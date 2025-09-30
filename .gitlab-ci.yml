@@ -1,0 +1,21 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Maven customization: https://gitlab.com/explore/catalog/to-be-continuous/maven
+
+stages:
+  - test
+  - security
+  - build
+  - publish
+
+include:
+  - component: $CI_SERVER_FQDN/components/code-quality/code-quality@main
+  # - component: $CI_SERVER_FQDN/components/container-scanning/container-scanning@main
+  - component: $CI_SERVER_FQDN/components/sast/sast@main
+  - component: $CI_SERVER_FQDN/components/secret-detection/secret-detection@main
+  - component: $CI_SERVER_FQDN/to-be-continuous/maven/gitlab-ci-maven@4.3.2
+    inputs:
+      image: docker.io/library/maven:3.9-eclipse-temurin-21-alpine

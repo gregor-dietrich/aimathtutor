@@ -1,0 +1,46 @@
+{
+  "[java]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "redhat.java"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "java.autobuild.enabled": false,
+  "java.cleanup.actions": [
+    // Specifies a list of cleanup actions applied automatically to improve code quality.
+    "addDeprecated", // Marks methods as @Deprecated if they override or implement deprecated methods.
+    "addFinalModifier", // Adds 'final' to local variables, parameters, and fields where possible for better immutability.
+    "addOverride", // Adds @Override annotations where applicable for better clarity and compiler checks.
+    "instanceofPatternMatch", // Uses 'instanceof' pattern matching to simplify type checks.
+    "invertEquals", // Inverts equals() comparisons to check for null safety first (e.g., "constant.equals(variable)").
+    "lambdaExpression", // General cleanup that converts eligible methods into lambda expressions.
+    "lambdaExpressionFromAnonymousClass", // Converts anonymous classes implementing functional interfaces into lambda expressions.    
+    "organizeImports", // Organizes imports to remove unused ones and sort them according to the project's import order.
+    "qualifyMembers", // Qualifies field and method accesses with 'this' or the class name when necessary.    
+    "renameFileToType", // Renames the file to match the class name, ensuring consistency between file and class names.
+    "renameUnusedLocalVariables", // Renames unused local variables to improve readability and reduce confusion.
+    "switchExpression", // Converts traditional switch statements to modern switch expressions where applicable.
+    "tryWithResource", // Converts try-finally blocks into try-with-resources statements where applicable.
+    "useSwitchForInstanceofPattern" // Uses switch expressions for instanceof pattern matching to enhance readability.
+  ],
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.codeGeneration.addFinalForNewDeclaration": "variables", // Adds the 'final' modifier to newly declared variables to prevent unintentional reassignment.
+  "java.codeGeneration.generateComments": true, // Automatically generates comments for generated methods and classes.
+  "java.codeGeneration.hashCodeEquals.useInstanceof": true, // Uses 'instanceof' instead of getClass() in hashCode() and equals() methods for better inheritance handling.
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.edit.validateAllOpenBuffersOnChanges": true, // Validates all open Java files when changes occur, ensuring real-time error detection.
+  "java.saveActions.organizeImports": true,
+  "java.sources.organizeImports.starThreshold": 5,
+  "java.sources.organizeImports.staticStarThreshold": 3,
+  "microprofile.tools.validation.unknown.excluded": [
+    "quarkus.log.*",
+    "quarkus.rest-client.midas-api.*"
+  ],
+  "quarkus.tools.alwaysShowWelcomePage": false,
+  "redhat.telemetry.enabled": false,
+  "workbench.startupEditor": "none"
+}
