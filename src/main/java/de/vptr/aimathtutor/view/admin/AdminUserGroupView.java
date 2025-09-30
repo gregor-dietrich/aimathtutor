@@ -34,8 +34,6 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.rest.dto.UserGroupDto;
 import de.vptr.aimathtutor.rest.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.rest.dto.UserViewDto;
-import de.vptr.aimathtutor.rest.exception.AuthenticationException;
-import de.vptr.aimathtutor.rest.exception.ServiceException;
 import de.vptr.aimathtutor.rest.service.AuthService;
 import de.vptr.aimathtutor.rest.service.UserGroupService;
 import de.vptr.aimathtutor.rest.service.UserService;
@@ -95,12 +93,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
             LOG.info("Loading groups");
             try {
                 return this.groupService.getAllGroups();
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while loading groups", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while loading groups", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error loading groups", e);
                 throw new RuntimeException("Failed to load groups", e);
@@ -277,11 +269,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error saving group: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving group", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -296,11 +283,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
             } else {
                 NotificationUtil.showError("Failed to delete group");
             }
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error deleting group: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting group", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -321,12 +303,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
             LOG.info("Searching groups");
             try {
                 return this.groupService.searchGroups(query);
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while searching groups", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while searching groups", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error searching groups", e);
                 throw new RuntimeException("Failed to search groups", e);
@@ -337,12 +313,7 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
                         this.searchButton.setEnabled(true);
                         if (throwable != null) {
                             LOG.error("Error searching groups: {}", throwable.getMessage(), throwable);
-                            if (throwable.getCause() instanceof AuthenticationException) {
-                                NotificationUtil.showError("Session expired. Please log in again.");
-                                ui.navigate("login");
-                            } else {
-                                NotificationUtil.showError("Failed to search groups: " + throwable.getMessage());
-                            }
+                            NotificationUtil.showError("Failed to search groups: " + throwable.getMessage());
                         } else {
                             LOG.info("Successfully found {} groups", groups.size());
                             this.grid.setItems(groups);
@@ -416,11 +387,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
         try {
             final var users = this.groupService.getUsersInGroup(this.selectedGroup.id);
             this.userGrid.setItems(users);
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error loading group users: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error loading group users", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -474,11 +440,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
             this.loadGroupUsers();
             this.loadAvailableUsers(); // Refresh the combo to exclude the newly added user
             this.availableUsersCombo.clear();
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error adding user to group: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error adding user to group", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -494,11 +455,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
             } else {
                 NotificationUtil.showError("Failed to remove user from group");
             }
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error removing user from group: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error removing user from group", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -515,13 +471,6 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
         try {
             final var groups = this.groupService.getGroupsForUser(userId.longValue());
             this.grid.setItems(groups);
-        } catch (final AuthenticationException e) {
-            LOG.error("Authentication failed while filtering groups by user", e);
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            LOG.error("Service error while filtering groups by user", e);
-            NotificationUtil.showError("Failed to filter groups: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Error filtering groups by user", e);
             NotificationUtil.showError("Failed to filter groups");

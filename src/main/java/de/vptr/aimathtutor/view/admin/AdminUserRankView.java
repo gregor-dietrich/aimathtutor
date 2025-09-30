@@ -35,8 +35,6 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.rest.dto.UserRankDto;
 import de.vptr.aimathtutor.rest.dto.UserRankViewDto;
-import de.vptr.aimathtutor.rest.exception.AuthenticationException;
-import de.vptr.aimathtutor.rest.exception.ServiceException;
 import de.vptr.aimathtutor.rest.service.AuthService;
 import de.vptr.aimathtutor.rest.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -85,12 +83,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
             LOG.info("Making service call to load ranks");
             try {
                 return this.rankService.getAllRanks();
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while loading ranks", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while loading ranks", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error loading ranks", e);
                 throw new RuntimeException("Failed to load ranks", e);
@@ -674,11 +666,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error saving rank: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving rank", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -693,11 +680,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
             } else {
                 NotificationUtil.showError("Failed to delete rank");
             }
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate("login"));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error deleting rank: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting rank", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -719,12 +701,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
             LOG.info("Searching ranks");
             try {
                 return this.rankService.searchRanks(query);
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while searching ranks", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while searching ranks", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error searching ranks", e);
                 throw new RuntimeException("Failed to search ranks", e);
@@ -735,12 +711,7 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
                         this.searchButton.setEnabled(true);
                         if (throwable != null) {
                             LOG.error("Error searching ranks: {}", throwable.getMessage(), throwable);
-                            if (throwable.getCause() instanceof AuthenticationException) {
-                                NotificationUtil.showError("Session expired. Please log in again.");
-                                ui.navigate("login");
-                            } else {
-                                NotificationUtil.showError("Failed to search ranks: " + throwable.getMessage());
-                            }
+                            NotificationUtil.showError("Failed to search ranks: " + throwable.getMessage());
                         } else {
                             LOG.info("Successfully found {} ranks", ranks.size());
                             this.grid.setItems(ranks);

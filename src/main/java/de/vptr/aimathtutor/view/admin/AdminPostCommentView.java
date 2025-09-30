@@ -39,8 +39,6 @@ import de.vptr.aimathtutor.rest.dto.PostCommentDto;
 import de.vptr.aimathtutor.rest.dto.PostCommentViewDto;
 import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
 import de.vptr.aimathtutor.rest.entity.PostEntity;
-import de.vptr.aimathtutor.rest.exception.AuthenticationException;
-import de.vptr.aimathtutor.rest.exception.ServiceException;
 import de.vptr.aimathtutor.rest.service.AuthService;
 import de.vptr.aimathtutor.rest.service.PostCommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -92,12 +90,6 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
             LOG.info("Loading comments from service");
             try {
                 return this.commentService.getAllComments();
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while loading comments", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while loading comments", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error loading comments", e);
                 throw new RuntimeException("Failed to load comments", e);
