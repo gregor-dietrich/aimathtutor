@@ -38,8 +38,6 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.rest.dto.UserDto;
 import de.vptr.aimathtutor.rest.dto.UserRankViewDto;
 import de.vptr.aimathtutor.rest.dto.UserViewDto;
-import de.vptr.aimathtutor.rest.exception.AuthenticationException;
-import de.vptr.aimathtutor.rest.exception.ServiceException;
 import de.vptr.aimathtutor.rest.service.AuthService;
 import de.vptr.aimathtutor.rest.service.UserRankService;
 import de.vptr.aimathtutor.rest.service.UserService;
@@ -96,12 +94,6 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
             LOG.info("Loading users");
             try {
                 return this.userService.getAllUsers();
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while loading users", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while loading users", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error loading users", e);
                 throw new RuntimeException("Failed to load users", e);
@@ -127,12 +119,6 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
             LOG.info("Loading ranks");
             try {
                 return this.userRankService.getAllRanks();
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while loading ranks", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while loading ranks", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error loading ranks", e);
                 throw new RuntimeException("Failed to load ranks", e);
@@ -440,12 +426,6 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
             this.userService.patchUser(userId, passwordUpdateDto);
             NotificationUtil.showSuccess("Password changed successfully");
             this.passwordDialog.close();
-
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error changing password: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error changing password", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -473,11 +453,6 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error saving user: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving user", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -492,11 +467,6 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
             } else {
                 NotificationUtil.showError("Failed to delete user");
             }
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error deleting user: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting user", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -514,10 +484,6 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
         CompletableFuture.supplyAsync(() -> {
             try {
                 return this.userService.searchUsers(query.trim());
-            } catch (final AuthenticationException e) {
-                throw new RuntimeException("Session expired. Please log in again.", e);
-            } catch (final ServiceException e) {
-                throw new RuntimeException("Error searching users: " + e.getMessage(), e);
             } catch (final Exception e) {
                 LOG.error("Unexpected error searching users", e);
                 throw new RuntimeException("Unexpected error occurred", e);

@@ -40,8 +40,6 @@ import de.vptr.aimathtutor.rest.dto.PostDto;
 import de.vptr.aimathtutor.rest.dto.PostViewDto;
 import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
 import de.vptr.aimathtutor.rest.entity.PostEntity;
-import de.vptr.aimathtutor.rest.exception.AuthenticationException;
-import de.vptr.aimathtutor.rest.exception.ServiceException;
 import de.vptr.aimathtutor.rest.service.*;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
@@ -395,11 +393,6 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error saving post: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving post", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -414,11 +407,6 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
             } else {
                 NotificationUtil.showError("Failed to delete post");
             }
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error deleting post: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting post", e);
             NotificationUtil.showError("Unexpected error occurred");

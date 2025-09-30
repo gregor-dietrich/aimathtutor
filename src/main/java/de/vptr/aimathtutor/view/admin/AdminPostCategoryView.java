@@ -34,8 +34,6 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.rest.dto.PostCategoryDto;
 import de.vptr.aimathtutor.rest.dto.PostCategoryViewDto;
 import de.vptr.aimathtutor.rest.entity.PostCategoryEntity;
-import de.vptr.aimathtutor.rest.exception.AuthenticationException;
-import de.vptr.aimathtutor.rest.exception.ServiceException;
 import de.vptr.aimathtutor.rest.service.AuthService;
 import de.vptr.aimathtutor.rest.service.PostCategoryService;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -86,12 +84,6 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
             LOG.info("Loading categories from service");
             try {
                 return this.categoryService.getAllCategories();
-            } catch (final AuthenticationException e) {
-                LOG.error("Authentication failed while loading categories", e);
-                throw e;
-            } catch (final ServiceException e) {
-                LOG.error("Service error while loading categories", e);
-                throw e;
             } catch (final Exception e) {
                 LOG.error("Error loading categories", e);
                 throw new RuntimeException("Failed to load categories", e);
@@ -381,11 +373,6 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error saving category: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving category", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -410,11 +397,6 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
             } else {
                 NotificationUtil.showError("Failed to delete category");
             }
-        } catch (final AuthenticationException e) {
-            NotificationUtil.showError("Session expired. Please log in again.");
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        } catch (final ServiceException e) {
-            NotificationUtil.showError("Error deleting category: " + e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting category", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -434,10 +416,6 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         CompletableFuture.supplyAsync(() -> {
             try {
                 return this.categoryService.searchCategories(query.trim());
-            } catch (final AuthenticationException e) {
-                throw new RuntimeException("Session expired. Please log in again.", e);
-            } catch (final ServiceException e) {
-                throw new RuntimeException("Error searching categories: " + e.getMessage(), e);
             } catch (final Exception e) {
                 LOG.error("Unexpected error searching categories", e);
                 throw new RuntimeException("Unexpected error occurred", e);
