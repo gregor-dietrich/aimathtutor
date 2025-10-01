@@ -41,9 +41,9 @@ class UserRankServiceTest {
         UserRankDto rankDto = new UserRankDto();
         rankDto.name = "   ";
 
-     
+        assertTrue(rankDto.name == null || rankDto.name.trim().isEmpty());
+    }
 
-    
     @Test
     @DisplayName("Should validate DTO with valid name")
     void shouldValidateDtoWithValidName() {
