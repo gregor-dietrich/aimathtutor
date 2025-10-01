@@ -156,7 +156,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
         // Create left side with title
         final var leftSide = new HorizontalLayout();
-        final var title = new H1("Midas Admin Panel");
+        final var title = new H1("AI Math Tutor - Admin Panel");
         title.getStyle().set("margin", "0");
         title.getStyle().set("color", "var(--lumo-primary-text-color)");
         leftSide.add(title);

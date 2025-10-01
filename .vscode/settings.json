@@ -37,8 +37,7 @@
   "java.sources.organizeImports.starThreshold": 5,
   "java.sources.organizeImports.staticStarThreshold": 3,
   "microprofile.tools.validation.unknown.excluded": [
-    "quarkus.log.*",
-    "quarkus.rest-client.midas-api.*"
+    "quarkus.log.*"
   ],
   "quarkus.tools.alwaysShowWelcomePage": false,
   "redhat.telemetry.enabled": false,

@@ -1,4 +1,4 @@
-# Midas GUI
+# AI Math Tutor
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
@@ -50,12 +50,12 @@ To run the tests, you can either omit the `-DskipTests` flag when using the comm
 It is recommended to use Docker Compose to run the application in production mode:
 
 ```shell script
-mkdir -p logs/midas-gui # only required once, before first launch
+mkdir -p logs/aimathtutor # only required once, before first launch
 sudo chown -R 185:185 logs # only required once, before first launch
 docker compose up -d --build
 ```
 
-> _**NOTE:**_ You need to create the directory `logs/midas-gui` relative to where the Compose file is located.
+> _**NOTE:**_ You need to create the directory `logs/aimathtutor` relative to where the Compose file is located.
 
 ## 📦 Packaging the application
 
@@ -85,7 +85,7 @@ The application, packaged as an _über-jar_, is now runnable using `java -jar ta
 You can create a Docker image using:
 
 ```shell script
-docker build . -f src/main/docker/Dockerfile.jvm -t midas-gui:1.0.0-SNAPSHOT
+docker build . -f src/main/docker/Dockerfile.jvm -t aimathtutor:1.0.0-SNAPSHOT
 ```
 
 If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.
@@ -104,13 +104,15 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./mvnw package -Dnative -Dquarkus.native.container-build=true -Pproduction
 ```
 
-You can then execute your native executable with: `./target/midas-gui-1.0.0-SNAPSHOT-runner`
+You can then execute your native executable with: `./target/aimathtutor-1.0.0-SNAPSHOT-runner`
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
 
 ## 📖 Related Guides
 
 - Quarkus ([guide](https://quarkus.io/guides/)): The main framework for building Java applications with a focus on cloud-native and microservices architectures.
-- ArC ([guide](https://quarkus.io/guides/cdi-reference)): A dependency injection framework that is part of Quarkus, providing support for CDI (Contexts and Dependency Injection).
-- REST Client ([guide](https://quarkus.io/guides/rest-client)): A client for making RESTful calls to other services.
 - Vaadin Flow ([guide](https://vaadin.com/docs/latest/flow/integrations/quarkus)): Vaadin Flow is a unique framework that lets you build web apps without writing HTML or JavaScript
+- ArC ([guide](https://quarkus.io/guides/cdi-reference)): A dependency injection framework that is part of Quarkus, providing support for CDI (Contexts and Dependency Injection).
+- Datasource ([guide](https://quarkus.io/guides/datasource)): A Quarkus extension for connecting to databases using JDBC, JPA, Hibernate ORM, and more.
+- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): A Quarkus extension that simplifies the use of Hibernate ORM with a focus on ease of use and productivity.
+- Hibernate Validator ([guide](https://quarkus.io/guides/hibernate-validator)): A Quarkus extension that integrates Hibernate Validator for bean validation, allowing you to validate your data models easily.

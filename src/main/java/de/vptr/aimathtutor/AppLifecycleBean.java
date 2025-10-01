@@ -40,10 +40,10 @@ public class AppLifecycleBean {
 
     void onStart(@Observes final StartupEvent ev) {
         LOG.info(asciiArt);
-        LOG.info("Welcome to Midas GUI! o/");
+        LOG.info("Welcome to AI Math Tutor! o/");
     }
 
     void onStop(@Observes final ShutdownEvent ev) {
-        LOG.info("Midas GUI is shutting down. Goodbye! \\o");
+        LOG.info("AI Math Tutor is shutting down. Goodbye! \\o");
     }
 }
