@@ -276,7 +276,7 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
 
             // Get current username from session
             final var session = com.vaadin.flow.server.VaadinSession.getCurrent();
-            final var currentUsername = (String) session.getAttribute("username");
+            final var currentUsername = (String) session.getAttribute("authenticated.username");
 
             if (this.currentComment.id == null) {
                 this.commentService.createComment(commentEntity, currentUsername);
