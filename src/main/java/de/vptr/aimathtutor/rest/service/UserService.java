@@ -285,7 +285,7 @@ public class UserService {
         if (session == null) {
             throw new WebApplicationException("No active session", Response.Status.UNAUTHORIZED);
         }
-        final var username = (String) session.getAttribute("username");
+        final var username = (String) session.getAttribute("authenticated.username");
         if (username == null) {
             throw new WebApplicationException("User not authenticated", Response.Status.UNAUTHORIZED);
         }
