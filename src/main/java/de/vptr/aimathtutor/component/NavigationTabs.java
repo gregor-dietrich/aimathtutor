@@ -10,8 +10,8 @@ public class NavigationTabs extends Tabs {
 
     public NavigationTabs() {
         this.add(new Tab(new RouterLink("Home", HomeView.class)));
-        // this.add(new Tab(new RouterLink("Posts", PostView.class)));
-        // this.add(new Tab(new RouterLink("Categories", PostCategoryView.class)));
+        // this.add(new Tab(new RouterLink("Exercises", Exercises.class)));
+        // this.add(new Tab(new RouterLink("Lessons", Lessons.class)));
         // this.add(new Tab(new RouterLink("Users", UserView.class)));
         // this.add(new Tab(new RouterLink("Groups", UserGroupView.class)));
     }

@@ -6,7 +6,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.vptr.aimathtutor.rest.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserEntity;
 import io.quarkus.security.AuthenticationFailedException;
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.IdentityProvider;

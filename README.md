@@ -17,9 +17,9 @@ For Docker, you have 2 options:
 - [Docker Engine](https://docs.docker.com/engine/install/)
 - or [Docker Desktop](https://docs.docker.com/desktop/) (includes Docker Engine)
 
-## 🔧 Preparation
+## 🔧 Setup
 
-Edit `src/main/resources/application.properties` to set the backend URL if needed.
+Edit `src/main/resources/application.properties` as needed, then run:
 
 ```shell script
 ./mvnw clean install -DskipTests
@@ -50,12 +50,8 @@ To run the tests, you can either omit the `-DskipTests` flag when using the comm
 It is recommended to use Docker Compose to run the application in production mode:
 
 ```shell script
-mkdir -p logs/aimathtutor # only required once, before first launch
-sudo chown -R 185:185 logs # only required once, before first launch
 docker compose up -d --build
 ```
-
-> _**NOTE:**_ You need to create the directory `logs/aimathtutor` relative to where the Compose file is located.
 
 ## 📦 Packaging the application
 

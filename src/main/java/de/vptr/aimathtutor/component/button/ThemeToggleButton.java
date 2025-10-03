@@ -4,7 +4,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.button.Button;
 
-import de.vptr.aimathtutor.rest.service.ThemeService;
+import de.vptr.aimathtutor.service.ThemeService;
 
 public class ThemeToggleButton extends Button {
 

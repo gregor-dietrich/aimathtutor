@@ -14,7 +14,7 @@ services:
     ports:
       - "80:9069"
     volumes:
-      - ./logs/aimathtutor:/deployments/logs
+      - aimathtutor_logs:/deployments/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://aimathtutor:9069/ || exit 1"]
       interval: 10s
@@ -66,3 +66,4 @@ services:
 
 volumes:
   mariadb_data:
+  aimathtutor_logs:

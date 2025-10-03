@@ -16,9 +16,9 @@ import de.vptr.aimathtutor.component.NavigationTabs;
 import de.vptr.aimathtutor.component.button.AdminViewButton;
 import de.vptr.aimathtutor.component.button.LogoutButton;
 import de.vptr.aimathtutor.component.button.ThemeToggleButton;
-import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.ThemeService;
-import de.vptr.aimathtutor.rest.service.UserRankService;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.ThemeService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.view.admin.AdminHomeView;
 import jakarta.inject.Inject;
 
