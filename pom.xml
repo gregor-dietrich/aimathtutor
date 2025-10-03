@@ -21,7 +21,6 @@
 
         <skipITs>true</skipITs>
 
-        <assertj.version>3.27.6</assertj.version>
         <compiler-plugin.version>3.14.1</compiler-plugin.version>
         <license-plugin.version>2.7.0</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
@@ -82,12 +81,6 @@
             <artifactId>quarkus-hibernate-validator</artifactId>
         </dependency>
 
-        <!-- Quarkus REST for building RESTful services (optional - for keeping API endpoints) -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest</artifactId>
-        </dependency>
-
         <!-- JSON processing -->
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -131,14 +124,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-panache-mock</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- AssertJ for fluent assertions -->
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
