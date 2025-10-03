@@ -1,18 +1,16 @@
 services:
-  midas-gui:
-    image: midas-gui:1.0.0-SNAPSHOT
+  aimathtutor:
+    image: aimathtutor:1.0.0-SNAPSHOT
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.jvm
     restart: unless-stopped
-    environment:
-      QUARKUS_REST_CLIENT_MIDAS_API_URL: "http://host.docker.internal:8800/api/v1"
     ports:
       - "80:9069"
     volumes:
-      - ./logs/midas-gui:/deployments/logs
+      - ./logs/aimathtutor:/deployments/logs
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://midas-gui:9069/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://aimathtutor:9069/ || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3

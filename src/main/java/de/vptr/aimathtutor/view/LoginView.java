@@ -19,7 +19,7 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 @Route(value = "login", layout = MainLayout.class)
-@PageTitle("Midas - Login")
+@PageTitle("AI Math Tutor - Login")
 public class LoginView extends VerticalLayout {
 
     private static final Logger LOG = LoggerFactory.getLogger(LoginView.class);
@@ -32,7 +32,7 @@ public class LoginView extends VerticalLayout {
         this.setAlignItems(Alignment.CENTER);
         this.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        final var title = new H1("Midas - Login");
+        final var title = new H1("AI Math Tutor - Login");
 
         final var usernameField = new TextField("Username");
         usernameField.setPrefixComponent(LineAwesomeIcon.USER_SOLID.create());

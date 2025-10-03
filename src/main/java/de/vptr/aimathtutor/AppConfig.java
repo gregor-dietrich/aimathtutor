@@ -6,7 +6,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.Theme;
 
 @Theme("starter-theme")
-@PageTitle("Midas")
+@PageTitle("AI Math Tutor")
 @Push
 public class AppConfig implements AppShellConfigurator {
 }
