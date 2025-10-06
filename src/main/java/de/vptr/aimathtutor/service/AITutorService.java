@@ -39,6 +39,12 @@ public class AITutorService {
     GeminiAIService geminiService;
 
     @Inject
+    OpenAIService openAIService;
+
+    @Inject
+    OllamaService ollamaService;
+
+    @Inject
     ObjectMapper objectMapper;
 
     /**
@@ -236,21 +242,61 @@ public class AITutorService {
     }
 
     /**
-     * Placeholder for OpenAI integration.
-     * TODO: Implement actual OpenAI API calls
+     * Analyzes math action using OpenAI (GPT models).
+     * Uses JSON mode for guaranteed valid JSON responses.
      */
     private AIFeedbackDto analyzeWithOpenAI(final GraspableEventDto event) {
-        LOG.warn("OpenAI provider not yet implemented, falling back to mock");
-        return analyzeWithMockAI(event);
+        LOG.info("Analyzing math action with OpenAI");
+
+        // Check if OpenAI is configured
+        if (!openAIService.isConfigured()) {
+            LOG.warn("OpenAI not configured, falling back to mock AI");
+            return analyzeWithMockAI(event);
+        }
+
+        try {
+            // Build the prompt
+            final String prompt = buildMathTutoringPrompt(event);
+
+            // Call OpenAI API with JSON mode
+            final String response = openAIService.generateJsonContent(prompt);
+
+            // Parse response as JSON
+            return parseFeedbackFromJSON(response);
+
+        } catch (final Exception e) {
+            LOG.error("Error using OpenAI, falling back to mock", e);
+            return analyzeWithMockAI(event);
+        }
     }
 
     /**
-     * Placeholder for Ollama integration.
-     * TODO: Implement actual Ollama API calls
+     * Analyzes math action using Ollama (local LLM).
+     * Sends structured prompt and parses JSON response.
      */
     private AIFeedbackDto analyzeWithOllama(final GraspableEventDto event) {
-        LOG.warn("Ollama provider not yet implemented, falling back to mock");
-        return analyzeWithMockAI(event);
+        LOG.info("Analyzing math action with Ollama");
+
+        // Check if Ollama is available
+        if (!ollamaService.isAvailable()) {
+            LOG.warn("Ollama server not available at {}, falling back to mock AI", ollamaService.getApiUrl());
+            return analyzeWithMockAI(event);
+        }
+
+        try {
+            // Build the prompt
+            final String prompt = buildMathTutoringPrompt(event);
+
+            // Call Ollama API
+            final String response = ollamaService.generateContent(prompt);
+
+            // Parse response as JSON
+            return parseFeedbackFromJSON(response);
+
+        } catch (final Exception e) {
+            LOG.error("Error using Ollama, falling back to mock", e);
+            return analyzeWithMockAI(event);
+        }
     }
 
     /**
