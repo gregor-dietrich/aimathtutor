@@ -4,6 +4,57 @@ applyTo: '**'
 # AIMathTutor Project Coding Instructions
 
 ## Project Structure
+- **Monolithic** full-stack web application using **Quarkus + Vaadin**
+- Backend and frontend are **tightly integrated** - no REST API between them
+- Vaadin Views directly inject and call backend Services using CDI (`@Inject`)
+- Integrates **Graspable Math** as an interactive math workspace
+- Adds an **AI Tutor Layer** for feedback, hints, and adaptive problem generation
+- Reference existing code in same package for consistency and avoid duplication
+
+## Framework Guidelines
+- Follow Quarkus best practices (CDI, ApplicationScoped services, etc.)
+- Utilize Vaadin components for UI (Flow components, layouts, etc.)
+- Services are injected into Views using `@Inject` annotation
+- Use the Graspable Math **JavaScript API / embed widget** in Vaadin views
+- Check the `pom.xml` file for available dependencies and utilities
+
+## Code Organization
+- For each resource, there should be corresponding classes:
+  - **DTO classes:** for data transfer and view data (e.g., `GraspableEventDto`, `AIFeedbackDto`)
+  - **Entity classes:** for database access with Hibernate/Panache (e.g., `StudentSessionEntity`, `AIInteractionEntity`)
+  - **Service classes:** for business logic with `@ApplicationScoped` or `@Dependent` (e.g., `AITutorService`, `GraspableMathService`)
+  - **View classes:** Vaadin UI components extending layouts (e.g., `GraspableMathView`, `AITutorView`)
+- Add new resources for AI integration:
+  - `AITutorService.java`: handles calls to AI APIs (e.g., OpenAI, local ML models) - `@ApplicationScoped`
+  - `AIFeedbackDto.java`: defines structure of AI feedback responses
+  - `AIInteractionEntity.java`: stores AI interactions in database (optional, for logging/analytics)
+- Add new resources for Graspable Math workspace integration:
+  - `GraspableEventDto.java`: represents student actions (move, simplify, expand, etc.)
+  - `GraspableMathView.java`: Vaadin view embedding Graspable Math using `Html` or `IFrame` component
+  - `GraspableMathService.java`: handles Graspable Math event processing and state management
+
+## Graspable Math + AI Integration Logic
+- **View Layer:** `GraspableMathView` embeds the Graspable Math workspace (HTML/JS widget)
+- **JavaScript Integration:** Use Vaadin's `@JavaScript` annotation or `UI.getCurrent().getPage().executeJs()` to interact with Graspable Math
+- **Event Flow:**
+  1. Student performs action in Graspable Math (move, simplify, etc.)
+  2. JavaScript listener captures event and calls Java method via `element.$server.methodName(eventData)`
+  3. View method receives event, converts to `GraspableEventDto`
+  4. View calls `AITutorService.analyzeMathAction(eventDto)` (direct method call, no REST)
+  5. `AITutorService` constructs prompt and queries AI model
+  6. Service returns `AIFeedbackDto` to view
+  7. View displays feedback in Vaadin component (e.g., `Div`, `Paragraph`, chat-style layout)
+- **AI Feedback Examples:**
+  - "Good job, correct simplification!"
+  - "Careful, you only divided one side of the equation."
+  - "Try factoring instead of expanding."
+- **AI Additional Features:**
+  - Generate new problems based on student performance
+  - Summarize learning progress
+  - Provide teacher-facing reports of student strengths and weaknesses
+# AIMathTutor Project Coding Instructions
+
+## Project Structure
 - Full Stack web application using **Quarkus + Vaadin**
 - Integrates **Graspable Math** as an interactive math workspace
 - Adds an **AI Tutor Layer** for feedback, hints, and adaptive problem generation
