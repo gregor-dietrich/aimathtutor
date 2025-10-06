@@ -38,7 +38,14 @@ CREATE TABLE `posts` (
   `published` tinyint(1) NOT NULL DEFAULT 0,
   `commentable` tinyint(1) NOT NULL DEFAULT 0,
   `created` datetime NOT NULL DEFAULT current_timestamp(),
-  `last_edit` datetime DEFAULT NULL ON UPDATE current_timestamp()
+  `last_edit` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  `graspable_enabled` tinyint(1) DEFAULT 0,
+  `graspable_initial_expression` text COLLATE utf8mb4_unicode_ci,
+  `graspable_target_expression` text COLLATE utf8mb4_unicode_ci,
+  `graspable_allowed_operations` text COLLATE utf8mb4_unicode_ci,
+  `graspable_difficulty` varchar(50) COLLATE utf8mb4_unicode_ci,
+  `graspable_hints` text COLLATE utf8mb4_unicode_ci,
+  `graspable_config` text COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

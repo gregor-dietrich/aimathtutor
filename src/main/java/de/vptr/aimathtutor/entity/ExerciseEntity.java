@@ -46,4 +46,26 @@ public class ExerciseEntity extends PanacheEntityBase {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
     @JsonIgnore
     public List<CommentEntity> comments;
+
+    // Graspable Math Configuration
+    @Column(name = "graspable_enabled", columnDefinition = "TINYINT(1)")
+    public Boolean graspableEnabled = false;
+
+    @Column(name = "graspable_initial_expression", columnDefinition = "TEXT")
+    public String graspableInitialExpression;
+
+    @Column(name = "graspable_target_expression", columnDefinition = "TEXT")
+    public String graspableTargetExpression;
+
+    @Column(name = "graspable_allowed_operations", columnDefinition = "TEXT")
+    public String graspableAllowedOperations; // JSON array: ["simplify", "expand", "factor"]
+
+    @Column(name = "graspable_difficulty")
+    public String graspableDifficulty; // "beginner", "intermediate", "advanced"
+
+    @Column(name = "graspable_hints", columnDefinition = "TEXT")
+    public String graspableHints; // JSON array of hint strings
+
+    @Column(name = "graspable_config", columnDefinition = "TEXT")
+    public String graspableConfig; // Additional JSON config for Graspable Math widget
 }

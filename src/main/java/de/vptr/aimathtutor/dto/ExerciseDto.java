@@ -26,6 +26,15 @@ public class ExerciseDto {
 
     public LocalDateTime lastEdit;
 
+    // Graspable Math fields
+    public Boolean graspableEnabled;
+    public String graspableInitialExpression;
+    public String graspableTargetExpression;
+    public String graspableAllowedOperations;
+    public String graspableDifficulty;
+    public String graspableHints;
+    public String graspableConfig;
+
     // Helper fields for compatibility with old code that used nested objects
     public UserField user;
     public LessonField lesson;
