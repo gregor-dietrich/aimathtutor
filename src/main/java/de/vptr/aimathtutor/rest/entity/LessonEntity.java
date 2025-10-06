@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "post_categories")
-public class PostCategoryEntity extends PanacheEntityBase {
+public class LessonEntity extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,29 +19,29 @@ public class PostCategoryEntity extends PanacheEntityBase {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    public PostCategoryEntity parent;
+    public LessonEntity parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    public List<PostCategoryEntity> children;
+    public List<LessonEntity> children;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    public List<PostEntity> posts;
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
+    public List<ExerciseEntity> exercises;
 
-    // Helper method to check if this is a root category
-    public boolean isRootCategory() {
+    // Helper method to check if this is a root lesson
+    public boolean isRootLesson() {
         return this.parent == null;
     }
 
-    // Helper method to get all subcategories recursively
-    public static List<PostCategoryEntity> findByParentId(final Long parentId) {
+    // Helper method to get all sub-lessons recursively
+    public static List<LessonEntity> findByParentId(final Long parentId) {
         if (parentId == null) {
             return find("parent IS NULL").list();
         }
         return find("parent.id", parentId).list();
     }
 
-    // Helper method to find root categories
-    public static List<PostCategoryEntity> findRootCategories() {
+    // Helper method to find root lessons
+    public static List<LessonEntity> findRootLessons() {
         return find("parent IS NULL").list();
     }
 }

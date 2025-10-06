@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Size;
 
-public class PostDto {
+public class ExerciseDto {
 
     public Long id;
 
@@ -16,7 +16,7 @@ public class PostDto {
 
     public Long userId;
 
-    public Long categoryId;
+    public Long lessonId;
 
     public Boolean published;
 
@@ -28,17 +28,17 @@ public class PostDto {
 
     // Helper fields for compatibility with old code that used nested objects
     public UserField user;
-    public CategoryField category;
+    public LessonField lesson;
 
-    public PostDto() {
+    public ExerciseDto() {
     }
 
-    public PostDto(final String title, final String content, final Long userId, final Long categoryId,
+    public ExerciseDto(final String title, final String content, final Long userId, final Long lessonId,
             final Boolean published, final Boolean commentable) {
         this.title = title;
         this.content = content;
         this.userId = userId;
-        this.categoryId = categoryId;
+        this.lessonId = lessonId;
         this.published = published;
         this.commentable = commentable;
     }
@@ -66,20 +66,20 @@ public class PostDto {
         }
     }
 
-    public static class CategoryField {
+    public static class LessonField {
         public Long id;
         public String name;
 
-        public CategoryField() {
+        public LessonField() {
         }
 
-        public CategoryField(final Long id) {
+        public LessonField(final Long id) {
             this.id = id;
         }
     }
 
     /**
-     * Ensure userId/categoryId and nested objects stay in sync
+     * Ensure userId/lessonId and nested objects stay in sync
      */
     public void syncNestedFields() {
         if (this.user != null && this.user.id != null) {
@@ -88,10 +88,10 @@ public class PostDto {
             this.user = new UserField(this.userId);
         }
 
-        if (this.category != null && this.category.id != null) {
-            this.categoryId = this.category.id;
-        } else if (this.categoryId != null && this.category == null) {
-            this.category = new CategoryField(this.categoryId);
+        if (this.lesson != null && this.lesson.id != null) {
+            this.lessonId = this.lesson.id;
+        } else if (this.lessonId != null && this.lesson == null) {
+            this.lesson = new LessonField(this.lessonId);
         }
     }
 }

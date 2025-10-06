@@ -9,48 +9,48 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
+import de.vptr.aimathtutor.rest.entity.CommentEntity;
 import jakarta.validation.ValidationException;
 
 @ExtendWith(MockitoExtension.class)
-class PostCommentServiceTest {
+class CommentServiceTest {
 
     @Mock
     private UserService userService;
 
     @InjectMocks
-    private PostCommentService postCommentService;
+    private CommentService commentService;
 
     @Test
     @DisplayName("Should throw ValidationException when creating comment with null content")
     void shouldThrowValidationExceptionWhenCreatingCommentWithNullContent() {
-        PostCommentEntity comment = new PostCommentEntity();
+        final CommentEntity comment = new CommentEntity();
         comment.content = null;
 
         assertThrows(ValidationException.class, () -> {
-            postCommentService.createComment(comment, "testuser");
+            this.commentService.createComment(comment, "testuser");
         });
     }
 
     @Test
     @DisplayName("Should throw ValidationException when creating comment with empty content")
     void shouldThrowValidationExceptionWhenCreatingCommentWithEmptyContent() {
-        PostCommentEntity comment = new PostCommentEntity();
+        final CommentEntity comment = new CommentEntity();
         comment.content = "";
 
         assertThrows(ValidationException.class, () -> {
-            postCommentService.createComment(comment, "testuser");
+            this.commentService.createComment(comment, "testuser");
         });
     }
 
     @Test
     @DisplayName("Should throw ValidationException when creating comment with whitespace content")
     void shouldThrowValidationExceptionWhenCreatingCommentWithWhitespaceContent() {
-        PostCommentEntity comment = new PostCommentEntity();
+        final CommentEntity comment = new CommentEntity();
         comment.content = "   ";
 
         assertThrows(ValidationException.class, () -> {
-            postCommentService.createComment(comment, "testuser");
+            this.commentService.createComment(comment, "testuser");
         });
     }
 }

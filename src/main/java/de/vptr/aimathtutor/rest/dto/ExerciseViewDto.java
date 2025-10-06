@@ -2,35 +2,35 @@ package de.vptr.aimathtutor.rest.dto;
 
 import java.time.LocalDateTime;
 
-import de.vptr.aimathtutor.rest.entity.PostEntity;
+import de.vptr.aimathtutor.rest.entity.ExerciseEntity;
 
-public class PostViewDto {
+public class ExerciseViewDto {
 
     public Long id;
     public String title;
     public String content;
     public Long userId;
     public String username;
-    public Long categoryId;
-    public String categoryName;
+    public Long lessonId;
+    public String lessonName;
     public Boolean published;
     public Boolean commentable;
     public LocalDateTime created;
     public LocalDateTime lastEdit;
     public Long commentsCount;
 
-    public PostViewDto() {
+    public ExerciseViewDto() {
     }
 
-    public PostViewDto(final PostEntity entity) {
+    public ExerciseViewDto(final ExerciseEntity entity) {
         if (entity != null) {
             this.id = entity.id;
             this.title = entity.title;
             this.content = entity.content;
             this.userId = entity.user != null ? entity.user.id : null;
             this.username = entity.user != null ? entity.user.username : null;
-            this.categoryId = entity.category != null ? entity.category.id : null;
-            this.categoryName = entity.category != null ? entity.category.name : null;
+            this.lessonId = entity.lesson != null ? entity.lesson.id : null;
+            this.lessonName = entity.lesson != null ? entity.lesson.name : null;
             this.published = entity.published;
             this.commentable = entity.commentable;
             this.created = entity.created;
@@ -54,15 +54,15 @@ public class PostViewDto {
     }
 
     /**
-     * Convert this ViewDto to a PostDto for create/update operations
+     * Convert this ViewDto to a ExerciseDto for create/update operations
      */
-    public PostDto toPostDto() {
-        final PostDto dto = new PostDto();
+    public ExerciseDto toExerciseDto() {
+        final ExerciseDto dto = new ExerciseDto();
         dto.id = this.id;
         dto.title = this.title;
         dto.content = this.content;
         dto.userId = this.userId;
-        dto.categoryId = this.categoryId;
+        dto.lessonId = this.lessonId;
         dto.published = this.published;
         dto.commentable = this.commentable;
         dto.created = this.created;

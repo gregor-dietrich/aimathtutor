@@ -57,9 +57,9 @@ public class UserEntity extends PanacheEntityBase {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
-    public List<PostEntity> posts;
+    public List<ExerciseEntity> exercises;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
-    public List<PostCommentEntity> comments;
+    public List<CommentEntity> comments;
 }

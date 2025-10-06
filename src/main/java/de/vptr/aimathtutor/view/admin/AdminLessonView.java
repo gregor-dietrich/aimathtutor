@@ -31,36 +31,36 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.rest.dto.PostCategoryDto;
-import de.vptr.aimathtutor.rest.dto.PostCategoryViewDto;
-import de.vptr.aimathtutor.rest.entity.PostCategoryEntity;
+import de.vptr.aimathtutor.rest.dto.LessonDto;
+import de.vptr.aimathtutor.rest.dto.LessonViewDto;
+import de.vptr.aimathtutor.rest.entity.LessonEntity;
 import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.PostCategoryService;
+import de.vptr.aimathtutor.rest.service.LessonService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
-@Route(value = "admin/categories", layout = AdminMainLayout.class)
-public class AdminPostCategoryView extends VerticalLayout implements BeforeEnterObserver {
+@Route(value = "admin/lessons", layout = AdminMainLayout.class)
+public class AdminLessonView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminPostCategoryView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminLessonView.class);
 
     @Inject
-    PostCategoryService categoryService;
+    LessonService lessonService;
 
     @Inject
     AuthService authService;
 
-    private TreeGrid<PostCategoryViewDto> treeGrid;
+    private TreeGrid<LessonViewDto> treeGrid;
     private TextField searchField;
     private Button searchButton;
-    private List<PostCategoryViewDto> allCategories;
+    private List<LessonViewDto> allLessons;
 
-    private Dialog categoryDialog;
-    private Binder<PostCategoryDto> binder;
-    private PostCategoryDto currentCategory;
+    private Dialog lessonDialog;
+    private Binder<LessonDto> binder;
+    private LessonDto currentLesson;
 
-    public AdminPostCategoryView() {
+    public AdminLessonView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -74,29 +74,29 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         }
 
         this.buildUI();
-        this.loadCategoriesAsync();
+        this.loadLessonsAsync();
     }
 
-    private void loadCategoriesAsync() {
-        LOG.info("Loading categories");
+    private void loadLessonsAsync() {
+        LOG.info("Loading lessons");
 
         CompletableFuture.supplyAsync(() -> {
-            LOG.info("Loading categories from service");
+            LOG.info("Loading lessons from service");
             try {
-                return this.categoryService.getAllCategories();
+                return this.lessonService.getAllLessons();
             } catch (final Exception e) {
-                LOG.error("Error loading categories", e);
-                throw new RuntimeException("Failed to load categories", e);
+                LOG.error("Error loading lessons", e);
+                throw new RuntimeException("Failed to load lessons", e);
             }
         }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((categories, throwable) -> {
+                .whenComplete((lessons, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
-                            LOG.error("Error loading categories: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load categories: " + throwable.getMessage());
+                            LOG.error("Error loading lessons: {}", throwable.getMessage(), throwable);
+                            NotificationUtil.showError("Failed to load lessons: " + throwable.getMessage());
                         } else {
-                            LOG.info("Successfully loaded {} categories", categories.size());
-                            this.allCategories = categories;
+                            LOG.info("Successfully loaded {} lessons", lessons.size());
+                            this.allLessons = lessons;
                             this.updateTreeGrid();
                         }
                     }));
@@ -104,55 +104,55 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
     }
 
     private void updateTreeGrid() {
-        // Find root categories (categories without parent)
-        final var rootCategories = this.allCategories.stream()
-                .filter(PostCategoryViewDto::isRootCategory)
+        // Find root lessons (lessons without parent)
+        final var rootLessons = this.allLessons.stream()
+                .filter(LessonViewDto::isRootLesson)
                 .toList();
 
-        this.treeGrid.setItems(rootCategories, this::getChildrenOfCategory);
-        this.treeGrid.expandRecursively(rootCategories, 2); // Expand up to 2 levels
+        this.treeGrid.setItems(rootLessons, this::getChildrenOfLesson);
+        this.treeGrid.expandRecursively(rootLessons, 2); // Expand up to 2 levels
     }
 
-    private void updateSearchTreeGrid(final List<PostCategoryViewDto> searchResults) {
-        // For search results, we want to show all matching categories
-        // If a matching category has a parent that's not in the search results,
+    private void updateSearchTreeGrid(final List<LessonViewDto> searchResults) {
+        // For search results, we want to show all matching lessons
+        // If a matching lesson has a parent that's not in the search results,
         // we show it as a top-level item for better visibility
 
-        // Get all category IDs that exist in the search results
-        final var categoryIdsInResults = searchResults.stream()
+        // Get all lesson IDs that exist in the search results
+        final var lessonIdsInResults = searchResults.stream()
                 .map(cat -> cat.id)
                 .collect(java.util.stream.Collectors.toSet());
 
-        // Find categories to show at the top level:
-        // 1. Root categories (no parent)
-        // 2. Categories whose parent is not in the search results (orphaned in this
+        // Find lessons to show at the top level:
+        // 1. Root lessons (no parent)
+        // 2. Lessons whose parent is not in the search results (orphaned in this
         // context)
-        final var topLevelCategories = searchResults.stream()
-                .filter(cat -> cat.parentId == null || !categoryIdsInResults.contains(cat.parentId))
+        final var topLevelLessons = searchResults.stream()
+                .filter(cat -> cat.parentId == null || !lessonIdsInResults.contains(cat.parentId))
                 .toList();
 
-        this.treeGrid.setItems(topLevelCategories, category -> searchResults.stream()
-                .filter(cat -> cat.parentId != null && cat.parentId.equals(category.id))
+        this.treeGrid.setItems(topLevelLessons, lesson -> searchResults.stream()
+                .filter(cat -> cat.parentId != null && cat.parentId.equals(lesson.id))
                 .toList());
 
         // Expand all search results for better visibility
-        this.treeGrid.expandRecursively(topLevelCategories, 10);
+        this.treeGrid.expandRecursively(topLevelLessons, 10);
     }
 
-    private List<PostCategoryViewDto> getChildrenOfCategory(final PostCategoryViewDto parent) {
-        return this.allCategories.stream()
-                .filter(category -> category.parentId != null && category.parentId.equals(parent.id))
+    private List<LessonViewDto> getChildrenOfLesson(final LessonViewDto parent) {
+        return this.allLessons.stream()
+                .filter(lesson -> lesson.parentId != null && lesson.parentId.equals(parent.id))
                 .toList();
     }
 
     private void buildUI() {
         this.removeAll();
 
-        final var header = new H2("Post Categories");
+        final var header = new H2("Lessons");
         final var searchLayout = this.createSearchLayout();
         final var buttonLayout = this.createButtonLayout();
         this.createTreeGrid();
-        this.categoryDialog = new FormDialog();
+        this.lessonDialog = new FormDialog();
 
         this.add(header, searchLayout, buttonLayout, this.treeGrid);
     }
@@ -164,9 +164,9 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
                         this.updateTreeGrid();
                     }
                 },
-                e -> this.searchCategories(),
+                e -> this.searchLessons(),
                 "Search by name...",
-                "Search Categories");
+                "Search Lessons");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -178,34 +178,34 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(e -> this.openCategoryDialog(null));
-        final var refreshButton = new RefreshButton(e -> this.loadCategoriesAsync());
+        final var createButton = new CreateButton(e -> this.openLessonDialog(null));
+        final var refreshButton = new RefreshButton(e -> this.loadLessonsAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
     }
 
     private void createTreeGrid() {
-        this.treeGrid = new TreeGrid<>(PostCategoryViewDto.class);
+        this.treeGrid = new TreeGrid<>(LessonViewDto.class);
         this.treeGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.treeGrid.setSizeFull();
         this.treeGrid.removeAllColumns();
 
         // Configure columns
-        this.treeGrid.addHierarchyColumn(category -> category.name)
-                .setHeader("Category Name")
+        this.treeGrid.addHierarchyColumn(lesson -> lesson.name)
+                .setHeader("Lesson Name")
                 .setFlexGrow(3);
 
-        this.treeGrid.addColumn(category -> category.parentName != null ? category.parentName : "N/A")
+        this.treeGrid.addColumn(lesson -> lesson.parentName != null ? lesson.parentName : "N/A")
                 .setHeader("Parent")
                 .setFlexGrow(2);
 
-        this.treeGrid.addColumn(category -> category.childrenCount)
+        this.treeGrid.addColumn(lesson -> lesson.childrenCount)
                 .setHeader("Children")
                 .setFlexGrow(1);
 
-        this.treeGrid.addColumn(category -> category.postsCount)
-                .setHeader("Posts")
+        this.treeGrid.addColumn(lesson -> lesson.exercisesCount)
+                .setHeader("Lessons")
                 .setFlexGrow(1);
 
         // Add action column
@@ -215,24 +215,24 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
                 .setFlexGrow(0);
     }
 
-    private HorizontalLayout createActionButtons(final PostCategoryViewDto category) {
+    private HorizontalLayout createActionButtons(final LessonViewDto lesson) {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(e -> this.openCategoryDialog(category.toPostCategoryDto()));
-        final var deleteButton = new DeleteButton(e -> this.deleteCategory(category.toPostCategoryDto()));
+        final var editButton = new EditButton(e -> this.openLessonDialog(lesson.toLessonDto()));
+        final var deleteButton = new DeleteButton(e -> this.deleteLesson(lesson.toLessonDto()));
 
         layout.add(editButton, deleteButton);
         return layout;
     }
 
-    private void openCategoryDialog(final PostCategoryDto category) {
-        this.categoryDialog.removeAll();
-        this.currentCategory = category != null ? category : new PostCategoryDto();
+    private void openLessonDialog(final LessonDto lesson) {
+        this.lessonDialog.removeAll();
+        this.currentLesson = lesson != null ? lesson : new LessonDto();
 
-        this.binder = new Binder<>(PostCategoryDto.class);
+        this.binder = new Binder<>(LessonDto.class);
 
-        final var title = new H3(category != null ? "Edit Category" : "Create Category");
+        final var title = new H3(lesson != null ? "Edit Lesson" : "Create Lesson");
 
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
@@ -242,20 +242,20 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         nameField.setRequired(true);
         nameField.setInvalid(false); // Clear any previous validation state
 
-        final var parentField = new ComboBox<PostCategoryDto>("Parent Category");
+        final var parentField = new ComboBox<LessonDto>("Parent Lesson");
         parentField.setItemLabelGenerator(cat -> cat != null ? cat.name : "N/A");
         parentField.setPlaceholder("(none)");
         parentField.setInvalid(false); // Clear any previous validation state
-        if (this.allCategories != null) {
-            // Only show categories that are not descendants of the current category
-            final var availableParents = this.allCategories.stream()
-                    .map(PostCategoryViewDto::toPostCategoryDto)
-                    .filter(cat -> category == null || !this.isDescendantOf(cat, category))
-                    .filter(cat -> category == null || !cat.id.equals(category.id))
+        if (this.allLessons != null) {
+            // Only show lessons that are not descendants of the current lesson
+            final var availableParents = this.allLessons.stream()
+                    .map(LessonViewDto::toLessonDto)
+                    .filter(cat -> lesson == null || !this.isDescendantOf(cat, lesson))
+                    .filter(cat -> lesson == null || !cat.id.equals(lesson.id))
                     .toList();
             parentField.setItems(availableParents);
         }
-        // Allow clearing the selection to make it a root category
+        // Allow clearing the selection to make it a root lesson
         parentField.setClearButtonVisible(true);
 
         // Bind fields
@@ -267,10 +267,10 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
                         cat -> {
                             // Convert from DTO parent field
                             if (cat.parent != null && cat.parent.id != null) {
-                                // Find the PostCategoryDto from available parents
-                                if (this.allCategories != null) {
-                                    return this.allCategories.stream()
-                                            .map(PostCategoryViewDto::toPostCategoryDto)
+                                // Find the LessonDto from available parents
+                                if (this.allLessons != null) {
+                                    return this.allLessons.stream()
+                                            .map(LessonViewDto::toLessonDto)
                                             .filter(c -> c.id.equals(cat.parent.id))
                                             .findFirst()
                                             .orElse(null);
@@ -283,7 +283,7 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
                             if (value != null && value.id != null) {
                                 cat.parentId = value.id;
                                 if (cat.parent == null) {
-                                    cat.parent = new PostCategoryDto.ParentField();
+                                    cat.parent = new LessonDto.ParentField();
                                 }
                                 cat.parent.id = value.id;
                             } else {
@@ -298,10 +298,10 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", e -> this.saveCategory());
+        final var saveButton = new Button("Save", e -> this.saveLesson());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", e -> this.categoryDialog.close());
+        final var cancelButton = new Button("Cancel", e -> this.lessonDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
@@ -311,15 +311,15 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         dialogLayout.setPadding(false);
         dialogLayout.setSizeFull();
 
-        this.categoryDialog.add(dialogLayout);
+        this.lessonDialog.add(dialogLayout);
 
-        // Load current category data
-        this.binder.readBean(this.currentCategory);
+        // Load current lesson data
+        this.binder.readBean(this.currentLesson);
 
-        this.categoryDialog.open();
+        this.lessonDialog.open();
     }
 
-    private boolean isDescendantOf(final PostCategoryDto potential, final PostCategoryDto ancestor) {
+    private boolean isDescendantOf(final LessonDto potential, final LessonDto ancestor) {
         if (potential.parent == null) {
             return false;
         }
@@ -328,9 +328,9 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         }
 
         // Find the parent in the list and check recursively
-        final var parent = this.allCategories.stream()
+        final var parent = this.allLessons.stream()
                 .filter(cat -> cat.id.equals(potential.parent.id))
-                .map(PostCategoryViewDto::toPostCategoryDto)
+                .map(LessonViewDto::toLessonDto)
                 .findFirst()
                 .orElse(null);
 
@@ -341,69 +341,69 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         return false;
     }
 
-    private void saveCategory() {
+    private void saveLesson() {
         try {
-            this.binder.writeBean(this.currentCategory);
+            this.binder.writeBean(this.currentLesson);
 
             // Sync parent field
-            this.currentCategory.syncParent();
+            this.currentLesson.syncParent();
 
             // Convert DTO to Entity for service call
-            final var categoryEntity = new PostCategoryEntity();
-            categoryEntity.id = this.currentCategory.id;
-            categoryEntity.name = this.currentCategory.name;
+            final var lessonEntity = new LessonEntity();
+            lessonEntity.id = this.currentLesson.id;
+            lessonEntity.name = this.currentLesson.name;
 
             // Set parent if specified
-            if (this.currentCategory.parentId != null) {
-                final var parentEntity = new PostCategoryEntity();
-                parentEntity.id = this.currentCategory.parentId;
-                categoryEntity.parent = parentEntity;
+            if (this.currentLesson.parentId != null) {
+                final var parentEntity = new LessonEntity();
+                parentEntity.id = this.currentLesson.parentId;
+                lessonEntity.parent = parentEntity;
             }
 
-            if (this.currentCategory.id == null) {
-                this.categoryService.createCategory(categoryEntity);
-                NotificationUtil.showSuccess("Category created successfully");
+            if (this.currentLesson.id == null) {
+                this.lessonService.createLesson(lessonEntity);
+                NotificationUtil.showSuccess("Lesson created successfully");
             } else {
-                this.categoryService.updateCategory(categoryEntity);
-                NotificationUtil.showSuccess("Category updated successfully");
+                this.lessonService.updateLesson(lessonEntity);
+                NotificationUtil.showSuccess("Lesson updated successfully");
             }
 
-            this.categoryDialog.close();
-            this.loadCategoriesAsync();
+            this.lessonDialog.close();
+            this.loadLessonsAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
         } catch (final Exception e) {
-            LOG.error("Unexpected error saving category", e);
+            LOG.error("Unexpected error saving lesson", e);
             NotificationUtil.showError("Unexpected error occurred");
         }
     }
 
-    private void deleteCategory(final PostCategoryDto category) {
-        // Check if category has children
-        final boolean hasChildren = this.allCategories.stream()
-                .anyMatch(cat -> cat.parentId != null && cat.parentId.equals(category.id));
+    private void deleteLesson(final LessonDto lesson) {
+        // Check if lesson has children
+        final boolean hasChildren = this.allLessons.stream()
+                .anyMatch(cat -> cat.parentId != null && cat.parentId.equals(lesson.id));
 
         if (hasChildren) {
             NotificationUtil
-                    .showError("Cannot delete category with subcategories. Please delete or move subcategories first.");
+                    .showError("Cannot delete lesson with sub-lessons. Please delete or move sub-lessons first.");
             return;
         }
 
         try {
-            if (this.categoryService.deleteCategory(category.id)) {
-                NotificationUtil.showSuccess("Category deleted successfully");
-                this.loadCategoriesAsync();
+            if (this.lessonService.deleteLesson(lesson.id)) {
+                NotificationUtil.showSuccess("Lesson deleted successfully");
+                this.loadLessonsAsync();
             } else {
-                NotificationUtil.showError("Failed to delete category");
+                NotificationUtil.showError("Failed to delete lesson");
             }
         } catch (final Exception e) {
-            LOG.error("Unexpected error deleting category", e);
+            LOG.error("Unexpected error deleting lesson", e);
             NotificationUtil.showError("Unexpected error occurred");
         }
     }
 
-    private void searchCategories() {
+    private void searchLessons() {
         final String query = this.searchField.getValue();
         if (query == null || query.trim().isEmpty()) {
             // If query is empty, return to normal view
@@ -415,23 +415,23 @@ public class AdminPostCategoryView extends VerticalLayout implements BeforeEnter
         this.searchButton.setText("Searching...");
         CompletableFuture.supplyAsync(() -> {
             try {
-                return this.categoryService.searchCategories(query.trim());
+                return this.lessonService.searchLessons(query.trim());
             } catch (final Exception e) {
-                LOG.error("Unexpected error searching categories", e);
+                LOG.error("Unexpected error searching lessons", e);
                 throw new RuntimeException("Unexpected error occurred", e);
             }
         }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((categories, throwable) -> {
+                .whenComplete((lessons, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         this.searchButton.setEnabled(true);
                         this.searchButton.setText("Search");
                         if (throwable != null) {
-                            LOG.error("Error searching categories: {}", throwable.getMessage(), throwable);
+                            LOG.error("Error searching lessons: {}", throwable.getMessage(), throwable);
                             NotificationUtil.showError(throwable.getCause() != null ? throwable.getCause().getMessage()
                                     : throwable.getMessage());
                         } else {
                             // Store search results and update the tree grid
-                            this.updateSearchTreeGrid(categories);
+                            this.updateSearchTreeGrid(lessons);
                         }
                     }));
                 });

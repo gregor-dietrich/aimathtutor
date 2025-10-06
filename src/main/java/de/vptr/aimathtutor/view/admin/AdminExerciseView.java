@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -34,27 +33,27 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.rest.dto.PostCategoryViewDto;
-import de.vptr.aimathtutor.rest.dto.PostCommentDto;
-import de.vptr.aimathtutor.rest.dto.PostDto;
-import de.vptr.aimathtutor.rest.dto.PostViewDto;
-import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
-import de.vptr.aimathtutor.rest.entity.PostEntity;
+import de.vptr.aimathtutor.rest.dto.CommentDto;
+import de.vptr.aimathtutor.rest.dto.ExerciseDto;
+import de.vptr.aimathtutor.rest.dto.ExerciseViewDto;
+import de.vptr.aimathtutor.rest.dto.LessonViewDto;
+import de.vptr.aimathtutor.rest.entity.CommentEntity;
+import de.vptr.aimathtutor.rest.entity.ExerciseEntity;
 import de.vptr.aimathtutor.rest.service.*;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
-@Route(value = "admin/posts", layout = AdminMainLayout.class)
-public class AdminPostView extends VerticalLayout implements BeforeEnterObserver {
+@Route(value = "admin/exercises", layout = AdminMainLayout.class)
+public class AdminExerciseView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminPostView.class);
-
-    @Inject
-    PostService postService;
+    private static final Logger LOG = LoggerFactory.getLogger(AdminExerciseView.class);
 
     @Inject
-    PostCategoryService postCategoryService;
+    ExerciseService exerciseService;
+
+    @Inject
+    LessonService lessonService;
 
     @Inject
     AuthService authService;
@@ -63,9 +62,9 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
     UserService userService;
 
     @Inject
-    PostCommentService postCommentService;
+    CommentService commentService;
 
-    private Grid<PostViewDto> grid;
+    private Grid<ExerciseViewDto> grid;
     private TextField searchField;
     private Button searchButton;
     private Button showPublishedButton;
@@ -73,18 +72,18 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
     private DatePicker endDatePicker;
     private IntegerField userIdField;
 
-    private Dialog postDialog;
-    private Binder<PostDto> binder;
-    private PostDto currentPost;
-    private List<PostCategoryViewDto> availableCategories;
+    private Dialog exerciseDialog;
+    private Binder<ExerciseDto> binder;
+    private ExerciseDto currentExercise;
+    private List<LessonViewDto> availableLessons;
 
     // Comment management components
     private Dialog commentDialog;
-    private Binder<PostCommentDto> commentBinder;
-    private PostCommentDto currentComment;
-    private PostViewDto selectedPost;
+    private Binder<CommentDto> commentBinder;
+    private CommentDto currentComment;
+    private ExerciseViewDto selectedExercise;
 
-    public AdminPostView() {
+    public AdminExerciseView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -98,53 +97,53 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         }
 
         this.buildUI();
-        this.loadCategoriesAsync();
-        this.loadPostsAsync();
+        this.loadLessonsAsync();
+        this.loadExercisesAsync();
     }
 
-    private void loadPostsAsync() {
-        LOG.info("Loading posts");
+    private void loadExercisesAsync() {
+        LOG.info("Loading exercises");
         try {
-            final var posts = this.postService.getAllPosts();
-            LOG.info("Successfully loaded {} posts", posts.size());
-            this.grid.setItems(posts);
+            final var exercises = this.exerciseService.getAllExercises();
+            LOG.info("Successfully loaded {} exercises", exercises.size());
+            this.grid.setItems(exercises);
         } catch (final Exception e) {
-            LOG.error("Error loading posts", e);
-            NotificationUtil.showError("Failed to load posts: " + e.getMessage());
+            LOG.error("Error loading exercises", e);
+            NotificationUtil.showError("Failed to load exercises: " + e.getMessage());
         }
     }
 
-    private void loadPublishedPostsAsync() {
-        LOG.info("Loading published posts");
+    private void loadPublishedExercisesAsync() {
+        LOG.info("Loading published exercises");
         try {
-            final var posts = this.postService.getPublishedPosts();
-            LOG.info("Successfully loaded {} published posts", posts.size());
-            this.grid.setItems(posts);
+            final var exercises = this.exerciseService.findPublishedExercises();
+            LOG.info("Successfully loaded {} published exercises", exercises.size());
+            this.grid.setItems(exercises);
         } catch (final Exception e) {
-            LOG.error("Error loading published posts", e);
-            NotificationUtil.showError("Failed to load published posts: " + e.getMessage());
+            LOG.error("Error loading published exercises", e);
+            NotificationUtil.showError("Failed to load published exercises: " + e.getMessage());
         }
     }
 
-    private void loadCategoriesAsync() {
-        LOG.info("Loading categories");
+    private void loadLessonsAsync() {
+        LOG.info("Loading lessons");
         try {
-            this.availableCategories = this.postCategoryService.getAllCategories();
-            LOG.info("Successfully loaded {} categories", this.availableCategories.size());
+            this.availableLessons = this.lessonService.getAllLessons();
+            LOG.info("Successfully loaded {} lessons", this.availableLessons.size());
         } catch (final Exception e) {
-            LOG.error("Error loading categories", e);
-            this.availableCategories = List.of(); // Empty list as fallback
+            LOG.error("Error loading lessons", e);
+            this.availableLessons = List.of(); // Empty list as fallback
         }
     }
 
     private void buildUI() {
         this.removeAll();
 
-        final var header = new H2("Posts");
+        final var header = new H2("Exercises");
         final var searchLayout = this.createSearchLayout();
         final var buttonLayout = this.createButtonLayout();
         this.createGrid();
-        this.postDialog = new FormDialog();
+        this.exerciseDialog = new FormDialog();
         this.commentDialog = new FormDialog();
 
         this.add(header, searchLayout, buttonLayout, this.grid);
@@ -154,17 +153,17 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         final var searchLayout = new SearchLayout(
                 e -> {
                     if (e.getValue() == null || e.getValue().trim().isEmpty()) {
-                        this.loadPostsAsync();
+                        this.loadExercisesAsync();
                     }
                 },
-                e -> this.searchPosts(),
+                e -> this.searchExercise(),
                 "Search by title or content...",
-                "Search Posts");
+                "Search Exercises");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
 
-        this.showPublishedButton = new Button("Show Published Only", e -> this.loadPublishedPostsAsync());
+        this.showPublishedButton = new Button("Show Published Only", e -> this.loadPublishedExercisesAsync());
         this.showPublishedButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         // Date range filter
@@ -187,92 +186,94 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(e -> this.openPostDialog(null));
-        final var refreshButton = new RefreshButton(e -> this.loadPostsAsync());
+        final var createButton = new CreateButton(e -> this.openExerciseDialog(null));
+        final var refreshButton = new RefreshButton(e -> this.loadExercisesAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
     }
 
     private void createGrid() {
-        this.grid = new Grid<>(PostViewDto.class, false);
+        this.grid = new Grid<>(ExerciseViewDto.class, false);
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(post -> post.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> exercise.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
 
         // Make the title column clickable
-        this.grid.addComponentColumn(post -> {
-            final var titleSpan = new Span(post.title);
+        this.grid.addComponentColumn(exercise -> {
+            final var titleSpan = new Span(exercise.title);
             titleSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
             titleSpan.getStyle().set("cursor", "pointer");
             titleSpan.getStyle().set("width", "100%");
             titleSpan.getStyle().set("display", "block");
-            titleSpan.addClickListener(e -> this.openPostDialog(post));
+            titleSpan.addClickListener(e -> this.openExerciseDialog(exercise));
             return titleSpan;
         }).setHeader("Title").setFlexGrow(2);
 
-        this.grid.addColumn(post -> post.username != null ? post.username : "").setHeader("Author").setWidth("120px")
+        this.grid.addColumn(exercise -> exercise.username != null ? exercise.username : "").setHeader("Author")
+                .setWidth("120px")
                 .setFlexGrow(0);
-        this.grid.addColumn(post -> post.categoryName != null ? post.categoryName : "").setHeader("Category")
+        this.grid.addColumn(exercise -> exercise.lessonName != null ? exercise.lessonName : "")
+                .setHeader("Lesson")
                 .setWidth("120px").setFlexGrow(0);
 
-        this.grid.addComponentColumn(post -> {
+        this.grid.addComponentColumn(exercise -> {
             final var checkbox = new Checkbox();
-            checkbox.setValue(post.published != null ? post.published : false);
+            checkbox.setValue(exercise.published != null ? exercise.published : false);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Published").setWidth("100px").setFlexGrow(0);
 
-        this.grid.addComponentColumn(post -> {
+        this.grid.addComponentColumn(exercise -> {
             final var checkbox = new Checkbox();
-            checkbox.setValue(post.commentable != null ? post.commentable : false);
+            checkbox.setValue(exercise.commentable != null ? exercise.commentable : false);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Commentable").setWidth("100px").setFlexGrow(0);
 
-        this.grid.addColumn(post -> post.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
-        this.grid.addColumn(post -> post.lastEdit).setHeader("Last Edit").setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> exercise.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> exercise.lastEdit).setHeader("Last Edit").setWidth("150px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
     }
 
-    private HorizontalLayout createActionButtons(final PostViewDto post) {
+    private HorizontalLayout createActionButtons(final ExerciseViewDto exercise) {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(e -> this.openPostDialog(post));
-        final var deleteButton = new DeleteButton(e -> this.deletePost(post));
-        final var commentButton = new AddCommentButton(e -> this.openCommentDialog(post));
+        final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
+        final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
+        final var commentButton = new AddCommentButton(e -> this.openCommentDialog(exercise));
 
         layout.add(editButton, deleteButton, commentButton);
         return layout;
     }
 
-    private void openPostDialog(final PostViewDto post) {
-        this.postDialog.removeAll();
-        this.currentPost = post != null ? post.toPostDto() : new PostDto();
+    private void openExerciseDialog(final ExerciseViewDto exercise) {
+        this.exerciseDialog.removeAll();
+        this.currentExercise = exercise != null ? exercise.toExerciseDto() : new ExerciseDto();
 
-        this.binder = new Binder<>(PostDto.class);
+        this.binder = new Binder<>(ExerciseDto.class);
 
-        // For new posts, automatically set the current user as the author
-        if (post == null) {
+        // For new exercises, automatically set the current user as the author
+        if (exercise == null) {
             try {
                 final var currentUser = this.userService.getCurrentUser();
-                this.currentPost.userId = currentUser.id;
-                this.currentPost.user = new PostDto.UserField();
-                this.currentPost.user.setId(currentUser.id);
-                this.currentPost.user.setUsername(currentUser.username);
+                this.currentExercise.userId = currentUser.id;
+                this.currentExercise.user = new ExerciseDto.UserField();
+                this.currentExercise.user.setId(currentUser.id);
+                this.currentExercise.user.setUsername(currentUser.username);
             } catch (final Exception e) {
-                LOG.error("Error retrieving current user for new post", e);
+                LOG.error("Error retrieving current user for new exercise", e);
                 NotificationUtil.showError("Error retrieving user information. Please try again.");
                 return;
             }
         }
 
-        final var title = new H3(post != null ? "Edit Post" : "Create Post");
+        final var title = new H3(exercise != null ? "Edit Exercise" : "Create Exercise");
 
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
@@ -292,62 +293,62 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         final var publishedField = new Checkbox("Published");
         final var commentableField = new Checkbox("Commentable");
 
-        // Category dropdown
-        final var categoryField = new ComboBox<PostCategoryViewDto>("Category");
-        categoryField.setItems(this.availableCategories != null ? this.availableCategories : List.of());
-        categoryField.setItemLabelGenerator(PostCategoryViewDto::getName);
-        categoryField.setPlaceholder("(none)");
-        categoryField.setClearButtonVisible(true);
-        categoryField.setInvalid(false); // Clear any previous validation state
+        // Lesson dropdown
+        final var lessonField = new ComboBox<LessonViewDto>("Lesson");
+        lessonField.setItems(this.availableLessons != null ? this.availableLessons : List.of());
+        lessonField.setItemLabelGenerator(LessonViewDto::getName);
+        lessonField.setPlaceholder("(none)");
+        lessonField.setClearButtonVisible(true);
+        lessonField.setInvalid(false); // Clear any previous validation state
 
         // Bind fields
         this.binder.forField(titleField)
                 .withValidator(value -> value != null && !value.trim().isEmpty(), "Title is required")
-                .bind(post1 -> post1.title, (post1, value) -> post1.title = value);
+                .bind(exercise1 -> exercise1.title, (exercise1, value) -> exercise1.title = value);
         this.binder.forField(contentField)
                 .withValidator(value -> value != null && !value.trim().isEmpty(), "Content is required")
-                .bind(post1 -> post1.content, (post1, value) -> post1.content = value);
-        this.binder.bind(publishedField, post1 -> post1.published != null ? post1.published : false,
-                (post1, value) -> post1.published = value);
-        this.binder.bind(commentableField, post1 -> post1.commentable != null ? post1.commentable : false,
-                (post1, value) -> post1.commentable = value);
+                .bind(exercise1 -> exercise1.content, (exercise1, value) -> exercise1.content = value);
+        this.binder.bind(publishedField, exercise1 -> exercise1.published != null ? exercise1.published : false,
+                (exercise1, value) -> exercise1.published = value);
+        this.binder.bind(commentableField, exercise1 -> exercise1.commentable != null ? exercise1.commentable : false,
+                (exercise1, value) -> exercise1.commentable = value);
 
-        // Category binding - convert between PostCategoryViewDto and categoryId
-        this.binder.bind(categoryField,
-                post1 -> {
-                    if (post1.categoryId != null && this.availableCategories != null) {
-                        return this.availableCategories.stream()
-                                .filter(cat -> cat.getId().equals(post1.categoryId))
+        // Lesson binding - convert between LessonViewDto and lessonId
+        this.binder.bind(lessonField,
+                exercise1 -> {
+                    if (exercise1.lessonId != null && this.availableLessons != null) {
+                        return this.availableLessons.stream()
+                                .filter(cat -> cat.getId().equals(exercise1.lessonId))
                                 .findFirst()
                                 .orElse(null);
                     }
                     return null;
                 },
-                (post1, value) -> {
+                (exercise1, value) -> {
                     if (value != null) {
-                        post1.categoryId = value.getId();
-                        // Also update the category object for consistency
-                        if (post1.category == null) {
-                            post1.category = new PostDto.CategoryField();
+                        exercise1.lessonId = value.getId();
+                        // Also update the lesson object for consistency
+                        if (exercise1.lesson == null) {
+                            exercise1.lesson = new ExerciseDto.LessonField();
                         }
-                        post1.category.id = value.getId();
-                        post1.category.name = value.getName();
+                        exercise1.lesson.id = value.getId();
+                        exercise1.lesson.name = value.getName();
                     } else {
-                        post1.categoryId = null;
-                        post1.category = null;
+                        exercise1.lessonId = null;
+                        exercise1.lesson = null;
                     }
                 });
 
-        form.add(titleField, contentField, categoryField, publishedField, commentableField);
+        form.add(titleField, contentField, lessonField, publishedField, commentableField);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", e -> this.savePost());
+        final var saveButton = new Button("Save", e -> this.saveExercise());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", e -> this.postDialog.close());
+        final var cancelButton = new Button("Cancel", e -> this.exerciseDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
@@ -357,15 +358,15 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         dialogLayout.setPadding(false);
         dialogLayout.setSizeFull();
 
-        this.postDialog.add(dialogLayout);
+        this.exerciseDialog.add(dialogLayout);
 
-        // Load current post data
-        this.binder.readBean(this.currentPost);
+        // Load current exercise data
+        this.binder.readBean(this.currentExercise);
 
-        this.postDialog.open();
+        this.exerciseDialog.open();
     }
 
-    private void savePost() {
+    private void saveExercise() {
         try {
             // Validate the form before attempting to save
             if (!this.binder.validate().isOk()) {
@@ -373,47 +374,47 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
                 return;
             }
 
-            this.binder.writeBean(this.currentPost);
+            this.binder.writeBean(this.currentExercise);
 
             // Clear timestamp fields to let the backend handle them
             // This prevents issues with timestamp format mismatches
-            this.currentPost.created = null;
-            this.currentPost.lastEdit = null;
+            this.currentExercise.created = null;
+            this.currentExercise.lastEdit = null;
 
-            if (this.currentPost.id == null) {
-                this.postService.createPost(this.currentPost);
-                NotificationUtil.showSuccess("Post created successfully");
+            if (this.currentExercise.id == null) {
+                this.exerciseService.createExercise(this.currentExercise);
+                NotificationUtil.showSuccess("Exercise created successfully");
             } else {
-                this.postService.updatePost(this.currentPost.id, this.currentPost);
-                NotificationUtil.showSuccess("Post updated successfully");
+                this.exerciseService.updateExercise(this.currentExercise.id, this.currentExercise);
+                NotificationUtil.showSuccess("Exercise updated successfully");
             }
 
-            this.postDialog.close();
-            this.loadPostsAsync();
+            this.exerciseDialog.close();
+            this.loadExercisesAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
         } catch (final Exception e) {
-            LOG.error("Unexpected error saving post", e);
+            LOG.error("Unexpected error saving exercise", e);
             NotificationUtil.showError("Unexpected error occurred");
         }
     }
 
-    private void deletePost(final PostViewDto post) {
+    private void deleteExercise(final ExerciseViewDto exercise) {
         try {
-            if (this.postService.deletePost(post.id)) {
-                NotificationUtil.showSuccess("Post deleted successfully");
-                this.loadPostsAsync();
+            if (this.exerciseService.deleteExercise(exercise.id)) {
+                NotificationUtil.showSuccess("Exercise deleted successfully");
+                this.loadExercisesAsync();
             } else {
-                NotificationUtil.showError("Failed to delete post");
+                NotificationUtil.showError("Failed to delete exercise");
             }
         } catch (final Exception e) {
-            LOG.error("Unexpected error deleting post", e);
+            LOG.error("Unexpected error deleting exercise", e);
             NotificationUtil.showError("Unexpected error occurred");
         }
     }
 
-    private void searchPosts() {
+    private void searchExercise() {
         final String query = this.searchField.getValue();
         if (query == null || query.trim().isEmpty()) {
             NotificationUtil.showWarning("Please enter a search query");
@@ -422,25 +423,25 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
         try {
-            final var posts = this.postService.searchPosts(query.trim());
-            this.grid.setItems(posts);
+            final var exercises = this.exerciseService.searchExercises(query.trim());
+            this.grid.setItems(exercises);
         } catch (final Exception e) {
-            LOG.error("Error searching posts", e);
-            NotificationUtil.showError("Error searching posts: " + e.getMessage());
+            LOG.error("Error searching exercises", e);
+            NotificationUtil.showError("Error searching exercises: " + e.getMessage());
         } finally {
             this.searchButton.setEnabled(true);
             this.searchButton.setText("Search");
         }
     }
 
-    private void openCommentDialog(final PostViewDto post) {
-        this.selectedPost = post;
+    private void openCommentDialog(final ExerciseViewDto exercise) {
+        this.selectedExercise = exercise;
         this.commentDialog.removeAll();
-        this.currentComment = new PostCommentDto();
+        this.currentComment = new CommentDto();
 
-        this.commentBinder = new Binder<>(PostCommentDto.class);
+        this.commentBinder = new Binder<>(CommentDto.class);
 
-        final var title = new H3("Add Comment to: " + post.title);
+        final var title = new H3("Add Comment to: " + exercise.title);
 
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
@@ -496,19 +497,19 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
             this.commentBinder.writeBean(this.currentComment);
 
             // Convert DTO to Entity for service call
-            final var commentEntity = new PostCommentEntity();
+            final var commentEntity = new CommentEntity();
             commentEntity.content = this.currentComment.content;
 
-            // Set the post reference
-            final var postEntity = new PostEntity();
-            postEntity.id = this.selectedPost.id;
-            commentEntity.post = postEntity;
+            // Set the exercise reference
+            final var exerciseEntity = new ExerciseEntity();
+            exerciseEntity.id = this.selectedExercise.id;
+            commentEntity.exercise = exerciseEntity;
 
             // Get current username from session
             final var session = com.vaadin.flow.server.VaadinSession.getCurrent();
             final var currentUsername = (String) session.getAttribute("authenticated.username");
 
-            this.postCommentService.createComment(commentEntity, currentUsername);
+            this.commentService.createComment(commentEntity, currentUsername);
             NotificationUtil.showSuccess("Comment added successfully");
 
             this.commentDialog.close();
@@ -522,8 +523,8 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
     }
 
     private void filterByDateRange() {
-        final LocalDate startDate = this.startDatePicker.getValue();
-        final LocalDate endDate = this.endDatePicker.getValue();
+        final var startDate = this.startDatePicker.getValue();
+        final var endDate = this.endDatePicker.getValue();
 
         if (startDate == null || endDate == null) {
             NotificationUtil.showWarning("Please select both start and end dates");
@@ -536,27 +537,27 @@ public class AdminPostView extends VerticalLayout implements BeforeEnterObserver
         }
 
         try {
-            final var posts = this.postService.getPostsByDateRange(startDate.toString(), endDate.toString());
-            this.grid.setItems(posts);
+            final var exercises = this.exerciseService.findByDateRange(startDate.toString(), endDate.toString());
+            this.grid.setItems(exercises);
         } catch (final Exception e) {
-            LOG.error("Error filtering posts by date range", e);
-            NotificationUtil.showError("Error filtering posts: " + e.getMessage());
+            LOG.error("Error filtering exercises by date range", e);
+            NotificationUtil.showError("Error filtering exercises: " + e.getMessage());
         }
     }
 
     private void filterByUser() {
-        final Integer userId = this.userIdField.getValue();
+        final var userId = this.userIdField.getValue();
         if (userId == null) {
             NotificationUtil.showWarning("Please enter a user ID");
             return;
         }
 
         try {
-            final var posts = this.postService.getPostsByUser(userId.longValue());
-            this.grid.setItems(posts);
+            final var exercises = this.exerciseService.findByUserId(userId.longValue());
+            this.grid.setItems(exercises);
         } catch (final Exception e) {
-            LOG.error("Error filtering posts by user", e);
-            NotificationUtil.showError("Error filtering posts: " + e.getMessage());
+            LOG.error("Error filtering exercises by user", e);
+            NotificationUtil.showError("Error filtering exercises: " + e.getMessage());
         }
     }
 }

@@ -8,94 +8,94 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
-import de.vptr.aimathtutor.rest.entity.PostEntity;
+import de.vptr.aimathtutor.rest.entity.CommentEntity;
+import de.vptr.aimathtutor.rest.entity.ExerciseEntity;
 import de.vptr.aimathtutor.rest.entity.UserEntity;
 
-class PostCommentViewDtoTest {
+class CommentViewDtoTest {
 
     @Test
-    @DisplayName("Should create PostCommentViewDto from PostCommentEntity")
-    void shouldCreatePostCommentViewDtoFromPostCommentEntity() {
+    @DisplayName("Should create CommentViewDto from CommentEntity")
+    void shouldCreateCommentViewDtoFromCommentEntity() {
         // Given
-        PostCommentEntity commentEntity = new PostCommentEntity();
+        final CommentEntity commentEntity = new CommentEntity();
         commentEntity.id = 1L;
         commentEntity.content = "Test comment";
         commentEntity.created = LocalDateTime.now();
 
-        PostEntity postEntity = new PostEntity();
-        postEntity.id = 100L;
-        postEntity.title = "Test Post";
-        commentEntity.post = postEntity;
+        final ExerciseEntity exerciseEntity = new ExerciseEntity();
+        exerciseEntity.id = 100L;
+        exerciseEntity.title = "Test Exercise";
+        commentEntity.exercise = exerciseEntity;
 
-        UserEntity userEntity = new UserEntity();
+        final UserEntity userEntity = new UserEntity();
         userEntity.id = 50L;
         userEntity.username = "testuser";
         commentEntity.user = userEntity;
 
         // When
-        PostCommentViewDto dto = new PostCommentViewDto(commentEntity);
+        final CommentViewDto dto = new CommentViewDto(commentEntity);
 
         // Then
         assertEquals(1L, dto.id);
         assertEquals("Test comment", dto.content);
         assertEquals(commentEntity.created, dto.created);
-        assertEquals(100L, dto.postId);
-        assertEquals("Test Post", dto.postTitle);
+        assertEquals(100L, dto.exerciseId);
+        assertEquals("Test Exercise", dto.exerciseTitle);
         assertEquals(50L, dto.userId);
         assertEquals("testuser", dto.username);
     }
 
     @Test
-    @DisplayName("Should handle null post in PostCommentEntity")
-    void shouldHandleNullPostInPostCommentEntity() {
+    @DisplayName("Should handle null exercise in CommentEntity")
+    void shouldHandleNullExerciseInCommentEntity() {
         // Given
-        PostCommentEntity commentEntity = new PostCommentEntity();
+        final CommentEntity commentEntity = new CommentEntity();
         commentEntity.id = 1L;
         commentEntity.content = "Test comment";
         commentEntity.created = LocalDateTime.now();
-        commentEntity.post = null;
+        commentEntity.exercise = null;
 
-        UserEntity userEntity = new UserEntity();
+        final UserEntity userEntity = new UserEntity();
         userEntity.id = 50L;
         userEntity.username = "testuser";
         commentEntity.user = userEntity;
 
         // When
-        PostCommentViewDto dto = new PostCommentViewDto(commentEntity);
+        final CommentViewDto dto = new CommentViewDto(commentEntity);
 
         // Then
         assertEquals(1L, dto.id);
         assertEquals("Test comment", dto.content);
-        assertNull(dto.postId);
-        assertNull(dto.postTitle);
+        assertNull(dto.exerciseId);
+        assertNull(dto.exerciseTitle);
         assertEquals(50L, dto.userId);
         assertEquals("testuser", dto.username);
     }
 
     @Test
-    @DisplayName("Should handle null user in PostCommentEntity")
-    void shouldHandleNullUserInPostCommentEntity() {
+    @DisplayName("Should handle null user in CommentEntity")
+    void shouldHandleNullUserInCommentEntity() {
         // Given
-        PostCommentEntity commentEntity = new PostCommentEntity();
+        final CommentEntity commentEntity = new CommentEntity();
         commentEntity.id = 1L;
         commentEntity.content = "Test comment";
         commentEntity.created = LocalDateTime.now();
 
-        PostEntity postEntity = new PostEntity();
-        postEntity.id = 100L;
-        postEntity.title = "Test Post";
-        commentEntity.post = postEntity;
+        final ExerciseEntity exerciseEntity = new ExerciseEntity();
+        exerciseEntity.id = 100L;
+        exerciseEntity.title = "Test Exercise";
+        commentEntity.exercise = exerciseEntity;
         commentEntity.user = null;
 
         // When
-        PostCommentViewDto dto = new PostCommentViewDto(commentEntity);
+        final CommentViewDto dto = new CommentViewDto(commentEntity);
 
         // Then
         assertEquals(1L, dto.id);
         assertEquals("Test comment", dto.content);
-        assertEquals(100L, dto.postId);
-        assertEquals("Test Post", dto.postTitle);
+        assertEquals(100L, dto.exerciseId);
+        assertEquals("Test Exercise", dto.exerciseTitle);
         assertNull(dto.userId);
         assertNull(dto.username);
     }

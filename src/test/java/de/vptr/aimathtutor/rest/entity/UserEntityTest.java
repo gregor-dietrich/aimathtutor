@@ -6,9 +6,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class UserEntityTest {
 
@@ -17,125 +17,125 @@ class UserEntityTest {
 
     @BeforeEach
     void setUp() {
-        userEntity = new UserEntity();
-        userRank = new UserRankEntity();
-        userRank.id = 1L;
-        userRank.name = "User";
+        this.userEntity = new UserEntity();
+        this.userRank = new UserRankEntity();
+        this.userRank.id = 1L;
+        this.userRank.name = "User";
     }
 
     @Test
     @DisplayName("Should create UserEntity with all fields")
     void shouldCreateUserEntityWithAllFields() {
         // Given
-        LocalDateTime now = LocalDateTime.now();
+        final LocalDateTime now = LocalDateTime.now();
 
         // When
-        userEntity.id = 1L;
-        userEntity.username = "testuser";
-        userEntity.password = "hashedpassword";
-        userEntity.salt = "randomsalt";
-        userEntity.rank = userRank;
-        userEntity.email = "test@example.com";
-        userEntity.banned = false;
-        userEntity.activated = true;
-        userEntity.activationKey = "activation123";
-        userEntity.lastIp = "192.168.1.1";
-        userEntity.created = now;
-        userEntity.lastLogin = now;
+        this.userEntity.id = 1L;
+        this.userEntity.username = "testuser";
+        this.userEntity.password = "hashedpassword";
+        this.userEntity.salt = "randomsalt";
+        this.userEntity.rank = this.userRank;
+        this.userEntity.email = "test@example.com";
+        this.userEntity.banned = false;
+        this.userEntity.activated = true;
+        this.userEntity.activationKey = "activation123";
+        this.userEntity.lastIp = "192.168.1.1";
+        this.userEntity.created = now;
+        this.userEntity.lastLogin = now;
 
         // Then
-        assertEquals(1L, userEntity.id);
-        assertEquals("testuser", userEntity.username);
-        assertEquals("hashedpassword", userEntity.password);
-        assertEquals("randomsalt", userEntity.salt);
-        assertEquals(userRank, userEntity.rank);
-        assertEquals("test@example.com", userEntity.email);
-        assertFalse(userEntity.banned);
-        assertTrue(userEntity.activated);
-        assertEquals("activation123", userEntity.activationKey);
-        assertEquals("192.168.1.1", userEntity.lastIp);
-        assertEquals(now, userEntity.created);
-        assertEquals(now, userEntity.lastLogin);
+        assertEquals(1L, this.userEntity.id);
+        assertEquals("testuser", this.userEntity.username);
+        assertEquals("hashedpassword", this.userEntity.password);
+        assertEquals("randomsalt", this.userEntity.salt);
+        assertEquals(this.userRank, this.userEntity.rank);
+        assertEquals("test@example.com", this.userEntity.email);
+        assertFalse(this.userEntity.banned);
+        assertTrue(this.userEntity.activated);
+        assertEquals("activation123", this.userEntity.activationKey);
+        assertEquals("192.168.1.1", this.userEntity.lastIp);
+        assertEquals(now, this.userEntity.created);
+        assertEquals(now, this.userEntity.lastLogin);
     }
 
     @Test
     @DisplayName("Should handle null values for optional fields")
     void shouldHandleNullValuesForOptionalFields() {
         // When
-        userEntity.id = 1L;
-        userEntity.username = "testuser";
-        userEntity.password = "password";
-        userEntity.salt = "salt";
-        userEntity.rank = userRank;
-        userEntity.email = null;
-        userEntity.banned = null;
-        userEntity.activated = null;
-        userEntity.activationKey = null;
-        userEntity.lastIp = null;
-        userEntity.created = null;
-        userEntity.lastLogin = null;
+        this.userEntity.id = 1L;
+        this.userEntity.username = "testuser";
+        this.userEntity.password = "password";
+        this.userEntity.salt = "salt";
+        this.userEntity.rank = this.userRank;
+        this.userEntity.email = null;
+        this.userEntity.banned = null;
+        this.userEntity.activated = null;
+        this.userEntity.activationKey = null;
+        this.userEntity.lastIp = null;
+        this.userEntity.created = null;
+        this.userEntity.lastLogin = null;
 
         // Then
-        assertNull(userEntity.email);
-        assertNull(userEntity.banned);
-        assertNull(userEntity.activated);
-        assertNull(userEntity.activationKey);
-        assertNull(userEntity.lastIp);
-        assertNull(userEntity.created);
-        assertNull(userEntity.lastLogin);
+        assertNull(this.userEntity.email);
+        assertNull(this.userEntity.banned);
+        assertNull(this.userEntity.activated);
+        assertNull(this.userEntity.activationKey);
+        assertNull(this.userEntity.lastIp);
+        assertNull(this.userEntity.created);
+        assertNull(this.userEntity.lastLogin);
     }
 
     @Test
     @DisplayName("Should handle collections properly")
     void shouldHandleCollectionsProperly() {
         // Given
-        List<PostEntity> posts = new ArrayList<>();
-        List<PostCommentEntity> comments = new ArrayList<>();
+        final List<ExerciseEntity> exercises = new ArrayList<>();
+        final List<CommentEntity> comments = new ArrayList<>();
 
-        PostEntity post = new PostEntity();
-        post.id = 1L;
-        posts.add(post);
+        final ExerciseEntity exercise = new ExerciseEntity();
+        exercise.id = 1L;
+        exercises.add(exercise);
 
-        PostCommentEntity comment = new PostCommentEntity();
+        final CommentEntity comment = new CommentEntity();
         comment.id = 1L;
         comments.add(comment);
 
         // When
-        userEntity.posts = posts;
-        userEntity.comments = comments;
+        this.userEntity.exercises = exercises;
+        this.userEntity.comments = comments;
 
         // Then
-        assertNotNull(userEntity.posts);
-        assertNotNull(userEntity.comments);
-        assertEquals(1, userEntity.posts.size());
-        assertEquals(1, userEntity.comments.size());
-        assertEquals(post, userEntity.posts.get(0));
-        assertEquals(comment, userEntity.comments.get(0));
+        assertNotNull(this.userEntity.exercises);
+        assertNotNull(this.userEntity.comments);
+        assertEquals(1, this.userEntity.exercises.size());
+        assertEquals(1, this.userEntity.comments.size());
+        assertEquals(exercise, this.userEntity.exercises.get(0));
+        assertEquals(comment, this.userEntity.comments.get(0));
     }
 
     @Test
     @DisplayName("Should handle empty collections")
     void shouldHandleEmptyCollections() {
         // When
-        userEntity.posts = new ArrayList<>();
-        userEntity.comments = new ArrayList<>();
+        this.userEntity.exercises = new ArrayList<>();
+        this.userEntity.comments = new ArrayList<>();
 
         // Then
-        assertNotNull(userEntity.posts);
-        assertNotNull(userEntity.comments);
-        assertTrue(userEntity.posts.isEmpty());
-        assertTrue(userEntity.comments.isEmpty());
+        assertNotNull(this.userEntity.exercises);
+        assertNotNull(this.userEntity.comments);
+        assertTrue(this.userEntity.exercises.isEmpty());
+        assertTrue(this.userEntity.comments.isEmpty());
     }
 
     @Test
     @DisplayName("Should set boolean fields correctly")
     void shouldSetBooleanFieldsCorrectly() {
         // When
-        userEntity.banned = true;
-        userEntity.activated = false;
+        this.userEntity.banned = true;
+        this.userEntity.activated = false;
 
         // Then
-        assertTrue(userEntity.banned);
-        assertFalse(userEntity.activated);
+        assertTrue(this.userEntity.banned);
+        assertFalse(this.userEntity.activated);
     }
 }

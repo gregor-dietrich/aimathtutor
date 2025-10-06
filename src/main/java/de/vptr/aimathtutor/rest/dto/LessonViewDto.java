@@ -2,31 +2,31 @@ package de.vptr.aimathtutor.rest.dto;
 
 import java.util.List;
 
-import de.vptr.aimathtutor.rest.entity.PostCategoryEntity;
+import de.vptr.aimathtutor.rest.entity.LessonEntity;
 
 /**
- * Response DTO for post category operations.
+ * Response DTO for lesson operations.
  * Contains computed fields and safe data for client responses.
  */
-public class PostCategoryViewDto {
+public class LessonViewDto {
 
     public Long id;
     public String name;
     public Long parentId;
     public String parentName;
-    public boolean isRootCategory;
+    public boolean isRootLesson;
     public int childrenCount;
-    public int postsCount;
+    public int exercisesCount;
     public List<Long> childrenIds;
 
-    public PostCategoryViewDto() {
+    public LessonViewDto() {
         // Default constructor for Jackson
     }
 
-    public PostCategoryViewDto(final PostCategoryEntity entity) {
+    public LessonViewDto(final LessonEntity entity) {
         this.id = entity.id;
         this.name = entity.name;
-        this.isRootCategory = entity.isRootCategory();
+        this.isRootLesson = entity.isRootLesson();
 
         // Handle parent information safely
         if (entity.parent != null) {
@@ -51,24 +51,24 @@ public class PostCategoryViewDto {
             this.childrenIds = List.of();
         }
 
-        // Compute posts count safely
+        // Compute exercises count safely
         try {
-            if (entity.posts != null) {
-                this.postsCount = entity.posts.size();
+            if (entity.exercises != null) {
+                this.exercisesCount = entity.exercises.size();
             } else {
-                this.postsCount = 0;
+                this.exercisesCount = 0;
             }
         } catch (final org.hibernate.LazyInitializationException e) {
             // Collection not initialized, set default
-            this.postsCount = 0;
+            this.exercisesCount = 0;
         }
     }
 
     /**
-     * Helper method to check if this is a root category
+     * Helper method to check if this is a root lesson
      */
-    public boolean isRootCategory() {
-        return this.isRootCategory;
+    public boolean isRootLesson() {
+        return this.isRootLesson;
     }
 
     /**
@@ -86,10 +86,10 @@ public class PostCategoryViewDto {
     }
 
     /**
-     * Convert this ViewDto to a PostCategoryDto for create/update operations
+     * Convert this ViewDto to a LessonDto for create/update operations
      */
-    public PostCategoryDto toPostCategoryDto() {
-        final PostCategoryDto dto = new PostCategoryDto();
+    public LessonDto toLessonDto() {
+        final var dto = new LessonDto();
         dto.id = this.id;
         dto.name = this.name;
         dto.parentId = this.parentId;

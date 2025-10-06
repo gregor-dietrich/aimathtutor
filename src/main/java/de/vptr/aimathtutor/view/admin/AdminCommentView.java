@@ -35,27 +35,27 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.rest.dto.PostCommentDto;
-import de.vptr.aimathtutor.rest.dto.PostCommentViewDto;
-import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
-import de.vptr.aimathtutor.rest.entity.PostEntity;
+import de.vptr.aimathtutor.rest.dto.CommentDto;
+import de.vptr.aimathtutor.rest.dto.CommentViewDto;
+import de.vptr.aimathtutor.rest.entity.CommentEntity;
+import de.vptr.aimathtutor.rest.entity.ExerciseEntity;
 import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.PostCommentService;
+import de.vptr.aimathtutor.rest.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
-public class AdminPostCommentView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminCommentView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminPostCommentView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminCommentView.class);
 
     @Inject
-    PostCommentService commentService;
+    CommentService commentService;
 
     @Inject
     AuthService authService;
 
-    private Grid<PostCommentViewDto> grid;
+    private Grid<CommentViewDto> grid;
     private TextField searchField;
     private Button searchButton;
     private DatePicker startDatePicker;
@@ -63,10 +63,10 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
     private IntegerField userIdField;
 
     private Dialog commentDialog;
-    private Binder<PostCommentDto> binder;
-    private PostCommentDto currentComment;
+    private Binder<CommentDto> binder;
+    private CommentDto currentComment;
 
-    public AdminPostCommentView() {
+    public AdminCommentView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -111,7 +111,7 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
     private void buildUI() {
         this.removeAll();
 
-        final var header = new H2("Post Comments");
+        final var header = new H2("Comments");
         final var searchLayout = this.createSearchLayout();
         final var buttonLayout = this.createButtonLayout();
         this.createGrid();
@@ -161,21 +161,21 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
     }
 
     private void createGrid() {
-        this.grid = new Grid<>(PostCommentViewDto.class, false);
+        this.grid = new Grid<>(CommentViewDto.class, false);
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Configure columns
         this.grid.addColumn(comment -> comment.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
 
-        // Post title column
+        // Exercise title column
         this.grid.addComponentColumn(comment -> {
-            final var title = comment.postTitle != null ? comment.postTitle : "(No title)";
+            final var title = comment.exerciseTitle != null ? comment.exerciseTitle : "(No title)";
             final var titleSpan = new Span(title);
             titleSpan.getStyle().set("color", "var(--lumo-contrast-70pct)");
             titleSpan.getStyle().set("font-weight", "500");
             return titleSpan;
-        }).setHeader("Post").setWidth("200px").setFlexGrow(1);
+        }).setHeader("Exercise").setWidth("200px").setFlexGrow(1);
 
         // Author column
         this.grid.addColumn(comment -> comment.username != null ? comment.username : "(Unknown)")
@@ -196,22 +196,22 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("150px").setFlexGrow(0);
     }
 
-    private HorizontalLayout createActionButtons(final PostCommentViewDto comment) {
+    private HorizontalLayout createActionButtons(final CommentViewDto comment) {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(e -> this.openCommentDialog(comment.toPostCommentDto()));
-        final var deleteButton = new DeleteButton(e -> this.deleteComment(comment.toPostCommentDto()));
+        final var editButton = new EditButton(e -> this.openCommentDialog(comment.toCommentDto()));
+        final var deleteButton = new DeleteButton(e -> this.deleteComment(comment.toCommentDto()));
 
         layout.add(editButton, deleteButton);
         return layout;
     }
 
-    private void openCommentDialog(final PostCommentDto comment) {
+    private void openCommentDialog(final CommentDto comment) {
         this.commentDialog.removeAll();
-        this.currentComment = comment != null ? comment : new PostCommentDto();
+        this.currentComment = comment != null ? comment : new CommentDto();
 
-        this.binder = new Binder<>(PostCommentDto.class);
+        this.binder = new Binder<>(CommentDto.class);
 
         final var title = new H3(comment != null ? "Edit Comment" : "Create Comment");
 
@@ -259,19 +259,19 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
         try {
             this.binder.writeBean(this.currentComment);
 
-            // Sync post field
-            this.currentComment.syncPost();
+            // Sync exercise field
+            this.currentComment.syncExercise();
 
             // Convert DTO to Entity for service call
-            final var commentEntity = new PostCommentEntity();
+            final var commentEntity = new CommentEntity();
             commentEntity.id = this.currentComment.id;
             commentEntity.content = this.currentComment.content;
 
-            // Set post if specified
-            if (this.currentComment.postId != null) {
-                final var postEntity = new PostEntity();
-                postEntity.id = this.currentComment.postId;
-                commentEntity.post = postEntity;
+            // Set exercise if specified
+            if (this.currentComment.exerciseId != null) {
+                final var exerciseEntity = new ExerciseEntity();
+                exerciseEntity.id = this.currentComment.exerciseId;
+                commentEntity.exercise = exerciseEntity;
             }
 
             // Get current username from session
@@ -297,7 +297,7 @@ public class AdminPostCommentView extends VerticalLayout implements BeforeEnterO
         }
     }
 
-    private void deleteComment(final PostCommentDto comment) {
+    private void deleteComment(final CommentDto comment) {
         try {
             if (this.commentService.deleteComment(comment.id)) {
                 NotificationUtil.showSuccess("Comment deleted successfully");

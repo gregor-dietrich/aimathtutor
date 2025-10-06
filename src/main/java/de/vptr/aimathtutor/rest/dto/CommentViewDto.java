@@ -2,28 +2,28 @@ package de.vptr.aimathtutor.rest.dto;
 
 import java.time.LocalDateTime;
 
-import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
+import de.vptr.aimathtutor.rest.entity.CommentEntity;
 
-public class PostCommentViewDto {
+public class CommentViewDto {
     public Long id;
     public String content;
-    public Long postId;
-    public String postTitle;
+    public Long exerciseId;
+    public String exerciseTitle;
     public Long userId;
     public String username;
     public LocalDateTime created;
 
-    public PostCommentViewDto() {
+    public CommentViewDto() {
     }
 
-    public PostCommentViewDto(final PostCommentEntity entity) {
+    public CommentViewDto(final CommentEntity entity) {
         this.id = entity.id;
         this.content = entity.content;
         this.created = entity.created;
 
-        if (entity.post != null) {
-            this.postId = entity.post.id;
-            this.postTitle = entity.post.title;
+        if (entity.exercise != null) {
+            this.exerciseId = entity.exercise.id;
+            this.exerciseTitle = entity.exercise.title;
         }
 
         if (entity.user != null) {
@@ -33,13 +33,13 @@ public class PostCommentViewDto {
     }
 
     /**
-     * Convert this ViewDto to a PostCommentDto for create/update operations
+     * Convert this ViewDto to a CommentDto for create/update operations
      */
-    public PostCommentDto toPostCommentDto() {
-        final PostCommentDto dto = new PostCommentDto();
+    public CommentDto toCommentDto() {
+        final CommentDto dto = new CommentDto();
         dto.id = this.id;
         dto.content = this.content;
-        dto.postId = this.postId;
+        dto.exerciseId = this.exerciseId;
         return dto;
     }
 }

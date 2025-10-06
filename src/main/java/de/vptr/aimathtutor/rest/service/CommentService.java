@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import de.vptr.aimathtutor.rest.dto.PostCommentViewDto;
-import de.vptr.aimathtutor.rest.entity.PostCommentEntity;
-import de.vptr.aimathtutor.rest.entity.PostEntity;
+import de.vptr.aimathtutor.rest.dto.CommentViewDto;
+import de.vptr.aimathtutor.rest.entity.CommentEntity;
+import de.vptr.aimathtutor.rest.entity.ExerciseEntity;
 import de.vptr.aimathtutor.rest.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,74 +19,74 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
-public class PostCommentService {
+public class CommentService {
 
     @Inject
     UserService userService;
 
     @Transactional
-    public List<PostCommentViewDto> getAllComments() {
-        final List<PostCommentEntity> comments = PostCommentEntity.listAll();
+    public List<CommentViewDto> getAllComments() {
+        final List<CommentEntity> comments = CommentEntity.listAll();
         // Force load lazy fields within transaction
-        for (final PostCommentEntity comment : comments) {
-            comment.post.title.length(); // Force load post title
+        for (final CommentEntity comment : comments) {
+            comment.exercise.title.length(); // Force load exercise title
             comment.user.username.length(); // Force load username
             comment.content.length(); // Force load content
         }
         return comments.stream()
-                .map(PostCommentViewDto::new)
+                .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public Optional<PostCommentViewDto> findById(final Long id) {
-        final Optional<PostCommentEntity> comment = PostCommentEntity.findByIdOptional(id);
+    public Optional<CommentViewDto> findById(final Long id) {
+        final Optional<CommentEntity> comment = CommentEntity.findByIdOptional(id);
         if (comment.isPresent()) {
-            final PostCommentEntity entity = comment.get();
+            final CommentEntity entity = comment.get();
             // Force load lazy fields within transaction
-            entity.post.title.length(); // Force load post title
+            entity.exercise.title.length(); // Force load exercise title
             entity.user.username.length(); // Force load username
             entity.content.length(); // Force load content
-            return Optional.of(new PostCommentViewDto(entity));
+            return Optional.of(new CommentViewDto(entity));
         }
         return Optional.empty();
     }
 
     @Transactional
-    public List<PostCommentViewDto> findByPostId(final Long postId) {
-        final List<PostCommentEntity> comments = PostCommentEntity.find("post.id", postId).list();
+    public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
+        final List<CommentEntity> comments = CommentEntity.find("post.id", exerciseId).list();
         // Force load lazy fields within transaction
-        for (final PostCommentEntity comment : comments) {
-            comment.post.title.length(); // Force load post title
+        for (final CommentEntity comment : comments) {
+            comment.exercise.title.length(); // Force load exercise title
             comment.user.username.length(); // Force load username
             comment.content.length(); // Force load content
         }
         return comments.stream()
-                .map(PostCommentViewDto::new)
+                .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public List<PostCommentViewDto> findByUserId(final Long userId) {
-        final List<PostCommentEntity> comments = PostCommentEntity.find("user.id", userId).list();
+    public List<CommentViewDto> findByUserId(final Long userId) {
+        final List<CommentEntity> comments = CommentEntity.find("user.id", userId).list();
         // Force load lazy fields within transaction
-        for (final PostCommentEntity comment : comments) {
-            comment.post.title.length(); // Force load post title
+        for (final CommentEntity comment : comments) {
+            comment.exercise.title.length(); // Force load exercise title
             comment.user.username.length(); // Force load username
             comment.content.length(); // Force load content
         }
         return comments.stream()
-                .map(PostCommentViewDto::new)
+                .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public List<PostCommentViewDto> findRecentComments(final int limit) {
-        final List<PostCommentEntity> comments = PostCommentEntity.findRecentComments(limit);
+    public List<CommentViewDto> findRecentComments(final int limit) {
+        final List<CommentEntity> comments = CommentEntity.findRecentComments(limit);
         // Force initialization of lazy fields
-        for (final PostCommentEntity comment : comments) {
-            if (comment.post != null) {
-                comment.post.title.length(); // Force lazy loading
+        for (final CommentEntity comment : comments) {
+            if (comment.exercise != null) {
+                comment.exercise.title.length(); // Force lazy loading
             }
             if (comment.user != null) {
                 comment.user.username.length(); // Force lazy loading
@@ -94,38 +94,40 @@ public class PostCommentService {
             comment.content.length(); // Force load content
         }
         return comments.stream()
-                .map(PostCommentViewDto::new)
+                .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public PostCommentViewDto createComment(final PostCommentEntity comment, final String currentUsername) {
+    public CommentViewDto createComment(final CommentEntity comment, final String currentUsername) {
         // Validate content is provided for creation
         if (comment.content == null || comment.content.trim().isEmpty()) {
             throw new ValidationException("Content is required for creating a comment");
         }
 
-        // Validate post exists
-        final PostEntity existingPost = PostEntity.findById(comment.post != null ? comment.post.id : null);
-        if (existingPost == null) {
+        // Validate exercise exists
+        final ExerciseEntity existingExercise = ExerciseEntity
+                .findById(comment.exercise != null ? comment.exercise.id : null);
+        if (existingExercise == null) {
             throw new WebApplicationException(
-                    "Post with ID " + (comment.post != null ? comment.post.id : null) + " does not exist.",
+                    "Exercise with ID " + (comment.exercise != null ? comment.exercise.id : null) + " does not exist.",
                     Response.Status.BAD_REQUEST);
         }
 
-        // Validate post is published
-        if (existingPost.published == null || !existingPost.published) {
-            throw new WebApplicationException("Cannot add comment to an unpublished post.",
+        // Validate exercise is published
+        if (existingExercise.published == null || !existingExercise.published) {
+            throw new WebApplicationException("Cannot add comment to an unpublished exercise.",
                     Response.Status.BAD_REQUEST);
         }
 
-        // Validate post allows comments
-        if (existingPost.commentable == null || !existingPost.commentable) {
-            throw new WebApplicationException("Comments are not allowed on this post.", Response.Status.BAD_REQUEST);
+        // Validate exercise allows comments
+        if (existingExercise.commentable == null || !existingExercise.commentable) {
+            throw new WebApplicationException("Comments are not allowed on this exercise.",
+                    Response.Status.BAD_REQUEST);
         }
 
-        // Always assign the managed post entity
-        comment.post = existingPost;
+        // Always assign the managed exercise entity
+        comment.exercise = existingExercise;
 
         // Auto-assign current user if not provided (skip existence check)
         if (comment.user == null) {
@@ -136,19 +138,19 @@ public class PostCommentService {
         comment.persist();
 
         // Force load lazy fields to avoid LazyInitializationException
-        if (comment.post != null) {
-            comment.post.title.length(); // Force lazy loading
+        if (comment.exercise != null) {
+            comment.exercise.title.length(); // Force lazy loading
         }
         if (comment.user != null) {
             comment.user.username.length(); // Force lazy loading
         }
 
-        return new PostCommentViewDto(comment);
+        return new CommentViewDto(comment);
     }
 
     @Transactional
-    public PostCommentViewDto updateComment(final PostCommentEntity comment) {
-        final PostCommentEntity existingComment = PostCommentEntity.findById(comment.id);
+    public CommentViewDto updateComment(final CommentEntity comment) {
+        final CommentEntity existingComment = CommentEntity.findById(comment.id);
         if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
@@ -164,19 +166,19 @@ public class PostCommentService {
         existingComment.persist();
 
         // Force initialization of lazy fields to avoid LazyInitializationException
-        if (existingComment.post != null) {
-            existingComment.post.title.length(); // Force lazy loading
+        if (existingComment.exercise != null) {
+            existingComment.exercise.title.length(); // Force lazy loading
         }
         if (existingComment.user != null) {
             existingComment.user.username.length(); // Force lazy loading
         }
 
-        return new PostCommentViewDto(existingComment);
+        return new CommentViewDto(existingComment);
     }
 
     @Transactional
-    public PostCommentViewDto patchComment(final PostCommentEntity comment) {
-        final PostCommentEntity existingComment = PostCommentEntity.findById(comment.id);
+    public CommentViewDto patchComment(final CommentEntity comment) {
+        final CommentEntity existingComment = CommentEntity.findById(comment.id);
         if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
@@ -189,33 +191,33 @@ public class PostCommentService {
         existingComment.persist();
 
         // Force initialization of lazy fields to avoid LazyInitializationException
-        if (existingComment.post != null) {
-            existingComment.post.title.length(); // Force lazy loading
+        if (existingComment.exercise != null) {
+            existingComment.exercise.title.length(); // Force lazy loading
         }
         if (existingComment.user != null) {
             existingComment.user.username.length(); // Force lazy loading
         }
 
-        return new PostCommentViewDto(existingComment);
+        return new CommentViewDto(existingComment);
     }
 
     @Transactional
     public boolean deleteComment(final Long id) {
-        return PostCommentEntity.deleteById(id);
+        return CommentEntity.deleteById(id);
     }
 
-    public List<PostCommentViewDto> searchComments(final String query) {
+    public List<CommentViewDto> searchComments(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllComments();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<PostCommentEntity> comments = PostCommentEntity.find(
+        final List<CommentEntity> comments = CommentEntity.find(
                 "content LIKE ?1 OR LOWER(user.username) LIKE ?1", searchTerm).list();
 
         // Force load lazy fields
-        for (final PostCommentEntity comment : comments) {
-            if (comment.post != null) {
-                comment.post.title.length(); // Force lazy loading
+        for (final CommentEntity comment : comments) {
+            if (comment.exercise != null) {
+                comment.exercise.title.length(); // Force lazy loading
             }
             if (comment.user != null) {
                 comment.user.username.length(); // Force lazy loading
@@ -224,12 +226,12 @@ public class PostCommentService {
         }
 
         return comments.stream()
-                .map(PostCommentViewDto::new)
+                .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public List<PostCommentViewDto> findByDateRange(final String startDate, final String endDate) {
+    public List<CommentViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
             return this.getAllComments();
         }
@@ -241,13 +243,13 @@ public class PostCommentService {
             final LocalDateTime startDateTime = start.atStartOfDay();
             final LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
 
-            final List<PostCommentEntity> comments = PostCommentEntity
+            final List<CommentEntity> comments = CommentEntity
                     .find("created >= ?1 AND created <= ?2", startDateTime, endDateTime).list();
 
             // Force load lazy fields
-            for (final PostCommentEntity comment : comments) {
-                if (comment.post != null) {
-                    comment.post.title.length(); // Force lazy loading
+            for (final CommentEntity comment : comments) {
+                if (comment.exercise != null) {
+                    comment.exercise.title.length(); // Force lazy loading
                 }
                 if (comment.user != null) {
                     comment.user.username.length(); // Force lazy loading
@@ -256,7 +258,7 @@ public class PostCommentService {
             }
 
             return comments.stream()
-                    .map(PostCommentViewDto::new)
+                    .map(CommentViewDto::new)
                     .collect(Collectors.toList());
         } catch (final Exception e) {
             // If date parsing fails, return all comments
@@ -268,7 +270,7 @@ public class PostCommentService {
      * Alias for findByDateRange - for backward compatibility with views
      */
     @Transactional
-    public List<PostCommentViewDto> getCommentsByDateRange(final String startDate, final String endDate) {
+    public List<CommentViewDto> getCommentsByDateRange(final String startDate, final String endDate) {
         return this.findByDateRange(startDate, endDate);
     }
 
@@ -276,7 +278,7 @@ public class PostCommentService {
      * Alias for findByUserId - for backward compatibility with views
      */
     @Transactional
-    public List<PostCommentViewDto> getCommentsByUser(final long userId) {
+    public List<CommentViewDto> getCommentsByUser(final long userId) {
         return this.findByUserId(userId);
     }
 }

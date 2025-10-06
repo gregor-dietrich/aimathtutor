@@ -18,7 +18,7 @@ public class UserViewDto {
     public String lastIp;
     public LocalDateTime created;
     public LocalDateTime lastLogin;
-    public Long postsCount;
+    public Long exercisesCount;
     public Long commentsCount;
 
     public UserViewDto() {
@@ -38,7 +38,7 @@ public class UserViewDto {
             this.lastIp = entity.lastIp;
             this.created = entity.created;
             this.lastLogin = entity.lastLogin;
-            this.postsCount = entity.posts != null ? (long) entity.posts.size() : 0L;
+            this.exercisesCount = entity.exercises != null ? (long) entity.exercises.size() : 0L;
             this.commentsCount = entity.comments != null ? (long) entity.comments.size() : 0L;
         }
     }

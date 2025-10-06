@@ -37,7 +37,9 @@
   "java.sources.organizeImports.starThreshold": 5,
   "java.sources.organizeImports.staticStarThreshold": 3,
   "microprofile.tools.validation.unknown.excluded": [
-    "quarkus.log.*"
+    "quarkus.log.*",
+    "quarkus.datasource.*",
+    "quarkus.hibernate-orm.*"
   ],
   "quarkus.tools.alwaysShowWelcomePage": false,
   "redhat.telemetry.enabled": false,
