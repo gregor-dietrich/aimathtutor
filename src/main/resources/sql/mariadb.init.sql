@@ -512,6 +512,70 @@ ALTER TABLE `user_payments`
   ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`source_id`) REFERENCES `user_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `payments_ibfk_3` FOREIGN KEY (`target_id`) REFERENCES `user_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for table `student_sessions`
+--
+
+CREATE TABLE `student_sessions` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `session_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `exercise_id` bigint UNSIGNED NOT NULL,
+  `start_time` datetime NOT NULL DEFAULT current_timestamp(),
+  `end_time` datetime DEFAULT NULL,
+  `completed` tinyint(1) NOT NULL DEFAULT 0,
+  `actions_count` int NOT NULL DEFAULT 0,
+  `correct_actions` int NOT NULL DEFAULT 0,
+  `hints_used` int NOT NULL DEFAULT 0,
+  `final_expression` text COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `session_id` (`session_id`),
+  KEY `user_id` (`user_id`),
+  KEY `exercise_id` (`exercise_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Constraints for table `student_sessions`
+--
+ALTER TABLE `student_sessions`
+  ADD CONSTRAINT `student_sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `student_sessions_ibfk_2` FOREIGN KEY (`exercise_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for table `ai_interactions`
+--
+
+CREATE TABLE `ai_interactions` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `session_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL,
+  `exercise_id` bigint UNSIGNED DEFAULT NULL,
+  `event_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expression_before` text COLLATE utf8mb4_unicode_ci,
+  `expression_after` text COLLATE utf8mb4_unicode_ci,
+  `feedback_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `feedback_message` text COLLATE utf8mb4_unicode_ci,
+  `confidence_score` decimal(5,4) DEFAULT NULL,
+  `action_correct` tinyint(1) DEFAULT NULL,
+  `timestamp` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `session_id` (`session_id`),
+  KEY `user_id` (`user_id`),
+  KEY `exercise_id` (`exercise_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Constraints for table `ai_interactions`
+--
+ALTER TABLE `ai_interactions`
+  ADD CONSTRAINT `ai_interactions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `ai_interactions_ibfk_2` FOREIGN KEY (`exercise_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

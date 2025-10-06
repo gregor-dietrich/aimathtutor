@@ -82,4 +82,13 @@ public class AuthService {
     public String getUsername() {
         return (String) VaadinSession.getCurrent().getAttribute(USERNAME_KEY);
     }
+
+    public Long getUserId() {
+        final String username = this.getUsername();
+        if (username == null) {
+            return null;
+        }
+        final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        return user != null ? user.id : null;
+    }
 }
