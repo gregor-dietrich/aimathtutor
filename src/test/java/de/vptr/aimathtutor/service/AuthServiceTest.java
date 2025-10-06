@@ -11,8 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.security.PasswordHashingService;
-import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.UserRankService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
