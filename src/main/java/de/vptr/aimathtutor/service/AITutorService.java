@@ -6,6 +6,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.vptr.aimathtutor.dto.AIFeedbackDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
@@ -13,6 +15,7 @@ import de.vptr.aimathtutor.entity.AIInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
@@ -30,7 +33,13 @@ public class AITutorService {
     Boolean aiEnabled;
 
     @ConfigProperty(name = "ai.tutor.provider", defaultValue = "mock")
-    String aiProvider; // "mock", "openai", "ollama"
+    String aiProvider; // "mock", "openai", "ollama", "gemini"
+
+    @Inject
+    GeminiAIService geminiService;
+
+    @Inject
+    ObjectMapper objectMapper;
 
     /**
      * Analyzes a student's math action and provides AI feedback.
@@ -48,6 +57,7 @@ public class AITutorService {
         // Use different AI provider based on configuration
         final String provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
         return switch (provider) {
+            case "gemini" -> analyzeWithGemini(event);
             case "openai" -> analyzeWithOpenAI(event);
             case "ollama" -> analyzeWithOllama(event);
             default -> analyzeWithMockAI(event);
@@ -110,6 +120,119 @@ public class AITutorService {
         feedback.confidence = 0.85; // Mock confidence
 
         return feedback;
+    }
+
+    /**
+     * Analyzes math action using Google Gemini AI.
+     * Sends a structured prompt and parses JSON response.
+     */
+    private AIFeedbackDto analyzeWithGemini(final GraspableEventDto event) {
+        LOG.info("Analyzing math action with Gemini AI");
+
+        // Check if Gemini is configured
+        if (!geminiService.isConfigured()) {
+            LOG.warn("Gemini not configured, falling back to mock AI");
+            return analyzeWithMockAI(event);
+        }
+
+        try {
+            // Build the prompt
+            final String prompt = buildMathTutoringPrompt(event);
+
+            // Call Gemini API
+            final String response = geminiService.generateContent(prompt);
+
+            // Parse response as JSON
+            return parseFeedbackFromJSON(response);
+
+        } catch (final Exception e) {
+            LOG.error("Error using Gemini AI, falling back to mock", e);
+            return analyzeWithMockAI(event);
+        }
+    }
+
+    /**
+     * Builds a structured prompt for math tutoring with Gemini.
+     */
+    private String buildMathTutoringPrompt(final GraspableEventDto event) {
+        final StringBuilder prompt = new StringBuilder();
+
+        prompt.append("You are an encouraging AI math tutor helping a student learn algebra. ");
+        prompt.append("Analyze the student's action and provide helpful feedback.\n\n");
+
+        prompt.append("Student Action:\n");
+        prompt.append("- Action Type: ").append(event.eventType != null ? event.eventType : "unknown").append("\n");
+
+        if (event.expressionBefore != null) {
+            prompt.append("- Expression Before: ").append(event.expressionBefore).append("\n");
+        }
+
+        if (event.expressionAfter != null) {
+            prompt.append("- Expression After: ").append(event.expressionAfter).append("\n");
+        }
+
+        if (event.correct != null) {
+            prompt.append("- Is Correct: ").append(event.correct).append("\n");
+        }
+
+        prompt.append("\nProvide feedback in the following JSON format:\n");
+        prompt.append("{\n");
+        prompt.append("  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n");
+        prompt.append("  \"message\": \"Your encouraging feedback message (one sentence)\",\n");
+        prompt.append("  \"hints\": [\"optional hint 1\", \"optional hint 2\"],\n");
+        prompt.append("  \"suggestedNextSteps\": [\"what to try next\"],\n");
+        prompt.append("  \"confidence\": 0.0 to 1.0\n");
+        prompt.append("}\n\n");
+
+        prompt.append("Guidelines:\n");
+        prompt.append("- Be encouraging and supportive\n");
+        prompt.append("- If the action is correct, praise the student\n");
+        prompt.append("- If incorrect, gently point out the error without giving away the answer\n");
+        prompt.append("- Provide hints that guide thinking, don't solve it for them\n");
+        prompt.append("- Suggest logical next steps\n");
+        prompt.append("- Keep messages concise (1-2 sentences)\n");
+
+        return prompt.toString();
+    }
+
+    /**
+     * Parses Gemini's JSON response into AIFeedbackDto.
+     * Falls back to extracting message if JSON parsing fails.
+     */
+    private AIFeedbackDto parseFeedbackFromJSON(final String jsonResponse) {
+        try {
+            // Try to extract JSON from response (Gemini might wrap it in markdown)
+            String json = jsonResponse.trim();
+
+            // Remove markdown code block if present
+            if (json.startsWith("```json")) {
+                json = json.substring(7);
+            }
+            if (json.startsWith("```")) {
+                json = json.substring(3);
+            }
+            if (json.endsWith("```")) {
+                json = json.substring(0, json.length() - 3);
+            }
+            json = json.trim();
+
+            // Parse JSON to AIFeedbackDto
+            final var feedback = objectMapper.readValue(json, AIFeedbackDto.class);
+
+            // Set timestamp
+            feedback.timestamp = java.time.LocalDateTime.now();
+
+            LOG.debug("Successfully parsed Gemini response as JSON");
+            return feedback;
+
+        } catch (final Exception e) {
+            LOG.warn("Failed to parse Gemini response as JSON, creating simple feedback", e);
+
+            // Fallback: create simple positive feedback with the response text
+            final var feedback = AIFeedbackDto.positive(jsonResponse);
+            feedback.confidence = 0.7;
+            return feedback;
+        }
     }
 
     /**
