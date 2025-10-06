@@ -286,13 +286,13 @@ OLLAMA_MAX_LOADED_MODELS=2 ollama serve  # Limit concurrent models
 
 ## Model Comparison for Math Tutoring
 
-| Model | Size | Speed | Math Quality | Best For |
-|-------|------|-------|--------------|----------|
-| phi3:mini | 2.3 GB | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | Resource-limited |
-| llama3.1:8b | 4.7 GB | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Most users |
-| qwen2.5:7b | 4.7 GB | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Math-focused |
-| deepseek-coder:6.7b | 3.8 GB | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Math reasoning |
-| llama3.1:70b | 40 GB | ⭐⭐ | ⭐⭐⭐⭐⭐ | High-end hardware |
+| Model               | Size   | Speed      | Math Quality | Best For          |
+| ------------------- | ------ | ---------- | ------------ | ----------------- |
+| phi3:mini           | 2.3 GB | ⭐⭐⭐⭐⭐ | ⭐⭐⭐       | Resource-limited  |
+| llama3.1:8b         | 4.7 GB | ⭐⭐⭐⭐   | ⭐⭐⭐⭐     | Most users        |
+| qwen2.5:7b          | 4.7 GB | ⭐⭐⭐⭐   | ⭐⭐⭐⭐     | Math-focused      |
+| deepseek-coder:6.7b | 3.8 GB | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐   | Math reasoning    |
+| llama3.1:70b        | 40 GB  | ⭐⭐       | ⭐⭐⭐⭐⭐   | High-end hardware |
 
 ## Security & Privacy
 

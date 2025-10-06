@@ -101,6 +101,7 @@ The AI Math Tutor is a **full-stack web application** that integrates **Graspabl
 **Key Components:**
 
 1. **ExerciseWorkspaceView**
+
    - Embeds Graspable Math canvas
    - Captures student actions via JavaScript
    - Sends events to AITutorService
@@ -344,6 +345,7 @@ midas-gui/
 ### Research Documents
 
 1. **GEMINI_RESEARCH.md**
+
    - Model features and capabilities
    - Free tier and paid tier comparison
    - Cost analysis for different classroom sizes
@@ -351,6 +353,7 @@ midas-gui/
    - Comparison with competitors
 
 2. **OPENAI_RESEARCH.md**
+
    - Model comparison (GPT-4o, GPT-4o-mini, GPT-3.5-turbo)
    - Pricing breakdown and cost estimates
    - JSON mode and function calling features
@@ -368,6 +371,7 @@ midas-gui/
 ### Setup Guides
 
 4. **GEMINI_SETUP.md**
+
    - Account creation and API key generation
    - Environment variable configuration
    - Application configuration
@@ -376,6 +380,7 @@ midas-gui/
    - Cost monitoring and alerts
 
 5. **OPENAI_SETUP.md**
+
    - Account creation and billing setup
    - API key generation and management
    - Usage limits configuration
@@ -418,6 +423,7 @@ midas-gui/
 ### Test Coverage
 
 - **DTO Tests:** 16 suites, 130 tests
+
   - AIFeedbackDtoTest (12 tests)
   - GraspableEventDtoTest (5 tests)
   - GraspableProblemDtoTest (8 tests)
@@ -425,18 +431,21 @@ midas-gui/
   - ... (other DTO tests)
 
 - **Entity Tests:** 7 suites, 60 tests
+
   - ExerciseEntityTest (6 tests)
   - LessonEntityTest (8 tests)
   - UserEntityTest (5 tests)
   - ... (other entity tests)
 
 - **Service Tests:** 10 suites, 63 tests
+
   - AITutorServiceTest (13 tests)
   - ExerciseServiceTest (4 tests)
   - AuthServiceTest (6 tests)
   - ... (other service tests)
 
 - **Security Tests:** 1 suite, 17 tests
+
   - PasswordHashingServiceTest (17 tests)
 
 - **Utility Tests:** 1 suite, 13 tests
@@ -518,18 +527,18 @@ docker-compose up -d
 
 ## Cost Analysis (30 students, 20 sessions/month)
 
-| Provider | Monthly Cost | Annual Cost | 3-Year Total |
-|----------|-------------|-------------|--------------|
-| **Mock** | $0 | $0 | $0 |
-| **Gemini (Free)** | $0 | $0 | $0 |
-| **Gemini (Paid)** | $7 | $84 | $252 |
-| **OpenAI (mini)** | $6 | $75 | $225 |
-| **OpenAI (gpt-4o)** | $105 | $1,260 | $3,780 |
-| **Ollama (CPU)** | $0* | $0* | $0* |
-| **Ollama (GPU)** | $0* | $0* | $350-800** |
+| Provider            | Monthly Cost | Annual Cost | 3-Year Total |
+| ------------------- | ------------ | ----------- | ------------ |
+| **Mock**            | $0           | $0          | $0           |
+| **Gemini (Free)**   | $0           | $0          | $0           |
+| **Gemini (Paid)**   | $7           | $84         | $252         |
+| **OpenAI (mini)**   | $6           | $75         | $225         |
+| **OpenAI (gpt-4o)** | $105         | $1,260      | $3,780       |
+| **Ollama (CPU)**    | $0\*         | $0\*        | $0\*         |
+| **Ollama (GPU)**    | $0\*         | $0\*        | $350-800\*\* |
 
-*\* After initial hardware cost*  
-*\*\* One-time GPU investment*
+_\* After initial hardware cost_  
+_\*\* One-time GPU investment_
 
 ---
 
@@ -693,26 +702,32 @@ docker-compose restart mariadb
 ### Potential Improvements
 
 1. **Multi-Provider Routing**
+
    - Route queries intelligently based on complexity
    - Use Gemini for simple, OpenAI for complex
 
 2. **Response Caching**
+
    - Cache common patterns to reduce API calls
    - Save costs and improve speed
 
 3. **A/B Testing**
+
    - Compare provider quality
    - Gather student feedback
 
 4. **Load Balancing**
+
    - Multiple Ollama instances
    - High availability for large deployments
 
 5. **Fine-Tuning**
+
    - Customize Ollama models for specific topics
    - Optimize prompts for better responses
 
 6. **Analytics Dashboard**
+
    - Student progress tracking
    - Common mistake patterns
    - AI effectiveness metrics

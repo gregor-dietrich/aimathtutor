@@ -97,16 +97,19 @@ New methods added:
 1. **Navigate to Admin > Exercises**
 2. **Click "Create" button**
 3. **Fill in basic fields:**
+
    - Title (e.g., "Solve for x: Linear Equation")
    - Content (free-form description and instructions)
    - Select a Lesson (optional)
    - Set Published/Commentable flags
 
 4. **Enable Graspable Math:**
+
    - Check "Enable Graspable Math" checkbox
    - Additional fields will appear
 
 5. **Configure Graspable Math:**
+
    - **Initial Expression:** `2x + 5 = 15`
    - **Target Expression:** `x = 5` (optional - for validation)
    - **Allowed Operations:** `simplify, move, subtract, divide`
@@ -171,6 +174,7 @@ For new deployments, the `mariadb.init.sql` script already includes these column
 #### Phase 3: Student-Facing Views (Priority)
 
 1. **Create ExerciseWorkspaceView**
+
    - Route: `@Route("exercise/:exerciseId")`
    - Load exercise from database
    - Initialize Graspable Math with exercise configuration
@@ -179,6 +183,7 @@ For new deployments, the `mariadb.init.sql` script already includes these column
    - Track session progress
 
 2. **Update HomeView**
+
    - Show lesson list with exercises
    - Navigate to ExerciseWorkspaceView when exercise clicked
    - Filter to show only published exercises
@@ -191,11 +196,13 @@ For new deployments, the `mariadb.init.sql` script already includes these column
 #### Phase 4: Gemini AI Integration
 
 1. **Research Gemini Flash API**
+
    - Confirm free tier availability
    - Get API key and credentials
    - Review API documentation
 
 2. **Implement Gemini AI Provider**
+
    - Add Gemini SDK dependency to `pom.xml`
    - Implement `analyzeWithGemini()` in AITutorService
    - Create math tutoring prompts

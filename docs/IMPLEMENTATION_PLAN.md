@@ -143,7 +143,6 @@ Options:
   - Home
   - Math Workspace (link to standalone practice)
   - (Admin links for admin users)
-  
 - **Option B:** Remove NavigationTabs entirely:
   - HomeView becomes primary entry
   - Navigation via exercise cards
@@ -269,22 +268,27 @@ Add methods:
 ## Immediate Next Steps (Priority Order)
 
 1. **Update Exercise Entity & Database Schema**
+
    - Add Graspable Math fields to ExerciseEntity
    - Update mariadb.init.sql
    - Update DTOs
 
 2. **Update Admin Interface**
+
    - Add Graspable Math fields to exercise creation/editing
 
 3. **Create ExerciseWorkspaceView**
+
    - New view that loads exercise and embeds Graspable Math
    - Replaces standalone GraspableMathView for actual usage
 
 4. **Update HomeView**
+
    - Show lessons and exercises
    - Navigate to ExerciseWorkspaceView
 
 5. **Research & Implement Gemini Flash**
+
    - Get API key
    - Implement provider
    - Test with exercises
@@ -299,16 +303,19 @@ Add methods:
 ## Questions to Resolve
 
 1. **Gemini Flash Free Tier:**
+
    - Current limits? (requests per minute/day)
    - Best practices for educational use
    - Fallback strategy if quota exceeded?
 
 2. **Exercise Content Format:**
+
    - Should `content` field support Markdown?
    - Should we support LaTeX for math notation?
    - How to display complex math in exercise description?
 
 3. **Student Progress:**
+
    - How to mark an exercise as "completed"?
    - Scoring system? (e.g., based on accuracy, time, hints used)
    - Retry allowed?

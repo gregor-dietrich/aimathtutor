@@ -43,6 +43,7 @@ Phase 5 successfully adds **OpenAI** and **Ollama** as additional AI providers t
 ### Research Documentation
 
 1. **OPENAI_RESEARCH.md** (Complete)
+
    - Model comparison (GPT-4o, GPT-4o-mini, GPT-3.5-turbo)
    - Cost analysis for different classroom sizes
    - JSON mode and function calling features
@@ -62,6 +63,7 @@ Phase 5 successfully adds **OpenAI** and **Ollama** as additional AI providers t
 ### Setup Guides
 
 3. **OPENAI_SETUP.md** (Complete)
+
    - Step-by-step account creation
    - API key generation
    - Environment variable configuration
@@ -95,17 +97,20 @@ Phase 5 successfully adds **OpenAI** and **Ollama** as additional AI providers t
 ### DTOs (Data Transfer Objects)
 
 6. **dto/OpenAIRequestDto.java** (95 lines)
+
    - Message class for chat completions
    - ResponseFormat for JSON mode
    - Helper methods: createChatRequest(), createJsonRequest()
    - Support for system prompts and temperature
 
 7. **dto/OpenAIResponseDto.java** (82 lines)
+
    - Choice, Message, and Usage classes
    - Helper methods: getTextContent(), isComplete(), isTruncated()
    - Token usage tracking
 
 8. **dto/OllamaRequestDto.java** (46 lines)
+
    - Options class for model parameters
    - Helper method: createGenerateRequest()
    - Support for temperature and max tokens
@@ -118,6 +123,7 @@ Phase 5 successfully adds **OpenAI** and **Ollama** as additional AI providers t
 ### Services
 
 10. **service/OpenAIService.java** (185 lines)
+
     - REST client using JAX-RS
     - generateContent() for general AI responses
     - generateJsonContent() for guaranteed JSON mode
@@ -153,7 +159,9 @@ Phase 5 successfully adds **OpenAI** and **Ollama** as additional AI providers t
 ### Configuration Updates
 
 2. **src/main/resources/application.properties**
+
    - **Added:** OpenAI configuration section
+
      - openai.api.key (environment variable support)
      - openai.model (default: gpt-4o-mini)
      - openai.organization (optional)
@@ -255,40 +263,40 @@ AIFeedbackDto → ExerciseWorkspaceView
 
 ### Cost (30 students, 20 sessions/month)
 
-| Provider | Monthly Cost | Annual Cost | 3-Year Total |
-|----------|-------------|-------------|--------------|
-| Mock | $0 | $0 | $0 |
-| Gemini (Free) | $0 | $0 | $0 |
-| Gemini (Paid) | $7 | $84 | $252 |
-| OpenAI (mini) | $6 | $75 | $225 |
-| OpenAI (gpt-4o) | $105 | $1,260 | $3,780 |
-| Ollama (CPU) | $0* | $0* | $0* |
-| Ollama (GPU) | $0* | $0* | $350-800** |
+| Provider        | Monthly Cost | Annual Cost | 3-Year Total |
+| --------------- | ------------ | ----------- | ------------ |
+| Mock            | $0           | $0          | $0           |
+| Gemini (Free)   | $0           | $0          | $0           |
+| Gemini (Paid)   | $7           | $84         | $252         |
+| OpenAI (mini)   | $6           | $75         | $225         |
+| OpenAI (gpt-4o) | $105         | $1,260      | $3,780       |
+| Ollama (CPU)    | $0\*         | $0\*        | $0\*         |
+| Ollama (GPU)    | $0\*         | $0\*        | $350-800\*\* |
 
-*\* After initial hardware cost*  
-*\*\* One-time GPU investment*
+_\* After initial hardware cost_  
+_\*\* One-time GPU investment_
 
 ### Speed
 
-| Provider | Average Response Time |
-|----------|--------------------|
-| Mock | <1ms |
-| Gemini | 0.5-2s |
-| OpenAI | 0.5-2s |
-| Ollama (CPU) | 5-10s |
-| Ollama (RTX 3060) | 1-2s |
-| Ollama (RTX 4070 Ti) | 0.5-1s |
+| Provider             | Average Response Time |
+| -------------------- | --------------------- |
+| Mock                 | <1ms                  |
+| Gemini               | 0.5-2s                |
+| OpenAI               | 0.5-2s                |
+| Ollama (CPU)         | 5-10s                 |
+| Ollama (RTX 3060)    | 1-2s                  |
+| Ollama (RTX 4070 Ti) | 0.5-1s                |
 
 ### Quality (Math Tutoring)
 
-| Provider | Basic Math | Algebra | Calculus | Overall |
-|----------|-----------|---------|----------|---------|
-| Mock | ⭐ | ⭐ | ⭐ | ⭐ |
-| Gemini | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| OpenAI (mini) | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| OpenAI (gpt-4o) | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| Ollama (llama3.1:8b) | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| Ollama (qwen2.5:7b) | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Provider             | Basic Math | Algebra    | Calculus   | Overall    |
+| -------------------- | ---------- | ---------- | ---------- | ---------- |
+| Mock                 | ⭐         | ⭐         | ⭐         | ⭐         |
+| Gemini               | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐ |
+| OpenAI (mini)        | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| OpenAI (gpt-4o)      | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Ollama (llama3.1:8b) | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   |
+| Ollama (qwen2.5:7b)  | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -432,7 +440,7 @@ ai.tutor.provider=mock
 public AIFeedbackDto analyzeExpression(GraspableEventDto event) {
     String provider = ConfigProvider.getConfig()
         .getValue("ai.tutor.provider", String.class);
-    
+
     return switch (provider.toLowerCase()) {
         case "gemini" -> analyzeWithGemini(event);
         case "openai" -> analyzeWithOpenAI(event);
@@ -535,21 +543,25 @@ private AIFeedbackDto parseFeedbackFromJSON(String jsonResponse) {
 ### Potential Improvements
 
 1. **Multi-Provider Routing**
+
    - Route complex queries to OpenAI
    - Route simple queries to Gemini (save costs)
    - Use Ollama as backup if cloud unavailable
 
 2. **Response Caching**
+
    - Cache common question patterns
    - Reduce API calls for similar problems
    - Save costs and improve response time
 
 3. **A/B Testing**
+
    - Compare response quality across providers
    - Gather student feedback
    - Optimize provider selection
 
 4. **Load Balancing**
+
    - Multiple Ollama instances
    - Round-robin or least-loaded routing
    - High availability for large deployments

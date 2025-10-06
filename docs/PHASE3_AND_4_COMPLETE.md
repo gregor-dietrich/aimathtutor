@@ -167,6 +167,7 @@ ai.tutor.provider=gemini  # or 'mock', 'openai', 'ollama'
 1. Teacher logs in → Admin Panel
 2. Creates a Lesson (e.g., "Introduction to Linear Equations")
 3. Creates an Exercise:
+
    - Title: "Solve 2x + 5 = 15"
    - Content: "Isolate the variable x by performing inverse operations"
    - ✅ Enable Graspable Math

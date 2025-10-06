@@ -125,13 +125,13 @@ docker run -d \
 
 ### Recommended Models for Math Tutoring
 
-| Model | Size | RAM Needed | Quality | Speed | Use Case |
-|-------|------|------------|---------|-------|----------|
-| **llama3.1:8b** | 4.7 GB | 8 GB | Excellent | Fast | **Recommended** - Best balance |
-| **qwen2.5:7b** | 4.4 GB | 8 GB | Excellent | Fast | Math-specialized, excellent reasoning |
-| **phi3:mini** | 2.3 GB | 4 GB | Good | Very Fast | Quick responses, basic math |
-| **deepseek-coder:6.7b** | 3.8 GB | 8 GB | Excellent | Fast | Code + math, good at algebra |
-| **llama3.1:70b** | 40 GB | 64 GB | Outstanding | Slow | Premium quality, needs powerful GPU |
+| Model                   | Size   | RAM Needed | Quality     | Speed     | Use Case                              |
+| ----------------------- | ------ | ---------- | ----------- | --------- | ------------------------------------- |
+| **llama3.1:8b**         | 4.7 GB | 8 GB       | Excellent   | Fast      | **Recommended** - Best balance        |
+| **qwen2.5:7b**          | 4.4 GB | 8 GB       | Excellent   | Fast      | Math-specialized, excellent reasoning |
+| **phi3:mini**           | 2.3 GB | 4 GB       | Good        | Very Fast | Quick responses, basic math           |
+| **deepseek-coder:6.7b** | 3.8 GB | 8 GB       | Excellent   | Fast      | Code + math, good at algebra          |
+| **llama3.1:70b**        | 40 GB  | 64 GB      | Outstanding | Slow      | Premium quality, needs powerful GPU   |
 
 ### Download Models
 
@@ -192,22 +192,18 @@ ollama.timeout-seconds=30
 - `ollama.api.url`: Ollama server address
   - `http://localhost:11434` - Local installation
   - `http://your-server:11434` - Remote server
-  
 - `ollama.model`: Model to use (must be downloaded first)
   - `llama3.1:8b` - Recommended (excellent quality)
   - `qwen2.5:7b` - Math specialist
   - `phi3:mini` - Lightweight
-  
 - `ollama.temperature`: Controls randomness (0.0-1.0)
   - `0.7` - Recommended (balanced)
   - `0.3` - More focused responses
   - `0.9` - More creative
-  
 - `ollama.max-tokens`: Maximum response length
   - `1000` - Default
   - `500` - Shorter, faster
   - `2000` - Longer explanations
-  
 - `ollama.timeout-seconds`: Request timeout in seconds
   - `30` - Default (good for most systems)
   - `60` - Slower CPUs or large models
@@ -315,22 +311,22 @@ Check logs for:
 
 ### Speed Comparison (llama3.1:8b)
 
-| Hardware | Tokens/Second | Response Time | Quality |
-|----------|---------------|---------------|---------|
-| **CPU Only (i7-10700)** | 8-12 tok/s | 5-10s | ⭐⭐⭐⭐⭐ |
-| **RTX 3060 (12GB)** | 40-60 tok/s | 1-2s | ⭐⭐⭐⭐⭐ |
-| **RTX 4070 Ti (12GB)** | 80-100 tok/s | 0.5-1s | ⭐⭐⭐⭐⭐ |
-| **RTX 4090 (24GB)** | 120-150 tok/s | 0.3-0.8s | ⭐⭐⭐⭐⭐ |
+| Hardware                | Tokens/Second | Response Time | Quality    |
+| ----------------------- | ------------- | ------------- | ---------- |
+| **CPU Only (i7-10700)** | 8-12 tok/s    | 5-10s         | ⭐⭐⭐⭐⭐ |
+| **RTX 3060 (12GB)**     | 40-60 tok/s   | 1-2s          | ⭐⭐⭐⭐⭐ |
+| **RTX 4070 Ti (12GB)**  | 80-100 tok/s  | 0.5-1s        | ⭐⭐⭐⭐⭐ |
+| **RTX 4090 (24GB)**     | 120-150 tok/s | 0.3-0.8s      | ⭐⭐⭐⭐⭐ |
 
 ### Model Comparison (on RTX 3060)
 
-| Model | Load Time | Response Time | Quality | Math Skills |
-|-------|-----------|---------------|---------|-------------|
-| **phi3:mini** | 1s | 0.5-1s | ⭐⭐⭐ | ⭐⭐⭐ |
-| **qwen2.5:7b** | 2s | 1-2s | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **llama3.1:8b** | 2s | 1-2s | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **deepseek-coder:6.7b** | 2s | 1-2s | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **llama3.1:70b** | 10s | 3-5s | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| Model                   | Load Time | Response Time | Quality    | Math Skills |
+| ----------------------- | --------- | ------------- | ---------- | ----------- |
+| **phi3:mini**           | 1s        | 0.5-1s        | ⭐⭐⭐     | ⭐⭐⭐      |
+| **qwen2.5:7b**          | 2s        | 1-2s          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐  |
+| **llama3.1:8b**         | 2s        | 1-2s          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐    |
+| **deepseek-coder:6.7b** | 2s        | 1-2s          | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐  |
+| **llama3.1:70b**        | 10s       | 3-5s          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐  |
 
 ## Troubleshooting
 
@@ -520,7 +516,7 @@ ollama.api.url=http://server-ip:11434
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   ollama:
     image: ollama/ollama
@@ -535,7 +531,7 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-              
+
 volumes:
   ollama-data:
 ```
@@ -624,17 +620,17 @@ ollama serve --port 11436  # Instance 3
 
 ## Comparison with Cloud Providers
 
-| Feature | Ollama | Gemini | OpenAI |
-|---------|--------|--------|--------|
-| **Monthly Cost** | $0 | $0-7 | $6-105 |
-| **Setup Time** | 30-60 min | 5 min | 5 min |
-| **Privacy** | 100% Private | Cloud | Cloud |
-| **Rate Limits** | None | 15-360 RPM | 500-10K RPM |
-| **Offline** | Yes ✓ | No | No |
-| **Hardware** | Required | None | None |
-| **Quality** | Good-Excellent | Excellent | Excellent |
-| **Speed** | 1-10s | 0.5-2s | 0.5-2s |
-| **Maintenance** | Self-managed | None | None |
+| Feature          | Ollama         | Gemini     | OpenAI      |
+| ---------------- | -------------- | ---------- | ----------- |
+| **Monthly Cost** | $0             | $0-7       | $6-105      |
+| **Setup Time**   | 30-60 min      | 5 min      | 5 min       |
+| **Privacy**      | 100% Private   | Cloud      | Cloud       |
+| **Rate Limits**  | None           | 15-360 RPM | 500-10K RPM |
+| **Offline**      | Yes ✓          | No         | No          |
+| **Hardware**     | Required       | None       | None        |
+| **Quality**      | Good-Excellent | Excellent  | Excellent   |
+| **Speed**        | 1-10s          | 0.5-2s     | 0.5-2s      |
+| **Maintenance**  | Self-managed   | None       | None        |
 
 **Use Ollama when:**
 

@@ -21,11 +21,11 @@ OpenAI provides premium AI models (GPT-4o, GPT-4o-mini, GPT-3.5-turbo) with exce
 
 For a classroom with **30 students**, assuming **10 interactions per student per session**:
 
-| Model | Input Cost | Output Cost | Monthly Cost (20 sessions) | Use Case |
-|-------|-----------|-------------|---------------------------|----------|
-| **gpt-4o-mini** | $0.150/1M | $0.600/1M | **$6.30/month** | Recommended - Best value |
-| **gpt-3.5-turbo** | $0.50/1M | $1.50/1M | $16.80/month | Budget option |
-| **gpt-4o** | $2.50/1M | $10/1M | **$105/month** | Premium - Highest quality |
+| Model             | Input Cost | Output Cost | Monthly Cost (20 sessions) | Use Case                  |
+| ----------------- | ---------- | ----------- | -------------------------- | ------------------------- |
+| **gpt-4o-mini**   | $0.150/1M  | $0.600/1M   | **$6.30/month**            | Recommended - Best value  |
+| **gpt-3.5-turbo** | $0.50/1M   | $1.50/1M    | $16.80/month               | Budget option             |
+| **gpt-4o**        | $2.50/1M   | $10/1M      | **$105/month**             | Premium - Highest quality |
 
 **Recommendation:** Start with **gpt-4o-mini** for excellent quality at minimal cost.
 
@@ -100,12 +100,10 @@ openai.max-tokens=1000
   - `gpt-4o-mini` - Recommended (fast, affordable, high quality)
   - `gpt-4o` - Premium (highest quality, most expensive)
   - `gpt-3.5-turbo` - Budget (good for simple tasks)
-  
 - `openai.temperature`: Controls randomness (0.0-2.0)
   - `0.7` - Recommended (balanced creativity)
   - `0.3` - More focused and deterministic
   - `1.0` - More creative responses
-  
 - `openai.max-tokens`: Maximum response length
   - `1000` - Default (good for most tutoring responses)
   - `500` - Shorter responses (faster, cheaper)
@@ -300,16 +298,16 @@ Example (30 students, gpt-4o-mini):
 
 ## Comparison with Other Providers
 
-| Feature | OpenAI | Gemini | Ollama |
-|---------|--------|--------|--------|
-| **Cost** | $6-105/month | Free-$7/month | $0 (hardware cost) |
-| **Quality** | Excellent | Very Good | Good |
-| **Speed** | Fast (500ms-2s) | Fast (500ms-2s) | Varies (1-10s) |
-| **JSON Mode** | Native ✓ | Prompt-based | Prompt-based |
-| **Privacy** | Cloud (secure) | Cloud (secure) | Local (private) |
-| **Setup** | Easy | Easy | Moderate |
-| **Rate Limits** | 500-10K RPM | 15-360 RPM | None |
-| **Support** | Enterprise SLA | Community | Community |
+| Feature         | OpenAI          | Gemini          | Ollama             |
+| --------------- | --------------- | --------------- | ------------------ |
+| **Cost**        | $6-105/month    | Free-$7/month   | $0 (hardware cost) |
+| **Quality**     | Excellent       | Very Good       | Good               |
+| **Speed**       | Fast (500ms-2s) | Fast (500ms-2s) | Varies (1-10s)     |
+| **JSON Mode**   | Native ✓        | Prompt-based    | Prompt-based       |
+| **Privacy**     | Cloud (secure)  | Cloud (secure)  | Local (private)    |
+| **Setup**       | Easy            | Easy            | Moderate           |
+| **Rate Limits** | 500-10K RPM     | 15-360 RPM      | None               |
+| **Support**     | Enterprise SLA  | Community       | Community          |
 
 **When to use OpenAI:**
 
