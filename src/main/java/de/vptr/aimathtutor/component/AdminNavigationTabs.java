@@ -4,7 +4,7 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.RouterLink;
 
-import de.vptr.aimathtutor.rest.dto.UserRankViewDto;
+import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.view.admin.*;
 
 public class AdminNavigationTabs extends Tabs {

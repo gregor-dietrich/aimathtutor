@@ -31,12 +31,12 @@ import de.vptr.aimathtutor.component.button.*;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.rest.dto.UserGroupDto;
-import de.vptr.aimathtutor.rest.dto.UserGroupViewDto;
-import de.vptr.aimathtutor.rest.dto.UserViewDto;
-import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.UserGroupService;
-import de.vptr.aimathtutor.rest.service.UserService;
+import de.vptr.aimathtutor.dto.UserGroupDto;
+import de.vptr.aimathtutor.dto.UserGroupViewDto;
+import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.UserGroupService;
+import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 

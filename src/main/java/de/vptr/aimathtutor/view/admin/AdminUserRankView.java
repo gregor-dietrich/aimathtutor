@@ -33,10 +33,10 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.rest.dto.UserRankDto;
-import de.vptr.aimathtutor.rest.dto.UserRankViewDto;
-import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.UserRankService;
+import de.vptr.aimathtutor.dto.UserRankDto;
+import de.vptr.aimathtutor.dto.UserRankViewDto;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 

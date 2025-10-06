@@ -11,8 +11,8 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.GreetService;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.GreetService;
 import jakarta.inject.Inject;
 
 @Route(value = "", layout = MainLayout.class)

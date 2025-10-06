@@ -5,8 +5,8 @@ import java.util.Set;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
 
-import de.vptr.aimathtutor.rest.entity.UserEntity;
-import de.vptr.aimathtutor.rest.entity.UserRankEntity;
+import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.security.identity.SecurityIdentityAugmentor;

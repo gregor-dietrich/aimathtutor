@@ -35,12 +35,12 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.rest.dto.CommentDto;
-import de.vptr.aimathtutor.rest.dto.CommentViewDto;
-import de.vptr.aimathtutor.rest.entity.CommentEntity;
-import de.vptr.aimathtutor.rest.entity.ExerciseEntity;
-import de.vptr.aimathtutor.rest.service.AuthService;
-import de.vptr.aimathtutor.rest.service.CommentService;
+import de.vptr.aimathtutor.dto.CommentDto;
+import de.vptr.aimathtutor.dto.CommentViewDto;
+import de.vptr.aimathtutor.entity.CommentEntity;
+import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
