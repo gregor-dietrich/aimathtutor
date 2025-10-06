@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.ExerciseDto;
-
 class ExerciseDtoTest {
 
     private ExerciseDto exerciseDto;
