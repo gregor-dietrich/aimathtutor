@@ -19,6 +19,15 @@ public class ExerciseViewDto {
     public LocalDateTime lastEdit;
     public Long commentsCount;
 
+    // Graspable Math fields
+    public Boolean graspableEnabled;
+    public String graspableInitialExpression;
+    public String graspableTargetExpression;
+    public String graspableAllowedOperations;
+    public String graspableDifficulty;
+    public String graspableHints;
+    public String graspableConfig;
+
     public ExerciseViewDto() {
     }
 
@@ -36,6 +45,15 @@ public class ExerciseViewDto {
             this.created = entity.created;
             this.lastEdit = entity.lastEdit;
             this.commentsCount = entity.comments != null ? (long) entity.comments.size() : 0L;
+
+            // Graspable Math fields
+            this.graspableEnabled = entity.graspableEnabled;
+            this.graspableInitialExpression = entity.graspableInitialExpression;
+            this.graspableTargetExpression = entity.graspableTargetExpression;
+            this.graspableAllowedOperations = entity.graspableAllowedOperations;
+            this.graspableDifficulty = entity.graspableDifficulty;
+            this.graspableHints = entity.graspableHints;
+            this.graspableConfig = entity.graspableConfig;
         }
     }
 
@@ -67,6 +85,16 @@ public class ExerciseViewDto {
         dto.commentable = this.commentable;
         dto.created = this.created;
         dto.lastEdit = this.lastEdit;
+
+        // Graspable Math fields
+        dto.graspableEnabled = this.graspableEnabled;
+        dto.graspableInitialExpression = this.graspableInitialExpression;
+        dto.graspableTargetExpression = this.graspableTargetExpression;
+        dto.graspableAllowedOperations = this.graspableAllowedOperations;
+        dto.graspableDifficulty = this.graspableDifficulty;
+        dto.graspableHints = this.graspableHints;
+        dto.graspableConfig = this.graspableConfig;
+
         return dto;
     }
 }

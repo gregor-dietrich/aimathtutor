@@ -49,6 +49,21 @@ public class ExerciseService {
                 .toList();
     }
 
+    public List<ExerciseViewDto> findGraspableMathExercises() {
+        return ExerciseEntity.find("graspableEnabled = true AND published = true ORDER BY created DESC").list().stream()
+                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+                .toList();
+    }
+
+    public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
+        return ExerciseEntity
+                .find("graspableEnabled = true AND published = true AND category.id = ?1 ORDER BY created DESC",
+                        lessonId)
+                .list().stream()
+                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+                .toList();
+    }
+
     @Transactional
     public ExerciseViewDto createExercise(final ExerciseDto exerciseDto) {
         if (exerciseDto.title == null || exerciseDto.title.trim().isEmpty()) {
@@ -68,6 +83,15 @@ public class ExerciseService {
         exercise.commentable = exerciseDto.commentable != null ? exerciseDto.commentable : false;
         exercise.created = LocalDateTime.now();
         exercise.lastEdit = exercise.created;
+
+        // Set Graspable Math fields
+        exercise.graspableEnabled = exerciseDto.graspableEnabled != null ? exerciseDto.graspableEnabled : false;
+        exercise.graspableInitialExpression = exerciseDto.graspableInitialExpression;
+        exercise.graspableTargetExpression = exerciseDto.graspableTargetExpression;
+        exercise.graspableAllowedOperations = exerciseDto.graspableAllowedOperations;
+        exercise.graspableDifficulty = exerciseDto.graspableDifficulty;
+        exercise.graspableHints = exerciseDto.graspableHints;
+        exercise.graspableConfig = exerciseDto.graspableConfig;
 
         // Set user - required for creation
         final UserEntity user = UserEntity.findById(exerciseDto.userId);
@@ -110,6 +134,15 @@ public class ExerciseService {
         existingExercise.published = exerciseDto.published != null ? exerciseDto.published : false;
         existingExercise.commentable = exerciseDto.commentable != null ? exerciseDto.commentable : false;
         existingExercise.lastEdit = LocalDateTime.now();
+
+        // Update Graspable Math fields
+        existingExercise.graspableEnabled = exerciseDto.graspableEnabled != null ? exerciseDto.graspableEnabled : false;
+        existingExercise.graspableInitialExpression = exerciseDto.graspableInitialExpression;
+        existingExercise.graspableTargetExpression = exerciseDto.graspableTargetExpression;
+        existingExercise.graspableAllowedOperations = exerciseDto.graspableAllowedOperations;
+        existingExercise.graspableDifficulty = exerciseDto.graspableDifficulty;
+        existingExercise.graspableHints = exerciseDto.graspableHints;
+        existingExercise.graspableConfig = exerciseDto.graspableConfig;
 
         // Set user if provided, otherwise keep existing user
         if (exerciseDto.userId != null) {
@@ -155,6 +188,29 @@ public class ExerciseService {
         }
         if (exerciseDto.commentable != null) {
             existingExercise.commentable = exerciseDto.commentable;
+        }
+
+        // Update Graspable Math fields if provided
+        if (exerciseDto.graspableEnabled != null) {
+            existingExercise.graspableEnabled = exerciseDto.graspableEnabled;
+        }
+        if (exerciseDto.graspableInitialExpression != null) {
+            existingExercise.graspableInitialExpression = exerciseDto.graspableInitialExpression;
+        }
+        if (exerciseDto.graspableTargetExpression != null) {
+            existingExercise.graspableTargetExpression = exerciseDto.graspableTargetExpression;
+        }
+        if (exerciseDto.graspableAllowedOperations != null) {
+            existingExercise.graspableAllowedOperations = exerciseDto.graspableAllowedOperations;
+        }
+        if (exerciseDto.graspableDifficulty != null) {
+            existingExercise.graspableDifficulty = exerciseDto.graspableDifficulty;
+        }
+        if (exerciseDto.graspableHints != null) {
+            existingExercise.graspableHints = exerciseDto.graspableHints;
+        }
+        if (exerciseDto.graspableConfig != null) {
+            existingExercise.graspableConfig = exerciseDto.graspableConfig;
         }
 
         // Set user if provided

@@ -233,6 +233,13 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
             return checkbox;
         }).setHeader("Commentable").setWidth("100px").setFlexGrow(0);
 
+        this.grid.addComponentColumn(exercise -> {
+            final var checkbox = new Checkbox();
+            checkbox.setValue(exercise.graspableEnabled != null ? exercise.graspableEnabled : false);
+            checkbox.setReadOnly(true);
+            return checkbox;
+        }).setHeader("Graspable Math").setWidth("120px").setFlexGrow(0);
+
         this.grid.addColumn(exercise -> exercise.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
         this.grid.addColumn(exercise -> exercise.lastEdit).setHeader("Last Edit").setWidth("150px").setFlexGrow(0);
 
@@ -339,7 +346,94 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
                     }
                 });
 
-        form.add(titleField, contentField, lessonField, publishedField, commentableField);
+        // Graspable Math fields
+        final var graspableEnabledField = new Checkbox("Enable Graspable Math");
+        graspableEnabledField.setTooltipText("Enable interactive math workspace for this exercise");
+
+        final var graspableInitialExpressionField = new TextArea("Initial Expression");
+        graspableInitialExpressionField.setPlaceholder("e.g., 2x + 5 = 15");
+        graspableInitialExpressionField.setWidthFull();
+        graspableInitialExpressionField.setHeight("80px");
+        graspableInitialExpressionField.setTooltipText("Starting math expression for the student");
+
+        final var graspableTargetExpressionField = new TextArea("Target Expression (optional)");
+        graspableTargetExpressionField.setPlaceholder("e.g., x = 5");
+        graspableTargetExpressionField.setWidthFull();
+        graspableTargetExpressionField.setHeight("80px");
+        graspableTargetExpressionField.setTooltipText("Expected solution to validate against");
+
+        final var graspableAllowedOperationsField = new TextArea("Allowed Operations (optional)");
+        graspableAllowedOperationsField.setPlaceholder("e.g., simplify, factor, expand, combine");
+        graspableAllowedOperationsField.setWidthFull();
+        graspableAllowedOperationsField.setHeight("60px");
+        graspableAllowedOperationsField.setTooltipText("Comma-separated list of allowed student actions");
+
+        final var graspableDifficultyField = new ComboBox<String>("Difficulty");
+        graspableDifficultyField.setItems("beginner", "intermediate", "advanced", "expert");
+        graspableDifficultyField.setPlaceholder("Select difficulty");
+        graspableDifficultyField.setClearButtonVisible(true);
+        graspableDifficultyField.setTooltipText("Problem difficulty level for AI adaptation");
+
+        final var graspableHintsField = new TextArea("Hints (optional)");
+        graspableHintsField.setPlaceholder("Enter hints, one per line");
+        graspableHintsField.setWidthFull();
+        graspableHintsField.setHeight("100px");
+        graspableHintsField.setTooltipText("Hints to display when student requests help");
+
+        final var graspableConfigField = new TextArea("Custom Configuration (JSON, optional)");
+        graspableConfigField.setPlaceholder("{ \"key\": \"value\" }");
+        graspableConfigField.setWidthFull();
+        graspableConfigField.setHeight("100px");
+        graspableConfigField.setTooltipText("Advanced: custom JSON configuration for Graspable Math");
+
+        // Bind Graspable Math fields
+        this.binder.bind(graspableEnabledField,
+                exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
+                (exercise1, value) -> exercise1.graspableEnabled = value);
+        this.binder.bind(graspableInitialExpressionField,
+                exercise1 -> exercise1.graspableInitialExpression,
+                (exercise1, value) -> exercise1.graspableInitialExpression = value);
+        this.binder.bind(graspableTargetExpressionField,
+                exercise1 -> exercise1.graspableTargetExpression,
+                (exercise1, value) -> exercise1.graspableTargetExpression = value);
+        this.binder.bind(graspableAllowedOperationsField,
+                exercise1 -> exercise1.graspableAllowedOperations,
+                (exercise1, value) -> exercise1.graspableAllowedOperations = value);
+        this.binder.bind(graspableDifficultyField,
+                exercise1 -> exercise1.graspableDifficulty,
+                (exercise1, value) -> exercise1.graspableDifficulty = value);
+        this.binder.bind(graspableHintsField,
+                exercise1 -> exercise1.graspableHints,
+                (exercise1, value) -> exercise1.graspableHints = value);
+        this.binder.bind(graspableConfigField,
+                exercise1 -> exercise1.graspableConfig,
+                (exercise1, value) -> exercise1.graspableConfig = value);
+
+        // Show/hide Graspable Math fields based on checkbox
+        graspableEnabledField.addValueChangeListener(event -> {
+            final boolean enabled = event.getValue();
+            graspableInitialExpressionField.setVisible(enabled);
+            graspableTargetExpressionField.setVisible(enabled);
+            graspableAllowedOperationsField.setVisible(enabled);
+            graspableDifficultyField.setVisible(enabled);
+            graspableHintsField.setVisible(enabled);
+            graspableConfigField.setVisible(enabled);
+        });
+
+        // Initially hide Graspable Math fields if not enabled
+        final boolean initiallyEnabled = this.currentExercise.graspableEnabled != null
+                && this.currentExercise.graspableEnabled;
+        graspableInitialExpressionField.setVisible(initiallyEnabled);
+        graspableTargetExpressionField.setVisible(initiallyEnabled);
+        graspableAllowedOperationsField.setVisible(initiallyEnabled);
+        graspableDifficultyField.setVisible(initiallyEnabled);
+        graspableHintsField.setVisible(initiallyEnabled);
+        graspableConfigField.setVisible(initiallyEnabled);
+
+        form.add(titleField, contentField, lessonField, publishedField, commentableField,
+                graspableEnabledField, graspableInitialExpressionField, graspableTargetExpressionField,
+                graspableAllowedOperationsField, graspableDifficultyField, graspableHintsField,
+                graspableConfigField);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
