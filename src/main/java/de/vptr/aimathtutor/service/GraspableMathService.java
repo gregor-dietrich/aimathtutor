@@ -34,10 +34,22 @@ public class GraspableMathService {
     public String createSession(final Long userId, final Long exerciseId) {
         final String sessionId = UUID.randomUUID().toString();
 
+        final UserEntity user = UserEntity.findById(userId);
+        if (user == null) {
+            LOG.error("User not found: {}", userId);
+            throw new IllegalArgumentException("User not found: " + userId);
+        }
+
+        final ExerciseEntity exercise = ExerciseEntity.findById(exerciseId);
+        if (exercise == null) {
+            LOG.error("Exercise not found: {}", exerciseId);
+            throw new IllegalArgumentException("Exercise not found: " + exerciseId);
+        }
+
         final var session = new StudentSessionEntity();
         session.sessionId = sessionId;
-        session.user = UserEntity.findById(userId);
-        session.exercise = ExerciseEntity.findById(exerciseId);
+        session.user = user;
+        session.exercise = exercise;
         session.startTime = LocalDateTime.now();
         session.completed = false;
         session.actionsCount = 0;

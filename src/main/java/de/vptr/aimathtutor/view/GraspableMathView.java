@@ -67,7 +67,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        buildUI();
+        this.buildUI();
     }
 
     private void buildUI() {
@@ -102,13 +102,13 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         final var controls = new HorizontalLayout();
         controls.setSpacing(true);
 
-        this.generateProblemButton = new Button("Generate New Problem", e -> generateNewProblem());
+        this.generateProblemButton = new Button("Generate New Problem", e -> this.generateNewProblem());
         this.generateProblemButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        this.getHintButton = new Button("Get Hint", e -> requestHint());
+        this.getHintButton = new Button("Get Hint", e -> this.requestHint());
         this.getHintButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        final var resetButton = new Button("Reset", e -> resetCanvas());
+        final var resetButton = new Button("Reset", e -> this.resetCanvas());
 
         controls.add(this.generateProblemButton, this.getHintButton, resetButton);
 
@@ -139,7 +139,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         this.add(header, mainLayout);
 
         // Initialize session
-        initializeSession();
+        this.initializeSession();
     }
 
     @Override
@@ -147,7 +147,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         super.onAttach(attachEvent);
 
         // Initialize Graspable Math widget
-        initializeGraspableMath();
+        this.initializeGraspableMath();
     }
 
     private void initializeSession() {
@@ -156,10 +156,17 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         final Long userId = this.authService.getUserId();
         final Long exerciseId = 1L;
 
-        this.sessionId = this.graspableMathService.createSession(userId, exerciseId);
-        LOG.info("Initialized session: {}", this.sessionId);
-
-        addFeedback(AIFeedbackDto.positive("Welcome! Start working on the problem below."));
+        try {
+            this.sessionId = this.graspableMathService.createSession(userId, exerciseId);
+            LOG.info("Initialized session: {}", this.sessionId);
+            this.addFeedback(AIFeedbackDto.positive("Welcome! Start working on the problem below."));
+        } catch (final IllegalArgumentException e) {
+            LOG.error("Failed to create session: {}", e.getMessage());
+            this.addFeedback(AIFeedbackDto.error(
+                    "Unable to start session. Please make sure you have exercises created in the admin panel."));
+            this.generateProblemButton.setEnabled(false);
+            this.getHintButton.setEnabled(false);
+        }
     }
 
     /**
@@ -242,7 +249,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         UI.getCurrent().getPage().executeJs(jsCode);
 
         // Register server-side connector
-        registerServerConnector();
+        this.registerServerConnector();
     }
 
     /**
@@ -253,7 +260,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
                 "window.graspableViewConnector = { onMathAction: function(type, before, after) { " +
                         "   $0.$server.onMathAction(type, before, after); " +
                         "}}",
-                getElement());
+                this.getElement());
     }
 
     /**
@@ -283,7 +290,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         this.aiTutorService.logInteraction(event, feedback);
 
         // Display feedback to user
-        addFeedback(feedback);
+        this.addFeedback(feedback);
     }
 
     private void addFeedback(final AIFeedbackDto feedback) {
@@ -292,7 +299,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
                 .set("padding", "var(--lumo-space-s)")
                 .set("margin-bottom", "var(--lumo-space-s)")
                 .set("border-radius", "var(--lumo-border-radius-s)")
-                .set("background-color", getFeedbackColor(feedback.type));
+                .set("background-color", this.getFeedbackColor(feedback.type));
 
         final var message = new Paragraph(feedback.message);
         message.getStyle().set("margin", "0");
@@ -340,7 +347,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
 
         UI.getCurrent().getPage().executeJs(jsCode);
 
-        addFeedback(AIFeedbackDto.positive("New problem loaded: " + problem.title));
+        this.addFeedback(AIFeedbackDto.positive("New problem loaded: " + problem.title));
     }
 
     private void requestHint() {
@@ -349,7 +356,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         final var feedback = AIFeedbackDto.hint("Try isolating the variable on one side of the equation.");
         feedback.hints.add("What operation would cancel out the constant term?");
 
-        addFeedback(feedback);
+        this.addFeedback(feedback);
     }
 
     private void resetCanvas() {
@@ -360,6 +367,6 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
                 """);
 
         this.feedbackPanel.removeAll();
-        addFeedback(AIFeedbackDto.positive("Canvas reset. Ready for a new problem!"));
+        this.addFeedback(AIFeedbackDto.positive("Canvas reset. Ready for a new problem!"));
     }
 }

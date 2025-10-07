@@ -76,14 +76,18 @@ public class AIFeedbackDto {
         return new AIFeedbackDto(FeedbackType.NEUTRAL, message);
     }
 
+    public static AIFeedbackDto error(final String message) {
+        return new AIFeedbackDto(FeedbackType.CORRECTIVE, message);
+    }
+
     @Override
     public String toString() {
         return "AIFeedbackDto{" +
-                "type=" + type +
-                ", message='" + message + '\'' +
-                ", confidence=" + confidence +
-                ", timestamp=" + timestamp +
-                ", sessionId='" + sessionId + '\'' +
+                "type=" + this.type +
+                ", message='" + this.message + '\'' +
+                ", confidence=" + this.confidence +
+                ", timestamp=" + this.timestamp +
+                ", sessionId='" + this.sessionId + '\'' +
                 '}';
     }
 }

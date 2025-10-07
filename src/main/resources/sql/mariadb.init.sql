@@ -567,7 +567,7 @@ CREATE TABLE `ai_interactions` (
   `expression_after` text COLLATE utf8mb4_unicode_ci,
   `feedback_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `feedback_message` text COLLATE utf8mb4_unicode_ci,
-  `confidence_score` decimal(5,4) DEFAULT NULL,
+  `confidence_score` double DEFAULT NULL,
   `action_correct` tinyint(1) DEFAULT NULL,
   `timestamp` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
