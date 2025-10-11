@@ -113,14 +113,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `username`, `password`, `salt`, `rank_id`, `activated`, `banned`, `activation_key`) VALUES
 (1, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, 1, 0, NULL),
-(2, 'user', 'KD+VrVb86w2Z7Ei8UjsHbbZ/awEnReWeC8t0656EqMM=', 'e3/FXXV1XuCaSHXxtwR1K0Lc5N/Al7rTJ6Kkpx1S2Uk=', 3, 1, 0, NULL),
-(3, 'guest', '1B+WWB3fopZvGiqUzwNWgI74mE5EaeryMlOoKNXvzhQ=', 'nNmZIEEzv7peVc+UqSbd+Q0g8KbTAgAa5RbhZwgUiOk=', 3, 1, 0, NULL),
-(4, 'moderator', '4IV82pA2Q1BmNaIS+de+1yqS1UQSwSE21xU6kkSda6c=', '52Mdt2qexvXu99Gm+wB0iv8V3n5leK5XR1zGLNBeDQg=', 2, 1, 0, NULL),
-(5, 'bannedUser', 'tE04ap7GWryC2vCAzJpcFilsSGPozJsrAjRyZaXqeXM=', 'QLxT3YTXJuEFeaG71Shryr5BUkW+i4vocjmpKXT8h4k=', 3, 1, 1, NULL),
-(6, 'notActivatedUser', 'xA28JSHhTwUxoBfOS0RCTPfnMzkvzB5i724zzo25iYI=', 'BVCeBwQYMx/7sZ8tIiR9wCvQ/plNQzTwG0neblWWu3k=', 3, 0, 0, '21b8efb5-8eb0-4530-9d9a-cdbc33ba7164');
--- (2, 'teacher', '', '', 2, 1, 0, NULL);
--- (3, 'student1', '', '', 3, 1, 0, NULL);
--- (4, 'student2', '', '', 3, 1, 0, NULL);
+(2, 'teacher', 'UMlKgd7trJ6AkPxCmGFV8SeKuNuepLWQtmJhMiOrJe4=', 'SrfeZ8CKyW3vQKcnDPsuFMXc5SGGjfNOlcOmHo0IZQ0=', 2, 1, 0, NULL),
+(3, 'student1', '3Xwz27IF/jydWnSaMe3hg+W3TeBysC4HyiRjmaXq9X4=', 'jz7iveDe+tMVRUCZ8y8g5CSOhPOexYHNhiEgl21gfZ8=', 3, 1, 0, NULL),
+(4, 'student2', 'UohNl09lzkNATW9RZK5dSdlURU0p60ZopMTJKo1iJ6g=', 'HjAbdnWMRcUwV5zyiF1mHAPcOcdbxG2QTxlTsyx6ExI=', 3, 1, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -219,15 +214,6 @@ INSERT INTO `user_ranks` (`id`, `name`, `admin_view`, `exercise_add`, `exercise_
 --
 
 --
--- Indexes for table `pages`
---
-ALTER TABLE `pages`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `pages`
-  ADD FULLTEXT KEY `content` (`content`);
-
---
 -- Indexes for table `exercises`
 --
 ALTER TABLE `exercises`
@@ -266,23 +252,6 @@ ALTER TABLE `users`
   ADD KEY `users_ibfk_1` (`rank_id`);
 
 --
--- Indexes for table `user_accounts`
---
-ALTER TABLE `user_accounts`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `user_accounts`
-  ADD INDEX `idx_user_accounts_name` (`name`);
-
---
--- Indexes for table `user_accounts_meta`
---
-ALTER TABLE `user_accounts_meta`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `user_id` (`user_id`,`account_id`),
-  ADD KEY `account_id` (`account_id`);
-
---
 -- Indexes for table `user_groups`
 --
 ALTER TABLE `user_groups`
@@ -297,30 +266,6 @@ ALTER TABLE `user_groups_meta`
   ADD KEY `group_id` (`group_id`);
 
 --
--- Indexes for table `user_payments`
---
-ALTER TABLE `user_payments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `payments_ibfk_1` (`user_id`),
-  ADD KEY `payments_ibfk_2` (`source_id`),
-  ADD KEY `payments_ibfk_3` (`target_id`);
-
-ALTER TABLE `user_payments`
-  ADD INDEX `idx_user_payments_created` (`created` DESC);
-
-ALTER TABLE `user_payments`
-  ADD INDEX `idx_user_payments_date` (`date` DESC);
-
-ALTER TABLE `user_payments`
-  ADD INDEX `idx_user_payments_source_amount` (`source_id`, `amount`);
-
-ALTER TABLE `user_payments`
-  ADD INDEX `idx_user_payments_target_amount` (`target_id`, `amount`);
-
-ALTER TABLE `user_payments`
-  ADD INDEX `idx_user_payments_balance_calc` (`target_id`, `source_id`, `amount`, `created`, `date`);
-
---
 -- Indexes for table `user_ranks`
 --
 ALTER TABLE `user_ranks`
@@ -330,12 +275,6 @@ ALTER TABLE `user_ranks`
 --
 -- AUTO_INCREMENT for exported tables
 --
-
---
--- AUTO_INCREMENT for table `pages`
---
-ALTER TABLE `pages`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `exercises`
@@ -362,18 +301,6 @@ ALTER TABLE `users`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `user_accounts`
---
-ALTER TABLE `user_accounts`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `user_accounts_meta`
---
-ALTER TABLE `user_accounts_meta`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `user_groups`
 --
 ALTER TABLE `user_groups`
@@ -383,12 +310,6 @@ ALTER TABLE `user_groups`
 -- AUTO_INCREMENT for table `user_groups_meta`
 --
 ALTER TABLE `user_groups_meta`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `user_payments`
---
-ALTER TABLE `user_payments`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -428,26 +349,11 @@ ALTER TABLE `users`
   ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`rank_id`) REFERENCES `user_ranks` (`id`) ON UPDATE CASCADE;
 
 --
--- Constraints for table `user_accounts_meta`
---
-ALTER TABLE `user_accounts_meta`
-  ADD CONSTRAINT `user_accounts_meta_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `user_accounts_meta_ibfk_2` FOREIGN KEY (`account_id`) REFERENCES `user_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
 -- Constraints for table `user_groups_meta`
 --
 ALTER TABLE `user_groups_meta`
   ADD CONSTRAINT `user_groups_meta_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `user_groups_meta_ibfk_2` FOREIGN KEY (`group_id`) REFERENCES `user_groups` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `user_payments`
---
-ALTER TABLE `user_payments`
-  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`source_id`) REFERENCES `user_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `payments_ibfk_3` FOREIGN KEY (`target_id`) REFERENCES `user_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- --------------------------------------------------------
 

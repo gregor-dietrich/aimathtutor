@@ -54,7 +54,7 @@ public class CommentService {
 
     @Transactional
     public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
-        final List<CommentEntity> comments = CommentEntity.find("post.id", exerciseId).list();
+        final List<CommentEntity> comments = CommentEntity.find("exercise.id", exerciseId).list();
         // Force load lazy fields within transaction
         for (final CommentEntity comment : comments) {
             comment.exercise.title.length(); // Force load exercise title

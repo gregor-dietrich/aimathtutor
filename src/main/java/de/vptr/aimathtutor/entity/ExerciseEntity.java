@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "posts")
+@Table(name = "exercises")
 public class ExerciseEntity extends PanacheEntityBase {
 
     @Id
@@ -29,7 +29,7 @@ public class ExerciseEntity extends PanacheEntityBase {
     public UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "lesson_id")
     public LessonEntity lesson;
 
     @Column(columnDefinition = "TINYINT(1)")
