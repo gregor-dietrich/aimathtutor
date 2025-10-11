@@ -9,7 +9,6 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.ExerciseDto;
-import de.vptr.aimathtutor.service.ExerciseService;
 import jakarta.validation.ValidationException;
 
 @ExtendWith(MockitoExtension.class)

@@ -54,14 +54,14 @@ public class GraspableEventDto {
     @Override
     public String toString() {
         return "GraspableEventDto{" +
-                "eventType='" + eventType + '\'' +
-                ", expressionBefore='" + expressionBefore + '\'' +
-                ", expressionAfter='" + expressionAfter + '\'' +
-                ", studentId=" + studentId +
-                ", exerciseId=" + exerciseId +
-                ", sessionId='" + sessionId + '\'' +
-                ", timestamp=" + timestamp +
-                ", correct=" + correct +
+                "eventType='" + this.eventType + '\'' +
+                ", expressionBefore='" + this.expressionBefore + '\'' +
+                ", expressionAfter='" + this.expressionAfter + '\'' +
+                ", studentId=" + this.studentId +
+                ", exerciseId=" + this.exerciseId +
+                ", sessionId='" + this.sessionId + '\'' +
+                ", timestamp=" + this.timestamp +
+                ", correct=" + this.correct +
                 '}';
     }
 }

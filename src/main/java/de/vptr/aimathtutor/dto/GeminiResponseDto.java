@@ -34,7 +34,7 @@ public class GeminiResponseDto {
     }
 
     public static class SafetyRating {
-        public String category;
+        public String lesson;
         public String probability;
     }
 
@@ -47,11 +47,11 @@ public class GeminiResponseDto {
      * Extract the text content from the first candidate
      */
     public String getTextContent() {
-        if (candidates == null || candidates.isEmpty()) {
+        if (this.candidates == null || this.candidates.isEmpty()) {
             return null;
         }
 
-        final var candidate = candidates.get(0);
+        final var candidate = this.candidates.get(0);
         if (candidate.content == null || candidate.content.parts == null || candidate.content.parts.isEmpty()) {
             return null;
         }
@@ -63,11 +63,11 @@ public class GeminiResponseDto {
      * Check if the response was blocked due to safety filters
      */
     public boolean isBlocked() {
-        if (candidates == null || candidates.isEmpty()) {
+        if (this.candidates == null || this.candidates.isEmpty()) {
             return true;
         }
 
-        final var finishReason = candidates.get(0).finishReason;
+        final var finishReason = this.candidates.get(0).finishReason;
         return "SAFETY".equals(finishReason) || "BLOCKED".equals(finishReason);
     }
 }

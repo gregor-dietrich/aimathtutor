@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
 class UserRankViewDtoTest {
@@ -19,12 +18,12 @@ class UserRankViewDtoTest {
         this.rankEntity.id = 1L;
         this.rankEntity.name = "Admin";
         this.rankEntity.adminView = true;
-        this.rankEntity.pageAdd = true;
-        this.rankEntity.pageEdit = true;
-        this.rankEntity.pageDelete = false;
-        this.rankEntity.postAdd = true;
-        this.rankEntity.postEdit = true;
-        this.rankEntity.postDelete = false;
+        this.rankEntity.lessonAdd = true;
+        this.rankEntity.lessonEdit = true;
+        this.rankEntity.lessonDelete = false;
+        this.rankEntity.exerciseAdd = true;
+        this.rankEntity.exerciseEdit = true;
+        this.rankEntity.exerciseDelete = false;
     }
 
     @Test
@@ -35,30 +34,30 @@ class UserRankViewDtoTest {
         assertEquals(1L, dto.id);
         assertEquals("Admin", dto.name);
         assertTrue(dto.adminView);
-        assertTrue(dto.pageAdd);
-        assertTrue(dto.pageEdit);
-        assertFalse(dto.pageDelete);
-        assertTrue(dto.postAdd);
-        assertTrue(dto.postEdit);
-        assertFalse(dto.postDelete);
+        assertTrue(dto.lessonAdd);
+        assertTrue(dto.lessonEdit);
+        assertFalse(dto.lessonDelete);
+        assertTrue(dto.exerciseAdd);
+        assertTrue(dto.exerciseEdit);
+        assertFalse(dto.exerciseDelete);
     }
 
     @Test
     @DisplayName("Should handle entity with all permissions false")
     void shouldHandleEntityWithAllPermissionsFalse() {
         this.rankEntity.adminView = false;
-        this.rankEntity.pageAdd = false;
-        this.rankEntity.pageEdit = false;
-        this.rankEntity.postAdd = false;
-        this.rankEntity.postEdit = false;
+        this.rankEntity.lessonAdd = false;
+        this.rankEntity.lessonEdit = false;
+        this.rankEntity.exerciseAdd = false;
+        this.rankEntity.exerciseEdit = false;
 
         final UserRankViewDto dto = new UserRankViewDto(this.rankEntity);
 
         assertFalse(dto.adminView);
-        assertFalse(dto.pageAdd);
-        assertFalse(dto.pageEdit);
-        assertFalse(dto.postAdd);
-        assertFalse(dto.postEdit);
+        assertFalse(dto.lessonAdd);
+        assertFalse(dto.lessonEdit);
+        assertFalse(dto.exerciseAdd);
+        assertFalse(dto.exerciseEdit);
     }
 
     @Test

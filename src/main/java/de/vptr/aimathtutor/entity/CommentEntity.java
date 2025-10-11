@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "post_comments")
+@Table(name = "comments")
 public class CommentEntity extends PanacheEntityBase {
 
     @Id
@@ -20,7 +20,7 @@ public class CommentEntity extends PanacheEntityBase {
     public String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "exercise_id", nullable = false)
     public ExerciseEntity exercise;
 
     @ManyToOne(fetch = FetchType.LAZY)

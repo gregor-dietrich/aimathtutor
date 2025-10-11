@@ -12,29 +12,29 @@ class UserDtoTest {
 
     @BeforeEach
     void setUp() {
-        userDto = new UserDto();
+        this.userDto = new UserDto();
     }
 
     @Test
     @DisplayName("Should create UserDto with default constructor")
     void shouldCreateUserDtoWithDefaultConstructor() {
         // Then
-        assertNull(userDto.id);
-        assertNull(userDto.username);
-        assertNull(userDto.password);
-        assertNull(userDto.email);
-        assertNull(userDto.rankId);
-        assertNull(userDto.banned);
-        assertNull(userDto.activated);
-        assertNull(userDto.activationKey);
-        assertNull(userDto.lastIp);
+        assertNull(this.userDto.id);
+        assertNull(this.userDto.username);
+        assertNull(this.userDto.password);
+        assertNull(this.userDto.email);
+        assertNull(this.userDto.rankId);
+        assertNull(this.userDto.banned);
+        assertNull(this.userDto.activated);
+        assertNull(this.userDto.activationKey);
+        assertNull(this.userDto.lastIp);
     }
 
     @Test
     @DisplayName("Should create UserDto with parameterized constructor")
     void shouldCreateUserDtoWithParameterizedConstructor() {
         // When
-        UserDto dto = new UserDto("testuser", "password123", "test@example.com", 1L, false, true, "key123",
+        final UserDto dto = new UserDto("testuser", "password123", "test@example.com", 1L, false, true, "key123",
                 "192.168.1.1");
 
         // Then
@@ -53,119 +53,119 @@ class UserDtoTest {
     @DisplayName("Should set all fields correctly")
     void shouldSetAllFieldsCorrectly() {
         // When
-        userDto.id = 1L;
-        userDto.username = "testuser";
-        userDto.password = "hashedpassword";
-        userDto.email = "test@example.com";
-        userDto.rankId = 2L;
-        userDto.banned = false;
-        userDto.activated = true;
-        userDto.activationKey = "activation123";
-        userDto.lastIp = "192.168.1.1";
+        this.userDto.id = 1L;
+        this.userDto.username = "testuser";
+        this.userDto.password = "hashedpassword";
+        this.userDto.email = "test@example.com";
+        this.userDto.rankId = 2L;
+        this.userDto.banned = false;
+        this.userDto.activated = true;
+        this.userDto.activationKey = "activation123";
+        this.userDto.lastIp = "192.168.1.1";
 
         // Then
-        assertEquals(1L, userDto.id);
-        assertEquals("testuser", userDto.username);
-        assertEquals("hashedpassword", userDto.password);
-        assertEquals("test@example.com", userDto.email);
-        assertEquals(2L, userDto.rankId);
-        assertFalse(userDto.banned);
-        assertTrue(userDto.activated);
-        assertEquals("activation123", userDto.activationKey);
-        assertEquals("192.168.1.1", userDto.lastIp);
+        assertEquals(1L, this.userDto.id);
+        assertEquals("testuser", this.userDto.username);
+        assertEquals("hashedpassword", this.userDto.password);
+        assertEquals("test@example.com", this.userDto.email);
+        assertEquals(2L, this.userDto.rankId);
+        assertFalse(this.userDto.banned);
+        assertTrue(this.userDto.activated);
+        assertEquals("activation123", this.userDto.activationKey);
+        assertEquals("192.168.1.1", this.userDto.lastIp);
     }
 
     @Test
     @DisplayName("Should handle null values")
     void shouldHandleNullValues() {
         // When
-        userDto.username = null;
-        userDto.password = null;
-        userDto.email = null;
-        userDto.rankId = null;
-        userDto.banned = null;
-        userDto.activated = null;
-        userDto.activationKey = null;
-        userDto.lastIp = null;
+        this.userDto.username = null;
+        this.userDto.password = null;
+        this.userDto.email = null;
+        this.userDto.rankId = null;
+        this.userDto.banned = null;
+        this.userDto.activated = null;
+        this.userDto.activationKey = null;
+        this.userDto.lastIp = null;
 
         // Then
-        assertNull(userDto.username);
-        assertNull(userDto.password);
-        assertNull(userDto.email);
-        assertNull(userDto.rankId);
-        assertNull(userDto.banned);
-        assertNull(userDto.activated);
-        assertNull(userDto.activationKey);
-        assertNull(userDto.lastIp);
+        assertNull(this.userDto.username);
+        assertNull(this.userDto.password);
+        assertNull(this.userDto.email);
+        assertNull(this.userDto.rankId);
+        assertNull(this.userDto.banned);
+        assertNull(this.userDto.activated);
+        assertNull(this.userDto.activationKey);
+        assertNull(this.userDto.lastIp);
     }
 
     @Test
     @DisplayName("Should handle empty strings")
     void shouldHandleEmptyStrings() {
         // When
-        userDto.username = "";
-        userDto.password = "";
-        userDto.email = "";
-        userDto.activationKey = "";
-        userDto.lastIp = "";
+        this.userDto.username = "";
+        this.userDto.password = "";
+        this.userDto.email = "";
+        this.userDto.activationKey = "";
+        this.userDto.lastIp = "";
 
         // Then
-        assertEquals("", userDto.username);
-        assertEquals("", userDto.password);
-        assertEquals("", userDto.email);
-        assertEquals("", userDto.activationKey);
-        assertEquals("", userDto.lastIp);
+        assertEquals("", this.userDto.username);
+        assertEquals("", this.userDto.password);
+        assertEquals("", this.userDto.email);
+        assertEquals("", this.userDto.activationKey);
+        assertEquals("", this.userDto.lastIp);
     }
 
     @Test
     @DisplayName("Should handle boolean flags correctly")
     void shouldHandleBooleanFlagsCorrectly() {
         // When - Test all boolean combinations
-        userDto.banned = true;
-        userDto.activated = false;
+        this.userDto.banned = true;
+        this.userDto.activated = false;
 
         // Then
-        assertTrue(userDto.banned);
-        assertFalse(userDto.activated);
+        assertTrue(this.userDto.banned);
+        assertFalse(this.userDto.activated);
 
         // When - Flip values
-        userDto.banned = false;
-        userDto.activated = true;
+        this.userDto.banned = false;
+        this.userDto.activated = true;
 
         // Then
-        assertFalse(userDto.banned);
-        assertTrue(userDto.activated);
+        assertFalse(this.userDto.banned);
+        assertTrue(this.userDto.activated);
     }
 
     @Test
     @DisplayName("Should handle special characters in fields")
     void shouldHandleSpecialCharactersInFields() {
         // Given
-        String specialUsername = "test_user-123@domain.com";
-        String specialEmail = "test+user@sub.domain.co.uk";
-        String specialKey = "key-123_456@activation";
-        String specialIp = "::1"; // IPv6 localhost
+        final String specialUsername = "test_user-123@domain.com";
+        final String specialEmail = "test+user@sub.domain.co.uk";
+        final String specialKey = "key-123_456@activation";
+        final String specialIp = "::1"; // IPv6 localhost
 
         // When
-        userDto.username = specialUsername;
-        userDto.email = specialEmail;
-        userDto.activationKey = specialKey;
-        userDto.lastIp = specialIp;
+        this.userDto.username = specialUsername;
+        this.userDto.email = specialEmail;
+        this.userDto.activationKey = specialKey;
+        this.userDto.lastIp = specialIp;
 
         // Then
-        assertEquals(specialUsername, userDto.username);
-        assertEquals(specialEmail, userDto.email);
-        assertEquals(specialKey, userDto.activationKey);
-        assertEquals(specialIp, userDto.lastIp);
+        assertEquals(specialUsername, this.userDto.username);
+        assertEquals(specialEmail, this.userDto.email);
+        assertEquals(specialKey, this.userDto.activationKey);
+        assertEquals(specialIp, this.userDto.lastIp);
     }
 
     @Test
     @DisplayName("Should handle long strings")
     void shouldHandleLongStrings() {
         // Given
-        StringBuilder longUsername = new StringBuilder();
-        StringBuilder longPassword = new StringBuilder();
-        StringBuilder longEmail = new StringBuilder();
+        final StringBuilder longUsername = new StringBuilder();
+        final StringBuilder longPassword = new StringBuilder();
+        final StringBuilder longEmail = new StringBuilder();
 
         for (int i = 0; i < 100; i++) {
             longUsername.append("u");
@@ -175,21 +175,21 @@ class UserDtoTest {
         longEmail.append("@example.com");
 
         // When
-        userDto.username = longUsername.toString();
-        userDto.password = longPassword.toString();
-        userDto.email = longEmail.toString();
+        this.userDto.username = longUsername.toString();
+        this.userDto.password = longPassword.toString();
+        this.userDto.email = longEmail.toString();
 
         // Then
-        assertEquals(longUsername.toString(), userDto.username);
-        assertEquals(longPassword.toString(), userDto.password);
-        assertEquals(longEmail.toString(), userDto.email);
+        assertEquals(longUsername.toString(), this.userDto.username);
+        assertEquals(longPassword.toString(), this.userDto.password);
+        assertEquals(longEmail.toString(), this.userDto.email);
     }
 
     @Test
     @DisplayName("Should handle edge case IP addresses")
     void shouldHandleEdgeCaseIpAddresses() {
         // Test various IP formats
-        String[] ipAddresses = {
+        final String[] ipAddresses = {
                 "127.0.0.1", // IPv4 localhost
                 "0.0.0.0", // IPv4 any
                 "255.255.255.255", // IPv4 broadcast
@@ -198,12 +198,12 @@ class UserDtoTest {
                 "fe80::1%lo0" // IPv6 with zone
         };
 
-        for (String ip : ipAddresses) {
+        for (final String ip : ipAddresses) {
             // When
-            userDto.lastIp = ip;
+            this.userDto.lastIp = ip;
 
             // Then
-            assertEquals(ip, userDto.lastIp);
+            assertEquals(ip, this.userDto.lastIp);
         }
     }
 }

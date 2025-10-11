@@ -10,8 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.service.CommentService;
-import de.vptr.aimathtutor.service.UserService;
 import jakarta.validation.ValidationException;
 
 @ExtendWith(MockitoExtension.class)

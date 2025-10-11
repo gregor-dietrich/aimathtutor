@@ -38,7 +38,7 @@ public class OpenAIRequestDto {
         public Message() {
         }
 
-        public Message(String role, String content) {
+        public Message(final String role, final String content) {
             this.role = role;
             this.content = content;
         }
@@ -50,7 +50,7 @@ public class OpenAIRequestDto {
         public ResponseFormat() {
         }
 
-        public ResponseFormat(String type) {
+        public ResponseFormat(final String type) {
             this.type = type;
         }
     }
@@ -58,8 +58,8 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a simple chat request
      */
-    public static OpenAIRequestDto createChatRequest(String systemPrompt, String userPrompt, String model,
-            Double temperature, Integer maxTokens) {
+    public static OpenAIRequestDto createChatRequest(final String systemPrompt, final String userPrompt, final String model,
+            final Double temperature, final Integer maxTokens) {
         final var request = new OpenAIRequestDto();
         request.model = model;
         request.temperature = temperature;
@@ -75,8 +75,8 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a JSON mode request (guarantees valid JSON response)
      */
-    public static OpenAIRequestDto createJsonRequest(String systemPrompt, String userPrompt, String model,
-            Double temperature, Integer maxTokens) {
+    public static OpenAIRequestDto createJsonRequest(final String systemPrompt, final String userPrompt, final String model,
+            final Double temperature, final Integer maxTokens) {
         final var request = createChatRequest(systemPrompt, userPrompt, model, temperature, maxTokens);
         request.responseFormat = new ResponseFormat("json_object");
         return request;

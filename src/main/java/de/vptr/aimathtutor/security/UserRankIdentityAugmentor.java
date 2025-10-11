@@ -55,36 +55,28 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
         if (Boolean.TRUE.equals(rank.adminView))
             roles.add("admin:view");
 
-        // Page permissions
-        if (Boolean.TRUE.equals(rank.pageAdd))
-            roles.add("page:add");
-        if (Boolean.TRUE.equals(rank.pageDelete))
-            roles.add("page:delete");
-        if (Boolean.TRUE.equals(rank.pageEdit))
-            roles.add("page:edit");
-
-        // Post permissions
-        if (Boolean.TRUE.equals(rank.postAdd))
+        // Exercise permissions
+        if (Boolean.TRUE.equals(rank.exerciseAdd))
             roles.add("post:add");
-        if (Boolean.TRUE.equals(rank.postDelete))
+        if (Boolean.TRUE.equals(rank.exerciseDelete))
             roles.add("post:delete");
-        if (Boolean.TRUE.equals(rank.postEdit))
+        if (Boolean.TRUE.equals(rank.exerciseEdit))
             roles.add("post:edit");
 
-        // Post category permissions
-        if (Boolean.TRUE.equals(rank.postCategoryAdd))
+        // Lesson permissions
+        if (Boolean.TRUE.equals(rank.lessonAdd))
             roles.add("post-category:add");
-        if (Boolean.TRUE.equals(rank.postCategoryDelete))
+        if (Boolean.TRUE.equals(rank.lessonDelete))
             roles.add("post-category:delete");
-        if (Boolean.TRUE.equals(rank.postCategoryEdit))
+        if (Boolean.TRUE.equals(rank.lessonEdit))
             roles.add("post-category:edit");
 
-        // Post comment permissions
-        if (Boolean.TRUE.equals(rank.postCommentAdd))
+        // Comment permissions
+        if (Boolean.TRUE.equals(rank.commentAdd))
             roles.add("post-comment:add");
-        if (Boolean.TRUE.equals(rank.postCommentDelete))
+        if (Boolean.TRUE.equals(rank.commentDelete))
             roles.add("post-comment:delete");
-        if (Boolean.TRUE.equals(rank.postCommentEdit))
+        if (Boolean.TRUE.equals(rank.commentEdit))
             roles.add("post-comment:edit");
 
         // User permissions
@@ -102,14 +94,6 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
             roles.add("user-group:delete");
         if (Boolean.TRUE.equals(rank.userGroupEdit))
             roles.add("user-group:edit");
-
-        // Account permissions
-        if (Boolean.TRUE.equals(rank.userAccountAdd))
-            roles.add("user-account:add");
-        if (Boolean.TRUE.equals(rank.userAccountDelete))
-            roles.add("user-account:delete");
-        if (Boolean.TRUE.equals(rank.userAccountEdit))
-            roles.add("user-account:edit");
 
         // User rank permissions
         if (Boolean.TRUE.equals(rank.userRankAdd))

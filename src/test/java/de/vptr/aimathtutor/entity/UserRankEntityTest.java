@@ -9,165 +9,144 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
-
 class UserRankEntityTest {
 
     private UserRankEntity userRank;
 
     @BeforeEach
     void setUp() {
-        userRank = new UserRankEntity();
+        this.userRank = new UserRankEntity();
     }
 
     @Test
     @DisplayName("Should create UserRankEntity with all fields")
     void shouldCreateUserRankEntityWithAllFields() {
         // Given
-        List<UserEntity> users = new ArrayList<>();
+        final List<UserEntity> users = new ArrayList<>();
 
         // When
-        userRank.id = 1L;
-        userRank.name = "Administrator";
-        userRank.adminView = true;
-        userRank.pageAdd = true;
-        userRank.pageDelete = true;
-        userRank.pageEdit = true;
-        userRank.postAdd = true;
-        userRank.postDelete = true;
-        userRank.postEdit = true;
-        userRank.postCategoryAdd = true;
-        userRank.postCategoryDelete = true;
-        userRank.postCategoryEdit = true;
-        userRank.postCommentAdd = true;
-        userRank.postCommentDelete = true;
-        userRank.postCommentEdit = true;
-        userRank.userAdd = true;
-        userRank.userDelete = true;
-        userRank.userEdit = true;
-        userRank.userGroupAdd = true;
-        userRank.userGroupDelete = true;
-        userRank.userGroupEdit = true;
-        userRank.userAccountAdd = true;
-        userRank.userAccountDelete = true;
-        userRank.userAccountEdit = true;
-        userRank.userRankAdd = true;
-        userRank.userRankDelete = true;
-        userRank.userRankEdit = true;
-        userRank.users = users;
+        this.userRank.id = 1L;
+        this.userRank.name = "Administrator";
+        this.userRank.adminView = true;
+        this.userRank.exerciseAdd = true;
+        this.userRank.exerciseDelete = true;
+        this.userRank.exerciseEdit = true;
+        this.userRank.lessonAdd = true;
+        this.userRank.lessonDelete = true;
+        this.userRank.lessonEdit = true;
+        this.userRank.commentAdd = true;
+        this.userRank.commentDelete = true;
+        this.userRank.commentEdit = true;
+        this.userRank.userAdd = true;
+        this.userRank.userDelete = true;
+        this.userRank.userEdit = true;
+        this.userRank.userGroupAdd = true;
+        this.userRank.userGroupDelete = true;
+        this.userRank.userGroupEdit = true;
+        this.userRank.userRankAdd = true;
+        this.userRank.userRankDelete = true;
+        this.userRank.userRankEdit = true;
+        this.userRank.users = users;
 
         // Then
-        assertEquals(1L, userRank.id);
-        assertEquals("Administrator", userRank.name);
-        assertTrue(userRank.adminView);
-        assertTrue(userRank.pageAdd);
-        assertTrue(userRank.pageDelete);
-        assertTrue(userRank.pageEdit);
-        assertTrue(userRank.postAdd);
-        assertTrue(userRank.postDelete);
-        assertTrue(userRank.postEdit);
-        assertTrue(userRank.postCategoryAdd);
-        assertTrue(userRank.postCategoryDelete);
-        assertTrue(userRank.postCategoryEdit);
-        assertTrue(userRank.postCommentAdd);
-        assertTrue(userRank.postCommentDelete);
-        assertTrue(userRank.postCommentEdit);
-        assertTrue(userRank.userAdd);
-        assertTrue(userRank.userDelete);
-        assertTrue(userRank.userEdit);
-        assertTrue(userRank.userGroupAdd);
-        assertTrue(userRank.userGroupDelete);
-        assertTrue(userRank.userGroupEdit);
-        assertTrue(userRank.userAccountAdd);
-        assertTrue(userRank.userAccountDelete);
-        assertTrue(userRank.userAccountEdit);
-        assertTrue(userRank.userRankAdd);
-        assertTrue(userRank.userRankDelete);
-        assertTrue(userRank.userRankEdit);
-        assertEquals(users, userRank.users);
+        assertEquals(1L, this.userRank.id);
+        assertEquals("Administrator", this.userRank.name);
+        assertTrue(this.userRank.adminView);
+        assertTrue(this.userRank.exerciseAdd);
+        assertTrue(this.userRank.exerciseDelete);
+        assertTrue(this.userRank.exerciseEdit);
+        assertTrue(this.userRank.lessonAdd);
+        assertTrue(this.userRank.lessonDelete);
+        assertTrue(this.userRank.lessonEdit);
+        assertTrue(this.userRank.commentAdd);
+        assertTrue(this.userRank.commentDelete);
+        assertTrue(this.userRank.commentEdit);
+        assertTrue(this.userRank.userAdd);
+        assertTrue(this.userRank.userDelete);
+        assertTrue(this.userRank.userEdit);
+        assertTrue(this.userRank.userGroupAdd);
+        assertTrue(this.userRank.userGroupDelete);
+        assertTrue(this.userRank.userGroupEdit);
+        assertTrue(this.userRank.userRankAdd);
+        assertTrue(this.userRank.userRankDelete);
+        assertTrue(this.userRank.userRankEdit);
+        assertEquals(users, this.userRank.users);
     }
 
     @Test
     @DisplayName("Should have default false values for all permissions")
     void shouldHaveDefaultFalseValuesForAllPermissions() {
         // Then
-        assertFalse(userRank.adminView);
-        assertFalse(userRank.pageAdd);
-        assertFalse(userRank.pageDelete);
-        assertFalse(userRank.pageEdit);
-        assertFalse(userRank.postAdd);
-        assertFalse(userRank.postDelete);
-        assertFalse(userRank.postEdit);
-        assertFalse(userRank.postCategoryAdd);
-        assertFalse(userRank.postCategoryDelete);
-        assertFalse(userRank.postCategoryEdit);
-        assertFalse(userRank.postCommentAdd);
-        assertFalse(userRank.postCommentDelete);
-        assertFalse(userRank.postCommentEdit);
-        assertFalse(userRank.userAdd);
-        assertFalse(userRank.userDelete);
-        assertFalse(userRank.userEdit);
-        assertFalse(userRank.userGroupAdd);
-        assertFalse(userRank.userGroupDelete);
-        assertFalse(userRank.userGroupEdit);
-        assertFalse(userRank.userAccountAdd);
-        assertFalse(userRank.userAccountDelete);
-        assertFalse(userRank.userAccountEdit);
-        assertFalse(userRank.userRankAdd);
-        assertFalse(userRank.userRankDelete);
-        assertFalse(userRank.userRankEdit);
+        assertFalse(this.userRank.adminView);
+        assertFalse(this.userRank.exerciseAdd);
+        assertFalse(this.userRank.exerciseDelete);
+        assertFalse(this.userRank.exerciseEdit);
+        assertFalse(this.userRank.lessonAdd);
+        assertFalse(this.userRank.lessonDelete);
+        assertFalse(this.userRank.lessonEdit);
+        assertFalse(this.userRank.commentAdd);
+        assertFalse(this.userRank.commentDelete);
+        assertFalse(this.userRank.commentEdit);
+        assertFalse(this.userRank.userAdd);
+        assertFalse(this.userRank.userDelete);
+        assertFalse(this.userRank.userEdit);
+        assertFalse(this.userRank.userGroupAdd);
+        assertFalse(this.userRank.userGroupDelete);
+        assertFalse(this.userRank.userGroupEdit);
+        assertFalse(this.userRank.userRankAdd);
+        assertFalse(this.userRank.userRankDelete);
+        assertFalse(this.userRank.userRankEdit);
     }
 
     @Test
     @DisplayName("Should create read-only user rank")
     void shouldCreateReadOnlyUserRank() {
         // When
-        userRank.name = "Viewer";
-        userRank.adminView = false;
+        this.userRank.name = "Viewer";
+        this.userRank.adminView = false;
         // All other permissions remain false by default
 
         // Then
-        assertEquals("Viewer", userRank.name);
-        assertFalse(userRank.adminView);
-        assertFalse(userRank.userAdd);
-        assertFalse(userRank.userDelete);
-        assertFalse(userRank.postAdd);
-        assertFalse(userRank.postDelete);
+        assertEquals("Viewer", this.userRank.name);
+        assertFalse(this.userRank.adminView);
+        assertFalse(this.userRank.userAdd);
+        assertFalse(this.userRank.userDelete);
+        assertFalse(this.userRank.exerciseAdd);
+        assertFalse(this.userRank.exerciseDelete);
     }
 
     @Test
     @DisplayName("Should create moderator user rank")
     void shouldCreateModeratorUserRank() {
         // When
-        userRank.name = "Moderator";
-        userRank.adminView = true;
-        userRank.postEdit = true;
-        userRank.postDelete = true;
-        userRank.postCommentEdit = true;
-        userRank.postCommentDelete = true;
+        this.userRank.name = "Moderator";
+        this.userRank.adminView = true;
+        this.userRank.exerciseEdit = true;
+        this.userRank.exerciseDelete = true;
+        this.userRank.commentEdit = true;
+        this.userRank.commentDelete = true;
 
         // Then
-        assertEquals("Moderator", userRank.name);
-        assertTrue(userRank.adminView);
-        assertTrue(userRank.postEdit);
-        assertTrue(userRank.postDelete);
-        assertTrue(userRank.postCommentEdit);
-        assertTrue(userRank.postCommentDelete);
-        assertFalse(userRank.userAdd); // Still can't manage users
-        assertFalse(userRank.userRankEdit); // Still can't edit ranks
+        assertEquals("Moderator", this.userRank.name);
+        assertTrue(this.userRank.adminView);
+        assertTrue(this.userRank.exerciseEdit);
+        assertTrue(this.userRank.exerciseDelete);
+        assertTrue(this.userRank.commentEdit);
+        assertTrue(this.userRank.commentDelete);
+        assertFalse(this.userRank.userAdd); // Still can't manage users
+        assertFalse(this.userRank.userRankEdit); // Still can't edit ranks
     }
 
     @Test
     @DisplayName("Should handle users collection properly")
     void shouldHandleUsersCollectionProperly() {
         // Given
-        List<UserEntity> users = new ArrayList<>();
-        UserEntity user1 = new UserEntity();
+        final List<UserEntity> users = new ArrayList<>();
+        final UserEntity user1 = new UserEntity();
         user1.id = 1L;
         user1.username = "admin1";
 
-        UserEntity user2 = new UserEntity();
+        final UserEntity user2 = new UserEntity();
         user2.id = 2L;
         user2.username = "admin2";
 
@@ -175,81 +154,81 @@ class UserRankEntityTest {
         users.add(user2);
 
         // When
-        userRank.users = users;
+        this.userRank.users = users;
 
         // Then
-        assertNotNull(userRank.users);
-        assertEquals(2, userRank.users.size());
-        assertEquals(user1, userRank.users.get(0));
-        assertEquals(user2, userRank.users.get(1));
+        assertNotNull(this.userRank.users);
+        assertEquals(2, this.userRank.users.size());
+        assertEquals(user1, this.userRank.users.get(0));
+        assertEquals(user2, this.userRank.users.get(1));
     }
 
     @Test
     @DisplayName("Should handle empty users collection")
     void shouldHandleEmptyUsersCollection() {
         // When
-        userRank.users = new ArrayList<>();
+        this.userRank.users = new ArrayList<>();
 
         // Then
-        assertNotNull(userRank.users);
-        assertTrue(userRank.users.isEmpty());
+        assertNotNull(this.userRank.users);
+        assertTrue(this.userRank.users.isEmpty());
     }
 
     @Test
     @DisplayName("Should handle null users collection")
     void shouldHandleNullUsersCollection() {
         // When
-        userRank.users = null;
+        this.userRank.users = null;
 
         // Then
-        assertNull(userRank.users);
+        assertNull(this.userRank.users);
     }
 
     @Test
     @DisplayName("Should handle null name")
     void shouldHandleNullName() {
         // When
-        userRank.name = null;
+        this.userRank.name = null;
 
         // Then
-        assertNull(userRank.name);
+        assertNull(this.userRank.name);
     }
 
     @Test
     @DisplayName("Should handle empty name")
     void shouldHandleEmptyName() {
         // When
-        userRank.name = "";
+        this.userRank.name = "";
 
         // Then
-        assertEquals("", userRank.name);
+        assertEquals("", this.userRank.name);
     }
 
     @Test
     @DisplayName("Should allow individual permission setting")
     void shouldAllowIndividualPermissionSetting() {
         // When - Set only specific permissions
-        userRank.postAdd = true;
-        userRank.postCommentAdd = true;
+        this.userRank.exerciseAdd = true;
+        this.userRank.commentAdd = true;
 
         // Then
-        assertTrue(userRank.postAdd);
-        assertTrue(userRank.postCommentAdd);
-        assertFalse(userRank.postDelete);
-        assertFalse(userRank.postEdit);
-        assertFalse(userRank.userAdd);
-        assertFalse(userRank.adminView);
+        assertTrue(this.userRank.exerciseAdd);
+        assertTrue(this.userRank.commentAdd);
+        assertFalse(this.userRank.exerciseDelete);
+        assertFalse(this.userRank.exerciseEdit);
+        assertFalse(this.userRank.userAdd);
+        assertFalse(this.userRank.adminView);
     }
 
     @Test
     @DisplayName("Should handle null permission values")
     void shouldHandleNullPermissionValues() {
         // When
-        userRank.adminView = null;
-        userRank.postAdd = null;
+        this.userRank.adminView = null;
+        this.userRank.exerciseAdd = null;
 
         // Then
-        assertNull(userRank.adminView);
-        assertNull(userRank.postAdd);
+        assertNull(this.userRank.adminView);
+        assertNull(this.userRank.exerciseAdd);
     }
 }

@@ -10,25 +10,20 @@ public class UserRankViewDto {
     // View permissions
     public Boolean adminView;
 
-    // Page permissions
-    public Boolean pageAdd;
-    public Boolean pageDelete;
-    public Boolean pageEdit;
+    // Exercise permissions
+    public Boolean exerciseAdd;
+    public Boolean exerciseDelete;
+    public Boolean exerciseEdit;
 
-    // Post permissions
-    public Boolean postAdd;
-    public Boolean postDelete;
-    public Boolean postEdit;
+    // Lesson permissions
+    public Boolean lessonAdd;
+    public Boolean lessonDelete;
+    public Boolean lessonEdit;
 
-    // Post category permissions
-    public Boolean postCategoryAdd;
-    public Boolean postCategoryDelete;
-    public Boolean postCategoryEdit;
-
-    // Post comment permissions
-    public Boolean postCommentAdd;
-    public Boolean postCommentDelete;
-    public Boolean postCommentEdit;
+    // Comment permissions
+    public Boolean commentAdd;
+    public Boolean commentDelete;
+    public Boolean commentEdit;
 
     // User permissions
     public Boolean userAdd;
@@ -39,11 +34,6 @@ public class UserRankViewDto {
     public Boolean userGroupAdd;
     public Boolean userGroupDelete;
     public Boolean userGroupEdit;
-
-    // Account permissions
-    public Boolean userAccountAdd;
-    public Boolean userAccountDelete;
-    public Boolean userAccountEdit;
 
     // User rank permissions
     public Boolean userRankAdd;
@@ -64,25 +54,20 @@ public class UserRankViewDto {
             // View permissions
             this.adminView = entity.adminView;
 
-            // Page permissions
-            this.pageAdd = entity.pageAdd;
-            this.pageDelete = entity.pageDelete;
-            this.pageEdit = entity.pageEdit;
-
             // Post permissions
-            this.postAdd = entity.postAdd;
-            this.postDelete = entity.postDelete;
-            this.postEdit = entity.postEdit;
+            this.exerciseAdd = entity.exerciseAdd;
+            this.exerciseDelete = entity.exerciseDelete;
+            this.exerciseEdit = entity.exerciseEdit;
 
             // Post category permissions
-            this.postCategoryAdd = entity.postCategoryAdd;
-            this.postCategoryDelete = entity.postCategoryDelete;
-            this.postCategoryEdit = entity.postCategoryEdit;
+            this.lessonAdd = entity.lessonAdd;
+            this.lessonDelete = entity.lessonDelete;
+            this.lessonEdit = entity.lessonEdit;
 
             // Post comment permissions
-            this.postCommentAdd = entity.postCommentAdd;
-            this.postCommentDelete = entity.postCommentDelete;
-            this.postCommentEdit = entity.postCommentEdit;
+            this.commentAdd = entity.commentAdd;
+            this.commentDelete = entity.commentDelete;
+            this.commentEdit = entity.commentEdit;
 
             // User permissions
             this.userAdd = entity.userAdd;
@@ -93,11 +78,6 @@ public class UserRankViewDto {
             this.userGroupAdd = entity.userGroupAdd;
             this.userGroupDelete = entity.userGroupDelete;
             this.userGroupEdit = entity.userGroupEdit;
-
-            // Account permissions
-            this.userAccountAdd = entity.userAccountAdd;
-            this.userAccountDelete = entity.userAccountDelete;
-            this.userAccountEdit = entity.userAccountEdit;
 
             // User rank permissions
             this.userRankAdd = entity.userRankAdd;
@@ -114,19 +94,19 @@ public class UserRankViewDto {
         return Boolean.TRUE.equals(this.adminView);
     }
 
-    public boolean hasAnyPostPermission() {
-        return Boolean.TRUE.equals(this.postAdd) || Boolean.TRUE.equals(this.postEdit)
-                || Boolean.TRUE.equals(this.postDelete);
+    public boolean hasAnyExercisePermission() {
+        return Boolean.TRUE.equals(this.exerciseAdd) || Boolean.TRUE.equals(this.exerciseEdit)
+                || Boolean.TRUE.equals(this.exerciseDelete);
     }
 
-    public boolean hasAnyPostCategoryPermission() {
-        return Boolean.TRUE.equals(this.postCategoryAdd) || Boolean.TRUE.equals(this.postCategoryEdit)
-                || Boolean.TRUE.equals(this.postCategoryDelete);
+    public boolean hasAnyLessonPermission() {
+        return Boolean.TRUE.equals(this.lessonAdd) || Boolean.TRUE.equals(this.lessonEdit)
+                || Boolean.TRUE.equals(this.lessonDelete);
     }
 
-    public boolean hasAnyPostCommentPermission() {
-        return Boolean.TRUE.equals(this.postCommentAdd) || Boolean.TRUE.equals(this.postCommentEdit)
-                || Boolean.TRUE.equals(this.postCommentDelete);
+    public boolean hasAnyCommentPermission() {
+        return Boolean.TRUE.equals(this.commentAdd) || Boolean.TRUE.equals(this.commentEdit)
+                || Boolean.TRUE.equals(this.commentDelete);
     }
 
     public boolean hasAnyUserPermission() {
@@ -149,27 +129,21 @@ public class UserRankViewDto {
         dto.id = this.id;
         dto.name = this.name;
         dto.adminView = this.adminView;
-        dto.pageAdd = this.pageAdd;
-        dto.pageDelete = this.pageDelete;
-        dto.pageEdit = this.pageEdit;
-        dto.postAdd = this.postAdd;
-        dto.postDelete = this.postDelete;
-        dto.postEdit = this.postEdit;
-        dto.postCategoryAdd = this.postCategoryAdd;
-        dto.postCategoryDelete = this.postCategoryDelete;
-        dto.postCategoryEdit = this.postCategoryEdit;
-        dto.postCommentAdd = this.postCommentAdd;
-        dto.postCommentDelete = this.postCommentDelete;
-        dto.postCommentEdit = this.postCommentEdit;
+        dto.exerciseAdd = this.exerciseAdd;
+        dto.exerciseDelete = this.exerciseDelete;
+        dto.exerciseEdit = this.exerciseEdit;
+        dto.lessonAdd = this.lessonAdd;
+        dto.lessonDelete = this.lessonDelete;
+        dto.lessonEdit = this.lessonEdit;
+        dto.commentAdd = this.commentAdd;
+        dto.commentDelete = this.commentDelete;
+        dto.commentEdit = this.commentEdit;
         dto.userAdd = this.userAdd;
         dto.userDelete = this.userDelete;
         dto.userEdit = this.userEdit;
         dto.userGroupAdd = this.userGroupAdd;
         dto.userGroupDelete = this.userGroupDelete;
         dto.userGroupEdit = this.userGroupEdit;
-        dto.userAccountAdd = this.userAccountAdd;
-        dto.userAccountDelete = this.userAccountDelete;
-        dto.userAccountEdit = this.userAccountEdit;
         dto.userRankAdd = this.userRankAdd;
         dto.userRankDelete = this.userRankDelete;
         dto.userRankEdit = this.userRankEdit;

@@ -28,23 +28,23 @@ public class OllamaResponseDto {
      * Extract the text content
      */
     public String getTextContent() {
-        return response;
+        return this.response;
     }
 
     /**
      * Check if the response is complete
      */
     public boolean isComplete() {
-        return done != null && done;
+        return this.done != null && this.done;
     }
 
     /**
      * Get tokens per second (if available)
      */
     public Double getTokensPerSecond() {
-        if (evalCount != null && evalDuration != null && evalDuration > 0) {
+        if (this.evalCount != null && this.evalDuration != null && this.evalDuration > 0) {
             // evalDuration is in nanoseconds
-            return evalCount / (evalDuration / 1_000_000_000.0);
+            return this.evalCount / (this.evalDuration / 1_000_000_000.0);
         }
         return null;
     }

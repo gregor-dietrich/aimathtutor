@@ -25,7 +25,7 @@ public class GeminiRequestDto {
         public Content() {
         }
 
-        public Content(String text) {
+        public Content(final String text) {
             this.parts = List.of(new Part(text));
             this.role = "user";
         }
@@ -37,7 +37,7 @@ public class GeminiRequestDto {
         public Part() {
         }
 
-        public Part(String text) {
+        public Part(final String text) {
             this.text = text;
         }
     }
@@ -54,21 +54,21 @@ public class GeminiRequestDto {
         public GenerationConfig() {
         }
 
-        public GenerationConfig(Double temperature, Integer maxOutputTokens) {
+        public GenerationConfig(final Double temperature, final Integer maxOutputTokens) {
             this.temperature = temperature;
             this.maxOutputTokens = maxOutputTokens;
         }
     }
 
     public static class SafetySetting {
-        public String category;
+        public String lesson;
         public String threshold;
 
         public SafetySetting() {
         }
 
-        public SafetySetting(String category, String threshold) {
-            this.category = category;
+        public SafetySetting(final String lesson, final String threshold) {
+            this.lesson = lesson;
             this.threshold = threshold;
         }
     }
@@ -76,7 +76,7 @@ public class GeminiRequestDto {
     /**
      * Helper method to create a simple text request
      */
-    public static GeminiRequestDto createTextRequest(String prompt, Double temperature, Integer maxTokens) {
+    public static GeminiRequestDto createTextRequest(final String prompt, final Double temperature, final Integer maxTokens) {
         final var request = new GeminiRequestDto();
         request.contents = List.of(new Content(prompt));
         request.generationConfig = new GenerationConfig(temperature, maxTokens);

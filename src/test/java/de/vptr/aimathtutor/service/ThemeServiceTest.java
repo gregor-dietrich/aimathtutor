@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.ThemeService.Theme;
 
 class ThemeServiceTest {
@@ -15,7 +14,7 @@ class ThemeServiceTest {
 
     @BeforeEach
     void setUp() {
-        themeService = new ThemeService();
+        this.themeService = new ThemeService();
     }
 
     @Test
@@ -23,7 +22,7 @@ class ThemeServiceTest {
     void shouldReturnSystemThemeAsDefaultWhenNoSession() {
         // Note: VaadinSession.getCurrent() will return null in test environment
         // When
-        Theme currentTheme = themeService.getCurrentTheme();
+        final Theme currentTheme = this.themeService.getCurrentTheme();
 
         // Then
         assertEquals(Theme.SYSTEM, currentTheme);
@@ -33,7 +32,7 @@ class ThemeServiceTest {
     @DisplayName("Should get next theme correctly from LIGHT")
     void shouldGetNextThemeCorrectlyFromLight() {
         // When
-        Theme nextTheme = themeService.getNextTheme();
+        final Theme nextTheme = this.themeService.getNextTheme();
 
         // Then
         // Since getCurrentTheme() returns SYSTEM by default, getNextTheme should return
@@ -46,7 +45,7 @@ class ThemeServiceTest {
     void shouldCycleThroughThemesCorrectly() {
         // Test the theme cycling logic
         // LIGHT -> DARK
-        Theme nextFromLight = switch (Theme.LIGHT) {
+        final Theme nextFromLight = switch (Theme.LIGHT) {
             case LIGHT -> Theme.DARK;
             case DARK -> Theme.SYSTEM;
             case SYSTEM -> Theme.LIGHT;
@@ -54,7 +53,7 @@ class ThemeServiceTest {
         assertEquals(Theme.DARK, nextFromLight);
 
         // DARK -> SYSTEM
-        Theme nextFromDark = switch (Theme.DARK) {
+        final Theme nextFromDark = switch (Theme.DARK) {
             case LIGHT -> Theme.DARK;
             case DARK -> Theme.SYSTEM;
             case SYSTEM -> Theme.LIGHT;
@@ -62,7 +61,7 @@ class ThemeServiceTest {
         assertEquals(Theme.SYSTEM, nextFromDark);
 
         // SYSTEM -> LIGHT
-        Theme nextFromSystem = switch (Theme.SYSTEM) {
+        final Theme nextFromSystem = switch (Theme.SYSTEM) {
             case LIGHT -> Theme.DARK;
             case DARK -> Theme.SYSTEM;
             case SYSTEM -> Theme.LIGHT;
@@ -74,16 +73,16 @@ class ThemeServiceTest {
     @DisplayName("Should set theme without active UI")
     void shouldSetThemeWithoutActiveUI() {
         // When - This should not throw an exception even without active UI
-        assertDoesNotThrow(() -> themeService.setTheme(Theme.DARK));
+        assertDoesNotThrow(() -> this.themeService.setTheme(Theme.DARK));
     }
 
     @Test
     @DisplayName("Should apply theme without active UI")
     void shouldApplyThemeWithoutActiveUI() {
         // When - This should not throw an exception even without active UI
-        assertDoesNotThrow(() -> themeService.applyTheme(Theme.LIGHT));
-        assertDoesNotThrow(() -> themeService.applyTheme(Theme.DARK));
-        assertDoesNotThrow(() -> themeService.applyTheme(Theme.SYSTEM));
+        assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.LIGHT));
+        assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.DARK));
+        assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.SYSTEM));
     }
 
     @Test
@@ -106,11 +105,11 @@ class ThemeServiceTest {
     @DisplayName("Should handle all theme enum values")
     void shouldHandleAllThemeEnumValues() {
         // Verify all enum values exist
-        Theme[] themes = Theme.values();
+        final Theme[] themes = Theme.values();
         assertEquals(3, themes.length);
 
         // Verify each theme has proper display name
-        for (Theme theme : themes) {
+        for (final Theme theme : themes) {
             assertNotNull(theme.getDisplayName());
             assertFalse(theme.getDisplayName().trim().isEmpty());
         }
@@ -119,7 +118,7 @@ class ThemeServiceTest {
     @Test
     @DisplayName("Should have proper enum ordering")
     void shouldHaveProperEnumOrdering() {
-        Theme[] themes = Theme.values();
+        final Theme[] themes = Theme.values();
 
         assertEquals(Theme.LIGHT, themes[0]);
         assertEquals(Theme.DARK, themes[1]);
@@ -130,12 +129,12 @@ class ThemeServiceTest {
     @DisplayName("Should handle theme cycling edge cases")
     void shouldHandleThemeCyclingEdgeCases() {
         // Test that each theme leads to exactly one next theme
-        assertEquals(Theme.DARK, getNextThemeFor(Theme.LIGHT));
-        assertEquals(Theme.SYSTEM, getNextThemeFor(Theme.DARK));
-        assertEquals(Theme.LIGHT, getNextThemeFor(Theme.SYSTEM));
+        assertEquals(Theme.DARK, this.getNextThemeFor(Theme.LIGHT));
+        assertEquals(Theme.SYSTEM, this.getNextThemeFor(Theme.DARK));
+        assertEquals(Theme.LIGHT, this.getNextThemeFor(Theme.SYSTEM));
     }
 
-    private Theme getNextThemeFor(Theme current) {
+    private Theme getNextThemeFor(final Theme current) {
         return switch (current) {
             case LIGHT -> Theme.DARK;
             case DARK -> Theme.SYSTEM;

@@ -177,116 +177,86 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
             return layout;
         }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
 
-        // Page permissions
+        // Exercise permissions
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.pageAdd != null && rank.pageAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.exerciseAdd != null && rank.exerciseAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Pages");
+                ((SvgIcon) addIcon).setTooltipText("Add Exercises");
             }
 
-            final var editIcon = rank.pageEdit != null && rank.pageEdit ? LineAwesomeIcon.EDIT_SOLID.create()
+            final var editIcon = rank.exerciseEdit != null && rank.exerciseEdit ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Pages");
+                ((SvgIcon) editIcon).setTooltipText("Edit Exercises");
             }
 
-            final var deleteIcon = rank.pageDelete != null && rank.pageDelete ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Pages");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("Pages").setWidth("150px").setFlexGrow(0);
-
-        // Post permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.postAdd != null && rank.postAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Posts");
-            }
-
-            final var editIcon = rank.postEdit != null && rank.postEdit ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Posts");
-            }
-
-            final var deleteIcon = rank.postDelete != null && rank.postDelete ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Posts");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("Posts").setWidth("150px").setFlexGrow(0);
-
-        // Post category permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.postCategoryAdd != null && rank.postCategoryAdd
-                    ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Post Categories");
-            }
-
-            final var editIcon = rank.postCategoryEdit != null && rank.postCategoryEdit
-                    ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Post Categories");
-            }
-
-            final var deleteIcon = rank.postCategoryDelete != null && rank.postCategoryDelete
+            final var deleteIcon = rank.exerciseDelete != null && rank.exerciseDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Post Categories");
+                ((SvgIcon) deleteIcon).setTooltipText("Delete Exercises");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Post Categories").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Exercises").setWidth("150px").setFlexGrow(0);
 
-        // Post comment permissions
+        // Lesson permissions
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.postCommentAdd != null && rank.postCommentAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.lessonAdd != null && rank.lessonAdd
+                    ? LineAwesomeIcon.PLUS_SOLID.create()
+                    : new Span("");
+            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
+            if (addIcon instanceof SvgIcon) {
+                ((SvgIcon) addIcon).setTooltipText("Add Lessons");
+            }
+
+            final var editIcon = rank.lessonEdit != null && rank.lessonEdit
+                    ? LineAwesomeIcon.EDIT_SOLID.create()
+                    : new Span("");
+            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
+            if (editIcon instanceof SvgIcon) {
+                ((SvgIcon) editIcon).setTooltipText("Edit Lessons");
+            }
+
+            final var deleteIcon = rank.lessonDelete != null && rank.lessonDelete
+                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
+                    : new Span("");
+            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
+            if (deleteIcon instanceof SvgIcon) {
+                ((SvgIcon) deleteIcon).setTooltipText("Delete Lessons");
+            }
+
+            layout.add(addIcon, editIcon, deleteIcon);
+            return layout;
+        }).setHeader("Lessons").setWidth("150px").setFlexGrow(0);
+
+        // Comment permissions
+        this.grid.addComponentColumn(rank -> {
+            final var layout = new HorizontalLayout();
+            layout.setSpacing(true);
+            layout.setPadding(false);
+
+            final var addIcon = rank.commentAdd != null && rank.commentAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add Comments");
             }
 
-            final var editIcon = rank.postCommentEdit != null && rank.postCommentEdit
+            final var editIcon = rank.commentEdit != null && rank.commentEdit
                     ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -294,7 +264,7 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
                 ((SvgIcon) editIcon).setTooltipText("Edit Comments");
             }
 
-            final var deleteIcon = rank.postCommentDelete != null && rank.postCommentDelete
+            final var deleteIcon = rank.commentDelete != null && rank.commentDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -304,7 +274,7 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Post Comments").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Comments").setWidth("150px").setFlexGrow(0);
 
         // User permissions
         this.grid.addComponentColumn(rank -> {
@@ -368,39 +338,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
         }).setHeader("User Groups").setWidth("150px").setFlexGrow(0);
-
-        // Account permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.userAccountAdd != null && rank.userAccountAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Accounts");
-            }
-
-            final var editIcon = rank.userAccountEdit != null && rank.userAccountEdit
-                    ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Accounts");
-            }
-
-            final var deleteIcon = rank.userAccountDelete != null && rank.userAccountDelete
-                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Accounts");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("Accounts").setWidth("150px").setFlexGrow(0);
 
         // User rank permissions
         this.grid.addComponentColumn(rank -> {
@@ -466,25 +403,20 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
         // Viewpermissions
         final var adminViewField = new Checkbox("Admin View");
 
-        // Page permissions
-        final var pageAddField = new Checkbox("Can Add Pages");
-        final var pageEditField = new Checkbox("Can Edit Pages");
-        final var pageDeleteField = new Checkbox("Can Delete Pages");
+        // Exercise permissions
+        final var exerciseAddField = new Checkbox("Can Add Exercises");
+        final var exerciseEditField = new Checkbox("Can Edit Exercises");
+        final var exerciseDeleteField = new Checkbox("Can Delete Exercises");
 
-        // Post permissions
-        final var postAddField = new Checkbox("Can Add Posts");
-        final var postEditField = new Checkbox("Can Edit Posts");
-        final var postDeleteField = new Checkbox("Can Delete Posts");
+        // Lesson permissions
+        final var lessonAddField = new Checkbox("Can Add Lessons");
+        final var lessonEditField = new Checkbox("Can Edit Lessons");
+        final var lessonDeleteField = new Checkbox("Can Delete Lessons");
 
-        // Post category permissions
-        final var postCategoryAddField = new Checkbox("Can Add Post Categories");
-        final var postCategoryEditField = new Checkbox("Can Edit Post Categories");
-        final var postCategoryDeleteField = new Checkbox("Can Delete Post Categories");
-
-        // Post comment permissions
-        final var postCommentAddField = new Checkbox("Can Add Post Comments");
-        final var postCommentEditField = new Checkbox("Can Edit Post Comments");
-        final var postCommentDeleteField = new Checkbox("Can Delete Post Comments");
+        // Comment permissions
+        final var commentAddField = new Checkbox("Can Add Comments");
+        final var commentEditField = new Checkbox("Can Edit Comments");
+        final var commentDeleteField = new Checkbox("Can Delete Comments");
 
         // User permissions
         final var userAddField = new Checkbox("Can Add Users");
@@ -495,11 +427,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
         final var userGroupAddField = new Checkbox("Can Add User Groups");
         final var userGroupEditField = new Checkbox("Can Edit User Groups");
         final var userGroupDeleteField = new Checkbox("Can Delete User Groups");
-
-        // Account permissions
-        final var userAccountAddField = new Checkbox("Can Add User Accounts");
-        final var userAccountEditField = new Checkbox("Can Edit User Accounts");
-        final var userAccountDeleteField = new Checkbox("Can Delete User Accounts");
 
         // User rank permissions
         final var userRankAddField = new Checkbox("Can Add User Ranks");
@@ -515,40 +442,32 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
         this.binder.bind(adminViewField, rank1 -> rank1.adminView != null ? rank1.adminView : false,
                 (rank1, value) -> rank1.adminView = value);
 
-        // Page permissions bindings
-        this.binder.bind(pageAddField, rank1 -> rank1.pageAdd != null ? rank1.pageAdd : false,
-                (rank1, value) -> rank1.pageAdd = value);
-        this.binder.bind(pageEditField, rank1 -> rank1.pageEdit != null ? rank1.pageEdit : false,
-                (rank1, value) -> rank1.pageEdit = value);
-        this.binder.bind(pageDeleteField, rank1 -> rank1.pageDelete != null ? rank1.pageDelete : false,
-                (rank1, value) -> rank1.pageDelete = value);
+        // Exercise permissions bindings
+        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd != null ? rank1.exerciseAdd : false,
+                (rank1, value) -> rank1.exerciseAdd = value);
+        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit != null ? rank1.exerciseEdit : false,
+                (rank1, value) -> rank1.exerciseEdit = value);
+        this.binder.bind(exerciseDeleteField, rank1 -> rank1.exerciseDelete != null ? rank1.exerciseDelete : false,
+                (rank1, value) -> rank1.exerciseDelete = value);
 
-        // Post permissions bindings
-        this.binder.bind(postAddField, rank1 -> rank1.postAdd != null ? rank1.postAdd : false,
-                (rank1, value) -> rank1.postAdd = value);
-        this.binder.bind(postEditField, rank1 -> rank1.postEdit != null ? rank1.postEdit : false,
-                (rank1, value) -> rank1.postEdit = value);
-        this.binder.bind(postDeleteField, rank1 -> rank1.postDelete != null ? rank1.postDelete : false,
-                (rank1, value) -> rank1.postDelete = value);
+        // Lesson permissions bindings
+        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd != null ? rank1.lessonAdd : false,
+                (rank1, value) -> rank1.lessonAdd = value);
+        this.binder.bind(lessonEditField,
+                rank1 -> rank1.lessonEdit != null ? rank1.lessonEdit : false,
+                (rank1, value) -> rank1.lessonEdit = value);
+        this.binder.bind(lessonDeleteField,
+                rank1 -> rank1.lessonDelete != null ? rank1.lessonDelete : false,
+                (rank1, value) -> rank1.lessonDelete = value);
 
-        // Post category permissions bindings
-        this.binder.bind(postCategoryAddField, rank1 -> rank1.postCategoryAdd != null ? rank1.postCategoryAdd : false,
-                (rank1, value) -> rank1.postCategoryAdd = value);
-        this.binder.bind(postCategoryEditField,
-                rank1 -> rank1.postCategoryEdit != null ? rank1.postCategoryEdit : false,
-                (rank1, value) -> rank1.postCategoryEdit = value);
-        this.binder.bind(postCategoryDeleteField,
-                rank1 -> rank1.postCategoryDelete != null ? rank1.postCategoryDelete : false,
-                (rank1, value) -> rank1.postCategoryDelete = value);
-
-        // Post comment permissions bindings
-        this.binder.bind(postCommentAddField, rank1 -> rank1.postCommentAdd != null ? rank1.postCommentAdd : false,
-                (rank1, value) -> rank1.postCommentAdd = value);
-        this.binder.bind(postCommentEditField, rank1 -> rank1.postCommentEdit != null ? rank1.postCommentEdit : false,
-                (rank1, value) -> rank1.postCommentEdit = value);
-        this.binder.bind(postCommentDeleteField,
-                rank1 -> rank1.postCommentDelete != null ? rank1.postCommentDelete : false,
-                (rank1, value) -> rank1.postCommentDelete = value);
+        // Comment permissions bindings
+        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd != null ? rank1.commentAdd : false,
+                (rank1, value) -> rank1.commentAdd = value);
+        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit != null ? rank1.commentEdit : false,
+                (rank1, value) -> rank1.commentEdit = value);
+        this.binder.bind(commentDeleteField,
+                rank1 -> rank1.commentDelete != null ? rank1.commentDelete : false,
+                (rank1, value) -> rank1.commentDelete = value);
 
         // User permissions bindings
         this.binder.bind(userAddField, rank1 -> rank1.userAdd != null ? rank1.userAdd : false,
@@ -566,15 +485,6 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
         this.binder.bind(userGroupDeleteField, rank1 -> rank1.userGroupDelete != null ? rank1.userGroupDelete : false,
                 (rank1, value) -> rank1.userGroupDelete = value);
 
-        // Account permissions bindings
-        this.binder.bind(userAccountAddField, rank1 -> rank1.userAccountAdd != null ? rank1.userAccountAdd : false,
-                (rank1, value) -> rank1.userAccountAdd = value);
-        this.binder.bind(userAccountEditField, rank1 -> rank1.userAccountEdit != null ? rank1.userAccountEdit : false,
-                (rank1, value) -> rank1.userAccountEdit = value);
-        this.binder.bind(userAccountDeleteField,
-                rank1 -> rank1.userAccountDelete != null ? rank1.userAccountDelete : false,
-                (rank1, value) -> rank1.userAccountDelete = value);
-
         // User rank permissions bindings
         this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd != null ? rank1.userRankAdd : false,
                 (rank1, value) -> rank1.userRankAdd = value);
@@ -590,26 +500,20 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
         form.add(adminViewField);
 
         // Add section headers and organize permissions in sections
-        form.add(new H3("Page Permissions"));
-        form.add(pageAddField, pageEditField, pageDeleteField);
+        form.add(new H3("Exercise Permissions"));
+        form.add(exerciseAddField, exerciseEditField, exerciseDeleteField);
 
-        form.add(new H3("Post Permissions"));
-        form.add(postAddField, postEditField, postDeleteField);
+        form.add(new H3("Lesson Permissions"));
+        form.add(lessonAddField, lessonEditField, lessonDeleteField);
 
-        form.add(new H3("Post Category Permissions"));
-        form.add(postCategoryAddField, postCategoryEditField, postCategoryDeleteField);
-
-        form.add(new H3("Post Comment Permissions"));
-        form.add(postCommentAddField, postCommentEditField, postCommentDeleteField);
+        form.add(new H3("Comment Permissions"));
+        form.add(commentAddField, commentEditField, commentDeleteField);
 
         form.add(new H3("User Permissions"));
         form.add(userAddField, userEditField, userDeleteField);
 
         form.add(new H3("User Group Permissions"));
         form.add(userGroupAddField, userGroupEditField, userGroupDeleteField);
-
-        form.add(new H3("Account Permissions"));
-        form.add(userAccountAddField, userAccountEditField, userAccountDeleteField);
 
         form.add(new H3("User Rank Permissions"));
         form.add(userRankAddField, userRankEditField, userRankDeleteField);
