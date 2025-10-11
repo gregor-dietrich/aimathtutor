@@ -347,7 +347,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
         }
 
         try {
-            final var comments = this.commentService.getCommentsByDateRange(startDate.toString(), endDate.toString());
+            final var comments = this.commentService.findByDateRange(startDate.toString(), endDate.toString());
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by date range", e);
@@ -363,7 +363,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
         }
 
         try {
-            final var comments = this.commentService.getCommentsByUser(userId.longValue());
+            final var comments = this.commentService.findByUserId(userId.longValue());
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by user", e);

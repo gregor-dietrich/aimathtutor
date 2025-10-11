@@ -265,20 +265,4 @@ public class CommentService {
             return this.getAllComments();
         }
     }
-
-    /**
-     * Alias for findByDateRange - for backward compatibility with views
-     */
-    @Transactional
-    public List<CommentViewDto> getCommentsByDateRange(final String startDate, final String endDate) {
-        return this.findByDateRange(startDate, endDate);
-    }
-
-    /**
-     * Alias for findByUserId - for backward compatibility with views
-     */
-    @Transactional
-    public List<CommentViewDto> getCommentsByUser(final long userId) {
-        return this.findByUserId(userId);
-    }
 }
