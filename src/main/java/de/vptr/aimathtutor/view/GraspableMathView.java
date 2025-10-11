@@ -168,6 +168,39 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
 
         // Register server-side connector
         this.registerServerConnector();
+
+        // Auto-load a problem after canvas initialization
+        this.loadInitialProblem();
+    }
+
+    /**
+     * Loads an initial problem automatically when the view is first opened.
+     */
+    private void loadInitialProblem() {
+        // Generate a problem
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", "algebra");
+
+        // Wait for canvas to be ready, then load the problem
+        final String loadScript = String.format("""
+                setTimeout(function() {
+                    var loadProblemWhenReady = function() {
+                        if (window.graspableCanvas && window.graspableMathUtils) {
+                            console.log('[GM] Canvas ready, loading initial problem');
+                            window.graspableMathUtils.loadProblem('%s', 100, 50);
+                        } else {
+                            console.log('[GM] Waiting for canvas...');
+                            setTimeout(loadProblemWhenReady, 200);
+                        }
+                    };
+                    loadProblemWhenReady();
+                }, 500);
+                """, problem.initialExpression);
+
+        UI.getCurrent().getPage().executeJs(loadScript);
+
+        // Add feedback about the loaded problem
+        this.addFeedback(AIFeedbackDto
+                .positive("Problem loaded: " + problem.title + ". Click 'Generate New Problem' for a different one."));
     }
 
     /**
