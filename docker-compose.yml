@@ -31,7 +31,7 @@ services:
       MYSQL_PASSWORD: changeit
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./src/main/resources/sql/mariadb.init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/main/resources/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u aimathtutor -pchangeit || exit 1"]
       interval: 10s
