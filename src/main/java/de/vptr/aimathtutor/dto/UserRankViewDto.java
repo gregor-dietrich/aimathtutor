@@ -54,17 +54,17 @@ public class UserRankViewDto {
             // View permissions
             this.adminView = entity.adminView;
 
-            // Post permissions
+            // Exercise permissions
             this.exerciseAdd = entity.exerciseAdd;
             this.exerciseDelete = entity.exerciseDelete;
             this.exerciseEdit = entity.exerciseEdit;
 
-            // Post category permissions
+            // Lesson permissions
             this.lessonAdd = entity.lessonAdd;
             this.lessonDelete = entity.lessonDelete;
             this.lessonEdit = entity.lessonEdit;
 
-            // Post comment permissions
+            // Comment permissions
             this.commentAdd = entity.commentAdd;
             this.commentDelete = entity.commentDelete;
             this.commentEdit = entity.commentEdit;

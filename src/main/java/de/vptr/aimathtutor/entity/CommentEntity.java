@@ -31,7 +31,7 @@ public class CommentEntity extends PanacheEntityBase {
 
     // Helper method to find comments by exercise
     public static List<CommentEntity> findByExerciseId(final Long exerciseId) {
-        return find("post.id", exerciseId).list();
+        return find("exercise.id", exerciseId).list();
     }
 
     // Helper method to find comments by user

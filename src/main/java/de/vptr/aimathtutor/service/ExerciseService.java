@@ -57,7 +57,7 @@ public class ExerciseService {
 
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
         return ExerciseEntity
-                .find("graspableEnabled = true AND published = true AND category.id = ?1 ORDER BY created DESC",
+                .find("graspableEnabled = true AND published = true AND lesson.id = ?1 ORDER BY created DESC",
                         lessonId)
                 .list().stream()
                 .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))

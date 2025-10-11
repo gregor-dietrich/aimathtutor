@@ -57,27 +57,27 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
 
         // Exercise permissions
         if (Boolean.TRUE.equals(rank.exerciseAdd))
-            roles.add("post:add");
+            roles.add("exercise:add");
         if (Boolean.TRUE.equals(rank.exerciseDelete))
-            roles.add("post:delete");
+            roles.add("exercise:delete");
         if (Boolean.TRUE.equals(rank.exerciseEdit))
-            roles.add("post:edit");
+            roles.add("exercise:edit");
 
         // Lesson permissions
         if (Boolean.TRUE.equals(rank.lessonAdd))
-            roles.add("post-category:add");
+            roles.add("lesson:add");
         if (Boolean.TRUE.equals(rank.lessonDelete))
-            roles.add("post-category:delete");
+            roles.add("lesson:delete");
         if (Boolean.TRUE.equals(rank.lessonEdit))
-            roles.add("post-category:edit");
+            roles.add("lesson:edit");
 
         // Comment permissions
         if (Boolean.TRUE.equals(rank.commentAdd))
-            roles.add("post-comment:add");
+            roles.add("comment:add");
         if (Boolean.TRUE.equals(rank.commentDelete))
-            roles.add("post-comment:delete");
+            roles.add("comment:delete");
         if (Boolean.TRUE.equals(rank.commentEdit))
-            roles.add("post-comment:edit");
+            roles.add("comment:edit");
 
         // User permissions
         if (Boolean.TRUE.equals(rank.userAdd))
