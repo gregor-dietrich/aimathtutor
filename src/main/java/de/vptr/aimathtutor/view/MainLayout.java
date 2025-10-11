@@ -169,6 +169,11 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     private void addButtonsToTopBar() {
+        // Check if buttons already exist, if so don't add them again
+        if (this.logoutButton != null && this.rightSide.getChildren().anyMatch(c -> c == this.logoutButton)) {
+            return;
+        }
+
         // Only create admin button if user is authenticated and has admin:view
         // permission
         final var userRank = this.userRankService.getCurrentUserRank();
