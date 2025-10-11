@@ -9,10 +9,23 @@ console.log('[GM] Script loaded');
 window.initializeGraspableMath = function() {
     console.log('[GM] Starting initialization...');
 
-    // Check if already initialized
-    if (window.graspableCanvas) {
-        console.log('[GM] Canvas already exists');
+    // Check if canvas element exists in DOM
+    var canvasElement = document.getElementById('graspable-canvas');
+    if (!canvasElement) {
+        console.error('[GM] Canvas element not found in DOM');
         return;
+    }
+
+    // If canvas already exists, clear it and reinitialize
+    if (window.graspableCanvas) {
+        console.log('[GM] Canvas already exists, clearing for reinitialization...');
+        try {
+            // Clear the old canvas
+            window.graspableCanvas = null;
+            canvasElement.innerHTML = '';
+        } catch (e) {
+            console.error('[GM] Error clearing old canvas:', e);
+        }
     }
 
     // Load Graspable Math library directly (not the inject script)
