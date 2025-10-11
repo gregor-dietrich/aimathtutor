@@ -113,9 +113,9 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `username`, `password`, `salt`, `rank_id`, `activated`, `banned`, `activation_key`) VALUES
 (1, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, 1, 0, NULL),
-(2, 'teacher', 'UMlKgd7trJ6AkPxCmGFV8SeKuNuepLWQtmJhMiOrJe4=', 'SrfeZ8CKyW3vQKcnDPsuFMXc5SGGjfNOlcOmHo0IZQ0=', 2, 1, 0, NULL),
-(3, 'student1', '3Xwz27IF/jydWnSaMe3hg+W3TeBysC4HyiRjmaXq9X4=', 'jz7iveDe+tMVRUCZ8y8g5CSOhPOexYHNhiEgl21gfZ8=', 3, 1, 0, NULL),
-(4, 'student2', 'UohNl09lzkNATW9RZK5dSdlURU0p60ZopMTJKo1iJ6g=', 'HjAbdnWMRcUwV5zyiF1mHAPcOcdbxG2QTxlTsyx6ExI=', 3, 1, 0, NULL);
+(2, 'teacher', 'gqjX9Myv2T0+cSsc7Mk5uP00vWN74acNaV8aVJvvK8Q=', 'Oz3c7v4qJJqqbPHlTzAhilp4O7o+DdW4iBYQMJRABQo=', 2, 1, 0, NULL),
+(3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, 1, 0, NULL),
+(4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, 1, 0, NULL);
 
 -- --------------------------------------------------------
 
