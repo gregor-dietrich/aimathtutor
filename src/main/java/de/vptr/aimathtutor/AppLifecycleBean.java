@@ -21,8 +21,6 @@ public class AppLifecycleBean {
      * Font: Standard, Horizontal Layout: Squeezed, Border: Cats
      */
     private static final String asciiArt = """
-
-
              /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\
             ( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )
              > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <
@@ -34,15 +32,13 @@ public class AppLifecycleBean {
              > ^ <                                                                        > ^ <
              /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\
             ( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )
-             > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <
-             """;
+             > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <""";
 
     void onStart(@Observes final StartupEvent ev) {
-        LOG.info(asciiArt);
-        LOG.info("Welcome to AI Math Tutor! o/");
+        LOG.info("\n\n{}\n", asciiArt);
     }
 
     void onStop(@Observes final ShutdownEvent ev) {
-        LOG.info("AI Math Tutor is shutting down. Goodbye! \\o");
+        LOG.info("AI Math Tutor is shutting down. Goodbye! o/");
     }
 }
