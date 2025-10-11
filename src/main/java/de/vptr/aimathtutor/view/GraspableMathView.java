@@ -24,7 +24,6 @@ import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.AITutorService;
 import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.GraspableMathService;
 import jakarta.inject.Inject;
 
 /**
@@ -40,15 +39,11 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     AuthService authService;
 
     @Inject
-    GraspableMathService graspableMathService;
-
-    @Inject
     AITutorService aiTutorService;
 
     @Inject
     ObjectMapper objectMapper;
 
-    private String sessionId;
     private Div graspableCanvas;
     private VerticalLayout feedbackPanel;
     private Button generateProblemButton;
@@ -95,8 +90,9 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         this.graspableCanvas.getStyle()
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("background-color", "var(--lumo-base-color)")
-                .set("padding", "var(--lumo-space-m)");
+                .set("background-color", "#ffffff")
+                .set("padding", "var(--lumo-space-m)")
+                .set("position", "relative");
 
         // Controls
         final var controls = new HorizontalLayout();
@@ -138,8 +134,9 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
 
         this.add(header, mainLayout);
 
-        // Initialize session
-        this.initializeSession();
+        // Show welcome message
+        this.addFeedback(AIFeedbackDto.positive(
+                "Welcome to the Math Workspace! Click 'Generate New Problem' to begin practicing."));
     }
 
     @Override
@@ -150,103 +147,24 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         this.initializeGraspableMath();
     }
 
-    private void initializeSession() {
-        // Create a new session for this user
-        // For demo purposes, using exercise ID 1
-        final Long userId = this.authService.getUserId();
-        final Long exerciseId = 1L;
-
-        try {
-            this.sessionId = this.graspableMathService.createSession(userId, exerciseId);
-            LOG.info("Initialized session: {}", this.sessionId);
-            this.addFeedback(AIFeedbackDto.positive("Welcome! Start working on the problem below."));
-        } catch (final IllegalArgumentException e) {
-            LOG.error("Failed to create session: {}", e.getMessage());
-            this.addFeedback(AIFeedbackDto.error(
-                    "Unable to start session. Please make sure you have exercises created in the admin panel."));
-            this.generateProblemButton.setEnabled(false);
-            this.getHintButton.setEnabled(false);
-        }
-    }
-
     /**
      * Initializes the Graspable Math JavaScript widget.
-     * This method injects the necessary JavaScript code into the page.
+     * This method loads the external JavaScript file and initializes the canvas.
      */
     private void initializeGraspableMath() {
-        final String jsCode = """
-                // Load Graspable Math library
-                if (!document.getElementById('graspable-math-lib')) {
-                    var script = document.createElement('script');
-                    script.id = 'graspable-math-lib';
-                    script.src = 'https://graspablemath.com/shared/libs/gmath/gm-inject.js';
-                    script.onload = function() {
-                        console.log('Graspable Math library loaded');
-                        initializeCanvas();
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    initializeCanvas();
-                }
+        // Load the external JavaScript file
+        UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
 
-                function initializeCanvas() {
-                    // Wait for library to be ready
-                    if (typeof GraspableMath === 'undefined') {
-                        setTimeout(initializeCanvas, 100);
-                        return;
-                    }
-
-                    var canvasElement = document.getElementById('graspable-canvas');
-                    if (!canvasElement) {
-                        console.error('Canvas element not found');
-                        return;
-                    }
-
-                    // Initialize Graspable Math canvas
-                    var canvas = new GraspableMath.Canvas(canvasElement, {
-                        use_fade_effects: true,
-                        use_property_effect: true
-                    });
-
-                    // Store canvas reference globally
-                    window.graspableCanvas = canvas;
-
-                    // Add initial problem
-                    canvas.model.createElement('derivation', {
-                        eq: '2x + 5 = 13',
-                        pos: { x: 50, y: 50 }
-                    });
-
-                    // Listen to events
-                    canvas.model.on('change', function(event) {
-                        handleGraspableEvent(event);
-                    });
-
-                    console.log('Graspable Math canvas initialized');
-                }
-
-                function handleGraspableEvent(event) {
-                    // Extract event details
-                    var eventData = {
-                        type: event.type || 'unknown',
-                        expressionBefore: event.before || '',
-                        expressionAfter: event.after || ''
-                    };
-
-                    console.log('Graspable Math event:', eventData);
-
-                    // Call server-side method
-                    if (window.graspableViewConnector) {
-                        window.graspableViewConnector.onMathAction(
-                            eventData.type,
-                            eventData.expressionBefore,
-                            eventData.expressionAfter
-                        );
-                    }
-                }
-                """;
-
-        UI.getCurrent().getPage().executeJs(jsCode);
+        // Wait a bit for the script to load, then call the initialization function
+        UI.getCurrent().getPage().executeJs("""
+                    setTimeout(function() {
+                        if (window.initializeGraspableMath) {
+                            window.initializeGraspableMath();
+                        } else {
+                            console.error('[GM] Initialization function not found');
+                        }
+                    }, 100);
+                """);
 
         // Register server-side connector
         this.registerServerConnector();
@@ -277,16 +195,12 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         event.expressionBefore = expressionBefore;
         event.expressionAfter = expressionAfter;
         event.studentId = this.authService.getUserId();
-        event.exerciseId = 1L; // For demo
-        event.sessionId = this.sessionId;
-
-        // Process event
-        this.graspableMathService.processEvent(event);
+        // No exercise or session needed for standalone workspace
 
         // Get AI feedback
         final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event);
 
-        // Log interaction
+        // Log interaction (optional - for analytics)
         this.aiTutorService.logInteraction(event, feedback);
 
         // Display feedback to user
@@ -334,14 +248,11 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     private void generateNewProblem() {
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", "algebra");
 
-        // Load problem into Graspable Math
+        // Load problem into Graspable Math using the utility function
         final String jsCode = String.format("""
-                if (window.graspableCanvas) {
-                    window.graspableCanvas.model.clear();
-                    window.graspableCanvas.model.createElement('derivation', {
-                        eq: '%s',
-                        pos: { x: 50, y: 50 }
-                    });
+                if (window.graspableMathUtils) {
+                    window.graspableMathUtils.clearCanvas();
+                    window.graspableMathUtils.loadProblem('%s', 100, 50);
                 }
                 """, problem.initialExpression);
 
@@ -351,18 +262,18 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     }
 
     private void requestHint() {
-        this.graspableMathService.recordHintUsed(this.sessionId);
-
+        // Provide a generic hint for solving linear equations
         final var feedback = AIFeedbackDto.hint("Try isolating the variable on one side of the equation.");
         feedback.hints.add("What operation would cancel out the constant term?");
+        feedback.hints.add("Remember to perform the same operation on both sides.");
 
         this.addFeedback(feedback);
     }
 
     private void resetCanvas() {
         UI.getCurrent().getPage().executeJs("""
-                if (window.graspableCanvas) {
-                    window.graspableCanvas.model.clear();
+                if (window.graspableMathUtils) {
+                    window.graspableMathUtils.clearCanvas();
                 }
                 """);
 
