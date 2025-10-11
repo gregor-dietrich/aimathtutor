@@ -133,9 +133,9 @@ CREATE TABLE `user_groups` (
 
 INSERT INTO `user_groups` (`id`, `name`) VALUES
 (1, 'Teacher'),
-(2, 'Class 8A');
-(3, 'Class 8B');
-(4, 'Class 9A');
+(2, 'Class 8A'),
+(3, 'Class 8B'),
+(4, 'Class 9A'),
 (5, 'Class 9B');
 
 -- --------------------------------------------------------
