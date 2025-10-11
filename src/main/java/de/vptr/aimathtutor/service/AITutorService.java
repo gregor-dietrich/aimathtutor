@@ -1,6 +1,8 @@
 package de.vptr.aimathtutor.service;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Random;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -56,17 +58,17 @@ public class AITutorService {
     public AIFeedbackDto analyzeMathAction(final GraspableEventDto event) {
         LOG.debug("Analyzing math action: {}", event);
 
-        if (aiEnabled != null && !aiEnabled) {
+        if (this.aiEnabled != null && !this.aiEnabled) {
             return AIFeedbackDto.positive("Keep going!");
         }
 
         // Use different AI provider based on configuration
-        final String provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+        final String provider = (this.aiProvider != null) ? this.aiProvider.toLowerCase() : "mock";
         return switch (provider) {
-            case "gemini" -> analyzeWithGemini(event);
-            case "openai" -> analyzeWithOpenAI(event);
-            case "ollama" -> analyzeWithOllama(event);
-            default -> analyzeWithMockAI(event);
+            case "gemini" -> this.analyzeWithGemini(event);
+            case "openai" -> this.analyzeWithOpenAI(event);
+            case "ollama" -> this.analyzeWithOllama(event);
+            default -> this.analyzeWithMockAI(event);
         };
     }
 
@@ -136,24 +138,24 @@ public class AITutorService {
         LOG.info("Analyzing math action with Gemini AI");
 
         // Check if Gemini is configured
-        if (!geminiService.isConfigured()) {
+        if (!this.geminiService.isConfigured()) {
             LOG.warn("Gemini not configured, falling back to mock AI");
-            return analyzeWithMockAI(event);
+            return this.analyzeWithMockAI(event);
         }
 
         try {
             // Build the prompt
-            final String prompt = buildMathTutoringPrompt(event);
+            final String prompt = this.buildMathTutoringPrompt(event);
 
             // Call Gemini API
-            final String response = geminiService.generateContent(prompt);
+            final String response = this.geminiService.generateContent(prompt);
 
             // Parse response as JSON
-            return parseFeedbackFromJSON(response);
+            return this.parseFeedbackFromJSON(response);
 
         } catch (final Exception e) {
             LOG.error("Error using Gemini AI, falling back to mock", e);
-            return analyzeWithMockAI(event);
+            return this.analyzeWithMockAI(event);
         }
     }
 
@@ -223,10 +225,10 @@ public class AITutorService {
             json = json.trim();
 
             // Parse JSON to AIFeedbackDto
-            final var feedback = objectMapper.readValue(json, AIFeedbackDto.class);
+            final var feedback = this.objectMapper.readValue(json, AIFeedbackDto.class);
 
             // Set timestamp
-            feedback.timestamp = java.time.LocalDateTime.now();
+            feedback.timestamp = LocalDateTime.now();
 
             LOG.debug("Successfully parsed Gemini response as JSON");
             return feedback;
@@ -249,24 +251,24 @@ public class AITutorService {
         LOG.info("Analyzing math action with OpenAI");
 
         // Check if OpenAI is configured
-        if (!openAIService.isConfigured()) {
+        if (!this.openAIService.isConfigured()) {
             LOG.warn("OpenAI not configured, falling back to mock AI");
-            return analyzeWithMockAI(event);
+            return this.analyzeWithMockAI(event);
         }
 
         try {
             // Build the prompt
-            final String prompt = buildMathTutoringPrompt(event);
+            final String prompt = this.buildMathTutoringPrompt(event);
 
             // Call OpenAI API with JSON mode
-            final String response = openAIService.generateJsonContent(prompt);
+            final String response = this.openAIService.generateJsonContent(prompt);
 
             // Parse response as JSON
-            return parseFeedbackFromJSON(response);
+            return this.parseFeedbackFromJSON(response);
 
         } catch (final Exception e) {
             LOG.error("Error using OpenAI, falling back to mock", e);
-            return analyzeWithMockAI(event);
+            return this.analyzeWithMockAI(event);
         }
     }
 
@@ -278,24 +280,24 @@ public class AITutorService {
         LOG.info("Analyzing math action with Ollama");
 
         // Check if Ollama is available
-        if (!ollamaService.isAvailable()) {
-            LOG.warn("Ollama server not available at {}, falling back to mock AI", ollamaService.getApiUrl());
-            return analyzeWithMockAI(event);
+        if (!this.ollamaService.isAvailable()) {
+            LOG.warn("Ollama server not available at {}, falling back to mock AI", this.ollamaService.getApiUrl());
+            return this.analyzeWithMockAI(event);
         }
 
         try {
             // Build the prompt
-            final String prompt = buildMathTutoringPrompt(event);
+            final String prompt = this.buildMathTutoringPrompt(event);
 
             // Call Ollama API
-            final String response = ollamaService.generateContent(prompt);
+            final String response = this.ollamaService.generateContent(prompt);
 
             // Parse response as JSON
-            return parseFeedbackFromJSON(response);
+            return this.parseFeedbackFromJSON(response);
 
         } catch (final Exception e) {
             LOG.error("Error using Ollama, falling back to mock", e);
-            return analyzeWithMockAI(event);
+            return this.analyzeWithMockAI(event);
         }
     }
 
@@ -312,29 +314,52 @@ public class AITutorService {
         final var problem = new GraspableProblemDto();
         problem.difficulty = difficulty;
 
-        // Generate based on topic (mock implementation)
+        // Generate random problems based on topic
+        final Random random = new Random();
+
         switch (topic != null ? topic.toLowerCase() : "algebra") {
             case "algebra":
+                // Generate random linear equation: ax + b = c
+                final int a = random.nextInt(9) + 1; // 1-9
+                final int b = random.nextInt(20) - 10; // -10 to 10
+                final int x = random.nextInt(20) - 10; // -10 to 10
+                final int c = a * x + b;
+
                 problem.title = "Solve for x";
-                problem.initialExpression = "2x + 5 = 13";
-                problem.targetExpression = "x = 4";
+                problem.initialExpression = String.format("%dx %s %d = %d",
+                        a,
+                        b >= 0 ? "+" : "-",
+                        Math.abs(b),
+                        c);
+                problem.targetExpression = "x = " + x;
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
                 problem.hints.add("First, isolate the term with x");
                 problem.hints.add("Remember to do the same operation on both sides");
                 break;
 
             case "factoring":
+                // Generate random factorable quadratic
+                final int p = random.nextInt(9) + 1;
+                final int q = random.nextInt(9) + 1;
+                final int sum = p + q;
+                final int product = p * q;
+
                 problem.title = "Factor the expression";
-                problem.initialExpression = "x^2 + 5x + 6";
-                problem.targetExpression = "(x + 2)(x + 3)";
+                problem.initialExpression = String.format("x^2 + %dx + %d", sum, product);
+                problem.targetExpression = String.format("(x + %d)(x + %d)", p, q);
                 problem.allowedOperations.addAll(Arrays.asList("factor", "expand"));
-                problem.hints.add("Look for two numbers that multiply to 6 and add to 5");
+                problem.hints
+                        .add(String.format("Look for two numbers that multiply to %d and add to %d", product, sum));
                 break;
 
             default:
+                // Generate random simplification
+                final int coef1 = random.nextInt(9) + 1;
+                final int coef2 = random.nextInt(9) + 1;
+
                 problem.title = "Simplify the expression";
-                problem.initialExpression = "3x + 2x";
-                problem.targetExpression = "5x";
+                problem.initialExpression = String.format("%dx + %dx", coef1, coef2);
+                problem.targetExpression = (coef1 + coef2) + "x";
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "combine"));
                 break;
         }
