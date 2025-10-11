@@ -6,12 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -33,10 +33,10 @@ import jakarta.inject.Inject;
 /**
  * ExerciseWorkspaceView - Student-facing view for working on specific exercises
  * with integrated Graspable Math workspace and AI tutor feedback.
+ * Uses the updated Graspable Math API with external JavaScript.
  */
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
-@JavaScript("https://graspablemath.com/shared/libs/gmath/gm-inject.js")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExerciseWorkspaceView.class);
@@ -190,7 +190,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Graspable Math canvas container
         this.canvasContainer = new Div();
-        this.canvasContainer.setId("gm-canvas-" + System.currentTimeMillis());
+        this.canvasContainer.setId("graspable-canvas"); // Fixed ID expected by JavaScript
         this.canvasContainer.getStyle()
                 .set("width", "100%")
                 .set("height", "500px")
@@ -216,14 +216,26 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.feedbackContent.getStyle()
                 .set("max-height", "300px")
                 .set("overflow-y", "auto")
-                .set("padding", "0.5rem")
-                .set("background-color", "white")
+                .set("padding", "var(--lumo-space-m)")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)");
-        this.feedbackContent.add(new Paragraph("Work on the problem and I'll provide feedback on your steps."));
 
         this.feedbackPanel = new VerticalLayout(feedbackHeader, this.feedbackContent);
         this.feedbackPanel.setSpacing(false);
         this.feedbackPanel.setPadding(false);
+
+        // Add welcome message as a proper feedback item
+        final var welcomeDiv = new Div();
+        welcomeDiv.getStyle()
+                .set("padding", "var(--lumo-space-s)")
+                .set("margin-bottom", "var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius-s)")
+                .set("background-color", "var(--lumo-primary-color-10pct)");
+        final var welcomeMsg = new Paragraph("💡 Work on the problem and I'll provide feedback on your steps.");
+        welcomeMsg.getStyle().set("margin", "0");
+        welcomeDiv.add(welcomeMsg);
+        this.feedbackContent.add(welcomeDiv);
 
         // Hints section
         final var hintsHeader = new H4("Hints");
@@ -231,9 +243,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.hintsPanel.setSpacing(true);
         this.hintsPanel.setPadding(true);
         this.hintsPanel.getStyle()
-                .set("background-color", "white")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("padding", "1rem");
+                .set("padding", "var(--lumo-space-m)");
 
         this.requestHintButton = new Button("Request Hint", e -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -245,35 +258,107 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         rightPanel.add(this.feedbackPanel, hintsSection);
 
         this.add(leftPanel, rightPanel);
+    }
 
-        // Initialize Graspable Math after layout is attached
-        UI.getCurrent().getPage().executeJs(
-                "setTimeout(() => { " +
-                        "  const canvas = new GraspableMath.Canvas(document.getElementById($0), {" +
-                        "    use_toolbar: true," +
-                        "    show_keypad: true" +
-                        "  });" +
-                        "  window.gmCanvas = canvas;" +
-                        "  canvas.model.addEventListener('change', (event) => {" +
-                        "    $1.$server.onMathAction(JSON.stringify(event));" +
-                        "  });" +
-                        "  if ($2) {" +
-                        "    canvas.model.createElement('derivation', {" +
-                        "      eq: $2," +
-                        "      pos: { x: 'center', y: 50 }" +
-                        "    });" +
-                        "  }" +
-                        "}, 500);",
-                this.canvasContainer.getId().get(),
-                this.getElement(),
-                this.exercise.graspableInitialExpression);
+    @Override
+    protected void onAttach(final AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+
+        // Initialize Graspable Math widget using external JavaScript
+        this.initializeGraspableMath();
     }
 
     /**
-     * Called from JavaScript when student performs an action in Graspable Math
+     * Initializes the Graspable Math JavaScript widget using the external file.
+     * This loads the problem from the exercise configuration.
+     */
+    private void initializeGraspableMath() {
+        if (this.exercise.graspableInitialExpression == null
+                || this.exercise.graspableInitialExpression.trim().isEmpty()) {
+            LOG.warn("No initial expression configured for exercise {}", this.exerciseId);
+            return;
+        }
+
+        // Load the external JavaScript file
+        UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
+
+        // Initialize canvas and load problem once ready
+        final String initScript = String.format("""
+                setTimeout(function() {
+                    if (window.initializeGraspableMath) {
+                        window.initializeGraspableMath();
+
+                        // Wait for canvas to be ready, then load the problem
+                        var loadProblemWhenReady = function() {
+                            if (window.graspableCanvas && window.graspableMathUtils) {
+                                console.log('[Exercise] Canvas ready, loading problem');
+                                window.graspableMathUtils.loadProblem('%s', 100, 50);
+                            } else {
+                                console.log('[Exercise] Waiting for canvas...');
+                                setTimeout(loadProblemWhenReady, 200);
+                            }
+                        };
+                        setTimeout(loadProblemWhenReady, 500);
+                    } else {
+                        console.error('[Exercise] Graspable Math initialization function not found');
+                    }
+                }, 100);
+                """, this.exercise.graspableInitialExpression);
+
+        UI.getCurrent().getPage().executeJs(initScript);
+
+        // Register server-side connector
+        this.registerServerConnector();
+    }
+
+    /**
+     * Registers a server-side connector that JavaScript can call.
+     */
+    private void registerServerConnector() {
+        UI.getCurrent().getPage().executeJs(
+                "window.graspableViewConnector = { onMathAction: function(type, before, after) { " +
+                        "   $0.$server.onMathAction(type, before, after); " +
+                        "}}",
+                this.getElement());
+    }
+
+    /**
+     * Called from JavaScript when student performs an action in Graspable Math.
+     * Updated to match the new event signature from graspable-math-init.js
      */
     @ClientCallable
-    public void onMathAction(final String eventJson) {
+    public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
+        LOG.debug("Math action: type={}, before={}, after={}", eventType, expressionBefore, expressionAfter);
+
+        // Create event DTO
+        final var event = new GraspableEventDto();
+        event.eventType = eventType;
+        event.expressionBefore = expressionBefore;
+        event.expressionAfter = expressionAfter;
+        event.studentId = this.authService.getUserId();
+        event.exerciseId = this.exerciseId;
+        event.sessionId = this.currentSessionId;
+        event.timestamp = java.time.LocalDateTime.now();
+
+        // Process event through GraspableMathService (for session tracking)
+        this.graspableMathService.processEvent(event);
+
+        // Get AI feedback
+        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event);
+
+        // Log interaction
+        this.aiTutorService.logInteraction(event, feedback);
+
+        // Display feedback
+        this.displayFeedback(feedback);
+    }
+
+    /**
+     * @deprecated Old method signature - no longer called by new JavaScript
+     */
+    @Deprecated
+    @ClientCallable
+    public void onMathActionOld(final String eventJson) {
         LOG.debug("Received math action: {}", eventJson);
 
         try {
@@ -314,28 +399,27 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         UI.getCurrent().access(() -> {
             final var feedbackDiv = new Div();
             feedbackDiv.getStyle()
-                    .set("margin-bottom", "0.5rem")
-                    .set("padding", "0.75rem")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("border-left", "4px solid " + this.getFeedbackColor(feedback.type));
+                    .set("padding", "var(--lumo-space-s)")
+                    .set("margin-bottom", "var(--lumo-space-s)")
+                    .set("border-radius", "var(--lumo-border-radius-s)")
+                    .set("background-color", this.getFeedbackColor(feedback.type));
 
             final var icon = this.getFeedbackIcon(feedback.type);
-            final var message = new Html("<div><strong>" + icon + " " +
-                    feedback.type.toString() + ":</strong> " +
-                    feedback.message + "</div>");
+            final var message = new Paragraph(icon + " " + feedback.message);
+            message.getStyle().set("margin", "0");
 
             feedbackDiv.add(message);
 
             // Add hints if provided
             if (feedback.hints != null && !feedback.hints.isEmpty()) {
-                final var hintsList = new VerticalLayout();
-                hintsList.setSpacing(false);
-                hintsList.setPadding(false);
-                hintsList.getStyle().set("margin-top", "0.5rem");
                 for (final String hint : feedback.hints) {
-                    hintsList.add(new Paragraph("💡 " + hint));
+                    final var hintPara = new Paragraph("💡 " + hint);
+                    hintPara.getStyle()
+                            .set("margin", "var(--lumo-space-xs) 0 0 0")
+                            .set("font-size", "var(--lumo-font-size-s)")
+                            .set("font-style", "italic");
+                    feedbackDiv.add(hintPara);
                 }
-                feedbackDiv.add(hintsList);
             }
 
             // Add to top of feedback panel
@@ -356,8 +440,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
-        // Split hints by newline
-        final String[] hints = this.exercise.graspableHints.split("\\n");
+        // Split hints by newline, semicolon, or pipe character
+        // Supports formats like: "hint1\nhint2" or "hint1;hint2" or "hint1|hint2"
+        final String[] hints = this.exercise.graspableHints.split("\\r?\\n|;|\\|");
 
         if (this.hintCount >= hints.length) {
             NotificationUtil.showInfo("No more hints available");
@@ -400,11 +485,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
     private String getFeedbackColor(final AIFeedbackDto.FeedbackType type) {
         return switch (type) {
-            case POSITIVE -> "var(--lumo-success-color)";
-            case CORRECTIVE -> "var(--lumo-error-color)";
-            case HINT -> "var(--lumo-primary-color)";
-            case SUGGESTION -> "var(--lumo-contrast-60pct)";
-            case NEUTRAL -> "var(--lumo-contrast-40pct)";
+            case POSITIVE -> "var(--lumo-success-color-10pct)";
+            case CORRECTIVE -> "var(--lumo-error-color-10pct)";
+            case HINT -> "var(--lumo-primary-color-10pct)";
+            case SUGGESTION -> "var(--lumo-contrast-10pct)";
+            case NEUTRAL -> "var(--lumo-contrast-5pct)";
         };
     }
 
