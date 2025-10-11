@@ -25,7 +25,7 @@ public class OllamaRequestDto {
         public Options() {
         }
 
-        public Options(Double temperature, Integer numPredict) {
+        public Options(final Double temperature, final Integer numPredict) {
             this.temperature = temperature;
             this.numPredict = numPredict;
         }
@@ -34,8 +34,8 @@ public class OllamaRequestDto {
     /**
      * Helper method to create a simple generate request
      */
-    public static OllamaRequestDto createGenerateRequest(String prompt, String model, Double temperature,
-            Integer maxTokens) {
+    public static OllamaRequestDto createGenerateRequest(final String prompt, final String model, final Double temperature,
+            final Integer maxTokens) {
         final var request = new OllamaRequestDto();
         request.model = model;
         request.prompt = prompt;

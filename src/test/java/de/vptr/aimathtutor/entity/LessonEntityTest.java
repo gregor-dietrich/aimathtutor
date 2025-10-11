@@ -9,9 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.entity.LessonEntity;
-
 class LessonEntityTest {
 
     private LessonEntity lesson;

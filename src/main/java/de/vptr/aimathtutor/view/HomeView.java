@@ -66,7 +66,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
 
         // Display each lesson with its exercises
         for (final LessonViewDto lesson : lessons) {
-            this.add(createLessonCard(lesson));
+            this.add(this.createLessonCard(lesson));
         }
 
         // Also show standalone exercises (not in any lesson)
@@ -88,7 +88,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
             exerciseGrid.getStyle().set("flex-wrap", "wrap");
 
             for (final ExerciseViewDto exercise : standaloneExercises) {
-                exerciseGrid.add(createExerciseCard(exercise));
+                exerciseGrid.add(this.createExerciseCard(exercise));
             }
 
             standaloneSection.add(exerciseGrid);
@@ -96,7 +96,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-    private VerticalLayout createLessonCard(LessonViewDto lesson) {
+    private VerticalLayout createLessonCard(final LessonViewDto lesson) {
         final var lessonCard = new VerticalLayout();
         lessonCard.setSpacing(true);
         lessonCard.setPadding(true);
@@ -129,7 +129,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
             exerciseGrid.getStyle().set("flex-wrap", "wrap");
 
             for (final ExerciseViewDto exercise : exercises) {
-                exerciseGrid.add(createExerciseCard(exercise));
+                exerciseGrid.add(this.createExerciseCard(exercise));
             }
 
             lessonCard.add(exerciseGrid);
@@ -138,7 +138,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
         return lessonCard;
     }
 
-    private Div createExerciseCard(ExerciseViewDto exercise) {
+    private Div createExerciseCard(final ExerciseViewDto exercise) {
         final var card = new Div();
         card.getStyle()
                 .set("width", "300px")

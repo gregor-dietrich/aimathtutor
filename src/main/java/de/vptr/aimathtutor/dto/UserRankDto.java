@@ -12,25 +12,20 @@ public class UserRankDto {
     // View permissions
     public Boolean adminView;
 
-    // Page permissions
-    public Boolean pageAdd;
-    public Boolean pageDelete;
-    public Boolean pageEdit;
+    // Exercise permissions
+    public Boolean exerciseAdd;
+    public Boolean exerciseDelete;
+    public Boolean exerciseEdit;
 
-    // Post permissions
-    public Boolean postAdd;
-    public Boolean postDelete;
-    public Boolean postEdit;
+    // Lesson permissions
+    public Boolean lessonAdd;
+    public Boolean lessonDelete;
+    public Boolean lessonEdit;
 
-    // Post category permissions
-    public Boolean postCategoryAdd;
-    public Boolean postCategoryDelete;
-    public Boolean postCategoryEdit;
-
-    // Post comment permissions
-    public Boolean postCommentAdd;
-    public Boolean postCommentDelete;
-    public Boolean postCommentEdit;
+    // Comment permissions
+    public Boolean commentAdd;
+    public Boolean commentDelete;
+    public Boolean commentEdit;
 
     // User permissions
     public Boolean userAdd;
@@ -41,11 +36,6 @@ public class UserRankDto {
     public Boolean userGroupAdd;
     public Boolean userGroupDelete;
     public Boolean userGroupEdit;
-
-    // Account permissions
-    public Boolean userAccountAdd;
-    public Boolean userAccountDelete;
-    public Boolean userAccountEdit;
 
     // User rank permissions
     public Boolean userRankAdd;

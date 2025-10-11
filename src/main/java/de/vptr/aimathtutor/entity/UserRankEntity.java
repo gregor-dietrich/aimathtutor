@@ -23,45 +23,35 @@ public class UserRankEntity extends PanacheEntityBase {
     @Column(name = "admin_view", columnDefinition = "TINYINT(1)")
     public Boolean adminView = false;
 
-    // Page permissions
-    @Column(name = "page_add", columnDefinition = "TINYINT(1)")
-    public Boolean pageAdd = false;
+    // Exercise permissions
+    @Column(name = "exercise_add", columnDefinition = "TINYINT(1)")
+    public Boolean exerciseAdd = false;
 
-    @Column(name = "page_delete", columnDefinition = "TINYINT(1)")
-    public Boolean pageDelete = false;
+    @Column(name = "exercise_delete", columnDefinition = "TINYINT(1)")
+    public Boolean exerciseDelete = false;
 
-    @Column(name = "page_edit", columnDefinition = "TINYINT(1)")
-    public Boolean pageEdit = false;
+    @Column(name = "exercise_edit", columnDefinition = "TINYINT(1)")
+    public Boolean exerciseEdit = false;
 
-    // Post permissions
-    @Column(name = "post_add", columnDefinition = "TINYINT(1)")
-    public Boolean postAdd = false;
+    // Lesson permissions
+    @Column(name = "lesson_add", columnDefinition = "TINYINT(1)")
+    public Boolean lessonAdd = false;
 
-    @Column(name = "post_delete", columnDefinition = "TINYINT(1)")
-    public Boolean postDelete = false;
+    @Column(name = "lesson_delete", columnDefinition = "TINYINT(1)")
+    public Boolean lessonDelete = false;
 
-    @Column(name = "post_edit", columnDefinition = "TINYINT(1)")
-    public Boolean postEdit = false;
+    @Column(name = "lesson_edit", columnDefinition = "TINYINT(1)")
+    public Boolean lessonEdit = false;
 
-    // Post category permissions
-    @Column(name = "post_category_add", columnDefinition = "TINYINT(1)")
-    public Boolean postCategoryAdd = false;
+    // Comment permissions
+    @Column(name = "comment_add", columnDefinition = "TINYINT(1)")
+    public Boolean commentAdd = false;
 
-    @Column(name = "post_category_delete", columnDefinition = "TINYINT(1)")
-    public Boolean postCategoryDelete = false;
+    @Column(name = "comment_delete", columnDefinition = "TINYINT(1)")
+    public Boolean commentDelete = false;
 
-    @Column(name = "post_category_edit", columnDefinition = "TINYINT(1)")
-    public Boolean postCategoryEdit = false;
-
-    // Post comment permissions
-    @Column(name = "post_comment_add", columnDefinition = "TINYINT(1)")
-    public Boolean postCommentAdd = false;
-
-    @Column(name = "post_comment_delete", columnDefinition = "TINYINT(1)")
-    public Boolean postCommentDelete = false;
-
-    @Column(name = "post_comment_edit", columnDefinition = "TINYINT(1)")
-    public Boolean postCommentEdit = false;
+    @Column(name = "comment_edit", columnDefinition = "TINYINT(1)")
+    public Boolean commentEdit = false;
 
     // User permissions
     @Column(name = "user_add", columnDefinition = "TINYINT(1)")
@@ -82,16 +72,6 @@ public class UserRankEntity extends PanacheEntityBase {
 
     @Column(name = "user_group_edit", columnDefinition = "TINYINT(1)")
     public Boolean userGroupEdit = false;
-
-    // Account permissions
-    @Column(name = "user_account_add", columnDefinition = "TINYINT(1)")
-    public Boolean userAccountAdd = false;
-
-    @Column(name = "user_account_delete", columnDefinition = "TINYINT(1)")
-    public Boolean userAccountDelete = false;
-
-    @Column(name = "user_account_edit", columnDefinition = "TINYINT(1)")
-    public Boolean userAccountEdit = false;
 
     // User rank permissions
     @Column(name = "user_rank_add", columnDefinition = "TINYINT(1)")

@@ -14,15 +14,15 @@ public class AdminNavigationTabs extends Tabs {
         this.setWidthFull();
         this.add(new Tab(new RouterLink("Home", AdminHomeView.class)));
 
-        if (userRank.hasAnyPostPermission()) {
+        if (userRank.hasAnyExercisePermission()) {
             this.add(new Tab(new RouterLink("Exercises", AdminExerciseView.class)));
         }
 
-        if (userRank.hasAnyPostCategoryPermission()) {
+        if (userRank.hasAnyLessonPermission()) {
             this.add(new Tab(new RouterLink("Lessons", AdminLessonView.class)));
         }
 
-        if (userRank.hasAnyPostCommentPermission()) {
+        if (userRank.hasAnyCommentPermission()) {
             this.add(new Tab(new RouterLink("Comments", AdminCommentView.class)));
         }
 

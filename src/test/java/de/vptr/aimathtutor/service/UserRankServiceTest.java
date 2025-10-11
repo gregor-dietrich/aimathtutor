@@ -10,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.UserRankDto;
-import de.vptr.aimathtutor.service.UserRankService;
 
 @ExtendWith(MockitoExtension.class)
 class UserRankServiceTest {

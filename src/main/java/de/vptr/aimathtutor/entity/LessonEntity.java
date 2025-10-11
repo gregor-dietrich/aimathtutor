@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
 @Entity
-@Table(name = "post_categories")
+@Table(name = "lessons")
 public class LessonEntity extends PanacheEntityBase {
 
     @Id

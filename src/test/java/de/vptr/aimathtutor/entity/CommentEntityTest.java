@@ -8,10 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.entity.UserEntity;
-
 class CommentEntityTest {
 
     private CommentEntity comment;

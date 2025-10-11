@@ -42,11 +42,11 @@ public class OpenAIResponseDto {
      * Extract the text content from the first choice
      */
     public String getTextContent() {
-        if (choices == null || choices.isEmpty()) {
+        if (this.choices == null || this.choices.isEmpty()) {
             return null;
         }
 
-        final var choice = choices.get(0);
+        final var choice = this.choices.get(0);
         if (choice.message == null || choice.message.content == null) {
             return null;
         }
@@ -58,11 +58,11 @@ public class OpenAIResponseDto {
      * Check if the response was completed successfully
      */
     public boolean isComplete() {
-        if (choices == null || choices.isEmpty()) {
+        if (this.choices == null || this.choices.isEmpty()) {
             return false;
         }
 
-        final var finishReason = choices.get(0).finishReason;
+        final var finishReason = this.choices.get(0).finishReason;
         return "stop".equals(finishReason);
     }
 
@@ -70,11 +70,11 @@ public class OpenAIResponseDto {
      * Check if response was truncated due to token limit
      */
     public boolean isTruncated() {
-        if (choices == null || choices.isEmpty()) {
+        if (this.choices == null || this.choices.isEmpty()) {
             return false;
         }
 
-        final var finishReason = choices.get(0).finishReason;
+        final var finishReason = this.choices.get(0).finishReason;
         return "length".equals(finishReason);
     }
 }

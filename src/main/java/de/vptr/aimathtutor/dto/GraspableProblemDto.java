@@ -46,10 +46,10 @@ public class GraspableProblemDto {
     @Override
     public String toString() {
         return "GraspableProblemDto{" +
-                "title='" + title + '\'' +
-                ", initialExpression='" + initialExpression + '\'' +
-                ", targetExpression='" + targetExpression + '\'' +
-                ", difficulty='" + difficulty + '\'' +
+                "title='" + this.title + '\'' +
+                ", initialExpression='" + this.initialExpression + '\'' +
+                ", targetExpression='" + this.targetExpression + '\'' +
+                ", difficulty='" + this.difficulty + '\'' +
                 '}';
     }
 }

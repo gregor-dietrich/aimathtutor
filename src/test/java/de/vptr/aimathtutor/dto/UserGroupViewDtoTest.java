@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 
 class UserGroupViewDtoTest {

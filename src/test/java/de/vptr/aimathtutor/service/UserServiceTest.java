@@ -11,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.security.PasswordHashingService;
-import de.vptr.aimathtutor.service.UserService;
 import jakarta.validation.ValidationException;
 
 @ExtendWith(MockitoExtension.class)

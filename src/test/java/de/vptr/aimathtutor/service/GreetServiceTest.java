@@ -11,9 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.GreetService;
-
 @ExtendWith(MockitoExtension.class)
 class GreetServiceTest {
 
