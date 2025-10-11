@@ -58,13 +58,6 @@ public class ExerciseViewDto {
     }
 
     /**
-     * Getter for name (returns title for compatibility)
-     */
-    public String getName() {
-        return this.title;
-    }
-
-    /**
      * Getter for id
      */
     public Long getId() {

@@ -70,7 +70,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private Button backButton;
 
     @Override
-    public void beforeEnter(BeforeEnterEvent event) {
+    public void beforeEnter(final BeforeEnterEvent event) {
         // Extract exerciseId from route parameters
         final var params = event.getRouteParameters();
         final var exerciseIdParam = params.get("exerciseId");
@@ -114,7 +114,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         // Initialize the view
-        initializeView();
+        this.initializeView();
     }
 
     private void initializeView() {
@@ -273,7 +273,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      * Called from JavaScript when student performs an action in Graspable Math
      */
     @ClientCallable
-    public void onMathAction(String eventJson) {
+    public void onMathAction(final String eventJson) {
         LOG.debug("Received math action: {}", eventJson);
 
         try {
@@ -306,7 +306,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
     }
 
-    private void displayFeedback(AIFeedbackDto feedback) {
+    private void displayFeedback(final AIFeedbackDto feedback) {
         if (feedback == null) {
             return;
         }
@@ -317,9 +317,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     .set("margin-bottom", "0.5rem")
                     .set("padding", "0.75rem")
                     .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("border-left", "4px solid " + getFeedbackColor(feedback.type));
+                    .set("border-left", "4px solid " + this.getFeedbackColor(feedback.type));
 
-            final var icon = getFeedbackIcon(feedback.type);
+            final var icon = this.getFeedbackIcon(feedback.type);
             final var message = new Html("<div><strong>" + icon + " " +
                     feedback.type.toString() + ":</strong> " +
                     feedback.message + "</div>");
@@ -398,7 +398,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         NotificationUtil.showSuccess("Hint revealed!");
     }
 
-    private String getFeedbackColor(AIFeedbackDto.FeedbackType type) {
+    private String getFeedbackColor(final AIFeedbackDto.FeedbackType type) {
         return switch (type) {
             case POSITIVE -> "var(--lumo-success-color)";
             case CORRECTIVE -> "var(--lumo-error-color)";
@@ -408,13 +408,13 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         };
     }
 
-    private String getFeedbackIcon(AIFeedbackDto.FeedbackType type) {
+    private String getFeedbackIcon(final AIFeedbackDto.FeedbackType type) {
         return switch (type) {
-            case POSITIVE -> "✓";
-            case CORRECTIVE -> "✗";
+            case POSITIVE -> "✅";
+            case CORRECTIVE -> "❌";
             case HINT -> "💡";
-            case SUGGESTION -> "💭";
-            case NEUTRAL -> "ℹ";
+            case SUGGESTION -> "⚡";
+            case NEUTRAL -> "ℹ️";
         };
     }
 }
