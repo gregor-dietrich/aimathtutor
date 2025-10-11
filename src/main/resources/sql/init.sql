@@ -110,11 +110,11 @@ CREATE TABLE `users` (
 -- Inserts for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `salt`, `rank_id`, `activated`, `banned`, `activation_key`) VALUES
-(1, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, 1, 0, NULL),
-(2, 'teacher', 'gqjX9Myv2T0+cSsc7Mk5uP00vWN74acNaV8aVJvvK8Q=', 'Oz3c7v4qJJqqbPHlTzAhilp4O7o+DdW4iBYQMJRABQo=', 2, 1, 0, NULL),
-(3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, 1, 0, NULL),
-(4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, 1, 0, NULL);
+INSERT INTO `users` (`id`, `username`, `password`, `salt`, `rank_id`, `activated`) VALUES
+(1, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, 1),
+(2, 'teacher', 'gqjX9Myv2T0+cSsc7Mk5uP00vWN74acNaV8aVJvvK8Q=', 'Oz3c7v4qJJqqbPHlTzAhilp4O7o+DdW4iBYQMJRABQo=', 2, 1),
+(3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, 1),
+(4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, 1);
 
 -- --------------------------------------------------------
 
@@ -133,7 +133,10 @@ CREATE TABLE `user_groups` (
 
 INSERT INTO `user_groups` (`id`, `name`) VALUES
 (1, 'Teacher'),
-(2, 'Student');
+(2, 'Class 8A');
+(3, 'Class 8B');
+(4, 'Class 9A');
+(5, 'Class 9B');
 
 -- --------------------------------------------------------
 
@@ -162,8 +165,8 @@ CREATE TABLE `user_groups_meta` (
 
 INSERT INTO `user_groups_meta` (`id`, `user_id`, `group_id`) VALUES
 (1, 2, 1),
-(2, 3, 2),
-(3, 4, 2);
+(2, 3, 4),
+(3, 4, 4);
 
 -- --------------------------------------------------------
 
@@ -204,9 +207,9 @@ CREATE TABLE `user_ranks` (
 --
 
 INSERT INTO `user_ranks` (`id`, `name`, `admin_view`, `exercise_add`, `exercise_delete`, `exercise_edit`, `lesson_add`, `lesson_delete`, `lesson_edit`, `comment_add`, `comment_delete`, `comment_edit`, `user_add`, `user_delete`, `user_edit`, `user_group_add`, `user_group_delete`, `user_group_edit`, `user_rank_add`, `user_rank_delete`, `user_rank_edit`) VALUES
-(1, 'Administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-(2, 'Moderator', 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-(3, 'User', 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+(1, 'Admin', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+(2, 'Teacher', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+(3, 'Student', 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 --
 -- Indexes for exported tables
