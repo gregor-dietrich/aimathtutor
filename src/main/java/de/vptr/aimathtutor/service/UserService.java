@@ -89,7 +89,6 @@ public class UserService {
         user.activated = userDto.activated != null ? userDto.activated : false;
         user.activationKey = userDto.activationKey != null ? userDto.activationKey
                 : java.util.UUID.randomUUID().toString();
-        user.lastIp = userDto.lastIp;
 
         // Generate salt and hash password
         final var salt = this.passwordHashingService.generateSalt();
@@ -153,7 +152,6 @@ public class UserService {
         existingUser.banned = userDto.banned != null ? userDto.banned : false;
         existingUser.activated = userDto.activated != null ? userDto.activated : false;
         existingUser.activationKey = userDto.activationKey;
-        existingUser.lastIp = userDto.lastIp;
 
         // Handle password update if provided
         if (userDto.password != null && !userDto.password.trim().isEmpty()) {
@@ -223,9 +221,6 @@ public class UserService {
         }
         if (userDto.activationKey != null) {
             existingUser.activationKey = userDto.activationKey;
-        }
-        if (userDto.lastIp != null) {
-            existingUser.lastIp = userDto.lastIp;
         }
 
         // Handle password update if provided

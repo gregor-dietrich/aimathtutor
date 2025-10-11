@@ -35,7 +35,6 @@ class UserViewDtoTest {
         assertNull(this.userViewDto.rankName);
         assertNull(this.userViewDto.banned);
         assertNull(this.userViewDto.activated);
-        assertNull(this.userViewDto.lastIp);
         assertNull(this.userViewDto.created);
         assertNull(this.userViewDto.lastLogin);
         assertNull(this.userViewDto.exercisesCount);
@@ -65,7 +64,6 @@ class UserViewDtoTest {
         userEntity.rank = userRank;
         userEntity.banned = false;
         userEntity.activated = true;
-        userEntity.lastIp = "192.168.1.1";
         userEntity.created = now;
         userEntity.lastLogin = now;
         userEntity.exercises = exercises;
@@ -82,7 +80,6 @@ class UserViewDtoTest {
         assertEquals("User", dto.rankName);
         assertFalse(dto.banned);
         assertTrue(dto.activated);
-        assertEquals("192.168.1.1", dto.lastIp);
         assertEquals(now, dto.created);
         assertEquals(now, dto.lastLogin);
         assertEquals(2L, dto.exercisesCount);
@@ -103,7 +100,6 @@ class UserViewDtoTest {
         assertNull(dto.rankName);
         assertNull(dto.banned);
         assertNull(dto.activated);
-        assertNull(dto.lastIp);
         assertNull(dto.created);
         assertNull(dto.lastLogin);
         assertNull(dto.exercisesCount);
@@ -195,7 +191,6 @@ class UserViewDtoTest {
         this.userViewDto.rankName = "Administrator";
         this.userViewDto.banned = true;
         this.userViewDto.activated = false;
-        this.userViewDto.lastIp = "192.168.1.100";
         this.userViewDto.created = now;
         this.userViewDto.lastLogin = now;
         this.userViewDto.exercisesCount = 5L;
@@ -209,7 +204,6 @@ class UserViewDtoTest {
         assertEquals("Administrator", this.userViewDto.rankName);
         assertTrue(this.userViewDto.banned);
         assertFalse(this.userViewDto.activated);
-        assertEquals("192.168.1.100", this.userViewDto.lastIp);
         assertEquals(now, this.userViewDto.created);
         assertEquals(now, this.userViewDto.lastLogin);
         assertEquals(5L, this.userViewDto.exercisesCount);

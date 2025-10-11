@@ -47,9 +47,6 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "activation_key")
     public String activationKey;
 
-    @Column(name = "last_ip", length = 45)
-    public String lastIp;
-
     public LocalDateTime created;
 
     @Column(name = "last_login")

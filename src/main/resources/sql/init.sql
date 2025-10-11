@@ -96,7 +96,6 @@ CREATE TABLE `users` (
   `banned` tinyint(1) NOT NULL DEFAULT 0,
   `activated` tinyint(1) NOT NULL DEFAULT 0,
   `activation_key` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `last_ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created` datetime NOT NULL DEFAULT current_timestamp(),
   `last_login` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
