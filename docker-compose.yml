@@ -26,7 +26,7 @@ services:
         condition: service_healthy
 
   mariadb:
-    image: mariadb:11-ubi
+    image: mariadb:12.0.2-noble
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: changeit
@@ -44,7 +44,7 @@ services:
       start_period: 5s
 
   phpmyadmin:
-    image: phpmyadmin:5-apache
+    image: phpmyadmin:5.2.3-apache
     restart: unless-stopped
     environment:
       PMA_HOST: mariadb
@@ -65,5 +65,5 @@ services:
         condition: service_healthy
 
 volumes:
-  mariadb_data:
   aimathtutor_logs:
+  mariadb_data:
