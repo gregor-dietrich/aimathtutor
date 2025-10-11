@@ -6,11 +6,7 @@ services:
       dockerfile: src/main/docker/Dockerfile.jvm
     restart: unless-stopped
     environment:
-      QUARKUS_DATASOURCE_DB_KIND: mariadb
-      QUARKUS_DATASOURCE_USERNAME: aimathtutor
-      QUARKUS_DATASOURCE_PASSWORD: changeit
-      QUARKUS_DATASOURCE_JDBC_URL: jdbc:mariadb://mariadb:3306/aimathtutor
-      QUARKUS_DATASOURCE_JDBC_DRIVER: org.mariadb.jdbc.Driver
+      quarkus.datasource.jdbc.url: jdbc:mariadb://mariadb:3306/aimathtutor
     ports:
       - "80:9069"
     volumes:
