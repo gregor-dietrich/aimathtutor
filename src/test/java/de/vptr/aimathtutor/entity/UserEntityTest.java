@@ -39,7 +39,6 @@ class UserEntityTest {
         this.userEntity.banned = false;
         this.userEntity.activated = true;
         this.userEntity.activationKey = "activation123";
-        this.userEntity.lastIp = "192.168.1.1";
         this.userEntity.created = now;
         this.userEntity.lastLogin = now;
 
@@ -53,7 +52,6 @@ class UserEntityTest {
         assertFalse(this.userEntity.banned);
         assertTrue(this.userEntity.activated);
         assertEquals("activation123", this.userEntity.activationKey);
-        assertEquals("192.168.1.1", this.userEntity.lastIp);
         assertEquals(now, this.userEntity.created);
         assertEquals(now, this.userEntity.lastLogin);
     }
@@ -71,7 +69,6 @@ class UserEntityTest {
         this.userEntity.banned = null;
         this.userEntity.activated = null;
         this.userEntity.activationKey = null;
-        this.userEntity.lastIp = null;
         this.userEntity.created = null;
         this.userEntity.lastLogin = null;
 
@@ -80,7 +77,6 @@ class UserEntityTest {
         assertNull(this.userEntity.banned);
         assertNull(this.userEntity.activated);
         assertNull(this.userEntity.activationKey);
-        assertNull(this.userEntity.lastIp);
         assertNull(this.userEntity.created);
         assertNull(this.userEntity.lastLogin);
     }

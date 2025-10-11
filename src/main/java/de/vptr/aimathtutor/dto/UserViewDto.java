@@ -15,7 +15,6 @@ public class UserViewDto {
     public Boolean banned;
     public Boolean activated;
     // activationKey is sensitive and not exposed in normal responses
-    public String lastIp;
     public LocalDateTime created;
     public LocalDateTime lastLogin;
     public Long exercisesCount;
@@ -35,7 +34,6 @@ public class UserViewDto {
             this.banned = entity.banned;
             this.activated = entity.activated;
             // activationKey is not exposed for security
-            this.lastIp = entity.lastIp;
             this.created = entity.created;
             this.lastLogin = entity.lastLogin;
             this.exercisesCount = entity.exercises != null ? (long) entity.exercises.size() : 0L;

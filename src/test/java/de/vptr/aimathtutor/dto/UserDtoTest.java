@@ -27,15 +27,13 @@ class UserDtoTest {
         assertNull(this.userDto.banned);
         assertNull(this.userDto.activated);
         assertNull(this.userDto.activationKey);
-        assertNull(this.userDto.lastIp);
     }
 
     @Test
     @DisplayName("Should create UserDto with parameterized constructor")
     void shouldCreateUserDtoWithParameterizedConstructor() {
         // When
-        final UserDto dto = new UserDto("testuser", "password123", "test@example.com", 1L, false, true, "key123",
-                "192.168.1.1");
+        final UserDto dto = new UserDto("testuser", "password123", "test@example.com", 1L, false, true, "key123");
 
         // Then
         assertEquals("testuser", dto.username);
@@ -45,7 +43,6 @@ class UserDtoTest {
         assertFalse(dto.banned);
         assertTrue(dto.activated);
         assertEquals("key123", dto.activationKey);
-        assertEquals("192.168.1.1", dto.lastIp);
         assertNull(dto.id); // Not set by constructor
     }
 
@@ -61,7 +58,6 @@ class UserDtoTest {
         this.userDto.banned = false;
         this.userDto.activated = true;
         this.userDto.activationKey = "activation123";
-        this.userDto.lastIp = "192.168.1.1";
 
         // Then
         assertEquals(1L, this.userDto.id);
@@ -72,7 +68,6 @@ class UserDtoTest {
         assertFalse(this.userDto.banned);
         assertTrue(this.userDto.activated);
         assertEquals("activation123", this.userDto.activationKey);
-        assertEquals("192.168.1.1", this.userDto.lastIp);
     }
 
     @Test
@@ -86,7 +81,6 @@ class UserDtoTest {
         this.userDto.banned = null;
         this.userDto.activated = null;
         this.userDto.activationKey = null;
-        this.userDto.lastIp = null;
 
         // Then
         assertNull(this.userDto.username);
@@ -96,7 +90,6 @@ class UserDtoTest {
         assertNull(this.userDto.banned);
         assertNull(this.userDto.activated);
         assertNull(this.userDto.activationKey);
-        assertNull(this.userDto.lastIp);
     }
 
     @Test
@@ -107,14 +100,11 @@ class UserDtoTest {
         this.userDto.password = "";
         this.userDto.email = "";
         this.userDto.activationKey = "";
-        this.userDto.lastIp = "";
-
         // Then
         assertEquals("", this.userDto.username);
         assertEquals("", this.userDto.password);
         assertEquals("", this.userDto.email);
         assertEquals("", this.userDto.activationKey);
-        assertEquals("", this.userDto.lastIp);
     }
 
     @Test
@@ -144,19 +134,16 @@ class UserDtoTest {
         final String specialUsername = "test_user-123@domain.com";
         final String specialEmail = "test+user@sub.domain.co.uk";
         final String specialKey = "key-123_456@activation";
-        final String specialIp = "::1"; // IPv6 localhost
 
         // When
         this.userDto.username = specialUsername;
         this.userDto.email = specialEmail;
         this.userDto.activationKey = specialKey;
-        this.userDto.lastIp = specialIp;
 
         // Then
         assertEquals(specialUsername, this.userDto.username);
         assertEquals(specialEmail, this.userDto.email);
         assertEquals(specialKey, this.userDto.activationKey);
-        assertEquals(specialIp, this.userDto.lastIp);
     }
 
     @Test
@@ -183,27 +170,5 @@ class UserDtoTest {
         assertEquals(longUsername.toString(), this.userDto.username);
         assertEquals(longPassword.toString(), this.userDto.password);
         assertEquals(longEmail.toString(), this.userDto.email);
-    }
-
-    @Test
-    @DisplayName("Should handle edge case IP addresses")
-    void shouldHandleEdgeCaseIpAddresses() {
-        // Test various IP formats
-        final String[] ipAddresses = {
-                "127.0.0.1", // IPv4 localhost
-                "0.0.0.0", // IPv4 any
-                "255.255.255.255", // IPv4 broadcast
-                "::1", // IPv6 localhost
-                "2001:db8::1", // IPv6 example
-                "fe80::1%lo0" // IPv6 with zone
-        };
-
-        for (final String ip : ipAddresses) {
-            // When
-            this.userDto.lastIp = ip;
-
-            // Then
-            assertEquals(ip, this.userDto.lastIp);
-        }
     }
 }

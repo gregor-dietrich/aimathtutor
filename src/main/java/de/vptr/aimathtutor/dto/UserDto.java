@@ -25,14 +25,11 @@ public class UserDto {
 
     public String activationKey;
 
-    public String lastIp;
-
     public UserDto() {
     }
 
     public UserDto(final String username, final String password, final String email, final Long rankId,
-            final Boolean banned, final Boolean activated,
-            final String activationKey, final String lastIp) {
+            final Boolean banned, final Boolean activated, final String activationKey) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -40,6 +37,5 @@ public class UserDto {
         this.banned = banned;
         this.activated = activated;
         this.activationKey = activationKey;
-        this.lastIp = lastIp;
     }
 }
