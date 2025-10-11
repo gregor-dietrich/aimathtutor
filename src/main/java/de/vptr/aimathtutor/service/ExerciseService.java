@@ -43,8 +43,8 @@ public class ExerciseService {
                 .toList();
     }
 
-    public List<ExerciseViewDto> findByLessonId(final Long exerciseId) {
-        return ExerciseEntity.find("category.id = ?1 ORDER BY created DESC", exerciseId).list().stream()
+    public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
+        return ExerciseEntity.find("lesson.id = ?1 ORDER BY created DESC", lessonId).list().stream()
                 .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
                 .toList();
     }
