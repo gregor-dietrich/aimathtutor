@@ -10,39 +10,60 @@
     max-width: 250px;
 }
 
-/* Graspable Math canvas dark mode support */
-#graspable-canvas {
-    /* Use theme-aware colors */
-    background-color: var(--lumo-base-color) !important;
-    color: var(--lumo-body-text-color) !important;
+/* Graspable Math keyboard popup in dark mode */
+html[theme~="dark"] #gm-keyboard {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
 }
 
-/* Force Graspable Math content to use theme colors */
-#graspable-canvas canvas {
-    /* Make the canvas background transparent so parent bg shows through */
-    background-color: transparent !important;
+/* All elements in keyboard get dark background */
+html[theme~="dark"] #gm-keyboard * {
+    background-color: #2a2a2a !important;
 }
 
-/* Ensure text/math elements in Graspable Math use the right color */
-#graspable-canvas * {
-    color: var(--lumo-body-text-color) !important;
+/* Caption (instruction text) */
+html[theme~="dark"] #gm-keyboard .caption,
+html[theme~="dark"] #gm-keyboard .caption * {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    opacity: 1 !important;
 }
 
-/* SVG elements (if Graspable Math uses them) */
-#graspable-canvas svg,
-#graspable-canvas svg * {
-    fill: var(--lumo-body-text-color) !important;
-    stroke: var(--lumo-body-text-color) !important;
+/* Close button (X icon) */
+html[theme~="dark"] #gm-keyboard .close,
+html[theme~="dark"] #gm-keyboard .close * {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    opacity: 1 !important;
 }
 
-/* Specific for dark mode - override any hardcoded black text */
-html[theme~="dark"] #graspable-canvas {
-    background-color: var(--lumo-base-color) !important;
+/* Keyboard buttons */
+html[theme~="dark"] #gm-keyboard button.key,
+html[theme~="dark"] #gm-keyboard button.key.dark {
+    background-color: #3a3a3a !important;
+    border: 1px solid #555555 !important;
+    color: #e0e0e0 !important;
 }
 
-html[theme~="dark"] #graspable-canvas *,
-html[theme~="dark"] #graspable-canvas text {
-    color: var(--lumo-body-text-color) !important;
-    fill: var(--lumo-body-text-color) !important;
+html[theme~="dark"] #gm-keyboard button.key:hover,
+html[theme~="dark"] #gm-keyboard button.key.dark:hover {
+    background-color: #4a4a4a !important;
+}
+
+/* SVG icons */
+html[theme~="dark"] #gm-keyboard svg,
+html[theme~="dark"] #gm-keyboard svg *,
+html[theme~="dark"] #gm-keyboard svg path {
+    fill: #e0e0e0 !important;
+    stroke: #e0e0e0 !important;
+    color: #e0e0e0 !important;
+}
+
+/* Input fields */
+html[theme~="dark"] #gm-keyboard .gm-mq-input,
+html[theme~="dark"] #gm-keyboard textarea {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #555555 !important;
 }
 
