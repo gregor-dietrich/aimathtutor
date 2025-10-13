@@ -61,14 +61,14 @@ public class GeminiRequestDto {
     }
 
     public static class SafetySetting {
-        public String lesson;
+        public String category;
         public String threshold;
 
         public SafetySetting() {
         }
 
-        public SafetySetting(final String lesson, final String threshold) {
-            this.lesson = lesson;
+        public SafetySetting(final String category, final String threshold) {
+            this.category = category;
             this.threshold = threshold;
         }
     }
@@ -76,7 +76,8 @@ public class GeminiRequestDto {
     /**
      * Helper method to create a simple text request
      */
-    public static GeminiRequestDto createTextRequest(final String prompt, final Double temperature, final Integer maxTokens) {
+    public static GeminiRequestDto createTextRequest(final String prompt, final Double temperature,
+            final Integer maxTokens) {
         final var request = new GeminiRequestDto();
         request.contents = List.of(new Content(prompt));
         request.generationConfig = new GenerationConfig(temperature, maxTokens);
