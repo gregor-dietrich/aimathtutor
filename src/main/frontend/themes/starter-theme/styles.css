@@ -10,3 +10,39 @@
     max-width: 250px;
 }
 
+/* Graspable Math canvas dark mode support */
+#graspable-canvas {
+    /* Use theme-aware colors */
+    background-color: var(--lumo-base-color) !important;
+    color: var(--lumo-body-text-color) !important;
+}
+
+/* Force Graspable Math content to use theme colors */
+#graspable-canvas canvas {
+    /* Make the canvas background transparent so parent bg shows through */
+    background-color: transparent !important;
+}
+
+/* Ensure text/math elements in Graspable Math use the right color */
+#graspable-canvas * {
+    color: var(--lumo-body-text-color) !important;
+}
+
+/* SVG elements (if Graspable Math uses them) */
+#graspable-canvas svg,
+#graspable-canvas svg * {
+    fill: var(--lumo-body-text-color) !important;
+    stroke: var(--lumo-body-text-color) !important;
+}
+
+/* Specific for dark mode - override any hardcoded black text */
+html[theme~="dark"] #graspable-canvas {
+    background-color: var(--lumo-base-color) !important;
+}
+
+html[theme~="dark"] #graspable-canvas *,
+html[theme~="dark"] #graspable-canvas text {
+    color: var(--lumo-body-text-color) !important;
+    fill: var(--lumo-body-text-color) !important;
+}
+
