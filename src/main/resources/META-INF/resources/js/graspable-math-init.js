@@ -68,6 +68,15 @@ function initializeCanvas() {
     }
 
     try {
+        // Check if dark theme is active and set it BEFORE creating canvas
+        var isDarkMode = document.documentElement.hasAttribute('theme') && 
+                         document.documentElement.getAttribute('theme').includes('dark');
+        
+        if (isDarkMode && window.gmath.setDarkTheme) {
+            console.log('[GM] Setting dark theme');
+            window.gmath.setDarkTheme(true);
+        }
+
         // Create canvas using gmath.Canvas with minimal toolbar
         var canvas = new window.gmath.Canvas(canvasElement, {
             use_fade_effects: true,
