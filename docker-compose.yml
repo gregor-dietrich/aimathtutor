@@ -8,9 +8,23 @@ services:
     env_file:
       - .env
     environment:
-      ai.tutor.provider: gemini
-      gemini.api.key: ${GEMINI_API_KEY}
       quarkus.datasource.jdbc.url: jdbc:mariadb://mariadb:3306/aimathtutor
+
+      # Google Gemini config
+      ai.tutor.provider: gemini
+      gemini.model: gemini-2.5-flash-lite
+      gemini.api.key: ${GEMINI_API_KEY}
+
+      # OpenAI ChatGPT config
+      # ai.tutor.provider: openai
+      # openai.model: gpt-4o-mini
+      # openai.api.key: ${OPENAI_API_KEY}
+      # openai.organization-id: ${OPENAI_ORG_ID}
+
+      # Ollama config
+      # ai.tutor.provider: ollama
+      # ollama.model: llama3.1:8b
+      # ollama.api.url: http://localhost:11434
     ports:
       - "80:9069"
     volumes:
