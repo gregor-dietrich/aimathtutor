@@ -12,6 +12,9 @@ max_line_length = 80
 [*.sh]
 end_of_line = lf
  
+[*.js]
+indent_size = 4
+ 
 [*.java]
 indent_size = 4
 max_line_length = 120
