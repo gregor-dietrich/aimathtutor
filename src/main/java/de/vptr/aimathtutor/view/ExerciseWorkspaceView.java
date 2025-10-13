@@ -13,14 +13,17 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AIFeedbackDto;
+import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.service.AITutorService;
@@ -63,11 +66,13 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
     // UI Components
     private Div canvasContainer;
-    private VerticalLayout feedbackPanel;
-    private Div feedbackContent;
+    private VerticalLayout chatPanel;
+    private TextField chatInput;
+    private Button sendButton;
     private VerticalLayout hintsPanel;
     private Button requestHintButton;
     private Button backButton;
+    private String currentExpression;
 
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -201,7 +206,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         leftPanel.add(header, this.canvasContainer);
 
-        // Right side: AI Feedback and Hints (30%)
+        // Right side: AI Chat and Hints (30%)
         final var rightPanel = new VerticalLayout();
         rightPanel.setSpacing(true);
         rightPanel.setPadding(true);
@@ -210,32 +215,51 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border-left", "1px solid var(--lumo-contrast-10pct)");
 
-        // AI Feedback section
-        final var feedbackHeader = new H4("AI Tutor Feedback");
-        this.feedbackContent = new Div();
-        this.feedbackContent.getStyle()
+        // AI Chat section
+        final var chatHeader = new H4("AI Tutor Chat");
+        this.chatPanel = new VerticalLayout();
+        this.chatPanel.setSpacing(true);
+        this.chatPanel.getStyle()
                 .set("max-height", "300px")
                 .set("overflow-y", "auto")
                 .set("padding", "var(--lumo-space-m)")
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("flex-grow", "1");
 
-        this.feedbackPanel = new VerticalLayout(feedbackHeader, this.feedbackContent);
-        this.feedbackPanel.setSpacing(false);
-        this.feedbackPanel.setPadding(false);
+        // Chat input area
+        this.chatInput = new TextField();
+        this.chatInput.setPlaceholder("Ask me a question...");
+        this.chatInput.setWidthFull();
+        this.chatInput.addValueChangeListener(e -> this.sendButton.setEnabled(!e.getValue().trim().isEmpty()));
 
-        // Add welcome message as a proper feedback item
-        final var welcomeDiv = new Div();
-        welcomeDiv.getStyle()
-                .set("padding", "var(--lumo-space-s)")
-                .set("margin-bottom", "var(--lumo-space-s)")
-                .set("border-radius", "var(--lumo-border-radius-s)")
-                .set("background-color", "var(--lumo-primary-color-10pct)");
-        final var welcomeMsg = new Paragraph("💡 Work on the problem and I'll provide feedback on your steps.");
-        welcomeMsg.getStyle().set("margin", "0");
-        welcomeDiv.add(welcomeMsg);
-        this.feedbackContent.add(welcomeDiv);
+        this.sendButton = new Button("Send", VaadinIcon.PAPERPLANE.create());
+        this.sendButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        this.sendButton.setEnabled(false);
+        this.sendButton.addClickListener(e -> this.sendQuestion());
+
+        // Allow Enter key to send
+        this.chatInput.addKeyPressListener(com.vaadin.flow.component.Key.ENTER, e -> {
+            if (!this.chatInput.isEmpty()) {
+                this.sendQuestion();
+            }
+        });
+
+        final var inputLayout = new HorizontalLayout(this.chatInput, this.sendButton);
+        inputLayout.setWidthFull();
+        inputLayout.setSpacing(true);
+        inputLayout.setAlignItems(Alignment.END);
+        this.chatInput.getStyle().set("flex-grow", "1");
+
+        final var chatSection = new VerticalLayout(chatHeader, this.chatPanel, inputLayout);
+        chatSection.setSpacing(true);
+        chatSection.setPadding(false);
+        chatSection.setFlexGrow(1, this.chatPanel);
+
+        // Add welcome message
+        this.addChatMessage(ChatMessageDto.system(
+                "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
 
         // Hints section
         final var hintsHeader = new H4("Hints");
@@ -255,7 +279,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         hintsSection.setSpacing(true);
         hintsSection.setPadding(false);
 
-        rightPanel.add(this.feedbackPanel, hintsSection);
+        rightPanel.add(chatSection, hintsSection);
+        rightPanel.setFlexGrow(1, chatSection);
 
         this.add(leftPanel, rightPanel);
     }
@@ -330,6 +355,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
         LOG.debug("Math action: type={}, before={}, after={}", eventType, expressionBefore, expressionAfter);
 
+        // Update current expression
+        this.currentExpression = expressionAfter;
+
         // Create event DTO
         final var event = new GraspableEventDto();
         event.eventType = eventType;
@@ -343,52 +371,95 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Process event through GraspableMathService (for session tracking)
         this.graspableMathService.processEvent(event);
 
-        // Get AI feedback
+        // Get AI feedback (may return null if action is insignificant)
         final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event);
 
-        // Log interaction
-        this.aiTutorService.logInteraction(event, feedback);
+        // Only log and display if we got feedback
+        if (feedback != null) {
+            // Log interaction
+            this.aiTutorService.logInteraction(event, feedback);
 
-        // Display feedback
-        this.displayFeedback(feedback);
+            // Display feedback
+            this.displayFeedback(feedback);
+        }
     }
 
     /**
-     * @deprecated Old method signature - no longer called by new JavaScript
+     * Handles sending a user question to the AI tutor.
      */
-    @Deprecated
-    @ClientCallable
-    public void onMathActionOld(final String eventJson) {
-        LOG.debug("Received math action: {}", eventJson);
+    private void sendQuestion() {
+        final String question = this.chatInput.getValue().trim();
+        if (question.isEmpty()) {
+            return;
+        }
 
-        try {
-            // Parse the Graspable Math event
-            // For now, create a simplified event DTO
-            final var event = new GraspableEventDto();
-            event.sessionId = this.currentSessionId;
-            event.exerciseId = this.exerciseId;
-            event.eventType = "action"; // We'll parse this better later
-            event.timestamp = java.time.LocalDateTime.now();
+        // Display user message
+        this.addChatMessage(ChatMessageDto.userQuestion(question));
 
-            // Get user ID
-            try {
-                event.studentId = this.authService.getUserId();
-            } catch (final Exception e) {
-                LOG.warn("Could not get user ID", e);
+        // Clear input
+        this.chatInput.clear();
+        this.sendButton.setEnabled(false);
+
+        // Get AI answer
+        final ChatMessageDto answer = this.aiTutorService.answerQuestion(
+                question,
+                this.currentExpression,
+                this.currentSessionId);
+
+        // Display AI answer
+        this.addChatMessage(answer);
+    }
+
+    /**
+     * Adds a chat message to the chat panel.
+     */
+    private void addChatMessage(final ChatMessageDto message) {
+        UI.getCurrent().access(() -> {
+            final var messageDiv = new Div();
+            messageDiv.getStyle()
+                    .set("padding", "var(--lumo-space-s)")
+                    .set("margin-bottom", "var(--lumo-space-s)")
+                    .set("border-radius", "var(--lumo-border-radius-m)");
+
+            // Style based on sender
+            if (message.sender == ChatMessageDto.Sender.USER) {
+                messageDiv.getStyle()
+                        .set("background-color", "var(--lumo-primary-color-10pct)")
+                        .set("margin-left", "var(--lumo-space-l)")
+                        .set("border", "1px solid var(--lumo-primary-color-50pct)");
+            } else {
+                messageDiv.getStyle()
+                        .set("background-color", "var(--lumo-contrast-10pct)")
+                        .set("margin-right", "var(--lumo-space-l)");
             }
 
-            // Process event through GraspableMathService
-            this.graspableMathService.processEvent(event);
+            // Add icon based on message type
+            String icon = "";
+            if (message.sender == ChatMessageDto.Sender.USER) {
+                icon = "👤 ";
+            } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
+                icon = "ℹ️ ";
+            } else {
+                icon = "🤖 ";
+            }
 
-            // Get AI feedback
-            final var feedback = this.aiTutorService.analyzeMathAction(event);
+            final var messagePara = new Paragraph(icon + message.message);
+            messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
 
-            // Display feedback in UI
-            this.displayFeedback(feedback);
+            messageDiv.add(messagePara);
 
-        } catch (final Exception e) {
-            LOG.error("Error processing math action", e);
-        }
+            this.chatPanel.add(messageDiv);
+
+            // Auto-scroll to bottom
+            UI.getCurrent().getPage().executeJs(
+                    "const panel = $0; panel.scrollTop = panel.scrollHeight;",
+                    this.chatPanel.getElement());
+
+            // Limit chat history to 20 messages
+            if (this.chatPanel.getComponentCount() > 20) {
+                this.chatPanel.remove(this.chatPanel.getComponentAt(0));
+            }
+        });
     }
 
     private void displayFeedback(final AIFeedbackDto feedback) {
@@ -396,42 +467,19 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
-        UI.getCurrent().access(() -> {
-            final var feedbackDiv = new Div();
-            feedbackDiv.getStyle()
-                    .set("padding", "var(--lumo-space-s)")
-                    .set("margin-bottom", "var(--lumo-space-s)")
-                    .set("border-radius", "var(--lumo-border-radius-s)")
-                    .set("background-color", this.getFeedbackColor(feedback.type));
+        final var message = ChatMessageDto.aiFeedback(feedback.message);
+        message.sessionId = this.currentSessionId;
 
-            final var icon = this.getFeedbackIcon(feedback.type);
-            final var message = new Paragraph(icon + " " + feedback.message);
-            message.getStyle().set("margin", "0");
-
-            feedbackDiv.add(message);
-
-            // Add hints if provided
-            if (feedback.hints != null && !feedback.hints.isEmpty()) {
-                for (final String hint : feedback.hints) {
-                    final var hintPara = new Paragraph("💡 " + hint);
-                    hintPara.getStyle()
-                            .set("margin", "var(--lumo-space-xs) 0 0 0")
-                            .set("font-size", "var(--lumo-font-size-s)")
-                            .set("font-style", "italic");
-                    feedbackDiv.add(hintPara);
-                }
+        // Add hints as part of the message if present
+        if (feedback.hints != null && !feedback.hints.isEmpty()) {
+            final StringBuilder fullMessage = new StringBuilder(feedback.message);
+            for (final String hint : feedback.hints) {
+                fullMessage.append("\n💡 ").append(hint);
             }
+            message.message = fullMessage.toString();
+        }
 
-            // Add to top of feedback panel
-            this.feedbackContent.addComponentAsFirst(feedbackDiv);
-
-            // Limit feedback history to 10 items
-            if (this.feedbackContent.getChildren().count() > 10) {
-                this.feedbackContent.getChildren()
-                        .skip(10)
-                        .forEach(component -> this.feedbackContent.remove(component));
-            }
-        });
+        this.addChatMessage(message);
     }
 
     private void showNextHint() {
@@ -481,25 +529,5 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         NotificationUtil.showSuccess("Hint revealed!");
-    }
-
-    private String getFeedbackColor(final AIFeedbackDto.FeedbackType type) {
-        return switch (type) {
-            case POSITIVE -> "var(--lumo-success-color-10pct)";
-            case CORRECTIVE -> "var(--lumo-error-color-10pct)";
-            case HINT -> "var(--lumo-primary-color-10pct)";
-            case SUGGESTION -> "var(--lumo-contrast-10pct)";
-            case NEUTRAL -> "var(--lumo-contrast-5pct)";
-        };
-    }
-
-    private String getFeedbackIcon(final AIFeedbackDto.FeedbackType type) {
-        return switch (type) {
-            case POSITIVE -> "✅";
-            case CORRECTIVE -> "❌";
-            case HINT -> "💡";
-            case SUGGESTION -> "⚡";
-            case NEUTRAL -> "ℹ️";
-        };
     }
 }

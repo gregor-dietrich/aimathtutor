@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.AIFeedbackDto;
+import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.entity.AIInteractionEntity;
@@ -51,15 +52,22 @@ public class AITutorService {
 
     /**
      * Analyzes a student's math action and provides AI feedback.
+     * Only provides feedback for significant actions to reduce spam.
      * 
      * @param event The Graspable Math event containing the student's action
-     * @return AI-generated feedback
+     * @return AI-generated feedback, or null if no feedback needed
      */
     public AIFeedbackDto analyzeMathAction(final GraspableEventDto event) {
         LOG.debug("Analyzing math action: {}", event);
 
         if (this.aiEnabled != null && !this.aiEnabled) {
-            return AIFeedbackDto.positive("Keep going!");
+            return null; // Don't provide feedback if AI is disabled
+        }
+
+        // Filter out insignificant actions to reduce spam
+        if (!this.isSignificantAction(event)) {
+            LOG.debug("Skipping feedback for insignificant action: {}", event.eventType);
+            return null;
         }
 
         // Use different AI provider based on configuration
@@ -73,6 +81,62 @@ public class AITutorService {
     }
 
     /**
+     * Determines if an action is significant enough to warrant feedback.
+     * Helps reduce spammy feedback on every minor change.
+     */
+    private boolean isSignificantAction(final GraspableEventDto event) {
+        if (event.eventType == null) {
+            return false;
+        }
+
+        final String type = event.eventType.toLowerCase();
+
+        // Significant actions that deserve feedback
+        return type.contains("simplify") ||
+                type.contains("expand") ||
+                type.contains("factor") ||
+                type.contains("solve") ||
+                type.contains("combine") ||
+                type.contains("isolate") ||
+                type.contains("substitute") ||
+                (type.contains("move") && event.expressionBefore != null && event.expressionAfter != null
+                        && !event.expressionBefore.equals(event.expressionAfter));
+    }
+
+    /**
+     * Answers a direct question from the student.
+     * Uses AI to provide contextual help based on the current problem state.
+     * 
+     * @param question          The student's question
+     * @param currentExpression The current state of the problem (optional)
+     * @param sessionId         The session ID (optional)
+     * @return AI-generated answer
+     */
+    public ChatMessageDto answerQuestion(final String question, final String currentExpression,
+            final String sessionId) {
+        LOG.debug("Answering question: {} (session: {})", question, sessionId);
+
+        if (this.aiEnabled != null && !this.aiEnabled) {
+            return ChatMessageDto.aiAnswer(
+                    "I'm currently offline, but keep working on the problem! You can ask your teacher for help.");
+        }
+
+        // Use different AI provider based on configuration
+        final String provider = (this.aiProvider != null) ? this.aiProvider.toLowerCase() : "mock";
+
+        final String answer = switch (provider) {
+            case "gemini" -> this.answerWithGemini(question, currentExpression);
+            case "openai" -> this.answerWithOpenAI(question, currentExpression);
+            case "ollama" -> this.answerWithOllama(question, currentExpression);
+            default -> this.answerWithMockAI(question, currentExpression);
+        };
+
+        final var message = ChatMessageDto.aiAnswer(answer);
+        message.sessionId = sessionId;
+        return message;
+    }
+
+    /**
      * Mock AI implementation using rule-based logic.
      * Provides reasonable feedback based on action type.
      */
@@ -83,51 +147,153 @@ public class AITutorService {
         switch (event.eventType != null ? event.eventType.toLowerCase() : "") {
             case "simplify":
                 if (event.correct != null && event.correct) {
-                    feedback = AIFeedbackDto.positive("Great job! You simplified the expression correctly.");
-                    feedback.suggestedNextSteps.add("Continue simplifying if possible");
+                    feedback = AIFeedbackDto.positive("Great job! You simplified correctly.");
                 } else if (event.correct != null && !event.correct) {
-                    feedback = AIFeedbackDto.corrective("Hmm, that simplification doesn't look quite right.");
+                    feedback = AIFeedbackDto.corrective("That simplification doesn't look quite right.");
                     feedback.hints.add("Check if you applied the operation to both sides");
-                    feedback.hints.add("Remember the order of operations");
                 } else {
-                    // No correctness info provided
-                    feedback = AIFeedbackDto.positive("You're simplifying the expression.");
-                    feedback.suggestedNextSteps.add("Continue simplifying if possible");
+                    // No correctness info provided - be less spammy
+                    return null; // Don't give feedback for unclear simplification
                 }
                 break;
 
             case "expand":
-                feedback = AIFeedbackDto.positive("Good! You expanded the expression.");
+                feedback = AIFeedbackDto.positive("Good expansion!");
                 feedback.suggestedNextSteps.add("Now try to simplify the result");
-                feedback.relatedConcepts.add("Distributive property");
                 break;
 
             case "factor":
                 feedback = AIFeedbackDto.positive("Nice factoring!");
-                feedback.relatedConcepts.add("Factoring");
-                feedback.relatedConcepts.add("Common factors");
                 break;
 
             case "combine":
-                feedback = AIFeedbackDto
-                        .suggestion("You're combining like terms. Make sure the terms are actually alike!");
-                feedback.hints.add("Like terms have the same variable and exponent");
+                feedback = AIFeedbackDto.suggestion("Combining like terms - make sure they match!");
                 break;
 
             case "move":
-                feedback = AIFeedbackDto.hint("Moving terms across the equals sign? Remember to change the sign!");
-                feedback.relatedConcepts.add("Equation balancing");
+                // Only give feedback if the expression actually changed
+                if (event.expressionBefore != null && event.expressionAfter != null &&
+                        event.expressionBefore.equals(event.expressionAfter)) {
+                    return null; // No change, no feedback
+                }
+                feedback = AIFeedbackDto.hint("Remember to change the sign when moving across the equals sign!");
                 break;
 
             default:
-                feedback = AIFeedbackDto.neutral("I see you're working on the problem. Keep it up!");
-                break;
+                // Don't give feedback for unknown or minor actions
+                return null;
         }
 
         feedback.sessionId = event.sessionId;
         feedback.confidence = 0.85; // Mock confidence
 
         return feedback;
+    }
+
+    /**
+     * Mock AI implementation for answering student questions.
+     */
+    private String answerWithMockAI(final String question, final String currentExpression) {
+        final String lowerQuestion = question.toLowerCase();
+
+        // Provide context-aware answers based on keywords
+        if (lowerQuestion.contains("how") && lowerQuestion.contains("solve")) {
+            return "To solve an equation, try to isolate the variable on one side. Work step by step, performing the same operation on both sides.";
+        } else if (lowerQuestion.contains("what") && (lowerQuestion.contains("next") || lowerQuestion.contains("do"))) {
+            if (currentExpression != null && currentExpression.contains("+")) {
+                return "Try combining like terms or moving terms to isolate the variable.";
+            }
+            return "Look at what you have now and think about what operation would help simplify or isolate the variable.";
+        } else if (lowerQuestion.contains("why") || lowerQuestion.contains("explain")) {
+            return "That's a great question! In algebra, we maintain balance by doing the same operation on both sides. This keeps the equation true.";
+        } else if (lowerQuestion.contains("stuck") || lowerQuestion.contains("help")) {
+            return "No worries! Try breaking it down into smaller steps. What's the first thing you can simplify or isolate?";
+        } else if (lowerQuestion.contains("hint")) {
+            return "💡 Look for terms you can combine, or operations you can undo to isolate the variable.";
+        } else {
+            return "I'm here to help! Can you be more specific about what you're stuck on?";
+        }
+    }
+
+    /**
+     * Answer question using Gemini AI.
+     */
+    private String answerWithGemini(final String question, final String currentExpression) {
+        if (!this.geminiService.isConfigured()) {
+            LOG.warn("Gemini not configured, using mock AI");
+            return this.answerWithMockAI(question, currentExpression);
+        }
+
+        try {
+            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            return this.geminiService.generateContent(prompt);
+        } catch (final Exception e) {
+            LOG.error("Error using Gemini for question answering", e);
+            return this.answerWithMockAI(question, currentExpression);
+        }
+    }
+
+    /**
+     * Answer question using OpenAI.
+     */
+    private String answerWithOpenAI(final String question, final String currentExpression) {
+        if (!this.openAIService.isConfigured()) {
+            LOG.warn("OpenAI not configured, using mock AI");
+            return this.answerWithMockAI(question, currentExpression);
+        }
+
+        try {
+            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            return this.openAIService.generateContent(prompt);
+        } catch (final Exception e) {
+            LOG.error("Error using OpenAI for question answering", e);
+            return this.answerWithMockAI(question, currentExpression);
+        }
+    }
+
+    /**
+     * Answer question using Ollama.
+     */
+    private String answerWithOllama(final String question, final String currentExpression) {
+        if (!this.ollamaService.isAvailable()) {
+            LOG.warn("Ollama not available, using mock AI");
+            return this.answerWithMockAI(question, currentExpression);
+        }
+
+        try {
+            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            return this.ollamaService.generateContent(prompt);
+        } catch (final Exception e) {
+            LOG.error("Error using Ollama for question answering", e);
+            return this.answerWithMockAI(question, currentExpression);
+        }
+    }
+
+    /**
+     * Builds a prompt for answering student questions.
+     */
+    private String buildQuestionAnsweringPrompt(final String question, final String currentExpression) {
+        final StringBuilder prompt = new StringBuilder();
+
+        prompt.append(
+                "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n");
+
+        if (currentExpression != null && !currentExpression.trim().isEmpty()) {
+            prompt.append("Current problem state: ").append(currentExpression).append("\n\n");
+        }
+
+        prompt.append("Student question: ").append(question).append("\n\n");
+
+        prompt.append("Provide a helpful, encouraging answer that:\n");
+        prompt.append("- Guides the student's thinking without solving it for them\n");
+        prompt.append("- Is concise (2-3 sentences max)\n");
+        prompt.append("- Relates to their current problem if possible\n");
+        prompt.append("- Uses clear, simple language\n");
+        prompt.append("- Encourages them to try the next step\n\n");
+
+        prompt.append("Your answer:");
+
+        return prompt.toString();
     }
 
     /**
@@ -165,8 +331,8 @@ public class AITutorService {
     private String buildMathTutoringPrompt(final GraspableEventDto event) {
         final StringBuilder prompt = new StringBuilder();
 
-        prompt.append("You are an encouraging AI math tutor helping a student learn algebra. ");
-        prompt.append("Analyze the student's action and provide helpful feedback.\n\n");
+        prompt.append("You are an encouraging but concise AI math tutor helping a student learn algebra. ");
+        prompt.append("Analyze the student's action and provide brief, helpful feedback.\n\n");
 
         prompt.append("Student Action:\n");
         prompt.append("- Action Type: ").append(event.eventType != null ? event.eventType : "unknown").append("\n");
@@ -186,19 +352,21 @@ public class AITutorService {
         prompt.append("\nProvide feedback in the following JSON format:\n");
         prompt.append("{\n");
         prompt.append("  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n");
-        prompt.append("  \"message\": \"Your encouraging feedback message (one sentence)\",\n");
-        prompt.append("  \"hints\": [\"optional hint 1\", \"optional hint 2\"],\n");
-        prompt.append("  \"suggestedNextSteps\": [\"what to try next\"],\n");
+        prompt.append("  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n");
+        prompt.append("  \"hints\": [],\n");
+        prompt.append("  \"suggestedNextSteps\": [],\n");
         prompt.append("  \"confidence\": 0.0 to 1.0\n");
         prompt.append("}\n\n");
 
-        prompt.append("Guidelines:\n");
-        prompt.append("- Be encouraging and supportive\n");
-        prompt.append("- If the action is correct, praise the student\n");
-        prompt.append("- If incorrect, gently point out the error without giving away the answer\n");
-        prompt.append("- Provide hints that guide thinking, don't solve it for them\n");
-        prompt.append("- Suggest logical next steps\n");
-        prompt.append("- Keep messages concise (1-2 sentences)\n");
+        prompt.append("IMPORTANT Guidelines:\n");
+        prompt.append("- Keep message to ONE SHORT sentence (max 15 words)\n");
+        prompt.append("- Be encouraging but not overly enthusiastic\n");
+        prompt.append("- If the action is correct, give brief praise\n");
+        prompt.append("- If incorrect, point out the error gently\n");
+        prompt.append("- Only provide hints array if student made a mistake (max 1-2 hints)\n");
+        prompt.append("- Do NOT provide hints for correct actions\n");
+        prompt.append("- Leave suggestedNextSteps empty unless specifically needed\n");
+        prompt.append("- Be specific about what they did, not generic\n");
 
         return prompt.toString();
     }
