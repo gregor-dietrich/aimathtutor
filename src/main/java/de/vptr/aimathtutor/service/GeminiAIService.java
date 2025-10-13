@@ -33,7 +33,7 @@ public class GeminiAIService {
     @ConfigProperty(name = "gemini.model", defaultValue = "gemini-1.5-flash")
     String model;
 
-    @ConfigProperty(name = "gemini.api.base-url", defaultValue = "https://generativelanguage.googleapis.com/v1beta")
+    @ConfigProperty(name = "gemini.api.base-url", defaultValue = "https://generativelanguage.googleapis.com")
     String baseUrl;
 
     @ConfigProperty(name = "gemini.temperature", defaultValue = "0.7")
