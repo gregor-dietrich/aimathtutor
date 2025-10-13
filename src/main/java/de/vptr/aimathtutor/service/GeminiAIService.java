@@ -1,5 +1,11 @@
 package de.vptr.aimathtutor.service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,14 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 /**
  * Service for interacting with Google Gemini AI API
@@ -44,7 +45,18 @@ public class GeminiAIService {
     @Inject
     ObjectMapper objectMapper;
 
-    private Client client;
+    private HttpClient httpClient;
+
+    @PostConstruct
+    void init() {
+        // Initialize HttpClient with appropriate settings
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(30))
+                .build();
+
+        LOG.debug("Initialized Gemini HttpClient for model: {}", this.model);
+    }
 
     /**
      * Generate content using Gemini API
@@ -52,40 +64,49 @@ public class GeminiAIService {
      * @param prompt The input prompt
      * @return The generated text response
      */
-    public String generateContent(String prompt) {
+    public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 
-        if (apiKey == null || apiKey.isBlank() || apiKey.startsWith("${")) {
+        if (this.apiKey == null || this.apiKey.isBlank() || this.apiKey.startsWith("${")) {
             LOG.warn("Gemini API key not configured");
             throw new IllegalStateException(
                     "Gemini API key not configured. Please set gemini.api.key in application.properties or GEMINI_API_KEY environment variable");
         }
 
         try {
-            // Create request
-            final var request = GeminiRequestDto.createTextRequest(prompt, temperature, maxTokens);
+            // Create request DTO
+            final var requestDto = GeminiRequestDto.createTextRequest(prompt, this.temperature, this.maxTokens);
+
+            // Convert to JSON
+            final String requestJson = this.objectMapper.writeValueAsString(requestDto);
 
             // Build API URL
-            final String url = String.format("%s/models/%s:generateContent?key=%s", baseUrl, model, apiKey);
+            final String url = String.format("%s/v1beta/models/%s:generateContent?key=%s",
+                    this.baseUrl, this.model, this.apiKey);
 
-            // Get or create client
-            if (client == null) {
-                client = ClientBuilder.newClient();
-            }
+            LOG.debug("Calling Gemini API at: {}", url.replaceAll("key=[^&]+", "key=***"));
+
+            // Create HTTP request
+            final HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(60))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                    .build();
 
             // Make API call
-            final var response = client.target(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(request));
+            final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                final String errorBody = response.readEntity(String.class);
-                LOG.error("Gemini API error (status {}): {}", response.getStatus(), errorBody);
-                throw new WebApplicationException("Gemini API error: " + response.getStatus(), response.getStatus());
+            final int statusCode = response.statusCode();
+            final String responseBody = response.body();
+
+            if (statusCode != 200) {
+                LOG.error("Gemini API error (status {}): {}", statusCode, responseBody);
+                throw new IllegalStateException("Gemini API error: " + statusCode + " - " + responseBody);
             }
 
             // Parse response
-            final var geminiResponse = response.readEntity(GeminiResponseDto.class);
+            final var geminiResponse = this.objectMapper.readValue(responseBody, GeminiResponseDto.class);
 
             if (geminiResponse.isBlocked()) {
                 LOG.warn("Gemini response was blocked by safety filters");
@@ -101,11 +122,8 @@ public class GeminiAIService {
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
 
-        } catch (final WebApplicationException e) {
-            LOG.error("Error calling Gemini API", e);
-            throw e;
         } catch (final Exception e) {
-            LOG.error("Unexpected error calling Gemini API", e);
+            LOG.error("Error calling Gemini API", e);
             throw new IllegalStateException("Failed to call Gemini API", e);
         }
     }
@@ -113,14 +131,14 @@ public class GeminiAIService {
     /**
      * Generate content with custom temperature and max tokens
      */
-    public String generateContent(String prompt, Double customTemperature, Integer customMaxTokens) {
+    public String generateContent(final String prompt, final Double customTemperature, final Integer customMaxTokens) {
         final Double originalTemp = this.temperature;
         final Integer originalMaxTokens = this.maxTokens;
 
         try {
             this.temperature = customTemperature;
             this.maxTokens = customMaxTokens;
-            return generateContent(prompt);
+            return this.generateContent(prompt);
         } finally {
             this.temperature = originalTemp;
             this.maxTokens = originalMaxTokens;
@@ -131,13 +149,13 @@ public class GeminiAIService {
      * Check if Gemini is properly configured
      */
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("${");
+        return this.apiKey != null && !this.apiKey.isBlank() && !this.apiKey.startsWith("${");
     }
 
     /**
      * Get the current model name
      */
     public String getModel() {
-        return model;
+        return this.model;
     }
 }
