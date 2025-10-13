@@ -13,13 +13,16 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AIFeedbackDto;
+import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.AITutorService;
@@ -46,8 +49,10 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
 
     private Div graspableCanvas;
     private VerticalLayout feedbackPanel;
-    private Button generateProblemButton;
-    private Button getHintButton;
+    private TextField chatInput;
+    private Button sendButton;
+    private String currentExpression;
+    private String sessionId;
 
     public GraspableMathView() {
         this.setSizeFull();
@@ -68,11 +73,14 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     private void buildUI() {
         this.removeAll();
 
+        // Generate session ID
+        this.sessionId = "session-" + System.currentTimeMillis();
+
         // Header
         final var header = new H2("Graspable Math Workspace");
         header.getStyle().set("margin-bottom", "var(--lumo-space-m)");
 
-        // Main layout: Graspable Math canvas on left, AI feedback on right
+        // Main layout: Graspable Math canvas on left, AI chat on right
         final var mainLayout = new HorizontalLayout();
         mainLayout.setSizeFull();
         mainLayout.setSpacing(true);
@@ -98,26 +106,24 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         final var controls = new HorizontalLayout();
         controls.setSpacing(true);
 
-        this.generateProblemButton = new Button("Generate New Problem", e -> this.generateNewProblem());
-        this.generateProblemButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-        this.getHintButton = new Button("Get Hint", e -> this.requestHint());
-        this.getHintButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        final var generateProblemButton = new Button("Generate New Problem", e -> this.generateNewProblem());
+        generateProblemButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         final var resetButton = new Button("Reset", e -> this.resetCanvas());
 
-        controls.add(this.generateProblemButton, this.getHintButton, resetButton);
+        controls.add(generateProblemButton, resetButton);
 
         leftPanel.add(this.graspableCanvas, controls);
 
-        // Right side: AI Feedback panel
+        // Right side: AI Chat panel
         final var rightPanel = new VerticalLayout();
         rightPanel.setWidth("30%");
         rightPanel.setSpacing(true);
 
-        final var feedbackHeader = new H3("AI Tutor Feedback");
-        feedbackHeader.getStyle().set("margin-top", "0");
+        final var chatHeader = new H3("AI Tutor Chat");
+        chatHeader.getStyle().set("margin-top", "0");
 
+        // Chat history panel
         this.feedbackPanel = new VerticalLayout();
         this.feedbackPanel.setSpacing(true);
         this.feedbackPanel.getStyle()
@@ -126,17 +132,43 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
                 .set("padding", "var(--lumo-space-m)")
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("overflow-y", "auto")
-                .set("max-height", "600px");
+                .set("max-height", "500px")
+                .set("flex-grow", "1");
 
-        rightPanel.add(feedbackHeader, this.feedbackPanel);
+        // Chat input area
+        this.chatInput = new TextField();
+        this.chatInput.setPlaceholder("Ask me a question...");
+        this.chatInput.setWidthFull();
+        this.chatInput.addValueChangeListener(e -> this.sendButton.setEnabled(!e.getValue().trim().isEmpty()));
+
+        this.sendButton = new Button("Send", VaadinIcon.PAPERPLANE.create());
+        this.sendButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        this.sendButton.setEnabled(false);
+        this.sendButton.addClickListener(e -> this.sendQuestion());
+
+        // Allow Enter key to send
+        this.chatInput.addKeyPressListener(com.vaadin.flow.component.Key.ENTER, e -> {
+            if (!this.chatInput.isEmpty()) {
+                this.sendQuestion();
+            }
+        });
+
+        final var inputLayout = new HorizontalLayout(this.chatInput, this.sendButton);
+        inputLayout.setWidthFull();
+        inputLayout.setSpacing(true);
+        inputLayout.setAlignItems(Alignment.END);
+        this.chatInput.getStyle().set("flex-grow", "1");
+
+        rightPanel.add(chatHeader, this.feedbackPanel, inputLayout);
+        rightPanel.setFlexGrow(1, this.feedbackPanel);
 
         mainLayout.add(leftPanel, rightPanel);
 
         this.add(header, mainLayout);
 
         // Show welcome message
-        this.addFeedback(AIFeedbackDto.positive(
-                "Welcome to the Math Workspace! Click 'Generate New Problem' to begin practicing."));
+        this.addChatMessage(ChatMessageDto.system(
+                "Welcome! I'm your AI math tutor. Work on problems and I'll help you along the way. Feel free to ask me questions anytime!"));
     }
 
     @Override
@@ -198,9 +230,11 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
 
         UI.getCurrent().getPage().executeJs(loadScript);
 
-        // Add feedback about the loaded problem
-        this.addFeedback(AIFeedbackDto
-                .positive("Problem loaded: " + problem.title + ". Click 'Generate New Problem' for a different one."));
+        // Store initial expression
+        this.currentExpression = problem.initialExpression;
+
+        // Add message about the loaded problem
+        this.addChatMessage(ChatMessageDto.system("Problem loaded: " + problem.title));
     }
 
     /**
@@ -222,60 +256,124 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
         LOG.debug("Math action: type={}, before={}, after={}", eventType, expressionBefore, expressionAfter);
 
+        // Update current expression
+        this.currentExpression = expressionAfter;
+
         // Create event DTO
         final var event = new GraspableEventDto();
         event.eventType = eventType;
         event.expressionBefore = expressionBefore;
         event.expressionAfter = expressionAfter;
         event.studentId = this.authService.getUserId();
-        // No exercise or session needed for standalone workspace
+        event.sessionId = this.sessionId;
+        // No exercise needed for standalone workspace
 
-        // Get AI feedback
+        // Get AI feedback (may return null if action is insignificant)
         final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event);
 
-        // Log interaction (optional - for analytics)
-        this.aiTutorService.logInteraction(event, feedback);
+        // Only log and display if we got feedback
+        if (feedback != null) {
+            // Log interaction (optional - for analytics)
+            this.aiTutorService.logInteraction(event, feedback);
 
-        // Display feedback to user
-        this.addFeedback(feedback);
+            // Display feedback to user
+            this.addAIFeedback(feedback);
+        }
     }
 
-    private void addFeedback(final AIFeedbackDto feedback) {
-        final var feedbackDiv = new Div();
-        feedbackDiv.getStyle()
-                .set("padding", "var(--lumo-space-s)")
-                .set("margin-bottom", "var(--lumo-space-s)")
-                .set("border-radius", "var(--lumo-border-radius-s)")
-                .set("background-color", this.getFeedbackColor(feedback.type));
-
-        final var message = new Paragraph(feedback.message);
-        message.getStyle().set("margin", "0");
-
-        feedbackDiv.add(message);
-
-        // Add hints if available
-        if (feedback.hints != null && !feedback.hints.isEmpty()) {
-            for (final String hint : feedback.hints) {
-                final var hintPara = new Paragraph("💡 " + hint);
-                hintPara.getStyle()
-                        .set("margin", "var(--lumo-space-xs) 0 0 0")
-                        .set("font-size", "var(--lumo-font-size-s)")
-                        .set("font-style", "italic");
-                feedbackDiv.add(hintPara);
-            }
+    /**
+     * Handles sending a user question to the AI tutor.
+     */
+    private void sendQuestion() {
+        final String question = this.chatInput.getValue().trim();
+        if (question.isEmpty()) {
+            return;
         }
 
-        this.feedbackPanel.addComponentAsFirst(feedbackDiv);
+        // Display user message
+        this.addChatMessage(ChatMessageDto.userQuestion(question));
+
+        // Clear input
+        this.chatInput.clear();
+        this.sendButton.setEnabled(false);
+
+        // Get AI answer
+        final ChatMessageDto answer = this.aiTutorService.answerQuestion(
+                question,
+                this.currentExpression,
+                this.sessionId);
+
+        // Display AI answer
+        this.addChatMessage(answer);
     }
 
-    private String getFeedbackColor(final AIFeedbackDto.FeedbackType type) {
-        return switch (type) {
-            case POSITIVE -> "var(--lumo-success-color-10pct)";
-            case CORRECTIVE -> "var(--lumo-error-color-10pct)";
-            case HINT -> "var(--lumo-primary-color-10pct)";
-            case SUGGESTION -> "var(--lumo-contrast-10pct)";
-            default -> "var(--lumo-contrast-5pct)";
-        };
+    /**
+     * Adds a chat message to the chat panel.
+     */
+    private void addChatMessage(final ChatMessageDto message) {
+        final var messageDiv = new Div();
+        messageDiv.getStyle()
+                .set("padding", "var(--lumo-space-s)")
+                .set("margin-bottom", "var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius-m)");
+
+        // Style based on sender
+        if (message.sender == ChatMessageDto.Sender.USER) {
+            messageDiv.getStyle()
+                    .set("background-color", "var(--lumo-primary-color-10pct)")
+                    .set("margin-left", "var(--lumo-space-l)")
+                    .set("border", "1px solid var(--lumo-primary-color-50pct)");
+        } else {
+            messageDiv.getStyle()
+                    .set("background-color", "var(--lumo-contrast-10pct)")
+                    .set("margin-right", "var(--lumo-space-l)");
+        }
+
+        // Add icon based on message type
+        String icon = "";
+        if (message.sender == ChatMessageDto.Sender.USER) {
+            icon = "👤 ";
+        } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
+            icon = "ℹ️ ";
+        } else {
+            icon = "🤖 ";
+        }
+
+        final var messagePara = new Paragraph(icon + message.message);
+        messagePara.getStyle().set("margin", "0");
+
+        messageDiv.add(messagePara);
+
+        this.feedbackPanel.add(messageDiv);
+
+        // Auto-scroll to bottom
+        UI.getCurrent().getPage().executeJs(
+                "const panel = $0; panel.scrollTop = panel.scrollHeight;",
+                this.feedbackPanel.getElement());
+
+        // Limit chat history to 20 messages
+        if (this.feedbackPanel.getComponentCount() > 20) {
+            this.feedbackPanel.remove(this.feedbackPanel.getComponentAt(0));
+        }
+    }
+
+    /**
+     * Converts AIFeedbackDto to ChatMessageDto and displays it.
+     */
+    private void addAIFeedback(final AIFeedbackDto feedback) {
+        final var message = ChatMessageDto.aiFeedback(feedback.message);
+        message.sessionId = this.sessionId;
+
+        // Add hints as part of the message if present
+        if (feedback.hints != null && !feedback.hints.isEmpty()) {
+            final StringBuilder fullMessage = new StringBuilder(feedback.message);
+            for (final String hint : feedback.hints) {
+                fullMessage.append("\n💡 ").append(hint);
+            }
+            message.message = fullMessage.toString();
+        }
+
+        this.addChatMessage(message);
     }
 
     private void generateNewProblem() {
@@ -291,16 +389,10 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
 
         UI.getCurrent().getPage().executeJs(jsCode);
 
-        this.addFeedback(AIFeedbackDto.positive("New problem loaded: " + problem.title));
-    }
+        // Store initial expression
+        this.currentExpression = problem.initialExpression;
 
-    private void requestHint() {
-        // Provide a generic hint for solving linear equations
-        final var feedback = AIFeedbackDto.hint("Try isolating the variable on one side of the equation.");
-        feedback.hints.add("What operation would cancel out the constant term?");
-        feedback.hints.add("Remember to perform the same operation on both sides.");
-
-        this.addFeedback(feedback);
+        this.addChatMessage(ChatMessageDto.system("New problem loaded: " + problem.title));
     }
 
     private void resetCanvas() {
@@ -310,7 +402,8 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
                 }
                 """);
 
+        this.currentExpression = null;
         this.feedbackPanel.removeAll();
-        this.addFeedback(AIFeedbackDto.positive("Canvas reset. Ready for a new problem!"));
+        this.addChatMessage(ChatMessageDto.system("Canvas reset. Click 'Generate New Problem' to start!"));
     }
 }
