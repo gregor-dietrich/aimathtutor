@@ -5,7 +5,11 @@ services:
       context: .
       dockerfile: src/main/docker/Dockerfile.jvm
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
+      ai.tutor.provider: gemini
+      gemini.api.key: ${GEMINI_API_KEY}
       quarkus.datasource.jdbc.url: jdbc:mariadb://mariadb:3306/aimathtutor
     ports:
       - "80:9069"
