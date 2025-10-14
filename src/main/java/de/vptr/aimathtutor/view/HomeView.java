@@ -143,7 +143,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
         card.getStyle()
                 .set("width", "300px")
                 .set("padding", "1rem")
-                .set("background-color", "white")
+                .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("cursor", "pointer")
@@ -168,8 +168,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
         final var titleSpan = new Span(exercise.title);
         titleSpan.getStyle()
                 .set("font-weight", "600")
-                .set("font-size", "var(--lumo-font-size-m)")
-                .set("color", "var(--lumo-primary-text-color)");
+                .set("font-size", "var(--lumo-font-size-m)");
 
         // Badges
         final var badgeLayout = new HorizontalLayout();
@@ -203,42 +202,18 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
             badgeLayout.add(difficultyBadge);
         }
 
-        // Content preview
-        final var contentPreview = new Paragraph();
-        if (exercise.content != null && !exercise.content.trim().isEmpty()) {
-            String preview = exercise.content.replaceAll("<[^>]*>", ""); // Strip HTML tags
-            if (preview.length() > 100) {
-                preview = preview.substring(0, 100) + "...";
-            }
-            contentPreview.setText(preview);
-        } else {
-            contentPreview.setText("Click to start working on this exercise");
-        }
-        contentPreview.getStyle()
-                .set("color", "var(--lumo-secondary-text-color)")
-                .set("font-size", "var(--lumo-font-size-s)")
-                .set("margin", "0");
-
         // Start button
         final var startButton = new Button("Start Exercise");
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         startButton.setWidthFull();
         startButton.addClickListener(e -> {
-            if (Boolean.TRUE.equals(exercise.graspableEnabled)) {
-                // Navigate to ExerciseWorkspaceView
-                UI.getCurrent().navigate(ExerciseWorkspaceView.class,
-                        new RouteParameters("exerciseId", exercise.id.toString()));
-            } else {
-                // For non-Graspable Math exercises, could navigate to a different view
-                // For now, show a notification
-                com.vaadin.flow.component.notification.Notification.show(
-                        "This exercise doesn't have interactive workspace yet",
-                        3000,
-                        com.vaadin.flow.component.notification.Notification.Position.MIDDLE);
-            }
+            // Navigate to ExerciseWorkspaceView for Graspable exercises
+            // or to a generic ExerciseView for non-Graspable exercises
+            UI.getCurrent().navigate(ExerciseWorkspaceView.class,
+                    new RouteParameters("exerciseId", exercise.id.toString()));
         });
 
-        card.add(titleSpan, badgeLayout, contentPreview, startButton);
+        card.add(titleSpan, badgeLayout, startButton);
 
         return card;
     }
