@@ -2,6 +2,7 @@
 docs/gm-api
 
 # Logs
+logs
 **/*.log*
 
 # Maven

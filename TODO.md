@@ -1,5 +1,28 @@
 # TODO - Detailed Implementation Plans
 
+## 0. General
+
+### Implementation Priority
+
+Suggested order (easiest to hardest):
+
+1. **User Settings Panel** (Task 5 - standalone feature, good UI/UX improvement)
+2. **AIChatPanel Experience Improvements** (Task 6.1 & 6.2 - UI/UX improvements, no AI changes)
+3. **Problem Completion Detection** (Task 1 - enhances existing functionality)
+4. **Problem Category Selection** (Task 2 - extends generation feature)
+5. **Add Rich Context to AI API Requests** (Task 6.3 - moderate complexity, improves AI responses)
+6. **Multiple Problems Per Exercise** (Task 3 - moderate complexity, requires DB changes)
+7. **Admin Views** (Task 4 - most complex, requires multiple new views and services)
+
+### Testing Checklist (for each feature)
+
+- [ ] Unit tests for service methods
+- [ ] Integration tests for DB operations
+- [ ] Manual UI testing in both views
+- [ ] Edge cases (empty data, invalid input, etc.)
+- [ ] Permission/security checks
+- [ ] Performance with large datasets (admin views)
+
 ## 1. Problem Completion Detection & AI Verification
 
 **Goal:** Detect when a student reaches the target/solution expression and have the AI tutor provide congratulatory feedback.
@@ -50,7 +73,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 2.1 Backend Changes
 
 1. **Create enum:** `ProblemCategory.java`
 
@@ -75,7 +98,7 @@
 3. **GraspableProblemDto** - Add field:
    - `ProblemCategory category`
 
-### Frontend Changes
+### 2.2 Frontend Changes
 
 1. **GraspableMathView** - Replace "Generate New Problem" button:
    - Change to `ComboBox<ProblemCategory> categorySelect`
@@ -102,7 +125,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 3.1 Backend Changes
 
 1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
    - `graspableInitialExpression` → Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
@@ -119,7 +142,7 @@
    - Add `current_problem_index INT DEFAULT 0` to `student_sessions` table
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
 
-### Frontend Changes
+### 3.2 Frontend Changes
 
 1. **ExerciseWorkspaceView** - Add UI components:
    - Field: `int currentProblemIndex = 0`
@@ -157,7 +180,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 4.1 Backend Changes
 
 1. **New Service:** `AnalyticsService.java` (@ApplicationScoped)
    - `List<StudentSessionViewDto> getAllSessions()`
@@ -181,7 +204,7 @@
    - Ensure `AIInteractionEntity` has all needed fields:
      - `sessionId`, `eventType`, `feedbackMessage`, `timestamp`
 
-### Frontend Changes
+### 4.2 Frontend Changes
 
 1. **New View:** `AdminDashboardView.java` (@Route "admin/dashboard")
    - Check user rank permissions (`rank.adminView == true`)
@@ -237,7 +260,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 5.1 Backend Changes
 
 1. **UserEntity** - Add fields:
    - `String userAvatarEmoji` (default: "🧒")
@@ -264,7 +287,7 @@
      - `user_avatar_emoji VARCHAR(10) DEFAULT '🧒'`
      - `tutor_avatar_emoji VARCHAR(10) DEFAULT '🧑‍🏫'`
 
-### Frontend Changes
+### 5.2 Frontend Changes
 
 1. **New View:** `UserSettingsView.java` (@Route "settings")
    - Accessible from user menu in MainLayout
@@ -329,23 +352,59 @@
 
 ---
 
-## Implementation Priority
+## 6. AIChatPanel Experience Improvements
 
-Suggested order (easiest to hardest):
+### 1. Async Messaging & Typing Animation
 
-1. **User Settings Panel** (standalone feature, good UI/UX improvement)
-2. **Problem Completion Detection** (enhances existing functionality)
-3. **Problem Category Selection** (extends generation feature)
-4. **Multiple Problems Per Exercise** (moderate complexity, requires DB changes)
-5. **Admin Views** (most complex, requires multiple new views and services)
+**Goal:** Make chat interactions smoother and non-blocking.
 
----
+**Implementation Plan:**
 
-## Testing Checklist (for each feature)
+- Refactor AIChatPanel so sending messages is fully async:
+  - When user sends a message, immediately show it in the chat panel.
+  - Show a "typing" animation or effect for the AI tutor while waiting for a response.
+  - Ensure the rest of the UI remains interactive (no freeze/blocking) while awaiting AI reply.
+  - On receiving the reply, replace the typing animation with the actual message.
 
-- [ ] Unit tests for service methods
-- [ ] Integration tests for DB operations
-- [ ] Manual UI testing in both views
-- [ ] Edge cases (empty data, invalid input, etc.)
-- [ ] Permission/security checks
-- [ ] Performance with large datasets (admin views)
+### 2. Avatar Positioning Outside Chat Bubble
+
+**Goal:** Improve visual clarity and alignment of chat avatars.
+
+**Implementation Plan:**
+
+- Display user and tutor avatars (emojis) **outside** the chat bubble:
+  - User avatar to the right of their message bubble.
+  - Tutor avatar to the left of the AI message bubble.
+  - Remove avatar emoji from inside the bubble text.
+  - Update layout and styling for clear alignment and spacing.
+
+### 3. Add Rich Context to AI API Requests
+
+**Goal:** Improve the relevance and personalization of AI responses by including the last 5 actions, last 5 user questions, and last 5 AI messages (feedback or answers) in every prompt sent to the AI APIs—regardless of whether the request is for tutoring feedback or a direct question.
+
+**Implementation Plan:**
+
+- **Backend Changes:**
+  - **AITutorService:**
+    - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
+      - The last 5 actions performed by the student
+      - The last 5 user questions
+      - The last 5 AI messages (feedback or answers)
+    - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
+  - **ChatMessageDto:**
+    - Add optional `relatedAction` field to link messages to specific actions.
+  - **AIInteractionEntity:**
+    - Add `conversationContext` field to log the full context sent with each AI request.
+
+- **Frontend Changes:**
+  - **AIChatPanel:**
+    - Maintain rolling buffers for:
+      - Last 5 actions
+      - Last 5 user questions
+      - Last 5 AI messages
+    - Pass all three buffers to the backend with each user question or action.
+
+- **Testing:**
+  - Verify that prompts include the correct context for both tutoring and questions.
+  - Ensure token limits are respected for all AI providers.
+  - Test with long conversations and many actions to confirm performance and accuracy.
