@@ -184,53 +184,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             header.add(badge);
         }
 
-        // Graspable Math canvas container (only if enabled)
-        if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
-            this.canvasContainer = new Div();
-            this.canvasContainer.setId("graspable-canvas"); // Fixed ID expected by JavaScript
-            this.canvasContainer.getStyle()
-                    .set("width", "100%")
-                    .set("height", "500px")
-                    .set("border", "1px solid var(--lumo-contrast-20pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("background-color", "var(--lumo-base-color)")
-                    .set("margin-top", "1rem");
-
-            leftPanel.add(header, this.canvasContainer);
-        } else {
-            // For non-Graspable exercises, just show the instructions
-            leftPanel.add(header);
-
-            // Add a notice that this is a non-interactive exercise
-            final var noticeDiv = new Div();
-            noticeDiv.getStyle()
-                    .set("padding", "1rem")
-                    .set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("border", "1px solid var(--lumo-contrast-20pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("margin-top", "1rem");
-            noticeDiv.add(new Paragraph(
-                    "This is a reading/study exercise. Review the content above and use the AI tutor if you have questions."));
-            leftPanel.add(noticeDiv);
-        }
-
-        // Right side: AI Chat and Hints (30%)
-        final var rightPanel = new VerticalLayout();
-        rightPanel.setSpacing(true);
-        rightPanel.setPadding(true);
-        rightPanel.getStyle()
-                .set("width", "30%")
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)");
-
-        // AI Chat section using reusable component
-        this.chatPanel = new AIChatPanel(this::handleUserQuestion);
-
-        // Add welcome message
-        this.chatPanel.addMessage(ChatMessageDto.system(
-                "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
-
-        // Hints section
+        // Hints section (below canvas or instructions)
         final var hintsHeader = new H4("Hints");
         this.hintsPanel = new VerticalLayout();
         this.hintsPanel.setSpacing(true);
@@ -247,8 +201,55 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final var hintsSection = new VerticalLayout(hintsHeader, this.hintsPanel, this.requestHintButton);
         hintsSection.setSpacing(true);
         hintsSection.setPadding(false);
+        hintsSection.setWidthFull();
 
-        rightPanel.add(this.chatPanel, hintsSection);
+        // Graspable Math canvas container (only if enabled)
+        if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
+            this.canvasContainer = new Div();
+            this.canvasContainer.setId("graspable-canvas"); // Fixed ID expected by JavaScript
+            this.canvasContainer.getStyle()
+                    .set("width", "100%")
+                    .set("height", "500px")
+                    .set("border", "1px solid var(--lumo-contrast-20pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)")
+                    .set("background-color", "var(--lumo-base-color)")
+                    .set("margin-top", "1rem");
+
+            leftPanel.add(header, this.canvasContainer, hintsSection);
+        } else {
+            // For non-Graspable exercises, just show the instructions
+            leftPanel.add(header);
+
+            // Add a notice that this is a non-interactive exercise
+            final var noticeDiv = new Div();
+            noticeDiv.getStyle()
+                    .set("padding", "1rem")
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border", "1px solid var(--lumo-contrast-20pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)")
+                    .set("margin-top", "1rem");
+            noticeDiv.add(new Paragraph(
+                    "This is a reading/study exercise. Review the content above and use the AI tutor if you have questions."));
+            leftPanel.add(noticeDiv, hintsSection);
+        }
+
+        // Right side: AI Chat only (30%)
+        final var rightPanel = new VerticalLayout();
+        rightPanel.setSpacing(true);
+        rightPanel.setPadding(true);
+        rightPanel.getStyle()
+                .set("width", "30%")
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border-left", "1px solid var(--lumo-contrast-10pct)");
+
+        // AI Chat section using reusable component
+        this.chatPanel = new AIChatPanel(this::handleUserQuestion);
+
+        // Add welcome message
+        this.chatPanel.addMessage(ChatMessageDto.system(
+                "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
+
+        rightPanel.add(this.chatPanel);
         rightPanel.setFlexGrow(1, this.chatPanel);
 
         this.add(leftPanel, rightPanel);
