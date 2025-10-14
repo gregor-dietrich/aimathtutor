@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -13,10 +14,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -31,6 +30,7 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.component.AIChatPanel;
 import jakarta.inject.Inject;
 
 /**
@@ -66,9 +66,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
     // UI Components
     private Div canvasContainer;
-    private VerticalLayout chatPanel;
-    private TextField chatInput;
-    private Button sendButton;
+    private AIChatPanel chatPanel;
     private VerticalLayout hintsPanel;
     private Button requestHintButton;
     private Button backButton;
@@ -111,14 +109,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
-        // Check if Graspable Math is enabled for this exercise
-        if (!Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
-            NotificationUtil.showError("This exercise does not have Graspable Math enabled");
-            event.rerouteTo(HomeView.class);
-            return;
-        }
-
-        // Initialize the view
+        // Initialize the view (supports both Graspable and non-Graspable exercises)
         this.initializeView();
     }
 
@@ -193,18 +184,35 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             header.add(badge);
         }
 
-        // Graspable Math canvas container
-        this.canvasContainer = new Div();
-        this.canvasContainer.setId("graspable-canvas"); // Fixed ID expected by JavaScript
-        this.canvasContainer.getStyle()
-                .set("width", "100%")
-                .set("height", "500px")
-                .set("border", "2px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("background-color", "white")
-                .set("margin-top", "1rem");
+        // Graspable Math canvas container (only if enabled)
+        if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
+            this.canvasContainer = new Div();
+            this.canvasContainer.setId("graspable-canvas"); // Fixed ID expected by JavaScript
+            this.canvasContainer.getStyle()
+                    .set("width", "100%")
+                    .set("height", "500px")
+                    .set("border", "1px solid var(--lumo-contrast-20pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)")
+                    .set("background-color", "var(--lumo-base-color)")
+                    .set("margin-top", "1rem");
 
-        leftPanel.add(header, this.canvasContainer);
+            leftPanel.add(header, this.canvasContainer);
+        } else {
+            // For non-Graspable exercises, just show the instructions
+            leftPanel.add(header);
+
+            // Add a notice that this is a non-interactive exercise
+            final var noticeDiv = new Div();
+            noticeDiv.getStyle()
+                    .set("padding", "1rem")
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border", "1px solid var(--lumo-contrast-20pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)")
+                    .set("margin-top", "1rem");
+            noticeDiv.add(new Paragraph(
+                    "This is a reading/study exercise. Review the content above and use the AI tutor if you have questions."));
+            leftPanel.add(noticeDiv);
+        }
 
         // Right side: AI Chat and Hints (30%)
         final var rightPanel = new VerticalLayout();
@@ -215,50 +223,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border-left", "1px solid var(--lumo-contrast-10pct)");
 
-        // AI Chat section
-        final var chatHeader = new H4("AI Tutor Chat");
-        this.chatPanel = new VerticalLayout();
-        this.chatPanel.setSpacing(true);
-        this.chatPanel.getStyle()
-                .set("max-height", "300px")
-                .set("overflow-y", "auto")
-                .set("padding", "var(--lumo-space-m)")
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("flex-grow", "1");
-
-        // Chat input area
-        this.chatInput = new TextField();
-        this.chatInput.setPlaceholder("Ask me a question...");
-        this.chatInput.setWidthFull();
-        this.chatInput.addValueChangeListener(e -> this.sendButton.setEnabled(!e.getValue().trim().isEmpty()));
-
-        this.sendButton = new Button("Send", VaadinIcon.PAPERPLANE.create());
-        this.sendButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        this.sendButton.setEnabled(false);
-        this.sendButton.addClickListener(e -> this.sendQuestion());
-
-        // Allow Enter key to send
-        this.chatInput.addKeyPressListener(com.vaadin.flow.component.Key.ENTER, e -> {
-            if (!this.chatInput.isEmpty()) {
-                this.sendQuestion();
-            }
-        });
-
-        final var inputLayout = new HorizontalLayout(this.chatInput, this.sendButton);
-        inputLayout.setWidthFull();
-        inputLayout.setSpacing(true);
-        inputLayout.setAlignItems(Alignment.END);
-        this.chatInput.getStyle().set("flex-grow", "1");
-
-        final var chatSection = new VerticalLayout(chatHeader, this.chatPanel, inputLayout);
-        chatSection.setSpacing(true);
-        chatSection.setPadding(false);
-        chatSection.setFlexGrow(1, this.chatPanel);
+        // AI Chat section using reusable component
+        this.chatPanel = new AIChatPanel(this::handleUserQuestion);
 
         // Add welcome message
-        this.addChatMessage(ChatMessageDto.system(
+        this.chatPanel.addMessage(ChatMessageDto.system(
                 "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
 
         // Hints section
@@ -279,8 +248,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         hintsSection.setSpacing(true);
         hintsSection.setPadding(false);
 
-        rightPanel.add(chatSection, hintsSection);
-        rightPanel.setFlexGrow(1, chatSection);
+        rightPanel.add(this.chatPanel, hintsSection);
+        rightPanel.setFlexGrow(1, this.chatPanel);
 
         this.add(leftPanel, rightPanel);
     }
@@ -289,8 +258,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
 
-        // Initialize Graspable Math widget using external JavaScript
-        this.initializeGraspableMath();
+        // Initialize Graspable Math widget using external JavaScript (only if enabled)
+        if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
+            this.initializeGraspableMath();
+        }
     }
 
     /**
@@ -366,7 +337,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         event.studentId = this.authService.getUserId();
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
-        event.timestamp = java.time.LocalDateTime.now();
+        event.timestamp = LocalDateTime.now();
 
         // Process event through GraspableMathService (for session tracking)
         this.graspableMathService.processEvent(event);
@@ -385,20 +356,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     /**
-     * Handles sending a user question to the AI tutor.
+     * Handles user questions from the chat panel.
      */
-    private void sendQuestion() {
-        final String question = this.chatInput.getValue().trim();
-        if (question.isEmpty()) {
-            return;
-        }
-
+    private void handleUserQuestion(final String question) {
         // Display user message
-        this.addChatMessage(ChatMessageDto.userQuestion(question));
-
-        // Clear input
-        this.chatInput.clear();
-        this.sendButton.setEnabled(false);
+        this.chatPanel.addMessage(ChatMessageDto.userQuestion(question));
 
         // Get AI answer
         final ChatMessageDto answer = this.aiTutorService.answerQuestion(
@@ -407,59 +369,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 this.currentSessionId);
 
         // Display AI answer
-        this.addChatMessage(answer);
-    }
-
-    /**
-     * Adds a chat message to the chat panel.
-     */
-    private void addChatMessage(final ChatMessageDto message) {
-        UI.getCurrent().access(() -> {
-            final var messageDiv = new Div();
-            messageDiv.getStyle()
-                    .set("padding", "var(--lumo-space-s)")
-                    .set("margin-bottom", "var(--lumo-space-s)")
-                    .set("border-radius", "var(--lumo-border-radius-m)");
-
-            // Style based on sender
-            if (message.sender == ChatMessageDto.Sender.USER) {
-                messageDiv.getStyle()
-                        .set("background-color", "var(--lumo-primary-color-10pct)")
-                        .set("margin-left", "var(--lumo-space-l)")
-                        .set("border", "1px solid var(--lumo-primary-color-50pct)");
-            } else {
-                messageDiv.getStyle()
-                        .set("background-color", "var(--lumo-contrast-10pct)")
-                        .set("margin-right", "var(--lumo-space-l)");
-            }
-
-            // Add icon based on message type
-            String icon = "";
-            if (message.sender == ChatMessageDto.Sender.USER) {
-                icon = "👤 ";
-            } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
-                icon = "ℹ️ ";
-            } else {
-                icon = "🤖 ";
-            }
-
-            final var messagePara = new Paragraph(icon + message.message);
-            messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
-
-            messageDiv.add(messagePara);
-
-            this.chatPanel.add(messageDiv);
-
-            // Auto-scroll to bottom
-            UI.getCurrent().getPage().executeJs(
-                    "const panel = $0; panel.scrollTop = panel.scrollHeight;",
-                    this.chatPanel.getElement());
-
-            // Limit chat history to 20 messages
-            if (this.chatPanel.getComponentCount() > 20) {
-                this.chatPanel.remove(this.chatPanel.getComponentAt(0));
-            }
-        });
+        this.chatPanel.addMessage(answer);
     }
 
     private void displayFeedback(final AIFeedbackDto feedback) {
@@ -479,7 +389,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             message.message = fullMessage.toString();
         }
 
-        this.addChatMessage(message);
+        this.chatPanel.addMessage(message);
     }
 
     private void showNextHint() {
