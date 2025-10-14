@@ -212,6 +212,21 @@ public class AITutorService {
                 feedback = AIFeedbackDto.suggestion("Combining like terms - make sure they match!");
                 break;
 
+            // Graspable Math specific action names
+            case "addsubinvertaction":
+                feedback = AIFeedbackDto.hint("Good! You added/subtracted to both sides to maintain balance.");
+                feedback.suggestedNextSteps.add("Continue simplifying to isolate the variable");
+                break;
+
+            case "muldivinvertaction":
+                feedback = AIFeedbackDto.hint("Nice! You multiplied/divided both sides to maintain balance.");
+                feedback.suggestedNextSteps.add("Simplify the result");
+                break;
+
+            case "fractioncanceltermsaction":
+                feedback = AIFeedbackDto.positive("Great job simplifying the fraction!");
+                break;
+
             case "move":
                 // Only give feedback if the expression actually changed
                 if (event.expressionBefore != null && event.expressionAfter != null &&

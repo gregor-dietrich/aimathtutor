@@ -125,11 +125,11 @@ class AITutorServiceTest {
     }
 
     @Test
-    @DisplayName("Should analyze move action")
+    @DisplayName("Should analyze move action with expression change")
     void shouldAnalyzeMoveAction() {
         // Given
         final var event = new GraspableEventDto();
-        event.eventType = "move";
+        event.eventType = "AddSubInvertAction"; // Using actual Graspable Math action name
         event.expressionBefore = "x + 5 = 10";
         event.expressionAfter = "x = 10 - 5";
         event.sessionId = "session-303";
