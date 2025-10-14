@@ -349,3 +349,40 @@ Suggested order (easiest to hardest):
 - [ ] Edge cases (empty data, invalid input, etc.)
 - [ ] Permission/security checks
 - [ ] Performance with large datasets (admin views)
+
+## 6. AIChatPanel Experience Improvements
+
+### 1. Async Messaging & Typing Animation
+
+**Goal:** Make chat interactions smoother and non-blocking.
+
+**Implementation Plan:**
+
+- Refactor AIChatPanel so sending messages is fully async:
+  - When user sends a message, immediately show it in the chat panel.
+  - Show a "typing" animation or effect for the AI tutor while waiting for a response.
+  - Ensure the rest of the UI remains interactive (no freeze/blocking) while awaiting AI reply.
+  - On receiving the reply, replace the typing animation with the actual message.
+
+### 2. Avatar Positioning Outside Chat Bubble
+
+**Goal:** Improve visual clarity and alignment of chat avatars.
+
+**Implementation Plan:**
+
+- Display user and tutor avatars (emojis) **outside** the chat bubble:
+  - User avatar to the right of their message bubble.
+  - Tutor avatar to the left of the AI message bubble.
+  - Remove avatar emoji from inside the bubble text.
+  - Update layout and styling for clear alignment and spacing.
+
+### 3. Gemini Live API Evaluation/Integration
+
+**Goal:** Enable real-time streaming responses from Gemini if possible.
+
+**Implementation Plan:**
+
+- Investigate if Gemini's Live API (for real-time streaming responses) is currently used for AI tutor replies.
+- If not used, add a separate task to integrate Gemini Live API for streaming/real-time chat.
+- If integration is simple, include as part of async messaging refactor; otherwise, track as a distinct backend task.
+- Document findings and required changes.
