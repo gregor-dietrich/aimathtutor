@@ -31,7 +31,7 @@ services:
     volumes:
       - aimathtutor_logs:/deployments/logs
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://aimathtutor:9069 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:9069 || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3

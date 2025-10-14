@@ -78,10 +78,12 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
-FROM registry.access.redhat.com/ubi9/openjdk-21:1.21
+FROM eclipse-temurin:21.0.8_9-jre-alpine-3.22
 
 ENV LANGUAGE='en_US:en'
 
+# Create application user
+RUN addgroup -g 185 -S jboss && adduser -u 185 -S -G jboss -h /deployments -s /sbin/nologin jboss
 
 # We make four distinct layers so if there are application changes the library layers can be re-used
 COPY --chown=185 target/quarkus-app/lib/ /deployments/lib/
@@ -91,8 +93,11 @@ COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 9069
 USER 185
-ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+WORKDIR /deployments
 
-ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]
+ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+ENV JAVA_OPTS_APPEND=""
+
+ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
+CMD []
 
