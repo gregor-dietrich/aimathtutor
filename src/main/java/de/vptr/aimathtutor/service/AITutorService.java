@@ -32,6 +32,12 @@ public class AITutorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AITutorService.class);
 
+    private static final String questionAnsweringPromptPrefix = "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n";
+    private static final String questionAnsweringPromptPostfix = "\n\nProvide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:";
+
+    private static final String mathTutoringPromptPrefix = "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.\n\nStudent Action:\n- Action Type: ";
+    private static final String mathTutoringPromptPostfix = "\nProvide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n";
+
     @ConfigProperty(name = "ai.tutor.enabled", defaultValue = "true")
     Boolean aiEnabled;
 
@@ -58,17 +64,22 @@ public class AITutorService {
      * @return AI-generated feedback, or null if no feedback needed
      */
     public AIFeedbackDto analyzeMathAction(final GraspableEventDto event) {
-        LOG.debug("Analyzing math action: {}", event);
+        LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}'",
+                event.eventType, event.expressionBefore, event.expressionAfter);
 
         if (this.aiEnabled != null && !this.aiEnabled) {
+            LOG.debug("AI is disabled, returning null");
             return null; // Don't provide feedback if AI is disabled
         }
 
         // Filter out insignificant actions to reduce spam
         if (!this.isSignificantAction(event)) {
-            LOG.debug("Skipping feedback for insignificant action: {}", event.eventType);
+            LOG.info("Skipping feedback for insignificant action: eventType='{}', before='{}', after='{}'",
+                    event.eventType, event.expressionBefore, event.expressionAfter);
             return null;
         }
+
+        LOG.info("Action is significant, generating feedback with provider: {}", this.aiProvider);
 
         // Use different AI provider based on configuration
         final String provider = (this.aiProvider != null) ? this.aiProvider.toLowerCase() : "mock";
@@ -91,16 +102,47 @@ public class AITutorService {
 
         final String type = event.eventType.toLowerCase();
 
-        // Significant actions that deserve feedback
-        return type.contains("simplify") ||
+        // Graspable Math specific action names (from the actual GM API)
+        if (type.contains("addsubinvert") || // Adding/subtracting to both sides
+                type.contains("muldivinvert") || // Multiplying/dividing both sides
+                type.contains("fractioncancel") || // Simplifying fractions
+                type.contains("distribute") || // Distributing multiplication
+                type.contains("factor") || // Factoring
+                type.contains("collect") || // Collecting like terms
+                type.contains("commute") || // Commutative property
+                type.contains("associate")) { // Associative property
+            return true;
+        }
+
+        // Generic action keywords (might be used by other math tools or custom actions)
+        if (type.contains("simplify") ||
                 type.contains("expand") ||
-                type.contains("factor") ||
                 type.contains("solve") ||
                 type.contains("combine") ||
                 type.contains("isolate") ||
-                type.contains("substitute") ||
-                (type.contains("move") && event.expressionBefore != null && event.expressionAfter != null
-                        && !event.expressionBefore.equals(event.expressionAfter));
+                type.contains("substitute")) {
+            return true;
+        }
+
+        // Skip automatic simplification actions to reduce noise
+        if (type.contains("postinteraction") ||
+                type.contains("addsubnumbers") || // Automatic number combining
+                type.contains("autosimp")) {
+            LOG.debug("Skipping automatic simplification: {}", type);
+            return false;
+        }
+
+        // For generic "change" or "math_step" events, check if expression actually
+        // changed
+        if ((type.contains("change") || type.contains("math_step")) &&
+                event.expressionBefore != null &&
+                event.expressionAfter != null &&
+                !event.expressionBefore.equals(event.expressionAfter) &&
+                !event.expressionBefore.isEmpty()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -261,7 +303,7 @@ public class AITutorService {
         }
 
         try {
-            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
             return this.ollamaService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Ollama for question answering", e);
@@ -273,27 +315,22 @@ public class AITutorService {
      * Builds a prompt for answering student questions.
      */
     private String buildQuestionAnsweringPrompt(final String question, final String currentExpression) {
-        final StringBuilder prompt = new StringBuilder();
+        final var prompt = new StringBuilder();
 
-        prompt.append(
-                "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n");
+        prompt.append(questionAnsweringPromptPrefix);
 
         if (currentExpression != null && !currentExpression.trim().isEmpty()) {
             prompt.append("Current problem state: ").append(currentExpression).append("\n\n");
         }
 
-        prompt.append("Student question: ").append(question).append("\n\n");
+        prompt.append("Student question: ").append(question);
 
-        prompt.append("Provide a helpful, encouraging answer that:\n");
-        prompt.append("- Guides the student's thinking without solving it for them\n");
-        prompt.append("- Is concise (2-3 sentences max)\n");
-        prompt.append("- Relates to their current problem if possible\n");
-        prompt.append("- Uses clear, simple language\n");
-        prompt.append("- Encourages them to try the next step\n\n");
+        prompt.append(questionAnsweringPromptPostfix);
 
-        prompt.append("Your answer:");
+        final var promptString = prompt.toString();
+        LOG.debug("Sending QuestionAnsweringPrompt: {}", promptString);
 
-        return prompt.toString();
+        return promptString;
     }
 
     /**
@@ -311,10 +348,10 @@ public class AITutorService {
 
         try {
             // Build the prompt
-            final String prompt = this.buildMathTutoringPrompt(event);
+            final var prompt = this.buildMathTutoringPrompt(event);
 
             // Call Gemini API
-            final String response = this.geminiService.generateContent(prompt);
+            final var response = this.geminiService.generateContent(prompt);
 
             // Parse response as JSON
             return this.parseFeedbackFromJSON(response);
@@ -329,13 +366,11 @@ public class AITutorService {
      * Builds a structured prompt for math tutoring with Gemini.
      */
     private String buildMathTutoringPrompt(final GraspableEventDto event) {
-        final StringBuilder prompt = new StringBuilder();
+        final var prompt = new StringBuilder();
 
-        prompt.append("You are an encouraging but concise AI math tutor helping a student learn algebra. ");
-        prompt.append("Analyze the student's action and provide brief, helpful feedback.\n\n");
+        prompt.append(mathTutoringPromptPrefix);
 
-        prompt.append("Student Action:\n");
-        prompt.append("- Action Type: ").append(event.eventType != null ? event.eventType : "unknown").append("\n");
+        prompt.append(event.eventType != null ? event.eventType : "unknown").append("\n");
 
         if (event.expressionBefore != null) {
             prompt.append("- Expression Before: ").append(event.expressionBefore).append("\n");
@@ -349,26 +384,12 @@ public class AITutorService {
             prompt.append("- Is Correct: ").append(event.correct).append("\n");
         }
 
-        prompt.append("\nProvide feedback in the following JSON format:\n");
-        prompt.append("{\n");
-        prompt.append("  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n");
-        prompt.append("  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n");
-        prompt.append("  \"hints\": [],\n");
-        prompt.append("  \"suggestedNextSteps\": [],\n");
-        prompt.append("  \"confidence\": 0.0 to 1.0\n");
-        prompt.append("}\n\n");
+        prompt.append(mathTutoringPromptPostfix);
 
-        prompt.append("IMPORTANT Guidelines:\n");
-        prompt.append("- Keep message to ONE SHORT sentence (max 15 words)\n");
-        prompt.append("- Be encouraging but not overly enthusiastic\n");
-        prompt.append("- If the action is correct, give brief praise\n");
-        prompt.append("- If incorrect, point out the error gently\n");
-        prompt.append("- Only provide hints array if student made a mistake (max 1-2 hints)\n");
-        prompt.append("- Do NOT provide hints for correct actions\n");
-        prompt.append("- Leave suggestedNextSteps empty unless specifically needed\n");
-        prompt.append("- Be specific about what they did, not generic\n");
+        final var promptString = prompt.toString();
+        LOG.debug("Sending MathTutoringPrompt: {}", promptString);
 
-        return prompt.toString();
+        return promptString;
     }
 
     /**

@@ -189,13 +189,106 @@ window.graspableMathUtils = {
 
             // Set up event listener for this derivation
             if (derivation && derivation.events) {
+                var lastKnownEq = derivation.getLastModel().to_ascii();
+                
                 derivation.events.on("change", function (event) {
-                    var lastEq = derivation.getLastModel().to_ascii();
-                    console.log("[GM] Equation changed to:", lastEq);
+                    try {
+                        var currentEq = derivation.getLastModel().to_ascii();
+                        console.log("[GM] Change event:", event);
+                        console.log("[GM] Equation changed to:", currentEq);
+                        console.log("[GM] Derivation rows count:", derivation.rows ? derivation.rows.length : "no rows");
+                        
+                        // Try to get more detailed action information
+                        var actionType = "math_step"; // Changed default to be more specific
+                        var actionDetails = null;
+                        var beforeEq = lastKnownEq;
+                        
+                        // Try multiple ways to access row information
+                        if (derivation.rows && derivation.rows.length > 0) {
+                            console.log("[GM] Total rows:", derivation.rows.length);
+                            
+                            // Get the last row (most recent action)
+                            var lastRow = derivation.rows[derivation.rows.length - 1];
+                            console.log("[GM] Last row:", lastRow);
+                            
+                            // Check if this row has an action
+                            if (lastRow && lastRow.action) {
+                                console.log("[GM] Action found:", lastRow.action);
+                                console.log("[GM] Action name:", lastRow.action.name);
+                                console.log("[GM] Action type:", lastRow.action.type);
+                                
+                                actionType = lastRow.action.name || lastRow.action.type || "math_step";
+                                
+                                // Try to get action details/description
+                                if (lastRow.action.description) {
+                                    actionDetails = lastRow.action.description;
+                                } else if (lastRow.action.label) {
+                                    actionDetails = lastRow.action.label;
+                                }
+                            }
+                            
+                            // Get the before equation from the previous row if available
+                            if (derivation.rows.length > 1) {
+                                var prevRow = derivation.rows[derivation.rows.length - 2];
+                                if (prevRow && prevRow.model) {
+                                    beforeEq = prevRow.model.to_ascii();
+                                }
+                            }
+                        }
+                        
+                        console.log("[GM] Action type:", actionType);
+                        console.log("[GM] Before:", beforeEq, "-> After:", currentEq);
+                        
+                        handleGraspableEvent({
+                            type: actionType,
+                            before: beforeEq,
+                            after: currentEq,
+                            details: actionDetails,
+                        });
+                        
+                        // Update last known equation
+                        lastKnownEq = currentEq;
+                    } catch (error) {
+                        console.error("[GM] Error in change handler:", error);
+                        console.error("[GM] Stack trace:", error.stack);
+                        // Fallback to simple change event
+                        handleGraspableEvent({
+                            type: "math_step",
+                            before: lastKnownEq,
+                            after: derivation.getLastModel().to_ascii(),
+                        });
+                        lastKnownEq = derivation.getLastModel().to_ascii();
+                    }
+                });
+                
+                // Also listen to mistake events
+                derivation.events.on("mistake", function (model) {
+                    console.log("[GM] Mistake event - invalid action attempted");
+                    // Optionally notify the backend about mistakes
+                    // handleGraspableEvent({
+                    //     type: "mistake",
+                    //     before: model.to_ascii(),
+                    //     after: model.to_ascii(),
+                    // });
+                });
+                
+                // Listen to undo events
+                derivation.events.on("undo", function () {
+                    console.log("[GM] Undo event");
                     handleGraspableEvent({
-                        type: "change",
-                        before: event.before_ascii || "",
-                        after: lastEq,
+                        type: "undo",
+                        before: "",
+                        after: derivation.getLastModel().to_ascii(),
+                    });
+                });
+                
+                // Listen to redo events
+                derivation.events.on("redo", function () {
+                    console.log("[GM] Redo event");
+                    handleGraspableEvent({
+                        type: "redo",
+                        before: "",
+                        after: derivation.getLastModel().to_ascii(),
                     });
                 });
             }
