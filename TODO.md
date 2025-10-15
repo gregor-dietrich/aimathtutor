@@ -4,15 +4,30 @@
 
 ### Implementation Priority
 
-Suggested order (easiest to hardest):
+### Suggested Order (Easiest to Hardest)
 
-1. **User Settings Panel** (Task 5 - standalone feature, good UI/UX improvement)
-2. **AIChatPanel Experience Improvements** (Task 6.1 & 6.2 - UI/UX improvements, no AI changes)
-3. **Problem Completion Detection** (Task 1 - enhances existing functionality)
-4. **Problem Category Selection** (Task 2 - extends generation feature)
-5. **Add Rich Context to AI API Requests** (Task 6.3 - moderate complexity, improves AI responses)
-6. **Multiple Problems Per Exercise** (Task 3 - moderate complexity, requires DB changes)
-7. **Admin Views** (Task 4 - most complex, requires multiple new views and services)
+1. **Problem Category Selection** (Task 1)
+   *Easiest*: Mostly UI changes and enum additions; minimal backend logic.
+
+2. **Add Rich Context to AI API Requests** (Task 4)
+   *Moderate*: Requires changes to prompt construction and DTOs, but isolated to AI service and chat panel.
+
+3. **Multiple Problems Per Exercise** (Task 2)
+   *Moderate-Complex*: Involves DB migration, session tracking, and sequential UI logic.
+
+4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+   *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
+
+5. **Admin Views for Progress Tracking** (Task 3)
+   *Most Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
+
+**Difficulty Ratings:**
+
+- Task 1: ★☆☆☆☆
+- Task 4: ★★☆☆☆
+- Task 2: ★★★☆☆
+- Task 5: ★★★★☆
+- Task 3: ★★★★★
 
 ### Testing Checklist (for each feature)
 
@@ -23,57 +38,15 @@ Suggested order (easiest to hardest):
 - [ ] Permission/security checks
 - [ ] Performance with large datasets (admin views)
 
-## 1. Problem Completion Detection & AI Verification
-
-**Goal:** Detect when a student reaches the target/solution expression and have the AI tutor provide congratulatory feedback.
-
-**Implementation Plan:**
-
-### Backend Changes
-
-1. **GraspableEventDto** - Add field:
-   - `boolean isComplete` - flag to indicate if this action resulted in completion
-
-2. **GraspableMathService** - Add method:
-   - `boolean checkCompletion(String currentExpression, String targetExpression)`
-   - Parse and normalize both expressions (handle whitespace, order of terms)
-   - Compare for mathematical equivalence (e.g., "x=5" == "5=x", "2x+3x" == "5x")
-   - Return true if expressions are equivalent
-
-3. **AITutorService** - Enhance `analyzeMathAction()`:
-   - Check if `graspableEventDto.isComplete == true`
-   - Generate special congratulatory feedback when complete
-   - Examples: "🎉 Excellent work! You've solved it correctly!", "Perfect! You reached the solution x=5"
-
-### Frontend Changes
-
-1. **ExerciseWorkspaceView**:
-   - In `onMathAction()`, call `graspableMathService.checkCompletion(expressionAfter, exercise.graspableTargetExpression)`
-   - Set `event.isComplete` flag before sending to AI service
-   - When complete, disable canvas interactions or show completion overlay
-   - Display success notification
-
-2. **GraspableMathView**:
-   - For generated problems, store `targetExpression` when problem is loaded
-   - Similar completion check as ExerciseWorkspaceView
-   - Add optional "Next Problem" or "Try Another" button on completion
-
-### Database Changes
-
-- **StudentSessionEntity** - Update on completion:
-  - Set `completed = true`
-  - Set `endTime = LocalDateTime.now()`
-  - Set `finalExpression = currentExpression`
-
 ---
 
-## 2. Problem Category Selection for Generation
+## 1. Problem Category Selection for Generation
 
 **Goal:** Allow users to choose from different math problem categories instead of always generating linear equations.
 
 **Implementation Plan:**
 
-### 2.1 Backend Changes
+### 1.1 Backend Changes
 
 1. **Create enum:** `ProblemCategory.java`
 
@@ -98,7 +71,7 @@ Suggested order (easiest to hardest):
 3. **GraspableProblemDto** - Add field:
    - `ProblemCategory category`
 
-### 2.2 Frontend Changes
+### 1.2 Frontend Changes
 
 1. **GraspableMathView** - Replace "Generate New Problem" button:
    - Change to `ComboBox<ProblemCategory> categorySelect`
@@ -119,13 +92,13 @@ Suggested order (easiest to hardest):
 
 ---
 
-## 3. Multiple Problems Per Exercise with Sequential Unlocking
+## 2. Multiple Problems Per Exercise with Sequential Unlocking
 
 **Goal:** Allow exercises to have multiple problems (like hints), unlock "Next Problem" button when current is complete.
 
 **Implementation Plan:**
 
-### 3.1 Backend Changes
+### 2.1 Backend Changes
 
 1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
    - `graspableInitialExpression` → Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
@@ -142,7 +115,7 @@ Suggested order (easiest to hardest):
    - Add `current_problem_index INT DEFAULT 0` to `student_sessions` table
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
 
-### 3.2 Frontend Changes
+### 2.2 Frontend Changes
 
 1. **ExerciseWorkspaceView** - Add UI components:
    - Field: `int currentProblemIndex = 0`
@@ -167,20 +140,19 @@ Suggested order (easiest to hardest):
    - Mark entire session as complete in database
    - Show "Back to Exercises" or "Review Session" options
 
-### Admin/Teacher View
-
-- Exercise creation form: Add help text explaining semicolon-separated format
-- Example: "2x+5=15;3x-7=20" → Two problems in sequence
+4. **Admin/Teacher View**
+   - Exercise creation form: Add help text explaining semicolon-separated format
+   - Example: "2x+5=15;3x-7=20" → Two problems in sequence
 
 ---
 
-## 4. Admin Views for Progress Tracking
+## 3. Admin Views for Progress Tracking
 
 **Goal:** Create admin-only views to monitor student sessions, AI interactions, and overall progress.
 
 **Implementation Plan:**
 
-### 4.1 Backend Changes
+### 3.1 Backend Changes
 
 1. **New Service:** `AnalyticsService.java` (@ApplicationScoped)
    - `List<StudentSessionViewDto> getAllSessions()`
@@ -204,7 +176,7 @@ Suggested order (easiest to hardest):
    - Ensure `AIInteractionEntity` has all needed fields:
      - `sessionId`, `eventType`, `feedbackMessage`, `timestamp`
 
-### 4.2 Frontend Changes
+### 3.2 Frontend Changes
 
 1. **New View:** `AdminDashboardView.java` (@Route "admin/dashboard")
    - Check user rank permissions (`rank.adminView == true`)
@@ -241,7 +213,7 @@ Suggested order (easiest to hardest):
    - Add "Admin" tab to MainLayout navigation bar (visible only if `rank.adminView == true`)
    - Submenu: Dashboard, Sessions, Student Progress
 
-### Security
+### 3.3 Security
 
 - Add checks in `beforeEnter()` for all admin views:
 
@@ -254,157 +226,82 @@ Suggested order (easiest to hardest):
 
 ---
 
-## 5. User Settings Panel (Password & Avatar Selection)
-
-**Goal:** Allow users to change their password and customize chat avatars (emojis).
-
-**Implementation Plan:**
-
-### 5.1 Backend Changes
-
-1. **UserEntity** - Add fields:
-   - `String userAvatarEmoji` (default: "🧒")
-   - `String tutorAvatarEmoji` (default: "🧑‍🏫")
-
-2. **New DTO:** `UserSettingsDto.java`
-   - `String currentPassword` (for verification)
-   - `String newPassword`
-   - `String userAvatarEmoji`
-   - `String tutorAvatarEmoji`
-
-3. **UserService** - Add methods:
-   - `void changePassword(Long userId, String currentPassword, String newPassword)`
-     - Verify current password matches
-     - Hash new password with same salt
-     - Update entity
-   - `void updateAvatars(Long userId, String userEmoji, String tutorEmoji)`
-     - Validate emojis (not empty, max length 10)
-     - Update entity
-   - `UserSettingsDto getSettings(Long userId)`
-
-4. **Database Migration:**
-   - Add columns to `users` table:
-     - `user_avatar_emoji VARCHAR(10) DEFAULT '🧒'`
-     - `tutor_avatar_emoji VARCHAR(10) DEFAULT '🧑‍🏫'`
-
-### 5.2 Frontend Changes
-
-1. **New View:** `UserSettingsView.java` (@Route "settings")
-   - Accessible from user menu in MainLayout
-   - Tab layout with sections:
-
-2. **Password Section:**
-   - `PasswordField currentPassword` (label: "Current Password")
-   - `PasswordField newPassword` (label: "New Password")
-   - `PasswordField confirmPassword` (label: "Confirm New Password")
-   - `Button changePassword` (primary)
-   - Validation:
-     - All fields required
-     - New password must be at least 8 characters
-     - New password must match confirm password
-     - Show error if current password incorrect
-
-3. **Avatar Section:**
-   - Description: "Select emojis to represent yourself and the AI tutor in chat conversations"
-   - `ComboBox<String> userAvatarSelect` (label: "Your Avatar")
-     - Options: 🧒, 👦, 👧, 🧑, 👨, 👩, 🙂, 😊, 🤓, 🧠, ✏️, 📚
-   - `ComboBox<String> tutorAvatarSelect` (label: "AI Tutor Avatar")
-     - Options: 🧑‍🏫, 👨‍🏫, 👩‍🏫, 🤖, 🦉, 📖, 🎓, 💡, ⭐
-   - Preview box showing sample messages with selected avatars
-   - `Button saveAvatars` (primary)
-
-4. **Integration with AIChatPanel:**
-   - Modify `AIChatPanel.addMessage()` to use dynamic avatars:
-     - Fetch user's avatar settings from `authService.getCurrentUser()`
-     - Use `userAvatarEmoji` for USER messages
-     - Use `tutorAvatarEmoji` for AI messages
-     - Keep ℹ️ for SYSTEM messages
-
-5. **UI Layout:**
-
-   ```text
-   Settings
-   ├─ Password
-   │  ├─ Current Password: [________]
-   │  ├─ New Password: [________]
-   │  ├─ Confirm Password: [________]
-   │  └─ [Change Password]
-   │
-   └─ Chat Avatars
-      ├─ Your Avatar: [🧒 ▼]
-      ├─ AI Tutor Avatar: [🧑‍🏫 ▼]
-      ├─ Preview:
-      │  🧒 Hello, can you help me?
-      │  🧑‍🏫 Of course! I'm here to help.
-      └─ [Save Avatars]
-   ```
-
-6. **Restrictions:**
-   - Do NOT allow changing: username, email, rank
-   - Display current username/email as read-only fields for reference
-   - Show message: "Contact an administrator to change your username or email"
-
-### Service Integration
-
-- **AuthService** - Add method:
-  - `UserViewDto getCurrentUserWithAvatars()` (include avatar fields)
-  - Cache avatars in session to avoid repeated DB queries
-
----
-
-## 6. AIChatPanel Experience Improvements
-
-### 1. Async Messaging & Typing Animation
-
-**Goal:** Make chat interactions smoother and non-blocking.
-
-**Implementation Plan:**
-
-- Refactor AIChatPanel so sending messages is fully async:
-  - When user sends a message, immediately show it in the chat panel.
-  - Show a "typing" animation or effect for the AI tutor while waiting for a response.
-  - Ensure the rest of the UI remains interactive (no freeze/blocking) while awaiting AI reply.
-  - On receiving the reply, replace the typing animation with the actual message.
-
-### 2. Avatar Positioning Outside Chat Bubble
-
-**Goal:** Improve visual clarity and alignment of chat avatars.
-
-**Implementation Plan:**
-
-- Display user and tutor avatars (emojis) **outside** the chat bubble:
-  - User avatar to the right of their message bubble.
-  - Tutor avatar to the left of the AI message bubble.
-  - Remove avatar emoji from inside the bubble text.
-  - Update layout and styling for clear alignment and spacing.
-
-### 3. Add Rich Context to AI API Requests
+## 4. Add Rich Context to AI API Requests
 
 **Goal:** Improve the relevance and personalization of AI responses by including the last 5 actions, last 5 user questions, and last 5 AI messages (feedback or answers) in every prompt sent to the AI APIs—regardless of whether the request is for tutoring feedback or a direct question.
 
 **Implementation Plan:**
 
-- **Backend Changes:**
-  - **AITutorService:**
-    - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
-      - The last 5 actions performed by the student
-      - The last 5 user questions
-      - The last 5 AI messages (feedback or answers)
-    - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
-  - **ChatMessageDto:**
-    - Add optional `relatedAction` field to link messages to specific actions.
-  - **AIInteractionEntity:**
-    - Add `conversationContext` field to log the full context sent with each AI request.
+### 4.1 Backend Changes
 
-- **Frontend Changes:**
-  - **AIChatPanel:**
-    - Maintain rolling buffers for:
-      - Last 5 actions
-      - Last 5 user questions
-      - Last 5 AI messages
-    - Pass all three buffers to the backend with each user question or action.
+1. **AITutorService:**
+   - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
+   - The last 5 actions performed by the student
+   - The last 5 user questions
+   - The last 5 AI messages (feedback or answers)
+   - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
+2. **ChatMessageDto:**
+   - Add optional `relatedAction` field to link messages to specific actions.
+3. **AIInteractionEntity:**
+   - Add `conversationContext` field to log the full context sent with each AI request.
 
-- **Testing:**
-  - Verify that prompts include the correct context for both tutoring and questions.
-  - Ensure token limits are respected for all AI providers.
-  - Test with long conversations and many actions to confirm performance and accuracy.
+### 46.2 AIChatPanel: Frontend Changes
+
+- Maintain rolling buffers for:
+  - Last 5 actions
+  - Last 5 user questions
+  - Last 5 AI messages
+- Pass all three buffers to the backend with each user question or action.
+
+### 4.3 Testing
+
+- Verify that prompts include the correct context for both tutoring and questions.
+- Ensure token limits are respected for all AI providers.
+- Test with long conversations and many actions to confirm performance and accuracy.
+
+---
+
+## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
+
+**Goal:** Transform the admin home view into `AdminConfigView`, allowing users with admin privileges to change application-wide AI settings at runtime.
+
+**Implementation Plan:**
+
+### 5.1 Backend Changes
+
+1. **Config Properties:**
+   - Rename `ai.tutor.provider` → `ai.tutor.default.provider`
+   - Rename `gemini.model` → `gemini.default.model`
+   - Rename `openai.model` → `openai.default.model`
+   - Rename `ollama.model` → `ollama.default.model`
+   - Add unified properties for `ai.tutor.max-tokens` and `ai.tutor.temperature` (not per-provider)
+   - Add `openai.organization-id`, `ollama.timeout-seconds`, and provider-specific API URLs
+
+2. **Service:**
+   - Add service for updating config properties at runtime (with validation and security checks)
+
+### 5.2 Frontend Changes
+
+1. **AdminConfigView:**
+   - Replace admin home view with a config panel for AI settings
+   - Dropdowns for AI provider and model (model dropdown updates when provider changes)
+   - Disable Gemini/OpenAI if API key is unset ("your-api-key-here"), disable Ollama if URL is unset ("your-ollama-api-url-here")
+   - Inputs for max-tokens and temperature (always visible, affect selected provider)
+   - Inputs for OpenAI organization ID and Ollama timeout (hidden unless respective provider selected, ideally with smooth animation)
+   - Input for API URL (affects only selected provider)
+
+2. **UI/UX:**
+   - Show/hide provider-specific fields with subtle animation
+   - Ensure only one set of model/temperature/max-tokens fields, always reflecting selected provider
+
+### 5.3 Security & Validation
+
+1. Only users with admin privileges can access and change settings
+2. Validate all inputs before saving
+3. Changes should take effect immediately for new AI interactions
+
+### 5.4 Testing
+
+- Unit tests for config update service
+- Integration tests for runtime config changes
+- Manual UI testing for all provider/model combinations and field visibility
