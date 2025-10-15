@@ -328,6 +328,25 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         event.sessionId = this.currentSessionId;
         event.timestamp = LocalDateTime.now();
 
+        // Check if problem is completed (only if target expression is defined)
+        if (this.exercise.graspableTargetExpression != null
+                && !this.exercise.graspableTargetExpression.trim().isEmpty()) {
+            final boolean isComplete = this.graspableMathService.checkCompletion(
+                    expressionAfter,
+                    this.exercise.graspableTargetExpression);
+
+            if (isComplete) {
+                event.isComplete = true;
+                // Mark session as completed
+                this.graspableMathService.markSessionComplete(this.currentSessionId);
+
+                // Show success notification
+                UI.getCurrent().access(() -> {
+                    NotificationUtil.showSuccess("🎉 Congratulations! You've solved the problem correctly!");
+                });
+            }
+        }
+
         // Process event through GraspableMathService (for session tracking)
         this.graspableMathService.processEvent(event);
 

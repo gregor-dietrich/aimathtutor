@@ -27,6 +27,8 @@ import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.AITutorService;
 import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.GraspableMathService;
+import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.component.AIChatPanel;
 import jakarta.inject.Inject;
 
@@ -48,9 +50,13 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    GraspableMathService graspableMathService;
+
     private Div graspableCanvas;
     private AIChatPanel chatPanel;
     private String currentExpression;
+    private String targetExpression;
     private String sessionId;
 
     public GraspableMathView() {
@@ -113,7 +119,15 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
         leftPanel.add(header, this.graspableCanvas, controls);
 
         // Right side: AI Chat panel with built-in styling (30%)
-        this.chatPanel = new AIChatPanel(this::handleUserQuestion);
+        // Get user's avatar settings
+        final var currentUserEntity = this.authService.getCurrentUserEntity();
+        final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
+                ? currentUserEntity.userAvatarEmoji
+                : "🧒";
+        final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
+                ? currentUserEntity.tutorAvatarEmoji
+                : "🧑‍🏫";
+        this.chatPanel = new AIChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto.system(
@@ -218,6 +232,25 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
         event.studentId = this.authService.getUserId();
         event.sessionId = this.sessionId;
         // No exercise needed for standalone workspace
+
+        // Check if problem is completed (if target is set)
+        if (this.targetExpression != null && !this.targetExpression.trim().isEmpty()) {
+            final boolean isComplete = this.graspableMathService.checkCompletion(
+                    expressionAfter,
+                    this.targetExpression);
+
+            if (isComplete) {
+                event.isComplete = true;
+
+                // Show success notification
+                UI.getCurrent().access(() -> {
+                    NotificationUtil.showSuccess("🎉 Congratulations! You've solved the problem correctly!");
+                });
+
+                // Clear target so we don't keep checking
+                this.targetExpression = null;
+            }
+        }
 
         // Get AI feedback (may return null if action is insignificant)
         final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event);
@@ -353,8 +386,9 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
 
         UI.getCurrent().getPage().executeJs(jsCode);
 
-        // Store initial expression
+        // Store initial expression and target
         this.currentExpression = problem.initialExpression;
+        this.targetExpression = problem.targetExpression; // Store target for completion checking
 
         this.chatPanel.addMessage(ChatMessageDto.system("New problem loaded: " + problem.title));
     }
@@ -367,6 +401,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
                 """);
 
         this.currentExpression = null;
+        this.targetExpression = null; // Clear target too
         this.chatPanel.clearMessages();
         this.chatPanel.addMessage(ChatMessageDto.system("Canvas reset. Click 'Generate New Problem' to start!"));
     }

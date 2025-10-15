@@ -72,6 +72,12 @@ public class AITutorService {
             return null; // Don't provide feedback if AI is disabled
         }
 
+        // Check if problem is completed
+        if (event.isComplete != null && event.isComplete) {
+            LOG.info("Problem completed! Generating congratulatory feedback.");
+            return this.generateCompletionFeedback(event);
+        }
+
         // Filter out insignificant actions to reduce spam
         if (!this.isSignificantAction(event)) {
             LOG.info("Skipping feedback for insignificant action: eventType='{}', before='{}', after='{}'",
@@ -89,6 +95,30 @@ public class AITutorService {
             case "ollama" -> this.analyzeWithOllama(event);
             default -> this.analyzeWithMockAI(event);
         };
+    }
+
+    /**
+     * Generates congratulatory feedback when a problem is completed.
+     * 
+     * @param event The completion event
+     * @return Congratulatory feedback message
+     */
+    private AIFeedbackDto generateCompletionFeedback(final GraspableEventDto event) {
+        final String[] congratulatoryMessages = {
+                "🎉 Excellent work! You've solved it correctly!",
+                "🌟 Perfect! You reached the solution: " + event.expressionAfter,
+                "👏 Outstanding! You've successfully completed the problem!",
+                "✨ Great job! You've mastered this problem!",
+                "🎯 Fantastic! You solved it: " + event.expressionAfter,
+                "💯 Well done! You've reached the correct solution!",
+                "🏆 Amazing work! Problem solved successfully!"
+        };
+
+        // Pick a random congratulatory message
+        final int index = (int) (Math.random() * congratulatoryMessages.length);
+        final String message = congratulatoryMessages[index];
+
+        return AIFeedbackDto.positive(message);
     }
 
     /**

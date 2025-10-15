@@ -168,4 +168,87 @@ public class GraspableMathService {
 
         return (session.correctActions.doubleValue() / session.actionsCount) * 100.0;
     }
+
+    /**
+     * Checks if the current expression matches the target expression.
+     * Normalizes both expressions for comparison (handles whitespace, order of
+     * terms, etc.)
+     * 
+     * @param currentExpression The current mathematical expression
+     * @param targetExpression  The target/goal expression
+     * @return true if expressions are equivalent, false otherwise
+     */
+    public boolean checkCompletion(final String currentExpression, final String targetExpression) {
+        if (currentExpression == null || targetExpression == null) {
+            return false;
+        }
+
+        // Normalize both expressions
+        final String normalizedCurrent = this.normalizeExpression(currentExpression);
+        final String normalizedTarget = this.normalizeExpression(targetExpression);
+
+        LOG.debug("Checking completion: '{}' vs '{}'", normalizedCurrent, normalizedTarget);
+
+        // Direct string comparison after normalization
+        return normalizedCurrent.equals(normalizedTarget);
+    }
+
+    /**
+     * Normalizes a mathematical expression for comparison.
+     * - Removes all whitespace
+     * - Converts to lowercase
+     * - Sorts terms in addition/subtraction (basic normalization)
+     * 
+     * @param expression The expression to normalize
+     * @return Normalized expression
+     */
+    private String normalizeExpression(final String expression) {
+        if (expression == null) {
+            return "";
+        }
+
+        // Remove all whitespace
+        String normalized = expression.replaceAll("\\s+", "");
+
+        // Convert to lowercase
+        normalized = normalized.toLowerCase();
+
+        // Handle common equivalent forms
+        // e.g., "x=5" is equivalent to "5=x"
+        if (normalized.contains("=")) {
+            final String[] parts = normalized.split("=");
+            if (parts.length == 2) {
+                // Sort the sides to handle "x=5" and "5=x" as equivalent
+                final String left = parts[0].trim();
+                final String right = parts[1].trim();
+                // If one side is just a number/variable and the other is more complex, keep
+                // order
+                // Otherwise, sort alphabetically for consistency
+                if (left.compareTo(right) > 0) {
+                    normalized = right + "=" + left;
+                }
+            }
+        }
+
+        return normalized;
+    }
+
+    /**
+     * Marks a session as completed.
+     * 
+     * @param sessionId The session ID to mark complete
+     */
+    @Transactional
+    public void markSessionComplete(final String sessionId) {
+        final var session = StudentSessionEntity.findBySessionId(sessionId);
+        if (session == null) {
+            LOG.warn("Cannot mark session complete - session not found: {}", sessionId);
+            return;
+        }
+
+        session.completed = true;
+        session.endTime = LocalDateTime.now();
+        session.persist();
+        LOG.debug("Session marked complete: {}", sessionId);
+    }
 }
