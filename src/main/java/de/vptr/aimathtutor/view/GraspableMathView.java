@@ -195,8 +195,9 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
 
         UI.getCurrent().getPage().executeJs(loadScript);
 
-        // Store initial expression
+        // Store initial expression and target for completion checking
         this.currentExpression = problem.initialExpression;
+        this.targetExpression = problem.targetExpression;
 
         // Add message about the loaded problem
         this.chatPanel.addMessage(ChatMessageDto.system("Problem loaded: " + problem.title));
