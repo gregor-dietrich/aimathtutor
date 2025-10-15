@@ -21,6 +21,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.layout.AIChatPanel;
 import de.vptr.aimathtutor.dto.AIFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
@@ -30,7 +31,6 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.component.AIChatPanel;
 import jakarta.inject.Inject;
 
 /**

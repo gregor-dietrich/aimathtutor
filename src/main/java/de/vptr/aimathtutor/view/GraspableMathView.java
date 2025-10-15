@@ -10,6 +10,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -21,6 +22,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.layout.AIChatPanel;
 import de.vptr.aimathtutor.dto.AIFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
@@ -29,7 +31,6 @@ import de.vptr.aimathtutor.service.AITutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.component.AIChatPanel;
 import jakarta.inject.Inject;
 
 /**
@@ -59,6 +60,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     private String targetExpression;
     private String sessionId;
     private boolean initialized = false;
+    private GraspableProblemDto.ProblemCategory selectedCategory = GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
 
     public GraspableMathView() {
         // Constructor intentionally empty - initialization happens in buildUI()
@@ -114,7 +116,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
         final var controls = new HorizontalLayout();
         controls.setSpacing(true);
 
-        final var generateProblemButton = new Button("Generate New Problem", e -> this.generateNewProblem());
+        final var generateProblemButton = new Button("Generate New Problem", e -> this.showProblemCategoryDialog());
         generateProblemButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         final var customProblemButton = new Button("Enter Custom Problem", e -> this.showCustomProblemDialog());
@@ -181,8 +183,8 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
      * Loads an initial problem automatically when the view is first opened.
      */
     private void loadInitialProblem() {
-        // Generate a problem
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", "algebra");
+        // Generate a problem using the default category
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
 
         // Wait for canvas to be ready, then load the problem
         final String loadScript = String.format("""
@@ -337,6 +339,47 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
+     * Shows a dialog for selecting problem category before generation.
+     */
+    private void showProblemCategoryDialog() {
+        final var dialog = new com.vaadin.flow.component.dialog.Dialog();
+        dialog.setHeaderTitle("Generate New Problem");
+        dialog.setWidth("400px");
+
+        final var layout = new VerticalLayout();
+        layout.setSpacing(true);
+        layout.setPadding(false);
+
+        final var instructions = new Paragraph(
+                "Choose the type of math problem you want to practice:");
+        instructions.getStyle().set("color", "var(--lumo-secondary-text-color)");
+
+        // Category selector
+        final var categorySelect = new ComboBox<GraspableProblemDto.ProblemCategory>("Problem Category");
+        categorySelect.setItems(GraspableProblemDto.ProblemCategory.values());
+        categorySelect.setValue(this.selectedCategory);
+        categorySelect.setItemLabelGenerator(GraspableProblemDto.ProblemCategory::getDisplayName);
+        categorySelect.setWidthFull();
+
+        layout.add(instructions, categorySelect);
+        dialog.add(layout);
+
+        // Buttons
+        final var cancelButton = new Button("Cancel", e -> dialog.close());
+        final var generateButton = new Button("Generate", e -> {
+            if (categorySelect.getValue() != null) {
+                this.selectedCategory = categorySelect.getValue();
+                this.generateNewProblem();
+                dialog.close();
+            }
+        });
+        generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        dialog.getFooter().add(cancelButton, generateButton);
+        dialog.open();
+    }
+
+    /**
      * Shows a dialog for entering a custom math problem.
      */
     private void showCustomProblemDialog() {
@@ -409,7 +452,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     }
 
     private void generateNewProblem() {
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", "algebra");
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
 
         // Load problem into Graspable Math using the utility function
         final String jsCode = String.format("""

@@ -12,6 +12,41 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class GraspableProblemDto {
 
+    /**
+     * Enum for different math problem categories.
+     */
+    public enum ProblemCategory {
+        LINEAR_EQUATIONS("Linear Equations", "algebra"),
+        QUADRATIC_EQUATIONS("Quadratic Equations", "algebra"),
+        POLYNOMIAL_SIMPLIFICATION("Polynomial Simplification", "algebra"),
+        FACTORING("Factoring", "algebra"),
+        FRACTIONS("Fraction Operations", "arithmetic"),
+        EXPONENTS("Exponent Rules", "algebra"),
+        SYSTEMS_OF_EQUATIONS("Systems of Equations", "algebra"),
+        INEQUALITIES("Inequalities", "algebra");
+
+        private final String displayName;
+        private final String topic;
+
+        ProblemCategory(final String displayName, final String topic) {
+            this.displayName = displayName;
+            this.topic = topic;
+        }
+
+        public String getDisplayName() {
+            return this.displayName;
+        }
+
+        public String getTopic() {
+            return this.topic;
+        }
+
+        @Override
+        public String toString() {
+            return this.displayName;
+        }
+    }
+
     public String title;
 
     public String description;
@@ -26,6 +61,8 @@ public class GraspableProblemDto {
     public List<String> allowedOperations; // e.g., ["simplify", "expand", "factor"]
 
     public String difficulty; // e.g., "beginner", "intermediate", "advanced"
+
+    public ProblemCategory category; // The problem category/type
 
     public List<String> hints; // Pre-defined hints for this problem
 
