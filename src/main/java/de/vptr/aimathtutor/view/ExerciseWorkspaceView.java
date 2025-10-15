@@ -358,17 +358,28 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Process event through GraspableMathService (for session tracking)
         this.graspableMathService.processEvent(event);
 
-        // Get AI feedback (may return null if action is insignificant)
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event);
+        // Get AI feedback asynchronously (may return null if action is insignificant)
+        // Don't show typing indicator for math actions - only show it when we get
+        // actual feedback
+        final var ui = UI.getCurrent();
 
-        // Only log and display if we got feedback
-        if (feedback != null) {
-            // Log interaction
-            this.aiTutorService.logInteraction(event, feedback);
+        this.aiTutorService.analyzeMathActionAsync(event).thenAccept(feedback -> {
+            ui.access(() -> {
+                // Only log and display if we got feedback
+                if (feedback != null) {
+                    // Log interaction
+                    this.aiTutorService.logInteraction(event, feedback);
 
-            // Display feedback
-            this.displayFeedback(feedback);
-        }
+                    // Display feedback
+                    this.displayFeedback(feedback);
+                }
+            });
+        }).exceptionally(ex -> {
+            ui.access(() -> {
+                LOG.error("Error getting AI feedback", ex);
+            });
+            return null;
+        });
     }
 
     /**
@@ -378,14 +389,30 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Display user message
         this.chatPanel.addMessage(ChatMessageDto.userQuestion(question));
 
-        // Get AI answer
-        final ChatMessageDto answer = this.aiTutorService.answerQuestion(
-                question,
-                this.currentExpression,
-                this.currentSessionId);
+        // Show typing indicator while waiting for AI response
+        this.chatPanel.showTypingIndicator();
 
-        // Display AI answer
-        this.chatPanel.addMessage(answer);
+        // Get AI answer asynchronously
+        final var ui = UI.getCurrent();
+        this.aiTutorService.answerQuestionAsync(question, this.currentExpression, this.currentSessionId)
+                .thenAccept(answer -> {
+                    ui.access(() -> {
+                        // Hide typing indicator
+                        this.chatPanel.hideTypingIndicator();
+
+                        // Display AI answer
+                        this.chatPanel.addMessage(answer);
+                    });
+                })
+                .exceptionally(ex -> {
+                    ui.access(() -> {
+                        this.chatPanel.hideTypingIndicator();
+                        LOG.error("Error getting AI answer", ex);
+                        this.chatPanel.addMessage(ChatMessageDto.aiAnswer(
+                                "Sorry, I encountered an error. Please try again."));
+                    });
+                    return null;
+                });
     }
 
     private void displayFeedback(final AIFeedbackDto feedback) {
