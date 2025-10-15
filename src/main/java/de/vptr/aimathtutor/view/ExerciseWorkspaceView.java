@@ -234,7 +234,15 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         // Right side: AI Chat panel with built-in styling (30%)
-        this.chatPanel = new AIChatPanel(this::handleUserQuestion);
+        // Get user's avatar settings
+        final var currentUserEntity = this.authService.getCurrentUserEntity();
+        final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
+                ? currentUserEntity.userAvatarEmoji
+                : "🧒";
+        final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
+                ? currentUserEntity.tutorAvatarEmoji
+                : "🧑‍🏫";
+        this.chatPanel = new AIChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto.system(
