@@ -16,6 +16,7 @@ import com.vaadin.flow.router.RouterLayout;
 import de.vptr.aimathtutor.component.NavigationTabs;
 import de.vptr.aimathtutor.component.button.AdminViewButton;
 import de.vptr.aimathtutor.component.button.LogoutButton;
+import de.vptr.aimathtutor.component.button.SettingsViewButton;
 import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
@@ -187,16 +188,16 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         }
 
         // Settings button
-        this.settingsButton = new Button("Settings");
-        this.settingsButton.getElement().addEventListener("click", e -> {
-            // Prevent duplicate navigation by checking current location
-        }).addEventData("event.preventDefault()");
-        this.settingsButton.addClickListener(e -> {
+        this.settingsButton = new SettingsViewButton(e -> {
             final var currentLocation = UI.getCurrent().getInternals().getActiveViewLocation();
             if (currentLocation == null || !"settings".equals(currentLocation.getPath())) {
                 this.getUI().ifPresent(ui -> ui.navigate(UserSettingsView.class));
             }
         });
+
+        // this.settingsButton.getElement().addEventListener("click", e -> {
+        // // Prevent duplicate navigation by checking current location
+        // }).addEventData("event.preventDefault()");
 
         this.logoutButton = new LogoutButton(e -> {
             this.authService.logout();
