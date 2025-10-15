@@ -50,7 +50,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 2.1 Backend Changes
 
 1. **Create enum:** `ProblemCategory.java`
 
@@ -75,7 +75,7 @@
 3. **GraspableProblemDto** - Add field:
    - `ProblemCategory category`
 
-### Frontend Changes
+### 2.2 Frontend Changes
 
 1. **GraspableMathView** - Replace "Generate New Problem" button:
    - Change to `ComboBox<ProblemCategory> categorySelect`
@@ -102,7 +102,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 3.1 Backend Changes
 
 1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
    - `graspableInitialExpression` → Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
@@ -119,7 +119,7 @@
    - Add `current_problem_index INT DEFAULT 0` to `student_sessions` table
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
 
-### Frontend Changes
+### 3.2 Frontend Changes
 
 1. **ExerciseWorkspaceView** - Add UI components:
    - Field: `int currentProblemIndex = 0`
@@ -157,7 +157,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 4.1 Backend Changes
 
 1. **New Service:** `AnalyticsService.java` (@ApplicationScoped)
    - `List<StudentSessionViewDto> getAllSessions()`
@@ -181,7 +181,7 @@
    - Ensure `AIInteractionEntity` has all needed fields:
      - `sessionId`, `eventType`, `feedbackMessage`, `timestamp`
 
-### Frontend Changes
+### 4.2 Frontend Changes
 
 1. **New View:** `AdminDashboardView.java` (@Route "admin/dashboard")
    - Check user rank permissions (`rank.adminView == true`)
@@ -237,7 +237,7 @@
 
 **Implementation Plan:**
 
-### Backend Changes
+### 5.1 Backend Changes
 
 1. **UserEntity** - Add fields:
    - `String userAvatarEmoji` (default: "🧒")
@@ -264,7 +264,7 @@
      - `user_avatar_emoji VARCHAR(10) DEFAULT '🧒'`
      - `tutor_avatar_emoji VARCHAR(10) DEFAULT '🧑‍🏫'`
 
-### Frontend Changes
+### 5.2 Frontend Changes
 
 1. **New View:** `UserSettingsView.java` (@Route "settings")
    - Accessible from user menu in MainLayout
