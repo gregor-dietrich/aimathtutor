@@ -35,7 +35,7 @@ import jakarta.inject.Inject;
  * Students can work on math problems and receive real-time AI feedback.
  */
 @Route(value = "graspable-math", layout = MainLayout.class)
-public class GraspableMathView extends VerticalLayout implements BeforeEnterObserver {
+public class GraspableMathView extends HorizontalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraspableMathView.class);
 
@@ -54,9 +54,7 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     private String sessionId;
 
     public GraspableMathView() {
-        this.setSizeFull();
-        this.setPadding(true);
-        this.setSpacing(true);
+        // Constructor intentionally empty - initialization happens in buildUI()
     }
 
     @Override
@@ -70,36 +68,34 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
     }
 
     private void buildUI() {
-        this.removeAll();
+        this.setSizeFull();
+        this.setSpacing(false);
+        this.setPadding(false);
 
         // Generate session ID
         this.sessionId = "session-" + System.currentTimeMillis();
 
+        // Left side: Graspable Math workspace (70%)
+        final var leftPanel = new VerticalLayout();
+        leftPanel.setSizeFull();
+        leftPanel.setSpacing(true);
+        leftPanel.setPadding(true);
+        leftPanel.getStyle().set("width", "70%");
+
         // Header
         final var header = new H2("Graspable Math Workspace");
-        header.getStyle().set("margin-bottom", "var(--lumo-space-m)");
-
-        // Main layout: Graspable Math canvas on left, AI chat on right
-        final var mainLayout = new HorizontalLayout();
-        mainLayout.setSizeFull();
-        mainLayout.setSpacing(true);
-
-        // Left side: Graspable Math workspace
-        final var leftPanel = new VerticalLayout();
-        leftPanel.setWidth("70%");
-        leftPanel.setSpacing(true);
+        header.getStyle().set("margin-top", "0");
 
         // Graspable Math canvas container
         this.graspableCanvas = new Div();
         this.graspableCanvas.setId("graspable-canvas");
-        this.graspableCanvas.setWidth("100%");
-        this.graspableCanvas.setHeight("500px");
         this.graspableCanvas.getStyle()
+                .set("width", "100%")
+                .set("height", "500px")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("background-color", "var(--lumo-base-color)")
-                .set("padding", "var(--lumo-space-m)")
-                .set("position", "relative");
+                .set("margin-top", "1rem");
 
         // Controls
         final var controls = new HorizontalLayout();
@@ -114,33 +110,16 @@ public class GraspableMathView extends VerticalLayout implements BeforeEnterObse
         final var resetButton = new Button("Reset", e -> this.resetCanvas());
 
         controls.add(generateProblemButton, customProblemButton, resetButton);
-        leftPanel.add(this.graspableCanvas, controls);
+        leftPanel.add(header, this.graspableCanvas, controls);
 
-        // Right side: AI Chat and Info panel (matching ExerciseWorkspaceView layout)
-        final var rightPanel = new VerticalLayout();
-        rightPanel.setWidth("30%");
-        rightPanel.setSpacing(true);
-        rightPanel.setPadding(true);
-        rightPanel.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)");
-
-        // AI Chat section using reusable component
+        // Right side: AI Chat panel with built-in styling (30%)
         this.chatPanel = new AIChatPanel(this::handleUserQuestion);
 
-        rightPanel.add(this.chatPanel);
-        rightPanel.setFlexGrow(1, this.chatPanel);
+        // Add welcome message
+        this.chatPanel.addMessage(ChatMessageDto.system(
+                "Welcome! I'm your AI math tutor. Work on problems and I'll help you along the way. Feel free to ask me questions anytime!"));
 
-        mainLayout.add(leftPanel, rightPanel);
-
-        this.add(header, mainLayout);
-
-        // Show welcome message (do this after the view is built to avoid null panel
-        // errors)
-        UI.getCurrent().access(() -> {
-            this.chatPanel.addMessage(ChatMessageDto.system(
-                    "Welcome! I'm your AI math tutor. Work on problems and I'll help you along the way. Feel free to ask me questions anytime!"));
-        });
+        this.add(leftPanel, this.chatPanel);
     }
 
     @Override

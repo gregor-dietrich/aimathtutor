@@ -18,6 +18,8 @@ import de.vptr.aimathtutor.dto.ChatMessageDto;
 /**
  * Reusable AI chat panel component for displaying chat messages and handling
  * user input.
+ * This component is designed to be used as a right-side panel (30% width) with
+ * proper styling and layout that matches across all views.
  * Provides a chat-style interface with proper message alignment and styling.
  */
 public class AIChatPanel extends VerticalLayout {
@@ -39,14 +41,17 @@ public class AIChatPanel extends VerticalLayout {
      * Creates a new AI chat panel.
      *
      * @param messageSendListener Callback to invoke when user sends a message
-     * @param maxHeight           Maximum height of the chat history panel (e.g.,
-     *                            "300px", "500px")
      */
     public AIChatPanel(final MessageSendListener messageSendListener) {
         this.messageSendListener = messageSendListener;
 
+        // Apply right panel styling
+        this.setWidth("30%");
         this.setSpacing(true);
-        this.setPadding(false);
+        this.setPadding(true);
+        this.getStyle()
+                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border-left", "1px solid var(--lumo-contrast-10pct)");
 
         // Chat header
         final var chatHeader = new H4("AI Tutor Chat");
@@ -56,6 +61,7 @@ public class AIChatPanel extends VerticalLayout {
         this.chatHistoryPanel = new VerticalLayout();
         this.chatHistoryPanel.setSpacing(true);
         this.chatHistoryPanel.setPadding(false);
+        this.chatHistoryPanel.setHeightFull();
         this.chatHistoryPanel.setDefaultHorizontalComponentAlignment(Alignment.STRETCH);
         this.chatHistoryPanel.getStyle()
                 .set("overflow-y", "auto")
@@ -63,7 +69,7 @@ public class AIChatPanel extends VerticalLayout {
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("flex-grow", "1");
+                .set("flex-shrink", "1");
 
         // Chat input area
         this.chatInput = new TextField();

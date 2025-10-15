@@ -233,26 +233,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             leftPanel.add(noticeDiv, hintsSection);
         }
 
-        // Right side: AI Chat only (30%)
-        final var rightPanel = new VerticalLayout();
-        rightPanel.setSpacing(true);
-        rightPanel.setPadding(true);
-        rightPanel.getStyle()
-                .set("width", "30%")
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)");
-
-        // AI Chat section using reusable component
+        // Right side: AI Chat panel with built-in styling (30%)
         this.chatPanel = new AIChatPanel(this::handleUserQuestion);
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto.system(
                 "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
 
-        rightPanel.add(this.chatPanel);
-        rightPanel.setFlexGrow(1, this.chatPanel);
-
-        this.add(leftPanel, rightPanel);
+        this.add(leftPanel, this.chatPanel);
     }
 
     @Override
