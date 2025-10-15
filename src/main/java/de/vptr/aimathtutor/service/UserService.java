@@ -287,4 +287,94 @@ public class UserService {
         return this.findByUsername(username)
                 .orElseThrow(() -> new WebApplicationException("User not found", Response.Status.NOT_FOUND));
     }
+
+    /**
+     * Change user password after verifying current password.
+     * 
+     * @param userId          The user ID
+     * @param currentPassword The current password for verification
+     * @param newPassword     The new password to set
+     */
+    @Transactional
+    public void changePassword(final Long userId, final String currentPassword, final String newPassword) {
+        final UserEntity user = UserEntity.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
+        }
+
+        // Verify current password
+        if (!this.passwordHashingService.verifyPassword(currentPassword, user.password, user.salt)) {
+            throw new ValidationException("Current password is incorrect");
+        }
+
+        // Validate new password
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new ValidationException("New password cannot be empty");
+        }
+        if (newPassword.length() < 4) {
+            throw new ValidationException("New password must be at least 4 characters long");
+        }
+
+        // Generate new salt and hash new password
+        final var newSalt = this.passwordHashingService.generateSalt();
+        try {
+            final var hashedPassword = this.passwordHashingService.hashPassword(newPassword, newSalt);
+            user.salt = newSalt;
+            user.password = hashedPassword;
+            user.persist();
+        } catch (final Exception e) {
+            throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update user avatar emojis.
+     * 
+     * @param userId     The user ID
+     * @param userEmoji  The emoji for the user
+     * @param tutorEmoji The emoji for the AI tutor
+     */
+    @Transactional
+    public void updateAvatars(final Long userId, final String userEmoji, final String tutorEmoji) {
+        final UserEntity user = UserEntity.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
+        }
+
+        // Validate emojis
+        if (userEmoji == null || userEmoji.trim().isEmpty()) {
+            throw new ValidationException("User avatar emoji cannot be empty");
+        }
+        if (tutorEmoji == null || tutorEmoji.trim().isEmpty()) {
+            throw new ValidationException("Tutor avatar emoji cannot be empty");
+        }
+        if (userEmoji.length() > 10) {
+            throw new ValidationException("User avatar emoji is too long");
+        }
+        if (tutorEmoji.length() > 10) {
+            throw new ValidationException("Tutor avatar emoji is too long");
+        }
+
+        user.userAvatarEmoji = userEmoji;
+        user.tutorAvatarEmoji = tutorEmoji;
+        user.persist();
+    }
+
+    /**
+     * Get user settings (avatars only, no passwords).
+     * 
+     * @param userId The user ID
+     * @return UserSettingsDto with avatar settings
+     */
+    @Transactional
+    public de.vptr.aimathtutor.dto.UserSettingsDto getSettings(final Long userId) {
+        final UserEntity user = UserEntity.findById(userId);
+        if (user == null) {
+            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
+        }
+
+        return new de.vptr.aimathtutor.dto.UserSettingsDto(
+                user.userAvatarEmoji != null ? user.userAvatarEmoji : "🧒",
+                user.tutorAvatarEmoji != null ? user.tutorAvatarEmoji : "🧑‍🏫");
+    }
 }

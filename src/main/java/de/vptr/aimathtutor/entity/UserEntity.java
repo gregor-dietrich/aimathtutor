@@ -52,6 +52,12 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "last_login")
     public LocalDateTime lastLogin;
 
+    @Column(name = "user_avatar_emoji", length = 10)
+    public String userAvatarEmoji = "🧒";
+
+    @Column(name = "tutor_avatar_emoji", length = 10)
+    public String tutorAvatarEmoji = "🧑‍🏫";
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
     public List<ExerciseEntity> exercises;

@@ -91,4 +91,18 @@ public class AuthService {
         final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
         return user != null ? user.id : null;
     }
+
+    /**
+     * Get the current authenticated user entity (for accessing avatar settings,
+     * etc.)
+     * 
+     * @return UserEntity or null if not authenticated
+     */
+    public UserEntity getCurrentUserEntity() {
+        final String username = this.getUsername();
+        if (username == null) {
+            return null;
+        }
+        return UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+    }
 }
