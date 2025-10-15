@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -206,6 +207,32 @@ public class AITutorService {
         final var message = ChatMessageDto.aiAnswer(answer);
         message.sessionId = sessionId;
         return message;
+    }
+
+    /**
+     * Async version of answerQuestion that returns a CompletableFuture.
+     * This allows the UI to show a typing indicator while waiting for the response.
+     * 
+     * @param question          The student's question
+     * @param currentExpression The current math expression
+     * @param sessionId         The session identifier
+     * @return CompletableFuture containing the AI's answer
+     */
+    public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
+            final String currentExpression, final String sessionId) {
+        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId));
+    }
+
+    /**
+     * Async version of analyzeMathAction that returns a CompletableFuture.
+     * This allows the UI to show a typing indicator while waiting for the response.
+     * 
+     * @param event The Graspable Math event
+     * @return CompletableFuture containing the AI feedback, or null if no feedback
+     *         needed
+     */
+    public CompletableFuture<AIFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event) {
+        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event));
     }
 
     /**

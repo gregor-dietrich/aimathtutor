@@ -31,6 +31,7 @@ public class AIChatPanel extends VerticalLayout {
     private final MessageSendListener messageSendListener;
     private String userAvatarEmoji = "🧒";
     private String tutorAvatarEmoji = "🧑‍🏫";
+    private HorizontalLayout currentTypingIndicator; // Track current typing indicator
 
     /**
      * Callback interface for handling message sends.
@@ -221,7 +222,23 @@ public class AIChatPanel extends VerticalLayout {
      *
      * @return The component to remove later
      */
-    public HorizontalLayout showTypingIndicator() {
+    /**
+     * Shows a typing indicator (simple version that doesn't require tracking the
+     * indicator).
+     */
+    public void showTypingIndicator() {
+        // Remove any existing typing indicator first
+        this.hideTypingIndicator();
+
+        this.currentTypingIndicator = this.createTypingIndicator();
+    }
+
+    /**
+     * Creates and displays a typing indicator.
+     * 
+     * @return The typing indicator component for manual management
+     */
+    public HorizontalLayout createTypingIndicator() {
         final var typingRow = new HorizontalLayout();
         typingRow.setWidthFull();
         typingRow.setSpacing(true);
@@ -265,7 +282,24 @@ public class AIChatPanel extends VerticalLayout {
     }
 
     /**
-     * Removes the typing indicator.
+     * Hides the typing indicator (simple version that uses tracked indicator).
+     */
+    public void hideTypingIndicator() {
+        final HorizontalLayout indicatorToRemove = this.currentTypingIndicator;
+        if (indicatorToRemove != null) {
+            UI.getCurrent().access(() -> {
+                try {
+                    this.chatHistoryPanel.remove(indicatorToRemove);
+                } catch (final Exception e) {
+                    // Indicator might have already been removed, ignore
+                }
+                this.currentTypingIndicator = null;
+            });
+        }
+    }
+
+    /**
+     * Removes a specific typing indicator.
      *
      * @param indicator The indicator component to remove
      */
