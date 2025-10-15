@@ -6,24 +6,20 @@
 
 ### Suggested Order (Easiest to Hardest)
 
-1. **Problem Category Selection** (Task 1)
-   *Easiest*: Mostly UI changes and enum additions; minimal backend logic.
-
-2. **Add Rich Context to AI API Requests** (Task 4)
+1. **Add Rich Context to AI API Requests** (Task 4)
    *Moderate*: Requires changes to prompt construction and DTOs, but isolated to AI service and chat panel.
 
-3. **Multiple Problems Per Exercise** (Task 2)
+2. **Multiple Problems Per Exercise** (Task 2)
    *Moderate-Complex*: Involves DB migration, session tracking, and sequential UI logic.
 
-4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-5. **Admin Views for Progress Tracking** (Task 3)
+4. **Admin Views for Progress Tracking** (Task 3)
    *Most Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
 
 **Difficulty Ratings:**
 
-- Task 1: ★☆☆☆☆
 - Task 4: ★★☆☆☆
 - Task 2: ★★★☆☆
 - Task 5: ★★★★☆
@@ -37,58 +33,6 @@
 - [ ] Edge cases (empty data, invalid input, etc.)
 - [ ] Permission/security checks
 - [ ] Performance with large datasets (admin views)
-
----
-
-## 1. Problem Category Selection for Generation
-
-**Goal:** Allow users to choose from different math problem categories instead of always generating linear equations.
-
-**Implementation Plan:**
-
-### 1.1 Backend Changes
-
-1. **Create enum:** `ProblemCategory.java`
-
-   ```java
-   public enum ProblemCategory {
-       LINEAR_EQUATIONS("Linear Equations", "algebra"),
-       QUADRATIC_EQUATIONS("Quadratic Equations", "algebra"),
-       POLYNOMIAL_SIMPLIFICATION("Polynomial Simplification", "algebra"),
-       FACTORING("Factoring", "algebra"),
-       FRACTIONS("Fraction Operations", "arithmetic"),
-       EXPONENTS("Exponent Rules", "algebra"),
-       SYSTEMS_OF_EQUATIONS("Systems of Equations", "algebra"),
-       INEQUALITIES("Inequalities", "algebra")
-   }
-   ```
-
-2. **AITutorService** - Enhance `generateProblem()`:
-   - Change signature: `generateProblem(String difficulty, ProblemCategory category)`
-   - Update AI prompt to include category-specific instructions
-   - Return appropriate initial/target expressions for each category
-
-3. **GraspableProblemDto** - Add field:
-   - `ProblemCategory category`
-
-### 1.2 Frontend Changes
-
-1. **GraspableMathView** - Replace "Generate New Problem" button:
-   - Change to `ComboBox<ProblemCategory> categorySelect`
-   - Add "Generate" button next to dropdown
-   - Store selected category
-   - Pass category to `aiTutorService.generateProblem()`
-
-2. **UI Layout:**
-
-   ```text
-   [Category: Linear Equations ▼] [Generate Problem]
-   ```
-
-3. **Styling:**
-   - Make category dropdown prominent
-   - Default to LINEAR_EQUATIONS
-   - Save last selected category in session/local storage (optional)
 
 ---
 
