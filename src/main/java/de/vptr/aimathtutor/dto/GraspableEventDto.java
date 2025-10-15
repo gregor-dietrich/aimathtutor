@@ -35,6 +35,8 @@ public class GraspableEventDto {
 
     public Boolean correct; // Whether the action was mathematically correct
 
+    public Boolean isComplete; // Whether this action resulted in problem completion
+
     public GraspableEventDto() {
         this.timestamp = LocalDateTime.now();
     }
