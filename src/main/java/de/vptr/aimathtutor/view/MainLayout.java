@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -187,7 +188,15 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
         // Settings button
         this.settingsButton = new Button("Settings");
-        this.settingsButton.addClickListener(e -> this.getUI().ifPresent(ui -> ui.navigate(UserSettingsView.class)));
+        this.settingsButton.getElement().addEventListener("click", e -> {
+            // Prevent duplicate navigation by checking current location
+        }).addEventData("event.preventDefault()");
+        this.settingsButton.addClickListener(e -> {
+            final var currentLocation = UI.getCurrent().getInternals().getActiveViewLocation();
+            if (currentLocation == null || !"settings".equals(currentLocation.getPath())) {
+                this.getUI().ifPresent(ui -> ui.navigate(UserSettingsView.class));
+            }
+        });
 
         this.logoutButton = new LogoutButton(e -> {
             this.authService.logout();
