@@ -27,6 +27,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
 
     private Button adminViewButton;
+    private Button settingsButton;
     private Button logoutButton;
     private Tabs navigationTabs;
 
@@ -184,6 +185,10 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             this.adminViewButton = null;
         }
 
+        // Settings button
+        this.settingsButton = new Button("Settings");
+        this.settingsButton.addClickListener(e -> this.getUI().ifPresent(ui -> ui.navigate(UserSettingsView.class)));
+
         this.logoutButton = new LogoutButton(e -> {
             this.authService.logout();
             this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
@@ -193,6 +198,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         final var componentCount = this.rightSide.getComponentCount();
         if (componentCount > 0) {
             this.rightSide.addComponentAtIndex(componentCount - 1, this.logoutButton);
+            this.rightSide.addComponentAtIndex(componentCount - 1, this.settingsButton);
             if (this.adminViewButton != null) {
                 this.rightSide.addComponentAtIndex(componentCount - 1, this.adminViewButton);
             }
@@ -200,6 +206,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             if (this.adminViewButton != null) {
                 this.rightSide.add(this.adminViewButton);
             }
+            this.rightSide.add(this.settingsButton);
             this.rightSide.add(this.logoutButton);
         }
     }
@@ -209,6 +216,10 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             if (this.logoutButton != null) {
                 this.rightSide.remove(this.logoutButton);
                 this.logoutButton = null;
+            }
+            if (this.settingsButton != null) {
+                this.rightSide.remove(this.settingsButton);
+                this.settingsButton = null;
             }
             if (this.adminViewButton != null) {
                 this.rightSide.remove(this.adminViewButton);
