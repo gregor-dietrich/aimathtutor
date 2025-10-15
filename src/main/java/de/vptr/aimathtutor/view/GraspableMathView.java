@@ -58,6 +58,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     private String currentExpression;
     private String targetExpression;
     private String sessionId;
+    private boolean initialized = false;
 
     public GraspableMathView() {
         // Constructor intentionally empty - initialization happens in buildUI()
@@ -70,10 +71,16 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
             return;
         }
 
-        this.buildUI();
+        // Only build UI once
+        if (!this.initialized) {
+            this.buildUI();
+            this.initialized = true;
+        }
     }
 
     private void buildUI() {
+        this.removeAll();
+
         this.setSizeFull();
         this.setSpacing(false);
         this.setPadding(false);
