@@ -11,7 +11,7 @@
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 9069:9069 quarkus/aimathtutor
+# docker run -i --rm -p 8080:8080 quarkus/aimathtutor
 #
 # The ` registry.access.redhat.com/ubi9/ubi-minimal:9.5` base image is based on UBI 9.
 # To use UBI 8, switch to `quay.io/ubi8/ubi-minimal:8.10`.
@@ -23,7 +23,7 @@ RUN chown 1001 /work \
     && chown 1001:root /work
 COPY --chown=1001:root --chmod=0755 target/*-runner /work/application
 
-EXPOSE 9069
+EXPOSE 8080
 USER 1001
 
 ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
