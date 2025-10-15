@@ -22,13 +22,13 @@ Suggested order (easiest to hardest):
 
 ---
 
-## 2. Problem Category Selection for Generation
+## 1. Problem Category Selection for Generation
 
 **Goal:** Allow users to choose from different math problem categories instead of always generating linear equations.
 
 **Implementation Plan:**
 
-### 2.1 Backend Changes
+### 1.1 Backend Changes
 
 1. **Create enum:** `ProblemCategory.java`
 
@@ -53,7 +53,7 @@ Suggested order (easiest to hardest):
 3. **GraspableProblemDto** - Add field:
    - `ProblemCategory category`
 
-### 2.2 Frontend Changes
+### 1.2 Frontend Changes
 
 1. **GraspableMathView** - Replace "Generate New Problem" button:
    - Change to `ComboBox<ProblemCategory> categorySelect`
@@ -74,13 +74,13 @@ Suggested order (easiest to hardest):
 
 ---
 
-## 3. Multiple Problems Per Exercise with Sequential Unlocking
+## 2. Multiple Problems Per Exercise with Sequential Unlocking
 
 **Goal:** Allow exercises to have multiple problems (like hints), unlock "Next Problem" button when current is complete.
 
 **Implementation Plan:**
 
-### 3.1 Backend Changes
+### 2.1 Backend Changes
 
 1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
    - `graspableInitialExpression` → Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
@@ -97,7 +97,7 @@ Suggested order (easiest to hardest):
    - Add `current_problem_index INT DEFAULT 0` to `student_sessions` table
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
 
-### 3.2 Frontend Changes
+### 2.2 Frontend Changes
 
 1. **ExerciseWorkspaceView** - Add UI components:
    - Field: `int currentProblemIndex = 0`
@@ -122,20 +122,19 @@ Suggested order (easiest to hardest):
    - Mark entire session as complete in database
    - Show "Back to Exercises" or "Review Session" options
 
-### Admin/Teacher View
-
-- Exercise creation form: Add help text explaining semicolon-separated format
-- Example: "2x+5=15;3x-7=20" → Two problems in sequence
+4. **Admin/Teacher View**
+   - Exercise creation form: Add help text explaining semicolon-separated format
+   - Example: "2x+5=15;3x-7=20" → Two problems in sequence
 
 ---
 
-## 4. Admin Views for Progress Tracking
+## 3. Admin Views for Progress Tracking
 
 **Goal:** Create admin-only views to monitor student sessions, AI interactions, and overall progress.
 
 **Implementation Plan:**
 
-### 4.1 Backend Changes
+### 3.1 Backend Changes
 
 1. **New Service:** `AnalyticsService.java` (@ApplicationScoped)
    - `List<StudentSessionViewDto> getAllSessions()`
@@ -159,7 +158,7 @@ Suggested order (easiest to hardest):
    - Ensure `AIInteractionEntity` has all needed fields:
      - `sessionId`, `eventType`, `feedbackMessage`, `timestamp`
 
-### 4.2 Frontend Changes
+### 3.2 Frontend Changes
 
 1. **New View:** `AdminDashboardView.java` (@Route "admin/dashboard")
    - Check user rank permissions (`rank.adminView == true`)
@@ -196,7 +195,7 @@ Suggested order (easiest to hardest):
    - Add "Admin" tab to MainLayout navigation bar (visible only if `rank.adminView == true`)
    - Submenu: Dashboard, Sessions, Student Progress
 
-### Security
+### 3.3 Security
 
 - Add checks in `beforeEnter()` for all admin views:
 
@@ -209,35 +208,82 @@ Suggested order (easiest to hardest):
 
 ---
 
-## 6. AIChatPanel Experience Improvements
-
-### 1. Add Rich Context to AI API Requests
+## 4. Add Rich Context to AI API Requests
 
 **Goal:** Improve the relevance and personalization of AI responses by including the last 5 actions, last 5 user questions, and last 5 AI messages (feedback or answers) in every prompt sent to the AI APIs—regardless of whether the request is for tutoring feedback or a direct question.
 
 **Implementation Plan:**
 
-- **Backend Changes:**
-  - **AITutorService:**
-    - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
-      - The last 5 actions performed by the student
-      - The last 5 user questions
-      - The last 5 AI messages (feedback or answers)
-    - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
-  - **ChatMessageDto:**
-    - Add optional `relatedAction` field to link messages to specific actions.
-  - **AIInteractionEntity:**
-    - Add `conversationContext` field to log the full context sent with each AI request.
+### 4.1 Backend Changes
 
-- **Frontend Changes:**
-  - **AIChatPanel:**
-    - Maintain rolling buffers for:
-      - Last 5 actions
-      - Last 5 user questions
-      - Last 5 AI messages
-    - Pass all three buffers to the backend with each user question or action.
+1. **AITutorService:**
+   - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
+   - The last 5 actions performed by the student
+   - The last 5 user questions
+   - The last 5 AI messages (feedback or answers)
+   - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
+2. **ChatMessageDto:**
+   - Add optional `relatedAction` field to link messages to specific actions.
+3. **AIInteractionEntity:**
+   - Add `conversationContext` field to log the full context sent with each AI request.
 
-- **Testing:**
-  - Verify that prompts include the correct context for both tutoring and questions.
-  - Ensure token limits are respected for all AI providers.
-  - Test with long conversations and many actions to confirm performance and accuracy.
+### 46.2 AIChatPanel: Frontend Changes
+
+- Maintain rolling buffers for:
+  - Last 5 actions
+  - Last 5 user questions
+  - Last 5 AI messages
+- Pass all three buffers to the backend with each user question or action.
+
+### 4.3 Testing
+
+- Verify that prompts include the correct context for both tutoring and questions.
+- Ensure token limits are respected for all AI providers.
+- Test with long conversations and many actions to confirm performance and accuracy.
+
+---
+
+## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
+
+**Goal:** Transform the admin home view into `AdminConfigView`, allowing users with admin privileges to change application-wide AI settings at runtime.
+
+**Implementation Plan:**
+
+### 5.1 Backend Changes
+
+1. **Config Properties:**
+   - Rename `ai.tutor.provider` → `ai.tutor.default.provider`
+   - Rename `gemini.model` → `gemini.default.model`
+   - Rename `openai.model` → `openai.default.model`
+   - Rename `ollama.model` → `ollama.default.model`
+   - Add unified properties for `ai.tutor.max-tokens` and `ai.tutor.temperature` (not per-provider)
+   - Add `openai.organization-id`, `ollama.timeout-seconds`, and provider-specific API URLs
+
+2. **Service:**
+   - Add service for updating config properties at runtime (with validation and security checks)
+
+### 5.2 Frontend Changes
+
+1. **AdminConfigView:**
+   - Replace admin home view with a config panel for AI settings
+   - Dropdowns for AI provider and model (model dropdown updates when provider changes)
+   - Disable Gemini/OpenAI if API key is unset ("your-api-key-here"), disable Ollama if URL is unset ("your-ollama-api-url-here")
+   - Inputs for max-tokens and temperature (always visible, affect selected provider)
+   - Inputs for OpenAI organization ID and Ollama timeout (hidden unless respective provider selected, ideally with smooth animation)
+   - Input for API URL (affects only selected provider)
+
+2. **UI/UX:**
+   - Show/hide provider-specific fields with subtle animation
+   - Ensure only one set of model/temperature/max-tokens fields, always reflecting selected provider
+
+### 5.3 Security & Validation
+
+1. Only users with admin privileges can access and change settings
+2. Validate all inputs before saving
+3. Changes should take effect immediately for new AI interactions
+
+### 5.4 Testing
+
+- Unit tests for config update service
+- Integration tests for runtime config changes
+- Manual UI testing for all provider/model combinations and field visibility
