@@ -97,7 +97,9 @@ CREATE TABLE `users` (
   `activated` tinyint(1) NOT NULL DEFAULT 0,
   `activation_key` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created` datetime NOT NULL DEFAULT current_timestamp(),
-  `last_login` datetime NOT NULL DEFAULT current_timestamp()
+  `last_login` datetime NOT NULL DEFAULT current_timestamp(),
+  `user_avatar_emoji` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '🧒',
+  `tutor_avatar_emoji` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '🧑‍🏫'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
