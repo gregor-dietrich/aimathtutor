@@ -195,10 +195,6 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             }
         });
 
-        // this.settingsButton.getElement().addEventListener("click", e -> {
-        // // Prevent duplicate navigation by checking current location
-        // }).addEventData("event.preventDefault()");
-
         this.logoutButton = new LogoutButton(e -> {
             this.authService.logout();
             this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
