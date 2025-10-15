@@ -6,13 +6,10 @@
 
 Suggested order (easiest to hardest):
 
-1. **User Settings Panel** (Task 5 - standalone feature, good UI/UX improvement)
-2. **AIChatPanel Experience Improvements** (Task 6.1 & 6.2 - UI/UX improvements, no AI changes)
-3. **Problem Completion Detection** (Task 1 - enhances existing functionality)
-4. **Problem Category Selection** (Task 2 - extends generation feature)
-5. **Add Rich Context to AI API Requests** (Task 6.3 - moderate complexity, improves AI responses)
-6. **Multiple Problems Per Exercise** (Task 3 - moderate complexity, requires DB changes)
-7. **Admin Views** (Task 4 - most complex, requires multiple new views and services)
+1. **Problem Category Selection** (Task 2 - extends generation feature)
+1. **Add Rich Context to AI API Requests** (Task 6.1 - moderate complexity, improves AI responses)
+1. **Multiple Problems Per Exercise** (Task 3 - moderate complexity, requires DB changes)
+1. **Admin Views** (Task 4 - most complex, requires multiple new views and services)
 
 ### Testing Checklist (for each feature)
 
@@ -22,48 +19,6 @@ Suggested order (easiest to hardest):
 - [ ] Edge cases (empty data, invalid input, etc.)
 - [ ] Permission/security checks
 - [ ] Performance with large datasets (admin views)
-
-## 1. Problem Completion Detection & AI Verification
-
-**Goal:** Detect when a student reaches the target/solution expression and have the AI tutor provide congratulatory feedback.
-
-**Implementation Plan:**
-
-### Backend Changes
-
-1. **GraspableEventDto** - Add field:
-   - `boolean isComplete` - flag to indicate if this action resulted in completion
-
-2. **GraspableMathService** - Add method:
-   - `boolean checkCompletion(String currentExpression, String targetExpression)`
-   - Parse and normalize both expressions (handle whitespace, order of terms)
-   - Compare for mathematical equivalence (e.g., "x=5" == "5=x", "2x+3x" == "5x")
-   - Return true if expressions are equivalent
-
-3. **AITutorService** - Enhance `analyzeMathAction()`:
-   - Check if `graspableEventDto.isComplete == true`
-   - Generate special congratulatory feedback when complete
-   - Examples: "🎉 Excellent work! You've solved it correctly!", "Perfect! You reached the solution x=5"
-
-### Frontend Changes
-
-1. **ExerciseWorkspaceView**:
-   - In `onMathAction()`, call `graspableMathService.checkCompletion(expressionAfter, exercise.graspableTargetExpression)`
-   - Set `event.isComplete` flag before sending to AI service
-   - When complete, disable canvas interactions or show completion overlay
-   - Display success notification
-
-2. **GraspableMathView**:
-   - For generated problems, store `targetExpression` when problem is loaded
-   - Similar completion check as ExerciseWorkspaceView
-   - Add optional "Next Problem" or "Try Another" button on completion
-
-### Database Changes
-
-- **StudentSessionEntity** - Update on completion:
-  - Set `completed = true`
-  - Set `endTime = LocalDateTime.now()`
-  - Set `finalExpression = currentExpression`
 
 ---
 
@@ -254,131 +209,9 @@ Suggested order (easiest to hardest):
 
 ---
 
-## 5. User Settings Panel (Password & Avatar Selection)
-
-**Goal:** Allow users to change their password and customize chat avatars (emojis).
-
-**Implementation Plan:**
-
-### 5.1 Backend Changes
-
-1. **UserEntity** - Add fields:
-   - `String userAvatarEmoji` (default: "🧒")
-   - `String tutorAvatarEmoji` (default: "🧑‍🏫")
-
-2. **New DTO:** `UserSettingsDto.java`
-   - `String currentPassword` (for verification)
-   - `String newPassword`
-   - `String userAvatarEmoji`
-   - `String tutorAvatarEmoji`
-
-3. **UserService** - Add methods:
-   - `void changePassword(Long userId, String currentPassword, String newPassword)`
-     - Verify current password matches
-     - Hash new password with same salt
-     - Update entity
-   - `void updateAvatars(Long userId, String userEmoji, String tutorEmoji)`
-     - Validate emojis (not empty, max length 10)
-     - Update entity
-   - `UserSettingsDto getSettings(Long userId)`
-
-4. **Database Migration:**
-   - Add columns to `users` table:
-     - `user_avatar_emoji VARCHAR(10) DEFAULT '🧒'`
-     - `tutor_avatar_emoji VARCHAR(10) DEFAULT '🧑‍🏫'`
-
-### 5.2 Frontend Changes
-
-1. **New View:** `UserSettingsView.java` (@Route "settings")
-   - Accessible from user menu in MainLayout
-   - Tab layout with sections:
-
-2. **Password Section:**
-   - `PasswordField currentPassword` (label: "Current Password")
-   - `PasswordField newPassword` (label: "New Password")
-   - `PasswordField confirmPassword` (label: "Confirm New Password")
-   - `Button changePassword` (primary)
-   - Validation:
-     - All fields required
-     - New password must be at least 8 characters
-     - New password must match confirm password
-     - Show error if current password incorrect
-
-3. **Avatar Section:**
-   - Description: "Select emojis to represent yourself and the AI tutor in chat conversations"
-   - `ComboBox<String> userAvatarSelect` (label: "Your Avatar")
-     - Options: 🧒, 👦, 👧, 🧑, 👨, 👩, 🙂, 😊, 🤓, 🧠, ✏️, 📚
-   - `ComboBox<String> tutorAvatarSelect` (label: "AI Tutor Avatar")
-     - Options: 🧑‍🏫, 👨‍🏫, 👩‍🏫, 🤖, 🦉, 📖, 🎓, 💡, ⭐
-   - Preview box showing sample messages with selected avatars
-   - `Button saveAvatars` (primary)
-
-4. **Integration with AIChatPanel:**
-   - Modify `AIChatPanel.addMessage()` to use dynamic avatars:
-     - Fetch user's avatar settings from `authService.getCurrentUser()`
-     - Use `userAvatarEmoji` for USER messages
-     - Use `tutorAvatarEmoji` for AI messages
-     - Keep ℹ️ for SYSTEM messages
-
-5. **UI Layout:**
-
-   ```text
-   Settings
-   ├─ Password
-   │  ├─ Current Password: [________]
-   │  ├─ New Password: [________]
-   │  ├─ Confirm Password: [________]
-   │  └─ [Change Password]
-   │
-   └─ Chat Avatars
-      ├─ Your Avatar: [🧒 ▼]
-      ├─ AI Tutor Avatar: [🧑‍🏫 ▼]
-      ├─ Preview:
-      │  🧒 Hello, can you help me?
-      │  🧑‍🏫 Of course! I'm here to help.
-      └─ [Save Avatars]
-   ```
-
-6. **Restrictions:**
-   - Do NOT allow changing: username, email, rank
-   - Display current username/email as read-only fields for reference
-   - Show message: "Contact an administrator to change your username or email"
-
-### Service Integration
-
-- **AuthService** - Add method:
-  - `UserViewDto getCurrentUserWithAvatars()` (include avatar fields)
-  - Cache avatars in session to avoid repeated DB queries
-
----
-
 ## 6. AIChatPanel Experience Improvements
 
-### 1. Async Messaging & Typing Animation
-
-**Goal:** Make chat interactions smoother and non-blocking.
-
-**Implementation Plan:**
-
-- Refactor AIChatPanel so sending messages is fully async:
-  - When user sends a message, immediately show it in the chat panel.
-  - Show a "typing" animation or effect for the AI tutor while waiting for a response.
-  - Ensure the rest of the UI remains interactive (no freeze/blocking) while awaiting AI reply.
-  - On receiving the reply, replace the typing animation with the actual message.
-
-### 2. Avatar Positioning Outside Chat Bubble
-
-**Goal:** Improve visual clarity and alignment of chat avatars.
-
-**Implementation Plan:**
-
-- Display user and tutor avatars (emojis) **outside** the chat bubble:
-  - User avatar to the right of their message bubble.
-  - Tutor avatar to the left of the AI message bubble.
-  - Remove avatar emoji from inside the bubble text.
-  - Update layout and styling for clear alignment and spacing.
-
-### 3. Add Rich Context to AI API Requests
+### 1. Add Rich Context to AI API Requests
 
 **Goal:** Improve the relevance and personalization of AI responses by including the last 5 actions, last 5 user questions, and last 5 AI messages (feedback or answers) in every prompt sent to the AI APIs—regardless of whether the request is for tutoring feedback or a direct question.
 
