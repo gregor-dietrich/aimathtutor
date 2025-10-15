@@ -104,7 +104,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
         this.graspableCanvas.setId("graspable-canvas");
         this.graspableCanvas.getStyle()
                 .set("width", "100%")
-                .set("height", "500px")
+                .set("height", "80vh")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("background-color", "var(--lumo-base-color)")

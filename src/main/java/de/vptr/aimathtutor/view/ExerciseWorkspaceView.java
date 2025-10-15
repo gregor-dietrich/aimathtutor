@@ -65,7 +65,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private int hintCount = 0;
 
     // UI Components
-    private Div canvasContainer;
+    private Div graspableCanvas;
     private AIChatPanel chatPanel;
     private VerticalLayout hintsPanel;
     private Button requestHintButton;
@@ -205,17 +205,17 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Graspable Math canvas container (only if enabled)
         if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
-            this.canvasContainer = new Div();
-            this.canvasContainer.setId("graspable-canvas"); // Fixed ID expected by JavaScript
-            this.canvasContainer.getStyle()
+            this.graspableCanvas = new Div();
+            this.graspableCanvas.setId("graspable-canvas"); // Fixed ID expected by JavaScript
+            this.graspableCanvas.getStyle()
                     .set("width", "100%")
-                    .set("height", "500px")
+                    .set("height", "80vh")
                     .set("border", "1px solid var(--lumo-contrast-20pct)")
                     .set("border-radius", "var(--lumo-border-radius-m)")
                     .set("background-color", "var(--lumo-base-color)")
                     .set("margin-top", "1rem");
 
-            leftPanel.add(header, this.canvasContainer, hintsSection);
+            leftPanel.add(header, this.graspableCanvas, hintsSection);
         } else {
             // For non-Graspable exercises, just show the instructions
             leftPanel.add(header);
