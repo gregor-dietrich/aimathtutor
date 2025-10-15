@@ -177,11 +177,13 @@ class AITutorServiceTest {
     @DisplayName("Should generate algebra problem")
     void shouldGenerateAlgebraProblem() {
         // When
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", "algebra");
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate",
+                GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS);
 
         // Then
         assertNotNull(problem);
         assertEquals("intermediate", problem.difficulty);
+        assertEquals(GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS, problem.category);
         assertNotNull(problem.title);
         assertNotNull(problem.initialExpression);
         assertFalse(problem.allowedOperations.isEmpty());
@@ -192,24 +194,28 @@ class AITutorServiceTest {
     @DisplayName("Should generate factoring problem")
     void shouldGenerateFactoringProblem() {
         // When
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("advanced", "factoring");
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem("advanced",
+                GraspableProblemDto.ProblemCategory.FACTORING);
 
         // Then
         assertNotNull(problem);
         assertEquals("advanced", problem.difficulty);
+        assertEquals(GraspableProblemDto.ProblemCategory.FACTORING, problem.category);
         assertNotNull(problem.initialExpression);
         assertTrue(problem.allowedOperations.contains("factor"));
         assertNotNull(problem.targetExpression);
     }
 
     @Test
-    @DisplayName("Should generate default problem for unknown topic")
-    void shouldGenerateDefaultProblemForUnknownTopic() {
+    @DisplayName("Should generate polynomial simplification problem")
+    void shouldGeneratePolynomialSimplificationProblem() {
         // When
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("beginner", "unknown_topic");
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem("beginner",
+                GraspableProblemDto.ProblemCategory.POLYNOMIAL_SIMPLIFICATION);
 
         // Then
         assertNotNull(problem);
+        assertEquals(GraspableProblemDto.ProblemCategory.POLYNOMIAL_SIMPLIFICATION, problem.category);
         assertNotNull(problem.initialExpression);
         assertNotNull(problem.title);
     }

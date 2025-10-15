@@ -177,18 +177,29 @@ window.graspableMathUtils = {
         }
 
         try {
-            // Use createElement to add a new derivation
-            var derivation = window.graspableCanvas.model.createElement(
-                "derivation",
-                {
-                    eq: equation,
-                    pos: { x: x || 100, y: y || 50 },
-                    font_size: 40,
-                }
-            );
+            // Split equation by semicolon to handle multiple equations (e.g., systems of equations)
+            var equations = equation.split(';').map(function(eq) { return eq.trim(); }).filter(function(eq) { return eq.length > 0; });
+            console.log("[GM] Split into", equations.length, "equation(s):", equations);
+            
+            var startY = y || 50;
+            var spacing = 80; // Vertical spacing between equations
+            
+            // Create a derivation for each equation
+            equations.forEach(function(eq, index) {
+                var currentY = startY + (index * spacing);
+                console.log("[GM] Creating derivation for equation", index + 1, ":", eq, "at y =", currentY);
+                
+                var derivation = window.graspableCanvas.model.createElement(
+                    "derivation",
+                    {
+                        eq: eq,
+                        pos: { x: x || 100, y: currentY },
+                        font_size: 40,
+                    }
+                );
 
-            // Set up event listener for this derivation
-            if (derivation && derivation.events) {
+                // Set up event listener for this derivation
+                if (derivation && derivation.events) {
                 var lastKnownEq = derivation.getLastModel().to_ascii();
                 
                 derivation.events.on("change", function (event) {
@@ -292,8 +303,9 @@ window.graspableMathUtils = {
                     });
                 });
             }
+            });
 
-            console.log("[GM] Problem loaded:", equation);
+            console.log("[GM] Problem loaded successfully with", equations.length, "equation(s)");
         } catch (error) {
             console.error("[GM] Error loading problem:", error);
             console.error("[GM] Stack:", error.stack);
