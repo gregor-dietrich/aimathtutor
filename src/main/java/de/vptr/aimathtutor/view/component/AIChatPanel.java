@@ -7,6 +7,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -28,6 +29,8 @@ public class AIChatPanel extends VerticalLayout {
     private final TextField chatInput;
     private final Button sendButton;
     private final MessageSendListener messageSendListener;
+    private String userAvatarEmoji = "🧒";
+    private String tutorAvatarEmoji = "🧑‍🏫";
 
     /**
      * Callback interface for handling message sends.
@@ -43,7 +46,22 @@ public class AIChatPanel extends VerticalLayout {
      * @param messageSendListener Callback to invoke when user sends a message
      */
     public AIChatPanel(final MessageSendListener messageSendListener) {
+        this(messageSendListener, "🧒", "🧑‍🏫");
+    }
+
+    /**
+     * Creates a new AI chat panel with custom avatars.
+     *
+     * @param messageSendListener Callback to invoke when user sends a message
+     * @param userAvatarEmoji     The emoji to use for user messages
+     * @param tutorAvatarEmoji    The emoji to use for AI tutor messages
+     */
+    public AIChatPanel(final MessageSendListener messageSendListener,
+            final String userAvatarEmoji,
+            final String tutorAvatarEmoji) {
         this.messageSendListener = messageSendListener;
+        this.userAvatarEmoji = userAvatarEmoji != null ? userAvatarEmoji : "🧒";
+        this.tutorAvatarEmoji = tutorAvatarEmoji != null ? tutorAvatarEmoji : "🧑‍🏫";
 
         // Apply right panel styling
         this.setWidth("30%");
@@ -128,66 +146,63 @@ public class AIChatPanel extends VerticalLayout {
      */
     public void addMessage(final ChatMessageDto message) {
         UI.getCurrent().access(() -> {
-            // Container for alignment
-            final var messageContainer = new Div();
-            messageContainer.getStyle()
-                    .set("display", "flex")
-                    .set("margin-bottom", "var(--lumo-space-s)");
+            // Outer container for the entire message row (avatar + bubble)
+            final var messageRow = new HorizontalLayout();
+            messageRow.setWidthFull();
+            messageRow.setSpacing(true);
+            messageRow.setPadding(false);
+            messageRow.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+
+            // Avatar label (outside bubble)
+            final var avatarLabel = new Span();
+            avatarLabel.getStyle()
+                    .set("font-size", "1.5rem")
+                    .set("flex-shrink", "0")
+                    .set("align-self", "flex-end");
 
             // Message bubble
             final var messageDiv = new Div();
             messageDiv.getStyle()
                     .set("padding", "var(--lumo-space-s)")
                     .set("border-radius", "var(--lumo-border-radius-l)")
-                    .set("max-width", "80%")
+                    .set("max-width", "70%")
                     .set("word-wrap", "break-word");
+
+            final var messagePara = new Paragraph(message.message);
+            messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
+            messageDiv.add(messagePara);
 
             // Style based on sender
             if (message.sender == ChatMessageDto.Sender.USER) {
-                // User messages: right-aligned, 20% margin on left
-                messageContainer.getStyle()
-                        .set("justify-content", "flex-end")
-                        .set("margin-left", "20%");
+                // User messages: right-aligned, avatar on right
+                messageRow.setJustifyContentMode(JustifyContentMode.END);
+                avatarLabel.setText(this.userAvatarEmoji);
                 messageDiv.getStyle()
                         .set("background-color", "var(--lumo-primary-color-10pct)")
                         .set("border", "1px solid var(--lumo-primary-color-50pct)");
+                messageRow.add(messageDiv, avatarLabel);
             } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
-                // System messages: centered with distinct styling
-                messageContainer.getStyle()
-                        .set("justify-content", "center");
+                // System messages: centered, no avatar
+                messageRow.setJustifyContentMode(JustifyContentMode.CENTER);
                 messageDiv.getStyle()
                         .set("background-color", "var(--lumo-contrast-5pct)")
                         .set("border", "1px solid var(--lumo-contrast-20pct)")
                         .set("font-style", "italic")
                         .set("text-align", "center")
-                        .set("color", "var(--lumo-secondary-text-color)");
+                        .set("color", "var(--lumo-secondary-text-color)")
+                        .set("max-width", "80%");
+                messageRow.add(messageDiv);
             } else {
-                // AI messages: left-aligned, 20% margin on right
-                messageContainer.getStyle()
-                        .set("justify-content", "flex-start")
-                        .set("margin-right", "20%");
+                // AI messages: left-aligned, avatar on left
+                messageRow.setJustifyContentMode(JustifyContentMode.START);
+                avatarLabel.setText(this.tutorAvatarEmoji);
                 messageDiv.getStyle()
                         .set("background-color", "var(--lumo-contrast-10pct)")
                         .set("border", "1px solid var(--lumo-contrast-20pct)");
+                messageRow.add(avatarLabel, messageDiv);
             }
 
-            // Add icon based on message type
-            String icon = "";
-            if (message.sender == ChatMessageDto.Sender.USER) {
-                icon = "🧒 ";
-            } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
-                icon = "ℹ️ ";
-            } else {
-                icon = "🧑‍🏫 ";
-            }
-
-            final var messagePara = new Paragraph(icon + message.message);
-            messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
-
-            messageDiv.add(messagePara);
-            messageContainer.add(messageDiv);
-
-            this.chatHistoryPanel.add(messageContainer);
+            this.chatHistoryPanel.add(messageRow);
 
             // Auto-scroll to bottom
             UI.getCurrent().getPage().executeJs(
@@ -199,6 +214,65 @@ public class AIChatPanel extends VerticalLayout {
                 this.chatHistoryPanel.remove(this.chatHistoryPanel.getComponentAt(0));
             }
         });
+    }
+
+    /**
+     * Shows a typing indicator for the AI tutor.
+     *
+     * @return The component to remove later
+     */
+    public HorizontalLayout showTypingIndicator() {
+        final var typingRow = new HorizontalLayout();
+        typingRow.setWidthFull();
+        typingRow.setSpacing(true);
+        typingRow.setPadding(false);
+        typingRow.setJustifyContentMode(JustifyContentMode.START);
+        typingRow.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+
+        // Avatar
+        final var avatarLabel = new Span(this.tutorAvatarEmoji);
+        avatarLabel.getStyle()
+                .set("font-size", "1.5rem")
+                .set("flex-shrink", "0")
+                .set("align-self", "flex-end");
+
+        // Typing indicator
+        final var typingDiv = new Div();
+        typingDiv.getStyle()
+                .set("padding", "var(--lumo-space-s)")
+                .set("border-radius", "var(--lumo-border-radius-l)")
+                .set("background-color", "var(--lumo-contrast-10pct)")
+                .set("border", "1px solid var(--lumo-contrast-20pct)");
+
+        final var typingText = new Span("typing...");
+        typingText.getStyle()
+                .set("font-style", "italic")
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("animation", "pulse 1.5s ease-in-out infinite");
+        typingDiv.add(typingText);
+
+        typingRow.add(avatarLabel, typingDiv);
+
+        UI.getCurrent().access(() -> {
+            this.chatHistoryPanel.add(typingRow);
+            // Auto-scroll to bottom
+            UI.getCurrent().getPage().executeJs(
+                    "const panel = $0; panel.scrollTop = panel.scrollHeight;",
+                    this.chatHistoryPanel.getElement());
+        });
+
+        return typingRow;
+    }
+
+    /**
+     * Removes the typing indicator.
+     *
+     * @param indicator The indicator component to remove
+     */
+    public void hideTypingIndicator(final HorizontalLayout indicator) {
+        if (indicator != null) {
+            UI.getCurrent().access(() -> this.chatHistoryPanel.remove(indicator));
+        }
     }
 
     /**
