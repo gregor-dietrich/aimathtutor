@@ -1,5 +1,28 @@
 # TODO - Detailed Implementation Plans
 
+## 0. General
+
+### Implementation Priority
+
+Suggested order (easiest to hardest):
+
+1. **User Settings Panel** (Task 5 - standalone feature, good UI/UX improvement)
+2. **AIChatPanel Experience Improvements** (Task 6.1 & 6.2 - UI/UX improvements, no AI changes)
+3. **Problem Completion Detection** (Task 1 - enhances existing functionality)
+4. **Problem Category Selection** (Task 2 - extends generation feature)
+5. **Add Rich Context to AI API Requests** (Task 6.3 - moderate complexity, improves AI responses)
+6. **Multiple Problems Per Exercise** (Task 3 - moderate complexity, requires DB changes)
+7. **Admin Views** (Task 4 - most complex, requires multiple new views and services)
+
+### Testing Checklist (for each feature)
+
+- [ ] Unit tests for service methods
+- [ ] Integration tests for DB operations
+- [ ] Manual UI testing in both views
+- [ ] Edge cases (empty data, invalid input, etc.)
+- [ ] Permission/security checks
+- [ ] Performance with large datasets (admin views)
+
 ## 1. Problem Completion Detection & AI Verification
 
 **Goal:** Detect when a student reaches the target/solution expression and have the AI tutor provide congratulatory feedback.
@@ -329,27 +352,6 @@
 
 ---
 
-## Implementation Priority
-
-Suggested order (easiest to hardest):
-
-1. **User Settings Panel** (standalone feature, good UI/UX improvement)
-2. **Problem Completion Detection** (enhances existing functionality)
-3. **Problem Category Selection** (extends generation feature)
-4. **Multiple Problems Per Exercise** (moderate complexity, requires DB changes)
-5. **Admin Views** (most complex, requires multiple new views and services)
-
----
-
-## Testing Checklist (for each feature)
-
-- [ ] Unit tests for service methods
-- [ ] Integration tests for DB operations
-- [ ] Manual UI testing in both views
-- [ ] Edge cases (empty data, invalid input, etc.)
-- [ ] Permission/security checks
-- [ ] Performance with large datasets (admin views)
-
 ## 6. AIChatPanel Experience Improvements
 
 ### 1. Async Messaging & Typing Animation
@@ -376,13 +378,33 @@ Suggested order (easiest to hardest):
   - Remove avatar emoji from inside the bubble text.
   - Update layout and styling for clear alignment and spacing.
 
-### 3. Gemini Live API Evaluation/Integration
+### 3. Add Rich Context to AI API Requests
 
-**Goal:** Enable real-time streaming responses from Gemini if possible.
+**Goal:** Improve the relevance and personalization of AI responses by including the last 5 actions, last 5 user questions, and last 5 AI messages (feedback or answers) in every prompt sent to the AI APIs—regardless of whether the request is for tutoring feedback or a direct question.
 
 **Implementation Plan:**
 
-- Investigate if Gemini's Live API (for real-time streaming responses) is currently used for AI tutor replies.
-- If not used, add a separate task to integrate Gemini Live API for streaming/real-time chat.
-- If integration is simple, include as part of async messaging refactor; otherwise, track as a distinct backend task.
-- Document findings and required changes.
+- **Backend Changes:**
+  - **AITutorService:**
+    - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
+      - The last 5 actions performed by the student
+      - The last 5 user questions
+      - The last 5 AI messages (feedback or answers)
+    - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
+  - **ChatMessageDto:**
+    - Add optional `relatedAction` field to link messages to specific actions.
+  - **AIInteractionEntity:**
+    - Add `conversationContext` field to log the full context sent with each AI request.
+
+- **Frontend Changes:**
+  - **AIChatPanel:**
+    - Maintain rolling buffers for:
+      - Last 5 actions
+      - Last 5 user questions
+      - Last 5 AI messages
+    - Pass all three buffers to the backend with each user question or action.
+
+- **Testing:**
+  - Verify that prompts include the correct context for both tutoring and questions.
+  - Ensure token limits are respected for all AI providers.
+  - Test with long conversations and many actions to confirm performance and accuracy.
