@@ -183,13 +183,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
 
         this.userAvatarSelect = new ComboBox<>("Your Avatar");
-        this.userAvatarSelect.setItems("🧒", "👦", "👧", "🧑", "👨", "👩", "🙂", "😊", "🤓", "🧠", "✏️", "📚");
-        this.userAvatarSelect.setValue("🧒");
+        this.userAvatarSelect.setItems("🧒", "👦", "👧", "🧑‍🎓", "👨‍🎓", "👩‍🎓", "🐱", "🐶", "🐭", "👽");
         this.userAvatarSelect.addValueChangeListener(e -> this.updatePreview());
 
         this.tutorAvatarSelect = new ComboBox<>("AI Tutor Avatar");
-        this.tutorAvatarSelect.setItems("🧑‍🏫", "👨‍🏫", "👩‍🏫", "🤖", "🦉", "📖", "🎓", "💡", "⭐");
-        this.tutorAvatarSelect.setValue("🧑‍🏫");
+        this.tutorAvatarSelect.setItems("🤖", "🦉", "🖥️", "💻", "🧑‍🏫", "👨‍🏫", "👩‍🏫", "🧑‍💻", "👨‍💻", "👩‍💻");
         this.tutorAvatarSelect.addValueChangeListener(e -> this.updatePreview());
 
         form.add(this.userAvatarSelect, this.tutorAvatarSelect);
