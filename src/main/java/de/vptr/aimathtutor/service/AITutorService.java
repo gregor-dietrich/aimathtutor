@@ -112,7 +112,11 @@ public class AITutorService {
                 "✨ Great job! You've mastered this problem!",
                 "🎯 Fantastic! You solved it: " + event.expressionAfter,
                 "💯 Well done! You've reached the correct solution!",
-                "🏆 Amazing work! Problem solved successfully!"
+                "🏆 Amazing work! Problem solved successfully!",
+                "💪 Strong work! You crushed this problem!",
+                "👍 Awesome! You got it right!",
+                "🏅 Champion! You conquered this challenge!",
+                "🎊 Congratulations! You nailed it!"
         };
 
         // Pick a random congratulatory message
