@@ -4,12 +4,30 @@
 
 ### Implementation Priority
 
-Suggested order (easiest to hardest):
+### Suggested Order (Easiest to Hardest)
 
-1. **Problem Category Selection** (Task 2 - extends generation feature)
-1. **Add Rich Context to AI API Requests** (Task 6.1 - moderate complexity, improves AI responses)
-1. **Multiple Problems Per Exercise** (Task 3 - moderate complexity, requires DB changes)
-1. **Admin Views** (Task 4 - most complex, requires multiple new views and services)
+1. **Problem Category Selection** (Task 1)
+   *Easiest*: Mostly UI changes and enum additions; minimal backend logic.
+
+2. **Add Rich Context to AI API Requests** (Task 4)
+   *Moderate*: Requires changes to prompt construction and DTOs, but isolated to AI service and chat panel.
+
+3. **Multiple Problems Per Exercise** (Task 2)
+   *Moderate-Complex*: Involves DB migration, session tracking, and sequential UI logic.
+
+4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+   *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
+
+5. **Admin Views for Progress Tracking** (Task 3)
+   *Most Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
+
+**Difficulty Ratings:**
+
+- Task 1: ★☆☆☆☆
+- Task 4: ★★☆☆☆
+- Task 2: ★★★☆☆
+- Task 5: ★★★★☆
+- Task 3: ★★★★★
 
 ### Testing Checklist (for each feature)
 
