@@ -45,17 +45,13 @@ jobs:
       - name: Secret Scanning
         uses: gitleaks/gitleaks-action@v2
       - name: Run OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
-        id: depcheck
-        with:
-          project: 'aimathtutor'
-          path: '.'
-          format: 'HTML'
+        run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
       - name: Upload Dependency-Check results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: dependency-check-report
-          path: ${{ github.workspace }}/reports
+          path: target/dependency-check-report.html
 
   build:
     runs-on: ubuntu-latest
