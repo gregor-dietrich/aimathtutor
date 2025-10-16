@@ -44,14 +44,18 @@ jobs:
         uses: github/codeql-action/analyze@v4
       - name: Secret Scanning
         uses: gitleaks/gitleaks-action@v2
-      - name: Dependency Scanning
-        uses: actions/checkout@v4
       - name: Run OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@1.1.0
+        uses: dependency-check/Dependency-Check_Action@main
+        id: depcheck
         with:
           project: 'aimathtutor'
           path: '.'
           format: 'HTML'
+      - name: Upload Dependency-Check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: ${{ github.workspace }}/reports
 
   build:
     runs-on: ubuntu-latest
