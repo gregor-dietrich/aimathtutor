@@ -23,8 +23,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.layout.AIChatPanel;
-import de.vptr.aimathtutor.dto.AIFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
+import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.AITutorService;
@@ -61,6 +61,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     private String sessionId;
     private boolean initialized = false;
     private GraspableProblemDto.ProblemCategory selectedCategory = GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
+    private final ConversationContextDto conversationContext = new ConversationContextDto();
 
     public GraspableMathView() {
         // Constructor intentionally empty - initialization happens in buildUI()
@@ -244,6 +245,9 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
         event.sessionId = this.sessionId;
         // No exercise needed for standalone workspace
 
+        // Add action to conversation context
+        this.conversationContext.addAction(event);
+
         // Check if problem is completed (if target is set)
         if (this.targetExpression != null && !this.targetExpression.trim().isEmpty()) {
             final boolean isComplete = this.graspableMathService.checkCompletion(
@@ -268,7 +272,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
         // actual feedback
         final var ui = UI.getCurrent();
 
-        this.aiTutorService.analyzeMathActionAsync(event).thenAccept(feedback -> {
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext).thenAccept(feedback -> {
             ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
@@ -276,7 +280,14 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
                     this.aiTutorService.logInteraction(event, feedback);
 
                     // Display feedback to user
-                    this.addAIFeedback(feedback);
+                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
+                    feedbackMessage.sessionId = this.sessionId;
+
+                    // Add AI message to context
+                    this.conversationContext.addAIMessage(feedbackMessage);
+
+                    // Display in chat
+                    this.chatPanel.addMessage(feedbackMessage);
                 }
             });
         }).exceptionally(ex -> {
@@ -291,19 +302,28 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
      * Handles user questions from the chat panel.
      */
     private void handleUserQuestion(final String question) {
+        // Create and add user message to context
+        final var userMessage = ChatMessageDto.userQuestion(question);
+        userMessage.sessionId = this.sessionId;
+        this.conversationContext.addQuestion(userMessage);
+
         // Display user message
-        this.chatPanel.addMessage(ChatMessageDto.userQuestion(question));
+        this.chatPanel.addMessage(userMessage);
 
         // Show typing indicator while waiting for AI response
         this.chatPanel.showTypingIndicator();
 
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
-        this.aiTutorService.answerQuestionAsync(question, this.currentExpression, this.sessionId)
+        this.aiTutorService
+                .answerQuestionAsync(question, this.currentExpression, this.sessionId, this.conversationContext)
                 .thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator
                         this.chatPanel.hideTypingIndicator();
+
+                        // Add AI answer to context
+                        this.conversationContext.addAIMessage(answer);
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);
@@ -318,25 +338,6 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
                     });
                     return null;
                 });
-    }
-
-    /**
-     * Displays AI feedback as a chat message.
-     */
-    private void addAIFeedback(final AIFeedbackDto feedback) {
-        final var message = ChatMessageDto.aiFeedback(feedback.message);
-        message.sessionId = this.sessionId;
-
-        // Add hints as part of the message if present
-        if (feedback.hints != null && !feedback.hints.isEmpty()) {
-            final StringBuilder fullMessage = new StringBuilder(feedback.message);
-            for (final String hint : feedback.hints) {
-                fullMessage.append("\n💡 ").append(hint);
-            }
-            message.message = fullMessage.toString();
-        }
-
-        this.chatPanel.addMessage(message);
     }
 
     /**

@@ -22,8 +22,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.layout.AIChatPanel;
-import de.vptr.aimathtutor.dto.AIFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
+import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.service.AITutorService;
@@ -63,6 +63,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private ExerciseViewDto exercise;
     private String currentSessionId;
     private int hintCount = 0;
+    private final ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
     private Div graspableCanvas;
@@ -337,6 +338,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         event.sessionId = this.currentSessionId;
         event.timestamp = LocalDateTime.now();
 
+        // Add event to conversation context
+        this.conversationContext.addAction(event);
+
         // Check if problem is completed (only if target expression is defined)
         if (this.exercise.graspableTargetExpression != null
                 && !this.exercise.graspableTargetExpression.trim().isEmpty()) {
@@ -364,15 +368,32 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // actual feedback
         final var ui = UI.getCurrent();
 
-        this.aiTutorService.analyzeMathActionAsync(event).thenAccept(feedback -> {
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext).thenAccept(feedback -> {
             ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
                     // Log interaction
                     this.aiTutorService.logInteraction(event, feedback);
 
-                    // Display feedback
-                    this.displayFeedback(feedback);
+                    // Create feedback message and add to conversation context
+                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
+                    feedbackMessage.sessionId = this.currentSessionId;
+                    this.conversationContext.addAIMessage(feedbackMessage);
+
+                    // Display feedback inline (replaces displayFeedback method)
+                    final var message = ChatMessageDto.aiFeedback(feedback.message);
+                    message.sessionId = this.currentSessionId;
+
+                    // Add hints as part of the message if present
+                    if (feedback.hints != null && !feedback.hints.isEmpty()) {
+                        final StringBuilder fullMessage = new StringBuilder(feedback.message);
+                        for (final String hint : feedback.hints) {
+                            fullMessage.append("\n💡 ").append(hint);
+                        }
+                        message.message = fullMessage.toString();
+                    }
+
+                    this.chatPanel.addMessage(message);
                 }
             });
         }).exceptionally(ex -> {
@@ -387,19 +408,28 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      * Handles user questions from the chat panel.
      */
     private void handleUserQuestion(final String question) {
+        // Create and add user message to context
+        final var userMessage = ChatMessageDto.userQuestion(question);
+        userMessage.sessionId = this.currentSessionId;
+        this.conversationContext.addQuestion(userMessage);
+
         // Display user message
-        this.chatPanel.addMessage(ChatMessageDto.userQuestion(question));
+        this.chatPanel.addMessage(userMessage);
 
         // Show typing indicator while waiting for AI response
         this.chatPanel.showTypingIndicator();
 
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
-        this.aiTutorService.answerQuestionAsync(question, this.currentExpression, this.currentSessionId)
+        this.aiTutorService
+                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext)
                 .thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator
                         this.chatPanel.hideTypingIndicator();
+
+                        // Add AI answer to conversation context
+                        this.conversationContext.addAIMessage(answer);
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);
@@ -414,26 +444,6 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     });
                     return null;
                 });
-    }
-
-    private void displayFeedback(final AIFeedbackDto feedback) {
-        if (feedback == null) {
-            return;
-        }
-
-        final var message = ChatMessageDto.aiFeedback(feedback.message);
-        message.sessionId = this.currentSessionId;
-
-        // Add hints as part of the message if present
-        if (feedback.hints != null && !feedback.hints.isEmpty()) {
-            final StringBuilder fullMessage = new StringBuilder(feedback.message);
-            for (final String hint : feedback.hints) {
-                fullMessage.append("\n💡 ").append(hint);
-            }
-            message.message = fullMessage.toString();
-        }
-
-        this.chatPanel.addMessage(message);
     }
 
     private void showNextHint() {
