@@ -70,11 +70,19 @@ public class AIChatPanel extends VerticalLayout {
         this.setPadding(true);
         this.getStyle()
                 .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)");
+                .set("border-left", "1px solid var(--lumo-contrast-10pct)")
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("position", "sticky")
+                .set("top", "0")
+                .set("max-height", "calc(100vh - 100px)") // Subtract approximate header height
+                .set("overflow", "hidden"); // Prevent the panel itself from scrolling
 
         // Chat header
         final var chatHeader = new H4("AI Tutor Chat");
-        chatHeader.getStyle().set("margin-top", "0");
+        chatHeader.getStyle()
+                .set("margin-top", "0")
+                .set("flex-shrink", "0");
 
         // Chat history panel
         this.chatHistoryPanel = new VerticalLayout();
@@ -82,13 +90,14 @@ public class AIChatPanel extends VerticalLayout {
         this.chatHistoryPanel.setPadding(false);
         this.chatHistoryPanel.setDefaultHorizontalComponentAlignment(Alignment.STRETCH);
         this.chatHistoryPanel.getStyle()
-                .set("height", "80vh")
-                .set("overflow-y", "auto")
+                .set("flex-grow", "1") // Grow to fill available space
+                .set("flex-shrink", "1") // Allow shrinking if needed
+                .set("overflow-y", "auto") // Only the history scrolls
+                .set("min-height", "0") // Important for flex shrinking
                 .set("padding", "var(--lumo-space-m)")
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("flex-shrink", "0");
+                .set("border-radius", "var(--lumo-border-radius-m)");
 
         // Chat input area
         this.chatInput = new TextField();
@@ -115,10 +124,11 @@ public class AIChatPanel extends VerticalLayout {
         inputLayout.setWidthFull();
         inputLayout.setSpacing(true);
         inputLayout.setAlignItems(Alignment.END);
+        inputLayout.getStyle().set("flex-shrink", "0"); // Don't shrink input area
         this.chatInput.getStyle().set("flex-grow", "1");
 
         this.add(chatHeader, this.chatHistoryPanel, inputLayout);
-        this.setFlexGrow(1, this.chatHistoryPanel);
+        this.setFlexGrow(1, this.chatHistoryPanel); // Let chat history grow to fill space
     }
 
     /**
