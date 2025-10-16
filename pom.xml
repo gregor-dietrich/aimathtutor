@@ -24,7 +24,7 @@
         <compiler-plugin.version>3.14.1</compiler-plugin.version>
         <license-plugin.version>2.7.0</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
-        <quarkus.platform.version>3.27.0</quarkus.platform.version>
+        <quarkus.platform.version>3.28.4</quarkus.platform.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
         <vaadin.version>24.9.2</vaadin.version>
     </properties>
