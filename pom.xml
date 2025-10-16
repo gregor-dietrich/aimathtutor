@@ -132,6 +132,13 @@
             <artifactId>quarkus-panache-mock</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- CVE-2025-59419 -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-smtp</artifactId>
+            <version>[4.1.128.Final,)</version>
+        </dependency>
     </dependencies>
 
     <repositories>
