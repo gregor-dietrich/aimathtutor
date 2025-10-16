@@ -12,9 +12,12 @@ updates:
     directory: "/src/main/docker"
     patterns: ["*"]
     multi-ecosystem-group: "infrastructure"
+    ignore:
+      - dependency-name: "eclipse-temurin"
 
   - package-ecosystem: "maven"
     directory: "/"
     patterns: ["*"]
     multi-ecosystem-group: "infrastructure"
-  
+    ignore:
+      - dependency-name: "io.quarkus:*"
