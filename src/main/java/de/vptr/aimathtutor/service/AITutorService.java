@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.vptr.aimathtutor.dto.AIFeedbackDto;
-import de.vptr.aimathtutor.dto.ChatMessageDto;
-import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.dto.*;
 import de.vptr.aimathtutor.entity.AIInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
@@ -61,12 +58,14 @@ public class AITutorService {
      * Analyzes a student's math action and provides AI feedback.
      * Only provides feedback for significant actions to reduce spam.
      * 
-     * @param event The Graspable Math event containing the student's action
+     * @param event   The Graspable Math event containing the student's action
+     * @param context Conversation context with recent actions, questions, and AI
+     *                messages
      * @return AI-generated feedback, or null if no feedback needed
      */
-    public AIFeedbackDto analyzeMathAction(final GraspableEventDto event) {
-        LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}'",
-                event.eventType, event.expressionBefore, event.expressionAfter);
+    public AIFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
+        LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}', context={}",
+                event.eventType, event.expressionBefore, event.expressionAfter, context);
 
         if (this.aiEnabled != null && !this.aiEnabled) {
             LOG.debug("AI is disabled, returning null");
@@ -91,9 +90,9 @@ public class AITutorService {
         // Use different AI provider based on configuration
         final String provider = (this.aiProvider != null) ? this.aiProvider.toLowerCase() : "mock";
         return switch (provider) {
-            case "gemini" -> this.analyzeWithGemini(event);
-            case "openai" -> this.analyzeWithOpenAI(event);
-            case "ollama" -> this.analyzeWithOllama(event);
+            case "gemini" -> this.analyzeWithGemini(event, context);
+            case "openai" -> this.analyzeWithOpenAI(event, context);
+            case "ollama" -> this.analyzeWithOllama(event, context);
             default -> this.analyzeWithMockAI(event);
         };
     }
@@ -187,11 +186,13 @@ public class AITutorService {
      * @param question          The student's question
      * @param currentExpression The current state of the problem (optional)
      * @param sessionId         The session ID (optional)
+     * @param context           Conversation context with recent actions, questions,
+     *                          and AI messages
      * @return AI-generated answer
      */
     public ChatMessageDto answerQuestion(final String question, final String currentExpression,
-            final String sessionId) {
-        LOG.debug("Answering question: {} (session: {})", question, sessionId);
+            final String sessionId, final ConversationContextDto context) {
+        LOG.debug("Answering question: {} (session: {}, context: {})", question, sessionId, context);
 
         if (this.aiEnabled != null && !this.aiEnabled) {
             return ChatMessageDto.aiAnswer(
@@ -202,9 +203,9 @@ public class AITutorService {
         final String provider = (this.aiProvider != null) ? this.aiProvider.toLowerCase() : "mock";
 
         final String answer = switch (provider) {
-            case "gemini" -> this.answerWithGemini(question, currentExpression);
-            case "openai" -> this.answerWithOpenAI(question, currentExpression);
-            case "ollama" -> this.answerWithOllama(question, currentExpression);
+            case "gemini" -> this.answerWithGemini(question, currentExpression, context);
+            case "openai" -> this.answerWithOpenAI(question, currentExpression, context);
+            case "ollama" -> this.answerWithOllama(question, currentExpression, context);
             default -> this.answerWithMockAI(question, currentExpression);
         };
 
@@ -220,23 +221,27 @@ public class AITutorService {
      * @param question          The student's question
      * @param currentExpression The current math expression
      * @param sessionId         The session identifier
+     * @param context           Conversation context
      * @return CompletableFuture containing the AI's answer
      */
     public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
-            final String currentExpression, final String sessionId) {
-        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId));
+            final String currentExpression, final String sessionId, final ConversationContextDto context) {
+        return CompletableFuture
+                .supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId, context));
     }
 
     /**
      * Async version of analyzeMathAction that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
      * 
-     * @param event The Graspable Math event
+     * @param event   The Graspable Math event
+     * @param context Conversation context
      * @return CompletableFuture containing the AI feedback, or null if no feedback
      *         needed
      */
-    public CompletableFuture<AIFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event) {
-        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event));
+    public CompletableFuture<AIFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
+            final ConversationContextDto context) {
+        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event, context));
     }
 
     /**
@@ -334,16 +339,17 @@ public class AITutorService {
     }
 
     /**
-     * Answer question using Gemini AI.
+     * Answer question using Gemini with conversation context.
      */
-    private String answerWithGemini(final String question, final String currentExpression) {
+    private String answerWithGemini(final String question, final String currentExpression,
+            final ConversationContextDto context) {
         if (!this.geminiService.isConfigured()) {
             LOG.warn("Gemini not configured, using mock AI");
             return this.answerWithMockAI(question, currentExpression);
         }
 
         try {
-            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
             return this.geminiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Gemini for question answering", e);
@@ -352,16 +358,17 @@ public class AITutorService {
     }
 
     /**
-     * Answer question using OpenAI.
+     * Answer question using OpenAI with conversation context.
      */
-    private String answerWithOpenAI(final String question, final String currentExpression) {
+    private String answerWithOpenAI(final String question, final String currentExpression,
+            final ConversationContextDto context) {
         if (!this.openAIService.isConfigured()) {
             LOG.warn("OpenAI not configured, using mock AI");
             return this.answerWithMockAI(question, currentExpression);
         }
 
         try {
-            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
             return this.openAIService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using OpenAI for question answering", e);
@@ -370,16 +377,17 @@ public class AITutorService {
     }
 
     /**
-     * Answer question using Ollama.
+     * Answer question using Ollama with conversation context.
      */
-    private String answerWithOllama(final String question, final String currentExpression) {
+    private String answerWithOllama(final String question, final String currentExpression,
+            final ConversationContextDto context) {
         if (!this.ollamaService.isAvailable()) {
             LOG.warn("Ollama not available, using mock AI");
             return this.answerWithMockAI(question, currentExpression);
         }
 
         try {
-            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression);
+            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
             return this.ollamaService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Ollama for question answering", e);
@@ -390,10 +398,42 @@ public class AITutorService {
     /**
      * Builds a prompt for answering student questions.
      */
-    private String buildQuestionAnsweringPrompt(final String question, final String currentExpression) {
+    private String buildQuestionAnsweringPrompt(final String question, final String currentExpression,
+            final ConversationContextDto context) {
         final var prompt = new StringBuilder();
 
         prompt.append(questionAnsweringPromptPrefix);
+
+        // Add conversation context if available
+        if (context != null) {
+            if (!context.recentActions.isEmpty()) {
+                prompt.append("Recent student actions:\n");
+                for (int i = 0; i < context.recentActions.size(); i++) {
+                    final var action = context.recentActions.get(i);
+                    prompt.append(String.format("%d. %s: '%s' → '%s'\n",
+                            i + 1, action.eventType, action.expressionBefore, action.expressionAfter));
+                }
+                prompt.append("\n");
+            }
+
+            if (!context.recentQuestions.isEmpty()) {
+                prompt.append("Recent student questions:\n");
+                for (int i = 0; i < context.recentQuestions.size(); i++) {
+                    final var q = context.recentQuestions.get(i);
+                    prompt.append(String.format("%d. \"%s\"\n", i + 1, q.message));
+                }
+                prompt.append("\n");
+            }
+
+            if (!context.recentAIMessages.isEmpty()) {
+                prompt.append("Your recent responses:\n");
+                for (int i = 0; i < context.recentAIMessages.size(); i++) {
+                    final var msg = context.recentAIMessages.get(i);
+                    prompt.append(String.format("%d. \"%s\"\n", i + 1, msg.message));
+                }
+                prompt.append("\n");
+            }
+        }
 
         if (currentExpression != null && !currentExpression.trim().isEmpty()) {
             prompt.append("Current problem state: ").append(currentExpression).append("\n\n");
@@ -410,10 +450,10 @@ public class AITutorService {
     }
 
     /**
-     * Analyzes math action using Google Gemini AI.
+     * Analyzes math action using Google Gemini AI with conversation context.
      * Sends a structured prompt and parses JSON response.
      */
-    private AIFeedbackDto analyzeWithGemini(final GraspableEventDto event) {
+    private AIFeedbackDto analyzeWithGemini(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Gemini AI");
 
         // Check if Gemini is configured
@@ -423,8 +463,8 @@ public class AITutorService {
         }
 
         try {
-            // Build the prompt
-            final var prompt = this.buildMathTutoringPrompt(event);
+            // Build the prompt with context
+            final var prompt = this.buildMathTutoringPrompt(event, context);
 
             // Call Gemini API
             final var response = this.geminiService.generateContent(prompt);
@@ -439,15 +479,44 @@ public class AITutorService {
     }
 
     /**
-     * Builds a structured prompt for math tutoring with Gemini.
+     * Builds a structured prompt for math tutoring with conversation context.
      */
-    private String buildMathTutoringPrompt(final GraspableEventDto event) {
+    private String buildMathTutoringPrompt(final GraspableEventDto event, final ConversationContextDto context) {
         final var prompt = new StringBuilder();
 
         prompt.append(mathTutoringPromptPrefix);
 
         prompt.append(event.eventType != null ? event.eventType : "unknown").append("\n");
 
+        // Add conversation context if available
+        if (context != null) {
+            if (!context.recentActions.isEmpty()) {
+                prompt.append("\nRecent actions (for context):\n");
+                for (int i = 0; i < context.recentActions.size(); i++) {
+                    final var action = context.recentActions.get(i);
+                    prompt.append(String.format("%d. %s: '%s' → '%s'\n",
+                            i + 1, action.eventType, action.expressionBefore, action.expressionAfter));
+                }
+            }
+
+            if (!context.recentQuestions.isEmpty()) {
+                prompt.append("\nRecent student questions:\n");
+                for (int i = 0; i < context.recentQuestions.size(); i++) {
+                    final var q = context.recentQuestions.get(i);
+                    prompt.append(String.format("%d. \"%s\"\n", i + 1, q.message));
+                }
+            }
+
+            if (!context.recentAIMessages.isEmpty()) {
+                prompt.append("\nYour recent feedback:\n");
+                for (int i = 0; i < context.recentAIMessages.size(); i++) {
+                    final var msg = context.recentAIMessages.get(i);
+                    prompt.append(String.format("%d. \"%s\"\n", i + 1, msg.message));
+                }
+            }
+        }
+
+        prompt.append("\nCurrent action being analyzed:\n");
         if (event.expressionBefore != null) {
             prompt.append("- Expression Before: ").append(event.expressionBefore).append("\n");
         }
@@ -509,10 +578,10 @@ public class AITutorService {
     }
 
     /**
-     * Analyzes math action using OpenAI (GPT models).
+     * Analyzes math action using OpenAI (GPT models) with conversation context.
      * Uses JSON mode for guaranteed valid JSON responses.
      */
-    private AIFeedbackDto analyzeWithOpenAI(final GraspableEventDto event) {
+    private AIFeedbackDto analyzeWithOpenAI(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with OpenAI");
 
         // Check if OpenAI is configured
@@ -522,8 +591,8 @@ public class AITutorService {
         }
 
         try {
-            // Build the prompt
-            final String prompt = this.buildMathTutoringPrompt(event);
+            // Build the prompt with context
+            final String prompt = this.buildMathTutoringPrompt(event, context);
 
             // Call OpenAI API with JSON mode
             final String response = this.openAIService.generateJsonContent(prompt);
@@ -538,10 +607,10 @@ public class AITutorService {
     }
 
     /**
-     * Analyzes math action using Ollama (local LLM).
+     * Analyzes math action using Ollama (local LLM) with conversation context.
      * Sends structured prompt and parses JSON response.
      */
-    private AIFeedbackDto analyzeWithOllama(final GraspableEventDto event) {
+    private AIFeedbackDto analyzeWithOllama(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Ollama");
 
         // Check if Ollama is available
@@ -551,8 +620,8 @@ public class AITutorService {
         }
 
         try {
-            // Build the prompt
-            final String prompt = this.buildMathTutoringPrompt(event);
+            // Build the prompt with context
+            final String prompt = this.buildMathTutoringPrompt(event, context);
 
             // Call Ollama API
             final String response = this.ollamaService.generateContent(prompt);
