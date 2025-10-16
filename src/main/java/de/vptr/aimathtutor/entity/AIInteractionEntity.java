@@ -52,6 +52,9 @@ public class AIInteractionEntity extends PanacheEntityBase {
     @Column(name = "action_correct")
     public Boolean actionCorrect;
 
+    @Column(name = "conversation_context", columnDefinition = "TEXT")
+    public String conversationContext; // JSON string of context sent with AI request
+
     public LocalDateTime timestamp;
 
     @PrePersist

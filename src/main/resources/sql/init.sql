@@ -408,6 +408,7 @@ CREATE TABLE `ai_interactions` (
   `feedback_message` text COLLATE utf8mb4_unicode_ci,
   `confidence_score` double DEFAULT NULL,
   `action_correct` tinyint(1) DEFAULT NULL,
+  `conversation_context` text COLLATE utf8mb4_unicode_ci,
   `timestamp` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `session_id` (`session_id`),
