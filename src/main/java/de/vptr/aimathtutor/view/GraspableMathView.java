@@ -83,16 +83,17 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     private void buildUI() {
         this.removeAll();
 
-        this.setSizeFull();
+        this.setWidthFull(); // Full width only
         this.setSpacing(false);
         this.setPadding(false);
+        this.setAlignItems(Alignment.STRETCH); // Make children stretch to same height
 
         // Generate session ID
         this.sessionId = "session-" + System.currentTimeMillis();
 
         // Left side: Graspable Math workspace (70%)
         final var leftPanel = new VerticalLayout();
-        leftPanel.setSizeFull();
+        leftPanel.setWidthFull(); // Only set width, let height be natural
         leftPanel.setSpacing(true);
         leftPanel.setPadding(true);
         leftPanel.getStyle().set("width", "70%");
