@@ -10,7 +10,7 @@
    *Moderate*: Requires changes to prompt construction and DTOs, but isolated to AI service and chat panel.
 
 2. **Multiple Problems Per Exercise** (Task 2)
-   *Moderate-Complex*: Involves DB migration, session tracking, and sequential UI logic.
+   *Moderate-Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
 3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
@@ -55,9 +55,10 @@
    - Method: `int getCurrentProblemIndex(String sessionId)`
    - Method: `void advanceToNextProblem(String sessionId)`
 
-3. **Database Migration:**
+3. **Database Changes:**
    - Add `current_problem_index INT DEFAULT 0` to `student_sessions` table
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
+   - Add them to the existing init script - do NOT create separate scripts
 
 ### 2.2 Frontend Changes
 
