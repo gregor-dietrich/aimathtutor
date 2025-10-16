@@ -34,6 +34,7 @@ jobs:
         with:
           languages: java
       - name: Build with Maven (for CodeQL)
+        id: setup-java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -46,12 +47,10 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
       - name: Dependency Scanning
         uses: actions/checkout@v4
-      - name: Set JAVA_HOME env
-        run: echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
       - name: Run OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@1.1.0
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
+          JAVA_HOME: ${{ steps.setup-java.outputs.path }}
         with:
           project: 'aimathtutor'
           path: '.'
