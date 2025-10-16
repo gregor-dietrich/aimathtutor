@@ -46,8 +46,12 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
       - name: Dependency Scanning
         uses: actions/checkout@v4
+      - name: Set JAVA_HOME env
+        run: echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
       - name: Run OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@1.1.0
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
         with:
           project: 'aimathtutor'
           path: '.'
