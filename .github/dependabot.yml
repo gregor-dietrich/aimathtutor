@@ -9,7 +9,7 @@ multi-ecosystem-groups:
 
 updates:
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/src/main/docker"
     patterns: ["*"]
     multi-ecosystem-group: "infrastructure"
 
