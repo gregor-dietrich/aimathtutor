@@ -6,21 +6,17 @@
 
 ### Suggested Order (Easiest to Hardest)
 
-1. **Add Rich Context to AI API Requests** (Task 4)
-   *Moderate*: Requires changes to prompt construction and DTOs, but isolated to AI service and chat panel.
-
-2. **Multiple Problems Per Exercise** (Task 2)
+1. **Multiple Problems Per Exercise** (Task 2)
    *Moderate-Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+2. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-4. **Admin Views for Progress Tracking** (Task 3)
+3. **Admin Views for Progress Tracking** (Task 3)
    *Most Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
 
 **Difficulty Ratings:**
 
-- Task 4: ★★☆☆☆
 - Task 2: ★★★☆☆
 - Task 5: ★★★★☆
 - Task 3: ★★★★★
@@ -168,41 +164,6 @@
       NotificationUtil.showError("Access denied");
   }
   ```
-
----
-
-## 4. Add Rich Context to AI API Requests
-
-**Goal:** Improve the relevance and personalization of AI responses by including the last 5 actions, last 5 user questions, and last 5 AI messages (feedback or answers) in every prompt sent to the AI APIs—regardless of whether the request is for tutoring feedback or a direct question.
-
-**Implementation Plan:**
-
-### 4.1 Backend Changes
-
-1. **AITutorService:**
-   - Update both `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` to include:
-   - The last 5 actions performed by the student
-   - The last 5 user questions
-   - The last 5 AI messages (feedback or answers)
-   - Ensure the prompt structure is consistent and concise, and respects token limits for each provider.
-2. **ChatMessageDto:**
-   - Add optional `relatedAction` field to link messages to specific actions.
-3. **AIInteractionEntity:**
-   - Add `conversationContext` field to log the full context sent with each AI request.
-
-### 46.2 AIChatPanel: Frontend Changes
-
-- Maintain rolling buffers for:
-  - Last 5 actions
-  - Last 5 user questions
-  - Last 5 AI messages
-- Pass all three buffers to the backend with each user question or action.
-
-### 4.3 Testing
-
-- Verify that prompts include the correct context for both tutoring and questions.
-- Ensure token limits are respected for all AI providers.
-- Test with long conversations and many actions to confirm performance and accuracy.
 
 ---
 
