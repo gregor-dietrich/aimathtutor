@@ -40,29 +40,29 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
-      mariadb:
+      postgres:
         condition: service_healthy
 
-    postgres:
-      image: postgres:18.0-alpine3.22
-      restart: unless-stopped
-      command: ["postgres", "-c", "max_connections=200"]
-      environment:
-        POSTGRES_USER: ${SQL_USERNAME:-aimathtutor}
-        POSTGRES_PASSWORD: ${SQL_PASSWORD:-changeit}
-        POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
-        POSTGRES_PORT: 5432
-      ports:
-        - 5432:5432
-      volumes:
-        - postgres_data:/var/lib/postgresql/data
-        - ./src/main/resources/sql/postgres.init.sql:/docker-entrypoint-initdb.d/init.sql
-      healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}"]
-        interval: 10s
-        timeout: 3s
-        retries: 3
-        start_period: 5s
+  postgres:
+    image: postgres:18.0-alpine3.22
+    restart: unless-stopped
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: ${SQL_USERNAME:-aimathtutor}
+      POSTGRES_PASSWORD: ${SQL_PASSWORD:-changeit}
+      POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
+      POSTGRES_PORT: 5432
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/sql/postgres.init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
   pgadmin:
     image: dpage/pgadmin4:9.9.0
