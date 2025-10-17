@@ -52,8 +52,6 @@ services:
       POSTGRES_PASSWORD: ${SQL_PASSWORD:-changeit}
       POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
       POSTGRES_PORT: 5432
-    ports:
-      - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/main/resources/sql/postgres.init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -75,7 +73,7 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q http://pgadmin || exit 1"]
+      test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3
