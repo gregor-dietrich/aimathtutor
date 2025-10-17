@@ -62,12 +62,19 @@
             <artifactId>quarkus-arc</artifactId>
         </dependency>
 
-        <!-- Database dependencies (from API) -->
+        <!-- PostgreSQL JDBC driver -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-postgresql</artifactId>
+        </dependency>
+
         <!-- MySQL/MariaDB JDBC driver -->
+        <!--
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jdbc-mariadb</artifactId>
         </dependency>
+        -->
 
         <!-- Hibernate ORM with Panache for easier database operations -->
         <dependency>
