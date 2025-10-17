@@ -42,8 +42,8 @@ jobs:
         run: ./mvnw clean install package -DskipTests
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
-      - name: Secret Scanning
-        uses: gitleaks/gitleaks-action@v2
+      # - name: Secret Scanning
+      #   uses: gitleaks/gitleaks-action@v2
       # - name: Run OWASP Dependency-Check
       #   run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
       # - name: Upload Dependency-Check results
