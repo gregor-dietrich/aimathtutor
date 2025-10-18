@@ -13,6 +13,7 @@ help:
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
 	@echo "  make test             - run install then execute the Maven test suite"
 	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
+
 branch:
 	@scripts/sh/branch.sh
  
