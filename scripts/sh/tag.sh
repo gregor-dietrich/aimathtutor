@@ -41,13 +41,13 @@ fi
 
 echo "Creating and pushing tag ${VERSION}..."
 
-git tag -a -s ${VERSION} -m "${VERSION}"
+git tag -a -s "${VERSION}" -m "${VERSION}"
 if [ $? -ne 0 ]; then
     echo "Git tag creation failed. Exiting."
     exit 2
 fi
 
-git push origin ${VERSION}
+git push origin "${VERSION}"
 if [ $? -ne 0 ]; then
     echo "Failed to push tag. Exiting."
     exit 3
