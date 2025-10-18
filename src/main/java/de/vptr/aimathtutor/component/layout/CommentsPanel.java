@@ -78,10 +78,6 @@ public class CommentsPanel extends VerticalLayout {
         this.setSpacing(true);
         this.addClassName("comments-panel");
 
-        // Header
-        final Span header = new Span("Comments");
-        header.addClassName("comments-header");
-
         // Comments container
         this.commentsContainer = new Div();
         this.commentsContainer.setWidthFull();
@@ -93,7 +89,7 @@ public class CommentsPanel extends VerticalLayout {
         final Div formContainer = this.createCommentForm();
 
         // Add all components
-        this.add(header, this.commentsContainer, formContainer);
+        this.add(this.commentsContainer, formContainer);
 
         // Load initial comments
         this.loadComments();
@@ -101,22 +97,20 @@ public class CommentsPanel extends VerticalLayout {
 
     private Div createCommentForm() {
         final Div formContainer = new Div();
-        formContainer.setWidthFull();
         formContainer.addClassName("comment-form");
         formContainer.getStyle()
-                .set("padding", "1rem")
-                .set("background-color", "var(--lumo-primary-color-10pct)")
-                .set("border", "1px solid var(--lumo-primary-color-20pct)")
+                .set("width", "100%")
+                .set("border-left", "1px solid var(--lumo-primary-color-50pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("margin-top", "1rem");
+                .set("padding", "0 1rem 0 1rem");
 
         // Textarea
         this.commentTextArea = new TextArea();
         this.commentTextArea.setLabel("Your comment");
         this.commentTextArea.setPlaceholder("Write a comment...");
-        this.commentTextArea.setWidthFull();
         this.commentTextArea.setMaxLength(1000);
         this.commentTextArea.getStyle()
+                .set("width", "95%")
                 .set("background-color", "var(--lumo-base-color)");
 
         // Submit button

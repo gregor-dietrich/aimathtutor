@@ -240,13 +240,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Create comments panel (full width, below canvas)
         this.commentsPanel = new CommentsPanel(this.exerciseId, this.currentSessionId,
                 this.authService.getUserId());
-        this.commentsPanel.getStyle()
-                .set("margin-top", "1.5rem")
-                .set("padding-top", "1rem")
-                .set("border-top", "2px solid var(--lumo-contrast-20pct)");
+        this.commentsPanel.getStyle().set("margin-top", "1rem");
 
         // Add comments section to left panel
-        final var commentsHeader = new H3("Comments & Discussion");
+        final var commentsHeader = new H4("Discussion");
+        commentsHeader.getStyle().set("margin-top", "1.5rem");
         leftPanel.add(commentsHeader, this.commentsPanel);
 
         // Right side: AI Chat panel with built-in styling (30%)
