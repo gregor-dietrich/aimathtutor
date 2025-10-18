@@ -24,23 +24,27 @@ else
     echo "No Maven processes found."
 fi
 
-if [ "$(docker ps -q)" ]; then
-    echo "Stopping all Docker containers..."
-    docker stop $(docker ps -q) > /dev/null || true
-    sleep 3
-
+if docker_available; then
     if [ "$(docker ps -q)" ]; then
-        echo "Force killing remaining Docker containers..."
-        docker kill $(docker ps -q) > /dev/null || true
+        echo "Stopping all Docker containers..."
+        docker stop $(docker ps -q) > /dev/null || true
+        sleep 3
+
+        if [ "$(docker ps -q)" ]; then
+            echo "Force killing remaining Docker containers..."
+            docker kill $(docker ps -q) > /dev/null || true
+        fi
+
+        echo "Docker containers stopped."
+    else
+        echo "No running Docker containers found."
     fi
 
-    echo "Docker containers stopped."
+    if [ "$(docker ps -a -q)" ]; then
+        echo "Removing all Docker containers..."
+        docker rm $(docker ps -a -q) > /dev/null || true
+        echo "All Docker containers removed."
+    fi
 else
-    echo "No running Docker containers found."
-fi
-
-if [ "$(docker ps -a -q)" ]; then
-    echo "Removing all Docker containers..."
-    docker rm $(docker ps -a -q) > /dev/null || true
-    echo "All Docker containers removed."
+    echo "Docker is not installed or not running. Skipping Docker cleanup."
 fi
