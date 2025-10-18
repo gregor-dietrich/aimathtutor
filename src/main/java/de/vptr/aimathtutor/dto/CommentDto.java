@@ -20,6 +20,15 @@ public class CommentDto {
     // Ignored for PUT/PATCH operations (exerciseId comes from the URL path)
     public Long exerciseId;
 
+    // NEW: For threading support
+    public Long parentCommentId;
+
+    // NEW: For lesson comments (future extension)
+    public Long lessonId;
+
+    // NEW: For tracking which session the comment was made during
+    public String sessionId;
+
     // Helper field for compatibility with old code that used nested objects
     public ExerciseField exercise;
 

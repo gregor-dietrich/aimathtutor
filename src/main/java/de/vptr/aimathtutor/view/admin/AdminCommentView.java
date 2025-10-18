@@ -19,6 +19,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -61,6 +62,8 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
     private IntegerField userIdField;
+    private Select<String> statusFilterSelect;
+    private IntegerField flagsFilterField;
 
     private Dialog commentDialog;
     private Binder<CommentDto> binder;
@@ -146,7 +149,30 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
 
-        searchLayout.add(dateFilterLayout, userFilterLayout);
+        // Status filter (VISIBLE, HIDDEN, DELETED)
+        this.statusFilterSelect = new Select<>();
+        this.statusFilterSelect.setLabel("Filter by Status");
+        this.statusFilterSelect.setItems("ALL", "VISIBLE", "HIDDEN", "DELETED");
+        this.statusFilterSelect.setValue("ALL");
+        this.statusFilterSelect.addValueChangeListener(e -> this.filterByStatus());
+
+        // Flags filter (show comments with N+ flags)
+        this.flagsFilterField = new IntegerField();
+        this.flagsFilterField.setLabel("Min Flags (0+)");
+        this.flagsFilterField.setMin(0);
+        this.flagsFilterField.setMax(1000);
+        this.flagsFilterField.setValue(0);
+        this.flagsFilterField.setWidthFull();
+        this.flagsFilterField.addValueChangeListener(e -> this.filterByFlags());
+
+        final var flagsFilterLayout = new HorizontalLayout(this.flagsFilterField);
+        flagsFilterLayout.setWidthFull();
+
+        final var statusAndFlagsLayout = new HorizontalLayout(this.statusFilterSelect, flagsFilterLayout);
+        statusAndFlagsLayout.setWidthFull();
+        statusAndFlagsLayout.setSpacing(true);
+
+        searchLayout.add(dateFilterLayout, userFilterLayout, statusAndFlagsLayout);
         return searchLayout;
     }
 
@@ -192,18 +218,58 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
 
         this.grid.addColumn(comment -> comment.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
 
+        // Status column
+        this.grid.addComponentColumn(comment -> {
+            final var status = comment.status != null ? comment.status : "VISIBLE";
+            final var statusSpan = new Span(status);
+            statusSpan.getStyle().set("font-weight", "600");
+
+            // Color-code status
+            if ("VISIBLE".equals(status)) {
+                statusSpan.getStyle().set("color", "var(--lumo-success-color)");
+            } else if ("HIDDEN".equals(status)) {
+                statusSpan.getStyle().set("color", "var(--lumo-warning-color)");
+            } else if ("DELETED".equals(status)) {
+                statusSpan.getStyle().set("color", "var(--lumo-error-color)");
+            }
+
+            return statusSpan;
+        }).setHeader("Status").setWidth("100px").setFlexGrow(0);
+
+        // Flags column
+        this.grid.addColumn(comment -> comment.flagsCount != null ? comment.flagsCount.toString() : "0")
+                .setHeader("Flags").setWidth("80px").setFlexGrow(0);
+
         // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("150px").setFlexGrow(0);
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
     }
 
     private HorizontalLayout createActionButtons(final CommentViewDto comment) {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
+        // Edit button
         final var editButton = new EditButton(e -> this.openCommentDialog(comment.toCommentDto()));
+
+        // Hide/Show button (toggle moderation)
+        Button moderateButton;
+        if ("VISIBLE".equals(comment.status)) {
+            moderateButton = new Button("Hide", e -> this.hideComment(comment));
+            moderateButton.addThemeVariants(ButtonVariant.LUMO_WARNING);
+        } else if ("HIDDEN".equals(comment.status)) {
+            moderateButton = new Button("Show", e -> this.showComment(comment));
+            moderateButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        } else {
+            // DELETED - offer restore option
+            moderateButton = new Button("Restore", e -> this.restoreComment(comment));
+            moderateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        }
+        moderateButton.setWidth("80px");
+
+        // Delete button
         final var deleteButton = new DeleteButton(e -> this.deleteComment(comment.toCommentDto()));
 
-        layout.add(editButton, deleteButton);
+        layout.add(editButton, moderateButton, deleteButton);
         return layout;
     }
 
@@ -369,5 +435,112 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
             LOG.error("Error filtering comments by user", e);
             NotificationUtil.showError("Error filtering comments: " + e.getMessage());
         }
+    }
+
+    private void filterByStatus() {
+        final String status = this.statusFilterSelect.getValue();
+        if ("ALL".equals(status)) {
+            this.loadCommentsAsync();
+            return;
+        }
+
+        try {
+            final var comments = this.commentService.findByStatus(status);
+            this.grid.setItems(comments);
+        } catch (final Exception e) {
+            LOG.error("Error filtering comments by status", e);
+            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+        }
+    }
+
+    private void filterByFlags() {
+        final Integer minFlags = this.flagsFilterField.getValue();
+        if (minFlags == null || minFlags < 0) {
+            NotificationUtil.showWarning("Please enter a valid minimum flag count");
+            return;
+        }
+
+        try {
+            final var comments = this.commentService.findFlaggedComments(minFlags);
+            this.grid.setItems(comments);
+        } catch (final Exception e) {
+            LOG.error("Error filtering comments by flags", e);
+            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+        }
+    }
+
+    private void hideComment(final CommentViewDto comment) {
+        this.showModerationReasonDialog("Hide Comment", "Why are you hiding this comment?", reason -> {
+            try {
+                final var currentUserId = this.authService.getUserId();
+                this.commentService.moderateComment(comment.id, "HIDE", currentUserId, reason);
+                NotificationUtil.showSuccess("Comment hidden successfully");
+                this.loadCommentsAsync();
+            } catch (final Exception e) {
+                LOG.error("Error hiding comment", e);
+                NotificationUtil.showError("Error hiding comment: " + e.getMessage());
+            }
+        });
+    }
+
+    private void showComment(final CommentViewDto comment) {
+        this.showModerationReasonDialog("Show Comment", "Why are you showing this comment again?", reason -> {
+            try {
+                final var currentUserId = this.authService.getUserId();
+                this.commentService.moderateComment(comment.id, "SHOW", currentUserId, reason);
+                NotificationUtil.showSuccess("Comment shown successfully");
+                this.loadCommentsAsync();
+            } catch (final Exception e) {
+                LOG.error("Error showing comment", e);
+                NotificationUtil.showError("Error showing comment: " + e.getMessage());
+            }
+        });
+    }
+
+    private void restoreComment(final CommentViewDto comment) {
+        this.showModerationReasonDialog("Restore Comment", "Why are you restoring this comment?", reason -> {
+            try {
+                final var currentUserId = this.authService.getUserId();
+                this.commentService.moderateComment(comment.id, "RESTORE", currentUserId, reason);
+                NotificationUtil.showSuccess("Comment restored successfully");
+                this.loadCommentsAsync();
+            } catch (final Exception e) {
+                LOG.error("Error restoring comment", e);
+                NotificationUtil.showError("Error restoring comment: " + e.getMessage());
+            }
+        });
+    }
+
+    private void showModerationReasonDialog(final String title, final String label,
+            final java.util.function.Consumer<String> onConfirm) {
+        final var dialog = new Dialog();
+        dialog.setHeaderTitle(title);
+
+        final var reasonField = new TextArea();
+        reasonField.setLabel(label);
+        reasonField.setWidthFull();
+        reasonField.setHeight("150px");
+        reasonField.setMaxLength(500);
+
+        final var buttonLayout = new HorizontalLayout();
+        buttonLayout.setSpacing(true);
+
+        final var confirmButton = new Button("Confirm", e -> {
+            onConfirm.accept(reasonField.getValue());
+            dialog.close();
+        });
+        confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        final var cancelButton = new Button("Cancel", e -> dialog.close());
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        buttonLayout.add(confirmButton, cancelButton);
+
+        final var layout = new VerticalLayout(reasonField, buttonLayout);
+        layout.setSpacing(true);
+        layout.setPadding(false);
+
+        dialog.add(layout);
+        dialog.open();
     }
 }
