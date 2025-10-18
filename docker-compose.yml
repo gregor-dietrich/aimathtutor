@@ -9,8 +9,8 @@ services:
     env_file:
       - .env
     environment:
-      # quarkus.datasource.jdbc.url: jdbc:mariadb://mariadb:3306/aimathtutor
-      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/aimathtutor
+      # quarkus.datasource.jdbc.url: jdbc:mariadb://mariadb:3306/${SQL_DATABASE:-aimathtutor}
+      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/${SQL_DATABASE:-aimathtutor}
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
