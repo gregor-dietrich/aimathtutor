@@ -40,7 +40,7 @@ set -e
 
 cd "$(dirname "$0")"/../..
 
-if prompt_yes_no "Do you want to run tests?" n; then	
+if prompt_yes_no "Do you want to run tests?" n; then
 	make test
 else
 	make install
