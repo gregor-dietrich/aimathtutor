@@ -470,14 +470,14 @@ public class CommentService {
         if (parentId == null) {
             // Top-level comments
             comments = CommentEntity.find(
-                    "exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY created DESC",
+                    "exercise.id = ?1 AND parentComment IS NULL AND status = 'VISIBLE' ORDER BY created DESC",
                     exerciseId)
                     .page(page, pageSize)
                     .list();
         } else {
             // Replies to specific parent
             comments = CommentEntity.find(
-                    "parentComment.id = ?1 AND status != 'DELETED' ORDER BY created ASC",
+                    "parentComment.id = ?1 AND status = 'VISIBLE' ORDER BY created ASC",
                     parentId)
                     .page(page, pageSize)
                     .list();
