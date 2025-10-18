@@ -29,18 +29,64 @@ public class CommentEntity extends PanacheEntityBase {
 
     public LocalDateTime created;
 
+    // NEW: Threading support
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    public CommentEntity parentComment;
+
+    // NEW: Moderation support
+    @Column(length = 20)
+    public String status = "VISIBLE"; // VISIBLE, HIDDEN, DELETED
+
+    @Column(name = "flags_count")
+    public Integer flagsCount = 0;
+
+    @Column(name = "session_id", length = 255)
+    public String sessionId;
+
+    @Column(name = "edited_at")
+    public LocalDateTime editedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deleted_by")
+    public UserEntity deletedBy;
+
+    @Column(name = "deleted_at")
+    public LocalDateTime deletedAt;
+
     // Helper method to find comments by exercise
     public static List<CommentEntity> findByExerciseId(final Long exerciseId) {
-        return find("exercise.id", exerciseId).list();
+        return find("exercise.id = ?1 AND status != 'DELETED' ORDER BY created DESC", exerciseId).list();
     }
 
     // Helper method to find comments by user
     public static List<CommentEntity> findByUserId(final Long userId) {
-        return find("user.id", userId).list();
+        return find("user.id = ?1 AND status != 'DELETED' ORDER BY created DESC", userId).list();
     }
 
     // Helper method to find recent comments
     public static List<CommentEntity> findRecentComments(final int limit) {
-        return find("ORDER BY created DESC").page(0, limit).list();
+        return find("status != 'DELETED' ORDER BY created DESC").page(0, limit).list();
+    }
+
+    // NEW: Find replies to a comment
+    public static List<CommentEntity> findReplies(final Long parentCommentId) {
+        return find("parentComment.id = ?1 AND status != 'DELETED' ORDER BY created ASC", parentCommentId).list();
+    }
+
+    // NEW: Find top-level comments for an exercise
+    public static List<CommentEntity> findTopLevelByExercise(final Long exerciseId) {
+        return find("exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY created DESC",
+                exerciseId).list();
+    }
+
+    // NEW: Find comments by session
+    public static List<CommentEntity> findBySessionId(final String sessionId) {
+        return find("sessionId = ?1 AND status != 'DELETED' ORDER BY created DESC", sessionId).list();
+    }
+
+    // NEW: Count flagged comments
+    public static int findFlaggedCommentCount() {
+        return (int) find("flagsCount > 0 AND status = 'VISIBLE'").count();
     }
 }

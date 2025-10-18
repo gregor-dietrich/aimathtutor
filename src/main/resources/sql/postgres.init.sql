@@ -6,86 +6,7 @@ BEGIN;
 -- --------------------------------------------------------
 
 --
--- Structure for table `exercises`
---
-
-CREATE TABLE exercises (
-  id BIGSERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  content TEXT NOT NULL,
-  user_id BIGINT DEFAULT NULL,
-  lesson_id BIGINT DEFAULT NULL,
-  published BOOLEAN NOT NULL DEFAULT FALSE,
-  commentable BOOLEAN NOT NULL DEFAULT FALSE,
-  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  last_edit TIMESTAMP DEFAULT NULL,
-  graspable_enabled BOOLEAN DEFAULT FALSE,
-  graspable_initial_expression TEXT,
-  graspable_target_expression TEXT,
-  graspable_allowed_operations TEXT,
-  graspable_difficulty VARCHAR(50),
-  graspable_hints TEXT,
-  graspable_config TEXT
-);
-
---
--- Relations for table `exercises`:
---   `user_id`
---       `users` -> `id`
---   `lesson_id`
---       `lessons` -> `id`
---
-
--- Full-text search index for content
-CREATE INDEX exercises_content_fts ON exercises USING gin(to_tsvector('english', content));
-
--- --------------------------------------------------------
-
---
--- Structure for table `lessons`
---
-
-CREATE TABLE lessons (
-  id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  parent_id BIGINT DEFAULT NULL
-);
-
---
--- Relations for table `lessons`:
---   `parent_id`
---       `lessons` -> `id`
---
-
--- --------------------------------------------------------
-
---
--- Structure for table `comments`
---
-
-CREATE TABLE comments (
-  id BIGSERIAL PRIMARY KEY,
-  content TEXT NOT NULL,
-  exercise_id BIGINT NOT NULL,
-  user_id BIGINT,
-  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
---
--- Relations for table `comments`:
---   `user_id`
---       `users` -> `id`
---   `exercise_id`
---       `exercises` -> `id`
---
-
--- Full-text search index for content
-CREATE INDEX comments_content_fts ON comments USING gin(to_tsvector('english', content));
-
--- --------------------------------------------------------
-
---
--- Structure for table `user_ranks`
+-- Structure for table `user_ranks` (must be first - no dependencies)
 --
 
 CREATE TABLE user_ranks (
@@ -111,10 +32,6 @@ CREATE TABLE user_ranks (
   user_rank_delete BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_edit BOOLEAN NOT NULL DEFAULT FALSE
 );
-
---
--- Relations for table `user_ranks`:
---
 
 --
 -- Inserts for table `user_ranks`
@@ -151,12 +68,6 @@ CREATE TABLE users (
 );
 
 --
--- Relations for table `users`:
---   `rank_id`
---       `user_ranks` -> `id`
---
-
---
 -- Inserts for table `users`
 --
 
@@ -168,6 +79,78 @@ INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
 
 -- Set sequence to continue from 5
 SELECT setval('users_id_seq', 4);
+
+-- --------------------------------------------------------
+
+--
+-- Structure for table `lessons`
+--
+
+CREATE TABLE lessons (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  parent_id BIGINT DEFAULT NULL
+);
+
+-- --------------------------------------------------------
+
+--
+-- Structure for table `exercises`
+--
+
+CREATE TABLE exercises (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  user_id BIGINT DEFAULT NULL,
+  lesson_id BIGINT DEFAULT NULL,
+  published BOOLEAN NOT NULL DEFAULT FALSE,
+  commentable BOOLEAN NOT NULL DEFAULT FALSE,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP DEFAULT NULL,
+  graspable_enabled BOOLEAN DEFAULT FALSE,
+  graspable_initial_expression TEXT,
+  graspable_target_expression TEXT,
+  graspable_allowed_operations TEXT,
+  graspable_difficulty VARCHAR(50),
+  graspable_hints TEXT,
+  graspable_config TEXT
+);
+
+-- Full-text search index for content
+CREATE INDEX exercises_content_fts ON exercises USING gin(to_tsvector('english', content));
+
+-- --------------------------------------------------------
+
+--
+-- Structure for table `comments` (can now reference users and exercises)
+--
+
+CREATE TABLE comments (
+  id BIGSERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  exercise_id BIGINT NOT NULL,
+  user_id BIGINT,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  parent_comment_id BIGINT,
+  status VARCHAR(20) NOT NULL DEFAULT 'VISIBLE',
+  flags_count INT NOT NULL DEFAULT 0,
+  session_id VARCHAR(255),
+  edited_at TIMESTAMP,
+  deleted_by BIGINT,
+  deleted_at TIMESTAMP
+);
+
+-- Performance indexes
+CREATE INDEX idx_comments_exercise_id ON comments(exercise_id);
+CREATE INDEX idx_comments_parent_id ON comments(parent_comment_id);
+CREATE INDEX idx_comments_user_id ON comments(user_id);
+CREATE INDEX idx_comments_session_id ON comments(session_id);
+CREATE INDEX idx_comments_created ON comments(created);
+CREATE INDEX idx_comments_status ON comments(status);
+
+-- Full-text search index for content
+CREATE INDEX comments_content_fts ON comments USING gin(to_tsvector('english', content));
 
 -- --------------------------------------------------------
 
@@ -208,13 +191,9 @@ CREATE TABLE user_groups_meta (
   UNIQUE (user_id, group_id)
 );
 
---
--- Relations for table `user_groups_meta`:
---   `user_id`
---       `users` -> `id`
---   `group_id`
---       `user_groups` -> `id`
---
+-- Performance indexes
+CREATE INDEX user_groups_meta_user_id_idx ON user_groups_meta (user_id);
+CREATE INDEX user_groups_meta_group_id_idx ON user_groups_meta (group_id);
 
 --
 -- Inserts for table `user_groups_meta`
@@ -248,6 +227,10 @@ CREATE TABLE student_sessions (
   final_expression TEXT
 );
 
+-- Performance indexes
+CREATE INDEX student_sessions_user_id_idx ON student_sessions (user_id);
+CREATE INDEX student_sessions_exercise_id_idx ON student_sessions (exercise_id);
+
 -- --------------------------------------------------------
 
 --
@@ -270,25 +253,32 @@ CREATE TABLE ai_interactions (
   timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Performance indexes
+CREATE INDEX ai_interactions_session_id_idx ON ai_interactions (session_id);
+CREATE INDEX ai_interactions_user_id_idx ON ai_interactions (user_id);
+CREATE INDEX ai_interactions_exercise_id_idx ON ai_interactions (exercise_id);
+
 -- --------------------------------------------------------
 
 --
 -- Foreign Key Constraints
 --
 
+-- Constraints for table `lessons`
+ALTER TABLE lessons
+  ADD CONSTRAINT lessons_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES lessons (id) ON DELETE SET NULL ON UPDATE CASCADE;
+
 -- Constraints for table `exercises`
 ALTER TABLE exercises
   ADD CONSTRAINT exercises_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT exercises_lesson_id_fkey FOREIGN KEY (lesson_id) REFERENCES lessons (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
--- Constraints for table `lessons`
-ALTER TABLE lessons
-  ADD CONSTRAINT lessons_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES lessons (id) ON DELETE SET NULL ON UPDATE CASCADE;
-
 -- Constraints for table `comments`
 ALTER TABLE comments
-  ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT comments_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT fk_comments_exercise FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE,
+  ADD CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+  ADD CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES comments (id) ON DELETE CASCADE,
+  ADD CONSTRAINT fk_comments_deleted_by FOREIGN KEY (deleted_by) REFERENCES users (id) ON DELETE SET NULL;
 
 -- Constraints for table `users`
 ALTER TABLE users
@@ -307,7 +297,7 @@ ALTER TABLE student_sessions
 -- Constraints for table `ai_interactions`
 ALTER TABLE ai_interactions
   ADD CONSTRAINT ai_interactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT ai_interactions_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT ai_interactions_exercise_id_fkey FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- --------------------------------------------------------
 
@@ -321,11 +311,5 @@ CREATE INDEX lessons_parent_id_idx ON lessons (parent_id);
 CREATE INDEX comments_user_id_idx ON comments (user_id);
 CREATE INDEX comments_exercise_id_idx ON comments (exercise_id);
 CREATE INDEX users_rank_id_idx ON users (rank_id);
-CREATE INDEX user_groups_meta_group_id_idx ON user_groups_meta (group_id);
-CREATE INDEX student_sessions_user_id_idx ON student_sessions (user_id);
-CREATE INDEX student_sessions_exercise_id_idx ON student_sessions (exercise_id);
-CREATE INDEX ai_interactions_session_id_idx ON ai_interactions (session_id);
-CREATE INDEX ai_interactions_user_id_idx ON ai_interactions (user_id);
-CREATE INDEX ai_interactions_exercise_id_idx ON ai_interactions (exercise_id);
 
 COMMIT;

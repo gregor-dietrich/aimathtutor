@@ -13,6 +13,14 @@ public class CommentViewDto {
     public String username;
     public LocalDateTime created;
 
+    // NEW: For threading and moderation
+    public Long parentId;
+    public String status; // VISIBLE, HIDDEN, DELETED
+    public Integer flagsCount;
+    public String sessionId;
+    public LocalDateTime editedAt;
+    public Long authorId;
+
     public CommentViewDto() {
     }
 
@@ -20,6 +28,10 @@ public class CommentViewDto {
         this.id = entity.id;
         this.content = entity.content;
         this.created = entity.created;
+        this.status = entity.status != null ? entity.status : "VISIBLE";
+        this.flagsCount = entity.flagsCount != null ? entity.flagsCount : 0;
+        this.sessionId = entity.sessionId;
+        this.editedAt = entity.editedAt;
 
         if (entity.exercise != null) {
             this.exerciseId = entity.exercise.id;
@@ -29,6 +41,11 @@ public class CommentViewDto {
         if (entity.user != null) {
             this.userId = entity.user.id;
             this.username = entity.user.username;
+            this.authorId = entity.user.id;
+        }
+
+        if (entity.parentComment != null) {
+            this.parentId = entity.parentComment.id;
         }
     }
 

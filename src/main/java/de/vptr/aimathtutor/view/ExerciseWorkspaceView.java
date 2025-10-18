@@ -22,6 +22,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.layout.AIChatPanel;
+import de.vptr.aimathtutor.component.layout.CommentsPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
@@ -68,6 +69,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     // UI Components
     private Div graspableCanvas;
     private AIChatPanel chatPanel;
+    private CommentsPanel commentsPanel;
     private VerticalLayout hintsPanel;
     private Button requestHintButton;
     private Button backButton;
@@ -250,7 +252,21 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.chatPanel.addMessage(ChatMessageDto.system(
                 "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
 
-        this.add(leftPanel, this.chatPanel);
+        // Create comments panel (40% width)
+        this.commentsPanel = new CommentsPanel(this.exerciseId, this.currentSessionId,
+                this.authService.getUserId());
+        this.commentsPanel.getStyle().set("width", "30%");
+
+        // Main layout: 70% for exercise + graspable, 30% for comments
+        final var mainContentLayout = new HorizontalLayout();
+        mainContentLayout.setWidthFull();
+        mainContentLayout.setSpacing(false);
+        mainContentLayout.setPadding(false);
+        mainContentLayout.setFlexGrow(1, leftPanel);
+        mainContentLayout.setFlexGrow(1, this.commentsPanel);
+        mainContentLayout.add(leftPanel, this.commentsPanel);
+
+        this.add(mainContentLayout, this.chatPanel);
     }
 
     @Override
