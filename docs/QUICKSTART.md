@@ -1,0 +1,149 @@
+# 🚀 Quickstart
+
+## 🧑‍💻 Development Mode
+
+```sh
+git clone git@github.com:gregor-dietrich/aimathtutor.git
+cd aimathtutor
+mvn clean install -DskipTests
+mvn quarkus:dev
+```
+
+### 🧪 Running Tests
+
+> **_NOTE:_** You need to do this in the same directory you cloned the repository into.
+
+```sh
+mvn clean install -DskipTests
+mvn test
+```
+
+## 🏭 Production Mode
+
+### Using Docker
+
+> **_NOTE:_** Change `localhost` to the actual hostname where your PostgreSQL instance is running.
+
+```sh
+docker run -d --name aimathtutor \
+  -p 80:8080 \
+  -e quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/aimathtutor \
+  -e quarkus.datasource.username=aimathtutor \
+  -e quarkus.datasource.password=changeit \
+  -e ai.tutor.provider=gemini \
+  -e gemini.api.key=your_gemini_api_key \
+  gregordietrich/aimathtutor:1.0.0-SNAPSHOT
+```
+
+### Using Docker Compose
+
+#### 1. Create an `init.sql` file in a new directory
+
+Paste in the contents of [postgres.init.sql](https://github.com/gregor-dietrich/aimathtutor/blob/main/src/main/resources/sql/postgres.init.sql).
+
+#### 2. Create a `.env` file in the same directory
+
+```properties
+GEMINI_API_KEY=your_gemini_api_key
+SQL_DATABASE=any_database_name
+SQL_USERNAME=any_username
+SQL_PASSWORD=safe_password_here
+PGADMIN_EMAIL=your@email.com
+PGADMIN_PASSWORD=another_safe_password_here
+```
+
+#### 3. Create a `docker-compose.yml` file in the same directory
+
+```yml
+services:
+  aimathtutor:
+    image: gregordietrich/aimathtutor:1.0.0-SNAPSHOT
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/${SQL_DATABASE:-aimathtutor}
+      quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
+      quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
+
+      # Google Gemini config
+      ai.tutor.provider: gemini
+      gemini.model: gemini-2.5-flash-lite
+      gemini.api.key: ${GEMINI_API_KEY}
+
+      # OpenAI (ChatGPT) config
+      # ai.tutor.provider: openai
+      # openai.model: gpt-4o-mini
+      # openai.api.key: ${OPENAI_API_KEY}
+      # openai.organization-id: ${OPENAI_ORG_ID}
+
+      # Ollama config
+      # ai.tutor.provider: ollama
+      # ollama.model: llama3.1:8b
+      # ollama.api.url: http://localhost:11434
+    ports:
+      - "80:8080/tcp"
+    volumes:
+      - aimathtutor_logs:/deployments/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:8080 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18.0-alpine3.22
+    restart: unless-stopped
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: ${SQL_USERNAME:-aimathtutor}
+      POSTGRES_PASSWORD: ${SQL_PASSWORD:-changeit}
+      POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
+      POSTGRES_PORT: 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  pgadmin:
+    image: dpage/pgadmin4:9.9.0
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
+    ports:
+      - "8080:80/tcp"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  aimathtutor_logs:
+  pgadmin_data:
+  postgres_data:
+```
+
+#### 4. Start the compose stack
+
+> **_NOTE:_** You need to do this in the same directory where you saved the `docker-compose.yml` file above.
+
+```sh
+docker compose up -d
+```
