@@ -253,7 +253,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
         final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
-        final var commentButton = new AddCommentButton(e -> this.openCommentDialog(exercise));
+        final var commentButton = new CommentButton(e -> this.openCommentDialog(exercise));
 
         layout.add(editButton, deleteButton, commentButton);
         return layout;

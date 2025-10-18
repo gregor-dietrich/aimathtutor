@@ -29,9 +29,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.component.button.DeleteButton;
-import de.vptr.aimathtutor.component.button.EditButton;
-import de.vptr.aimathtutor.component.button.RefreshButton;
+import de.vptr.aimathtutor.component.button.*;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
@@ -254,17 +252,13 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
         // Hide/Show button (toggle moderation)
         Button moderateButton;
         if ("VISIBLE".equals(comment.status)) {
-            moderateButton = new Button("Hide", e -> this.hideComment(comment));
-            moderateButton.addThemeVariants(ButtonVariant.LUMO_WARNING);
+            moderateButton = new HideButton(e -> this.hideComment(comment));
         } else if ("HIDDEN".equals(comment.status)) {
-            moderateButton = new Button("Show", e -> this.showComment(comment));
-            moderateButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+            moderateButton = new ShowButton(e -> this.showComment(comment));
         } else {
             // DELETED - offer restore option
-            moderateButton = new Button("Restore", e -> this.restoreComment(comment));
-            moderateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            moderateButton = new RestoreButton(e -> this.restoreComment(comment));
         }
-        moderateButton.setWidth("80px");
 
         // Delete button
         final var deleteButton = new DeleteButton(e -> this.deleteComment(comment.toCommentDto()));
