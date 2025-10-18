@@ -6,22 +6,18 @@
 
 ### Suggested Order (Easiest to Hardest)
 
-1. **Admin Views for Progress Tracking** (Task 3)
-   *Very Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
-
-2. **Multiple Problems Per Exercise** (Task 2)
+1. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+2. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-4. **Gamification** (Task 6)
+3. **Gamification** (Task 6)
    *Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
 
 **Difficulty Ratings:**
 
 - Task 2: ★★★☆☆
-- Task 3: ★★★★★
 - Task 5: ★★★★☆
 - Task 6: ★★★★☆
 
@@ -88,86 +84,6 @@
 4. **Admin/Teacher View**
    - Exercise creation form: Add help text explaining semicolon-separated format
    - Example: "2x+5=15;3x-7=20" → Two problems in sequence
-
----
-
-## 3. Admin Views for Progress Tracking
-
-**Goal:** Create admin-only views to monitor student sessions, AI interactions, and overall progress.
-
-**Implementation Plan:**
-
-### 3.1 Backend Changes
-
-1. **New Service:** `AnalyticsService.java` (@ApplicationScoped)
-   - `List<StudentSessionViewDto> getAllSessions()`
-   - `List<StudentSessionViewDto> getSessionsByUser(Long userId)`
-   - `List<StudentSessionViewDto> getSessionsByExercise(Long exerciseId)`
-   - `List<AIInteractionViewDto> getAIInteractionsBySession(String sessionId)`
-   - `StudentProgressSummaryDto getUserProgressSummary(Long userId)`
-   - `Map<String, Integer> getProblemCategoryStats()` (how many problems solved per category)
-
-2. **New DTOs:**
-   - `StudentSessionViewDto` (expand existing with user/exercise names)
-   - `AIInteractionViewDto` (event type, feedback given, timestamp)
-   - `StudentProgressSummaryDto`:
-     - `Long userId`, `String username`
-     - `int totalSessions`, `int completedSessions`
-     - `int totalProblems`, `int completedProblems`
-     - `int hintsUsed`, `int averageActionsPerProblem`
-     - `LocalDateTime lastActivity`
-
-3. **Entity Enhancement:**
-   - Ensure `AIInteractionEntity` has all needed fields:
-     - `sessionId`, `eventType`, `feedbackMessage`, `timestamp`
-
-### 3.2 Frontend Changes
-
-1. **New View:** `AdminDashboardView.java` (@Route "admin/dashboard")
-   - Check user rank permissions (`rank.adminView == true`)
-   - Display overview cards:
-     - Total sessions today/week/month
-     - Active students
-     - Most attempted exercises
-   - Charts/graphs (use Vaadin Charts if available, or simple tables)
-
-2. **New View:** `StudentSessionsView.java` (@Route "admin/sessions")
-   - Grid displaying all sessions with filters:
-     - Columns: Student, Exercise, Start Time, Duration, Completed, Hints Used, Actions
-     - Filter by: Student (dropdown), Exercise (dropdown), Date range, Completion status
-   - Click row → Navigate to detailed session view
-
-3. **New View:** `SessionDetailView.java` (@Route "admin/session/:sessionId")
-   - Display complete session timeline:
-     - Each action taken (expression before/after)
-     - AI feedback given for each action
-     - Hints revealed
-     - Time spent on each step
-   - Reconstruct the student's problem-solving path
-   - Show final outcome (completed/abandoned)
-
-4. **New View:** `StudentProgressView.java` (@Route "admin/progress")
-   - Grid of all students with summary statistics
-   - Columns: Username, Sessions, Completed, Success Rate, Last Activity
-   - Click row → Detailed student profile with:
-     - Session history
-     - Strengths/weaknesses analysis (based on problem categories)
-     - Time trends (improving/struggling)
-
-5. **Navigation:**
-   - Add "Admin" tab to MainLayout navigation bar (visible only if `rank.adminView == true`)
-   - Submenu: Dashboard, Sessions, Student Progress
-
-### 3.3 Security
-
-- Add checks in `beforeEnter()` for all admin views:
-
-  ```java
-  if (!authService.hasAdminView()) {
-      event.rerouteTo(HomeView.class);
-      NotificationUtil.showError("Access denied");
-  }
-  ```
 
 ---
 
