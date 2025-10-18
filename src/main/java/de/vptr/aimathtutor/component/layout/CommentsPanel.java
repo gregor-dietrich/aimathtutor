@@ -19,6 +19,10 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 
+import de.vptr.aimathtutor.component.button.DeleteButton;
+import de.vptr.aimathtutor.component.button.EditButton;
+import de.vptr.aimathtutor.component.button.ReplyButton;
+import de.vptr.aimathtutor.component.button.ReportButton;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
@@ -172,23 +176,19 @@ public class CommentsPanel extends VerticalLayout {
 
         // Show/hide based on status
         if (!"DELETED".equals(comment.status)) {
-            final Button replyButton = new Button("Reply");
-            replyButton.addClickListener(e -> this.onReplyClicked(comment.id));
+            final Button replyButton = new ReplyButton(e -> this.onReplyClicked(comment.id));
             actions.add(replyButton);
 
-            final Button flagButton = new Button("Flag");
-            flagButton.addClickListener(e -> this.onFlagClicked(comment.id));
-            actions.add(flagButton);
+            final Button reportButton = new ReportButton(e -> this.onReportClicked(comment.id));
+            actions.add(reportButton);
         }
 
         // Edit/Delete if author
         if (comment.authorId != null && comment.authorId.equals(this.currentUserId)) {
-            final Button editButton = new Button("Edit");
-            editButton.addClickListener(e -> this.onEditClicked(comment.id, comment.content));
+            final Button editButton = new EditButton(e -> this.onEditClicked(comment.id, comment.content));
             actions.add(editButton);
 
-            final Button deleteButton = new Button("Delete");
-            deleteButton.addClickListener(e -> this.onDeleteClicked(comment.id));
+            final Button deleteButton = new DeleteButton(e -> this.onDeleteClicked(comment.id));
             actions.add(deleteButton);
         }
 
@@ -301,9 +301,9 @@ public class CommentsPanel extends VerticalLayout {
         confirmDialog.open();
     }
 
-    private void onFlagClicked(final Long commentId) {
+    private void onReportClicked(final Long commentId) {
         final Dialog flagDialog = new Dialog();
-        flagDialog.setHeaderTitle("Flag Comment");
+        flagDialog.setHeaderTitle("Report Comment");
 
         final Paragraph message = new Paragraph("Report this comment for moderation review?");
         flagDialog.add(message);
