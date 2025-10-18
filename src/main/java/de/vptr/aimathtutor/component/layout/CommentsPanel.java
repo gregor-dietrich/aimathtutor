@@ -103,6 +103,12 @@ public class CommentsPanel extends VerticalLayout {
         final Div formContainer = new Div();
         formContainer.setWidthFull();
         formContainer.addClassName("comment-form");
+        formContainer.getStyle()
+                .set("padding", "1rem")
+                .set("background-color", "var(--lumo-primary-color-10pct)")
+                .set("border", "1px solid var(--lumo-primary-color-20pct)")
+                .set("border-radius", "var(--lumo-border-radius-m)")
+                .set("margin-top", "1rem");
 
         // Textarea
         this.commentTextArea = new TextArea();
@@ -110,6 +116,8 @@ public class CommentsPanel extends VerticalLayout {
         this.commentTextArea.setPlaceholder("Write a comment...");
         this.commentTextArea.setWidthFull();
         this.commentTextArea.setMaxLength(1000);
+        this.commentTextArea.getStyle()
+                .set("background-color", "var(--lumo-base-color)");
 
         // Submit button
         this.submitButton = new Button("Post Comment");
@@ -123,8 +131,9 @@ public class CommentsPanel extends VerticalLayout {
 
     private void loadComments() {
         try {
+            // Always load top-level comments
             final List<CommentViewDto> comments = this.getCommentService()
-                    .listCommentsByExercise(this.exerciseId, this.currentPage, this.pageSize, this.currentParentId);
+                    .listCommentsByExercise(this.exerciseId, this.currentPage, this.pageSize, null);
             this.displayComments(comments);
         } catch (final Exception e) {
             LOG.error("Failed to load comments", e);
@@ -143,6 +152,29 @@ public class CommentsPanel extends VerticalLayout {
         for (final CommentViewDto comment : comments) {
             final Div commentDiv = this.createCommentElement(comment);
             this.commentsContainer.add(commentDiv);
+
+            // If this comment has replies, load and display them
+            if (Boolean.TRUE.equals(comment.parentId == null)) {
+                try {
+                    final List<CommentViewDto> replies = this.getCommentService().findReplies(comment.id);
+                    if (!replies.isEmpty()) {
+                        final Div repliesContainer = new Div();
+                        repliesContainer.addClassName("comment-replies");
+                        repliesContainer.getStyle()
+                                .set("margin-left", "2rem")
+                                .set("margin-top", "0.5rem")
+                                .set("padding-left", "1rem")
+                                .set("border-left", "2px solid var(--lumo-contrast-20pct)");
+
+                        for (final CommentViewDto reply : replies) {
+                            repliesContainer.add(this.createCommentElement(reply));
+                        }
+                        this.commentsContainer.add(repliesContainer);
+                    }
+                } catch (final Exception e) {
+                    LOG.debug("Failed to load replies for comment {}", comment.id, e);
+                }
+            }
         }
 
         // Add load more button if we got full page
@@ -159,20 +191,40 @@ public class CommentsPanel extends VerticalLayout {
     private Div createCommentElement(final CommentViewDto comment) {
         final Div commentDiv = new Div();
         commentDiv.addClassName("comment-item");
+        commentDiv.getStyle()
+                .set("padding", "1rem")
+                .set("margin-bottom", "0.75rem")
+                .set("background-color", "var(--lumo-base-color)")
+                .set("border", "1px solid var(--lumo-contrast-20pct)")
+                .set("border-radius", "var(--lumo-border-radius-m)");
 
-        // Header with author and date
+        // Header with author and date - styled differently from content
         final String relativeDate = this.formatRelativeDate(comment.created);
         final Span header = new Span(comment.username + " · " + relativeDate);
         header.addClassName("comment-header");
+        header.getStyle()
+                .set("display", "block")
+                .set("font-weight", "600")
+                .set("font-size", "0.875rem")
+                .set("color", "var(--lumo-contrast-70pct)")
+                .set("margin-bottom", "0.5rem");
 
-        // Content
+        // Content with line break from header
         final String displayContent = "DELETED".equals(comment.status) ? "[deleted]" : comment.content;
         final Span content = new Span(displayContent);
         content.addClassName("comment-content");
+        content.getStyle()
+                .set("display", "block")
+                .set("word-wrap", "break-word")
+                .set("white-space", "pre-wrap");
 
         // Action buttons
         final Div actions = new Div();
         actions.addClassName("comment-actions");
+        actions.getStyle()
+                .set("display", "flex")
+                .set("gap", "0.5rem")
+                .set("margin-top", "0.75rem");
 
         // Show/hide based on status
         if (!"DELETED".equals(comment.status)) {
@@ -200,6 +252,10 @@ public class CommentsPanel extends VerticalLayout {
         if (comment.editedAt != null) {
             final Span editedNote = new Span("(edited)");
             editedNote.addClassName("comment-edited");
+            editedNote.getStyle()
+                    .set("font-size", "0.75rem")
+                    .set("color", "var(--lumo-contrast-50pct)")
+                    .set("margin-left", "0.5rem");
             commentDiv.add(editedNote);
         }
 
@@ -244,9 +300,9 @@ public class CommentsPanel extends VerticalLayout {
         this.commentTextArea.setPlaceholder("Reply to comment...");
         this.submitButton.setText("Post Reply");
 
-        // Load replies
-        this.currentPage = 0;
-        this.loadComments();
+        // Don't reload - just scroll to form and focus
+        // The replies will be shown inline under the parent comment
+        // when we next refresh the view
     }
 
     private void onEditClicked(final Long commentId, final String currentContent) {
