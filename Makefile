@@ -13,7 +13,6 @@ help:
 	@echo "  make tag              - Create and push git tags"
 	@echo "  make test             - Interactive test runner for customer modules"
 	@echo "  make untag            - Delete git tags"
- 
 branch:
 	@scripts/sh/branch.sh
  
