@@ -1,18 +1,18 @@
 .PHONY: help branch build check clean dev install kill rebase release tag test untag
 help:
 	@echo "AIMathTutor - Available commands:"
-	@echo "  make branch           - Create or reset git branches interactively"
-	@echo "  make build            - Interactive build script with customer selection and versioning"
-	@echo "  make check            - Verify installed Maven and JDK versions are compatible"
-	@echo "  make clean            - Clean Maven artifacts and target directories"
-	@echo "  make dev              - Interactive development mode launcher for customer modules"
-	@echo "  make install          - Clean install and package project (skips tests)"
-	@echo "  make kill             - Kill all Quarkus/Maven processes and Docker containers"
-	@echo "  make rebase           - Perform git rebase operations"
-	@echo "  make release          - Release a new version"
-	@echo "  make tag              - Create and push git tags"
-	@echo "  make test             - Interactive test runner for customer modules"
-	@echo "  make untag            - Delete git tags"
+	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
+	@echo "  make build            - build the JVM Docker image (runs tests/install and Maven package, uses docker buildx)"
+	@echo "  make check            - verify local environment (JDK >=21 and Maven >=3.9.8)"
+	@echo "  make clean            - run 'mvnw clean' and remove build artifacts (logs, node_modules, target)"
+	@echo "  make dev              - install deps and start Quarkus in dev mode (runs 'mvnw quarkus:dev')"
+	@echo "  make install          - run checks, clean, and perform 'mvnw clean install' (skips tests)"
+	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
+	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
+	@echo "  make release          - build and push the Docker image tag to the registry"
+	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
+	@echo "  make test             - run install then execute the Maven test suite"
+	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
 branch:
 	@scripts/sh/branch.sh
  
