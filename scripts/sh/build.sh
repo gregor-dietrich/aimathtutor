@@ -5,7 +5,7 @@ DOCKERFILE="src/main/docker/Dockerfile.jvm"
 PLATFORMS="linux/amd64,linux/arm64"
 
 prompt_yes_no() {
-	local question="$1"
+    local question="$1"
     local default_answer="$2"
 
 	if [ -z "$question" ]; then
