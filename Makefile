@@ -1,6 +1,6 @@
 .PHONY: help branch build check clean dev install kill rebase release tag test untag
 help:
-	@echo "FIP Dev Tools - Available commands:"
+	@echo "AIMathTutor - Available commands:"
 	@echo "  make branch           - Create or reset git branches interactively"
 	@echo "  make build            - Interactive build script with customer selection and versioning"
 	@echo "  make check            - Verify installed Maven and JDK versions are compatible"
