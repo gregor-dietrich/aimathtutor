@@ -8,32 +8,32 @@ prompt_yes_no() {
     local question="$1"
     local default_answer="$2"
 
-	if [ -z "$question" ]; then
-		question="Proceed"
-	fi
+    if [ -z "$question" ]; then
+        question="Proceed"
+    fi
 
-	if [ -z "$default_answer" ]; then
-		default_answer="n"
-	fi
+    if [ -z "$default_answer" ]; then
+        default_answer="n"
+    fi
 
     case "$default_answer" in
-		[yYjJ])
+        [yYjJ])
             question="${question}? [Y/n]: "
-			;;
-		*)
+            ;;
+        *)
             question="${question}? [y/N]: "
-			;;
-	esac
+            ;;
+    esac
 
-	read -r -p "${question}" reply
-	case "$reply" in
-		[yYjJ])
-			return 0
-			;;
-		*)
-			return 1
-			;;
-	esac
+    read -r -p "${question}" reply
+    case "$reply" in
+        [yYjJ])
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 set -e
