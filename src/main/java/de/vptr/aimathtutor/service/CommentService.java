@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
+import de.vptr.aimathtutor.entity.CommentFlagEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
@@ -427,6 +428,19 @@ public class CommentService {
             LOG.warn("Self-flag attempt: commentId={}, flaggerId={}", commentId, flaggerId);
             throw new WebApplicationException("Cannot flag your own comment", Response.Status.BAD_REQUEST);
         }
+
+        // Check if user has already flagged this comment
+        if (CommentFlagEntity.hasUserFlaggedComment(commentId, flaggerId)) {
+            LOG.info("User already flagged this comment: commentId={}, flaggerId={}", commentId, flaggerId);
+            throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
+        }
+
+        // Create flag record
+        final CommentFlagEntity flag = new CommentFlagEntity();
+        flag.comment = comment;
+        flag.flagger = UserEntity.findById(flaggerId);
+        flag.created = LocalDateTime.now();
+        flag.persist();
 
         // Increment flag count
         comment.flagsCount = (comment.flagsCount != null ? comment.flagsCount : 0) + 1;
