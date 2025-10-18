@@ -1,114 +1,26 @@
 # AI Math Tutor
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+AI Math Tutor is a full-stack web application that combines a Quarkus backend with a Vaadin frontend to deliver interactive math exercises. It embeds Graspable Math for hands-on symbolic manipulation and adds an AI tutor layer that answers questions and provides automated feedback to support learning.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## 🌟 Features
 
-## ⚠️ Requirements
+- Embedded Graspable Math workspace for interactive, manipulable math expressions and step-by-step student actions.
+- Real-time AI tutor layer that analyzes student actions and provides feedback, hints, and congratulatory responses.
+  - Can be disabled by either setting `ai.tutor.provider=mock` or even `ai.tutor.enabled=false`.
+- Problem generation and management: generate and load problems into the Graspable canvas with categories, difficulty and hints.
+- Lesson and exercise management: author and organize lessons and exercises, and expose exercise views for students and teachers.
+- Comments attached to exercises for students and teachers to discuss solution steps.
+- Session and event tracking: records student sessions and Graspable events for analytics and progress monitoring.
+- Granular user management: support for users, user groups, and ranks/permissions to enable differentiated access and progress tracking.
+- Vaadin + Quarkus architecture: server-rendered UI with direct CDI-injected services and tight integration between frontend and backend for low-latency feedback.
 
-| Name | Build | Run | Download |
-|----------|----------|----------|----------|
-| JDK 21 | ✅ | ❌ | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=21) |
-| Maven | ✅ | ❌ | [Apache](https://maven.apache.org/download.cgi) |
-| Docker | ❌ | ✅ | (see below) |
+## 🤖 Supported AI Providers
 
-For Docker, you have 2 options:
+- [Google](https://aistudio.google.com/api-keys)
+- [Ollama](https://ollama.com/download) (untested)
+- [OpenAI](https://platform.openai.com/api-keys) (untested)
 
-- [Docker Engine](https://docs.docker.com/engine/install/)
-- or [Docker Desktop](https://docs.docker.com/desktop/) (includes Docker Engine)
+## 📖 Documentation
 
-## 🔧 Setup
-
-Edit `src/main/resources/application.properties` as needed, then run:
-
-```shell script
-./mvnw clean install -DskipTests
-```
-
-### 🧪 Tests
-
-To run the tests, you can either omit the `-DskipTests` flag when using the command above, or execute the following command:
-
-```shell script
-./mvnw test
-```
-
-## 🚀 Running the application
-
-### 🧑‍💻 Development mode
-
-```shell script
-./mvnw quarkus:dev
-```
-
-> **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
-
-### 🏭 Production mode
-
-> **_NOTE:_** The application must be packaged for production mode **before** doing this (see below).
-
-It is recommended to use Docker Compose to run the application in production mode:
-
-```shell script
-docker compose up -d --build
-```
-
-## 📦 Packaging the application
-
-The application can be packaged using:
-
-```shell script
-./mvnw package -Pproduction
-```
-
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar -Pproduction
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-### 🐳 Creating a Docker image
-
-> **_NOTE:_** The application needs to be packaged for production mode **before** doing this (see above).
-
-You can create a Docker image using:
-
-```shell script
-docker build . -f src/main/docker/Dockerfile.jvm -t aimathtutor:1.0.0-SNAPSHOT
-```
-
-If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.
-
-### 🐇 Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative -Pproduction
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true -Pproduction
-```
-
-You can then execute your native executable with: `./target/aimathtutor-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## 📖 Related Guides
-
-- Quarkus ([guide](https://quarkus.io/guides/)): The main framework for building Java applications with a focus on cloud-native and microservices architectures.
-- Vaadin Flow ([guide](https://vaadin.com/docs/latest/flow/integrations/quarkus)): Vaadin Flow is a unique framework that lets you build web apps without writing HTML or JavaScript
-- ArC ([guide](https://quarkus.io/guides/cdi-reference)): A dependency injection framework that is part of Quarkus, providing support for CDI (Contexts and Dependency Injection).
-- Datasource ([guide](https://quarkus.io/guides/datasource)): A Quarkus extension for connecting to databases using JDBC, JPA, Hibernate ORM, and more.
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): A Quarkus extension that simplifies the use of Hibernate ORM with a focus on ease of use and productivity.
-- Hibernate Validator ([guide](https://quarkus.io/guides/hibernate-validator)): A Quarkus extension that integrates Hibernate Validator for bean validation, allowing you to validate your data models easily.
+- [Quickstart](https://github.com/gregor-dietrich/aimathtutor/blob/main/docs/QUICKSTART.md)
+- [Build Guide](https://github.com/gregor-dietrich/aimathtutor/blob/main/docs/BUILD_GUIDE.md)
