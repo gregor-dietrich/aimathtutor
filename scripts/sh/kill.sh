@@ -6,7 +6,6 @@ if pgrep -f "quarkus" > /dev/null; then
     echo "Killing Quarkus processes..."
     sudo pkill -f "quarkus" > /dev/null || true
     sleep 2
- 
     if pgrep -f "quarkus" > /dev/null; then
         echo "Force killing remaining Quarkus processes..."
         sudo pkill -f -9 "quarkus" > /dev/null || true
