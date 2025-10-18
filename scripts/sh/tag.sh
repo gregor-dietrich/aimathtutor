@@ -41,7 +41,7 @@ fi
 
 echo "Creating and pushing tag ${VERSION}..."
 
-git tag -a -s "${VERSION}" -m "${VERSION}"
+git tag -a -s "${VERSION}" -m "Release ${VERSION}"
 if [ $? -ne 0 ]; then
     echo "Git tag creation failed. Exiting."
     exit 2
