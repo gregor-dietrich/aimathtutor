@@ -32,7 +32,7 @@ public class ReportButton extends Button {
             if (this.reportAction != null) {
                 this.reportAction.onComponentEvent(event);
             }
-        });
+        }, "Report Content", "Report this content for moderation review?", "Report");
         confirmDialog.open();
     }
 }

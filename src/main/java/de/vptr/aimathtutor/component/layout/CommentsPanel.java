@@ -304,27 +304,13 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     private void onReportClicked(final Long commentId) {
-        final Dialog flagDialog = new Dialog();
-        flagDialog.setHeaderTitle("Report Comment");
-
-        final Paragraph message = new Paragraph("Report this comment for moderation review?");
-        flagDialog.add(message);
-
-        final Button flagButton = new Button("Flag", e -> {
-            try {
-                this.getCommentService().flagComment(commentId, this.currentUserId, "User flagged");
-                flagDialog.close();
-                NotificationUtil.showSuccess("Comment flagged for review");
-            } catch (final Exception ex) {
-                LOG.error("Failed to flag comment", ex);
-                NotificationUtil.showError("Failed to flag: " + ex.getMessage());
-            }
-        });
-
-        final Button cancelButton = new Button("Cancel", e -> flagDialog.close());
-
-        flagDialog.getFooter().add(flagButton, cancelButton);
-        flagDialog.open();
+        try {
+            this.getCommentService().flagComment(commentId, this.currentUserId, "Comment reported");
+            NotificationUtil.showSuccess("Comment flagged for review");
+        } catch (final Exception ex) {
+            LOG.error("Failed to flag comment", ex);
+            NotificationUtil.showError("Failed to flag: " + ex.getMessage());
+        }
     }
 
     private String formatRelativeDate(final LocalDateTime dateTime) {
