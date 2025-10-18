@@ -11,7 +11,7 @@ public class UserViewButton extends Button {
 
     public UserViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction, final String tooltipText) {
         super("", viewAction);
-        this.setIcon(LineAwesomeIcon.UNDO_SOLID.create());
+        this.setIcon(LineAwesomeIcon.GLOBE_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
