@@ -6,22 +6,26 @@
 
 ### Suggested Order (Easiest to Hardest)
 
-1. **Multiple Problems Per Exercise** (Task 2)
+1. **Comments on Exercises** (Task 4)
+   *Moderately Complex*: Backend and frontend work, DB schema verification, moderation, and realtime updates.
+
+2. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-2. **Admin Views for Progress Tracking** (Task 3)
+3. **Admin Views for Progress Tracking** (Task 3)
    *Very Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
 
-3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-4. **Gamification** (Task 6)
+5. **Gamification** (Task 6)
    *Moderately Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
 
 **Difficulty Ratings:**
 
 - Task 2: ★★★☆☆
 - Task 3: ★★★★★
+- Task 4: ★★★☆☆
 - Task 5: ★★★★☆
 - Task 6: ★★★☆☆
 
@@ -168,6 +172,118 @@
       NotificationUtil.showError("Access denied");
   }
   ```
+
+---
+
+## 4. Comments on Exercises (student comments & discussion)
+
+**Goal:** Let students comment on exercises and lessons, support threaded discussions, moderation and admin management. The repository already contains some comment-related entities and admin views; this task documents what is still missing and provides a concrete implementation checklist to fully support comments across backend, frontend, database, admin moderation, and tests.
+
+### Current state (as reported)
+
+- Entities and admin views for comments already exist in the codebase (verify by searching for `CommentEntity`, `CommentService`, `CommentView` in the project).
+- What appears to be missing or incomplete: DTOs for view models, a well-defined `CommentService` contract (create/edit/delete/list/moderate), Vaadin components on the exercise view to display and post comments, DB init schema additions (if entities exist but not in init scripts), realtime updates (server push) for new comments, and comprehensive tests.
+
+### Key requirements (high level)
+
+- Students can create comments on exercises and lessons.
+- Comments should support replies (threading) and simple formatting (plain text, optional markdown-lite).
+- Users can edit/delete their own comments within a short window; teachers/admins can edit/delete/moderate all comments.
+- Admins can view, filter, hide/unhide, and permanently delete comments via existing admin views.
+- Comments must be associated with exerciseId, lessonId (optional), sessionId (optional), userId, timestamp, and moderation status.
+- Real-time UI updates (Vaadin server push or polling) so students see new comments without full page refresh.
+- Audit/logging of moderation actions and comment deletes.
+- Rate-limiting/anti-spam and optional flagging flow for user-reported comments.
+
+### Missing pieces (detailed analysis)
+
+1. Comment DTOs and view models
+   - `CommentDto` (for create/update requests) with fields: `exerciseId`, `lessonId` (optional), `parentCommentId` (nullable), `text`.
+   - `CommentViewDto` (for rendering) with fields: `id`, `exerciseId`, `lessonId`, `parentId`, `authorId`, `authorName`, `text`, `createdAt`, `editedAt`, `status` (VISIBLE/HIDDEN/DELETED), `sessionId`, `flagsCount`.
+
+2. CommentService contract and implementation
+   - Methods to implement (ApplicationScoped service):
+     - `CommentViewDto createComment(CommentDto dto, Long authorId)`
+     - `CommentViewDto editComment(Long commentId, CommentDto dto, Long editorId)`
+     - `void deleteComment(Long commentId, Long requesterId, boolean softDelete)` (soft delete preserves audit trail)
+     - `List<CommentViewDto> listCommentsByExercise(Long exerciseId, int page, int size, Optional<Long> parentId)`
+     - `List<CommentViewDto> listCommentsBySession(String sessionId)`
+     - `void moderateComment(Long commentId, ModerationAction action, Long moderatorId, String reason)`
+     - `void flagComment(Long commentId, Long userId, String reason)`
+   - Security checks: only author or admin can edit/delete (respect soft-delete window), moderators/admins can override.
+
+3. Database / schema
+   - If `CommentEntity` exists, ensure the init SQL includes the table definition (columns and constraints). If not present, add to the existing init script (do NOT create a separate migration script per project guidelines). Required columns:
+     - `id` (PK), `exercise_id` (FK nullable), `lesson_id` (FK nullable), `session_id` (varchar nullable), `parent_comment_id` (FK nullable), `author_id` (FK), `text` (text), `created_at` (timestamp), `edited_at` (timestamp nullable), `status` (varchar, default 'VISIBLE'), `flags_count` (int default 0), `deleted_by` (nullable), `deleted_at` (nullable)
+   - Indexes: `exercise_id`, `lesson_id`, `parent_comment_id`, `author_id` for efficient queries.
+
+4. Vaadin UI integration
+   - Exercise view (`ExerciseWorkspaceView` / `GraspableMathView`):
+     - Add a `CommentsPanel` component (threaded list + new comment form) placed beside or below the Graspable canvas.
+     - The component should request initial comments via a server call (injected `CommentService`) and subscribe to server push for new comment events.
+     - Comment composer: text area, submit button, optional reply-to handling, client-side validation, character limit.
+     - For authors: show edit/delete controls; for moderators: show moderate/hide/delete controls.
+     - Pagination or lazy-loading of long threads.
+
+5. Real-time updates and notifications
+   - Implement Vaadin push (if enabled) or fallback to short polling (e.g., fetch new comments every X seconds).
+   - Optionally fire `UI.access()` updates when `CommentService.createComment` is called from server side or when a WebSocket broadcast announces a new comment.
+   - Publish comment events for users in the same exercise/session using an application-scoped broadcaster (e.g., CDI Event or small message hub).
+
+6. Admin moderation & audit
+   - Ensure admin views include filters for comments by exercise, author, status, flagged count, and date range.
+   - Add audit logging for moderation actions (who hid/deleted/edited, timestamp, reason). Link to `AIInteractionEntity` or a dedicated `CommentModerationEntity` if audit trail is required.
+
+7. Spam, rate limiting, and abuse mitigation
+   - Implement basic rate limiting per user (e.g., 1 comment per 5s, 200 comments/day) in `CommentService`.
+   - Add flagging workflow: when flagged by N users, auto-hide or queue for review.
+   - Optionally integrate a third-party moderation API (AI-based profanity/spam check) at create time.
+
+8. Tests
+   - Unit tests for `CommentService` (create/edit/delete/list/moderation, permission checks, rate limits).
+   - Integration tests that exercise DB writes and queries (session/comment linking, parent/child thread behavior).
+   - UI tests for `CommentsPanel` (posting, replying, edit/delete visibility based on permissions).
+
+9. Documentation & admin help
+   - Update `README.md` and `docs/Quickstart.md` (if necessary) with short note about comments (privacy, moderation rules).
+   - Add an entry to developer docs describing the comment schema and how to wire the `CommentsPanel` into exercise views.
+
+### Implementation checklist (step-by-step)
+
+1. Audit repository for existing comment artifacts
+   - Search for `CommentEntity`, `CommentService`, `CommentController`, `CommentView` and note which parts are implemented. Record filenames.
+
+2. Add/verify DTOs
+   - Create `CommentDto.java` and `CommentViewDto.java` in `src/main/java/de/vptr/aimathtutor/dto/` if missing.
+
+3. Implement/complete `CommentService` (@ApplicationScoped)
+   - Implement methods listed above with permission checks, rate limiting, and flagging support.
+
+4. Ensure DB schema/init scripts include comment table
+   - Add required columns and indexes into the existing SQL init script used by the project.
+
+5. Vaadin `CommentsPanel` component
+   - Build a reusable component that can be embedded into `ExerciseWorkspaceView` and other places.
+   - Support pagination, replying, edit/delete controls, and moderation UI for admins.
+
+6. Real-time notifications
+   - Add a simple in-app broadcaster (CDI Event or small hub) to notify sessions of new comments; implement Vaadin push handler or polling fallback.
+
+7. Admin views & moderation
+   - Hook into existing admin views: add comment filters, list, and moderation actions.
+
+8. Tests
+   - Add unit and integration tests. Run `mvn test` and fix issues.
+
+9. Docs & README
+   - Add short usage and privacy note.
+
+### Edge cases & additional notes
+
+- Consider whether comments should be versioned or soft-deleted (recommended to soft-delete and keep audit).
+- Consider attachments/images later — start with text-only.
+- Consider rate-limits, abuse reporting, and export of comment data for teachers.
+- Performance: paginate and index heavily; for very large classes consider caching/recent-only view.
 
 ---
 
