@@ -151,6 +151,20 @@ CREATE INDEX idx_comments_status ON comments(status);
 -- Full-text search index for content
 CREATE INDEX comments_content_fts ON comments USING gin(to_tsvector('english', content));
 
+-- Table to track which users have flagged which comments (prevents duplicate flags)
+CREATE TABLE comment_flags (
+  id BIGSERIAL PRIMARY KEY,
+  comment_id BIGINT NOT NULL,
+  flagger_id BIGINT NOT NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(comment_id, flagger_id),
+  FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+  FOREIGN KEY (flagger_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_comment_flags_comment_id ON comment_flags(comment_id);
+CREATE INDEX idx_comment_flags_flagger_id ON comment_flags(flagger_id);
+
 -- --------------------------------------------------------
 
 --
