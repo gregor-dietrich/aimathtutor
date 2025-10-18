@@ -1,5 +1,4 @@
 -- PostgreSQL initialization script
--- Translated from MariaDB version
 
 BEGIN;
 

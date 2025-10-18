@@ -54,7 +54,7 @@ services:
       POSTGRES_PORT: 5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/main/resources/sql/postgres.init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/main/resources/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}"]
       interval: 10s

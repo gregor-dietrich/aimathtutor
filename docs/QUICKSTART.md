@@ -39,7 +39,7 @@ docker run -d --name aimathtutor \
 
 #### 1. Create an `init.sql` file in a new directory
 
-Paste in the contents of [postgres.init.sql](https://github.com/gregor-dietrich/aimathtutor/blob/main/src/main/resources/sql/postgres.init.sql).
+Paste in the contents of [init.sql](https://github.com/gregor-dietrich/aimathtutor/blob/main/src/main/resources/sql/init.sql).
 
 #### 2. Create a `.env` file in the same directory
 
