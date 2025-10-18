@@ -100,4 +100,3 @@ ENV JAVA_OPTS_APPEND=""
 
 ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
 CMD []
-
