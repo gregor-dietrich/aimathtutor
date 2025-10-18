@@ -179,8 +179,10 @@ public class CommentsPanel extends VerticalLayout {
             final Button replyButton = new ReplyButton(e -> this.onReplyClicked(comment.id));
             actions.add(replyButton);
 
-            final Button reportButton = new ReportButton(e -> this.onReportClicked(comment.id));
-            actions.add(reportButton);
+            if (comment.authorId == null || !comment.authorId.equals(this.currentUserId)) {
+                final Button reportButton = new ReportButton(e -> this.onReportClicked(comment.id));
+                actions.add(reportButton);
+            }
         }
 
         // Edit/Delete if author
