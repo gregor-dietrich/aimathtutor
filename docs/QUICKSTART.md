@@ -26,7 +26,7 @@ mvn test
 
 ```sh
 docker run -d --name aimathtutor \
-  -p 80:8080 \
+  -p 80:9001 \
   -e quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
@@ -82,11 +82,11 @@ services:
       # ollama.model: llama3.1:8b
       # ollama.api.url: http://localhost:11434
     ports:
-      - "80:8080/tcp"
+      - "80:9001/tcp"
     volumes:
       - aimathtutor_logs:/deployments/logs
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:9001 || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -121,7 +121,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
     ports:
-      - "8080:80/tcp"
+      - "9001:80/tcp"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     healthcheck:

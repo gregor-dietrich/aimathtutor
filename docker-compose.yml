@@ -30,11 +30,11 @@ services:
       # ollama.model: llama3.1:8b
       # ollama.api.url: http://localhost:11434
     ports:
-      - "80:8080"
+      - "80:9001"
     volumes:
       - aimathtutor_logs:/deployments/logs
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:8080 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:9001 || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3

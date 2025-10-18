@@ -11,16 +11,16 @@
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/aimathtutor-jvm
+# docker run -i --rm -p 9001:9001 quarkus/aimathtutor-jvm
 #
 # If you want to include the debug port into your docker image
-# you will have to expose the debug port (default 5005 being the default) like this :  EXPOSE 8080 5005.
+# you will have to expose the debug port (default 5005 being the default) like this :  EXPOSE 9001 5005.
 # Additionally you will have to set -e JAVA_DEBUG=true and -e JAVA_DEBUG_PORT=*:5005
 # when running the container
 #
 # Then run the container using :
 #
-# docker run -i --rm -p 8080:8080 quarkus/aimathtutor-jvm
+# docker run -i --rm -p 9001:9001 quarkus/aimathtutor-jvm
 #
 # This image uses the `run-java.sh` script to run the application.
 # This scripts computes the command line to execute your Java application, and
@@ -72,8 +72,8 @@
 # - GC_CONTAINER_OPTIONS: Specify Java GC to use. The value of this variable should
 #   contain the necessary JRE command-line options to specify the required GC, which
 #   will override the default of `-XX:+UseParallelGC` (example: -XX:+UseG1GC).
-# - HTTPS_PROXY: The location of the https proxy. (example: "myuser@127.0.0.1:8080")
-# - HTTP_PROXY: The location of the http proxy. (example: "myuser@127.0.0.1:8080")
+# - HTTPS_PROXY: The location of the https proxy. (example: "myuser@127.0.0.1:9001")
+# - HTTP_PROXY: The location of the http proxy. (example: "myuser@127.0.0.1:9001")
 # - NO_PROXY: A comma separated lists of hosts, IP addresses or domains that can be
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
@@ -91,7 +91,7 @@ COPY --chown=185 target/quarkus-app/*.jar /deployments/
 COPY --chown=185 target/quarkus-app/app/ /deployments/app/
 COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
 
-EXPOSE 8080
+EXPOSE 9001
 USER 185
 WORKDIR /deployments
 

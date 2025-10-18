@@ -41,7 +41,7 @@ To run the tests, you can either omit the `-DskipTests` flag when using the comm
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+> **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:9001/q/dev/>.
 
 ### 🏭 Production mode
 
