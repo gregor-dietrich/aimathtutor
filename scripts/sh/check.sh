@@ -45,7 +45,6 @@ if ! command -v ./mvnw &> /dev/null; then
     echo "Please install Maven version ${REQUIRED_MAVEN_VERSION} or higher and add it to PATH."
     exit 1
 fi
- 
 MAVEN_VERSION=$(./mvnw -version | head -n 1 | awk '{print $3}')
 if [[ -z "$MAVEN_VERSION" ]]; then
     echo "ERROR: Could not determine Maven version. Exiting."
