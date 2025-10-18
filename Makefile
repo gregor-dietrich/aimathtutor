@@ -1,4 +1,4 @@
-.PHONY: help branch build check clean dev install kill rebase release tag test untag
+.PHONY: help branch build check clean dev install kill password rebase release tag test untag
 
 MAKEFLAGS += --no-print-directory
 
@@ -11,6 +11,7 @@ help:
 	@echo "  make dev              - install deps and start Quarkus in dev mode (runs 'mvnw quarkus:dev')"
 	@echo "  make install          - run checks, clean, and perform 'mvnw clean install' (skips tests)"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
+	@echo "  make password         - generate a salt+hash for a password, suitable for init.sql."
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
 	@echo "  make release          - build and push the Docker image tag to the registry"
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
@@ -37,6 +38,9 @@ install:
  
 kill:
 	@scripts/sh/kill.sh
+
+password:
+	@scripts/sh/password.sh
  
 rebase:
 	@scripts/sh/rebase.sh
