@@ -176,7 +176,7 @@ public class AIChatPanel extends VerticalLayout {
             messageDiv.getStyle()
                     .set("padding", "var(--lumo-space-s)")
                     .set("border-radius", "var(--lumo-border-radius-l)")
-                    .set("max-width", "70%")
+                    .set("max-width", "80%")
                     .set("word-wrap", "break-word");
 
             final var messagePara = new Paragraph(message.message);
