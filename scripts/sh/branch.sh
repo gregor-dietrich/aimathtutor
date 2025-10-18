@@ -25,30 +25,30 @@ if [ $? -ne 0 ]; then
     exit 3
 fi
 
-if git show-ref --verify --quiet refs/heads/${TARGET_BRANCH} || git show-ref --verify --quiet refs/remotes/origin/${TARGET_BRANCH}; then
-    git checkout ${TARGET_BRANCH}
+if git show-ref --verify --quiet "refs/heads/${TARGET_BRANCH}" || git show-ref --verify --quiet "refs/remotes/origin/${TARGET_BRANCH}"; then
+    git checkout "${TARGET_BRANCH}"
     if [ $? -ne 0 ]; then
         echo "Failed to checkout ${TARGET_BRANCH} branch. Exiting."
         exit 4
     fi
 
-    git reset --hard ${SOURCE_BRANCH}
+    git reset --hard "${SOURCE_BRANCH}"
     if [ $? -ne 0 ]; then
         echo "Git reset failed. Exiting."
         exit 5
     fi
 else
-    git checkout -b ${TARGET_BRANCH} ${SOURCE_BRANCH}
+    git checkout -b "${TARGET_BRANCH}" "${SOURCE_BRANCH}"
     if [ $? -ne 0 ]; then
         echo "Failed to create ${TARGET_BRANCH} branch. Exiting."
         exit 6
     fi
 fi
 
-if git ls-remote --exit-code --heads origin ${TARGET_BRANCH} >/dev/null 2>&1; then
-    git push --force-with-lease origin ${TARGET_BRANCH}
+if git ls-remote --exit-code --heads origin "${TARGET_BRANCH}" >/dev/null 2>&1; then
+    git push --force-with-lease origin "${TARGET_BRANCH}"
 else
-    git push -u origin ${TARGET_BRANCH}
+    git push -u origin "${TARGET_BRANCH}"
 fi
 
 if [ $? -ne 0 ]; then
