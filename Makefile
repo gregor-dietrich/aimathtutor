@@ -1,5 +1,4 @@
 .PHONY: help branch build check clean dev install kill rebase release tag test untag
- 
 help:
 	@echo "FIP Dev Tools - Available commands:"
 	@echo "  make branch           - Create or reset git branches interactively"
