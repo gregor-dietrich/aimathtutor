@@ -1,5 +1,7 @@
 .PHONY: help branch build check clean dev install kill rebase release tag test untag
 
+MAKEFLAGS += --no-print-directory
+
 help:
 	@echo "AIMathTutor - Available commands:"
 	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
