@@ -34,7 +34,6 @@ fi
 
 read -p "Enter the new tag [${LATEST_VERSION}]: " VERSION
 VERSION=${VERSION:-$LATEST_VERSION}
- 
 if [[ -z "$VERSION" ]]; then
     echo "Tag is required. Exiting."
     exit 1
