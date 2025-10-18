@@ -1,6 +1,7 @@
 #!/bin/bash
 
-TAG="gregordietrich/aimathtutor:1.0.0-SNAPSHOT"
+# Allow tag to be set via first argument or TAG env var, fallback to default
+TAG="${1:-${TAG:-gregordietrich/aimathtutor:1.0.0-SNAPSHOT}}"
 
 set -e
 
