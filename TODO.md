@@ -9,17 +9,17 @@
 1. **Comments on Exercises** (Task 4)
    *Moderately Complex*: Backend and frontend work, DB schema verification, moderation, and realtime updates.
 
-2. **Multiple Problems Per Exercise** (Task 2)
-   *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
-
-3. **Admin Views for Progress Tracking** (Task 3)
+2. **Admin Views for Progress Tracking** (Task 3)
    *Very Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
+
+3. **Multiple Problems Per Exercise** (Task 2)
+   *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
 4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
 5. **Gamification** (Task 6)
-   *Moderately Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
+   *Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
 
 **Difficulty Ratings:**
 
@@ -27,7 +27,7 @@
 - Task 3: ★★★★★
 - Task 4: ★★★☆☆
 - Task 5: ★★★★☆
-- Task 6: ★★★☆☆
+- Task 6: ★★★★☆
 
 ### Testing Checklist (for each feature)
 
@@ -181,19 +181,19 @@
 
 ### Current state (as reported)
 
-- Entities and admin views for comments already exist in the codebase (verify by searching for `CommentEntity`, `CommentService`, `CommentView` in the project).
-- What appears to be missing or incomplete: DTOs for view models, a well-defined `CommentService` contract (create/edit/delete/list/moderate), Vaadin components on the exercise view to display and post comments, DB init schema additions (if entities exist but not in init scripts), realtime updates (server push) for new comments, and comprehensive tests.
+- Entities, DTOs, service and admin views for comments already exist in the codebase (verify by searching for and then reviewing `CommentEntity`, `CommentService`, `CommentDto`, `CommentViewDto`, `AdminCommentView` in the project).
+- What appears to be missing or incomplete: Vaadin components on the exercise view to display and post comments, realtime updates (server push) for new comments, potential DB changes (init script, entity, DTOs, ...), and comprehensive tests.
 
 ### Key requirements (high level)
 
-- Students can create comments on exercises and lessons.
+- Users can create comments on exercises and lessons (if they have the `comment:add` permission).
 - Comments should support replies (threading) and simple formatting (plain text, optional markdown-lite).
-- Users can edit/delete their own comments within a short window; teachers/admins can edit/delete/moderate all comments.
-- Admins can view, filter, hide/unhide, and permanently delete comments via existing admin views.
-- Comments must be associated with exerciseId, lessonId (optional), sessionId (optional), userId, timestamp, and moderation status.
-- Real-time UI updates (Vaadin server push or polling) so students see new comments without full page refresh.
-- Audit/logging of moderation actions and comment deletes.
-- Rate-limiting/anti-spam and optional flagging flow for user-reported comments.
+- Users can edit/delete their own comments; teachers/admins can edit/delete all comments.
+- Admins can view, filter, edit and permanently delete comments via existing admin views.
+- Comments must be associated with exerciseId, sessionId (optional), userId and timestamp.
+- Real-time UI updates (Vaadin server push, no polling) so students see new comments without full page refresh.
+- Audit/logging of moderation edits and deletes.
+- Rate-limiting/anti-spam.
 
 ### Missing pieces (detailed analysis)
 
@@ -256,7 +256,7 @@
 2. Add/verify DTOs
    - Create `CommentDto.java` and `CommentViewDto.java` in `src/main/java/de/vptr/aimathtutor/dto/` if missing.
 
-3. Implement/complete `CommentService` (@ApplicationScoped)
+3. Add/verify `CommentService` (@ApplicationScoped)
    - Implement methods listed above with permission checks, rate limiting, and flagging support.
 
 4. Ensure DB schema/init scripts include comment table
@@ -270,7 +270,7 @@
    - Add a simple in-app broadcaster (CDI Event or small hub) to notify sessions of new comments; implement Vaadin push handler or polling fallback.
 
 7. Admin views & moderation
-   - Hook into existing admin views: add comment filters, list, and moderation actions.
+   - Hook into existing admin views: add comment filters, list, and moderation actions if needed.
 
 8. Tests
    - Add unit and integration tests. Run `mvn test` and fix issues.
