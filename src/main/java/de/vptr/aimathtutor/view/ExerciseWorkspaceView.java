@@ -237,6 +237,18 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             leftPanel.add(noticeDiv, hintsSection);
         }
 
+        // Create comments panel (full width, below canvas)
+        this.commentsPanel = new CommentsPanel(this.exerciseId, this.currentSessionId,
+                this.authService.getUserId());
+        this.commentsPanel.getStyle()
+                .set("margin-top", "1.5rem")
+                .set("padding-top", "1rem")
+                .set("border-top", "2px solid var(--lumo-contrast-20pct)");
+
+        // Add comments section to left panel
+        final var commentsHeader = new H3("Comments & Discussion");
+        leftPanel.add(commentsHeader, this.commentsPanel);
+
         // Right side: AI Chat panel with built-in styling (30%)
         // Get user's avatar settings
         final var currentUserEntity = this.authService.getCurrentUserEntity();
@@ -252,21 +264,15 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.chatPanel.addMessage(ChatMessageDto.system(
                 "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
 
-        // Create comments panel (40% width)
-        this.commentsPanel = new CommentsPanel(this.exerciseId, this.currentSessionId,
-                this.authService.getUserId());
-        this.commentsPanel.getStyle().set("width", "30%");
-
-        // Main layout: 70% for exercise + graspable, 30% for comments
+        // Main layout: 70% for exercise + graspable + comments, 30% for chat
         final var mainContentLayout = new HorizontalLayout();
         mainContentLayout.setWidthFull();
         mainContentLayout.setSpacing(false);
         mainContentLayout.setPadding(false);
         mainContentLayout.setFlexGrow(1, leftPanel);
-        mainContentLayout.setFlexGrow(1, this.commentsPanel);
-        mainContentLayout.add(leftPanel, this.commentsPanel);
+        mainContentLayout.add(leftPanel, this.chatPanel);
 
-        this.add(mainContentLayout, this.chatPanel);
+        this.add(mainContentLayout);
     }
 
     @Override
