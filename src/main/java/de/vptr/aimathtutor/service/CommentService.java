@@ -544,6 +544,13 @@ public class CommentService {
                 comment.flagsCount = 0;
                 LOG.info("Comment shown by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
+            case "RESTORE":
+                // Restore a deleted comment (same as SHOW)
+                comment.status = "VISIBLE";
+                comment.deletedBy = null;
+                comment.deletedAt = null;
+                LOG.info("Comment restored by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
+                break;
             case "DELETE":
                 comment.status = "DELETED";
                 comment.deletedBy = moderator;
@@ -710,7 +717,7 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> findFlaggedComments(final Integer minFlags) {
-        final List<CommentEntity> comments = CommentEntity.find("flags_count >= ?1 ORDER BY flags_count DESC", minFlags)
+        final List<CommentEntity> comments = CommentEntity.find("flagsCount >= ?1 ORDER BY flagsCount DESC", minFlags)
                 .list();
 
         // Force load lazy fields
