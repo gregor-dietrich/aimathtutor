@@ -6,7 +6,7 @@ help:
 	@echo "AIMathTutor - Available commands:"
 	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
 	@echo "  make build            - build the JVM Docker image (runs tests/install and Maven package, uses docker buildx)"
-	@echo "  make check            - verify local environment (JDK >=21 and Maven >=3.9.8)"
+	@echo "  make check            - verify local environment (JDK >=21 and Maven >=3.9.9)"
 	@echo "  make clean            - run 'mvnw clean' and remove build artifacts (logs, node_modules, target)"
 	@echo "  make dev              - install deps and start Quarkus in dev mode (runs 'mvnw quarkus:dev')"
 	@echo "  make install          - run checks, clean, and perform 'mvnw clean install' (skips tests)"
