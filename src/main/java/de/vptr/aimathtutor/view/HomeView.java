@@ -57,7 +57,12 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
         // Get all lessons
         final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
 
-        if (lessons.isEmpty()) {
+        // Also show standalone exercises (not in any lesson)
+        final List<ExerciseViewDto> standaloneExercises = this.exerciseService.findPublishedExercises().stream()
+                .filter(ex -> ex.lessonId == null)
+                .toList();
+
+        if (lessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
             noLessonsMsg.getStyle().set("color", "var(--lumo-secondary-text-color)");
             this.add(noLessonsMsg);
@@ -66,13 +71,10 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
 
         // Display each lesson with its exercises
         for (final LessonViewDto lesson : lessons) {
-            this.add(this.createLessonCard(lesson));
+            if (lesson.exercisesCount > 0) {
+                this.add(this.createLessonCard(lesson));
+            }
         }
-
-        // Also show standalone exercises (not in any lesson)
-        final List<ExerciseViewDto> standaloneExercises = this.exerciseService.findPublishedExercises().stream()
-                .filter(ex -> ex.lessonId == null)
-                .toList();
 
         if (!standaloneExercises.isEmpty()) {
             final var standaloneSection = new VerticalLayout();
