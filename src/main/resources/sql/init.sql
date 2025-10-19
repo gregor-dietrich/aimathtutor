@@ -93,6 +93,21 @@ CREATE TABLE lessons (
 
 -- --------------------------------------------------------
 
+-- Inserts for table `lessons`
+
+INSERT INTO lessons (id, name, parent_id) VALUES
+(1, 'Algebra', NULL),
+(2, 'Linear Equations', 1),
+(3, 'Quadratic Equations', 1),
+(4, 'Polynomials', 1);
+
+-- Set sequence to continue from 5
+SELECT setval('lessons_id_seq', 4);
+
+-- --------------------------------------------------------
+
+-- --------------------------------------------------------
+
 --
 -- Structure for table `exercises`
 --
@@ -120,6 +135,22 @@ CREATE TABLE exercises (
 CREATE INDEX exercises_content_fts ON exercises USING gin(to_tsvector('english', content));
 
 -- --------------------------------------------------------
+
+-- Seed exercises for lessons (graspable-enabled where appropriate)
+
+INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled, graspable_initial_expression, graspable_target_expression, graspable_difficulty, graspable_hints)
+VALUES
+  (1, 'Solve for x: simple linear', 'Solve the equation for x: 2x + 3 = 11', 2, 2, TRUE, TRUE, TRUE, '2*x + 3 = 11', 'x = 4', 'beginner', '["Isolate the term with x","Subtract 3 from both sides","Divide both sides by 2"]'),
+  (2, 'Two-step linear equation', 'Solve: 3(x - 2) = 9', 2, 2, TRUE, TRUE, TRUE, '3*(x - 2) = 9', 'x = 5', 'beginner', '["Divide both sides by 3","Then add 2 to both sides"]'),
+  (3, 'Linear equation with fractions', 'Solve: (1/2)x + 1 = 4', 2, 2, TRUE, TRUE, TRUE, '(1/2)*x + 1 = 4', 'x = 6', 'intermediate', '["Eliminate fractions by multiplying both sides","Isolate x"]'),
+  (4, 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'intermediate', '["Use distributive property","Combine like terms"]'),
+  (5, 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'intermediate', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]'),
+  (6, 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'advanced', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
+  (7, 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'advanced', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]');
+
+-- Set exercises sequence to continue from 8
+SELECT setval('exercises_id_seq', 7);
+
 
 --
 -- Structure for table `comments` (can now reference users and exercises)
