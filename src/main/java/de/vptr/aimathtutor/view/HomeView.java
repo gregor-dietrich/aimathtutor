@@ -66,7 +66,9 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
 
         // Display each lesson with its exercises
         for (final LessonViewDto lesson : lessons) {
-            this.add(this.createLessonCard(lesson));
+            if (lesson.exercisesCount > 0) {
+                this.add(this.createLessonCard(lesson));
+            }
         }
 
         // Also show standalone exercises (not in any lesson)
