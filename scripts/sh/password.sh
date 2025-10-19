@@ -24,7 +24,7 @@ else
 
 	if [ "$PASS1" != "$PASS2" ]; then
 		echo "Passwords do not match. Aborting." >&2
-		exit 2
+		exit 1
 	fi
 
 	PASSWORD="$PASS1"

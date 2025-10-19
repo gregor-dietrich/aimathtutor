@@ -7,7 +7,6 @@ set -e
 
 cd "$DIR/../.."
 
-# Run Maven clean
 ${MVN_CMD} clean
 
 rm -rf logs
