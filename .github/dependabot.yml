@@ -21,3 +21,5 @@ updates:
     multi-ecosystem-group: "infrastructure"
     ignore:
       - dependency-name: "io.quarkus:*"
+      - dependency-name: "io.quarkus.platform:quarkus-bom"
+      - dependency-name: "io.quarkus.platform:*"
