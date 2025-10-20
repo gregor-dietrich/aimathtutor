@@ -213,7 +213,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.graspableCanvas.setId("graspable-canvas"); // Fixed ID expected by JavaScript
             this.graspableCanvas.getStyle()
                     .set("width", "100%")
-                    .set("height", "80vh")
+                    .set("height", "77vh")
                     .set("border", "1px solid var(--lumo-contrast-20pct)")
                     .set("border-radius", "var(--lumo-border-radius-m)")
                     .set("background-color", "var(--lumo-base-color)")

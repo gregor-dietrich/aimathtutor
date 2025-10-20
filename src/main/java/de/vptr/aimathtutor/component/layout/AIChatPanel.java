@@ -75,7 +75,7 @@ public class AIChatPanel extends VerticalLayout {
                 .set("flex-direction", "column")
                 .set("position", "sticky")
                 .set("top", "0")
-                .set("max-height", "calc(100vh - 100px)") // Subtract approximate header height
+                .set("height", "calc(100vh - 100px)") // Subtract approximate header height
                 .set("overflow", "hidden"); // Prevent the panel itself from scrolling
 
         // Chat header
