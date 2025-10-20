@@ -1,3 +1,10 @@
+# Generated
+package-lock.json
+package.json
+tsconfig.json
+types.d.ts
+vite.config.ts
+
 # gm-api
 docs/gm-api
 
