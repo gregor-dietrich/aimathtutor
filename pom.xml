@@ -26,7 +26,7 @@
         <line-awesome.version>2.1.0</line-awesome.version>
         <quarkus.platform.version>3.27.0</quarkus.platform.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
-        <vaadin.version>24.9.2</vaadin.version>
+        <vaadin.version>24.9.3</vaadin.version>
     </properties>
 
     <dependencyManagement>
