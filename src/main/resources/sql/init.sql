@@ -41,8 +41,8 @@ INSERT INTO user_ranks (id, name, admin_view, exercise_add, exercise_delete, exe
 (2, 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
 (3, 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 
--- Set sequence to continue from 4
-SELECT setval('user_ranks_id_seq', 4);
+-- Set sequence to continue from 3
+SELECT setval('user_ranks_id_seq', 3);
 
 -- --------------------------------------------------------
 
@@ -148,8 +148,12 @@ VALUES
   (6, 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'advanced', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
   (7, 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'advanced', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]');
 
+INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled)
+VALUES
+  (8, 'Standalone Exerecise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
+
 -- Set exercises sequence to continue from 8
-SELECT setval('exercises_id_seq', 7);
+SELECT setval('exercises_id_seq', 8);
 
 
 --
@@ -218,7 +222,7 @@ INSERT INTO user_groups (id, name) VALUES
 (4, 'Class 9A'),
 (5, 'Class 9B');
 
--- Set sequence to continue from 6
+-- Set sequence to continue from 5
 SELECT setval('user_groups_id_seq', 5);
 
 -- --------------------------------------------------------
@@ -248,7 +252,7 @@ INSERT INTO user_groups_meta (id, user_id, group_id) VALUES
 (2, 3, 4),
 (3, 4, 4);
 
--- Set sequence to continue from 4
+-- Set sequence to continue from 3
 SELECT setval('user_groups_meta_id_seq', 3);
 
 -- --------------------------------------------------------
