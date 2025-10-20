@@ -9,6 +9,10 @@ set -e
 
 cd "$DIR/../.."
 
+git switch main
+
+git pull
+
 make build
 
 docker push "$TAG"
