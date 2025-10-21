@@ -65,6 +65,22 @@ public class AnalyticsService {
     }
 
     /**
+     * Get sessions by user and exercise ID
+     * Efficient single-database query for filtering sessions by both user and
+     * exercise
+     */
+    @Transactional
+    public List<StudentSessionViewDto> getSessionsByUserAndExercise(final Long userId, final Long exerciseId) {
+        LOG.trace("Getting sessions for user: {} on exercise: {}", userId, exerciseId);
+        final List<StudentSessionEntity> sessions = StudentSessionEntity
+                .find("user.id = ?1 AND exercise.id = ?2", userId, exerciseId)
+                .list();
+        return sessions.stream()
+                .map(StudentSessionViewDto::new)
+                .toList();
+    }
+
+    /**
      * Get sessions by user and date range
      */
     @Transactional
@@ -202,10 +218,49 @@ public class AnalyticsService {
         }
 
         final List<StudentSessionEntity> sessions = StudentSessionEntity.find("user.id = ?1", userId).list();
+        return this.computeProgressSummary(user, sessions);
+    }
 
+    /**
+     * Get progress summaries for all users
+     * Refactored to avoid N+1 queries by fetching all sessions once and grouping by
+     * user
+     */
+    @Transactional
+    public List<StudentProgressSummaryDto> getAllUsersProgressSummary() {
+        LOG.trace("Getting progress summary for all users");
+
+        // Fetch all users
+        final List<UserEntity> users = UserEntity.listAll();
+        if (users.isEmpty()) {
+            return List.of();
+        }
+
+        // Fetch all sessions in a single query
+        final List<StudentSessionEntity> allSessions = StudentSessionEntity.listAll();
+
+        // Group sessions by user ID
+        final Map<Long, List<StudentSessionEntity>> sessionsByUser = allSessions.stream()
+                .collect(Collectors.groupingBy(session -> session.user.id));
+
+        // Build progress summaries for each user
+        return users.stream()
+                .map(user -> this.computeProgressSummary(user,
+                        sessionsByUser.getOrDefault(user.id, List.of())))
+                .filter(summary -> summary != null)
+                .toList();
+    }
+
+    /**
+     * Computes progress summary for a user given their sessions
+     * Helper method to avoid code duplication between getUserProgressSummary and
+     * getAllUsersProgressSummary
+     */
+    private StudentProgressSummaryDto computeProgressSummary(final UserEntity user,
+            final List<StudentSessionEntity> sessions) {
         if (sessions.isEmpty()) {
             return new StudentProgressSummaryDto(
-                    userId,
+                    user.id,
                     user.username,
                     0, 0, 0, 0, 0, 0.0, 0.0, null);
         }
@@ -241,7 +296,7 @@ public class AnalyticsService {
                 .orElse(null);
 
         return new StudentProgressSummaryDto(
-                userId,
+                user.id,
                 user.username,
                 totalSessions,
                 completedSessions,
@@ -251,20 +306,6 @@ public class AnalyticsService {
                 averageActionsPerProblem,
                 successRate,
                 lastActivity);
-    }
-
-    /**
-     * Get progress summaries for all users
-     */
-    @Transactional
-    public List<StudentProgressSummaryDto> getAllUsersProgressSummary() {
-        LOG.trace("Getting progress summary for all users");
-
-        final List<UserEntity> users = UserEntity.listAll();
-        return users.stream()
-                .map(user -> this.getUserProgressSummary(user.id))
-                .filter(summary -> summary != null)
-                .toList();
     }
 
     /**
