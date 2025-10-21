@@ -68,7 +68,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         // Add placeholder cards that will be updated with data
         final var totalSessionsCard = this.createStatCard("Total Sessions", "Loading...");
         final var completedSessionsCard = this.createStatCard("Completed Sessions", "Loading...");
-        final var activeStudentsCard = this.createStatCard("Active Students (7d)", "Loading...");
+        final var activeStudentsCard = this.createStatCard("Active Students (Last 7 Days)", "Loading...");
         final var todaySessionsCard = this.createStatCard("Today's Sessions", "Loading...");
 
         cardsContainer.add(totalSessionsCard, completedSessionsCard, activeStudentsCard, todaySessionsCard);
@@ -88,7 +88,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
                 this.getUI().ifPresent(ui -> ui.access(() -> {
                     this.updateStatCard("Total Sessions", String.valueOf(totalSessions));
                     this.updateStatCard("Completed Sessions", String.valueOf(completedSessions));
-                    this.updateStatCard("Active Students (7d)", String.valueOf(activeStudents));
+                    this.updateStatCard("Active Students (Last 7 Days)", String.valueOf(activeStudents));
                     this.updateStatCard("Today's Sessions", String.valueOf(todaySessions));
                 }));
 
