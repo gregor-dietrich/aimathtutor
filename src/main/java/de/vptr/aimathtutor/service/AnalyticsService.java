@@ -57,7 +57,8 @@ public class AnalyticsService {
     @Transactional
     public List<StudentSessionViewDto> getSessionsByExercise(final Long exerciseId) {
         LOG.trace("Getting sessions for exercise: {}", exerciseId);
-        final List<StudentSessionEntity> sessions = StudentSessionEntity.find("exercise.id = ?1", exerciseId).list();
+        final List<StudentSessionEntity> sessions = StudentSessionEntity.find("exercise.id = ?1", exerciseId)
+                .list();
         return sessions.stream()
                 .map(StudentSessionViewDto::new)
                 .toList();
@@ -156,7 +157,8 @@ public class AnalyticsService {
     @Transactional
     public List<AIInteractionViewDto> getAIInteractionsBySession(final String sessionId) {
         LOG.trace("Getting AI interactions for session: {}", sessionId);
-        final List<AIInteractionEntity> interactions = AIInteractionEntity.find("sessionId = ?1", sessionId).list();
+        final List<AIInteractionEntity> interactions = AIInteractionEntity.find("sessionId = ?1", sessionId)
+                .list();
         return interactions.stream()
                 .map(AIInteractionViewDto::new)
                 .toList();
@@ -180,7 +182,8 @@ public class AnalyticsService {
     @Transactional
     public List<AIInteractionViewDto> getAIInteractionsByExercise(final Long exerciseId) {
         LOG.trace("Getting AI interactions for exercise: {}", exerciseId);
-        final List<AIInteractionEntity> interactions = AIInteractionEntity.find("exercise.id = ?1", exerciseId).list();
+        final List<AIInteractionEntity> interactions = AIInteractionEntity.find("exercise.id = ?1", exerciseId)
+                .list();
         return interactions.stream()
                 .map(AIInteractionViewDto::new)
                 .toList();
@@ -212,29 +215,25 @@ public class AnalyticsService {
                 .filter(s -> s.completed != null && s.completed)
                 .count();
 
-        final int totalProblems = sessions.stream()
-                .mapToInt(s -> s.actionsCount != null ? s.actionsCount : 0)
-                .sum();
+        // Note: one problem = one session/exercise attempt
+        // totalProblems is the number of exercises attempted
+        final int totalProblems = totalSessions;
 
-        final int completedProblems = (int) sessions.stream()
-                .filter(s -> s.completed != null && s.completed)
-                .count();
+        // completedProblems is the number of exercises successfully completed
+        final int completedProblems = completedSessions;
 
         final int hintsUsed = sessions.stream()
                 .mapToInt(s -> s.hintsUsed != null ? s.hintsUsed : 0)
                 .sum();
 
-        final double averageActionsPerProblem = totalProblems > 0
-                ? (double) sessions.stream()
-                        .mapToInt(s -> s.actionsCount != null ? s.actionsCount : 0)
-                        .sum() / sessions.size()
-                : 0.0;
-
-        final int totalCorrect = sessions.stream()
-                .mapToInt(s -> s.correctActions != null ? s.correctActions : 0)
+        // Average actions per problem (per session)
+        final double totalActions = sessions.stream()
+                .mapToInt(s -> s.actionsCount != null ? s.actionsCount : 0)
                 .sum();
+        final double averageActionsPerProblem = totalSessions > 0 ? totalActions / totalSessions : 0.0;
 
-        final double successRate = totalProblems > 0 ? (double) totalCorrect / totalProblems : 0.0;
+        // Success rate: percentage of exercises that were completed successfully
+        final double successRate = totalSessions > 0 ? (double) completedSessions / totalSessions : 0.0;
 
         final LocalDateTime lastActivity = sessions.stream()
                 .map(s -> s.endTime != null ? s.endTime : s.startTime)
@@ -282,7 +281,8 @@ public class AnalyticsService {
 
         return completedSessions.stream()
                 .collect(Collectors.groupingBy(
-                        session -> session.exercise != null ? session.exercise.title : "Unknown",
+                        session -> session.exercise != null ? session.exercise.title
+                                : "Unknown",
                         Collectors.summingInt(session -> 1)));
     }
 
