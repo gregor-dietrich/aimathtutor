@@ -12,7 +12,10 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.*;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AIInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
@@ -28,7 +31,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/session/:sessionId", layout = AdminMainLayout.class)
 @PageTitle("Session Details - AI Math Tutor")
-public class SessionDetailView extends VerticalLayout implements BeforeEnterObserver, HasUrlParameter<String> {
+public class SessionDetailView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionDetailView.class);
 
@@ -48,21 +51,14 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
     }
 
     @Override
-    public void setParameter(final BeforeEvent event, final String parameter) {
-        this.sessionId = parameter;
-    }
-
-    @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
             event.forwardTo("login");
             return;
         }
 
-        // Extract session ID from route parameter if not already set
-        if (this.sessionId == null) {
-            this.sessionId = event.getRouteParameters().get("sessionId").orElse(null);
-        }
+        // Extract session ID from route parameters
+        this.sessionId = event.getRouteParameters().get("sessionId").orElse(null);
 
         if (this.sessionId == null) {
             event.forwardTo(StudentSessionsView.class);

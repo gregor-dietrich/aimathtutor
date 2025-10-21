@@ -11,6 +11,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -23,8 +24,10 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Admin view for displaying all student sessions with filtering and detail options.
- * Shows session information including student, exercise, duration, and completion status.
+ * Admin view for displaying all student sessions with filtering and detail
+ * options.
+ * Shows session information including student, exercise, duration, and
+ * completion status.
  */
 @Route(value = "admin/sessions", layout = AdminMainLayout.class)
 @PageTitle("Student Sessions - AI Math Tutor")
@@ -82,7 +85,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Start Time")
                 .setFlexGrow(1);
 
-        this.grid.addColumn(session -> session.getFormattedDuration())
+        this.grid.addColumn((ValueProvider<StudentSessionViewDto, ?>) StudentSessionViewDto::getFormattedDuration)
                 .setHeader("Duration")
                 .setFlexGrow(0);
 
@@ -90,7 +93,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Actions")
                 .setFlexGrow(0);
 
-        this.grid.addColumn(session -> session.getSuccessRatePercentage())
+        this.grid.addColumn((ValueProvider<StudentSessionViewDto, ?>) StudentSessionViewDto::getSuccessRatePercentage)
                 .setHeader("Success Rate")
                 .setFlexGrow(1);
 
