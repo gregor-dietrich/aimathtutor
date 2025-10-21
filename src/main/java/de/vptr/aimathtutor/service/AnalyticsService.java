@@ -239,8 +239,9 @@ public class AnalyticsService {
         // Fetch all sessions in a single query
         final List<StudentSessionEntity> allSessions = StudentSessionEntity.listAll();
 
-        // Group sessions by user ID
+        // Group sessions by user ID (filter out sessions with null user to avoid NPE)
         final Map<Long, List<StudentSessionEntity>> sessionsByUser = allSessions.stream()
+                .filter(session -> session.user != null)
                 .collect(Collectors.groupingBy(session -> session.user.id));
 
         // Build progress summaries for each user
