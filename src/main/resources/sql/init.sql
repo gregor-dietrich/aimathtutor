@@ -41,8 +41,8 @@ INSERT INTO user_ranks (id, name, admin_view, exercise_add, exercise_delete, exe
 (2, 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
 (3, 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 
--- Set sequence to continue from 3
-SELECT setval('user_ranks_id_seq', 3);
+-- Set sequence to continue from 4 (next ID after 3)
+SELECT setval('user_ranks_id_seq', 3, false);
 
 -- --------------------------------------------------------
 
@@ -76,8 +76,8 @@ INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
 (3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, TRUE),
 (4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE);
 
--- Set sequence to continue from 5
-SELECT setval('users_id_seq', 4);
+-- Set sequence to continue from 5 (next ID after 4)
+SELECT setval('users_id_seq', 4, false);
 
 -- --------------------------------------------------------
 
@@ -101,8 +101,8 @@ INSERT INTO lessons (id, name, parent_id) VALUES
 (3, 'Quadratic Equations', 1),
 (4, 'Polynomials', 1);
 
--- Set sequence to continue from 5
-SELECT setval('lessons_id_seq', 4);
+-- Set sequence to continue from 5 (next ID after 4)
+SELECT setval('lessons_id_seq', 4, false);
 
 -- --------------------------------------------------------
 
@@ -152,8 +152,8 @@ INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commen
 VALUES
   (8, 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
 
--- Set exercises sequence to continue from 8
-SELECT setval('exercises_id_seq', 8);
+-- Set exercises sequence to continue from 9 (next ID after 8)
+SELECT setval('exercises_id_seq', 8, false);
 
 
 --
@@ -222,8 +222,8 @@ INSERT INTO user_groups (id, name) VALUES
 (4, 'Class 9A'),
 (5, 'Class 9B');
 
--- Set sequence to continue from 5
-SELECT setval('user_groups_id_seq', 5);
+-- Set sequence to continue from 6 (next ID after 5)
+SELECT setval('user_groups_id_seq', 5, false);
 
 -- --------------------------------------------------------
 
@@ -252,8 +252,8 @@ INSERT INTO user_groups_meta (id, user_id, group_id) VALUES
 (2, 3, 4),
 (3, 4, 4);
 
--- Set sequence to continue from 3
-SELECT setval('user_groups_meta_id_seq', 3);
+-- Set sequence to continue from 4 (next ID after 3)
+SELECT setval('user_groups_meta_id_seq', 3, false);
 
 -- --------------------------------------------------------
 
