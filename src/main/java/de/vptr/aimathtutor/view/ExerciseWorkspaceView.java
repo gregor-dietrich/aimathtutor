@@ -188,6 +188,23 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             header.add(badge);
         }
 
+        // Completion status indicator
+        if (Boolean.TRUE.equals(this.exercise.userCompleted)) {
+            final var completionInfo = new Paragraph();
+            completionInfo.getStyle()
+                    .set("color", "var(--lumo-success-color)")
+                    .set("font-weight", "500")
+                    .set("margin", "0.5rem 0 0 0");
+            final String pluralSuffix = this.exercise.userCompletionCount != null
+                    && this.exercise.userCompletionCount > 1
+                            ? "times"
+                            : "time";
+            completionInfo.setText("✓ You have completed this exercise "
+                    + (this.exercise.userCompletionCount != null ? this.exercise.userCompletionCount : 1)
+                    + " " + pluralSuffix);
+            header.add(completionInfo);
+        }
+
         // Hints section (below canvas or instructions)
         final var hintsHeader = new H4("Hints");
         this.hintsPanel = new VerticalLayout();
@@ -359,6 +376,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
         event.timestamp = LocalDateTime.now();
+        // By default, assume all student actions are correct (they're performing valid
+        // math operations)
+        // This can be enhanced with validation logic if needed
+        event.correct = true;
 
         // Add event to conversation context
         this.conversationContext.addAction(event);

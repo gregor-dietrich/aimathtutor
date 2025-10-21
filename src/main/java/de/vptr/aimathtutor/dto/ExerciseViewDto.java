@@ -19,6 +19,10 @@ public class ExerciseViewDto {
     public LocalDateTime lastEdit;
     public Long commentsCount;
 
+    // Completion tracking for current user
+    public Boolean userCompleted;
+    public Integer userCompletionCount;
+
     // Graspable Math fields
     public Boolean graspableEnabled;
     public String graspableInitialExpression;
