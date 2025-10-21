@@ -222,7 +222,7 @@ INSERT INTO user_groups (id, name) VALUES
 (4, 'Class 9A'),
 (5, 'Class 9B');
 
--- Set sequence to continue from 6 (next ID after 5)
+-- Set sequence to 5 so next value is 6
 SELECT setval('user_groups_id_seq', 5, false);
 
 -- --------------------------------------------------------
