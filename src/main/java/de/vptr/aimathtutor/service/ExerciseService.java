@@ -6,6 +6,9 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
@@ -20,6 +23,8 @@ import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 public class ExerciseService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     @Inject
     AuthService authService;
@@ -61,8 +66,9 @@ public class ExerciseService {
             dto.userCompletionCount = completedSessions.size();
 
         } catch (final Exception e) {
-            // If there's any error enriching the DTO, just leave completion data as null
-            // This ensures we don't break the exercise loading functionality
+            // Log the error but don't fail - this ensures we don't break the exercise
+            // loading functionality
+            log.error("Error enriching exercise DTO with completion data for exercise ID: " + dto.id, e);
         }
 
         return dto;
