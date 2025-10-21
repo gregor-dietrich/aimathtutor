@@ -41,8 +41,8 @@ INSERT INTO user_ranks (id, name, admin_view, exercise_add, exercise_delete, exe
 (2, 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
 (3, 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 
--- Set sequence to continue from 4
-SELECT setval('user_ranks_id_seq', 4);
+-- Set sequence to 3 so next value is 4 (using 'false' for is_called)
+SELECT setval('user_ranks_id_seq', 3, false);
 
 -- --------------------------------------------------------
 
@@ -76,8 +76,8 @@ INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
 (3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, TRUE),
 (4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE);
 
--- Set sequence to continue from 5
-SELECT setval('users_id_seq', 4);
+-- Set sequence to 4 so next value is 5
+SELECT setval('users_id_seq', 4, false);
 
 -- --------------------------------------------------------
 
@@ -90,6 +90,21 @@ CREATE TABLE lessons (
   name VARCHAR(255) NOT NULL,
   parent_id BIGINT DEFAULT NULL
 );
+
+-- --------------------------------------------------------
+
+-- Inserts for table `lessons`
+
+INSERT INTO lessons (id, name, parent_id) VALUES
+(1, 'Algebra', NULL),
+(2, 'Linear Equations', 1),
+(3, 'Quadratic Equations', 1),
+(4, 'Polynomials', 1);
+
+-- Set sequence to 4 so next value is 5
+SELECT setval('lessons_id_seq', 4, false);
+
+-- --------------------------------------------------------
 
 -- --------------------------------------------------------
 
@@ -120,6 +135,26 @@ CREATE TABLE exercises (
 CREATE INDEX exercises_content_fts ON exercises USING gin(to_tsvector('english', content));
 
 -- --------------------------------------------------------
+
+-- Seed exercises for lessons (graspable-enabled where appropriate)
+
+INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled, graspable_initial_expression, graspable_target_expression, graspable_difficulty, graspable_hints)
+VALUES
+  (1, 'Solve for x: simple linear', 'Solve the equation for x: 2x + 3 = 11', 2, 2, TRUE, TRUE, TRUE, '2*x + 3 = 11', 'x = 4', 'beginner', '["Isolate the term with x","Subtract 3 from both sides","Divide both sides by 2"]'),
+  (2, 'Two-step linear equation', 'Solve: 3(x - 2) = 9', 2, 2, TRUE, TRUE, TRUE, '3*(x - 2) = 9', 'x = 5', 'beginner', '["Divide both sides by 3","Then add 2 to both sides"]'),
+  (3, 'Linear equation with fractions', 'Solve: (1/2)x + 1 = 4', 2, 2, TRUE, TRUE, TRUE, '(1/2)*x + 1 = 4', 'x = 6', 'intermediate', '["Eliminate fractions by multiplying both sides","Isolate x"]'),
+  (4, 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'intermediate', '["Use distributive property","Combine like terms"]'),
+  (5, 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'intermediate', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]'),
+  (6, 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'advanced', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
+  (7, 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'advanced', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]');
+
+INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled)
+VALUES
+  (8, 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
+
+-- Set sequence to 8 so next value is 9
+SELECT setval('exercises_id_seq', 8, false);
+
 
 --
 -- Structure for table `comments` (can now reference users and exercises)
@@ -187,8 +222,8 @@ INSERT INTO user_groups (id, name) VALUES
 (4, 'Class 9A'),
 (5, 'Class 9B');
 
--- Set sequence to continue from 6
-SELECT setval('user_groups_id_seq', 5);
+-- Set sequence to 5 so next value is 6
+SELECT setval('user_groups_id_seq', 5, false);
 
 -- --------------------------------------------------------
 
@@ -217,8 +252,8 @@ INSERT INTO user_groups_meta (id, user_id, group_id) VALUES
 (2, 3, 4),
 (3, 4, 4);
 
--- Set sequence to continue from 4
-SELECT setval('user_groups_meta_id_seq', 3);
+-- Set sequence to 3 so next value is 4
+SELECT setval('user_groups_meta_id_seq', 3, false);
 
 -- --------------------------------------------------------
 

@@ -177,6 +177,14 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
         badgeLayout.setSpacing(true);
         badgeLayout.getStyle().set("flex-wrap", "wrap");
 
+        // Completed badge
+        if (Boolean.TRUE.equals(exercise.userCompleted)) {
+            final var completedBadge = new Span("✓ Completed");
+            completedBadge.getElement().getThemeList().add("badge");
+            completedBadge.getElement().getThemeList().add("success");
+            badgeLayout.add(completedBadge);
+        }
+
         // Graspable Math badge
         if (Boolean.TRUE.equals(exercise.graspableEnabled)) {
             final var gmBadge = new Span("📐 Interactive");

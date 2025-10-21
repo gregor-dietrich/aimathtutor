@@ -21,7 +21,6 @@ import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.view.admin.AdminHomeView;
 import jakarta.inject.Inject;
 
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
@@ -182,7 +181,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         final var userRank = this.userRankService.getCurrentUserRank();
         if (userRank != null && userRank.canAdminView()) {
             this.adminViewButton = new AdminViewButton(
-                    e -> this.getUI().ifPresent(ui -> ui.navigate(AdminHomeView.class)));
+                    e -> this.getUI().ifPresent(ui -> ui.navigate("admin/dashboard")));
         } else {
             this.adminViewButton = null;
         }

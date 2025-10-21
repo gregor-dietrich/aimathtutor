@@ -1,0 +1,3 @@
+*.ts linguist-vendored
+scripts/** linguist-vendored
+Makefile linguist-vendored

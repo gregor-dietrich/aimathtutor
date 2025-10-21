@@ -17,7 +17,7 @@ public class UserGroupEntity extends PanacheEntityBase {
     @NotBlank
     public String name;
 
-    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "group")
     public List<UserGroupMetaEntity> userGroupMetas;
 
     // Helper method to find group by name

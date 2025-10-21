@@ -58,11 +58,11 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "tutor_avatar_emoji", length = 10)
     public String tutorAvatarEmoji;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     @JsonIgnore
     public List<ExerciseEntity> exercises;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     @JsonIgnore
     public List<CommentEntity> comments;
 }

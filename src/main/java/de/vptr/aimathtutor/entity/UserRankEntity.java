@@ -83,7 +83,7 @@ public class UserRankEntity extends PanacheEntityBase {
     @Column(name = "user_rank_edit", columnDefinition = "TINYINT(1)")
     public Boolean userRankEdit = false;
 
-    @OneToMany(mappedBy = "rank", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "rank")
     @JsonIgnore
     public List<UserEntity> users;
 }
