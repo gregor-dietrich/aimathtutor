@@ -85,7 +85,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Start Time")
                 .setFlexGrow(1);
 
-        this.grid.addColumn((ValueProvider<StudentSessionViewDto, ?>) StudentSessionViewDto::getFormattedDuration)
+        this.grid.addColumn(StudentSessionViewDto::getFormattedDuration)
                 .setHeader("Duration")
                 .setFlexGrow(0);
 
