@@ -150,7 +150,7 @@ VALUES
 
 INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled)
 VALUES
-  (8, 'Standalone Exerecise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
+  (8, 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
 
 -- Set exercises sequence to continue from 8
 SELECT setval('exercises_id_seq', 8);
