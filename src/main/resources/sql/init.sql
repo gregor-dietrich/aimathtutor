@@ -101,7 +101,7 @@ INSERT INTO lessons (id, name, parent_id) VALUES
 (3, 'Quadratic Equations', 1),
 (4, 'Polynomials', 1);
 
--- Set sequence to continue from 5 (next ID after 4)
+-- Set sequence to 4 so next value is 5
 SELECT setval('lessons_id_seq', 4, false);
 
 -- --------------------------------------------------------
