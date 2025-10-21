@@ -93,7 +93,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Actions")
                 .setFlexGrow(0);
 
-        this.grid.addColumn((ValueProvider<StudentSessionViewDto, ?>) StudentSessionViewDto::getSuccessRatePercentage)
+        this.grid.addColumn(StudentSessionViewDto::getSuccessRatePercentage)
                 .setHeader("Success Rate")
                 .setFlexGrow(1);
 
