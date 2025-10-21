@@ -41,7 +41,7 @@ INSERT INTO user_ranks (id, name, admin_view, exercise_add, exercise_delete, exe
 (2, 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
 (3, 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 
--- Set sequence to continue from 4 (next ID after 3)
+-- Set sequence to 3 so next value is 4 (using 'false' for is_called)
 SELECT setval('user_ranks_id_seq', 3, false);
 
 -- --------------------------------------------------------
