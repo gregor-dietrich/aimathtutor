@@ -157,7 +157,7 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
     }
 
     private void updateSessionInfo() {
-        if (this.session == null) {
+        if (this.session == null || this.sessionInfoLayout == null) {
             return;
         }
 
