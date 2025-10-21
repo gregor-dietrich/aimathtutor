@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -36,6 +38,9 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
     @Inject
     AnalyticsService analyticsService;
 
+    // Map to store references to stat card value spans for efficient updates
+    private final Map<String, Span> statCardValues = new HashMap<>();
+
     public AdminDashboardView() {
         this.setSizeFull();
         this.setPadding(true);
@@ -55,6 +60,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
     private void buildUI() {
         this.removeAll();
+        this.statCardValues.clear();
 
         // Title
         final var title = new H2("Dashboard Overview");
@@ -123,30 +129,18 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
                 .set("font-weight", "700")
                 .set("color", "var(--lumo-primary-text-color)");
 
+        // Store reference to value label for efficient updates
+        this.statCardValues.put(title, valueLabel);
+
         card.add(titleLabel, valueLabel);
         return card;
     }
 
     private void updateStatCard(final String title, final String value) {
-        // Find and update the card with the matching title
-        this.getChildren()
-                .flatMap(c -> {
-                    if (c instanceof HorizontalLayout) {
-                        return ((HorizontalLayout) c).getChildren();
-                    }
-                    return java.util.stream.Stream.empty();
-                })
-                .filter(VerticalLayout.class::isInstance)
-                .map(c -> (VerticalLayout) c)
-                .forEach(card -> {
-                    final var children = card.getChildren().toList();
-                    if (children.size() >= 2 && children.get(0) instanceof Span) {
-                        final var titleSpan = (Span) children.get(0);
-                        if (title.equals(titleSpan.getText())) {
-                            final var valueSpan = (Span) children.get(1);
-                            valueSpan.setText(value);
-                        }
-                    }
-                });
+        // Direct lookup in map for O(1) access instead of tree traversal
+        final var valueLabel = this.statCardValues.get(title);
+        if (valueLabel != null) {
+            valueLabel.setText(value);
+        }
     }
 }
