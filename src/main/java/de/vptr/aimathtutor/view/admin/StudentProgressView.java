@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -23,7 +23,8 @@ import jakarta.inject.Inject;
 
 /**
  * Admin view for displaying student progress summaries.
- * Shows aggregate statistics for all students including completion rates, success rates, and activity.
+ * Shows aggregate statistics for all students including completion rates,
+ * success rates, and activity.
  */
 @Route(value = "admin/progress", layout = AdminMainLayout.class)
 @PageTitle("Student Progress - AI Math Tutor")
@@ -81,7 +82,8 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Completed")
                 .setFlexGrow(0);
 
-        this.grid.addColumn(progress -> progress.getCompletionRatePercentage())
+        this.grid.addColumn(
+                (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getCompletionRatePercentage)
                 .setHeader("Completion Rate")
                 .setFlexGrow(1);
 
@@ -89,7 +91,8 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Total Problems")
                 .setFlexGrow(0);
 
-        this.grid.addColumn(progress -> progress.getSuccessRatePercentage())
+        this.grid.addColumn(
+                (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getSuccessRatePercentage)
                 .setHeader("Success Rate")
                 .setFlexGrow(1);
 
@@ -97,7 +100,8 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Hints Used")
                 .setFlexGrow(0);
 
-        this.grid.addColumn(progress -> progress.getFormattedAverageActions())
+        this.grid.addColumn(
+                (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getFormattedAverageActions)
                 .setHeader("Avg Actions/Problem")
                 .setFlexGrow(1);
 
@@ -109,19 +113,23 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
     }
 
     private void loadProgressData() {
-        CompletableFuture.runAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
             try {
-                final List<StudentProgressSummaryDto> progressData = this.analyticsService
-                        .getAllUsersProgressSummary();
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    this.grid.setItems(progressData);
-                }));
+                return this.analyticsService.getAllUsersProgressSummary();
             } catch (final Exception e) {
                 LOG.error("Error loading progress data", e);
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    NotificationUtil.showError("Failed to load progress data");
-                }));
+                throw new RuntimeException("Failed to load progress data", e);
             }
+        }).whenComplete((progressData, throwable) -> {
+            this.getUI().ifPresent(ui -> ui.access(() -> {
+                if (throwable != null) {
+                    LOG.error("Error loading progress data: {}", throwable.getMessage(), throwable);
+                    NotificationUtil.showError("Failed to load progress data");
+                } else {
+                    this.grid.setItems(progressData);
+                    this.grid.getDataProvider().refreshAll();
+                }
+            }));
         });
     }
 }
