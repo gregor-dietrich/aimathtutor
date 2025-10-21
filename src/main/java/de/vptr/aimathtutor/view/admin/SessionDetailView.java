@@ -43,6 +43,8 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
 
     private String sessionId;
     private StudentSessionViewDto session;
+    private VerticalLayout sessionInfoLayout;
+    private Grid<AIInteractionViewDto> interactionsGrid;
 
     public SessionDetailView() {
         this.setSizeFull();
@@ -84,45 +86,45 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         this.add(title);
 
         // Placeholder for session info
-        final var sessionInfoLayout = new VerticalLayout();
-        sessionInfoLayout.setPadding(true);
-        sessionInfoLayout.setSpacing(true);
-        sessionInfoLayout.getStyle()
+        this.sessionInfoLayout = new VerticalLayout();
+        this.sessionInfoLayout.setPadding(true);
+        this.sessionInfoLayout.setSpacing(true);
+        this.sessionInfoLayout.getStyle()
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("border-radius", "4px")
                 .set("background-color", "var(--lumo-contrast-5pct)");
 
-        sessionInfoLayout.add(new Paragraph("Loading session information..."));
-        this.add(sessionInfoLayout);
+        this.sessionInfoLayout.add(new Paragraph("Loading session information..."));
+        this.add(this.sessionInfoLayout);
 
         // Interactions grid
         final var interactionsTitle = new H2("Interactions & Feedback");
         this.add(interactionsTitle);
 
-        final var interactionsGrid = new Grid<>(AIInteractionViewDto.class, false);
-        interactionsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
-        interactionsGrid.setSizeFull();
-        interactionsGrid.setHeight("400px");
+        this.interactionsGrid = new Grid<>(AIInteractionViewDto.class, false);
+        this.interactionsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.interactionsGrid.setSizeFull();
+        this.interactionsGrid.setHeight("400px");
 
         // Configure columns
-        interactionsGrid.addColumn(interaction -> interaction.timestamp)
+        this.interactionsGrid.addColumn(interaction -> interaction.timestamp)
                 .setHeader("Time")
                 .setFlexGrow(1);
 
-        interactionsGrid.addColumn(interaction -> interaction.eventType)
+        this.interactionsGrid.addColumn(interaction -> interaction.eventType)
                 .setHeader("Event Type")
                 .setFlexGrow(1);
 
-        interactionsGrid.addColumn(interaction -> interaction.feedbackType)
+        this.interactionsGrid.addColumn(interaction -> interaction.feedbackType)
                 .setHeader("Feedback Type")
                 .setFlexGrow(1);
 
-        interactionsGrid
+        this.interactionsGrid
                 .addColumn(interaction -> interaction.feedbackMessage != null ? interaction.feedbackMessage : "")
                 .setHeader("Feedback")
                 .setFlexGrow(2);
 
-        this.add(interactionsGrid);
+        this.add(this.interactionsGrid);
     }
 
     private void loadSessionDetails() {
@@ -159,16 +161,9 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        // Find and update the session info layout
-        final var sessionInfoLayout = new VerticalLayout();
-        sessionInfoLayout.setPadding(true);
-        sessionInfoLayout.setSpacing(true);
-        sessionInfoLayout.getStyle()
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("border-radius", "4px")
-                .set("background-color", "var(--lumo-contrast-5pct)");
-
-        sessionInfoLayout.add(
+        // Clear existing content and populate with session data
+        this.sessionInfoLayout.removeAll();
+        this.sessionInfoLayout.add(
                 new Paragraph("Session ID: " + this.session.sessionId),
                 new Paragraph("Student: " + this.session.username),
                 new Paragraph("Exercise: " + this.session.exerciseTitle),
@@ -183,23 +178,12 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
                 new Paragraph(
                         "Final Expression: "
                                 + (this.session.finalExpression != null ? this.session.finalExpression : "N/A")));
-
-        // Replace the first session info layout (skip back button and title)
-        final var children = this.getChildren().toList();
-        if (children.size() > 2 && children.get(2) instanceof VerticalLayout) {
-            this.replace(children.get(2), sessionInfoLayout);
-        }
     }
 
     private void updateInteractionsGrid(final List<AIInteractionViewDto> interactions) {
-        // Find and update the interactions grid
-        this.getChildren()
-                .filter(Grid.class::isInstance)
-                .findFirst()
-                .ifPresent(c -> {
-                    @SuppressWarnings("unchecked")
-                    final var grid = (Grid<AIInteractionViewDto>) c;
-                    grid.setItems(interactions);
-                });
+        // Direct update using stored grid reference
+        if (this.interactionsGrid != null) {
+            this.interactionsGrid.setItems(interactions);
+        }
     }
 }
