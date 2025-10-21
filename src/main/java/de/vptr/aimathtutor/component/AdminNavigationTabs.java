@@ -12,7 +12,6 @@ public class AdminNavigationTabs extends Tabs {
     public AdminNavigationTabs(final UserRankViewDto userRank) {
         this.setOrientation(Orientation.VERTICAL);
         this.setWidthFull();
-        this.add(new Tab(new RouterLink("Home", AdminHomeView.class)));
 
         if (userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission()) {
             this.add(new Tab(new RouterLink("Dashboard", AdminDashboardView.class)));
