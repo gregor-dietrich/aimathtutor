@@ -11,6 +11,7 @@ ${MVN_CMD} clean
 
 rm -rf logs
 rm -rf node_modules
+rm -rf src/main/frontend/generated
 rm -rf target
 
 cd - > /dev/null
