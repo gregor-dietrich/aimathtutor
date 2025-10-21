@@ -6,21 +6,27 @@
 
 ### Suggested Order (Easiest to Hardest)
 
-1. **Multiple Problems Per Exercise** (Task 2)
+1. **Layout and other visual enhancements** (Task 3)
+
+2. **Unable to create log file** (Task 1)
+
+3. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-2. **Graspable Math Action Validation (isValidAction)** (Task 7)
+4. **Graspable Math Action Validation (isValidAction)** (Task 7)
    *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
-3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+5. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-4. **Gamification** (Task 6)
+6. **Gamification** (Task 6)
    *Very Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
 
 **Difficulty Ratings:**
 
+- Task 1: ★★☆☆☆
 - Task 2: ★★★☆☆
+- Task 3: ★☆☆☆☆
 - Task 5: ★★★★☆
 - Task 6: ★★★★☆
 - Task 7: ★★★★★
@@ -33,6 +39,34 @@
 - [ ] Edge cases (empty data, invalid input, etc.)
 - [ ] Permission/security checks
 - [ ] Performance with large datasets (admin views)
+
+---
+
+## 1. Unable to create log file
+
+```log
+LogManager error of type OPEN_FAILURE: Failed to set log file
+java.io.FileNotFoundException: logs/aimathtutor.log (Permission denied)
+        at java.base/java.io.FileOutputStream.open0(Native Method)
+        at java.base/java.io.FileOutputStream.open(Unknown Source)
+        at java.base/java.io.FileOutputStream.<init>(Unknown Source)
+        at org.jboss.logmanager.handlers.FileHandler.setFile(FileHandler.java:155)
+        at org.jboss.logmanager.handlers.SizeRotatingFileHandler.setFileInternal(SizeRotatingFileHandler.java:288)
+        at org.jboss.logmanager.handlers.SizeRotatingFileHandler.setFile(SizeRotatingFileHandler.java:158)
+        at io.quarkus.runtime.logging.LoggingSetupRecorder.configureFileHandler(LoggingSetupRecorder.java:702)
+        at io.quarkus.runtime.logging.LoggingSetupRecorder.initializeLogging(LoggingSetupRecorder.java:215)
+        at io.quarkus.runner.recorded.LoggingResourceProcessor$setupLoggingRuntimeInit1072790680.deploy_0(Unknown Source)
+        at io.quarkus.runner.recorded.LoggingResourceProcessor$setupLoggingRuntimeInit1072790680.deploy(Unknown Source)
+        at io.quarkus.runner.ApplicationImpl.doStart(Unknown Source)
+        at io.quarkus.runtime.Application.start(Application.java:101)
+        at io.quarkus.runtime.ApplicationLifecycleManager.run(ApplicationLifecycleManager.java:119)
+        at io.quarkus.runtime.Quarkus.run(Quarkus.java:80)
+        at io.quarkus.runtime.Quarkus.run(Quarkus.java:51)
+        at io.quarkus.runtime.Quarkus.run(Quarkus.java:144)
+        at io.quarkus.runner.GeneratedMain.main(Unknown Source)
+        at io.quarkus.bootstrap.runner.QuarkusEntryPoint.doRun(QuarkusEntryPoint.java:69)
+        at io.quarkus.bootstrap.runner.QuarkusEntryPoint.main(QuarkusEntryPoint.java:37)
+```
 
 ---
 
@@ -88,6 +122,12 @@
 4. **Admin/Teacher View**
    - Exercise creation form: Add help text explaining semicolon-separated format
    - Example: "2x+5=15;3x-7=20" → Two problems in sequence
+
+---
+
+## 3. Layout and other visual enhancements
+
+- TBD
 
 ---
 
