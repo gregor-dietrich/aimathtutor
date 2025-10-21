@@ -152,7 +152,7 @@ INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commen
 VALUES
   (8, 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
 
--- Set exercises sequence to continue from 9 (next ID after 8)
+-- Set sequence to 8 so next value is 9
 SELECT setval('exercises_id_seq', 8, false);
 
 
