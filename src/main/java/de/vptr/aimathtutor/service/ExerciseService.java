@@ -51,11 +51,8 @@ public class ExerciseService {
                 return dto;
             }
 
-            // Get all completed sessions for this user on this exercise
-            final var sessions = this.analyticsService.getSessionsByExercise(dto.id);
-            final var userSessions = sessions.stream()
-                    .filter(s -> currentUserId.equals(s.userId))
-                    .toList();
+            // Get completed sessions for this user on this exercise (single query)
+            final var userSessions = this.analyticsService.getSessionsByUserAndExercise(currentUserId, dto.id);
 
             // Check if any session was completed
             final var completedSessions = userSessions.stream()
