@@ -76,7 +76,7 @@ INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
 (3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, TRUE),
 (4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE);
 
--- Set sequence to continue from 5 (next ID after 4)
+-- Set sequence to 4 so next value is 5
 SELECT setval('users_id_seq', 4, false);
 
 -- --------------------------------------------------------
