@@ -9,6 +9,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -71,8 +72,16 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(session -> session.username)
-                .setHeader("Student")
+        // Make the username column clickable like a hyperlink
+        this.grid.addComponentColumn(session -> {
+            final var usernameSpan = new Span(session.username);
+            usernameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            usernameSpan.getStyle().set("cursor", "pointer");
+            usernameSpan.getStyle().set("width", "100%");
+            usernameSpan.getStyle().set("display", "block");
+            usernameSpan.addClickListener(e -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
+            return usernameSpan;
+        }).setHeader("Student")
                 .setFlexGrow(1);
 
         this.grid.addColumn(session -> session.exerciseTitle)
@@ -102,14 +111,6 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
         this.grid.addColumn(session -> session.completed ? "✓" : "✗")
                 .setHeader("Completed")
                 .setFlexGrow(0);
-
-        // Add click listener to view session details
-        this.grid.asSingleSelect().addValueChangeListener(event -> {
-            final var selectedSession = event.getValue();
-            if (selectedSession != null) {
-                UI.getCurrent().navigate("admin/session/" + selectedSession.sessionId);
-            }
-        });
 
         this.add(this.grid);
     }
