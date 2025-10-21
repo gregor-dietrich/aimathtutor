@@ -1,8 +1,10 @@
 #!/bin/bash
 
+. "$(dirname "$0")"/lib/get_dir.sh
+
 set -e
 
-cd "$(dirname "$0")"/../..
+cd "$DIR/../.."
 
 git fetch
 

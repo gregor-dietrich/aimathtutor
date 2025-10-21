@@ -1,10 +1,14 @@
 #!/bin/bash
 
+. "$(dirname "$0")"/lib/get_dir.sh
+. "$DIR/lib/get_maven.sh"
+
 set -e
 
-cd "$(dirname "$0")"/../..
+cd "$DIR/../.."
+
 make check
 make clean
-./mvnw clean install -DskipTests
+${MVN_CMD} clean install -DskipTests
 
 cd - > /dev/null

@@ -21,10 +21,10 @@ public class LessonEntity extends PanacheEntityBase {
     @JoinColumn(name = "parent_id")
     public LessonEntity parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "parent")
     public List<LessonEntity> children;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "lesson")
     public List<ExerciseEntity> exercises;
 
     // Helper method to check if this is a root lesson

@@ -6,12 +6,16 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
@@ -19,6 +23,53 @@ import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 public class ExerciseService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
+
+    @Inject
+    AuthService authService;
+
+    @Inject
+    AnalyticsService analyticsService;
+
+    /**
+     * Enriches an ExerciseViewDto with completion data for the current user.
+     * If the user is not authenticated, completion fields remain null.
+     * 
+     * @param dto The exercise DTO to enrich
+     * @return The enriched DTO
+     */
+    private ExerciseViewDto enrichWithCompletionData(final ExerciseViewDto dto) {
+        if (dto == null) {
+            return dto;
+        }
+
+        try {
+            final Long currentUserId = this.authService.getUserId();
+            if (currentUserId == null) {
+                // User not authenticated, leave completion data as null
+                return dto;
+            }
+
+            // Get completed sessions for this user on this exercise (single query)
+            final var userSessions = this.analyticsService.getSessionsByUserAndExercise(currentUserId, dto.id);
+
+            // Check if any session was completed
+            final var completedSessions = userSessions.stream()
+                    .filter(s -> Boolean.TRUE.equals(s.completed))
+                    .toList();
+
+            dto.userCompleted = !completedSessions.isEmpty();
+            dto.userCompletionCount = completedSessions.size();
+
+        } catch (final Exception e) {
+            // Log the error but don't fail - this ensures we don't break the exercise
+            // loading functionality
+            log.error("Error enriching exercise DTO with completion data for exercise ID: " + dto.id, e);
+        }
+
+        return dto;
+    }
 
     public List<ExerciseViewDto> getAllExercises() {
         return ExerciseEntity.find("ORDER BY created DESC").list().stream()
@@ -28,12 +79,12 @@ public class ExerciseService {
 
     public Optional<ExerciseViewDto> findById(final Long id) {
         return ExerciseEntity.findByIdOptional(id)
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity));
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)));
     }
 
     public List<ExerciseViewDto> findPublishedExercises() {
         return ExerciseEntity.find("published = true ORDER BY created DESC").list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
                 .toList();
     }
 
@@ -45,7 +96,7 @@ public class ExerciseService {
 
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
         return ExerciseEntity.find("lesson.id = ?1 ORDER BY created DESC", lessonId).list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
                 .toList();
     }
 

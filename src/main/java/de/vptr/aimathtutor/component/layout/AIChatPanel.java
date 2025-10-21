@@ -75,7 +75,7 @@ public class AIChatPanel extends VerticalLayout {
                 .set("flex-direction", "column")
                 .set("position", "sticky")
                 .set("top", "0")
-                .set("max-height", "calc(100vh - 100px)") // Subtract approximate header height
+                .set("height", "calc(100vh - 100px)") // Subtract approximate header height
                 .set("overflow", "hidden"); // Prevent the panel itself from scrolling
 
         // Chat header
@@ -176,7 +176,7 @@ public class AIChatPanel extends VerticalLayout {
             messageDiv.getStyle()
                     .set("padding", "var(--lumo-space-s)")
                     .set("border-radius", "var(--lumo-border-radius-l)")
-                    .set("max-width", "70%")
+                    .set("max-width", "80%")
                     .set("word-wrap", "break-word");
 
             final var messagePara = new Paragraph(message.message);

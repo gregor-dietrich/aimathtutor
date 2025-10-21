@@ -1,5 +1,8 @@
 #!/bin/bash
 
+. "$(dirname "$0")"/lib/get_dir.sh
+. "$DIR/lib/get_maven.sh"
+
 TAG="gregordietrich/aimathtutor:1.0.0-SNAPSHOT"
 DOCKERFILE="src/main/docker/Dockerfile.jvm"
 PLATFORMS="linux/amd64,linux/arm64"
@@ -38,15 +41,15 @@ prompt_yes_no() {
 
 set -e
 
-cd "$(dirname "$0")"/../..
+cd "$DIR/../.."
 
-if prompt_yes_no "Do you want to run tests?" n; then
+if prompt_yes_no "Do you want to run tests" n; then
 	make test
 else
 	make install
 fi
 
-./mvnw package -DskipTests -Pproduction
+${MVN_CMD} package -DskipTests -Pproduction
 
 # Try to use buildx with the 'default' builder which typically uses the local docker driver
 # This avoids starting a docker-container builder that may reference Docker Desktop/WSL bind mounts

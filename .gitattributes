@@ -1,0 +1,4 @@
+*.ts linguist-vendored
+src/main/frontend/** linguist-vendored
+scripts/** linguist-vendored
+Makefile linguist-vendored

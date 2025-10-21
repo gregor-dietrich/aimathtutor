@@ -6,24 +6,24 @@
 
 ### Suggested Order (Easiest to Hardest)
 
-1. **Admin Views for Progress Tracking** (Task 3)
-   *Very Complex*: Multiple new views, analytics, charts, security checks, and extensive backend/frontend integration.
-
-2. **Multiple Problems Per Exercise** (Task 2)
+1. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
+
+2. **Graspable Math Action Validation (isValidAction)** (Task 7)
+   *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
 3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
 4. **Gamification** (Task 6)
-   *Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
+   *Very Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
 
 **Difficulty Ratings:**
 
 - Task 2: ★★★☆☆
-- Task 3: ★★★★★
 - Task 5: ★★★★☆
 - Task 6: ★★★★☆
+- Task 7: ★★★★★
 
 ### Testing Checklist (for each feature)
 
@@ -88,86 +88,6 @@
 4. **Admin/Teacher View**
    - Exercise creation form: Add help text explaining semicolon-separated format
    - Example: "2x+5=15;3x-7=20" → Two problems in sequence
-
----
-
-## 3. Admin Views for Progress Tracking
-
-**Goal:** Create admin-only views to monitor student sessions, AI interactions, and overall progress.
-
-**Implementation Plan:**
-
-### 3.1 Backend Changes
-
-1. **New Service:** `AnalyticsService.java` (@ApplicationScoped)
-   - `List<StudentSessionViewDto> getAllSessions()`
-   - `List<StudentSessionViewDto> getSessionsByUser(Long userId)`
-   - `List<StudentSessionViewDto> getSessionsByExercise(Long exerciseId)`
-   - `List<AIInteractionViewDto> getAIInteractionsBySession(String sessionId)`
-   - `StudentProgressSummaryDto getUserProgressSummary(Long userId)`
-   - `Map<String, Integer> getProblemCategoryStats()` (how many problems solved per category)
-
-2. **New DTOs:**
-   - `StudentSessionViewDto` (expand existing with user/exercise names)
-   - `AIInteractionViewDto` (event type, feedback given, timestamp)
-   - `StudentProgressSummaryDto`:
-     - `Long userId`, `String username`
-     - `int totalSessions`, `int completedSessions`
-     - `int totalProblems`, `int completedProblems`
-     - `int hintsUsed`, `int averageActionsPerProblem`
-     - `LocalDateTime lastActivity`
-
-3. **Entity Enhancement:**
-   - Ensure `AIInteractionEntity` has all needed fields:
-     - `sessionId`, `eventType`, `feedbackMessage`, `timestamp`
-
-### 3.2 Frontend Changes
-
-1. **New View:** `AdminDashboardView.java` (@Route "admin/dashboard")
-   - Check user rank permissions (`rank.adminView == true`)
-   - Display overview cards:
-     - Total sessions today/week/month
-     - Active students
-     - Most attempted exercises
-   - Charts/graphs (use Vaadin Charts if available, or simple tables)
-
-2. **New View:** `StudentSessionsView.java` (@Route "admin/sessions")
-   - Grid displaying all sessions with filters:
-     - Columns: Student, Exercise, Start Time, Duration, Completed, Hints Used, Actions
-     - Filter by: Student (dropdown), Exercise (dropdown), Date range, Completion status
-   - Click row → Navigate to detailed session view
-
-3. **New View:** `SessionDetailView.java` (@Route "admin/session/:sessionId")
-   - Display complete session timeline:
-     - Each action taken (expression before/after)
-     - AI feedback given for each action
-     - Hints revealed
-     - Time spent on each step
-   - Reconstruct the student's problem-solving path
-   - Show final outcome (completed/abandoned)
-
-4. **New View:** `StudentProgressView.java` (@Route "admin/progress")
-   - Grid of all students with summary statistics
-   - Columns: Username, Sessions, Completed, Success Rate, Last Activity
-   - Click row → Detailed student profile with:
-     - Session history
-     - Strengths/weaknesses analysis (based on problem categories)
-     - Time trends (improving/struggling)
-
-5. **Navigation:**
-   - Add "Admin" tab to MainLayout navigation bar (visible only if `rank.adminView == true`)
-   - Submenu: Dashboard, Sessions, Student Progress
-
-### 3.3 Security
-
-- Add checks in `beforeEnter()` for all admin views:
-
-  ```java
-  if (!authService.hasAdminView()) {
-      event.rerouteTo(HomeView.class);
-      NotificationUtil.showError("Access denied");
-  }
-  ```
 
 ---
 
@@ -332,3 +252,54 @@ Keep rules configurable via `AdminGamificationView`.
 ---
 
 Update task statuses in project tracking and prepare follow-up issues for implementation.
+
+## 7. Graspable Math Action Validation (isValidAction)
+
+Goal: Implement server-side validation of student math actions coming from the Graspable Math workspace so that session metrics (correctActions, success rate) reflect true mathematical correctness rather than relying solely on the frontend or marking every action as correct.
+
+Why this is separate: The repository currently sets `event.correct = true` for all math actions in `ExerciseWorkspaceView`. The quick note in `ISSUES.md` explains that adding a robust `isValidAction(before, after)` is non-trivial and was deferred. This TODO captures a concrete plan to implement it as a discrete task.
+
+Priority: Medium — important for analytics accuracy but non-trivial and requires careful selection of a math parsing/normalization approach.
+
+Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressions reliably is tricky)
+
+Implementation plan:
+
+- Backend changes (core):
+   1. Add a new method to `GraspableMathService`:
+       - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
+       - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
+   2. Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
+       - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
+       - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
+   3. If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
+   4. Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+
+- Backend changes (data/metrics):
+   1. Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
+   2. Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or roll-out mode (log only).
+
+- Tests:
+   1. Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
+   2. Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
+   3. End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+
+- Migration/compatibility notes:
+   1. If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
+   2. Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+
+- Rollout suggestion:
+   1. Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
+   2. Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
+   3. Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+
+Owner: Backend team / person familiar with symbolic math libraries
+
+Deliverables:
+
+- `GraspableMathService.isValidAction()` implementation
+- `MathExpressionComparator` (or adapter) with unit tests
+- Updated `ExerciseWorkspaceView.onMathAction(...)` usage and tests
+- Admin toggle or config for validation policy
+
+Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement MVP heuristics, and create tests. If a full CAS integration is required, add time for design and vetting (additional 1-2 weeks).

@@ -43,7 +43,7 @@ public class ExerciseEntity extends PanacheEntityBase {
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "exercise")
     @JsonIgnore
     public List<CommentEntity> comments;
 

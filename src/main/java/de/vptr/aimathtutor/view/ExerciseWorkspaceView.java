@@ -188,6 +188,23 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             header.add(badge);
         }
 
+        // Completion status indicator
+        if (Boolean.TRUE.equals(this.exercise.userCompleted)) {
+            final var completionInfo = new Paragraph();
+            completionInfo.getStyle()
+                    .set("color", "var(--lumo-success-color)")
+                    .set("font-weight", "500")
+                    .set("margin", "0.5rem 0 0 0");
+            final String pluralSuffix = this.exercise.userCompletionCount != null
+                    && this.exercise.userCompletionCount > 1
+                            ? "times"
+                            : "time";
+            completionInfo.setText("✓ You have completed this exercise "
+                    + (this.exercise.userCompletionCount != null ? this.exercise.userCompletionCount : 1)
+                    + " " + pluralSuffix);
+            header.add(completionInfo);
+        }
+
         // Hints section (below canvas or instructions)
         final var hintsHeader = new H4("Hints");
         this.hintsPanel = new VerticalLayout();
@@ -213,7 +230,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.graspableCanvas.setId("graspable-canvas"); // Fixed ID expected by JavaScript
             this.graspableCanvas.getStyle()
                     .set("width", "100%")
-                    .set("height", "80vh")
+                    .set("height", "77vh")
                     .set("border", "1px solid var(--lumo-contrast-20pct)")
                     .set("border-radius", "var(--lumo-border-radius-m)")
                     .set("background-color", "var(--lumo-base-color)")
@@ -359,6 +376,15 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
         event.timestamp = LocalDateTime.now();
+        // By default, assume all student actions are correct (they're performing valid
+        // math operations)
+        // TODO: Implement validation logic to determine if the action is correct.
+        // The current design correctly handles completion checking via
+        // `checkCompletion()` which compares against the target expression.
+        // Without a robust math validation library, setting `event.correct = true`
+        // for valid math operations (which Graspable Math already validates on the
+        // frontend) is a reasonable interim approach
+        event.correct = true;
 
         // Add event to conversation context
         this.conversationContext.addAction(event);

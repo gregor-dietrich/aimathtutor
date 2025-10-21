@@ -1,18 +1,23 @@
-.PHONY: help branch build check clean dev install kill rebase release tag test untag
+.PHONY: help branch build check clean dev install kill password rebase release tag test untag
+
+MAKEFLAGS += --no-print-directory
+
 help:
 	@echo "AIMathTutor - Available commands:"
 	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
 	@echo "  make build            - build the JVM Docker image (runs tests/install and Maven package, uses docker buildx)"
-	@echo "  make check            - verify local environment (JDK >=21 and Maven >=3.9.8)"
+	@echo "  make check            - verify local environment (JDK >=21 and Maven >=3.9.9)"
 	@echo "  make clean            - run 'mvnw clean' and remove build artifacts (logs, node_modules, target)"
 	@echo "  make dev              - install deps and start Quarkus in dev mode (runs 'mvnw quarkus:dev')"
 	@echo "  make install          - run checks, clean, and perform 'mvnw clean install' (skips tests)"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
+	@echo "  make password         - generate a salt+hash for a password, suitable for init.sql."
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
 	@echo "  make release          - build and push the Docker image tag to the registry"
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
 	@echo "  make test             - run install then execute the Maven test suite"
 	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
+
 branch:
 	@scripts/sh/branch.sh
  
@@ -33,6 +38,9 @@ install:
  
 kill:
 	@scripts/sh/kill.sh
+
+password:
+	@scripts/sh/password.sh
  
 rebase:
 	@scripts/sh/rebase.sh
