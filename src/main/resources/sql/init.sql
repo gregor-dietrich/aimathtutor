@@ -252,7 +252,7 @@ INSERT INTO user_groups_meta (id, user_id, group_id) VALUES
 (2, 3, 4),
 (3, 4, 4);
 
--- Set sequence to continue from 4 (next ID after 3)
+-- Set sequence to 3 so next value is 4
 SELECT setval('user_groups_meta_id_seq', 3, false);
 
 -- --------------------------------------------------------
