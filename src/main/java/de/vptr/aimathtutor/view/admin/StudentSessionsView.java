@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -116,18 +115,23 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
     }
 
     private void loadSessions() {
-        CompletableFuture.runAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
             try {
-                final List<StudentSessionViewDto> sessions = this.analyticsService.getAllSessions();
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    this.grid.setItems(sessions);
-                }));
+                return this.analyticsService.getAllSessions();
             } catch (final Exception e) {
                 LOG.error("Error loading sessions", e);
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    NotificationUtil.showError("Failed to load sessions");
-                }));
+                throw new RuntimeException("Failed to load sessions", e);
             }
+        }).whenComplete((sessions, throwable) -> {
+            this.getUI().ifPresent(ui -> ui.access(() -> {
+                if (throwable != null) {
+                    LOG.error("Error loading sessions: {}", throwable.getMessage(), throwable);
+                    NotificationUtil.showError("Failed to load sessions");
+                } else {
+                    this.grid.setItems(sessions);
+                    this.grid.getDataProvider().refreshAll();
+                }
+            }));
         });
     }
 }
