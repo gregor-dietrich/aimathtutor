@@ -378,7 +378,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         event.timestamp = LocalDateTime.now();
         // By default, assume all student actions are correct (they're performing valid
         // math operations)
-        // This can be enhanced with validation logic if needed
+        // TODO: Implement validation logic to determine if the action is correct. See issue #123
         event.correct = true;
 
         // Add event to conversation context
