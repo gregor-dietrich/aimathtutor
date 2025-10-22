@@ -840,8 +840,9 @@ public class AITutorService {
             studentQuestionRecord.feedbackType = "QUESTION";
             studentQuestionRecord.studentMessage = studentQuestion;
 
+            UserEntity user = null;
             if (userId != null) {
-                final UserEntity user = UserEntity.findById(userId);
+                user = UserEntity.findById(userId);
                 if (user == null) {
                     LOG.warn("User not found for logging question interaction: userId={}", userId);
                 } else {
@@ -871,7 +872,7 @@ public class AITutorService {
             aiAnswerRecord.feedbackMessage = aiAnswer;
 
             if (userId != null) {
-                final UserEntity user = UserEntity.findById(userId);
+                user = UserEntity.findById(userId);
                 if (user == null) {
                     LOG.warn("User not found for logging AI answer: userId={}", userId);
                 } else {
