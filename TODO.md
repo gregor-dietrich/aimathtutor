@@ -143,7 +143,7 @@ The Interactions & Feedback section of the SessionDetailsView only shows the gen
 
 ### 4.1 StudentProgressView
 
-Completion Rate and Success Rate seem to be the same thing. This needs to be verified, and if true, the latter should be removed.
+Completion Rate and Success Rate seem to be the same thing. This needs to be verified, and if true, the latter should be removed. Also, add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
 
 ### 4.2 Exercises fields
 
@@ -156,6 +156,10 @@ Timestamps aren't formatted properly right now, which is a problem across most v
 ### 4.4 Column Widths in Admin View grids
 
 The min-width for most if not all grids across most admin views needs to be adjusted, especially for timestamps.
+
+### 4.5 StudentSessionsView
+
+Add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
 
 ---
 
