@@ -4,27 +4,26 @@
 
 ### Implementation Priority
 
-1. **Missing Tutor Interactions** (Task 3)
+1. **Miscellaneous Fixes** (Task 4.1)
 
-2. **Miscellaneous Fixes** (Task 4)
-
-3. **Multiple Problems Per Exercise** (Task 2)
+2. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-4. **Graspable Math Action Validation (isValidAction)** (Task 7)
+3. **Graspable Math Action Validation (isValidAction)** (Task 7)
    *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
-5. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-6. **Gamification** (Task 6)
+5. **Gamification** (Task 6)
    *Very Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
+
+6. **Miscellaneous Fixes** (remaining tasks)
 
 **Difficulty Ratings:**
 
 - Task 2: ★★★☆☆
-- Task 3: ★★☆☆☆
-- Task 4: ★★☆☆☆
+- Task 4: various
 - Task 5: ★★★★☆
 - Task 6: ★★★★☆
 - Task 7: ★★★★★
@@ -92,12 +91,6 @@
 4. **Admin/Teacher View**
    - Exercise creation form: Add help text explaining semicolon-separated format
    - Example: "2x+5=15;3x-7=20" → Two problems in sequence
-
----
-
-## 3. Missing Tutor Interactions
-
-The Interactions & Feedback section of the SessionDetailsView only shows the generated AI tutoring prompts, but it shows neither student messages nor the AI tutor's answer to them.
 
 ---
 
