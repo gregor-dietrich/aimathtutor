@@ -114,7 +114,7 @@ Add server-side pagination for admin views to handle large datasets gracefully (
 
 ### 4.5 Database tweaks (very low priority)
 
-Review init.sql as well as all queries in the project for optimization potential.
+Review init.sql as well as all queries in the project for optimization potential. Notable examples would be `filterByDateRange` methods.
 
 ---
 
