@@ -57,7 +57,7 @@ public class StudentSessionViewDto {
             }
 
             // Compute duration only for completed sessions
-            if (entity.completed && entity.startTime != null && entity.endTime != null) {
+            if (entity.startTime != null && entity.endTime != null && entity.completed) {
                 this.durationSeconds = Duration.between(entity.startTime, entity.endTime).getSeconds();
             } else {
                 this.durationSeconds = null;
