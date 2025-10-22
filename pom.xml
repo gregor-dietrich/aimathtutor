@@ -146,6 +146,13 @@
             <artifactId>netty-codec-smtp</artifactId>
             <version>[4.1.128.Final,)</version>
         </dependency>
+
+        <!-- CVE-2025-11965 & CVE-2025-11966 -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+            <version>[4.5.22,)</version>
+        </dependency>
     </dependencies>
 
     <repositories>
