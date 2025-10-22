@@ -21,6 +21,9 @@ public class DateTimeFormatterUtil {
     @ConfigProperty(name = "app.datetime.format", defaultValue = "yyyy-MM-dd HH:mm:ss")
     String dateTimeFormat;
 
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(this.dateFormat);
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.dateTimeFormat);
+
     /**
      * Format a LocalDate using the configured date format
      *
@@ -31,8 +34,7 @@ public class DateTimeFormatterUtil {
         if (date == null) {
             return null;
         }
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(this.dateFormat);
-        return date.format(formatter);
+        return date.format(this.dateFormatter);
     }
 
     /**
@@ -45,8 +47,7 @@ public class DateTimeFormatterUtil {
         if (dateTime == null) {
             return null;
         }
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(this.dateTimeFormat);
-        return dateTime.format(formatter);
+        return dateTime.format(this.dateTimeFormatter);
     }
 
     /**
