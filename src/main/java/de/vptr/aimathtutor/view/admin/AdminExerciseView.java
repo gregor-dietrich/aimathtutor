@@ -24,9 +24,11 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.component.button.*;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
@@ -273,6 +275,8 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         // For new exercises, automatically set the current user as the author
         if (exercise == null) {
+            // Ensure ID is null for new exercises
+            this.currentExercise.id = null;
             try {
                 final var currentUser = this.userService.getCurrentUser();
                 this.currentExercise.userId = currentUser.id;
@@ -384,15 +388,31 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         this.binder.bind(graspableEnabledField,
                 exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
                 (exercise1, value) -> exercise1.graspableEnabled = value);
-        this.binder.bind(graspableInitialExpressionField,
-                exercise1 -> exercise1.graspableInitialExpression,
-                (exercise1, value) -> exercise1.graspableInitialExpression = value);
+        this.binder.forField(graspableInitialExpressionField)
+                .withValidator((value, ctx) -> {
+                    // Only validate if Graspable Math is enabled
+                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                        return ValidationResult
+                                .error("Initial Expression is required when Graspable Math is enabled");
+                    }
+                    return ValidationResult.ok();
+                })
+                .bind(exercise1 -> exercise1.graspableInitialExpression,
+                        (exercise1, value) -> exercise1.graspableInitialExpression = value);
         this.binder.bind(graspableTargetExpressionField,
                 exercise1 -> exercise1.graspableTargetExpression,
                 (exercise1, value) -> exercise1.graspableTargetExpression = value);
-        this.binder.bind(graspableDifficultyField,
-                exercise1 -> exercise1.graspableDifficulty,
-                (exercise1, value) -> exercise1.graspableDifficulty = value);
+        this.binder.forField(graspableDifficultyField)
+                .withValidator((value, ctx) -> {
+                    // Only validate if Graspable Math is enabled
+                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                        return ValidationResult
+                                .error("Difficulty is required when Graspable Math is enabled");
+                    }
+                    return ValidationResult.ok();
+                })
+                .bind(exercise1 -> exercise1.graspableDifficulty,
+                        (exercise1, value) -> exercise1.graspableDifficulty = value);
         this.binder.bind(graspableHintsField,
                 exercise1 -> exercise1.graspableHints,
                 (exercise1, value) -> exercise1.graspableHints = value);
@@ -583,7 +603,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
             commentEntity.exercise = exerciseEntity;
 
             // Get current username from session
-            final var session = com.vaadin.flow.server.VaadinSession.getCurrent();
+            final var session = VaadinSession.getCurrent();
             final var currentUsername = (String) session.getAttribute("authenticated.username");
 
             this.commentService.createComment(commentEntity, currentUsername);
