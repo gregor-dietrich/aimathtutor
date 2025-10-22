@@ -848,8 +848,10 @@ public class AITutorService {
                     studentQuestionRecord.user = user;
                 }
             }
+
+            ExerciseEntity exercise = null;
             if (exerciseId != null) {
-                final ExerciseEntity exercise = ExerciseEntity.findById(exerciseId);
+                exercise = ExerciseEntity.findById(exerciseId);
                 if (exercise == null) {
                     LOG.warn("Exercise not found for logging question interaction: exerciseId={}", exerciseId);
                 } else {
@@ -876,8 +878,9 @@ public class AITutorService {
                     aiAnswerRecord.user = user;
                 }
             }
+
             if (exerciseId != null) {
-                final ExerciseEntity exercise = ExerciseEntity.findById(exerciseId);
+                exercise = ExerciseEntity.findById(exerciseId);
                 if (exercise == null) {
                     LOG.warn("Exercise not found for logging AI answer: exerciseId={}", exerciseId);
                 } else {
