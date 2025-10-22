@@ -841,10 +841,20 @@ public class AITutorService {
             studentQuestionRecord.studentMessage = studentQuestion;
 
             if (userId != null) {
-                studentQuestionRecord.user = UserEntity.findById(userId);
+                final UserEntity user = UserEntity.findById(userId);
+                if (user == null) {
+                    LOG.warn("User not found for logging question interaction: userId={}", userId);
+                } else {
+                    studentQuestionRecord.user = user;
+                }
             }
             if (exerciseId != null) {
-                studentQuestionRecord.exercise = ExerciseEntity.findById(exerciseId);
+                final ExerciseEntity exercise = ExerciseEntity.findById(exerciseId);
+                if (exercise == null) {
+                    LOG.warn("Exercise not found for logging question interaction: exerciseId={}", exerciseId);
+                } else {
+                    studentQuestionRecord.exercise = exercise;
+                }
             }
 
             studentQuestionRecord.persist();
@@ -859,10 +869,20 @@ public class AITutorService {
             aiAnswerRecord.feedbackMessage = aiAnswer;
 
             if (userId != null) {
-                aiAnswerRecord.user = UserEntity.findById(userId);
+                final UserEntity user = UserEntity.findById(userId);
+                if (user == null) {
+                    LOG.warn("User not found for logging AI answer: userId={}", userId);
+                } else {
+                    aiAnswerRecord.user = user;
+                }
             }
             if (exerciseId != null) {
-                aiAnswerRecord.exercise = ExerciseEntity.findById(exerciseId);
+                final ExerciseEntity exercise = ExerciseEntity.findById(exerciseId);
+                if (exercise == null) {
+                    LOG.warn("Exercise not found for logging AI answer: exerciseId={}", exerciseId);
+                } else {
+                    aiAnswerRecord.exercise = exercise;
+                }
             }
 
             aiAnswerRecord.persist();
