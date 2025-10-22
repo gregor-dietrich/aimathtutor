@@ -169,6 +169,10 @@ Unit Test Coverage should be reviewed and probably improved across multiple pack
 
 Add server-side pagination for admin views to handle large datasets gracefully (Vaadin data provider + backend query offsets).
 
+### 4.8 Database tweaks
+
+Review init.sql as well as all queries in the project for optimization potential.
+
 ---
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
