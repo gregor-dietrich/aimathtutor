@@ -161,6 +161,14 @@ The min-width for most if not all grids across most admin views needs to be adju
 
 Add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
 
+### 4.6 Unit Test Coverage
+
+Unit Test Coverage should be reviewed and probably improved across multiple packages.
+
+### 4.7 Pagination (very low priority, leave for later)
+
+Add server-side pagination for admin views to handle large datasets gracefully (Vaadin data provider + backend query offsets).
+
 ---
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
