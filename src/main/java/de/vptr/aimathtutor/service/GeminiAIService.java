@@ -20,7 +20,7 @@ import jakarta.inject.Inject;
 
 /**
  * Service for interacting with Google Gemini AI API
- * Handles REST API calls to Gemini 1.5 Flash
+ * Handles REST API calls to Gemini 2.5 Flash-Lite
  */
 @ApplicationScoped
 public class GeminiAIService {
@@ -30,7 +30,7 @@ public class GeminiAIService {
     @ConfigProperty(name = "gemini.api.key")
     String apiKey;
 
-    @ConfigProperty(name = "gemini.model", defaultValue = "gemini-1.5-flash")
+    @ConfigProperty(name = "gemini.model", defaultValue = "gemini-2.5-flash-lite")
     String model;
 
     @ConfigProperty(name = "gemini.api.base-url", defaultValue = "https://generativelanguage.googleapis.com")
