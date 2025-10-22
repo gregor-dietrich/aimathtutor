@@ -8,13 +8,17 @@ import org.slf4j.LoggerFactory;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.button.RefreshButton;
+import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
@@ -39,6 +43,7 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
     AnalyticsService analyticsService;
 
     private Grid<StudentProgressSummaryDto> grid;
+    private TextField searchField;
 
     public StudentProgressView() {
         this.setSizeFull();
@@ -63,6 +68,14 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
         // Title
         final var title = new H2("Student Progress");
         this.add(title);
+
+        // Search layout
+        final var searchLayout = this.createSearchLayout();
+        this.add(searchLayout);
+
+        // Button layout
+        final var buttonLayout = this.createButtonLayout();
+        this.add(buttonLayout);
 
         // Create grid
         this.grid = new Grid<>(StudentProgressSummaryDto.class, false);
@@ -110,6 +123,51 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
                 .setFlexGrow(1);
 
         this.add(this.grid);
+    }
+
+    private HorizontalLayout createSearchLayout() {
+        final var searchLayout = new SearchLayout(
+                e -> {
+                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                        this.loadProgressData();
+                    }
+                },
+                e -> this.searchStudents(),
+                "Search by username...",
+                "Search Students");
+
+        this.searchField = searchLayout.getTextfield();
+
+        return searchLayout;
+    }
+
+    private HorizontalLayout createButtonLayout() {
+        final var layout = new HorizontalLayout();
+        layout.setSpacing(true);
+
+        final var refreshButton = new RefreshButton(e -> this.loadProgressData());
+
+        layout.add(refreshButton);
+        return layout;
+    }
+
+    private void searchStudents() {
+        final String searchTerm = this.searchField.getValue();
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            this.loadProgressData();
+            return;
+        }
+
+        try {
+            final var allProgress = this.analyticsService.getAllUsersProgressSummary();
+            final var filtered = allProgress.stream()
+                    .filter(p -> p.username != null && p.username.toLowerCase().contains(searchTerm.toLowerCase()))
+                    .toList();
+            this.grid.setItems(filtered);
+        } catch (final Exception e) {
+            LOG.error("Error searching students", e);
+            NotificationUtil.showError("Error searching students: " + e.getMessage());
+        }
     }
 
     private void loadProgressData() {

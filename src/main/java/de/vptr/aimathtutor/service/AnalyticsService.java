@@ -376,4 +376,19 @@ public class AnalyticsService {
                 .find("startTime >= ?1 AND startTime <= ?2", startOfDay, endOfDay)
                 .count();
     }
+
+    /**
+     * Search sessions by student username or exercise title
+     */
+    @Transactional
+    public List<StudentSessionViewDto> searchSessions(final String searchTerm) {
+        LOG.trace("Searching sessions for term: {}", searchTerm);
+        final String pattern = "%" + searchTerm.toLowerCase() + "%";
+        final List<StudentSessionEntity> sessions = StudentSessionEntity
+                .find("LOWER(user.username) LIKE ?1 OR LOWER(exercise.title) LIKE ?1", pattern)
+                .list();
+        return sessions.stream()
+                .map(StudentSessionViewDto::new)
+                .toList();
+    }
 }

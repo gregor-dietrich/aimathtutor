@@ -10,7 +10,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -85,15 +87,10 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         final var title = new H2("Session Details");
         this.add(title);
 
-        // Placeholder for session info
+        // Placeholder for session info - will be populated with cards
         this.sessionInfoLayout = new VerticalLayout();
-        this.sessionInfoLayout.setPadding(true);
+        this.sessionInfoLayout.setPadding(false);
         this.sessionInfoLayout.setSpacing(true);
-        this.sessionInfoLayout.getStyle()
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("border-radius", "4px")
-                .set("background-color", "var(--lumo-contrast-5pct)");
-
         this.sessionInfoLayout.add(new Paragraph("Loading session information..."));
         this.add(this.sessionInfoLayout);
 
@@ -106,18 +103,29 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         this.interactionsGrid.setSizeFull();
         this.interactionsGrid.setHeight("400px");
 
-        // Configure columns
+        // Configure columns to show both student and tutor messages
         this.interactionsGrid.addColumn(interaction -> interaction.timestamp)
                 .setHeader("Time")
-                .setFlexGrow(1);
+                .setFlexGrow(0)
+                .setWidth("150px");
 
         this.interactionsGrid.addColumn(interaction -> interaction.eventType)
                 .setHeader("Event Type")
+                .setFlexGrow(0)
+                .setWidth("120px");
+
+        this.interactionsGrid.addColumn(interaction -> {
+            if (interaction.expressionBefore != null && interaction.expressionAfter != null) {
+                return interaction.expressionBefore + " → " + interaction.expressionAfter;
+            }
+            return "";
+        }).setHeader("Expression Change")
                 .setFlexGrow(1);
 
-        this.interactionsGrid.addColumn(interaction -> interaction.feedbackType)
+        this.interactionsGrid.addColumn(interaction -> interaction.feedbackType != null ? interaction.feedbackType : "")
                 .setHeader("Feedback Type")
-                .setFlexGrow(1);
+                .setFlexGrow(0)
+                .setWidth("100px");
 
         this.interactionsGrid
                 .addColumn(interaction -> interaction.feedbackMessage != null ? interaction.feedbackMessage : "")
@@ -161,23 +169,71 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        // Clear existing content and populate with session data
+        // Clear existing content and populate with session data in card format
         this.sessionInfoLayout.removeAll();
-        this.sessionInfoLayout.add(
-                new Paragraph("Session ID: " + this.session.sessionId),
-                new Paragraph("Student: " + this.session.username),
-                new Paragraph("Exercise: " + this.session.exerciseTitle),
-                new Paragraph("Start Time: " + this.session.startTime),
-                new Paragraph("End Time: " + (this.session.endTime != null ? this.session.endTime : "In progress")),
-                new Paragraph("Duration: " + this.session.getFormattedDuration()),
-                new Paragraph("Total Actions: " + this.session.actionsCount),
-                new Paragraph("Correct Actions: " + this.session.correctActions),
-                new Paragraph("Success Rate: " + this.session.getSuccessRatePercentage()),
-                new Paragraph("Hints Used: " + this.session.hintsUsed),
-                new Paragraph("Status: " + (this.session.completed ? "Completed ✓" : "In Progress")),
-                new Paragraph(
-                        "Final Expression: "
-                                + (this.session.finalExpression != null ? this.session.finalExpression : "N/A")));
+
+        // Main info card
+        final var mainCard = new VerticalLayout();
+        mainCard.setPadding(true);
+        mainCard.setSpacing(true);
+        mainCard.getStyle()
+                .set("border", "1px solid var(--lumo-contrast-10pct)")
+                .set("border-radius", "4px")
+                .set("background-color", "var(--lumo-contrast-5pct)");
+
+        // Header with student and exercise info
+        final var header = new H3(this.session.username + " - " + this.session.exerciseTitle);
+        mainCard.add(header);
+
+        // Session status badge
+        final var statusSpan = new Span(this.session.completed ? "✓ Completed" : "◌ In Progress");
+        statusSpan.getElement().getThemeList().add("badge");
+        if (this.session.completed) {
+            statusSpan.getElement().getThemeList().add("success");
+        } else {
+            statusSpan.getElement().getThemeList().add("contrast");
+        }
+        mainCard.add(statusSpan);
+
+        // Info grid
+        final var infoGrid = new VerticalLayout();
+        infoGrid.setSpacing(false);
+        infoGrid.setPadding(false);
+
+        infoGrid.add(new Paragraph("Session ID: " + this.session.sessionId));
+        infoGrid.add(new Paragraph("Start Time: " + this.session.startTime));
+        infoGrid.add(new Paragraph(
+                "End Time: " + (this.session.endTime != null ? this.session.endTime : "In progress")));
+        infoGrid.add(new Paragraph("Duration: " + this.session.getFormattedDuration()));
+
+        mainCard.add(infoGrid);
+
+        // Performance metrics section
+        final var metricsCard = new VerticalLayout();
+        metricsCard.setPadding(true);
+        metricsCard.setSpacing(true);
+        metricsCard.getStyle()
+                .set("border", "1px solid var(--lumo-contrast-10pct)")
+                .set("border-radius", "4px")
+                .set("background-color", "var(--lumo-contrast-5pct)");
+
+        metricsCard.add(new H3("Performance Metrics"));
+
+        final var metricsGrid = new VerticalLayout();
+        metricsGrid.setSpacing(false);
+        metricsGrid.setPadding(false);
+
+        metricsGrid.add(new Paragraph("Total Actions: " + this.session.actionsCount));
+        metricsGrid.add(new Paragraph("Correct Actions: " + this.session.correctActions));
+        metricsGrid.add(new Paragraph("Success Rate: " + this.session.getSuccessRatePercentage()));
+        metricsGrid.add(new Paragraph("Hints Used: " + this.session.hintsUsed));
+        metricsGrid.add(new Paragraph(
+                "Final Expression: "
+                        + (this.session.finalExpression != null ? this.session.finalExpression : "N/A")));
+
+        metricsCard.add(metricsGrid);
+
+        this.sessionInfoLayout.add(mainCard, metricsCard);
     }
 
     private void updateInteractionsGrid(final List<AIInteractionViewDto> interactions) {
