@@ -4,8 +4,6 @@
 
 ### Implementation Priority
 
-### Suggested Order (Easiest to Hardest)
-
 1. **Session-related Fixes and Improvements** (Task 3)
 
 2. **Miscellaneous Fixes** (Task 4)
