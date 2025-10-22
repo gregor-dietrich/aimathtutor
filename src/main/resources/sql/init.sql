@@ -124,7 +124,7 @@ CREATE TABLE exercises (
   last_edit TIMESTAMP DEFAULT NULL,
   graspable_enabled BOOLEAN DEFAULT FALSE,
   graspable_initial_expression TEXT,
-  graspable_target_expression TEXT NOT NULL,
+  graspable_target_expression TEXT,
   graspable_difficulty VARCHAR(50),
   graspable_hints TEXT
 );

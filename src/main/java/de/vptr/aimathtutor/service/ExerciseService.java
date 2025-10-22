@@ -127,6 +127,15 @@ public class ExerciseService {
             throw new ValidationException("User ID is required for creating an exercise");
         }
 
+        // Validate Graspable Math: if enabled, target expression is required
+        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
+            if (exerciseDto.graspableTargetExpression == null
+                    || exerciseDto.graspableTargetExpression.trim().isEmpty()) {
+                throw new ValidationException(
+                        "Graspable Math target expression is required when Graspable Math is enabled");
+            }
+        }
+
         final ExerciseEntity exercise = new ExerciseEntity();
         exercise.title = exerciseDto.title;
         exercise.content = exerciseDto.content;
@@ -175,6 +184,15 @@ public class ExerciseService {
         final ExerciseEntity existingExercise = ExerciseEntity.findById(id);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
+        }
+
+        // Validate Graspable Math: if enabled, target expression is required
+        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
+            if (exerciseDto.graspableTargetExpression == null
+                    || exerciseDto.graspableTargetExpression.trim().isEmpty()) {
+                throw new ValidationException(
+                        "Graspable Math target expression is required when Graspable Math is enabled");
+            }
         }
 
         // Complete replacement (PUT semantics)

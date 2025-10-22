@@ -55,7 +55,6 @@ public class ExerciseEntity extends PanacheEntityBase {
     public String graspableInitialExpression;
 
     @Column(name = "graspable_target_expression", columnDefinition = "TEXT")
-    @NotBlank
     public String graspableTargetExpression;
 
     @Column(name = "graspable_difficulty")
