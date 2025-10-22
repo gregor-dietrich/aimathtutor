@@ -817,4 +817,35 @@ public class AITutorService {
             // Don't fail the request if logging fails
         }
     }
+
+    /**
+     * Log a student question and AI answer as an interaction.
+     * Used for recording conversational interactions in the SessionDetailsView.
+     */
+    public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
+            final String studentQuestion, final String aiAnswer) {
+        try {
+            final var interaction = new AIInteractionEntity();
+            interaction.sessionId = sessionId;
+            interaction.eventType = "QUESTION";
+
+            // Look up user and exercise if IDs are provided
+            if (userId != null) {
+                interaction.user = UserEntity.findById(userId);
+            }
+            if (exerciseId != null) {
+                interaction.exercise = ExerciseEntity.findById(exerciseId);
+            }
+
+            interaction.studentMessage = studentQuestion;
+            interaction.feedbackMessage = aiAnswer;
+            interaction.feedbackType = "ANSWER";
+
+            interaction.persist();
+            LOG.debug("Logged question interaction: {}", interaction.id);
+        } catch (final Exception e) {
+            LOG.error("Failed to log question interaction", e);
+            // Don't fail the request if logging fails
+        }
+    }
 }

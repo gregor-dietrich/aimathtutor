@@ -501,6 +501,20 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);
+
+                        // Log the question and answer interaction to the database
+                        if (this.currentSessionId != null) {
+                            try {
+                                this.aiTutorService.logQuestionInteraction(
+                                        this.currentSessionId,
+                                        this.currentUserId,
+                                        this.exercise.id,
+                                        question,
+                                        answer.message);
+                            } catch (final Exception e) {
+                                LOG.warn("Failed to log question interaction", e);
+                            }
+                        }
                     });
                 })
                 .exceptionally(ex -> {
