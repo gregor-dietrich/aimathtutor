@@ -288,9 +288,9 @@ public class AnalyticsService {
                                 .sum();
                 final double averageActionsPerProblem = totalSessions > 0 ? totalActions / totalSessions : 0.0;
 
-                // Success rate: percentage of actions that were correct (problem-solving
-                // accuracy)
-                // Not the same as completion rate
+                /* Success rate: percentage of actions that were correct (problem-solving accuracy).
+                 * Not the same as completion rate.
+                 */
                 final int totalCorrectActions = sessions.stream()
                                 .mapToInt(s -> s.correctActions != null ? s.correctActions : 0)
                                 .sum();
