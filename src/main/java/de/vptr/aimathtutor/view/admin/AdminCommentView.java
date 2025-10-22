@@ -40,6 +40,7 @@ import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.CommentService;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -53,6 +54,9 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
 
     @Inject
     AuthService authService;
+
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<CommentViewDto> grid;
     private TextField searchField;
@@ -214,7 +218,8 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
             return span;
         }).setHeader("Content").setFlexGrow(2);
 
-        this.grid.addColumn(comment -> comment.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(comment -> this.dateTimeFormatter.formatDateTime(comment.created)).setHeader("Created")
+                .setWidth("150px").setFlexGrow(0);
 
         // Status column
         this.grid.addComponentColumn(comment -> {

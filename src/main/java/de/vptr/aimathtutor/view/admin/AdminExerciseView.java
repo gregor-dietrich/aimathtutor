@@ -40,6 +40,7 @@ import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.*;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -63,6 +64,9 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
     @Inject
     CommentService commentService;
+
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<ExerciseViewDto> grid;
     private TextField searchField;
@@ -240,8 +244,10 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
             return checkbox;
         }).setHeader("Graspable Math").setWidth("120px").setFlexGrow(0);
 
-        this.grid.addColumn(exercise -> exercise.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
-        this.grid.addColumn(exercise -> exercise.lastEdit).setHeader("Last Edit").setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.created)).setHeader("Created")
+                .setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.lastEdit)).setHeader("Last Edit")
+                .setWidth("150px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
@@ -362,12 +368,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         graspableTargetExpressionField.setHeight("80px");
         graspableTargetExpressionField.setTooltipText("Expected solution to validate against");
 
-        final var graspableAllowedOperationsField = new TextArea("Allowed Operations (optional)");
-        graspableAllowedOperationsField.setPlaceholder("e.g., simplify, factor, expand, combine");
-        graspableAllowedOperationsField.setWidthFull();
-        graspableAllowedOperationsField.setHeight("60px");
-        graspableAllowedOperationsField.setTooltipText("Comma-separated list of allowed student actions");
-
         final var graspableDifficultyField = new ComboBox<String>("Difficulty");
         graspableDifficultyField.setItems("beginner", "intermediate", "advanced", "expert");
         graspableDifficultyField.setPlaceholder("Select difficulty");
@@ -380,12 +380,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         graspableHintsField.setHeight("100px");
         graspableHintsField.setTooltipText("Hints to display when student requests help");
 
-        final var graspableConfigField = new TextArea("Custom Configuration (JSON, optional)");
-        graspableConfigField.setPlaceholder("{ \"key\": \"value\" }");
-        graspableConfigField.setWidthFull();
-        graspableConfigField.setHeight("100px");
-        graspableConfigField.setTooltipText("Advanced: custom JSON configuration for Graspable Math");
-
         // Bind Graspable Math fields
         this.binder.bind(graspableEnabledField,
                 exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
@@ -396,28 +390,20 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         this.binder.bind(graspableTargetExpressionField,
                 exercise1 -> exercise1.graspableTargetExpression,
                 (exercise1, value) -> exercise1.graspableTargetExpression = value);
-        this.binder.bind(graspableAllowedOperationsField,
-                exercise1 -> exercise1.graspableAllowedOperations,
-                (exercise1, value) -> exercise1.graspableAllowedOperations = value);
         this.binder.bind(graspableDifficultyField,
                 exercise1 -> exercise1.graspableDifficulty,
                 (exercise1, value) -> exercise1.graspableDifficulty = value);
         this.binder.bind(graspableHintsField,
                 exercise1 -> exercise1.graspableHints,
                 (exercise1, value) -> exercise1.graspableHints = value);
-        this.binder.bind(graspableConfigField,
-                exercise1 -> exercise1.graspableConfig,
-                (exercise1, value) -> exercise1.graspableConfig = value);
 
         // Show/hide Graspable Math fields based on checkbox
         graspableEnabledField.addValueChangeListener(event -> {
             final boolean enabled = event.getValue();
             graspableInitialExpressionField.setVisible(enabled);
             graspableTargetExpressionField.setVisible(enabled);
-            graspableAllowedOperationsField.setVisible(enabled);
             graspableDifficultyField.setVisible(enabled);
             graspableHintsField.setVisible(enabled);
-            graspableConfigField.setVisible(enabled);
         });
 
         // Initially hide Graspable Math fields if not enabled
@@ -425,15 +411,12 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
                 && this.currentExercise.graspableEnabled;
         graspableInitialExpressionField.setVisible(initiallyEnabled);
         graspableTargetExpressionField.setVisible(initiallyEnabled);
-        graspableAllowedOperationsField.setVisible(initiallyEnabled);
         graspableDifficultyField.setVisible(initiallyEnabled);
         graspableHintsField.setVisible(initiallyEnabled);
-        graspableConfigField.setVisible(initiallyEnabled);
 
         form.add(titleField, contentField, lessonField, publishedField, commentableField,
                 graspableEnabledField, graspableInitialExpressionField, graspableTargetExpressionField,
-                graspableAllowedOperationsField, graspableDifficultyField, graspableHintsField,
-                graspableConfigField);
+                graspableDifficultyField, graspableHintsField);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();

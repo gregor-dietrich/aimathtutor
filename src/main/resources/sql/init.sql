@@ -124,11 +124,9 @@ CREATE TABLE exercises (
   last_edit TIMESTAMP DEFAULT NULL,
   graspable_enabled BOOLEAN DEFAULT FALSE,
   graspable_initial_expression TEXT,
-  graspable_target_expression TEXT,
-  graspable_allowed_operations TEXT,
+  graspable_target_expression TEXT NOT NULL,
   graspable_difficulty VARCHAR(50),
-  graspable_hints TEXT,
-  graspable_config TEXT
+  graspable_hints TEXT
 );
 
 -- Full-text search index for content
@@ -291,6 +289,7 @@ CREATE TABLE ai_interactions (
   user_id BIGINT DEFAULT NULL,
   exercise_id BIGINT DEFAULT NULL,
   event_type VARCHAR(50) NOT NULL,
+  student_message TEXT,
   expression_before TEXT,
   expression_after TEXT,
   feedback_type VARCHAR(50) NOT NULL,
