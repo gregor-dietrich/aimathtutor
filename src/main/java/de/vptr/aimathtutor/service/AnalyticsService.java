@@ -385,7 +385,7 @@ public class AnalyticsService {
         LOG.trace("Searching sessions for term: {}", searchTerm);
         final String pattern = "%" + searchTerm.toLowerCase() + "%";
         final List<StudentSessionEntity> sessions = StudentSessionEntity
-                .find("LOWER(user.username) LIKE ?1 OR LOWER(exercise.title) LIKE ?1", pattern, pattern)
+                .find("LOWER(user.username) LIKE ?1 OR LOWER(exercise.title) LIKE ?1", pattern)
                 .list();
         return sessions.stream()
                 .map(StudentSessionViewDto::new)
