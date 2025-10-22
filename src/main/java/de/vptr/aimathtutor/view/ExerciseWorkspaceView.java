@@ -147,29 +147,17 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         titleLayout.setWidthFull();
         titleLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
         titleLayout.setAlignItems(Alignment.CENTER);
+        titleLayout.setSpacing(true);
+
+        final var titleSection = new VerticalLayout();
+        titleSection.setPadding(false);
+        titleSection.setSpacing(false);
 
         final var title = new H2(this.exercise.title);
-        this.backButton = new Button("← Back to Exercises", e -> {
-            UI.getCurrent().navigate(HomeView.class);
-        });
-        this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        title.getStyle().set("margin", "0");
+        titleSection.add(title);
 
-        titleLayout.add(title, this.backButton);
-        header.add(titleLayout);
-
-        // Exercise content/instructions
-        if (this.exercise.content != null && !this.exercise.content.trim().isEmpty()) {
-            final var contentDiv = new Div();
-            contentDiv.getStyle()
-                    .set("padding", "1rem")
-                    .set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("margin-bottom", "1rem");
-            contentDiv.add(new Html("<div>" + this.exercise.content + "</div>"));
-            header.add(contentDiv);
-        }
-
-        // Difficulty badge
+        // Add difficulty badge right under the title
         if (this.exercise.graspableDifficulty != null) {
             final var badge = new Span("Difficulty: " + this.exercise.graspableDifficulty);
             badge.getElement().getThemeList().add("badge");
@@ -185,10 +173,20 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     badge.getElement().getThemeList().add("error");
                     break;
             }
-            header.add(badge);
+            badge.getStyle().set("margin-top", "0.5rem");
+            titleSection.add(badge);
         }
 
-        // Completion status indicator
+        this.backButton = new Button("← Back to Exercises", e -> {
+            UI.getCurrent().navigate(HomeView.class);
+        });
+        this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        titleLayout.add(titleSection, this.backButton);
+        titleLayout.setFlexGrow(1, titleSection);
+        header.add(titleLayout);
+
+        // Completion status indicator (if applicable)
         if (Boolean.TRUE.equals(this.exercise.userCompleted)) {
             final var completionInfo = new Paragraph();
             completionInfo.getStyle()
@@ -203,6 +201,28 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     + (this.exercise.userCompletionCount != null ? this.exercise.userCompletionCount : 1)
                     + " " + pluralSuffix);
             header.add(completionInfo);
+        }
+
+        // Exercise content/instructions in a separate section
+        if (this.exercise.content != null && !this.exercise.content.trim().isEmpty()) {
+            final var contentSection = new VerticalLayout();
+            contentSection.setPadding(true);
+            contentSection.setSpacing(true);
+            contentSection.getStyle()
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border", "1px solid var(--lumo-contrast-10pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)")
+                    .set("margin-top", "1rem");
+
+            final var instructionsHeader = new H4("Instructions");
+            instructionsHeader.getStyle().set("margin-top", "0");
+            contentSection.add(instructionsHeader);
+
+            final var contentDiv = new Div();
+            contentDiv.add(new Html("<div>" + this.exercise.content + "</div>"));
+            contentSection.add(contentDiv);
+
+            header.add(contentSection);
         }
 
         // Hints section (below canvas or instructions)
