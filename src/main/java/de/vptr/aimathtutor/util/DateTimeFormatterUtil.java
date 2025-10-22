@@ -10,9 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Utility class for formatting dates and datetimes according to application
- * configuration.
- * Uses ISO 8601 formatting by default (yyyy-MM-dd and yyyy-MM-dd HH:mm:ss).
- * Configurable via application.properties properties.
+ * configuration. Configurable via application.properties properties.
  */
 @ApplicationScoped
 public class DateTimeFormatterUtil {
