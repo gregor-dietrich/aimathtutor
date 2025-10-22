@@ -145,7 +145,7 @@ The Interactions & Feedback section of the SessionDetailsView only shows the gen
 
 Completion Rate and Success Rate seem to be the same thing. This needs to be verified, and if true, the latter should be removed. Also, add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
 
-### 4.2 Exercises fields
+### 4.2 Exercises database table fields
 
 Some fields can probably be removed as they aren't actually used, such as Allowed Operations and Custom Configuration for Exercises. The database init script and the entity as well as DTOs should be updated accordingly, and other tables should be checked for unnecessary fields as well. Also, the Target Expression should not be optional in the Exercise create/edit modals and it should be marked non-nullable in the init.sql, too.
 
@@ -161,15 +161,19 @@ The min-width for most if not all grids across most admin views needs to be adju
 
 Add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
 
-### 4.6 Unit Test Coverage
+### 4.6 Unit Test Coverage (low priority, leave for later)
 
 Unit Test Coverage should be reviewed and probably improved across multiple packages.
 
-### 4.7 Pagination (very low priority, leave for later)
+### 4.7 Keyboard accessibility (low priority, leave for later)
+
+Clickable spans are used extensively across views, especially admin views, however tehy lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
+
+### 4.8 Pagination (very low priority, leave for later)
 
 Add server-side pagination for admin views to handle large datasets gracefully (Vaadin data provider + backend query offsets).
 
-### 4.8 Database tweaks
+### 4.9 Database tweaks (very low priority, leave for later)
 
 Review init.sql as well as all queries in the project for optimization potential.
 
