@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
@@ -21,8 +22,14 @@ public class DateTimeFormatterUtil {
     @ConfigProperty(name = "app.datetime.format", defaultValue = "yyyy-MM-dd HH:mm:ss")
     String dateTimeFormat;
 
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(this.dateFormat);
-    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.dateTimeFormat);
+    private DateTimeFormatter dateFormatter;
+    private DateTimeFormatter dateTimeFormatter;
+
+    @PostConstruct
+    void init() {
+        this.dateFormatter = DateTimeFormatter.ofPattern(this.dateFormat);
+        this.dateTimeFormatter = DateTimeFormatter.ofPattern(this.dateTimeFormat);
+    }
 
     /**
      * Format a LocalDate using the configured date format
