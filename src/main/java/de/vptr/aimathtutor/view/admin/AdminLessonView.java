@@ -228,7 +228,20 @@ public class AdminLessonView extends VerticalLayout implements BeforeEnterObserv
 
     private void openLessonDialog(final LessonDto lesson) {
         this.lessonDialog.removeAll();
-        this.currentLesson = lesson != null ? lesson : new LessonDto();
+
+        if (lesson != null) {
+            // Create a fresh copy by converting through LessonViewDto pattern
+            this.currentLesson = new LessonDto();
+            this.currentLesson.id = lesson.id;
+            this.currentLesson.name = lesson.name;
+            this.currentLesson.parentId = lesson.parentId;
+            if (lesson.parent != null) {
+                this.currentLesson.parent = new LessonDto.ParentField(lesson.parent.id);
+            }
+        } else {
+            // CREATE mode: start with completely fresh DTO
+            this.currentLesson = new LessonDto();
+        }
 
         this.binder = new Binder<>(LessonDto.class);
 
