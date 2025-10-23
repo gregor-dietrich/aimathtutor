@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalDate;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.component.button.*;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
@@ -85,6 +87,23 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
         }
 
         this.buildUI();
+
+        // If navigated with an exerciseId query parameter, filter comments
+        final var params = event.getLocation().getQueryParameters().getParameters();
+        if (params.containsKey("exerciseId")) {
+            try {
+                final Long exerciseId = Long.valueOf(params.get("exerciseId").get(0));
+                // Load comments for that exercise only
+                CompletableFuture.runAsync(() -> {
+                    final var comments = this.commentService.findByExerciseId(exerciseId);
+                    this.getUI().ifPresent(ui -> ui.access(() -> this.grid.setItems(comments)));
+                });
+                return;
+            } catch (final Exception ex) {
+                LOG.warn("Invalid exerciseId parameter: {}", params.get("exerciseId"), ex);
+            }
+        }
+
         this.loadCommentsAsync();
     }
 
@@ -340,7 +359,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
             }
 
             // Get current username from session
-            final var session = com.vaadin.flow.server.VaadinSession.getCurrent();
+            final var session = VaadinSession.getCurrent();
             final var currentUsername = (String) session.getAttribute("authenticated.username");
 
             if (this.currentComment.id == null) {
@@ -510,8 +529,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
         });
     }
 
-    private void showModerationReasonDialog(final String title, final String label,
-            final java.util.function.Consumer<String> onConfirm) {
+    private void showModerationReasonDialog(final String title, final String label, final Consumer<String> onConfirm) {
         final var dialog = new Dialog();
         dialog.setHeaderTitle(title);
 

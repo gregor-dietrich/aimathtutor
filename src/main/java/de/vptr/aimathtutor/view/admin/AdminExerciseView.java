@@ -1,10 +1,12 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -27,20 +29,17 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.component.button.*;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.*;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -82,12 +81,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
     private Binder<ExerciseDto> binder;
     private ExerciseDto currentExercise;
     private List<LessonViewDto> availableLessons;
-
-    // Comment management components
-    private Dialog commentDialog;
-    private Binder<CommentDto> commentBinder;
-    private CommentDto currentComment;
-    private ExerciseViewDto selectedExercise;
 
     public AdminExerciseView() {
         this.setSizeFull();
@@ -150,7 +143,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         final var buttonLayout = this.createButtonLayout();
         this.createGrid();
         this.exerciseDialog = new FormDialog();
-        this.commentDialog = new FormDialog();
 
         this.add(header, searchLayout, buttonLayout, this.grid);
     }
@@ -261,7 +253,8 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
         final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
-        final var commentButton = new CommentButton(e -> this.openCommentDialog(exercise));
+        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentView.class,
+                new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
 
         layout.add(editButton, deleteButton, commentButton);
         return layout;
@@ -526,94 +519,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         } finally {
             this.searchButton.setEnabled(true);
             this.searchButton.setText("Search");
-        }
-    }
-
-    private void openCommentDialog(final ExerciseViewDto exercise) {
-        this.selectedExercise = exercise;
-        this.commentDialog.removeAll();
-        this.currentComment = new CommentDto();
-
-        this.commentBinder = new Binder<>(CommentDto.class);
-
-        final var title = new H3("Add Comment to: " + exercise.title);
-
-        final var form = new FormLayout();
-        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-
-        // Form fields
-        final var contentField = new TextArea("Comment");
-        contentField.setRequired(true);
-        contentField.setWidthFull();
-        contentField.setHeight("200px");
-        contentField.setPlaceholder("Write your comment here...");
-        contentField.setInvalid(false); // Clear any previous validation state
-
-        // Bind fields
-        this.commentBinder.forField(contentField)
-                .withValidator(value -> value != null && !value.trim().isEmpty(), "Comment is required")
-                .bind(comment -> comment.content, (comment, value) -> comment.content = value);
-
-        form.add(contentField);
-
-        // Button layout
-        final var buttonLayout = new HorizontalLayout();
-        buttonLayout.setSpacing(true);
-
-        final var saveButton = new Button("Post Comment", e -> this.saveComment());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-        final var cancelButton = new Button("Cancel", e -> this.commentDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-        buttonLayout.add(saveButton, cancelButton);
-
-        final var dialogLayout = new VerticalLayout(title, form, buttonLayout);
-        dialogLayout.setSpacing(true);
-        dialogLayout.setPadding(false);
-        dialogLayout.setSizeFull();
-
-        this.commentDialog.add(dialogLayout);
-
-        // Load current comment data
-        this.commentBinder.readBean(this.currentComment);
-
-        this.commentDialog.open();
-    }
-
-    private void saveComment() {
-        try {
-            // Validate the form before attempting to save
-            if (!this.commentBinder.validate().isOk()) {
-                NotificationUtil.showError("Please check the form for errors");
-                return;
-            }
-
-            this.commentBinder.writeBean(this.currentComment);
-
-            // Convert DTO to Entity for service call
-            final var commentEntity = new CommentEntity();
-            commentEntity.content = this.currentComment.content;
-
-            // Set the exercise reference
-            final var exerciseEntity = new ExerciseEntity();
-            exerciseEntity.id = this.selectedExercise.id;
-            commentEntity.exercise = exerciseEntity;
-
-            // Get current username from session
-            final var session = VaadinSession.getCurrent();
-            final var currentUsername = (String) session.getAttribute("authenticated.username");
-
-            this.commentService.createComment(commentEntity, currentUsername);
-            NotificationUtil.showSuccess("Comment added successfully");
-
-            this.commentDialog.close();
-
-        } catch (final ValidationException e) {
-            NotificationUtil.showError("Please check the form for errors");
-        } catch (final Exception e) {
-            LOG.error("Error creating comment", e);
-            NotificationUtil.showError("Error creating comment: " + e.getMessage());
         }
     }
 
