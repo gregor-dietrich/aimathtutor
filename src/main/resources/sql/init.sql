@@ -41,8 +41,8 @@ INSERT INTO user_ranks (id, name, admin_view, exercise_add, exercise_delete, exe
 (2, 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
 (3, 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 
--- Set sequence to 3 so next value is 4 (using 'false' for is_called)
-SELECT setval('user_ranks_id_seq', 3, false);
+-- Set sequence to 3 so next value is 4
+SELECT setval('user_ranks_id_seq', 3, true);
 
 -- --------------------------------------------------------
 
@@ -77,7 +77,7 @@ INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
 (4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE);
 
 -- Set sequence to 4 so next value is 5
-SELECT setval('users_id_seq', 4, false);
+SELECT setval('users_id_seq', 4, true);
 
 -- --------------------------------------------------------
 
@@ -102,7 +102,7 @@ INSERT INTO lessons (id, name, parent_id) VALUES
 (4, 'Polynomials', 1);
 
 -- Set sequence to 4 so next value is 5
-SELECT setval('lessons_id_seq', 4, false);
+SELECT setval('lessons_id_seq', 4, true);
 
 -- --------------------------------------------------------
 
@@ -151,7 +151,7 @@ VALUES
   (8, 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
 
 -- Set sequence to 8 so next value is 9
-SELECT setval('exercises_id_seq', 8, false);
+SELECT setval('exercises_id_seq', 8, true);
 
 
 --
@@ -221,7 +221,7 @@ INSERT INTO user_groups (id, name) VALUES
 (5, 'Class 9B');
 
 -- Set sequence to 5 so next value is 6
-SELECT setval('user_groups_id_seq', 5, false);
+SELECT setval('user_groups_id_seq', 5, true);
 
 -- --------------------------------------------------------
 
@@ -251,7 +251,7 @@ INSERT INTO user_groups_meta (id, user_id, group_id) VALUES
 (3, 4, 4);
 
 -- Set sequence to 3 so next value is 4
-SELECT setval('user_groups_meta_id_seq', 3, false);
+SELECT setval('user_groups_meta_id_seq', 3, true);
 
 -- --------------------------------------------------------
 
