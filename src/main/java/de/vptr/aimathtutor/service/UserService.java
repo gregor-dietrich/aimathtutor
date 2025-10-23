@@ -114,6 +114,14 @@ public class UserService {
             user.rank = UserRankEntity.findById(1L);
         }
 
+        // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
+        if (user.userAvatarEmoji == null) {
+            user.userAvatarEmoji = "🧒";
+        }
+        if (user.tutorAvatarEmoji == null) {
+            user.tutorAvatarEmoji = "🤖";
+        }
+
         user.persist();
         return new UserViewDto(user);
     }
