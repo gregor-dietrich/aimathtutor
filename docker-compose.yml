@@ -1,7 +1,6 @@
 services:
   aimathtutor:
     image: gregordietrich/aimathtutor:1.0.0-SNAPSHOT
-    user: root
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.jvm

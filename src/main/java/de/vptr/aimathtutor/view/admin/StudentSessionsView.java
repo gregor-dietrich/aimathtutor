@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
@@ -19,10 +22,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.RefreshButton;
+import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -44,8 +49,14 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
     @Inject
     AnalyticsService analyticsService;
 
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
+
     private Grid<StudentSessionViewDto> grid;
     private TextField searchField;
+    private DatePicker startDatePicker;
+    private DatePicker endDatePicker;
+    private Button resetFiltersButton;
 
     public StudentSessionsView() {
         this.setSizeFull();
@@ -101,7 +112,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Exercise")
                 .setFlexGrow(1);
 
-        this.grid.addColumn(session -> session.startTime)
+        this.grid.addColumn(session -> this.dateTimeFormatter.formatDateTime(session.startTime))
                 .setHeader("Start Time")
                 .setFlexGrow(1);
 
@@ -141,6 +152,16 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
 
         this.searchField = searchLayout.getTextfield();
 
+        // Date range filter for session start time
+        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        this.startDatePicker = dateFilterLayout.getStartDatePicker();
+        this.endDatePicker = dateFilterLayout.getEndDatePicker();
+
+        // Add reset filters button
+        this.resetFiltersButton = new Button("Reset Filters", e -> this.resetFilters());
+        this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        searchLayout.add(dateFilterLayout, this.resetFiltersButton);
         return searchLayout;
     }
 
@@ -189,5 +210,37 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
                 }
             }));
         });
+    }
+
+    private void filterByDateRange() {
+        try {
+            final var allSessions = this.analyticsService.getAllSessions();
+            final var startDate = this.startDatePicker.getValue();
+            final var endDate = this.endDatePicker.getValue();
+
+            final var filtered = allSessions.stream()
+                    .filter(session -> {
+                        if (session.startTime == null) {
+                            return false;
+                        }
+                        final var sessionDate = session.startTime.toLocalDate();
+                        final boolean passStart = startDate == null || !sessionDate.isBefore(startDate);
+                        final boolean passEnd = endDate == null || !sessionDate.isAfter(endDate);
+                        return passStart && passEnd;
+                    })
+                    .toList();
+
+            this.grid.setItems(filtered);
+        } catch (final Exception e) {
+            LOG.error("Error filtering by date range", e);
+            NotificationUtil.showError("Error filtering by date range: " + e.getMessage());
+        }
+    }
+
+    private void resetFilters() {
+        this.searchField.clear();
+        this.startDatePicker.clear();
+        this.endDatePicker.clear();
+        this.loadSessions();
     }
 }

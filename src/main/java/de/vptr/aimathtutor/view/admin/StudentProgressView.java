@@ -5,6 +5,9 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
@@ -18,10 +21,12 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.RefreshButton;
+import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -42,8 +47,14 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
     @Inject
     AnalyticsService analyticsService;
 
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
+
     private Grid<StudentProgressSummaryDto> grid;
     private TextField searchField;
+    private Button resetFiltersButton;
+    private DatePicker startDatePicker;
+    private DatePicker endDatePicker;
 
     public StudentProgressView() {
         this.setSizeFull();
@@ -118,7 +129,7 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
                 .setHeader("Avg Actions/Problem")
                 .setFlexGrow(1);
 
-        this.grid.addColumn(progress -> progress.lastActivity)
+        this.grid.addColumn(progress -> this.dateTimeFormatter.formatDateTime(progress.lastActivity))
                 .setHeader("Last Activity")
                 .setFlexGrow(1);
 
@@ -138,6 +149,16 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
 
         this.searchField = searchLayout.getTextfield();
 
+        // Add date range filter for last activity
+        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        this.startDatePicker = dateFilterLayout.getStartDatePicker();
+        this.endDatePicker = dateFilterLayout.getEndDatePicker();
+
+        // Add reset filters button
+        this.resetFiltersButton = new Button("Reset Filters", e -> this.resetFilters());
+        this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        searchLayout.add(dateFilterLayout, this.resetFiltersButton);
         return searchLayout;
     }
 
@@ -189,5 +210,37 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
                 }
             }));
         });
+    }
+
+    private void filterByDateRange() {
+        try {
+            final var allProgress = this.analyticsService.getAllUsersProgressSummary();
+            final var startDate = this.startDatePicker.getValue();
+            final var endDate = this.endDatePicker.getValue();
+
+            final var filtered = allProgress.stream()
+                    .filter(p -> {
+                        if (p.lastActivity == null) {
+                            return false;
+                        }
+                        final var activityDate = p.lastActivity.toLocalDate();
+                        final boolean passStart = startDate == null || !activityDate.isBefore(startDate);
+                        final boolean passEnd = endDate == null || !activityDate.isAfter(endDate);
+                        return passStart && passEnd;
+                    })
+                    .toList();
+
+            this.grid.setItems(filtered);
+        } catch (final Exception e) {
+            LOG.error("Error filtering by date range", e);
+            NotificationUtil.showError("Error filtering by date range: " + e.getMessage());
+        }
+    }
+
+    private void resetFilters() {
+        this.searchField.clear();
+        this.startDatePicker.clear();
+        this.endDatePicker.clear();
+        this.loadProgressData();
     }
 }

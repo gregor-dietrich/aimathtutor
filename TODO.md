@@ -4,30 +4,26 @@
 
 ### Implementation Priority
 
-1. **Session-related Fixes and Improvements** (Task 3)
+1. **Miscellaneous Fixes** (Task 4.1)
 
-2. **Miscellaneous Fixes** (Task 4)
-
-3. **Unable to create log file** (Task 1)
-
-4. **Multiple Problems Per Exercise** (Task 2)
+2. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-5. **Graspable Math Action Validation (isValidAction)** (Task 7)
+3. **Graspable Math Action Validation (isValidAction)** (Task 7)
    *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
-6. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-7. **Gamification** (Task 6)
+5. **Gamification** (Task 6)
    *Very Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
+
+6. **Miscellaneous Fixes** (remaining tasks)
 
 **Difficulty Ratings:**
 
-- Task 1: ★★☆☆☆
 - Task 2: ★★★☆☆
-- Task 3: ★☆☆☆☆
-- Task 4: ★☆☆☆☆
+- Task 4: various
 - Task 5: ★★★★☆
 - Task 6: ★★★★☆
 - Task 7: ★★★★★
@@ -40,34 +36,6 @@
 - [ ] Edge cases (empty data, invalid input, etc.)
 - [ ] Permission/security checks
 - [ ] Performance with large datasets (admin views)
-
----
-
-## 1. Unable to create log file
-
-```log
-LogManager error of type OPEN_FAILURE: Failed to set log file
-java.io.FileNotFoundException: logs/aimathtutor.log (Permission denied)
-        at java.base/java.io.FileOutputStream.open0(Native Method)
-        at java.base/java.io.FileOutputStream.open(Unknown Source)
-        at java.base/java.io.FileOutputStream.<init>(Unknown Source)
-        at org.jboss.logmanager.handlers.FileHandler.setFile(FileHandler.java:155)
-        at org.jboss.logmanager.handlers.SizeRotatingFileHandler.setFileInternal(SizeRotatingFileHandler.java:288)
-        at org.jboss.logmanager.handlers.SizeRotatingFileHandler.setFile(SizeRotatingFileHandler.java:158)
-        at io.quarkus.runtime.logging.LoggingSetupRecorder.configureFileHandler(LoggingSetupRecorder.java:702)
-        at io.quarkus.runtime.logging.LoggingSetupRecorder.initializeLogging(LoggingSetupRecorder.java:215)
-        at io.quarkus.runner.recorded.LoggingResourceProcessor$setupLoggingRuntimeInit1072790680.deploy_0(Unknown Source)
-        at io.quarkus.runner.recorded.LoggingResourceProcessor$setupLoggingRuntimeInit1072790680.deploy(Unknown Source)
-        at io.quarkus.runner.ApplicationImpl.doStart(Unknown Source)
-        at io.quarkus.runtime.Application.start(Application.java:101)
-        at io.quarkus.runtime.ApplicationLifecycleManager.run(ApplicationLifecycleManager.java:119)
-        at io.quarkus.runtime.Quarkus.run(Quarkus.java:80)
-        at io.quarkus.runtime.Quarkus.run(Quarkus.java:51)
-        at io.quarkus.runtime.Quarkus.run(Quarkus.java:144)
-        at io.quarkus.runner.GeneratedMain.main(Unknown Source)
-        at io.quarkus.bootstrap.runner.QuarkusEntryPoint.doRun(QuarkusEntryPoint.java:69)
-        at io.quarkus.bootstrap.runner.QuarkusEntryPoint.main(QuarkusEntryPoint.java:37)
-```
 
 ---
 
@@ -126,56 +94,27 @@ java.io.FileNotFoundException: logs/aimathtutor.log (Permission denied)
 
 ---
 
-## 3. Session-related Fixes and Improvements
-
-### 3.1 Session Duration
-
-- Currently behavior: when a user starts a session but doesn't solve the equation, it will always be shown as "in progess" in the admin views, and the duration will keep going up, even though the user can't go back to previous sessions
-- Expected behavior: when a session is not (yet) finished, no duration should be shown in the StudentSessionsView nor SessionDetailsView, and the latter should say "Not completed" or something similar, rather than "in progess"
-
-### 3.2 SessionDetailsView: Student Questions & AI Tutor Answers
-
-The Interactions & Feedback section of the SessionDetailsView only shows the generated AI tutoring prompts, but it shows neither student messages nor the AI tutor's answer to them.
-
----
-
 ## 4. Miscellaneous Fixes
 
-### 4.1 StudentProgressView
-
-Completion Rate and Success Rate seem to be the same thing. This needs to be verified, and if true, the latter should be removed. Also, add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
-
-### 4.2 Exercises database table fields
-
-Some fields can probably be removed as they aren't actually used, such as Allowed Operations and Custom Configuration for Exercises. The database init script and the entity as well as DTOs should be updated accordingly, and other tables should be checked for unnecessary fields as well. Also, the Target Expression should not be optional in the Exercise create/edit modals and it should be marked non-nullable in the init.sql, too.
-
-### 4.3 Timestamp Formatting
-
-Timestamps aren't formatted properly right now, which is a problem across most views. They should be formatted using a format string which can be defined using config properties (probably 2: for date and datetime?), and a default using German formatting should be used set in `application.properties`, which should include YYYY, MM, DD for the date and HH:MM:SS for the time.
-
-### 4.4 Column Widths in Admin View grids
+### 4.1 Column Widths in Admin View grids (low priority)
 
 The min-width for most if not all grids across most admin views needs to be adjusted, especially for timestamps.
 
-### 4.5 StudentSessionsView
-
-Add date filters and other filters (matching `AdminExerciseView` pattern as closely as makes sense).
-
-### 4.6 Unit Test Coverage (low priority, leave for later)
+### 4.2 Unit Test Coverage (low priority)
 
 Unit Test Coverage should be reviewed and probably improved across multiple packages.
 
-### 4.7 Keyboard accessibility (low priority, leave for later)
+### 4.3 Keyboard accessibility (low priority)
 
 Clickable spans are used extensively across views, especially admin views, however tehy lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
 
-### 4.8 Pagination (very low priority, leave for later)
+### 4.4 Pagination (very low priority)
 
 Add server-side pagination for admin views to handle large datasets gracefully (Vaadin data provider + backend query offsets).
 
-### 4.9 Database tweaks (very low priority, leave for later)
+### 4.5 Database tweaks (very low priority)
 
-Review init.sql as well as all queries in the project for optimization potential.
+Review init.sql as well as all queries in the project for optimization potential. Notable examples would be `filterByDateRange` methods.
 
 ---
 

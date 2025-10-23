@@ -56,13 +56,11 @@ public class StudentSessionViewDto {
                 this.exerciseTitle = entity.exercise.title;
             }
 
-            // Compute duration
-            if (entity.startTime != null && entity.endTime != null) {
+            // Compute duration only for completed sessions
+            if (entity.startTime != null && entity.endTime != null && entity.completed) {
                 this.durationSeconds = Duration.between(entity.startTime, entity.endTime).getSeconds();
-            } else if (entity.startTime != null) {
-                this.durationSeconds = Duration.between(entity.startTime, LocalDateTime.now()).getSeconds();
             } else {
-                this.durationSeconds = 0L;
+                this.durationSeconds = null;
             }
 
             // Compute success rate
@@ -75,10 +73,15 @@ public class StudentSessionViewDto {
     }
 
     /**
-     * Get formatted duration as HH:mm:ss
+     * Get formatted duration as HH:mm:ss, or null for incomplete sessions
      */
     public String getFormattedDuration() {
-        if (this.durationSeconds == null || this.durationSeconds == 0) {
+        // Don't show duration for incomplete sessions
+        if (this.durationSeconds == null || !this.completed) {
+            return null;
+        }
+
+        if (this.durationSeconds == 0) {
             return "0s";
         }
 
