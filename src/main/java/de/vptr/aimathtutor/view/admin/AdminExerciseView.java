@@ -275,8 +275,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         // For new exercises, automatically set the current user as the author
         if (exercise == null) {
-            // Ensure ID is null for new exercises
-            this.currentExercise.id = null;
             try {
                 final var currentUser = this.userService.getCurrentUser();
                 this.currentExercise.userId = currentUser.id;
