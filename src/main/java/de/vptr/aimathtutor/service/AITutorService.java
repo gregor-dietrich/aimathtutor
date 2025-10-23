@@ -817,4 +817,84 @@ public class AITutorService {
             // Don't fail the request if logging fails
         }
     }
+
+    /**
+     * Log a student question and AI answer as an interaction.
+     * Used for recording conversational interactions in the SessionDetailsView.
+     * Marked as @Transactional to ensure proper persistence in async contexts.
+     */
+    @Transactional
+    public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
+            final String studentQuestion, final String aiAnswer) {
+        try {
+            LOG.info("Logging question interaction: sessionId={}, userId={}, exerciseId={}, question={}, answer={}",
+                    sessionId, userId, exerciseId, studentQuestion, aiAnswer);
+
+            // Create TWO separate records: one for student question, one for AI answer
+            // This ensures they appear as separate rows in the SessionDetailView grid
+
+            // 1. Log the student question
+            final var studentQuestionRecord = new AIInteractionEntity();
+            studentQuestionRecord.sessionId = sessionId;
+            studentQuestionRecord.eventType = "QUESTION";
+            studentQuestionRecord.feedbackType = "QUESTION";
+            studentQuestionRecord.studentMessage = studentQuestion;
+
+            UserEntity user = null;
+            if (userId != null) {
+                user = UserEntity.findById(userId);
+                if (user == null) {
+                    LOG.warn("User not found for logging question interaction: userId={}", userId);
+                } else {
+                    studentQuestionRecord.user = user;
+                }
+            }
+
+            ExerciseEntity exercise = null;
+            if (exerciseId != null) {
+                exercise = ExerciseEntity.findById(exerciseId);
+                if (exercise == null) {
+                    LOG.warn("Exercise not found for logging question interaction: exerciseId={}", exerciseId);
+                } else {
+                    studentQuestionRecord.exercise = exercise;
+                }
+            }
+
+            studentQuestionRecord.persist();
+            LOG.info("Successfully logged student question: id={}, studentMessage={}",
+                    studentQuestionRecord.id, studentQuestionRecord.studentMessage);
+
+            // 2. Log the AI answer as a separate record
+            final var aiAnswerRecord = new AIInteractionEntity();
+            aiAnswerRecord.sessionId = sessionId;
+            aiAnswerRecord.eventType = "QUESTION_ANSWER";
+            aiAnswerRecord.feedbackType = "ANSWER";
+            aiAnswerRecord.feedbackMessage = aiAnswer;
+
+            if (userId != null) {
+                user = UserEntity.findById(userId);
+                if (user == null) {
+                    LOG.warn("User not found for logging AI answer: userId={}", userId);
+                } else {
+                    aiAnswerRecord.user = user;
+                }
+            }
+
+            if (exerciseId != null) {
+                exercise = ExerciseEntity.findById(exerciseId);
+                if (exercise == null) {
+                    LOG.warn("Exercise not found for logging AI answer: exerciseId={}", exerciseId);
+                } else {
+                    aiAnswerRecord.exercise = exercise;
+                }
+            }
+
+            aiAnswerRecord.persist();
+            LOG.info("Successfully logged AI answer: id={}, feedbackMessage={}",
+                    aiAnswerRecord.id, aiAnswerRecord.feedbackMessage);
+        } catch (final Exception e) {
+            LOG.error("Failed to log question interaction", e);
+            // Don't fail the request if logging fails
+        }
+    }
 }

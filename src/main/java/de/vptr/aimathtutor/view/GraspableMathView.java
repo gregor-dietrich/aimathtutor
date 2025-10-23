@@ -327,6 +327,24 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);
+
+                        // Disabled, only log interactions in exercises for now
+                        /*
+                         * // Log the question and answer interaction to the database
+                         * if (this.sessionId != null) {
+                         * try {
+                         * final var currentUser = this.authService.getCurrentUserEntity();
+                         * this.aiTutorService.logQuestionInteraction(
+                         * this.sessionId,
+                         * currentUser != null ? currentUser.id : null,
+                         * null, // GraspableMathView doesn't have a specific exercise
+                         * question,
+                         * answer.message);
+                         * } catch (final Exception e) {
+                         * LOG.warn("Failed to log question interaction", e);
+                         * }
+                         * }
+                         */
                     });
                 })
                 .exceptionally(ex -> {

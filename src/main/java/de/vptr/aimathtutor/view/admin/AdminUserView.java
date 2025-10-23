@@ -41,6 +41,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -58,6 +59,9 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
 
     @Inject
     UserRankService userRankService;
+
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<UserViewDto> grid;
     private TextField searchField;
@@ -212,8 +216,10 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Banned").setWidth("100px").setFlexGrow(0);
-        this.grid.addColumn(user -> user.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
-        this.grid.addColumn(user -> user.lastLogin).setHeader("Last Login").setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.created)).setHeader("Created")
+                .setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.lastLogin)).setHeader("Last Login")
+                .setWidth("150px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);

@@ -91,6 +91,9 @@ COPY --chown=185 target/quarkus-app/*.jar /deployments/
 COPY --chown=185 target/quarkus-app/app/ /deployments/app/
 COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
 
+# Create logs directory with proper permissions for the jboss user
+RUN mkdir -p /deployments/logs && chown -R 185:185 /deployments/logs
+
 EXPOSE 9001
 USER 185
 WORKDIR /deployments

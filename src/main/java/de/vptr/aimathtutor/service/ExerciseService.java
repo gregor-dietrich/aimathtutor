@@ -127,6 +127,15 @@ public class ExerciseService {
             throw new ValidationException("User ID is required for creating an exercise");
         }
 
+        // Validate Graspable Math: if enabled, target expression is required
+        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
+            if (exerciseDto.graspableTargetExpression == null
+                    || exerciseDto.graspableTargetExpression.trim().isEmpty()) {
+                throw new ValidationException(
+                        "Graspable Math target expression is required when Graspable Math is enabled");
+            }
+        }
+
         final ExerciseEntity exercise = new ExerciseEntity();
         exercise.title = exerciseDto.title;
         exercise.content = exerciseDto.content;
@@ -139,10 +148,8 @@ public class ExerciseService {
         exercise.graspableEnabled = exerciseDto.graspableEnabled != null ? exerciseDto.graspableEnabled : false;
         exercise.graspableInitialExpression = exerciseDto.graspableInitialExpression;
         exercise.graspableTargetExpression = exerciseDto.graspableTargetExpression;
-        exercise.graspableAllowedOperations = exerciseDto.graspableAllowedOperations;
         exercise.graspableDifficulty = exerciseDto.graspableDifficulty;
         exercise.graspableHints = exerciseDto.graspableHints;
-        exercise.graspableConfig = exerciseDto.graspableConfig;
 
         // Set user - required for creation
         final UserEntity user = UserEntity.findById(exerciseDto.userId);
@@ -179,6 +186,15 @@ public class ExerciseService {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
 
+        // Validate Graspable Math: if enabled, target expression is required
+        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
+            if (exerciseDto.graspableTargetExpression == null
+                    || exerciseDto.graspableTargetExpression.trim().isEmpty()) {
+                throw new ValidationException(
+                        "Graspable Math target expression is required when Graspable Math is enabled");
+            }
+        }
+
         // Complete replacement (PUT semantics)
         existingExercise.title = exerciseDto.title;
         existingExercise.content = exerciseDto.content;
@@ -190,10 +206,8 @@ public class ExerciseService {
         existingExercise.graspableEnabled = exerciseDto.graspableEnabled != null ? exerciseDto.graspableEnabled : false;
         existingExercise.graspableInitialExpression = exerciseDto.graspableInitialExpression;
         existingExercise.graspableTargetExpression = exerciseDto.graspableTargetExpression;
-        existingExercise.graspableAllowedOperations = exerciseDto.graspableAllowedOperations;
         existingExercise.graspableDifficulty = exerciseDto.graspableDifficulty;
         existingExercise.graspableHints = exerciseDto.graspableHints;
-        existingExercise.graspableConfig = exerciseDto.graspableConfig;
 
         // Set user if provided, otherwise keep existing user
         if (exerciseDto.userId != null) {
@@ -251,17 +265,11 @@ public class ExerciseService {
         if (exerciseDto.graspableTargetExpression != null) {
             existingExercise.graspableTargetExpression = exerciseDto.graspableTargetExpression;
         }
-        if (exerciseDto.graspableAllowedOperations != null) {
-            existingExercise.graspableAllowedOperations = exerciseDto.graspableAllowedOperations;
-        }
         if (exerciseDto.graspableDifficulty != null) {
             existingExercise.graspableDifficulty = exerciseDto.graspableDifficulty;
         }
         if (exerciseDto.graspableHints != null) {
             existingExercise.graspableHints = exerciseDto.graspableHints;
-        }
-        if (exerciseDto.graspableConfig != null) {
-            existingExercise.graspableConfig = exerciseDto.graspableConfig;
         }
 
         // Set user if provided

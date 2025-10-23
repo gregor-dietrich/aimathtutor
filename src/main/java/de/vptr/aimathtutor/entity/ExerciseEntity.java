@@ -57,15 +57,9 @@ public class ExerciseEntity extends PanacheEntityBase {
     @Column(name = "graspable_target_expression", columnDefinition = "TEXT")
     public String graspableTargetExpression;
 
-    @Column(name = "graspable_allowed_operations", columnDefinition = "TEXT")
-    public String graspableAllowedOperations; // JSON array: ["simplify", "expand", "factor"]
-
     @Column(name = "graspable_difficulty")
     public String graspableDifficulty; // "beginner", "intermediate", "advanced"
 
     @Column(name = "graspable_hints", columnDefinition = "TEXT")
     public String graspableHints; // JSON array of hint strings
-
-    @Column(name = "graspable_config", columnDefinition = "TEXT")
-    public String graspableConfig; // Additional JSON config for Graspable Math widget
 }

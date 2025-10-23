@@ -17,6 +17,7 @@ public class AIInteractionViewDto {
     public Long exerciseId;
     public String exerciseTitle;
     public String eventType;
+    public String studentMessage;
     public String expressionBefore;
     public String expressionAfter;
     public String feedbackType;
@@ -33,6 +34,7 @@ public class AIInteractionViewDto {
             this.id = entity.id;
             this.sessionId = entity.sessionId;
             this.eventType = entity.eventType;
+            this.studentMessage = entity.studentMessage;
             this.expressionBefore = entity.expressionBefore;
             this.expressionAfter = entity.expressionAfter;
             this.feedbackType = entity.feedbackType;

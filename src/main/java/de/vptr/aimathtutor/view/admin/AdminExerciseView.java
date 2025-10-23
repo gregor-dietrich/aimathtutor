@@ -1,10 +1,12 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -24,8 +26,10 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.*;
@@ -33,13 +37,11 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
-import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.*;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -64,6 +66,9 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
     @Inject
     CommentService commentService;
 
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
+
     private Grid<ExerciseViewDto> grid;
     private TextField searchField;
     private Button searchButton;
@@ -76,12 +81,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
     private Binder<ExerciseDto> binder;
     private ExerciseDto currentExercise;
     private List<LessonViewDto> availableLessons;
-
-    // Comment management components
-    private Dialog commentDialog;
-    private Binder<CommentDto> commentBinder;
-    private CommentDto currentComment;
-    private ExerciseViewDto selectedExercise;
 
     public AdminExerciseView() {
         this.setSizeFull();
@@ -144,7 +143,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         final var buttonLayout = this.createButtonLayout();
         this.createGrid();
         this.exerciseDialog = new FormDialog();
-        this.commentDialog = new FormDialog();
 
         this.add(header, searchLayout, buttonLayout, this.grid);
     }
@@ -240,8 +238,10 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
             return checkbox;
         }).setHeader("Graspable Math").setWidth("120px").setFlexGrow(0);
 
-        this.grid.addColumn(exercise -> exercise.created).setHeader("Created").setWidth("150px").setFlexGrow(0);
-        this.grid.addColumn(exercise -> exercise.lastEdit).setHeader("Last Edit").setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.created)).setHeader("Created")
+                .setWidth("150px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.lastEdit)).setHeader("Last Edit")
+                .setWidth("150px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
@@ -253,7 +253,8 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
         final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
-        final var commentButton = new CommentButton(e -> this.openCommentDialog(exercise));
+        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentView.class,
+                new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
 
         layout.add(editButton, deleteButton, commentButton);
         return layout;
@@ -362,12 +363,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         graspableTargetExpressionField.setHeight("80px");
         graspableTargetExpressionField.setTooltipText("Expected solution to validate against");
 
-        final var graspableAllowedOperationsField = new TextArea("Allowed Operations (optional)");
-        graspableAllowedOperationsField.setPlaceholder("e.g., simplify, factor, expand, combine");
-        graspableAllowedOperationsField.setWidthFull();
-        graspableAllowedOperationsField.setHeight("60px");
-        graspableAllowedOperationsField.setTooltipText("Comma-separated list of allowed student actions");
-
         final var graspableDifficultyField = new ComboBox<String>("Difficulty");
         graspableDifficultyField.setItems("beginner", "intermediate", "advanced", "expert");
         graspableDifficultyField.setPlaceholder("Select difficulty");
@@ -380,44 +375,46 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         graspableHintsField.setHeight("100px");
         graspableHintsField.setTooltipText("Hints to display when student requests help");
 
-        final var graspableConfigField = new TextArea("Custom Configuration (JSON, optional)");
-        graspableConfigField.setPlaceholder("{ \"key\": \"value\" }");
-        graspableConfigField.setWidthFull();
-        graspableConfigField.setHeight("100px");
-        graspableConfigField.setTooltipText("Advanced: custom JSON configuration for Graspable Math");
-
         // Bind Graspable Math fields
         this.binder.bind(graspableEnabledField,
                 exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
                 (exercise1, value) -> exercise1.graspableEnabled = value);
-        this.binder.bind(graspableInitialExpressionField,
-                exercise1 -> exercise1.graspableInitialExpression,
-                (exercise1, value) -> exercise1.graspableInitialExpression = value);
+        this.binder.forField(graspableInitialExpressionField)
+                .withValidator((value, ctx) -> {
+                    // Only validate if Graspable Math is enabled
+                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                        return ValidationResult
+                                .error("Initial Expression is required when Graspable Math is enabled");
+                    }
+                    return ValidationResult.ok();
+                })
+                .bind(exercise1 -> exercise1.graspableInitialExpression,
+                        (exercise1, value) -> exercise1.graspableInitialExpression = value);
         this.binder.bind(graspableTargetExpressionField,
                 exercise1 -> exercise1.graspableTargetExpression,
                 (exercise1, value) -> exercise1.graspableTargetExpression = value);
-        this.binder.bind(graspableAllowedOperationsField,
-                exercise1 -> exercise1.graspableAllowedOperations,
-                (exercise1, value) -> exercise1.graspableAllowedOperations = value);
-        this.binder.bind(graspableDifficultyField,
-                exercise1 -> exercise1.graspableDifficulty,
-                (exercise1, value) -> exercise1.graspableDifficulty = value);
+        this.binder.forField(graspableDifficultyField)
+                .withValidator((value, ctx) -> {
+                    // Only validate if Graspable Math is enabled
+                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                        return ValidationResult
+                                .error("Difficulty is required when Graspable Math is enabled");
+                    }
+                    return ValidationResult.ok();
+                })
+                .bind(exercise1 -> exercise1.graspableDifficulty,
+                        (exercise1, value) -> exercise1.graspableDifficulty = value);
         this.binder.bind(graspableHintsField,
                 exercise1 -> exercise1.graspableHints,
                 (exercise1, value) -> exercise1.graspableHints = value);
-        this.binder.bind(graspableConfigField,
-                exercise1 -> exercise1.graspableConfig,
-                (exercise1, value) -> exercise1.graspableConfig = value);
 
         // Show/hide Graspable Math fields based on checkbox
         graspableEnabledField.addValueChangeListener(event -> {
             final boolean enabled = event.getValue();
             graspableInitialExpressionField.setVisible(enabled);
             graspableTargetExpressionField.setVisible(enabled);
-            graspableAllowedOperationsField.setVisible(enabled);
             graspableDifficultyField.setVisible(enabled);
             graspableHintsField.setVisible(enabled);
-            graspableConfigField.setVisible(enabled);
         });
 
         // Initially hide Graspable Math fields if not enabled
@@ -425,15 +422,12 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
                 && this.currentExercise.graspableEnabled;
         graspableInitialExpressionField.setVisible(initiallyEnabled);
         graspableTargetExpressionField.setVisible(initiallyEnabled);
-        graspableAllowedOperationsField.setVisible(initiallyEnabled);
         graspableDifficultyField.setVisible(initiallyEnabled);
         graspableHintsField.setVisible(initiallyEnabled);
-        graspableConfigField.setVisible(initiallyEnabled);
 
         form.add(titleField, contentField, lessonField, publishedField, commentableField,
                 graspableEnabledField, graspableInitialExpressionField, graspableTargetExpressionField,
-                graspableAllowedOperationsField, graspableDifficultyField, graspableHintsField,
-                graspableConfigField);
+                graspableDifficultyField, graspableHintsField);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
@@ -525,94 +519,6 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         } finally {
             this.searchButton.setEnabled(true);
             this.searchButton.setText("Search");
-        }
-    }
-
-    private void openCommentDialog(final ExerciseViewDto exercise) {
-        this.selectedExercise = exercise;
-        this.commentDialog.removeAll();
-        this.currentComment = new CommentDto();
-
-        this.commentBinder = new Binder<>(CommentDto.class);
-
-        final var title = new H3("Add Comment to: " + exercise.title);
-
-        final var form = new FormLayout();
-        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
-
-        // Form fields
-        final var contentField = new TextArea("Comment");
-        contentField.setRequired(true);
-        contentField.setWidthFull();
-        contentField.setHeight("200px");
-        contentField.setPlaceholder("Write your comment here...");
-        contentField.setInvalid(false); // Clear any previous validation state
-
-        // Bind fields
-        this.commentBinder.forField(contentField)
-                .withValidator(value -> value != null && !value.trim().isEmpty(), "Comment is required")
-                .bind(comment -> comment.content, (comment, value) -> comment.content = value);
-
-        form.add(contentField);
-
-        // Button layout
-        final var buttonLayout = new HorizontalLayout();
-        buttonLayout.setSpacing(true);
-
-        final var saveButton = new Button("Post Comment", e -> this.saveComment());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-        final var cancelButton = new Button("Cancel", e -> this.commentDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-        buttonLayout.add(saveButton, cancelButton);
-
-        final var dialogLayout = new VerticalLayout(title, form, buttonLayout);
-        dialogLayout.setSpacing(true);
-        dialogLayout.setPadding(false);
-        dialogLayout.setSizeFull();
-
-        this.commentDialog.add(dialogLayout);
-
-        // Load current comment data
-        this.commentBinder.readBean(this.currentComment);
-
-        this.commentDialog.open();
-    }
-
-    private void saveComment() {
-        try {
-            // Validate the form before attempting to save
-            if (!this.commentBinder.validate().isOk()) {
-                NotificationUtil.showError("Please check the form for errors");
-                return;
-            }
-
-            this.commentBinder.writeBean(this.currentComment);
-
-            // Convert DTO to Entity for service call
-            final var commentEntity = new CommentEntity();
-            commentEntity.content = this.currentComment.content;
-
-            // Set the exercise reference
-            final var exerciseEntity = new ExerciseEntity();
-            exerciseEntity.id = this.selectedExercise.id;
-            commentEntity.exercise = exerciseEntity;
-
-            // Get current username from session
-            final var session = com.vaadin.flow.server.VaadinSession.getCurrent();
-            final var currentUsername = (String) session.getAttribute("authenticated.username");
-
-            this.commentService.createComment(commentEntity, currentUsername);
-            NotificationUtil.showSuccess("Comment added successfully");
-
-            this.commentDialog.close();
-
-        } catch (final ValidationException e) {
-            NotificationUtil.showError("Please check the form for errors");
-        } catch (final Exception e) {
-            LOG.error("Error creating comment", e);
-            NotificationUtil.showError("Error creating comment: " + e.getMessage());
         }
     }
 

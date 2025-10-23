@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.dto.AIInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -42,6 +43,9 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
 
     @Inject
     AnalyticsService analyticsService;
+
+    @Inject
+    DateTimeFormatterUtil dateTimeFormatter;
 
     private String sessionId;
     private StudentSessionViewDto session;
@@ -103,34 +107,42 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         this.interactionsGrid.setSizeFull();
         this.interactionsGrid.setHeight("400px");
 
-        // Configure columns to show both student and tutor messages
-        this.interactionsGrid.addColumn(interaction -> interaction.timestamp)
+        // Configure columns to show conversational interaction
+        this.interactionsGrid.addColumn(interaction -> this.dateTimeFormatter.formatDateTime(interaction.timestamp))
                 .setHeader("Time")
                 .setFlexGrow(0)
                 .setWidth("150px");
 
-        this.interactionsGrid.addColumn(interaction -> interaction.eventType)
-                .setHeader("Event Type")
-                .setFlexGrow(0)
-                .setWidth("120px");
-
         this.interactionsGrid.addColumn(interaction -> {
-            if (interaction.expressionBefore != null && interaction.expressionAfter != null) {
+            // Identify if this is a student message or AI response
+            if (interaction.studentMessage != null && !interaction.studentMessage.isEmpty()) {
+                return "Student";
+            } else if (interaction.feedbackMessage != null && !interaction.feedbackMessage.isEmpty()) {
+                return "AI Tutor";
+            }
+            return "Event";
+        }).setHeader("Source")
+                .setFlexGrow(0)
+                .setWidth("100px");
+
+        // Show message content (student message or AI feedback)
+        this.interactionsGrid.addColumn(interaction -> {
+            if (interaction.studentMessage != null && !interaction.studentMessage.isEmpty()) {
+                return interaction.studentMessage;
+            } else if (interaction.feedbackMessage != null && !interaction.feedbackMessage.isEmpty()) {
+                return interaction.feedbackMessage;
+            } else if (interaction.expressionBefore != null && interaction.expressionAfter != null) {
                 return interaction.expressionBefore + " → " + interaction.expressionAfter;
             }
             return "";
-        }).setHeader("Expression Change")
-                .setFlexGrow(1);
+        }).setHeader("Message")
+                .setFlexGrow(2);
 
+        // Show feedback type if available
         this.interactionsGrid.addColumn(interaction -> interaction.feedbackType != null ? interaction.feedbackType : "")
                 .setHeader("Feedback Type")
                 .setFlexGrow(0)
                 .setWidth("100px");
-
-        this.interactionsGrid
-                .addColumn(interaction -> interaction.feedbackMessage != null ? interaction.feedbackMessage : "")
-                .setHeader("Feedback")
-                .setFlexGrow(2);
 
         this.add(this.interactionsGrid);
     }
@@ -186,7 +198,7 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         mainCard.add(header);
 
         // Session status badge
-        final var statusSpan = new Span(this.session.completed ? "✓ Completed" : "◌ In Progress");
+        final var statusSpan = new Span(this.session.completed ? "✓ Completed" : "◌ Not Completed");
         statusSpan.getElement().getThemeList().add("badge");
         if (this.session.completed) {
             statusSpan.getElement().getThemeList().add("success");
@@ -201,10 +213,16 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         infoGrid.setPadding(false);
 
         infoGrid.add(new Paragraph("Session ID: " + this.session.sessionId));
-        infoGrid.add(new Paragraph("Start Time: " + this.session.startTime));
+        infoGrid.add(new Paragraph("Start Time: " + this.dateTimeFormatter.formatDateTime(this.session.startTime)));
         infoGrid.add(new Paragraph(
-                "End Time: " + (this.session.endTime != null ? this.session.endTime : "In progress")));
-        infoGrid.add(new Paragraph("Duration: " + this.session.getFormattedDuration()));
+                "End Time: "
+                        + (this.session.endTime != null ? this.dateTimeFormatter.formatDateTime(this.session.endTime)
+                                : "Not yet completed")));
+        if (this.session.getFormattedDuration() != null) {
+            infoGrid.add(new Paragraph("Duration: " + this.session.getFormattedDuration()));
+        } else {
+            infoGrid.add(new Paragraph("Duration: Not available"));
+        }
 
         mainCard.add(infoGrid);
 

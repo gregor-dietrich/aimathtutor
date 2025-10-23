@@ -487,11 +487,31 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Show typing indicator while waiting for AI response
         this.chatPanel.showTypingIndicator();
 
+        // Get user ID and exercise ID before async call (to avoid context issues)
+        final var userId = this.authService.getUserId();
+        final var exerciseId = this.exercise != null ? this.exercise.id : null;
+        final var sessionId = this.currentSessionId;
+
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
         this.aiTutorService
                 .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext)
                 .thenAccept(answer -> {
+                    // Log the question and answer interaction BEFORE UI access (to ensure proper
+                    // transaction context)
+                    if (sessionId != null) {
+                        try {
+                            this.aiTutorService.logQuestionInteraction(
+                                    sessionId,
+                                    userId,
+                                    exerciseId,
+                                    question,
+                                    answer.message);
+                        } catch (final Exception e) {
+                            LOG.warn("Failed to log question interaction", e);
+                        }
+                    }
+
                     ui.access(() -> {
                         // Hide typing indicator
                         this.chatPanel.hideTypingIndicator();

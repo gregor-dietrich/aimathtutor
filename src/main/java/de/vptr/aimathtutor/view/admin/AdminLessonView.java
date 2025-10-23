@@ -219,6 +219,7 @@ public class AdminLessonView extends VerticalLayout implements BeforeEnterObserv
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
+        // Convert view DTO to a fresh LessonDto and pass that to the dialog
         final var editButton = new EditButton(e -> this.openLessonDialog(lesson.toLessonDto()));
         final var deleteButton = new DeleteButton(e -> this.deleteLesson(lesson.toLessonDto()));
 
@@ -228,6 +229,7 @@ public class AdminLessonView extends VerticalLayout implements BeforeEnterObserv
 
     private void openLessonDialog(final LessonDto lesson) {
         this.lessonDialog.removeAll();
+        // Use provided LessonDto or start fresh for create
         this.currentLesson = lesson != null ? lesson : new LessonDto();
 
         this.binder = new Binder<>(LessonDto.class);

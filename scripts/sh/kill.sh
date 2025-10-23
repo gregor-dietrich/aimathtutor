@@ -2,6 +2,12 @@
 
 set -e
 
+# Check if docker is available
+docker_available() {
+    command -v docker &> /dev/null && docker ps &> /dev/null
+    return $?
+}
+
 if pgrep -f "quarkus" > /dev/null; then
     echo "Killing Quarkus processes..."
     sudo pkill -f "quarkus" > /dev/null || true

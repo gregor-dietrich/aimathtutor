@@ -27,10 +27,8 @@ public class ExerciseViewDto {
     public Boolean graspableEnabled;
     public String graspableInitialExpression;
     public String graspableTargetExpression;
-    public String graspableAllowedOperations;
     public String graspableDifficulty;
     public String graspableHints;
-    public String graspableConfig;
 
     public ExerciseViewDto() {
     }
@@ -54,10 +52,8 @@ public class ExerciseViewDto {
             this.graspableEnabled = entity.graspableEnabled;
             this.graspableInitialExpression = entity.graspableInitialExpression;
             this.graspableTargetExpression = entity.graspableTargetExpression;
-            this.graspableAllowedOperations = entity.graspableAllowedOperations;
             this.graspableDifficulty = entity.graspableDifficulty;
             this.graspableHints = entity.graspableHints;
-            this.graspableConfig = entity.graspableConfig;
         }
     }
 
@@ -87,10 +83,8 @@ public class ExerciseViewDto {
         dto.graspableEnabled = this.graspableEnabled;
         dto.graspableInitialExpression = this.graspableInitialExpression;
         dto.graspableTargetExpression = this.graspableTargetExpression;
-        dto.graspableAllowedOperations = this.graspableAllowedOperations;
         dto.graspableDifficulty = this.graspableDifficulty;
         dto.graspableHints = this.graspableHints;
-        dto.graspableConfig = this.graspableConfig;
 
         return dto;
     }

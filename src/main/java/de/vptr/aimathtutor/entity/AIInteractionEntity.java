@@ -33,6 +33,9 @@ public class AIInteractionEntity extends PanacheEntityBase {
     @Column(name = "event_type")
     public String eventType; // Type of math action
 
+    @Column(name = "student_message", columnDefinition = "TEXT")
+    public String studentMessage; // Optional: explicit student question/message
+
     @Column(name = "expression_before", columnDefinition = "TEXT")
     public String expressionBefore;
 
