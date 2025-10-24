@@ -57,6 +57,7 @@ public class UserRankService {
                 .map(entity -> new UserRankViewDto((UserRankEntity) entity));
     }
 
+    @Transactional
     public List<UserRankViewDto> searchRanks(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllRanks();
