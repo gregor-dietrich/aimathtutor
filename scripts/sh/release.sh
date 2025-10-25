@@ -13,9 +13,9 @@ git switch main
 
 git pull
 
-make tag
-
 make build
+
+make tag
 
 docker push "$TAG"
 
