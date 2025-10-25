@@ -149,6 +149,7 @@ public class UserGroupService {
         return UserGroupMetaEntity.isUserInGroup(userId, groupId);
     }
 
+    @Transactional
     public List<UserGroupViewDto> searchGroups(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllGroups();

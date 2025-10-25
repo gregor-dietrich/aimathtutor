@@ -152,6 +152,7 @@ public class LessonService {
         return LessonEntity.deleteById(id);
     }
 
+    @Transactional
     public List<LessonViewDto> searchLessons(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllLessons();

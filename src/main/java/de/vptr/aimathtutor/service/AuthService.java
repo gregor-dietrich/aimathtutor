@@ -42,6 +42,18 @@ public class AuthService {
                 return AuthResultDto.invalidCredentials();
             }
 
+            // Check if user is banned
+            if (user.banned != null && user.banned) {
+                LOG.trace("Authentication failed - user is banned: {}", username);
+                return AuthResultDto.invalidCredentials();
+            }
+
+            // Check if user is activated
+            if (user.activated == null || !user.activated) {
+                LOG.trace("Authentication failed - user is not activated: {}", username);
+                return AuthResultDto.invalidCredentials();
+            }
+
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
                 LOG.trace("Authentication failed - invalid password for user: {}", username);

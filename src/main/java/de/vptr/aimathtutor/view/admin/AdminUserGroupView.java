@@ -435,7 +435,7 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
         }
 
         try {
-            this.groupService.addUserToGroup(this.selectedGroup.id, selectedUser.id);
+            this.groupService.addUserToGroup(selectedUser.id, this.selectedGroup.id);
             NotificationUtil.showSuccess("User added to group successfully");
             this.loadGroupUsers();
             this.loadAvailableUsers(); // Refresh the combo to exclude the newly added user
@@ -448,7 +448,7 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
 
     private void removeUserFromGroup(final UserViewDto user) {
         try {
-            if (this.groupService.removeUserFromGroup(this.selectedGroup.id, user.id)) {
+            if (this.groupService.removeUserFromGroup(user.id, this.selectedGroup.id)) {
                 NotificationUtil.showSuccess("User removed from group successfully");
                 this.loadGroupUsers();
                 this.loadAvailableUsers(); // Refresh the combo to include the removed user

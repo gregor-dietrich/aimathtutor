@@ -52,6 +52,7 @@ public class UserViewDto {
         dto.email = this.email;
         dto.rankId = this.rankId;
         dto.banned = this.banned;
+        dto.activated = this.activated;
         // password is not included - must be set separately if updating password
         return dto;
     }

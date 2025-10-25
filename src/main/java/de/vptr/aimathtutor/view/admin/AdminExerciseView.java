@@ -357,7 +357,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         graspableInitialExpressionField.setHeight("80px");
         graspableInitialExpressionField.setTooltipText("Starting math expression for the student");
 
-        final var graspableTargetExpressionField = new TextArea("Target Expression (optional)");
+        final var graspableTargetExpressionField = new TextArea("Target Expression");
         graspableTargetExpressionField.setPlaceholder("e.g., x = 5");
         graspableTargetExpressionField.setWidthFull();
         graspableTargetExpressionField.setHeight("80px");
@@ -390,9 +390,17 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
                 })
                 .bind(exercise1 -> exercise1.graspableInitialExpression,
                         (exercise1, value) -> exercise1.graspableInitialExpression = value);
-        this.binder.bind(graspableTargetExpressionField,
-                exercise1 -> exercise1.graspableTargetExpression,
-                (exercise1, value) -> exercise1.graspableTargetExpression = value);
+        this.binder.forField(graspableTargetExpressionField)
+                .withValidator((value, ctx) -> {
+                    // Only validate if Graspable Math is enabled
+                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                        return ValidationResult
+                                .error("Target Expression is required when Graspable Math is enabled");
+                    }
+                    return ValidationResult.ok();
+                })
+                .bind(exercise1 -> exercise1.graspableTargetExpression,
+                        (exercise1, value) -> exercise1.graspableTargetExpression = value);
         this.binder.forField(graspableDifficultyField)
                 .withValidator((value, ctx) -> {
                     // Only validate if Graspable Math is enabled
