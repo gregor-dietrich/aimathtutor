@@ -1,112 +1,107 @@
 ---
 applyTo: '**'
 ---
-# AIMathTutor Project Coding Instructions
+---
+applyTo: '**'
+---
+# AIMathTutor Project Coding & Architecture Guide
+
+## Overview
+AIMathTutor is a monolithic full-stack web application built with **Quarkus** (backend) and **Vaadin** (frontend). It provides interactive math exercises, AI-powered tutoring, and analytics for students and teachers. The project tightly integrates backend and frontend using CDI (`@Inject`), with no REST API boundary between core services and views.
+
+## Key Features
+- **Graspable Math Workspace:** Embedded for symbolic manipulation and step-by-step math actions.
+- **AI Tutor Layer:** Real-time feedback, hints, and adaptive problem generation using multiple AI providers (Gemini, OpenAI, Ollama, mock).
+- **Lesson & Exercise Management:** Author, organize, and track progress on math problems and lessons.
+- **Comment System:** Threaded comments for exercises, moderation, and reporting.
+- **User Management:** Roles (Admin, Teacher, Student), groups, ranks, and permissions.
+- **Analytics:** Session/event tracking, progress summaries, and teacher/admin dashboards.
 
 ## Project Structure
-- **Monolithic** full-stack web application using **Quarkus + Vaadin**
-- Backend and frontend are **tightly integrated** - no REST API between them
-- Vaadin Views directly inject and call backend Services using CDI (`@Inject`)
-- Integrates **Graspable Math** as an interactive math workspace
-- Adds an **AI Tutor Layer** for feedback, hints, and adaptive problem generation
-- Reference existing code in same package for consistency and avoid duplication
+- **Backend & Frontend:**
+  - Vaadin views directly inject backend services (CDI, `@Inject`).
+  - No REST API for core app logic; REST only for external AI APIs.
+- **Graspable Math Integration:**
+  - Embedded via Vaadin `Html`/`IFrame` components and JavaScript API.
+  - Student actions captured by JS listeners, sent to Java via `@ClientCallable`.
+- **AI Tutor Integration:**
+  - `AITutorService` orchestrates feedback, hints, and problem generation.
+  - Supports Gemini, OpenAI, Ollama, and mock providers (configurable via `application.properties`).
+  - AI feedback is returned as `AIFeedbackDto` and displayed in chat-style panels.
+- **Entities, DTOs, Services, Views:**
+  - For each resource, maintain:
+    - **DTOs:** Data transfer objects (e.g., `GraspableEventDto`, `AIFeedbackDto`, `CommentDto`).
+    - **Entities:** Hibernate/Panache entities for DB access (e.g., `StudentSessionEntity`, `AIInteractionEntity`, `CommentEntity`).
+    - **Services:** Business logic (`@ApplicationScoped`), e.g., `AITutorService`, `GraspableMathService`, `CommentService`, `AnalyticsService`.
+    - **Views:** Vaadin UI components (e.g., `MathWorkspaceView`, `ExerciseWorkspaceView`, `LessonsView`).
 
-## Framework Guidelines
-- Follow Quarkus best practices (CDI, ApplicationScoped services, etc.)
-- Utilize Vaadin components for UI (Flow components, layouts, etc.)
-- Services are injected into Views using `@Inject` annotation
-- Use the Graspable Math **JavaScript API / embed widget** in Vaadin views
-- Check the `pom.xml` file for available dependencies and utilities
-
-## Code Organization
-- For each resource, there should be corresponding classes:
-  - **DTO classes:** for data transfer and view data (e.g., `GraspableEventDto`, `AIFeedbackDto`)
-  - **Entity classes:** for database access with Hibernate/Panache (e.g., `StudentSessionEntity`, `AIInteractionEntity`)
-  - **Service classes:** for business logic with `@ApplicationScoped` or `@Dependent` (e.g., `AITutorService`, `GraspableMathService`)
-  - **View classes:** Vaadin UI components extending layouts (e.g., `GraspableMathView`, `AITutorView`)
-- Add new resources for AI integration:
-  - `AITutorService.java`: handles calls to AI APIs (e.g., OpenAI, local ML models) - `@ApplicationScoped`
-  - `AIFeedbackDto.java`: defines structure of AI feedback responses
-  - `AIInteractionEntity.java`: stores AI interactions in database (optional, for logging/analytics)
-- Add new resources for Graspable Math workspace integration:
-  - `GraspableEventDto.java`: represents student actions (move, simplify, expand, etc.)
-  - `GraspableMathView.java`: Vaadin view embedding Graspable Math using `Html` or `IFrame` component
-  - `GraspableMathService.java`: handles Graspable Math event processing and state management
-
-## Graspable Math + AI Integration Logic
-- **View Layer:** `GraspableMathView` embeds the Graspable Math workspace (HTML/JS widget)
-- **JavaScript Integration:** Use Vaadin's `@JavaScript` annotation or `UI.getCurrent().getPage().executeJs()` to interact with Graspable Math
-- **Event Flow:**
-  1. Student performs action in Graspable Math (move, simplify, etc.)
-  2. JavaScript listener captures event and calls Java method via `element.$server.methodName(eventData)`
-  3. View method receives event, converts to `GraspableEventDto`
-  4. View calls `AITutorService.analyzeMathAction(eventDto)` (direct method call, no REST)
-  5. `AITutorService` constructs prompt and queries AI model
-  6. Service returns `AIFeedbackDto` to view
-  7. View displays feedback in Vaadin component (e.g., `Div`, `Paragraph`, chat-style layout)
-- **AI Feedback Examples:**
-  - "Good job, correct simplification!"
-  - "Careful, you only divided one side of the equation."
-  - "Try factoring instead of expanding."
-- **AI Additional Features:**
-  - Generate new problems based on student performance
-  - Summarize learning progress
-  - Provide teacher-facing reports of student strengths and weaknesses
-# AIMathTutor Project Coding Instructions
-
-## Project Structure
-- Full Stack web application using **Quarkus + Vaadin**
-- Integrates **Graspable Math** as an interactive math workspace
-- Adds an **AI Tutor Layer** for feedback, hints, and adaptive problem generation
-- Always cross-reference corresponding files between frontend and backend
-- Reference existing code in same package for consistency and avoid duplication
-
-## Framework Guidelines
-- Follow Quarkus best practices
-- Utilize Vaadin components for UI
-- Use the Graspable Math **JavaScript API / embed widget** in frontend views
-- Communicate between Graspable Math and AI services via REST endpoints
-- Check the `pom.xml` file for available dependencies and utilities
-
-## Code Organization
-- For each resource, there should be corresponding classes:
-  - **DTO classes:** for data exchange (e.g., student steps, AI feedback)
-  - **Entity:** for database access (e.g., student sessions, logs)
-  - **Service:** for business logic (e.g., AI analysis, feedback generation)
-  - **View:** for UI components (e.g., Graspable Math canvas + AI chat window)
-- Add a new resource for AI integration
-  - `AITutorService.java`: handles calls to AI APIs (e.g., OpenAI, local ML models)
-  - `AIResponseDTO.java`: defines structure of AI feedback
-  - `AIController.java`: exposes REST endpoints for the frontend
-- Add a new resource for Graspable Math workspace integration
-  - `GraspableEventDTO.java`: represents student actions (move, simplify, etc.)
-  - `GraspableView.java`: Vaadin view embedding Graspable Math
+## AI Providers
+- **Gemini (Google):**
+  - Configure via `gemini.api.key`, `gemini.model`, etc.
+  - See `GeminiAIService.java` and DTOs for integration.
+- **OpenAI:**
+  - Configure via `openai.api.key`, `openai.model`, etc.
+  - See `OpenAIService.java` and DTOs for integration.
+- **Ollama (local LLM):**
+  - Configure via `ollama.api.url`, `ollama.model`, etc.
+  - See `OllamaService.java` and DTOs for integration.
+- **Mock Provider:**
+  - For development/testing, set `ai.tutor.provider=mock` or disable with `ai.tutor.enabled=false`.
 
 ## Graspable Math + AI Integration Logic
-- The **frontend** embeds the Graspable Math workspace (HTML/JS widget)
-- Each student action triggers a **JavaScript listener** that sends an event to the backend
-- The **backend** receives this event and passes it to `AITutorService`
-- `AITutorService` constructs a natural language or structured prompt and sends it to the AI model
-- The AI analyzes the action and returns feedback such as:
-  - “Good job, correct simplification.”
-  - “Careful, you only divided one side.”
-  - “Try factoring instead of expanding.”
-- The feedback is displayed beside the Graspable Math workspace (e.g., in a Vaadin chat panel)
-- AI can also:
-  - Generate new problems based on student performance
-  - Summarize learning progress
-  - Provide teacher-facing reports of student strengths and weaknesses
+1. **Student Action:** Performed in Graspable Math workspace (move, simplify, expand, etc.).
+2. **Event Capture:** JavaScript listener calls Java method via `@ClientCallable`.
+3. **DTO Conversion:** Event data mapped to `GraspableEventDto`.
+4. **AI Analysis:** View calls `AITutorService.analyzeMathAction(eventDto)`.
+5. **AI Feedback:** Service constructs prompt, queries AI, returns `AIFeedbackDto`.
+6. **UI Update:** Feedback displayed in chat panel (`AIChatPanel`) beside workspace.
+7. **Session/Event Logging:** Actions and feedback logged for analytics.
+
+## User Management & Permissions
+- **Entities:** `UserEntity`, `UserGroupEntity`, `UserRankEntity`.
+- **Roles:** Admin, Teacher, Student (see `user_ranks` table in `init.sql`).
+- **Groups & Ranks:** Used for differentiated access, progress tracking, and permissions.
+- **Authentication:** Managed by `AuthService`, with password hashing and session management.
+
+## Comments & Moderation
+- **CommentEntity:** Stores threaded comments on exercises.
+- **CommentService:** Handles creation, editing, deletion, flagging, and moderation.
+- **CommentsPanel:** Vaadin component for displaying and managing comments.
+- **Moderation:** Rate limiting, flagging, auto-hide, and admin/teacher controls.
+
+## Analytics & Progress Tracking
+- **StudentSessionEntity:** Tracks sessions per user/exercise.
+- **AIInteractionEntity:** Logs AI feedback and interactions.
+- **AnalyticsService:** Provides summaries, progress reports, and admin dashboards.
 
 ## Testing Standards
-- Reference existing test structure and practices
-- Add mock tests for AI endpoints (simulate API calls)
-- Verify Graspable Math event handling using integration tests
-- Run tests after creation and fix compilation/test failures
-- Be careful with class references — service names may overlap between projects but have different packages
+- **Unit & Integration Tests:**
+  - Mock AI endpoints for deterministic tests.
+  - Test Graspable Math event handling and feedback logic.
+  - Use test DTOs/entities mirroring main code structure.
+- **Run tests after changes:**
+  - `./mvnw clean install package -DskipTests && ./mvnw test`
 
 ## Development Workflow
-1. Make changes following project coding standards
-2. Add clear comments where necessary
-3. Run:
-   ```bash
-   ./mvnw clean install package -DskipTests && ./mvnw test
+1. Make changes following these instructions and project coding standards.
+2. Add clear comments and Javadoc where necessary.
+3. Reference existing code for consistency and avoid duplication.
+4. Run tests and fix compilation/test failures before committing.
+5. Use seeded test accounts (see `init.sql`) for local testing.
+
+## Configuration & Environment
+- **Main config:** `src/main/resources/application.properties`
+- **Database:** PostgreSQL (default), see `init.sql` for schema and seed data.
+- **Logging:** Configured for file and console output; see comments in `application.properties`.
+- **Docker:** Use `docker-compose.yml` for production deployment.
+
+## Documentation
+- [Quickstart](../../docs/QUICKSTART.md)
+- [Build Guide](../../docs/BUILD_GUIDE.md)
+- [README.md](../../README.md)
+
+## File References
+- This is the canonical instructions file. For agent and Claude instructions, see:
+  - [AGENTS.md](../../AGENTS.md)
+  - [CLAUDE.md](../../CLAUDE.md)
+## Development Workflow
