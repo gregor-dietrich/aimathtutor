@@ -9,7 +9,7 @@ cd "$DIR/../.."
 git fetch
 
 LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
-LATEST_VERSION=${LATEST_TAG:-1.0.0}
+LATEST_VERSION=${LATEST_TAG:-1.1.0-SNAPSHOT}
 
 read -p "Enter the tag to delete [${LATEST_VERSION}]: " VERSION
 VERSION=${VERSION:-$LATEST_VERSION}

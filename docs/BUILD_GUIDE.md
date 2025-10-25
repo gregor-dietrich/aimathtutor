@@ -81,7 +81,7 @@ The application, packaged as an _über-jar_, is now runnable using `java -jar ta
 You can create a Docker image using:
 
 ```shell script
-docker build . -f src/main/docker/Dockerfile.jvm -t aimathtutor:1.0.0
+docker build . -f src/main/docker/Dockerfile.jvm -t aimathtutor:1.1.0-SNAPSHOT
 ```
 
 If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.

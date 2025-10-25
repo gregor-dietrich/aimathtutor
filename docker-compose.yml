@@ -1,6 +1,6 @@
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:1.0.0
+    image: gregordietrich/aimathtutor:1.1.0-SNAPSHOT
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.jvm
