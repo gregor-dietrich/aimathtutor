@@ -37,9 +37,9 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/progress", layout = AdminMainLayout.class)
 @PageTitle("Student Progress - AI Math Tutor")
-public class StudentProgressView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminProgressView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StudentProgressView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminProgressView.class);
 
     @Inject
     AuthService authService;
@@ -56,7 +56,7 @@ public class StudentProgressView extends VerticalLayout implements BeforeEnterOb
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
 
-    public StudentProgressView() {
+    public AdminProgressView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);

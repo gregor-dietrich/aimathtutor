@@ -41,9 +41,9 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
-public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupsView.class);
 
     @Inject
     UserGroupService groupService;
@@ -69,7 +69,7 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
     private ComboBox<UserViewDto> availableUsersCombo;
     private UserGroupViewDto selectedGroup;
 
-    public AdminUserGroupView() {
+    public AdminUserGroupsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);

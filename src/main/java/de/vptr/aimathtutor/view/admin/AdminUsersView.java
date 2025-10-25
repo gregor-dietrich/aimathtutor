@@ -47,9 +47,9 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/users", layout = AdminMainLayout.class)
-public class AdminUserView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
 
     @Inject
     UserService userService;
@@ -73,7 +73,7 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
     private UserDto currentUser;
     private List<UserRankViewDto> availableRanks;
 
-    public AdminUserView() {
+    public AdminUsersView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);

@@ -47,9 +47,9 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
-public class AdminExerciseView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminExerciseView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
 
     @Inject
     ExerciseService exerciseService;
@@ -82,7 +82,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
     private ExerciseDto currentExercise;
     private List<LessonViewDto> availableLessons;
 
-    public AdminExerciseView() {
+    public AdminExercisesView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -253,7 +253,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
         final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
-        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentView.class,
+        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentsView.class,
                 new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
 
         layout.add(editButton, deleteButton, commentButton);

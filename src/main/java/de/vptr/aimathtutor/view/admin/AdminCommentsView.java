@@ -47,9 +47,9 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
-public class AdminCommentView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminCommentView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminCommentsView.class);
 
     @Inject
     CommentService commentService;
@@ -74,7 +74,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
     private Binder<CommentDto> binder;
     private CommentDto currentComment;
 
-    public AdminCommentView() {
+    public AdminCommentsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
