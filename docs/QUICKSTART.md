@@ -9,7 +9,7 @@ make install   # Installs dependencies, skips tests
 make dev       # Starts Quarkus in dev mode
 ```
 
-See the [Makefile](../Makefile) for all available commands.
+See the [Makefile](../Makefile) or use `make help` for all available commands.
 
 ## Test accounts
 
@@ -39,6 +39,7 @@ The utility prints `salt=` and `hash=` values and an example `INSERT` statement 
 > **_NOTE:_** You need to do this in the same directory you cloned the repository into.
 
 ```sh
+make install
 make test
 ```
 

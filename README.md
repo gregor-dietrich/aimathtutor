@@ -19,16 +19,15 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Common Development Commands (via Makefile)
 
-- `make dev`      – Start Quarkus in dev mode (auto-installs dependencies)
-- `make build`    – Build the JVM Docker image (runs tests, Maven package, docker buildx)
-- `make test`     – Run install then execute the Maven test suite
-- `make clean`    – Clean build artifacts and logs
-- `make install`  – Run checks, clean, and perform Maven install (skips tests)
+- `make dev`      – Start Quarkus in dev mode
+- `make test`     – Execute the Maven test suite
+- `make build`    – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
+- `make install`  – `make check` and `mvn clean install -DskipTests`
 - `make password` – Generate a salt+hash for a password (for init.sql)
-- `make release`  – Build and push Docker image tag to registry
+- `make release`  – Pull from origin/main, `make build`, `make tag`, and push Docker image tag to registry
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 
-See the [Makefile](Makefile) for all available commands and scripts.
+See the [Makefile](Makefile) or use `make help` for all available commands and scripts.
 
 ## 🤖 Supported AI Providers
 
