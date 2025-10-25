@@ -1,3 +1,12 @@
+## Changelog Standards
+- **Changelog file:** Maintain a `CHANGELOG.md` in the root directory.
+- **Format:** Follow [Semantic Versioning 2.0.0](https://semver.org) and [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
+- **Content:**
+  - Each entry should describe changes from an end user's perspective (features, fixes, removals, breaking changes, etc.).
+  - Do **not** mention class, method, or file names—focus on what changed for users, not implementation details.
+  - Document all changes introduced by commits since the last tagged release.
+  - Use clear sections: Added, Changed, Deprecated, Removed, Fixed, Security.
+  - Update the changelog with every meaningful change before merging or tagging a release.
 ---
 applyTo: '**'
 ---
