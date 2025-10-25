@@ -93,6 +93,9 @@ public class LessonViewDto {
         dto.id = this.id;
         dto.name = this.name;
         dto.parentId = this.parentId;
+        if (this.parentId != null) {
+            dto.parent = new LessonDto.ParentField(this.parentId);
+        }
         return dto;
     }
 }
