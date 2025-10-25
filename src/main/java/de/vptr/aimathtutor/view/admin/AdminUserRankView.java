@@ -39,6 +39,7 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
 public class AdminUserRankView extends VerticalLayout implements BeforeEnterObserver {
@@ -584,9 +585,12 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
             } else {
                 NotificationUtil.showError("Failed to delete rank");
             }
+        } catch (final WebApplicationException e) {
+            LOG.error("Error deleting rank", e);
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting rank", e);
-            NotificationUtil.showError("Unexpected error occurred");
+            NotificationUtil.showError("Unexpected error occurred: " + e.getMessage());
         }
     }
 
