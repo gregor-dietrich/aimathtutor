@@ -112,11 +112,16 @@ AIMathTutor is a monolithic full-stack web application built with **Quarkus** (b
 
 ## Changelog Standards
 
-- **Changelog file:** Maintain a `CHANGELOG.md` in the root directory.
-- **Format:** Follow [Semantic Versioning 2.0.0](https://www.semver.org) and [Keep a Changelog 1.1.0](https://www.keepachangelog.com).
-- **Content:**
-  - Each entry should describe changes from an end user's perspective (features, fixes, removals, breaking changes, etc.).
-  - Do **not** mention class, method, or file names—focus on what changed for users, not implementation details.
-  - Document all changes introduced by commits since the last tagged release.
-  - Use clear sections: Added, Changed, Deprecated, Removed, Fixed, Security.
-  - Update the changelog with every meaningful change before merging or tagging a release.
+**Changelog Directory:** All changelogs are maintained in the `changelog/` directory, with a separate `.md` file for each released version (e.g., `changelog/1.0.0.md`, `changelog/1.1.0.md`).
+
+**Format:** Each changelog file follows [Semantic Versioning 2.0.0](https://www.semver.org) and [Keep a Changelog 1.1.0](https://www.keepachangelog.com).
+
+**Content:**
+
+- Each entry describes changes from an end user's perspective (features, fixes, removals, breaking changes, etc.).
+- Do **not** mention class, method, or file names—focus on what changed for users, not implementation details.
+- Document all changes introduced by commits since the last tagged release in a new version file.
+- Use clear sections: Added, Changed, Deprecated, Removed, Fixed, Security, and **Unreleased**.
+- The **Unreleased** section lists upcoming changes that are not yet released, so users can see what to expect. At release time, move these changes into the new version section.
+- Update the changelog with every meaningful change before merging or tagging a release.
+- For initial releases, provide a brief explanation of the changelog and versioning approach.
