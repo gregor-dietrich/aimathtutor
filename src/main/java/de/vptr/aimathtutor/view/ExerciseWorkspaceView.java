@@ -83,7 +83,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         if (exerciseIdParam.isEmpty()) {
             NotificationUtil.showError("Exercise ID is required");
-            event.rerouteTo(HomeView.class);
+            event.rerouteTo(LessonsView.class);
             return;
         }
 
@@ -91,7 +91,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.exerciseId = Long.parseLong(exerciseIdParam.get());
         } catch (final NumberFormatException e) {
             NotificationUtil.showError("Invalid exercise ID");
-            event.rerouteTo(HomeView.class);
+            event.rerouteTo(LessonsView.class);
             return;
         }
 
@@ -99,7 +99,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final Optional<ExerciseViewDto> exerciseOpt = this.exerciseService.findById(this.exerciseId);
         if (exerciseOpt.isEmpty()) {
             NotificationUtil.showError("Exercise not found");
-            event.rerouteTo(HomeView.class);
+            event.rerouteTo(LessonsView.class);
             return;
         }
 
@@ -108,7 +108,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Check if exercise is published (students can only see published exercises)
         if (!Boolean.TRUE.equals(this.exercise.published)) {
             NotificationUtil.showError("This exercise is not available");
-            event.rerouteTo(HomeView.class);
+            event.rerouteTo(LessonsView.class);
             return;
         }
 
@@ -178,7 +178,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         this.backButton = new Button("← Back to Exercises", e -> {
-            UI.getCurrent().navigate(HomeView.class);
+            UI.getCurrent().navigate(LessonsView.class);
         });
         this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
