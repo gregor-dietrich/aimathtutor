@@ -5,9 +5,11 @@
 ```sh
 git clone git@github.com:gregor-dietrich/aimathtutor.git
 cd aimathtutor
-mvn clean install -DskipTests
-mvn quarkus:dev
+make install   # Installs dependencies, skips tests
+make dev       # Starts Quarkus in dev mode
 ```
+
+See the [Makefile](../Makefile) for all available commands.
 
 ## Test accounts
 
@@ -24,8 +26,10 @@ If you need to set a known password for local testing, update the `users` table 
 
 ### Using the password utility
 
+You can generate a password hash and salt for local testing using:
+
 ```sh
-mvn -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtility" -Dexec.args="generate admin" exec:java
+make password
 ```
 
 The utility prints `salt=` and `hash=` values and an example `INSERT` statement you can paste into `src/main/resources/sql/init.sql` for local testing. Do NOT use it to distribute real credentials.
@@ -35,8 +39,7 @@ The utility prints `salt=` and `hash=` values and an example `INSERT` statement 
 > **_NOTE:_** You need to do this in the same directory you cloned the repository into.
 
 ```sh
-mvn clean install -DskipTests
-mvn test
+make test
 ```
 
 ## 🏭 Production Mode

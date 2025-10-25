@@ -1,26 +1,54 @@
-# AI Math Tutor
 
-AI Math Tutor is a full-stack web application that combines a Quarkus backend with a Vaadin frontend to deliver interactive math exercises. It embeds Graspable Math for hands-on symbolic manipulation and adds an AI tutor layer that answers questions and provides automated feedback to support learning.
+# AIMathTutor
+
+AIMathTutor is a full-stack web application for interactive math learning, built with Quarkus (backend) and Vaadin (frontend). It features an embedded Graspable Math workspace, AI-powered tutoring, lesson/exercise management, analytics, and granular user roles.
 
 ## 🌟 Features
 
-- Embedded Graspable Math workspace for interactive, manipulable math expressions and step-by-step student actions.
-- Real-time AI tutor layer that analyzes student actions and provides feedback, hints, and congratulatory responses.
-  - Can be disabled by either setting `ai.tutor.provider=mock` or even `ai.tutor.enabled=false`.
-- Problem generation and management: generate and load problems into the Graspable canvas with categories, difficulty and hints.
-- Lesson and exercise management: author and organize lessons and exercises, and expose exercise views for students and teachers.
-- Comments attached to exercises for students and teachers to discuss solution steps.
-- Session and event tracking: records student sessions and Graspable events for analytics and progress monitoring.
-- Granular user management: support for users, user groups, and ranks/permissions to enable differentiated access and progress tracking.
-- Vaadin + Quarkus architecture: server-rendered UI with direct CDI-injected services and tight integration between frontend and backend for low-latency feedback.
+- Interactive Graspable Math workspace for symbolic manipulation and step-by-step actions
+- Real-time AI tutor feedback, hints, and adaptive problem generation (Gemini, OpenAI, Ollama, mock)
+- Problem and lesson authoring, organization, and progress tracking
+- Threaded comments on exercises, moderation, and reporting
+- Session/event tracking and analytics dashboards for teachers/admins
+- Granular user management: users, groups, ranks, and permissions
+- Tight Quarkus + Vaadin integration: CDI-injected services, no REST boundary for core logic
+
+## 🚀 Getting Started
+
+See [Quickstart](docs/QUICKSTART.md) for setup and usage.
+
+### Common Development Commands (via Makefile)
+
+- `make dev`      – Start Quarkus in dev mode (auto-installs dependencies)
+- `make build`    – Build the JVM Docker image (runs tests, Maven package, docker buildx)
+- `make test`     – Run install then execute the Maven test suite
+- `make clean`    – Clean build artifacts and logs
+- `make install`  – Run checks, clean, and perform Maven install (skips tests)
+- `make password` – Generate a salt+hash for a password (for init.sql)
+- `make release`  – Build and push Docker image tag to registry
+- `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
+
+See the [Makefile](Makefile) for all available commands and scripts.
 
 ## 🤖 Supported AI Providers
 
-- [Google](https://aistudio.google.com/api-keys)
-- [Ollama](https://ollama.com/download) (untested)
-- [OpenAI](https://platform.openai.com/api-keys) (untested)
+- [Google Gemini](https://aistudio.google.com/api-keys)
+- [Ollama](https://ollama.com/download)
+- [OpenAI](https://platform.openai.com/api-keys)
+
+Configure providers in `src/main/resources/application.properties` or via environment variables. See [docs/QUICKSTART.md](docs/QUICKSTART.md) for details.
 
 ## 📖 Documentation
 
-- [Quickstart](https://github.com/gregor-dietrich/aimathtutor/blob/main/docs/QUICKSTART.md)
-- [Build Guide](https://github.com/gregor-dietrich/aimathtutor/blob/main/docs/BUILD_GUIDE.md)
+- [Quickstart](docs/QUICKSTART.md)
+- [Build Guide](docs/BUILD_GUIDE.md)
+- [Project Instructions](.github/instructions/aimathtutor.instructions.md)
+
+## 🛠️ Project Structure & Workflow
+
+- Monolithic Quarkus + Vaadin app
+- Vaadin views inject backend services via CDI (`@Inject`)
+- Graspable Math workspace embedded via Vaadin and JavaScript API
+- AI Tutor layer supports Gemini, OpenAI, Ollama, and mock providers
+- Entities, DTOs, services and views organized by resource type
+- See [Project Instructions](.github/instructions/aimathtutor.instructions.md) for coding standards and architecture
