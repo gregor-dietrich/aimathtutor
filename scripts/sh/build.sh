@@ -45,8 +45,6 @@ cd "$DIR/../.."
 
 if prompt_yes_no "Do you want to run tests" n; then
 	make test
-else
-	make install
 fi
 
 ${MVN_CMD} package -DskipTests -Pproduction
