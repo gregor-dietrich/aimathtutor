@@ -13,6 +13,8 @@ git switch main
 
 git pull
 
+make tag
+
 make build
 
 docker push "$TAG"
