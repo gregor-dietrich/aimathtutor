@@ -57,6 +57,7 @@ public class UserRankService {
                 .map(entity -> new UserRankViewDto((UserRankEntity) entity));
     }
 
+    @Transactional
     public List<UserRankViewDto> searchRanks(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllRanks();
@@ -188,6 +189,20 @@ public class UserRankService {
 
     @Transactional
     public boolean deleteRank(final Long id) {
+        final UserRankEntity rank = UserRankEntity.findById(id);
+        if (rank == null) {
+            return false;
+        }
+
+        // Check if rank has associated users
+        final List<UserEntity> usersWithRank = UserEntity.find("rank.id = ?1", id).list();
+        if (!usersWithRank.isEmpty()) {
+            throw new WebApplicationException(
+                    "Cannot delete rank because " + usersWithRank.size() + " user(s) are assigned to this rank. " +
+                            "Please reassign these users to a different rank before deleting.",
+                    Response.Status.CONFLICT);
+        }
+
         return UserRankEntity.deleteById(id);
     }
 }

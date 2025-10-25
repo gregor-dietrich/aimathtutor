@@ -66,6 +66,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
     private IntegerField userIdField;
+    private IntegerField exerciseIdField;
     private Select<String> statusFilterSelect;
     private IntegerField flagsFilterField;
 
@@ -170,6 +171,13 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
 
+        // Exercise ID filter
+        final var exerciseFilterLayout = new IntegerFilterLayout(
+                e -> this.filterByExerciseId(),
+                "Enter Exercise ID...",
+                "Filter by Exercise");
+        this.exerciseIdField = exerciseFilterLayout.getIntegerField();
+
         // Status filter (VISIBLE, HIDDEN, DELETED)
         this.statusFilterSelect = new Select<>();
         this.statusFilterSelect.setLabel("Filter by Status");
@@ -193,7 +201,7 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
         statusAndFlagsLayout.setWidthFull();
         statusAndFlagsLayout.setSpacing(true);
 
-        searchLayout.add(dateFilterLayout, userFilterLayout, statusAndFlagsLayout);
+        searchLayout.add(dateFilterLayout, userFilterLayout, exerciseFilterLayout, statusAndFlagsLayout);
         return searchLayout;
     }
 
@@ -451,6 +459,22 @@ public class AdminCommentView extends VerticalLayout implements BeforeEnterObser
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by user", e);
+            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+        }
+    }
+
+    private void filterByExerciseId() {
+        final Integer exerciseId = this.exerciseIdField.getValue();
+        if (exerciseId == null) {
+            NotificationUtil.showWarning("Please enter an exercise ID");
+            return;
+        }
+
+        try {
+            final var comments = this.commentService.findByExerciseId(exerciseId.longValue());
+            this.grid.setItems(comments);
+        } catch (final Exception e) {
+            LOG.error("Error filtering comments by exercise", e);
             NotificationUtil.showError("Error filtering comments: " + e.getMessage());
         }
     }

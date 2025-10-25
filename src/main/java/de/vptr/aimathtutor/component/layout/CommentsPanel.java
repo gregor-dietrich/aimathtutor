@@ -14,7 +14,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -329,28 +328,14 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     private void onDeleteClicked(final Long commentId) {
-        final Dialog confirmDialog = new Dialog();
-        confirmDialog.setHeaderTitle("Delete Comment");
-
-        final Paragraph message = new Paragraph("Are you sure you want to delete this comment?");
-        confirmDialog.add(message);
-
-        final Button confirmButton = new Button("Delete", e -> {
-            try {
-                this.getCommentService().deleteComment(commentId, this.currentUserId, true); // soft delete
-                confirmDialog.close();
-                this.loadComments();
-                NotificationUtil.showSuccess("Comment deleted!");
-            } catch (final Exception ex) {
-                LOG.error("Failed to delete comment", ex);
-                NotificationUtil.showError("Failed to delete: " + ex.getMessage());
-            }
-        });
-
-        final Button cancelButton = new Button("Cancel", e -> confirmDialog.close());
-
-        confirmDialog.getFooter().add(confirmButton, cancelButton);
-        confirmDialog.open();
+        try {
+            this.getCommentService().deleteComment(commentId, this.currentUserId, true); // soft delete
+            this.loadComments();
+            NotificationUtil.showSuccess("Comment deleted!");
+        } catch (final Exception ex) {
+            LOG.error("Failed to delete comment", ex);
+            NotificationUtil.showError("Failed to delete: " + ex.getMessage());
+        }
     }
 
     private void onReportClicked(final Long commentId) {

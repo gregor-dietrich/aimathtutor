@@ -267,6 +267,7 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional
     public List<UserViewDto> searchUsers(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllUsers();
