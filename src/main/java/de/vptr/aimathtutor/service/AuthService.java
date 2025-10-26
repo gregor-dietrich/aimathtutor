@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.service;
 
+import java.time.LocalDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +12,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class AuthService {
@@ -25,6 +28,7 @@ public class AuthService {
     private static final String PASSWORD_KEY = "authenticated.password";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
 
+    @Transactional
     public AuthResultDto authenticate(final String username, final String password) {
         LOG.trace("Starting authentication for user: {}", username);
 
@@ -58,6 +62,15 @@ public class AuthService {
             if (!this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
                 LOG.trace("Authentication failed - invalid password for user: {}", username);
                 return AuthResultDto.invalidCredentials();
+            }
+
+            // Update last login time and persist the user entity
+            try {
+                user.lastLogin = LocalDateTime.now();
+                user.persist();
+            } catch (final Exception e) {
+                LOG.warn("Failed to update lastLogin for user {}: {}", username, e.getMessage());
+                // continue with login even if lastLogin couldn't be updated
             }
 
             VaadinSession.getCurrent().setAttribute(USERNAME_KEY, username);
