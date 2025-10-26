@@ -53,12 +53,12 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
-                <version>4.5.22</version>
+                <version>5.0.5</version>
             </dependency>
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-web</artifactId>
-                <version>4.5.22</version>
+                <version>5.0.5</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -159,7 +159,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec-smtp</artifactId>
-            <version>4.1.128.Final</version>
+            <version>4.2.7.Final</version>
         </dependency>
     </dependencies>
 
