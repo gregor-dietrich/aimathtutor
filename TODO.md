@@ -4,29 +4,19 @@
 
 ### Implementation Priority
 
-1. **Miscellaneous Fixes** (Task 4.1)
+1. **Graspable Math Action Validation (isValidAction)** (Task 7)
+   *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
 2. **Multiple Problems Per Exercise** (Task 2)
    *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
 
-3. **Graspable Math Action Validation (isValidAction)** (Task 7)
-   *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
-
-4. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
+3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
    *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
-5. **Gamification** (Task 6)
+4. **Gamification** (Task 6)
    *Very Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
 
-6. **Miscellaneous Fixes** (remaining tasks)
-
-**Difficulty Ratings:**
-
-- Task 2: ★★★☆☆
-- Task 4: various
-- Task 5: ★★★★☆
-- Task 6: ★★★★☆
-- Task 7: ★★★★★
+5. **Miscellaneous Fixes** (Task 4)
 
 ### Testing Checklist (for each feature)
 
