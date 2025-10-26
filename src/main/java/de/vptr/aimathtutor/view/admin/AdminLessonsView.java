@@ -202,11 +202,11 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
 
         this.treeGrid.addColumn(lesson -> lesson.childrenCount)
                 .setHeader("Children")
-                .setFlexGrow(1);
+                .setFlexGrow(0);
 
         this.treeGrid.addColumn(lesson -> lesson.exercisesCount)
                 .setHeader("Lessons")
-                .setFlexGrow(1);
+                .setFlexGrow(0);
 
         // Add action column
         this.treeGrid.addComponentColumn(this::createActionButtons)

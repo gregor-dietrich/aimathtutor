@@ -131,7 +131,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
 
         this.grid.addColumn(progress -> this.dateTimeFormatter.formatDateTime(progress.lastActivity))
                 .setHeader("Last Activity")
-                .setFlexGrow(1);
+                .setWidth("180px").setFlexGrow(0);
 
         this.add(this.grid);
     }

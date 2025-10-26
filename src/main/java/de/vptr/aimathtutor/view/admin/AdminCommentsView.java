@@ -246,7 +246,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
         }).setHeader("Content").setFlexGrow(2);
 
         this.grid.addColumn(comment -> this.dateTimeFormatter.formatDateTime(comment.created)).setHeader("Created")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
 
         // Status column
         this.grid.addComponentColumn(comment -> {

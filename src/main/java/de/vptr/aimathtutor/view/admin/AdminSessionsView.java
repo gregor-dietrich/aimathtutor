@@ -114,7 +114,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
 
         this.grid.addColumn(session -> this.dateTimeFormatter.formatDateTime(session.startTime))
                 .setHeader("Start Time")
-                .setFlexGrow(1);
+                .setWidth("180px").setFlexGrow(0);
 
         this.grid.addColumn(StudentSessionViewDto::getFormattedDuration)
                 .setHeader("Duration")

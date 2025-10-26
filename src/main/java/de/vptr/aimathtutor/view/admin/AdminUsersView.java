@@ -202,24 +202,29 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
         }).setHeader("Username").setFlexGrow(1);
 
         this.grid.addColumn(user -> user.email).setHeader("Email").setFlexGrow(1);
+
         this.grid.addColumn(user -> user.rankName != null ? user.rankName : "").setHeader("Rank").setWidth("120px")
                 .setFlexGrow(0);
+
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
             checkbox.setValue(user.activated != null ? user.activated : false);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Activated").setWidth("100px").setFlexGrow(0);
+
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
             checkbox.setValue(user.banned != null ? user.banned : false);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Banned").setWidth("100px").setFlexGrow(0);
+
         this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.created)).setHeader("Created")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
+
         this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.lastLogin)).setHeader("Last Login")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);

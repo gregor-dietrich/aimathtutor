@@ -215,7 +215,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 .setFlexGrow(0);
         this.grid.addColumn(exercise -> exercise.lessonName != null ? exercise.lessonName : "")
                 .setHeader("Lesson")
-                .setWidth("120px").setFlexGrow(0);
+                .setFlexGrow(1);
 
         this.grid.addComponentColumn(exercise -> {
             final var checkbox = new Checkbox();
@@ -239,9 +239,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         }).setHeader("Graspable Math").setWidth("120px").setFlexGrow(0);
 
         this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.created)).setHeader("Created")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
         this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.lastEdit)).setHeader("Last Edit")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
