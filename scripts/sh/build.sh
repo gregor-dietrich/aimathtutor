@@ -4,7 +4,7 @@
 . "$DIR/lib/get_maven.sh"
 
 TAG="gregordietrich/aimathtutor:1.1.0"
-DOCKERFILE="src/main/docker/Dockerfile.ubi"
+DOCKERFILE="src/main/docker/Dockerfile.alpine"
 PLATFORMS="linux/amd64,linux/arm64"
 
 prompt_yes_no() {
