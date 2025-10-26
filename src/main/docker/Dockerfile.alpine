@@ -7,7 +7,7 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/aimathtutor-jvm .
+# docker build -f src/main/docker/Dockerfile.alpine -t quarkus/aimathtutor-jvm .
 #
 # Then run the container using:
 #
