@@ -25,3 +25,5 @@ updates:
         versions: [">=3.28.0"]
       - dependency-name: "io.quarkus.platform:*"
         versions: [">=3.28.0"]
+      - dependency-name: "io.vertx:*"
+        versions: [">=5.0.0"]
