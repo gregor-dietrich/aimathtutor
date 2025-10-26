@@ -21,44 +21,48 @@ For Docker, you have 2 options:
 
 Edit `src/main/resources/application.properties` as needed, then run:
 
-```shell script
-./mvnw clean install -DskipTests
+```sh
+make install   # Installs dependencies, skips tests
 ```
 
 ### 🧪 Tests
 
-To run the tests, you can either omit the `-DskipTests` flag when using the command above, or execute the following command:
+Run the full test suite:
 
-```shell script
-./mvnw test
+```sh
+make test
 ```
 
 ## 🚀 Running the application
 
 ### 🧑‍💻 Development mode
 
-```shell script
-./mvnw quarkus:dev
+```sh
+make dev
 ```
 
 > **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:9001/q/dev/>.
 
 ### 🏭 Production mode
 
-> **_NOTE:_** The application must be packaged for production mode **before** doing this (see below).
+First, package the application for production:
 
-It is recommended to use Docker Compose to run the application in production mode:
+```sh
+make build    # Build the JVM Docker image (runs tests/install and Maven package)
+```
 
-```shell script
+Then run with Docker Compose:
+
+```sh
 docker compose up -d --build
 ```
 
 ## 📦 Packaging the application
 
-The application can be packaged using:
+You can package the application using:
 
-```shell script
-./mvnw package -Pproduction
+```sh
+make build
 ```
 
 It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
@@ -76,17 +80,19 @@ The application, packaged as an _über-jar_, is now runnable using `java -jar ta
 
 ### 🐳 Creating a Docker image
 
-> **_NOTE:_** The application needs to be packaged for production mode **before** doing this (see above).
-
 You can create a Docker image using:
 
-```shell script
-docker build . -f src/main/docker/Dockerfile.jvm -t aimathtutor:1.0.0
+```sh
+make build    # Build the JVM Docker image
+make release  # Build and push Docker image tag to registry
 ```
 
 If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.
 
-## 📖 Related Guides
+## 📖 Related Guides & Docs
+
+- [Quickstart](QUICKSTART.md)
+- [Project Instructions](../.github/instructions/aimathtutor.instructions.md)
 
 - Quarkus ([guide](https://quarkus.io/guides/)): The main framework for building Java applications with a focus on cloud-native and microservices architectures.
 - Vaadin Flow ([guide](https://vaadin.com/docs/latest/flow/integrations/quarkus)): Vaadin Flow is a unique framework that lets you build web apps without writing HTML or JavaScript

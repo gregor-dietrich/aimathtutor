@@ -39,9 +39,9 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/sessions", layout = AdminMainLayout.class)
 @PageTitle("Student Sessions - AI Math Tutor")
-public class StudentSessionsView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminSessionsView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StudentSessionsView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminSessionsView.class);
 
     @Inject
     AuthService authService;
@@ -58,7 +58,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
     private DatePicker endDatePicker;
     private Button resetFiltersButton;
 
-    public StudentSessionsView() {
+    public AdminSessionsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -114,7 +114,7 @@ public class StudentSessionsView extends VerticalLayout implements BeforeEnterOb
 
         this.grid.addColumn(session -> this.dateTimeFormatter.formatDateTime(session.startTime))
                 .setHeader("Start Time")
-                .setFlexGrow(1);
+                .setWidth("180px").setFlexGrow(0);
 
         this.grid.addColumn(StudentSessionViewDto::getFormattedDuration)
                 .setHeader("Duration")

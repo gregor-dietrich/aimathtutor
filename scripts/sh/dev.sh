@@ -7,8 +7,6 @@ set -e
 
 cd "$DIR/../.."
 
-make install
-
 ${MVN_CMD} quarkus:dev
 
 cd - > /dev/null

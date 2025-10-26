@@ -47,9 +47,9 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
-public class AdminExerciseView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminExerciseView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
 
     @Inject
     ExerciseService exerciseService;
@@ -82,7 +82,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
     private ExerciseDto currentExercise;
     private List<LessonViewDto> availableLessons;
 
-    public AdminExerciseView() {
+    public AdminExercisesView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -215,7 +215,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
                 .setFlexGrow(0);
         this.grid.addColumn(exercise -> exercise.lessonName != null ? exercise.lessonName : "")
                 .setHeader("Lesson")
-                .setWidth("120px").setFlexGrow(0);
+                .setFlexGrow(1);
 
         this.grid.addComponentColumn(exercise -> {
             final var checkbox = new Checkbox();
@@ -239,9 +239,9 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
         }).setHeader("Graspable Math").setWidth("120px").setFlexGrow(0);
 
         this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.created)).setHeader("Created")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
         this.grid.addColumn(exercise -> this.dateTimeFormatter.formatDateTime(exercise.lastEdit)).setHeader("Last Edit")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
@@ -253,7 +253,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
 
         final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
         final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
-        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentView.class,
+        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentsView.class,
                 new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
 
         layout.add(editButton, deleteButton, commentButton);
@@ -486,7 +486,9 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
             }
 
             this.exerciseDialog.close();
+            // Refresh exercises and lessons so computed columns (exercise counts) update
             this.loadExercisesAsync();
+            this.loadLessonsAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
@@ -501,6 +503,7 @@ public class AdminExerciseView extends VerticalLayout implements BeforeEnterObse
             if (this.exerciseService.deleteExercise(exercise.id)) {
                 NotificationUtil.showSuccess("Exercise deleted successfully");
                 this.loadExercisesAsync();
+                this.loadLessonsAsync();
             } else {
                 NotificationUtil.showError("Failed to delete exercise");
             }

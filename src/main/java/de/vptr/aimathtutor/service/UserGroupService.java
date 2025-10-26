@@ -21,7 +21,7 @@ public class UserGroupService {
 
     @Transactional
     public List<UserGroupViewDto> getAllGroups() {
-        return UserGroupEntity.listAll().stream()
+        return UserGroupEntity.find("ORDER BY id DESC").list().stream()
                 .map(entity -> new UserGroupViewDto((UserGroupEntity) entity))
                 .toList();
     }
@@ -155,7 +155,7 @@ public class UserGroupService {
             return this.getAllGroups();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        return UserGroupEntity.find("LOWER(name) LIKE ?1", searchTerm)
+        return UserGroupEntity.find("LOWER(name) LIKE ?1 ORDER BY id DESC", searchTerm)
                 .stream()
                 .map(entity -> new UserGroupViewDto((UserGroupEntity) entity))
                 .toList();

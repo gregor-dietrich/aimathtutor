@@ -8,7 +8,7 @@ set -e
 cd "$DIR/../.."
 
 make check
-make clean
+
 ${MVN_CMD} clean install -DskipTests
 
 cd - > /dev/null

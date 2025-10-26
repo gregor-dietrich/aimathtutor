@@ -3,8 +3,8 @@
 . "$(dirname "$0")"/lib/get_dir.sh
 . "$DIR/lib/get_maven.sh"
 
-TAG="gregordietrich/aimathtutor:1.0.0"
-DOCKERFILE="src/main/docker/Dockerfile.jvm"
+TAG="gregordietrich/aimathtutor:1.1.0"
+DOCKERFILE="src/main/docker/Dockerfile.ubi"
 PLATFORMS="linux/amd64,linux/arm64"
 
 prompt_yes_no() {
@@ -45,8 +45,6 @@ cd "$DIR/../.."
 
 if prompt_yes_no "Do you want to run tests" n; then
 	make test
-else
-	make install
 fi
 
 ${MVN_CMD} package -DskipTests -Pproduction

@@ -38,9 +38,9 @@ import jakarta.inject.Inject;
  * Students can work on math problems and receive real-time AI feedback.
  */
 @Route(value = "graspable-math", layout = MainLayout.class)
-public class GraspableMathView extends HorizontalLayout implements BeforeEnterObserver {
+public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GraspableMathView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MathWorkspaceView.class);
 
     @Inject
     AuthService authService;
@@ -63,7 +63,7 @@ public class GraspableMathView extends HorizontalLayout implements BeforeEnterOb
     private GraspableProblemDto.ProblemCategory selectedCategory = GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
     private final ConversationContextDto conversationContext = new ConversationContextDto();
 
-    public GraspableMathView() {
+    public MathWorkspaceView() {
         // Constructor intentionally empty - initialization happens in buildUI()
     }
 

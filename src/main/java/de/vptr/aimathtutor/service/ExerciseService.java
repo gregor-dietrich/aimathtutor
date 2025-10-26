@@ -72,7 +72,7 @@ public class ExerciseService {
     }
 
     public List<ExerciseViewDto> getAllExercises() {
-        return ExerciseEntity.find("ORDER BY created DESC").list().stream()
+        return ExerciseEntity.find("ORDER BY id DESC").list().stream()
                 .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
                 .toList();
     }
@@ -83,32 +83,32 @@ public class ExerciseService {
     }
 
     public List<ExerciseViewDto> findPublishedExercises() {
-        return ExerciseEntity.find("published = true ORDER BY created DESC").list().stream()
+        return ExerciseEntity.find("published = true ORDER BY id DESC").list().stream()
                 .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
                 .toList();
     }
 
     public List<ExerciseViewDto> findByUserId(final Long userId) {
-        return ExerciseEntity.find("user.id = ?1 ORDER BY created DESC", userId).list().stream()
+        return ExerciseEntity.find("user.id = ?1 ORDER BY id DESC", userId).list().stream()
                 .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
                 .toList();
     }
 
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
-        return ExerciseEntity.find("lesson.id = ?1 ORDER BY created DESC", lessonId).list().stream()
+        return ExerciseEntity.find("lesson.id = ?1 ORDER BY id DESC", lessonId).list().stream()
                 .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
                 .toList();
     }
 
     public List<ExerciseViewDto> findGraspableMathExercises() {
-        return ExerciseEntity.find("graspableEnabled = true AND published = true ORDER BY created DESC").list().stream()
+        return ExerciseEntity.find("graspableEnabled = true AND published = true ORDER BY id DESC").list().stream()
                 .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
                 .toList();
     }
 
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
         return ExerciseEntity
-                .find("graspableEnabled = true AND published = true AND lesson.id = ?1 ORDER BY created DESC",
+                .find("graspableEnabled = true AND published = true AND lesson.id = ?1 ORDER BY id DESC",
                         lessonId)
                 .list().stream()
                 .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
@@ -306,7 +306,7 @@ public class ExerciseService {
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
         final List<ExerciseEntity> exercises = ExerciseEntity.find(
-                "LOWER(title) LIKE ?1 OR content LIKE ?1 OR LOWER(user.username) LIKE ?1 ORDER BY created DESC",
+                "LOWER(title) LIKE ?1 OR content LIKE ?1 OR LOWER(user.username) LIKE ?1 ORDER BY id DESC",
                 searchTerm).list();
         return exercises.stream()
                 .map(ExerciseViewDto::new)

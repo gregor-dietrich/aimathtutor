@@ -47,9 +47,9 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/users", layout = AdminMainLayout.class)
-public class AdminUserView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
 
     @Inject
     UserService userService;
@@ -73,7 +73,7 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
     private UserDto currentUser;
     private List<UserRankViewDto> availableRanks;
 
-    public AdminUserView() {
+    public AdminUsersView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -202,24 +202,29 @@ public class AdminUserView extends VerticalLayout implements BeforeEnterObserver
         }).setHeader("Username").setFlexGrow(1);
 
         this.grid.addColumn(user -> user.email).setHeader("Email").setFlexGrow(1);
+
         this.grid.addColumn(user -> user.rankName != null ? user.rankName : "").setHeader("Rank").setWidth("120px")
                 .setFlexGrow(0);
+
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
             checkbox.setValue(user.activated != null ? user.activated : false);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Activated").setWidth("100px").setFlexGrow(0);
+
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
             checkbox.setValue(user.banned != null ? user.banned : false);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Banned").setWidth("100px").setFlexGrow(0);
+
         this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.created)).setHeader("Created")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
+
         this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.lastLogin)).setHeader("Last Login")
-                .setWidth("150px").setFlexGrow(0);
+                .setWidth("180px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);

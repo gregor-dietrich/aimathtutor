@@ -20,7 +20,7 @@ import de.vptr.aimathtutor.component.button.UserViewButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.view.HomeView;
+import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
@@ -236,7 +236,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
             });
 
             // Create new AdminView button
-            this.userViewButton = new UserViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate(HomeView.class)));
+            this.userViewButton = new UserViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate(LessonsView.class)));
 
             // Add buttons
             final var componentCount = this.rightSide.getComponentCount();

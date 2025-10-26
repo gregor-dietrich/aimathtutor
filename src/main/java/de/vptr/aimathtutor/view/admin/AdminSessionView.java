@@ -34,9 +34,9 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/session/:sessionId", layout = AdminMainLayout.class)
 @PageTitle("Session Details - AI Math Tutor")
-public class SessionDetailView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminSessionView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SessionDetailView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminSessionView.class);
 
     @Inject
     AuthService authService;
@@ -52,7 +52,7 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
     private VerticalLayout sessionInfoLayout;
     private Grid<AIInteractionViewDto> interactionsGrid;
 
-    public SessionDetailView() {
+    public AdminSessionView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -69,7 +69,7 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
         this.sessionId = event.getRouteParameters().get("sessionId").orElse(null);
 
         if (this.sessionId == null) {
-            event.forwardTo(StudentSessionsView.class);
+            event.forwardTo(AdminSessionsView.class);
             return;
         }
 
@@ -82,7 +82,7 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
 
         // Back button
         final var backButton = new Button("← Back to Sessions", e -> {
-            this.getUI().ifPresent(ui -> ui.navigate(StudentSessionsView.class));
+            this.getUI().ifPresent(ui -> ui.navigate(AdminSessionsView.class));
         });
         backButton.getStyle().set("margin-bottom", "20px");
         this.add(backButton);
@@ -154,7 +154,7 @@ public class SessionDetailView extends VerticalLayout implements BeforeEnterObse
                 if (this.session == null) {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         NotificationUtil.showError("Session not found");
-                        ui.navigate(StudentSessionsView.class);
+                        ui.navigate(AdminSessionsView.class);
                     }));
                     return;
                 }

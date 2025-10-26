@@ -21,7 +21,7 @@ import de.vptr.aimathtutor.service.LessonService;
 import jakarta.inject.Inject;
 
 @Route(value = "", layout = MainLayout.class)
-public class HomeView extends VerticalLayout implements BeforeEnterObserver {
+public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     @Inject
     AuthService authService;
@@ -32,7 +32,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
     @Inject
     ExerciseService exerciseService;
 
-    public HomeView() {
+    public LessonsView() {
         this.setAlignItems(Alignment.START);
         this.setJustifyContentMode(JustifyContentMode.START);
         this.setPadding(true);

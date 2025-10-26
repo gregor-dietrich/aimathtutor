@@ -41,7 +41,7 @@ public class UserRankService {
 
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
-        return UserRankEntity.listAll().stream()
+        return UserRankEntity.find("ORDER BY id DESC").list().stream()
                 .map(entity -> new UserRankViewDto((UserRankEntity) entity))
                 .toList();
     }
@@ -63,7 +63,8 @@ public class UserRankService {
             return this.getAllRanks();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<UserRankEntity> ranks = UserRankEntity.find("LOWER(name) LIKE ?1", searchTerm).list();
+        final List<UserRankEntity> ranks = UserRankEntity.find("LOWER(name) LIKE ?1 ORDER BY id DESC", searchTerm)
+                .list();
         return ranks.stream()
                 .map(UserRankViewDto::new)
                 .toList();

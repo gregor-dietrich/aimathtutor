@@ -7,8 +7,6 @@ set -e
 
 cd "$DIR/../.."
 
-make install
-
 ${MVN_CMD} test
 
 cd - > /dev/null
