@@ -8,7 +8,6 @@ services:
     env_file:
       - .env
     environment:
-      # quarkus.datasource.jdbc.url: jdbc:mariadb://mariadb:3306/${SQL_DATABASE:-aimathtutor}
       quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/${SQL_DATABASE:-aimathtutor}
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
@@ -81,46 +80,7 @@ services:
       postgres:
         condition: service_healthy
 
-  # mariadb:
-  #   image: mariadb:12.0.2-noble
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: ${SQL_ROOT_PASSWORD:-changeit}
-  #     MYSQL_DATABASE: ${SQL_DATABASE:-aimathtutor}
-  #     MYSQL_USER: ${SQL_USERNAME:-aimathtutor}
-  #     MYSQL_PASSWORD: ${SQL_PASSWORD:-changeit}
-  #   volumes:
-  #     - mariadb_data:/var/lib/mysql
-  #     - ./src/main/resources/sql/mariadb.init.sql:/docker-entrypoint-initdb.d/init.sql
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u ${SQL_USERNAME:-aimathtutor} -p${SQL_PASSWORD:-changeit} || exit 1"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 5s
-
-  # phpmyadmin:
-  #   image: phpmyadmin:5.2.3-apache
-  #   restart: unless-stopped
-  #   environment:
-  #     PMA_HOST: mariadb
-  #     PMA_PORT: 3306
-  #     PMA_USER: ${SQL_USERNAME:-aimathtutor}
-  #     PMA_PASSWORD: ${SQL_PASSWORD:-changeit}
-  #   ports:
-  #     - "42069:80"
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl -f http://phpmyadmin/ || exit 1"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 10s
-  #   depends_on:
-  #     mariadb:
-  #       condition: service_healthy
-
 volumes:
   aimathtutor_logs:
-  # mariadb_data:
   pgadmin_data:
   postgres_data:
