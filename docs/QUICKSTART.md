@@ -57,7 +57,7 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.password=changeit \
   -e ai.tutor.provider=gemini \
   -e gemini.api.key=your_gemini_api_key \
-  gregordietrich/aimathtutor:1.1.0
+  gregordietrich/aimathtutor:1.2.0-SNAPSHOT
 ```
 
 ### Using Docker Compose
@@ -82,7 +82,7 @@ PGADMIN_PASSWORD=another_safe_password_here
 ```yml
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:1.1.0
+    image: gregordietrich/aimathtutor:1.2.0-SNAPSHOT
     restart: unless-stopped
     env_file:
       - .env

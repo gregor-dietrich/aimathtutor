@@ -9,7 +9,7 @@ cd "$DIR/../.."
 git fetch
 
 LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
-LATEST_TAG=${LATEST_TAG:-1.1.0}
+LATEST_TAG=${LATEST_TAG:-1.2.0-SNAPSHOT}
 
 if [[ "$LATEST_TAG" =~ ^([0-9]+(\.[0-9]+)*)(.*)$ ]]; then
     BASE="${BASH_REMATCH[1]}"
