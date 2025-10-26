@@ -42,9 +42,9 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
-public class AdminUserRankView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserRankView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminUserRanksView.class);
 
     @Inject
     UserRankService rankService;
@@ -60,7 +60,7 @@ public class AdminUserRankView extends VerticalLayout implements BeforeEnterObse
     private Binder<UserRankDto> binder;
     private UserRankDto currentRank;
 
-    public AdminUserRankView() {
+    public AdminUserRanksView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);

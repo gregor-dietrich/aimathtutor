@@ -41,7 +41,7 @@ public class CommentService {
 
     @Transactional
     public List<CommentViewDto> getAllComments() {
-        final List<CommentEntity> comments = CommentEntity.listAll();
+        final List<CommentEntity> comments = CommentEntity.find("ORDER BY id DESC").list();
         // Force load lazy fields within transaction
         for (final CommentEntity comment : comments) {
             comment.exercise.title.length(); // Force load exercise title

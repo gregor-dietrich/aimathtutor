@@ -33,7 +33,7 @@ public class AnalyticsService {
         @Transactional
         public List<StudentSessionViewDto> getAllSessions() {
                 LOG.trace("Getting all student sessions");
-                final List<StudentSessionEntity> sessions = StudentSessionEntity.listAll();
+                final List<StudentSessionEntity> sessions = StudentSessionEntity.find("ORDER BY id DESC").list();
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -161,7 +161,7 @@ public class AnalyticsService {
         @Transactional
         public List<AIInteractionViewDto> getAllAIInteractions() {
                 LOG.trace("Getting all AI interactions");
-                final List<AIInteractionEntity> interactions = AIInteractionEntity.listAll();
+                final List<AIInteractionEntity> interactions = AIInteractionEntity.find("ORDER BY id DESC").list();
                 return interactions.stream()
                                 .map(AIInteractionViewDto::new)
                                 .toList();
@@ -231,13 +231,13 @@ public class AnalyticsService {
                 LOG.trace("Getting progress summary for all users");
 
                 // Fetch all users
-                final List<UserEntity> users = UserEntity.listAll();
+                final List<UserEntity> users = UserEntity.find("ORDER BY id DESC").list();
                 if (users.isEmpty()) {
                         return List.of();
                 }
 
                 // Fetch all sessions in a single query
-                final List<StudentSessionEntity> allSessions = StudentSessionEntity.listAll();
+                final List<StudentSessionEntity> allSessions = StudentSessionEntity.find("ORDER BY id DESC").list();
 
                 // Group sessions by user ID (filter out sessions with null user to avoid NPE)
                 final Map<Long, List<StudentSessionEntity>> sessionsByUser = allSessions.stream()
@@ -288,7 +288,9 @@ public class AnalyticsService {
                                 .sum();
                 final double averageActionsPerProblem = totalSessions > 0 ? totalActions / totalSessions : 0.0;
 
-                /* Success rate: percentage of actions that were correct (problem-solving accuracy).
+                /*
+                 * Success rate: percentage of actions that were correct (problem-solving
+                 * accuracy).
                  * Not the same as completion rate.
                  */
                 final int totalCorrectActions = sessions.stream()

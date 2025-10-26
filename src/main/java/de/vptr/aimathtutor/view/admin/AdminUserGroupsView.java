@@ -41,9 +41,9 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
-public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupsView.class);
 
     @Inject
     UserGroupService groupService;
@@ -69,7 +69,7 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
     private ComboBox<UserViewDto> availableUsersCombo;
     private UserGroupViewDto selectedGroup;
 
-    public AdminUserGroupView() {
+    public AdminUserGroupsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -437,8 +437,11 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
         try {
             this.groupService.addUserToGroup(selectedUser.id, this.selectedGroup.id);
             NotificationUtil.showSuccess("User added to group successfully");
+            // Refresh user lists for the dialog
             this.loadGroupUsers();
             this.loadAvailableUsers(); // Refresh the combo to exclude the newly added user
+            // Also refresh the main groups grid so computed columns (user count) update
+            this.loadGroupsAsync();
             this.availableUsersCombo.clear();
         } catch (final Exception e) {
             LOG.error("Unexpected error adding user to group", e);
@@ -450,8 +453,11 @@ public class AdminUserGroupView extends VerticalLayout implements BeforeEnterObs
         try {
             if (this.groupService.removeUserFromGroup(user.id, this.selectedGroup.id)) {
                 NotificationUtil.showSuccess("User removed from group successfully");
+                // Refresh user lists for the dialog
                 this.loadGroupUsers();
                 this.loadAvailableUsers(); // Refresh the combo to include the removed user
+                // Also refresh the main groups grid so computed columns (user count) update
+                this.loadGroupsAsync();
             } else {
                 NotificationUtil.showError("Failed to remove user from group");
             }

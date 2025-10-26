@@ -41,9 +41,9 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
-public class AdminLessonView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminLessonsView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminLessonView.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminLessonsView.class);
 
     @Inject
     LessonService lessonService;
@@ -60,7 +60,7 @@ public class AdminLessonView extends VerticalLayout implements BeforeEnterObserv
     private Binder<LessonDto> binder;
     private LessonDto currentLesson;
 
-    public AdminLessonView() {
+    public AdminLessonsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -202,11 +202,11 @@ public class AdminLessonView extends VerticalLayout implements BeforeEnterObserv
 
         this.treeGrid.addColumn(lesson -> lesson.childrenCount)
                 .setHeader("Children")
-                .setFlexGrow(1);
+                .setFlexGrow(0);
 
         this.treeGrid.addColumn(lesson -> lesson.exercisesCount)
                 .setHeader("Lessons")
-                .setFlexGrow(1);
+                .setFlexGrow(0);
 
         // Add action column
         this.treeGrid.addComponentColumn(this::createActionButtons)

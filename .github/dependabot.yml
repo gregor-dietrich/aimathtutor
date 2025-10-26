@@ -14,6 +14,7 @@ updates:
     multi-ecosystem-group: "infrastructure"
     ignore:
       - dependency-name: "eclipse-temurin"
+        versions: ["<21.0.0", ">=22.0.0"]
 
   - package-ecosystem: "maven"
     directory: "/"
@@ -21,4 +22,6 @@ updates:
     multi-ecosystem-group: "infrastructure"
     ignore:
       - dependency-name: "io.quarkus:*"
+        versions: [">=3.28.0"]
       - dependency-name: "io.quarkus.platform:*"
+        versions: [">=3.28.0"]

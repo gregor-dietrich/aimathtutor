@@ -15,32 +15,32 @@ public class AdminNavigationTabs extends Tabs {
 
         if (userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission()) {
             this.add(new Tab(new RouterLink("Dashboard", AdminDashboardView.class)));
-            this.add(new Tab(new RouterLink("Sessions", StudentSessionsView.class)));
-            this.add(new Tab(new RouterLink("Progress", StudentProgressView.class)));
+            this.add(new Tab(new RouterLink("Sessions", AdminSessionsView.class)));
+            this.add(new Tab(new RouterLink("Progress", AdminProgressView.class)));
         }
 
         if (userRank.hasAnyExercisePermission()) {
-            this.add(new Tab(new RouterLink("Exercises", AdminExerciseView.class)));
+            this.add(new Tab(new RouterLink("Exercises", AdminExercisesView.class)));
         }
 
         if (userRank.hasAnyLessonPermission()) {
-            this.add(new Tab(new RouterLink("Lessons", AdminLessonView.class)));
+            this.add(new Tab(new RouterLink("Lessons", AdminLessonsView.class)));
         }
 
         if (userRank.hasAnyCommentPermission()) {
-            this.add(new Tab(new RouterLink("Comments", AdminCommentView.class)));
+            this.add(new Tab(new RouterLink("Comments", AdminCommentsView.class)));
         }
 
         if (userRank.hasAnyUserPermission()) {
-            this.add(new Tab(new RouterLink("Users", AdminUserView.class)));
+            this.add(new Tab(new RouterLink("Users", AdminUsersView.class)));
         }
 
         if (userRank.hasAnyUserGroupPermission()) {
-            this.add(new Tab(new RouterLink("User Groups", AdminUserGroupView.class)));
+            this.add(new Tab(new RouterLink("User Groups", AdminUserGroupsView.class)));
         }
 
         if (userRank.hasAnyUserRankPermission()) {
-            this.add(new Tab(new RouterLink("User Ranks", AdminUserRankView.class)));
+            this.add(new Tab(new RouterLink("User Ranks", AdminUserRanksView.class)));
         }
     }
 }

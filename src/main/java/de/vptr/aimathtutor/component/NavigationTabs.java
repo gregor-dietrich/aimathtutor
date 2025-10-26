@@ -4,17 +4,13 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.RouterLink;
 
-import de.vptr.aimathtutor.view.GraspableMathView;
-import de.vptr.aimathtutor.view.HomeView;
+import de.vptr.aimathtutor.view.LessonsView;
+import de.vptr.aimathtutor.view.MathWorkspaceView;
 
 public class NavigationTabs extends Tabs {
 
     public NavigationTabs() {
-        this.add(new Tab(new RouterLink("Home", HomeView.class)));
-        this.add(new Tab(new RouterLink("Math Workspace", GraspableMathView.class)));
-        // this.add(new Tab(new RouterLink("Exercises", Exercises.class)));
-        // this.add(new Tab(new RouterLink("Lessons", Lessons.class)));
-        // this.add(new Tab(new RouterLink("Users", UserView.class)));
-        // this.add(new Tab(new RouterLink("Groups", UserGroupView.class)));
+        this.add(new Tab(new RouterLink("Lessons", LessonsView.class)));
+        this.add(new Tab(new RouterLink("Math Workspace", MathWorkspaceView.class)));
     }
 }
