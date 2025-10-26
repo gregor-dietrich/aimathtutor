@@ -486,7 +486,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             }
 
             this.exerciseDialog.close();
+            // Refresh exercises and lessons so computed columns (exercise counts) update
             this.loadExercisesAsync();
+            this.loadLessonsAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
@@ -501,6 +503,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             if (this.exerciseService.deleteExercise(exercise.id)) {
                 NotificationUtil.showSuccess("Exercise deleted successfully");
                 this.loadExercisesAsync();
+                this.loadLessonsAsync();
             } else {
                 NotificationUtil.showError("Failed to delete exercise");
             }
