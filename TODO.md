@@ -5,16 +5,16 @@
 ### Implementation Priority
 
 1. **Graspable Math Action Validation (isValidAction)** (Task 7)
-   *Complex*: Requires math parsing/normalization or CAS integration, careful testing and rollout.
+   Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
 2. **Multiple Problems Per Exercise** (Task 2)
-   *Moderately Complex*: Involves DB changes, session tracking, and sequential UI logic.
+   Involves DB changes, session tracking, and sequential UI logic.
 
 3. **AdminConfigView: Runtime AI Provider/Model/Settings Management** (Task 5)
-   *Complex*: Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
+   *Requires dynamic config management, secure runtime updates, and advanced UI/UX for admin settings.
 
 4. **Gamification** (Task 6)
-   *Very Complex*: Backend entities, rules, and careful UI/UX and privacy considerations.
+   Backend entities, rules, and careful UI/UX and privacy considerations.
 
 5. **Miscellaneous Fixes** (Task 4)
 
@@ -86,45 +86,33 @@
 
 ## 4. Miscellaneous Fixes
 
-### 4.1 Grid Improvements
-
-### 4.1.1 Grid Row Sorting
-
-Current behavior: Grid rows in admin views are sorted properly on inital load, but editing items places them at the very bottom upon saving.
-
-Expected behavior: Grid rows in admin views should always use `ORDER BY 'id' DESC`.
-
-### 4.1.2 Count Updates
-
-In various admin views, computed columns, such as users in a group for user groups, or child lessons for lessons, are not updated automatically after actions in the admin view actually change the correct value, e.g. adding a new child lesson to a parent lesson does not update the count until refreshing the page or clicking the fresh button. The issue is likely the same one across admin views that have such columns.
-
-### 4.2 Admin Dashboard Enhancement
+### 4.1 Admin Dashboard Enhancement
 
 The admin dashboard could use some further enhancement, such as diagrams.
 
-### 4.3 Keyboard accessibility
+### 4.2 Keyboard accessibility
 
 Clickable spans are used extensively across views, especially admin views, however tehy lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
 
-### 4.4 Pagination
+### 4.3 Pagination
 
 Add server-side pagination for admin views to handle large datasets gracefully (Vaadin data provider + backend query offsets).
 
-### 4.5 Unit Test Coverage
+### 4.4 Unit Test Coverage
 
 Unit Test Coverage should be reviewed and probably improved across multiple packages.
 
-### 4.6 Security Considerations
+### 4.5 Security Considerations
 
-### 4.6.1 ULIDs
+### 4.5.1 ULIDs
 
 Use ULIDs for IDs rather than auto-incrementing integers.
 
-### 4.6.2 Rate Limits
+### 4.5.2 Rate Limits
 
 Implement rate limits. These should be configurable with generous but sensible defaults.
 
-### 4.7 Database Tweaks
+### 4.6 Database Tweaks
 
 Review init.sql as well as all queries in the project for optimization potential. Notable examples would be `filterByDateRange` methods.
 
