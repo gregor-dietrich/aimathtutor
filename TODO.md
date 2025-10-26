@@ -96,11 +96,17 @@
 
 ## 4. Miscellaneous Fixes
 
-### 4.1 Grid Sorting
+### 4.1 Grid Improvements
+
+### 4.1.1 Grid Row Sorting
 
 Current behavior: Grid rows in admin views are sorted properly on inital load, but editing items places them at the very bottom upon saving.
 
 Expected behavior: Grid rows in admin views should always use `ORDER BY 'id' DESC`.
+
+### 4.1.2 Count Updates
+
+In various admin views, computed columns, such as users in a group for user groups, or child lessons for lessons, are not updated automatically after actions in the admin view actually change the correct value, e.g. adding a new child lesson to a parent lesson does not update the count until refreshing the page or clicking the fresh button. The issue is likely the same one across admin views that have such columns.
 
 ### 4.2 Admin Dashboard Enhancement
 
