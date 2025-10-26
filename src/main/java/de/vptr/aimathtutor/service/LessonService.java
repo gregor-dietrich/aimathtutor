@@ -16,7 +16,7 @@ public class LessonService {
 
     @Transactional
     public List<LessonViewDto> getAllLessons() {
-        return LessonEntity.listAll().stream()
+        return LessonEntity.find("ORDER BY id DESC").list().stream()
                 .map(entity -> new LessonViewDto((LessonEntity) entity))
                 .toList();
     }

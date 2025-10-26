@@ -25,7 +25,7 @@ public class UserService {
 
     @Transactional
     public List<UserViewDto> getAllUsers() {
-        return UserEntity.listAll().stream()
+        return UserEntity.find("ORDER BY id DESC").list().stream()
                 .map(entity -> new UserViewDto((UserEntity) entity))
                 .toList();
     }
@@ -262,7 +262,7 @@ public class UserService {
     }
 
     public List<UserViewDto> findActiveUsers() {
-        return UserEntity.find("activated = true and banned = false").list().stream()
+        return UserEntity.find("activated = true and banned = false ORDER BY id DESC").list().stream()
                 .map(entity -> new UserViewDto((UserEntity) entity))
                 .toList();
     }
@@ -274,7 +274,7 @@ public class UserService {
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
         final List<UserEntity> users = UserEntity.find(
-                "LOWER(username) LIKE ?1 OR LOWER(email) LIKE ?1",
+                "LOWER(username) LIKE ?1 OR LOWER(email) LIKE ?1 ORDER BY id DESC",
                 searchTerm).list();
         return users.stream()
                 .map(UserViewDto::new)

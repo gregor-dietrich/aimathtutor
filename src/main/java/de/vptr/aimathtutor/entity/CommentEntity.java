@@ -56,17 +56,17 @@ public class CommentEntity extends PanacheEntityBase {
 
     // Helper method to find comments by exercise
     public static List<CommentEntity> findByExerciseId(final Long exerciseId) {
-        return find("exercise.id = ?1 AND status != 'DELETED' ORDER BY created DESC", exerciseId).list();
+        return find("exercise.id = ?1 AND status != 'DELETED' ORDER BY id DESC", exerciseId).list();
     }
 
     // Helper method to find comments by user
     public static List<CommentEntity> findByUserId(final Long userId) {
-        return find("user.id = ?1 AND status != 'DELETED' ORDER BY created DESC", userId).list();
+        return find("user.id = ?1 AND status != 'DELETED' ORDER BY id DESC", userId).list();
     }
 
     // Helper method to find recent comments
     public static List<CommentEntity> findRecentComments(final int limit) {
-        return find("status != 'DELETED' ORDER BY created DESC").page(0, limit).list();
+        return find("status != 'DELETED' ORDER BY id DESC").page(0, limit).list();
     }
 
     // NEW: Find replies to a comment
@@ -76,13 +76,13 @@ public class CommentEntity extends PanacheEntityBase {
 
     // NEW: Find top-level comments for an exercise
     public static List<CommentEntity> findTopLevelByExercise(final Long exerciseId) {
-        return find("exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY created DESC",
+        return find("exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY id DESC",
                 exerciseId).list();
     }
 
     // NEW: Find comments by session
     public static List<CommentEntity> findBySessionId(final String sessionId) {
-        return find("sessionId = ?1 AND status != 'DELETED' ORDER BY created DESC", sessionId).list();
+        return find("sessionId = ?1 AND status != 'DELETED' ORDER BY id DESC", sessionId).list();
     }
 
     // NEW: Count flagged comments
