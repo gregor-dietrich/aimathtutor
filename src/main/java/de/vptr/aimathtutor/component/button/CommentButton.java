@@ -8,7 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * TODO: Class documentation.
+ * Button that opens the comment editor for a given entity. Displays a comment
+ * icon and forwards clicks to the provided listener.
  */
 public class CommentButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Add Comment";

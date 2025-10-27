@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 
 /**
- * TODO: Class documentation.
+ * View DTO representing an exercise with denormalized user and lesson fields
+ * suitable for display in the UI.
  */
 public class ExerciseViewDto {
 

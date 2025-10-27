@@ -8,13 +8,19 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Repository for StudentSessionEntity access. Provides common queries used by
+ * the admin and analytics services. Null-safe and returns empty lists when
+ * parameters are missing.
  */
 @ApplicationScoped
 public class StudentSessionRepository extends AbstractRepository {
 
     /**
-     * TODO: Document findBySessionId().
+     * Find a student session by its external session id.
+     *
+     * @param sessionId external session identifier
+     * @return matching StudentSessionEntity or null if none found or sessionId
+     *         is null
      */
     public StudentSessionEntity findBySessionId(final String sessionId) {
         if (sessionId == null) {
@@ -27,7 +33,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByUserId().
+     * Find all sessions for a given user id.
+     *
+     * @param userId database id of the user
+     * @return list of sessions, empty list if userId is null or none found
      */
     public List<StudentSessionEntity> findByUserId(final Long userId) {
         if (userId == null) {
@@ -39,7 +48,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByExerciseId().
+     * Find all sessions for a given exercise id.
+     *
+     * @param exerciseId database id of the exercise
+     * @return list of sessions, empty list if exerciseId is null or none found
      */
     public List<StudentSessionEntity> findByExerciseId(final Long exerciseId) {
         if (exerciseId == null) {
@@ -51,14 +63,20 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findAll().
+     * List all student sessions ordered by start time (named query
+     * "StudentSession.findAllOrdered").
+     *
+     * @return list of all student sessions
      */
     public List<StudentSessionEntity> findAll() {
         return this.listNamed("StudentSession.findAllOrdered", StudentSessionEntity.class);
     }
 
     /**
-     * TODO: Document findById().
+     * Find a session by database id.
+     *
+     * @param id primary key of the session
+     * @return session entity or null if id is null or not found
      */
     public StudentSessionEntity findById(final Long id) {
         if (id == null) {
@@ -118,7 +136,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByStartTimeAfter().
+     * Find sessions that started after the provided time.
+     *
+     * @param time lower bound start time (exclusive)
+     * @return list of sessions starting after time, or empty list on null input
      */
     public List<StudentSessionEntity> findByStartTimeAfter(final LocalDateTime time) {
         if (time == null) {
@@ -130,7 +151,11 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByStartTimeBetween().
+     * Find sessions with start times between the provided range.
+     *
+     * @param start inclusive range start
+     * @param end   inclusive range end
+     * @return list of sessions in range or empty list on null inputs
      */
     public List<StudentSessionEntity> findByStartTimeBetween(final LocalDateTime start, final LocalDateTime end) {
         if (start == null || end == null) {
@@ -143,7 +168,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document countByCompleted().
+     * Count sessions by completion flag.
+     *
+     * @param completed true to count completed sessions, false otherwise
+     * @return count of matching sessions or 0 if completed is null
      */
     public long countByCompleted(final Boolean completed) {
         if (completed == null) {
@@ -155,7 +183,9 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document countAll().
+     * Count all student sessions.
+     *
+     * @return total number of sessions
      */
     public long countAll() {
         final var q = this.em.createNamedQuery("StudentSession.countAll", Long.class);
@@ -163,7 +193,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document searchByUserOrExerciseTerm().
+     * Search sessions by a lower-cased term matching user or exercise fields.
+     *
+     * @param lowerPattern lower-cased search pattern (e.g. "%term%")
+     * @return matching sessions or empty list if pattern is null/empty
      */
     public List<StudentSessionEntity> searchByUserOrExerciseTerm(final String lowerPattern) {
         if (lowerPattern == null || lowerPattern.isEmpty()) {
@@ -175,7 +208,9 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document persist().
+     * Persist a new student session entity.
+     *
+     * @param session entity to persist; ignored if null
      */
     @Transactional
     public void persist(final StudentSessionEntity session) {
@@ -186,7 +221,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document deleteById().
+     * Delete a session by id.
+     *
+     * @param id primary key of session to remove
+     * @return true if removed, false if id was null or entity not found
      */
     @Transactional
     public boolean deleteById(final Long id) {

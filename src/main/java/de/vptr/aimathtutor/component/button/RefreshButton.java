@@ -8,7 +8,8 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 
 /**
- * TODO: Class documentation.
+ * Refresh button with a refresh icon. Triggers the provided click listener
+ * to reload or refresh UI data.
  */
 public class RefreshButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Refresh";

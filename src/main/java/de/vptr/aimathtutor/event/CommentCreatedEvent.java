@@ -26,42 +26,42 @@ public class CommentCreatedEvent {
     }
 
     /**
-     * TODO: Document getCommentId().
+     * Get the id of the created comment.
      */
     public Long getCommentId() {
         return this.commentId;
     }
 
     /**
-     * TODO: Document getExerciseId().
+     * Get the exercise id the comment belongs to.
      */
     public Long getExerciseId() {
         return this.exerciseId;
     }
 
     /**
-     * TODO: Document getUserId().
+     * Get the id of the user who created the comment.
      */
     public Long getUserId() {
         return this.userId;
     }
 
     /**
-     * TODO: Document getUsername().
+     * Get the username of the comment author.
      */
     public String getUsername() {
         return this.username;
     }
 
     /**
-     * TODO: Document getContent().
+     * Get the comment content text.
      */
     public String getContent() {
         return this.content;
     }
 
     /**
-     * TODO: Document getCreatedAt().
+     * Get the timestamp when the comment was created.
      */
     public LocalDateTime getCreatedAt() {
         return this.createdAt;

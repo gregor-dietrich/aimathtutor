@@ -29,6 +29,10 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findByStatus", query = "FROM CommentEntity WHERE status = :st"),
         @NamedQuery(name = "Comment.findFlaggedComments", query = "FROM CommentEntity WHERE flagsCount >= :m ORDER BY flagsCount DESC")
 })
+/**
+ * JPA entity representing a comment posted by a user on an exercise. Supports
+ * threading through parentCommentId and soft deletion via status fields.
+ */
 @Entity
 @Table(name = "comments")
 public class CommentEntity extends PanacheEntityBase {
@@ -79,7 +83,10 @@ public class CommentEntity extends PanacheEntityBase {
     // Helper method to find comments by exercise
 
     /**
-     * TODO: Document findByExerciseId().
+     * Find non-deleted comments for a given exercise id ordered by id desc.
+     *
+     * @param exerciseId exercise primary key
+     * @return list of comments
      */
     public static List<CommentEntity> findByExerciseId(final Long exerciseId) {
         return find("exercise.id = ?1 AND status != 'DELETED' ORDER BY id DESC", exerciseId).list();
@@ -88,7 +95,10 @@ public class CommentEntity extends PanacheEntityBase {
     // Helper method to find comments by user
 
     /**
-     * TODO: Document findByUserId().
+     * Find non-deleted comments authored by a user.
+     *
+     * @param userId user primary key
+     * @return list of comments
      */
     public static List<CommentEntity> findByUserId(final Long userId) {
         return find("user.id = ?1 AND status != 'DELETED' ORDER BY id DESC", userId).list();
@@ -97,7 +107,10 @@ public class CommentEntity extends PanacheEntityBase {
     // Helper method to find recent comments
 
     /**
-     * TODO: Document findRecentComments().
+     * Retrieve recent non-deleted comments limited by the provided value.
+     *
+     * @param limit maximum number of comments to return
+     * @return list of recent comments
      */
     public static List<CommentEntity> findRecentComments(final int limit) {
         return find("status != 'DELETED' ORDER BY id DESC").page(0, limit).list();
@@ -106,7 +119,10 @@ public class CommentEntity extends PanacheEntityBase {
     // NEW: Find replies to a comment
 
     /**
-     * TODO: Document findReplies().
+     * Find visible replies for a parent comment.
+     *
+     * @param parentCommentId id of parent comment
+     * @return list of reply comments
      */
     public static List<CommentEntity> findReplies(final Long parentCommentId) {
         return find("parentComment.id = ?1 AND status != 'DELETED' ORDER BY created ASC", parentCommentId).list();
@@ -115,7 +131,10 @@ public class CommentEntity extends PanacheEntityBase {
     // NEW: Find top-level comments for an exercise
 
     /**
-     * TODO: Document findTopLevelByExercise().
+     * Find top-level (non-reply) comments for an exercise.
+     *
+     * @param exerciseId exercise primary key
+     * @return list of top-level comments
      */
     public static List<CommentEntity> findTopLevelByExercise(final Long exerciseId) {
         return find("exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY id DESC",
@@ -125,7 +144,10 @@ public class CommentEntity extends PanacheEntityBase {
     // NEW: Find comments by session
 
     /**
-     * TODO: Document findBySessionId().
+     * Find comments associated with a particular session id.
+     *
+     * @param sessionId external session identifier
+     * @return list of comments for the session
      */
     public static List<CommentEntity> findBySessionId(final String sessionId) {
         return find("sessionId = ?1 AND status != 'DELETED' ORDER BY id DESC", sessionId).list();
@@ -134,7 +156,9 @@ public class CommentEntity extends PanacheEntityBase {
     // NEW: Count flagged comments
 
     /**
-     * TODO: Document findFlaggedCommentCount().
+     * Count visible comments that have been flagged at least once.
+     *
+     * @return number of flagged comments
      */
     public static int findFlaggedCommentCount() {
         return (int) find("flagsCount > 0 AND status = 'VISIBLE'").count();

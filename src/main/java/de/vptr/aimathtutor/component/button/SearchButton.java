@@ -8,7 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * TODO: Class documentation.
+ * Button that triggers a search action. Displays a search icon and calls the
+ * provided click listener when pressed.
  */
 public class SearchButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Search";

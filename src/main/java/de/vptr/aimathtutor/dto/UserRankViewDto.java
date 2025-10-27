@@ -95,14 +95,14 @@ public class UserRankViewDto {
     // Helper methods for permission checking
 
     /**
-     * TODO: Document canAdminView().
+     * Whether this rank grants access to the admin view features.
      */
     public boolean canAdminView() {
         return Boolean.TRUE.equals(this.adminView);
     }
 
     /**
-     * TODO: Document hasAnyExercisePermission().
+     * Whether this rank has any exercise-related permissions (add/edit/delete).
      */
     public boolean hasAnyExercisePermission() {
         return Boolean.TRUE.equals(this.exerciseAdd) || Boolean.TRUE.equals(this.exerciseEdit)
@@ -110,7 +110,7 @@ public class UserRankViewDto {
     }
 
     /**
-     * TODO: Document hasAnyLessonPermission().
+     * Whether this rank has any lesson-related permissions (add/edit/delete).
      */
     public boolean hasAnyLessonPermission() {
         return Boolean.TRUE.equals(this.lessonAdd) || Boolean.TRUE.equals(this.lessonEdit)
@@ -118,7 +118,7 @@ public class UserRankViewDto {
     }
 
     /**
-     * TODO: Document hasAnyCommentPermission().
+     * Whether this rank has any comment-related permissions (add/edit/delete).
      */
     public boolean hasAnyCommentPermission() {
         return Boolean.TRUE.equals(this.commentAdd) || Boolean.TRUE.equals(this.commentEdit)
@@ -126,7 +126,7 @@ public class UserRankViewDto {
     }
 
     /**
-     * TODO: Document hasAnyUserPermission().
+     * Whether this rank has any user-management permissions.
      */
     public boolean hasAnyUserPermission() {
         return Boolean.TRUE.equals(this.userAdd) || Boolean.TRUE.equals(this.userEdit)
@@ -134,7 +134,7 @@ public class UserRankViewDto {
     }
 
     /**
-     * TODO: Document hasAnyUserGroupPermission().
+     * Whether this rank has any user-group management permissions.
      */
     public boolean hasAnyUserGroupPermission() {
         return Boolean.TRUE.equals(this.userGroupAdd) || Boolean.TRUE.equals(this.userGroupEdit)
@@ -142,7 +142,7 @@ public class UserRankViewDto {
     }
 
     /**
-     * TODO: Document hasAnyUserRankPermission().
+     * Whether this rank has any user-rank management permissions.
      */
     public boolean hasAnyUserRankPermission() {
         return Boolean.TRUE.equals(this.userRankAdd) || Boolean.TRUE.equals(this.userRankEdit)
@@ -150,7 +150,8 @@ public class UserRankViewDto {
     }
 
     /**
-     * TODO: Document toUserRankDto().
+     * Convert this view into a mutable {@link UserRankDto} used for editing
+     * and persistence.
      */
     public UserRankDto toUserRankDto() {
         final var dto = new UserRankDto();

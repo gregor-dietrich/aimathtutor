@@ -10,7 +10,9 @@ import de.vptr.aimathtutor.component.button.FilterButton;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * TODO: Class documentation.
+ * Small composite layout containing two date pickers and a filter button.
+ * Parent views can read the selected dates and trigger the filter action via
+ * the exposed button.
  */
 public class DateFilterLayout extends HorizontalLayout {
 
@@ -47,7 +49,10 @@ public class DateFilterLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getButton().
+     * Get the internal filter button so callers can attach listeners or
+     * programmatically trigger the filter action.
+     *
+     * @return filter button contained in this layout
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "This layout intentionally exposes internal components for composing into larger UIs")
     public Button getButton() {
@@ -55,7 +60,10 @@ public class DateFilterLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getStartDatePicker().
+     * Get the start date picker component. The returned instance is the live
+     * component used by the layout.
+     *
+     * @return start date picker
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose DatePicker so parent views can wire listeners and read values")
     public DatePicker getStartDatePicker() {
@@ -63,7 +71,10 @@ public class DateFilterLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getEndDatePicker().
+     * Get the end date picker component. The returned instance is the live
+     * component used by the layout.
+     *
+     * @return end date picker
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose DatePicker so parent views can wire listeners and read values")
     public DatePicker getEndDatePicker() {

@@ -13,7 +13,9 @@ import de.vptr.aimathtutor.component.button.SearchButton;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * TODO: Class documentation.
+ * Composite layout containing a search text field and a search button. The
+ * component wires default Enter key handling and exposes internal
+ * components for parent views to reuse.
  */
 public class SearchLayout extends HorizontalLayout {
 
@@ -71,7 +73,10 @@ public class SearchLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getButton().
+     * Return the internal search button. Useful to trigger a search from the
+     * parent view or to attach additional listeners.
+     *
+     * @return the search button
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose button intentionally so parent views can trigger searches or reuse it")
     public Button getButton() {
@@ -79,7 +84,10 @@ public class SearchLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getTextfield().
+     * Return the text field used for entering the search term. Parent views
+     * can read or set the value and attach listeners as needed.
+     *
+     * @return the search text field
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose textField intentionally so parent views can read/set value and attach listeners")
     public TextField getTextfield() {

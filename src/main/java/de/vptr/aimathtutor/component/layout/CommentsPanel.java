@@ -373,7 +373,8 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     /**
-     * TODO: Document refresh().
+     * Refresh the comments list by resetting pagination and reloading from the
+     * service. Safe to call from UI threads.
      */
     public void refresh() {
         this.currentPage = 0;

@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * TODO: Class documentation.
+ * Logout button that triggers the application's logout flow when clicked.
  */
 public class LogoutButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Logout";

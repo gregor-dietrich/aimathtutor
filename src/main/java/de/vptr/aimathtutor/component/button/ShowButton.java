@@ -8,7 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * TODO: Class documentation.
+ * Button to show or reveal an item or details. Delegates action to the
+ * provided click listener.
  */
 public class ShowButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Show";

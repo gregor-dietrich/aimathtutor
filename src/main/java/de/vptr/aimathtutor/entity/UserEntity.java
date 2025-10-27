@@ -21,6 +21,11 @@ import jakarta.validation.constraints.NotBlank;
 })
 @Entity
 @Table(name = "users")
+/**
+ * JPA entity representing an application user. Stores authentication and
+ * profile information. Sensitive fields such as password and salt are stored
+ * but should not be exposed by DTOs.
+ */
 public class UserEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

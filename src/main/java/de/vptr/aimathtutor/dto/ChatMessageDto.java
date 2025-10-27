@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ChatMessageDto {
 
     /**
-     * TODO: Class documentation.
+     * Sender of the chat message (student or AI tutor).
      */
     public enum Sender {
         USER, // Message from student
@@ -19,7 +19,8 @@ public class ChatMessageDto {
     }
 
     /**
-     * TODO: Class documentation.
+     * Type of the chat message used to differentiate UI rendering and
+     * handling.
      */
     public enum MessageType {
         QUESTION, // User asking a question
@@ -56,35 +57,47 @@ public class ChatMessageDto {
     }
 
     /**
-     * TODO: Document userQuestion().
+     * Create a user question message.
+     *
+     * @param message question text
+     * @return ChatMessageDto instance for a user question
      */
     public static ChatMessageDto userQuestion(final String message) {
         return new ChatMessageDto(Sender.USER, MessageType.QUESTION, message);
     }
 
     /**
-     * TODO: Document aiFeedback().
+     * Create an AI feedback message.
+     *
+     * @param message feedback text
+     * @return ChatMessageDto instance for AI feedback
      */
     public static ChatMessageDto aiFeedback(final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.FEEDBACK, message);
     }
 
     /**
-     * TODO: Document aiAnswer().
+     * Create an AI answer message (response to a question).
+     *
+     * @param message answer text
+     * @return ChatMessageDto instance for an AI answer
      */
     public static ChatMessageDto aiAnswer(final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.ANSWER, message);
     }
 
     /**
-     * TODO: Document system().
+     * Create a system message.
+     *
+     * @param message system text
+     * @return ChatMessageDto instance for system messages
      */
     public static ChatMessageDto system(final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.SYSTEM, message);
     }
 
     /**
-     * TODO: Document toString().
+     * Debug representation of the chat message.
      */
     @Override
     public String toString() {

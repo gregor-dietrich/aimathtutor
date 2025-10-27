@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.UserEntity;
 
 /**
- * TODO: Class documentation.
+ * DTO used to present a user in list and detail views. Contains non-sensitive
+ * fields intended for UI consumption.
  */
 public class UserViewDto {
 
@@ -49,7 +50,11 @@ public class UserViewDto {
     }
 
     /**
-     * TODO: Document toUserDto().
+     * Convert this view DTO to a minimal editable {@link UserDto} instance.
+     * Sensitive fields like password are not transferred and must be handled
+     * separately.
+     *
+     * @return a new UserDto populated from view fields
      */
     public UserDto toUserDto() {
         final var dto = new UserDto();

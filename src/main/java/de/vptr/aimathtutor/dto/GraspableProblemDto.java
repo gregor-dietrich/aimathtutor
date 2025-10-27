@@ -36,21 +36,25 @@ public class GraspableProblemDto {
         }
 
         /**
-         * TODO: Document getDisplayName().
+         * Get the human-readable display name for this category.
+         *
+         * @return display name
          */
         public String getDisplayName() {
             return this.displayName;
         }
 
         /**
-         * TODO: Document getTopic().
+         * Get the short topic identifier associated with this category.
+         *
+         * @return topic id
          */
         public String getTopic() {
             return this.topic;
         }
 
         /**
-         * TODO: Document toString().
+         * Return the display name when converting to string.
          */
         @Override
         public String toString() {

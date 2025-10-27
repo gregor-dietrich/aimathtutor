@@ -3,7 +3,8 @@ package de.vptr.aimathtutor.dto;
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 
 /**
- * TODO: Class documentation.
+ * DTO for presenting a user group in listings. Contains computed user count
+ * and conversion helper to the editable UserGroupDto.
  */
 public class UserGroupViewDto {
     public Long id;
@@ -20,7 +21,9 @@ public class UserGroupViewDto {
     }
 
     /**
-     * TODO: Document toUserGroupDto().
+     * Convert this view DTO to a persistent/editable {@link UserGroupDto}.
+     *
+     * @return new UserGroupDto populated from this view
      */
     public UserGroupDto toUserGroupDto() {
         final var dto = new UserGroupDto();
