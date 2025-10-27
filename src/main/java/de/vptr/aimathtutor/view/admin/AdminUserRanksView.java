@@ -41,6 +41,9 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
+/**
+ * TODO: Class documentation.
+ */
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
 public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -68,6 +71,9 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         this.setSpacing(true);
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {

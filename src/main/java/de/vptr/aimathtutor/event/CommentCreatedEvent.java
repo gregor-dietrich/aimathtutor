@@ -25,26 +25,44 @@ public class CommentCreatedEvent {
         this.createdAt = createdAt;
     }
 
+    /**
+     * TODO: Document getCommentId().
+     */
     public Long getCommentId() {
         return this.commentId;
     }
 
+    /**
+     * TODO: Document getExerciseId().
+     */
     public Long getExerciseId() {
         return this.exerciseId;
     }
 
+    /**
+     * TODO: Document getUserId().
+     */
     public Long getUserId() {
         return this.userId;
     }
 
+    /**
+     * TODO: Document getUsername().
+     */
     public String getUsername() {
         return this.username;
     }
 
+    /**
+     * TODO: Document getContent().
+     */
     public String getContent() {
         return this.content;
     }
 
+    /**
+     * TODO: Document getCreatedAt().
+     */
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }

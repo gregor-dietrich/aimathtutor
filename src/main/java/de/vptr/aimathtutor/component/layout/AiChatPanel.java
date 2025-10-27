@@ -228,11 +228,6 @@ public class AiChatPanel extends VerticalLayout {
     }
 
     /**
-     * Shows a typing indicator for the AI tutor.
-     *
-     * @return The component to remove later
-     */
-    /**
      * Shows a typing indicator (simple version that doesn't require tracking the
      * indicator).
      */
@@ -245,7 +240,7 @@ public class AiChatPanel extends VerticalLayout {
 
     /**
      * Creates and displays a typing indicator.
-     * 
+     *
      * @return The typing indicator component for manual management
      */
     public HorizontalLayout createTypingIndicator() {

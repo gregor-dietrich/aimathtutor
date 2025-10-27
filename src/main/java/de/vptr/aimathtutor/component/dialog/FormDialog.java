@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.component.dialog;
 
 import com.vaadin.flow.component.dialog.Dialog;
 
+/**
+ * TODO: Class documentation.
+ */
 public class FormDialog extends Dialog {
 
     private static final String DEFAULT_WIDTH = "800px";

@@ -7,9 +7,15 @@ import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class StudentSessionRepository extends AbstractRepository {
 
+    /**
+     * TODO: Document findBySessionId().
+     */
     public StudentSessionEntity findBySessionId(final String sessionId) {
         if (sessionId == null) {
             return null;
@@ -20,6 +26,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultStream().findFirst().orElse(null);
     }
 
+    /**
+     * TODO: Document findByUserId().
+     */
     public List<StudentSessionEntity> findByUserId(final Long userId) {
         if (userId == null) {
             return List.of();
@@ -29,6 +38,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document findByExerciseId().
+     */
     public List<StudentSessionEntity> findByExerciseId(final Long exerciseId) {
         if (exerciseId == null) {
             return List.of();
@@ -38,10 +50,16 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document findAll().
+     */
     public List<StudentSessionEntity> findAll() {
-        return listNamed("StudentSession.findAllOrdered", StudentSessionEntity.class);
+        return this.listNamed("StudentSession.findAllOrdered", StudentSessionEntity.class);
     }
 
+    /**
+     * TODO: Document findById().
+     */
     public StudentSessionEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -99,6 +117,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document findByStartTimeAfter().
+     */
     public List<StudentSessionEntity> findByStartTimeAfter(final LocalDateTime time) {
         if (time == null) {
             return List.of();
@@ -108,6 +129,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document findByStartTimeBetween().
+     */
     public List<StudentSessionEntity> findByStartTimeBetween(final LocalDateTime start, final LocalDateTime end) {
         if (start == null || end == null) {
             return List.of();
@@ -118,6 +142,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document countByCompleted().
+     */
     public long countByCompleted(final Boolean completed) {
         if (completed == null) {
             return 0L;
@@ -127,11 +154,17 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getSingleResult();
     }
 
+    /**
+     * TODO: Document countAll().
+     */
     public long countAll() {
         final var q = this.em.createNamedQuery("StudentSession.countAll", Long.class);
         return q.getSingleResult();
     }
 
+    /**
+     * TODO: Document searchByUserOrExerciseTerm().
+     */
     public List<StudentSessionEntity> searchByUserOrExerciseTerm(final String lowerPattern) {
         if (lowerPattern == null || lowerPattern.isEmpty()) {
             return List.of();
@@ -141,6 +174,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document persist().
+     */
     @Transactional
     public void persist(final StudentSessionEntity session) {
         if (session == null) {
@@ -149,6 +185,9 @@ public class StudentSessionRepository extends AbstractRepository {
         this.em.persist(session);
     }
 
+    /**
+     * TODO: Document deleteById().
+     */
     @Transactional
     public boolean deleteById(final Long id) {
         if (id == null) {

@@ -16,12 +16,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
 
     @Inject
     ManagedExecutor executor;
 
+    /**
+     * TODO: Document augment().
+     */
     @Override
     public Uni<SecurityIdentity> augment(final SecurityIdentity identity, final AuthenticationRequestContext context) {
         if (identity.isAnonymous()) {

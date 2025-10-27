@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 
+/**
+ * TODO: Class documentation.
+ */
 public class UserGroupViewDto {
     public Long id;
     public String name;
@@ -16,6 +19,9 @@ public class UserGroupViewDto {
         this.userCount = entity.getUserCount();
     }
 
+    /**
+     * TODO: Document toUserGroupDto().
+     */
     public UserGroupDto toUserGroupDto() {
         final var dto = new UserGroupDto();
         dto.id = this.id;

@@ -70,12 +70,15 @@ public class ConversationContextDto {
         }
     }
 
+    /**
+     * TODO: Document toString().
+     */
     @Override
     public String toString() {
-        return "ConversationContextDto{" +
-                "recentActions=" + this.recentActions.size() +
-                ", recentQuestions=" + this.recentQuestions.size() +
-                ", recentAIMessages=" + this.recentAiMessages.size() +
-                '}';
+        return "ConversationContextDto{"
+                + "recentActions=" + this.recentActions.size()
+                + ", recentQuestions=" + this.recentQuestions.size()
+                + ", recentAIMessages=" + this.recentAiMessages.size()
+                + '}';
     }
 }

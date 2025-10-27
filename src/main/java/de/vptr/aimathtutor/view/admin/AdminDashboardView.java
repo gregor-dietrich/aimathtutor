@@ -49,6 +49,9 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         // transient statCardValues is initialized inline; no further action required
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {

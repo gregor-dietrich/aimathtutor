@@ -65,6 +65,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Constructor intentionally empty - initialization happens in buildUi()
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -145,6 +148,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.add(leftPanel, this.chatPanel);
     }
 
+    /**
+     * TODO: Document onAttach().
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
@@ -215,9 +221,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      */
     private void registerServerConnector() {
         UI.getCurrent().getPage().executeJs(
-                "window.graspableViewConnector = { onMathAction: function(type, before, after) { " +
-                        "   $0.$server.onMathAction(type, before, after); " +
-                        "}}",
+                "window.graspableViewConnector = { onMathAction: function(type, before, after) { "
+                        + "   $0.$server.onMathAction(type, before, after); "
+                        + "}}",
                 this.getElement());
     }
 

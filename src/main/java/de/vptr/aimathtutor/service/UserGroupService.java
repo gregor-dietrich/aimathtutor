@@ -20,6 +20,9 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class UserGroupService {
 
@@ -32,6 +35,9 @@ public class UserGroupService {
     @Inject
     UserGroupMetaRepository userGroupMetaRepository;
 
+    /**
+     * TODO: Document getAllGroups().
+     */
     @Transactional
     public List<UserGroupViewDto> getAllGroups() {
         return this.userGroupRepository.findAll().stream()
@@ -39,18 +45,27 @@ public class UserGroupService {
                 .toList();
     }
 
+    /**
+     * TODO: Document findById().
+     */
     @Transactional
     public Optional<UserGroupViewDto> findById(final Long id) {
         return this.userGroupRepository.findByIdOptional(id)
                 .map(UserGroupViewDto::new);
     }
 
+    /**
+     * TODO: Document findByName().
+     */
     @Transactional
     public Optional<UserGroupViewDto> findByName(final String name) {
         final var group = this.userGroupRepository.findByName(name);
         return Optional.ofNullable(group).map(UserGroupViewDto::new);
     }
 
+    /**
+     * TODO: Document getUsersInGroup().
+     */
     @Transactional
     public List<UserViewDto> getUsersInGroup(final Long groupId) {
         final UserGroupEntity group = this.userGroupRepository.findById(groupId);
@@ -62,6 +77,9 @@ public class UserGroupService {
                 .toList();
     }
 
+    /**
+     * TODO: Document getGroupsForUser().
+     */
     @Transactional
     public List<UserGroupViewDto> getGroupsForUser(final Long userId) {
         final var metas = this.userGroupMetaRepository.findByUserId(userId);
@@ -70,6 +88,9 @@ public class UserGroupService {
                 .toList();
     }
 
+    /**
+     * TODO: Document createGroup().
+     */
     @Transactional
     public UserGroupViewDto createGroup(final UserGroupDto groupDto) {
         if (groupDto.name == null || groupDto.name.trim().isEmpty()) {
@@ -83,6 +104,9 @@ public class UserGroupService {
         return new UserGroupViewDto(group);
     }
 
+    /**
+     * TODO: Document updateGroup().
+     */
     @Transactional
     public UserGroupViewDto updateGroup(final Long id, final UserGroupDto groupDto) {
         if (groupDto.name == null || groupDto.name.trim().isEmpty()) {
@@ -101,6 +125,9 @@ public class UserGroupService {
         return new UserGroupViewDto(existingGroup);
     }
 
+    /**
+     * TODO: Document patchGroup().
+     */
     @Transactional
     public UserGroupViewDto patchGroup(final Long id, final UserGroupDto groupDto) {
         final UserGroupEntity existingGroup = this.userGroupRepository.findById(id);
@@ -117,11 +144,17 @@ public class UserGroupService {
         return new UserGroupViewDto(existingGroup);
     }
 
+    /**
+     * TODO: Document deleteGroup().
+     */
     @Transactional
     public boolean deleteGroup(final Long id) {
         return this.userGroupRepository.deleteById(id);
     }
 
+    /**
+     * TODO: Document addUserToGroup().
+     */
     @Transactional
     public UserGroupMetaEntity addUserToGroup(final Long userId, final Long groupId) {
         // Check if association already exists
@@ -148,6 +181,9 @@ public class UserGroupService {
         return meta;
     }
 
+    /**
+     * TODO: Document removeUserFromGroup().
+     */
     @Transactional
     public boolean removeUserFromGroup(final Long userId, final Long groupId) {
         final var meta = this.userGroupMetaRepository.findByUserAndGroup(userId, groupId);
@@ -158,10 +194,16 @@ public class UserGroupService {
         return true;
     }
 
+    /**
+     * TODO: Document isUserInGroup().
+     */
     public boolean isUserInGroup(final Long userId, final Long groupId) {
         return this.userGroupMetaRepository.isUserInGroup(userId, groupId);
     }
 
+    /**
+     * TODO: Document searchGroups().
+     */
     @Transactional
     public List<UserGroupViewDto> searchGroups(final String query) {
         if (query == null || query.trim().isEmpty()) {

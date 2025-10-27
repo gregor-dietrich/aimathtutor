@@ -31,21 +31,37 @@ public class UserGroupMetaEntity extends PanacheEntityBase {
     public LocalDateTime timestamp;
 
     // Helper method to find by user and group
+
+    /**
+     * TODO: Document findByUserAndGroup().
+     */
     public static UserGroupMetaEntity findByUserAndGroup(final Long userId, final Long groupId) {
         return find("user.id = ?1 AND group.id = ?2", userId, groupId).firstResult();
     }
 
     // Helper method to check if user is in group
+
+    /**
+     * TODO: Document isUserInGroup().
+     */
     public static boolean isUserInGroup(final Long userId, final Long groupId) {
         return count("user.id = ?1 AND group.id = ?2", userId, groupId) > 0;
     }
 
     // Helper method to find all groups for a user
+
+    /**
+     * TODO: Document findByUserId().
+     */
     public static List<UserGroupMetaEntity> findByUserId(final Long userId) {
         return find("user.id", userId).list();
     }
 
     // Helper method to find all users in a group
+
+    /**
+     * TODO: Document findByGroupId().
+     */
     public static List<UserGroupMetaEntity> findByGroupId(final Long groupId) {
         return find("group.id", groupId).list();
     }

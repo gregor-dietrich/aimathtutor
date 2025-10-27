@@ -28,6 +28,10 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Service for managing comments: creation, editing, deletion, listing and
+ * moderation.
+ */
 @ApplicationScoped
 public class CommentService {
 
@@ -54,6 +58,9 @@ public class CommentService {
     @Inject
     CommentFlagRepository commentFlagRepository;
 
+    /**
+     * TODO: Document getAllComments().
+     */
     @Transactional
     public List<CommentViewDto> getAllComments() {
         final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations();
@@ -62,6 +69,9 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Document findById().
+     */
     @Transactional
     public Optional<CommentViewDto> findById(final Long id) {
         final Optional<CommentEntity> comment = this.commentRepository.findByIdOptionalWithRelations(id);
@@ -72,6 +82,9 @@ public class CommentService {
         return Optional.empty();
     }
 
+    /**
+     * TODO: Document findByExerciseId().
+     */
     @Transactional
     public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
         final List<CommentEntity> comments = this.commentRepository.findByExerciseIdWithRelations(exerciseId);
@@ -80,6 +93,9 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Document findByUserId().
+     */
     @Transactional
     public List<CommentViewDto> findByUserId(final Long userId) {
         final List<CommentEntity> comments = this.commentRepository.findByUserIdWithRelations(userId);
@@ -88,6 +104,9 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Document findRecentComments().
+     */
     @Transactional
     public List<CommentViewDto> findRecentComments(final int limit) {
         final List<CommentEntity> comments = this.commentRepository.findRecentCommentsWithRelations(limit);
@@ -96,6 +115,9 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Document createComment().
+     */
     @Transactional
     public CommentViewDto createComment(final CommentEntity comment, final String currentUsername) {
         // Validate content is provided for creation
@@ -137,6 +159,9 @@ public class CommentService {
         return new CommentViewDto(comment);
     }
 
+    /**
+     * TODO: Document updateComment().
+     */
     @Transactional
     public CommentViewDto updateComment(final CommentEntity comment) {
         final CommentEntity existingComment = this.commentRepository.findById(comment.id);
@@ -156,6 +181,9 @@ public class CommentService {
         return new CommentViewDto(existingComment);
     }
 
+    /**
+     * TODO: Document patchComment().
+     */
     @Transactional
     public CommentViewDto patchComment(final CommentEntity comment) {
         final CommentEntity existingComment = this.commentRepository.findById(comment.id);
@@ -172,6 +200,9 @@ public class CommentService {
         return new CommentViewDto(existingComment);
     }
 
+    /**
+     * TODO: Document deleteComment().
+     */
     @Transactional
     public boolean deleteComment(final Long id) {
         return this.commentRepository.deleteById(id);
@@ -512,8 +543,8 @@ public class CommentService {
 
     private boolean isModerator(final UserEntity user) {
         // Check if user has teacher or admin rank
-        return user != null && user.rank != null && (Boolean.TRUE.equals(user.rank.exerciseEdit) ||
-                Boolean.TRUE.equals(user.rank.adminView));
+        return user != null && user.rank != null && (Boolean.TRUE.equals(user.rank.exerciseEdit)
+                || Boolean.TRUE.equals(user.rank.adminView));
     }
 
     private void checkRateLimit(final Long userId) {
@@ -539,6 +570,9 @@ public class CommentService {
         }
     }
 
+    /**
+     * TODO: Document searchComments().
+     */
     public List<CommentViewDto> searchComments(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllComments();
@@ -550,6 +584,9 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * TODO: Document findByDateRange().
+     */
     @Transactional
     public List<CommentViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {

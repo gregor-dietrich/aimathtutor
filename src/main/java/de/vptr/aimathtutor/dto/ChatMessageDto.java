@@ -10,11 +10,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ChatMessageDto {
 
+    /**
+     * TODO: Class documentation.
+     */
     public enum Sender {
         USER, // Message from student
         AI // Message from AI tutor
     }
 
+    /**
+     * TODO: Class documentation.
+     */
     public enum MessageType {
         QUESTION, // User asking a question
         FEEDBACK, // AI providing automatic feedback on an action
@@ -49,30 +55,45 @@ public class ChatMessageDto {
         this.message = message;
     }
 
+    /**
+     * TODO: Document userQuestion().
+     */
     public static ChatMessageDto userQuestion(final String message) {
         return new ChatMessageDto(Sender.USER, MessageType.QUESTION, message);
     }
 
+    /**
+     * TODO: Document aiFeedback().
+     */
     public static ChatMessageDto aiFeedback(final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.FEEDBACK, message);
     }
 
+    /**
+     * TODO: Document aiAnswer().
+     */
     public static ChatMessageDto aiAnswer(final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.ANSWER, message);
     }
 
+    /**
+     * TODO: Document system().
+     */
     public static ChatMessageDto system(final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.SYSTEM, message);
     }
 
+    /**
+     * TODO: Document toString().
+     */
     @Override
     public String toString() {
-        return "ChatMessageDto{" +
-                "sender=" + this.sender +
-                ", messageType=" + this.messageType +
-                ", message='" + this.message + '\'' +
-                ", timestamp=" + this.timestamp +
-                ", sessionId='" + this.sessionId + '\'' +
-                '}';
+        return "ChatMessageDto{"
+                + "sender=" + this.sender
+                + ", messageType=" + this.messageType
+                + ", message='" + this.message + '\''
+                + ", timestamp=" + this.timestamp
+                + ", sessionId='" + this.sessionId + '\''
+                + '}';
     }
 }

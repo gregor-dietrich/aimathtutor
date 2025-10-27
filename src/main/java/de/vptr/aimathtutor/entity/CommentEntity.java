@@ -77,37 +77,65 @@ public class CommentEntity extends PanacheEntityBase {
     public LocalDateTime deletedAt;
 
     // Helper method to find comments by exercise
+
+    /**
+     * TODO: Document findByExerciseId().
+     */
     public static List<CommentEntity> findByExerciseId(final Long exerciseId) {
         return find("exercise.id = ?1 AND status != 'DELETED' ORDER BY id DESC", exerciseId).list();
     }
 
     // Helper method to find comments by user
+
+    /**
+     * TODO: Document findByUserId().
+     */
     public static List<CommentEntity> findByUserId(final Long userId) {
         return find("user.id = ?1 AND status != 'DELETED' ORDER BY id DESC", userId).list();
     }
 
     // Helper method to find recent comments
+
+    /**
+     * TODO: Document findRecentComments().
+     */
     public static List<CommentEntity> findRecentComments(final int limit) {
         return find("status != 'DELETED' ORDER BY id DESC").page(0, limit).list();
     }
 
     // NEW: Find replies to a comment
+
+    /**
+     * TODO: Document findReplies().
+     */
     public static List<CommentEntity> findReplies(final Long parentCommentId) {
         return find("parentComment.id = ?1 AND status != 'DELETED' ORDER BY created ASC", parentCommentId).list();
     }
 
     // NEW: Find top-level comments for an exercise
+
+    /**
+     * TODO: Document findTopLevelByExercise().
+     */
     public static List<CommentEntity> findTopLevelByExercise(final Long exerciseId) {
         return find("exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY id DESC",
                 exerciseId).list();
     }
 
     // NEW: Find comments by session
+
+    /**
+     * TODO: Document findBySessionId().
+     */
     public static List<CommentEntity> findBySessionId(final String sessionId) {
         return find("sessionId = ?1 AND status != 'DELETED' ORDER BY id DESC", sessionId).list();
     }
 
     // NEW: Count flagged comments
+
+    /**
+     * TODO: Document findFlaggedCommentCount().
+     */
     public static int findFlaggedCommentCount() {
         return (int) find("flagsCount > 0 AND status = 'VISIBLE'").count();
     }

@@ -20,6 +20,9 @@ import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import jakarta.inject.Inject;
 
+/**
+ * TODO: Class documentation.
+ */
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -42,6 +45,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         this.setSizeFull();
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         this.buildUi();

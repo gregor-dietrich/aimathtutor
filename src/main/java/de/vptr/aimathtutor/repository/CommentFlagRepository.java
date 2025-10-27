@@ -13,12 +13,18 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class CommentFlagRepository {
 
     @Inject
     EntityManager em;
 
+    /**
+     * TODO: Document hasUserFlaggedComment().
+     */
     public boolean hasUserFlaggedComment(final Long commentId, final Long userId) {
         if (commentId == null || userId == null) {
             return false;
@@ -29,6 +35,9 @@ public class CommentFlagRepository {
         return q.getSingleResult() > 0;
     }
 
+    /**
+     * TODO: Document persist().
+     */
     @Transactional
     public void persist(final CommentFlagEntity flag) {
         if (flag == null) {
@@ -60,6 +69,9 @@ public class CommentFlagRepository {
         return flag;
     }
 
+    /**
+     * TODO: Document findByIdOptional().
+     */
     public Optional<CommentFlagEntity> findByIdOptional(final Long id) {
         if (id == null) {
             return Optional.empty();

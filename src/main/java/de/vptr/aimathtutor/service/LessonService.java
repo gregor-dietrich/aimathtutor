@@ -14,6 +14,9 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class LessonService {
 
@@ -23,25 +26,40 @@ public class LessonService {
     @Inject
     ExerciseRepository exerciseRepository;
 
+    /**
+     * TODO: Document getAllLessons().
+     */
     @Transactional
     public List<LessonViewDto> getAllLessons() {
         return this.lessonRepository.findAllOrdered().stream().map(LessonViewDto::new).toList();
     }
 
+    /**
+     * TODO: Document findById().
+     */
     @Transactional
     public Optional<LessonViewDto> findById(final Long id) {
         return this.lessonRepository.findByIdOptional(id).map(LessonViewDto::new);
     }
 
+    /**
+     * TODO: Document findRootLessons().
+     */
     @Transactional
     public List<LessonViewDto> findRootLessons() {
         return this.lessonRepository.findRootLessons().stream().map(LessonViewDto::new).toList();
     }
 
+    /**
+     * TODO: Document findByParentId().
+     */
     public List<LessonViewDto> findByParentId(final Long parentId) {
         return this.lessonRepository.findByParentId(parentId).stream().map(LessonViewDto::new).toList();
     }
 
+    /**
+     * TODO: Document createLesson().
+     */
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
         // Validate name is provided for creation
@@ -62,6 +80,9 @@ public class LessonService {
         return new LessonViewDto(persisted);
     }
 
+    /**
+     * TODO: Document updateLesson().
+     */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
         final var existingLesson = this.lessonRepository.findById(lesson.id);
@@ -98,6 +119,9 @@ public class LessonService {
         return new LessonViewDto(persisted);
     }
 
+    /**
+     * TODO: Document patchLesson().
+     */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
         final var existingLesson = this.lessonRepository.findById(lesson.id);
@@ -148,11 +172,17 @@ public class LessonService {
         return false;
     }
 
+    /**
+     * TODO: Document deleteLesson().
+     */
     @Transactional
     public boolean deleteLesson(final Long id) {
         return this.lessonRepository.deleteById(id);
     }
 
+    /**
+     * TODO: Document searchLessons().
+     */
     @Transactional
     public List<LessonViewDto> searchLessons(final String query) {
         if (query == null || query.trim().isEmpty()) {

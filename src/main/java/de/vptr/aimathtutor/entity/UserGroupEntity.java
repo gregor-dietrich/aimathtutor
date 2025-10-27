@@ -26,11 +26,19 @@ public class UserGroupEntity extends PanacheEntityBase {
     public List<UserGroupMetaEntity> userGroupMetas;
 
     // Helper method to find group by name
+
+    /**
+     * TODO: Document findByName().
+     */
     public static UserGroupEntity findByName(final String name) {
         return find("name", name).firstResult();
     }
 
     // Helper method to get users in this group
+
+    /**
+     * TODO: Document getUsers().
+     */
     public List<UserEntity> getUsers() {
         return this.userGroupMetas.stream()
                 .map(meta -> meta.user)
@@ -38,6 +46,10 @@ public class UserGroupEntity extends PanacheEntityBase {
     }
 
     // Helper method to get user count in this group
+
+    /**
+     * TODO: Document getUserCount().
+     */
     public long getUserCount() {
         return this.userGroupMetas != null ? this.userGroupMetas.size() : 0;
     }

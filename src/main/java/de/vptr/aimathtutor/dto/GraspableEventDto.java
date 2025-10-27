@@ -53,17 +53,20 @@ public class GraspableEventDto {
         this.sessionId = sessionId;
     }
 
+    /**
+     * TODO: Document toString().
+     */
     @Override
     public String toString() {
-        return "GraspableEventDto{" +
-                "eventType='" + this.eventType + '\'' +
-                ", expressionBefore='" + this.expressionBefore + '\'' +
-                ", expressionAfter='" + this.expressionAfter + '\'' +
-                ", studentId=" + this.studentId +
-                ", exerciseId=" + this.exerciseId +
-                ", sessionId='" + this.sessionId + '\'' +
-                ", timestamp=" + this.timestamp +
-                ", correct=" + this.correct +
-                '}';
+        return "GraspableEventDto{"
+                + "eventType='" + this.eventType + '\''
+                + ", expressionBefore='" + this.expressionBefore + '\''
+                + ", expressionAfter='" + this.expressionAfter + '\''
+                + ", studentId=" + this.studentId
+                + ", exerciseId=" + this.exerciseId
+                + ", sessionId='" + this.sessionId + '\''
+                + ", timestamp=" + this.timestamp
+                + ", correct=" + this.correct
+                + '}';
     }
 }

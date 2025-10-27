@@ -18,6 +18,9 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
+/**
+ * TODO: Class documentation.
+ */
 @Route(value = "login", layout = MainLayout.class)
 @PageTitle("AI Math Tutor - Login")
 public class LoginView extends VerticalLayout {

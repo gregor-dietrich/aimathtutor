@@ -24,6 +24,9 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class UserService {
 
@@ -36,21 +39,33 @@ public class UserService {
     @Inject
     UserRankRepository userRankRepository;
 
+    /**
+     * TODO: Document getAllUsers().
+     */
     @Transactional
     public List<UserViewDto> getAllUsers() {
         return this.userRepository.findAll().stream().map(UserViewDto::new).toList();
     }
 
+    /**
+     * TODO: Document findByUsername().
+     */
     @Transactional
     public Optional<UserViewDto> findByUsername(final String username) {
         return this.userRepository.findByUsernameOptional(username).map(UserViewDto::new);
     }
 
+    /**
+     * TODO: Document findById().
+     */
     @Transactional
     public Optional<UserViewDto> findById(final Long id) {
         return this.userRepository.findByIdOptional(id).map(UserViewDto::new);
     }
 
+    /**
+     * TODO: Document findByEmail().
+     */
     @Transactional
     public Optional<UserViewDto> findByEmail(final String email) {
         return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
@@ -69,6 +84,9 @@ public class UserService {
         return email.trim();
     }
 
+    /**
+     * TODO: Document createUser().
+     */
     @Transactional
     public UserViewDto createUser(final UserDto userDto) {
         // Validate required fields for POST
@@ -134,6 +152,9 @@ public class UserService {
         return new UserViewDto(user);
     }
 
+    /**
+     * TODO: Document updateUser().
+     */
     @Transactional
     public UserViewDto updateUser(final Long id, final UserDto userDto) {
         // Validate required fields for PUT
@@ -197,6 +218,9 @@ public class UserService {
         return new UserViewDto(existingUser);
     }
 
+    /**
+     * TODO: Document patchUser().
+     */
     @Transactional
     public UserViewDto patchUser(final Long id, final UserDto userDto) {
         final UserEntity existingUser = this.userRepository.findById(id);
@@ -264,15 +288,24 @@ public class UserService {
         return new UserViewDto(existingUser);
     }
 
+    /**
+     * TODO: Document deleteUser().
+     */
     @Transactional
     public boolean deleteUser(final Long id) {
         return this.userRepository.deleteById(id);
     }
 
+    /**
+     * TODO: Document findActiveUsers().
+     */
     public List<UserViewDto> findActiveUsers() {
         return this.userRepository.findActiveUsers().stream().map(UserViewDto::new).toList();
     }
 
+    /**
+     * TODO: Document searchUsers().
+     */
     @Transactional
     public List<UserViewDto> searchUsers(final String query) {
         if (query == null || query.trim().isEmpty()) {

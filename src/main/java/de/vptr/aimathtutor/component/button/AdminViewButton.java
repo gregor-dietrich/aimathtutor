@@ -6,6 +6,9 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
+/**
+ * TODO: Class documentation.
+ */
 public class AdminViewButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Admin Panel";
 

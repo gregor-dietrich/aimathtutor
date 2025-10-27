@@ -46,31 +46,32 @@ public class OllamaService {
      * @param prompt The input prompt
      * @return The generated text response
      */
-    public String generateContent(String prompt) {
+    public String generateContent(final String prompt) {
         LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
 
         try {
             // Check if Ollama is available
-            if (!isAvailable()) {
-                LOG.warn("Ollama server not available at {}", apiUrl);
+            if (!this.isAvailable()) {
+                LOG.warn("Ollama server not available at {}", this.apiUrl);
                 throw new IllegalStateException(
-                        "Ollama server not available. Please ensure Ollama is running at " + apiUrl);
+                        "Ollama server not available. Please ensure Ollama is running at " + this.apiUrl);
             }
 
             // Create request
-            final var request = OllamaRequestDto.createGenerateRequest(prompt, model, temperature, maxTokens);
+            final var request = OllamaRequestDto.createGenerateRequest(prompt, this.model, this.temperature,
+                    this.maxTokens);
 
             // Build API URL
-            final String url = apiUrl + "/api/generate";
+            final String url = this.apiUrl + "/api/generate";
 
             // Get or create client
-            if (client == null) {
-                client = ClientBuilder.newClient();
+            if (this.client == null) {
+                this.client = ClientBuilder.newClient();
             }
 
             // Make API call
             final long startTime = System.currentTimeMillis();
-            final var response = client.target(url)
+            final var response = this.client.target(url)
                     .request(MediaType.APPLICATION_JSON)
                     .post(Entity.json(request));
 
@@ -99,9 +100,9 @@ public class OllamaService {
             // Log performance metrics
             final Double tokensPerSecond = ollamaResponse.getTokensPerSecond();
             if (tokensPerSecond != null) {
-                LOG.debug("Ollama generated {} tokens at {:.2f} tokens/second in {}ms",
+                LOG.debug("Ollama generated {} tokens at {} tokens/second in {}ms",
                         ollamaResponse.evalCount,
-                        tokensPerSecond,
+                        String.format("%.2f", tokensPerSecond),
                         duration);
             } else {
                 LOG.debug("Successfully generated content from Ollama in {}ms, length: {}", duration,
@@ -124,27 +125,27 @@ public class OllamaService {
      */
     public boolean isAvailable() {
         try {
-            if (client == null) {
-                client = ClientBuilder.newClient();
+            if (this.client == null) {
+                this.client = ClientBuilder.newClient();
             }
 
             // Check /api/tags endpoint (lists installed models)
-            final var response = client.target(apiUrl + "/api/tags")
+            final var response = this.client.target(this.apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
             final boolean available = response.getStatus() == Response.Status.OK.getStatusCode();
 
             if (available) {
-                LOG.debug("Ollama server is available at {}", apiUrl);
+                LOG.debug("Ollama server is available at {}", this.apiUrl);
             } else {
-                LOG.debug("Ollama server not available at {} (status: {})", apiUrl, response.getStatus());
+                LOG.debug("Ollama server not available at {} (status: {})", this.apiUrl, response.getStatus());
             }
 
             return available;
 
         } catch (final Exception e) {
-            LOG.debug("Ollama server not available at {}: {}", apiUrl, e.getMessage());
+            LOG.debug("Ollama server not available at {}: {}", this.apiUrl, e.getMessage());
             return false;
         }
     }
@@ -152,13 +153,13 @@ public class OllamaService {
     /**
      * Check if a specific model is installed
      */
-    public boolean isModelInstalled(String modelName) {
+    public boolean isModelInstalled(final String modelName) {
         try {
-            if (client == null) {
-                client = ClientBuilder.newClient();
+            if (this.client == null) {
+                this.client = ClientBuilder.newClient();
             }
 
-            final var response = client.target(apiUrl + "/api/tags")
+            final var response = this.client.target(this.apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
@@ -180,20 +181,20 @@ public class OllamaService {
      * Check if Ollama is properly configured
      */
     public boolean isConfigured() {
-        return isAvailable();
+        return this.isAvailable();
     }
 
     /**
      * Get the current model name
      */
     public String getModel() {
-        return model;
+        return this.model;
     }
 
     /**
      * Get the API URL
      */
     public String getApiUrl() {
-        return apiUrl;
+        return this.apiUrl;
     }
 }

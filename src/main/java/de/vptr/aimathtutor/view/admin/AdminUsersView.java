@@ -46,6 +46,9 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
+/**
+ * TODO: Class documentation.
+ */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -80,6 +83,9 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
         this.setSpacing(true);
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {

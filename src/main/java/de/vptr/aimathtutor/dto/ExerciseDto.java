@@ -67,10 +67,16 @@ public class ExerciseDto {
             this.id = id;
         }
 
+        /**
+         * TODO: Document setId().
+         */
         public void setId(final Long id) {
             this.id = id;
         }
 
+        /**
+         * TODO: Document setUsername().
+         */
         public void setUsername(final String username) {
             this.username = username;
         }

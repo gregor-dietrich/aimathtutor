@@ -24,6 +24,9 @@ import de.vptr.aimathtutor.service.UserRankService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
+/**
+ * TODO: Class documentation.
+ */
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
@@ -55,12 +58,18 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         return this.topBar;
     }
 
+    /**
+     * TODO: Document onAttach().
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         this.updateLogoutButtonVisibility();
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.initialized) {

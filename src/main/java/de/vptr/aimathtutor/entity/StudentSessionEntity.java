@@ -71,10 +71,16 @@ public class StudentSessionEntity extends PanacheEntityBase {
     @Column(name = "final_expression", columnDefinition = "TEXT")
     public String finalExpression;
 
+    /**
+     * TODO: Document findBySessionId().
+     */
     public static StudentSessionEntity findBySessionId(final String sessionId) {
         return find("sessionId", sessionId).firstResult();
     }
 
+    /**
+     * TODO: Document prePersist().
+     */
     @PrePersist
     public void prePersist() {
         if (this.startTime == null) {

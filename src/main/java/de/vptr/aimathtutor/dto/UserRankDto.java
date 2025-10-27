@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.dto;
 
 import jakarta.validation.constraints.Size;
 
+/**
+ * TODO: Class documentation.
+ */
 public class UserRankDto {
 
     public Long id;

@@ -8,6 +8,9 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class AppLifecycleBean {
 

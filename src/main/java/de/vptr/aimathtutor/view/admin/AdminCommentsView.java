@@ -46,6 +46,9 @@ import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
+/**
+ * TODO: Class documentation.
+ */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
 public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -81,6 +84,9 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
         this.setSpacing(true);
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {

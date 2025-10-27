@@ -6,9 +6,15 @@ import com.vaadin.flow.theme.lumo.Lumo;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class ThemeService {
 
+    /**
+     * TODO: Class documentation.
+     */
     public enum Theme {
         LIGHT("Light", null),
         DARK("Dark", Lumo.DARK),
@@ -22,10 +28,16 @@ public class ThemeService {
             this.themeVariant = themeVariant;
         }
 
+        /**
+         * TODO: Document getDisplayName().
+         */
         public String getDisplayName() {
             return this.displayName;
         }
 
+        /**
+         * TODO: Document getThemeVariant().
+         */
         public String getThemeVariant() {
             return this.themeVariant;
         }
@@ -33,6 +45,9 @@ public class ThemeService {
 
     private static final String THEME_SESSION_KEY = "selected_theme";
 
+    /**
+     * TODO: Document getCurrentTheme().
+     */
     public Theme getCurrentTheme() {
         final var session = VaadinSession.getCurrent();
         if (session != null) {
@@ -42,6 +57,9 @@ public class ThemeService {
         return Theme.SYSTEM;
     }
 
+    /**
+     * TODO: Document setTheme().
+     */
     public void setTheme(final Theme theme) {
         final var session = VaadinSession.getCurrent();
         if (session != null) {
@@ -50,6 +68,9 @@ public class ThemeService {
         this.applyTheme(theme);
     }
 
+    /**
+     * TODO: Document applyTheme().
+     */
     public void applyTheme(final Theme theme) {
         final var ui = UI.getCurrent();
         if (ui != null) {
@@ -72,16 +93,24 @@ public class ThemeService {
                     // Clear Vaadin theme list and use CSS media query to detect system preference
                     themeList.clear();
                     ui.getPage().executeJs(
-                            "if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {" +
-                                    "  document.documentElement.setAttribute('theme', 'dark');" +
-                                    "} else {" +
-                                    "  document.documentElement.removeAttribute('theme');" +
-                                    "}");
+                            "if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {"
+                                    + "  document.documentElement.setAttribute('theme', 'dark');"
+                                    + "} else {"
+                                    + "  document.documentElement.removeAttribute('theme');"
+                                    + "}");
+                    break;
+                default:
+                    // Unknown theme - fall back to system and log
+                    themeList.clear();
+                    ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
                     break;
             }
         }
     }
 
+    /**
+     * TODO: Document getNextTheme().
+     */
     public Theme getNextTheme() {
         final var current = this.getCurrentTheme();
         return switch (current) {

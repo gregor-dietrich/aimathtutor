@@ -149,42 +149,42 @@ public class AiTutorService {
         final String type = event.eventType.toLowerCase();
 
         // Graspable Math specific action names (from the actual GM API)
-        if (type.contains("addsubinvert") || // Adding/subtracting to both sides
-                type.contains("muldivinvert") || // Multiplying/dividing both sides
-                type.contains("fractioncancel") || // Simplifying fractions
-                type.contains("distribute") || // Distributing multiplication
-                type.contains("factor") || // Factoring
-                type.contains("collect") || // Collecting like terms
-                type.contains("commute") || // Commutative property
-                type.contains("associate")) { // Associative property
+        if (type.contains("addsubinvert") // Adding/subtracting to both sides
+                || type.contains("muldivinvert") // Multiplying/dividing both sides
+                || type.contains("fractioncancel") // Simplifying fractions
+                || type.contains("distribute") // Distributing multiplication
+                || type.contains("factor") // Factoring
+                || type.contains("collect") // Collecting like terms
+                || type.contains("commute") // Commutative property
+                || type.contains("associate")) { // Associative property
             return true;
         }
 
         // Generic action keywords (might be used by other math tools or custom actions)
-        if (type.contains("simplify") ||
-                type.contains("expand") ||
-                type.contains("solve") ||
-                type.contains("combine") ||
-                type.contains("isolate") ||
-                type.contains("substitute")) {
+        if (type.contains("simplify")
+                || type.contains("expand")
+                || type.contains("solve")
+                || type.contains("combine")
+                || type.contains("isolate")
+                || type.contains("substitute")) {
             return true;
         }
 
         // Skip automatic simplification actions to reduce noise
-        if (type.contains("postinteraction") ||
-                type.contains("addsubnumbers") || // Automatic number combining
-                type.contains("autosimp")) {
+        if (type.contains("postinteraction")
+                || type.contains("addsubnumbers") // Automatic number combining
+                || type.contains("autosimp")) {
             LOG.debug("Skipping automatic simplification: {}", type);
             return false;
         }
 
         // For generic "change" or "math_step" events, check if expression actually
         // changed
-        if ((type.contains("change") || type.contains("math_step")) &&
-                event.expressionBefore != null &&
-                event.expressionAfter != null &&
-                !event.expressionBefore.equals(event.expressionAfter) &&
-                !event.expressionBefore.isEmpty()) {
+        if ((type.contains("change") || type.contains("math_step"))
+                && event.expressionBefore != null
+                && event.expressionAfter != null
+                && !event.expressionBefore.equals(event.expressionAfter)
+                && !event.expressionBefore.isEmpty()) {
             return true;
         }
 
@@ -229,7 +229,7 @@ public class AiTutorService {
     /**
      * Async version of answerQuestion that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
-     * 
+     *
      * @param question          The student's question
      * @param currentExpression The current math expression
      * @param sessionId         The session identifier
@@ -245,7 +245,7 @@ public class AiTutorService {
     /**
      * Async version of analyzeMathAction that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
-     * 
+     *
      * @param event   The Graspable Math event
      * @param context Conversation context
      * @return CompletableFuture containing the AI feedback, or null if no feedback

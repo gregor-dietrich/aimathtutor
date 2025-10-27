@@ -64,6 +64,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         this.setSpacing(true);
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {

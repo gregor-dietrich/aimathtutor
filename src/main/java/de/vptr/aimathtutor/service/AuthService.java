@@ -15,6 +15,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class AuthService {
     private static final Logger LOG = LoggerFactory.getLogger(AuthService.class);
@@ -32,6 +35,9 @@ public class AuthService {
     private static final String PASSWORD_KEY = "authenticated.password";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
 
+    /**
+     * TODO: Document authenticate().
+     */
     @Transactional
     public AuthResultDto authenticate(final String username, final String password) {
         LOG.trace("Starting authentication for user: {}", username);
@@ -90,6 +96,9 @@ public class AuthService {
         }
     }
 
+    /**
+     * TODO: Document logout().
+     */
     public void logout() {
         final var username = this.getUsername();
         LOG.trace("Logging out user: {}", username);
@@ -101,6 +110,9 @@ public class AuthService {
         LOG.trace("User logged out");
     }
 
+    /**
+     * TODO: Document isAuthenticated().
+     */
     public boolean isAuthenticated() {
         final var authenticated = (Boolean) VaadinSession.getCurrent().getAttribute(AUTHENTICATED_KEY);
         final var result = authenticated != null && authenticated;
@@ -108,10 +120,16 @@ public class AuthService {
         return result;
     }
 
+    /**
+     * TODO: Document getUsername().
+     */
     public String getUsername() {
         return (String) VaadinSession.getCurrent().getAttribute(USERNAME_KEY);
     }
 
+    /**
+     * TODO: Document getUserId().
+     */
     public Long getUserId() {
         final String username = this.getUsername();
         if (username == null) {

@@ -12,6 +12,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import de.vptr.aimathtutor.component.button.SearchButton;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * TODO: Class documentation.
+ */
 public class SearchLayout extends HorizontalLayout {
 
     private static final String DEFAULT_LABEL = "Search";
@@ -67,11 +70,17 @@ public class SearchLayout extends HorizontalLayout {
         this(listener, searchAction, DEFAULT_PLACEHOLDER);
     }
 
+    /**
+     * TODO: Document getButton().
+     */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose button intentionally so parent views can trigger searches or reuse it")
     public Button getButton() {
         return this.button;
     }
 
+    /**
+     * TODO: Document getTextfield().
+     */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose textField intentionally so parent views can read/set value and attach listeners")
     public TextField getTextfield() {
         return this.textField;

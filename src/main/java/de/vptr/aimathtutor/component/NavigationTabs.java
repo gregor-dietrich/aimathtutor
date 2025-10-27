@@ -7,6 +7,9 @@ import com.vaadin.flow.router.RouterLink;
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.MathWorkspaceView;
 
+/**
+ * TODO: Class documentation.
+ */
 public class NavigationTabs extends Tabs {
 
     public NavigationTabs() {

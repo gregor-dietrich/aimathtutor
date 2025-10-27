@@ -34,11 +34,19 @@ public class LessonEntity extends PanacheEntityBase {
     public List<ExerciseEntity> exercises;
 
     // Helper method to check if this is a root lesson
+
+    /**
+     * TODO: Document isRootLesson().
+     */
     public boolean isRootLesson() {
         return this.parent == null;
     }
 
     // Helper method to get all sub-lessons recursively
+
+    /**
+     * TODO: Document findByParentId().
+     */
     public static List<LessonEntity> findByParentId(final Long parentId) {
         if (parentId == null) {
             return find("parent IS NULL").list();
@@ -47,6 +55,10 @@ public class LessonEntity extends PanacheEntityBase {
     }
 
     // Helper method to find root lessons
+
+    /**
+     * TODO: Document findRootLessons().
+     */
     public static List<LessonEntity> findRootLessons() {
         return find("parent IS NULL").list();
     }

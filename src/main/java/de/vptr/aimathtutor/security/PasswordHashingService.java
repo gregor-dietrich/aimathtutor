@@ -10,6 +10,9 @@ import javax.crypto.spec.PBEKeySpec;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class PasswordHashingService {
 

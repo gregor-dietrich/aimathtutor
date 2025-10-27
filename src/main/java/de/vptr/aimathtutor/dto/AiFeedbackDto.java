@@ -12,6 +12,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class AiFeedbackDto {
 
+    /**
+     * TODO: Class documentation.
+     */
     public enum FeedbackType {
         POSITIVE, // Encouragement for correct action
         CORRECTIVE, // Pointing out an error
@@ -56,38 +59,59 @@ public class AiFeedbackDto {
         this.message = message;
     }
 
+    /**
+     * TODO: Document positive().
+     */
     public static AiFeedbackDto positive(final String message) {
         return new AiFeedbackDto(FeedbackType.POSITIVE, message);
     }
 
+    /**
+     * TODO: Document corrective().
+     */
     public static AiFeedbackDto corrective(final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
+    /**
+     * TODO: Document hint().
+     */
     public static AiFeedbackDto hint(final String message) {
         return new AiFeedbackDto(FeedbackType.HINT, message);
     }
 
+    /**
+     * TODO: Document suggestion().
+     */
     public static AiFeedbackDto suggestion(final String message) {
         return new AiFeedbackDto(FeedbackType.SUGGESTION, message);
     }
 
+    /**
+     * TODO: Document neutral().
+     */
     public static AiFeedbackDto neutral(final String message) {
         return new AiFeedbackDto(FeedbackType.NEUTRAL, message);
     }
 
+    /**
+     * TODO: Document error().
+     */
     public static AiFeedbackDto error(final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
+    /**
+     * TODO: Document toString().
+     */
     @Override
     public String toString() {
-        return "AIFeedbackDto{" +
-                "type=" + this.type +
-                ", message='" + this.message + '\'' +
-                ", confidence=" + this.confidence +
-                ", timestamp=" + this.timestamp +
-                ", sessionId='" + this.sessionId + '\'' +
-                '}';
+        return "AIFeedbackDto{"
+                + "type=" + this.type
+                + ", message='" + this.message + '\''
+                + ", confidence=" + this.confidence
+                + ", timestamp=" + this.timestamp
+                + ", sessionId='" + this.sessionId + '\''
+                + '}';
     }
 }

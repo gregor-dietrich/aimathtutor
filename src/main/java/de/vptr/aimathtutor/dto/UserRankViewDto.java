@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
+/**
+ * TODO: Class documentation.
+ */
 public class UserRankViewDto {
 
     public Long id;
@@ -90,40 +93,65 @@ public class UserRankViewDto {
     }
 
     // Helper methods for permission checking
+
+    /**
+     * TODO: Document canAdminView().
+     */
     public boolean canAdminView() {
         return Boolean.TRUE.equals(this.adminView);
     }
 
+    /**
+     * TODO: Document hasAnyExercisePermission().
+     */
     public boolean hasAnyExercisePermission() {
         return Boolean.TRUE.equals(this.exerciseAdd) || Boolean.TRUE.equals(this.exerciseEdit)
                 || Boolean.TRUE.equals(this.exerciseDelete);
     }
 
+    /**
+     * TODO: Document hasAnyLessonPermission().
+     */
     public boolean hasAnyLessonPermission() {
         return Boolean.TRUE.equals(this.lessonAdd) || Boolean.TRUE.equals(this.lessonEdit)
                 || Boolean.TRUE.equals(this.lessonDelete);
     }
 
+    /**
+     * TODO: Document hasAnyCommentPermission().
+     */
     public boolean hasAnyCommentPermission() {
         return Boolean.TRUE.equals(this.commentAdd) || Boolean.TRUE.equals(this.commentEdit)
                 || Boolean.TRUE.equals(this.commentDelete);
     }
 
+    /**
+     * TODO: Document hasAnyUserPermission().
+     */
     public boolean hasAnyUserPermission() {
         return Boolean.TRUE.equals(this.userAdd) || Boolean.TRUE.equals(this.userEdit)
                 || Boolean.TRUE.equals(this.userDelete);
     }
 
+    /**
+     * TODO: Document hasAnyUserGroupPermission().
+     */
     public boolean hasAnyUserGroupPermission() {
         return Boolean.TRUE.equals(this.userGroupAdd) || Boolean.TRUE.equals(this.userGroupEdit)
                 || Boolean.TRUE.equals(this.userGroupDelete);
     }
 
+    /**
+     * TODO: Document hasAnyUserRankPermission().
+     */
     public boolean hasAnyUserRankPermission() {
         return Boolean.TRUE.equals(this.userRankAdd) || Boolean.TRUE.equals(this.userRankEdit)
                 || Boolean.TRUE.equals(this.userRankDelete);
     }
 
+    /**
+     * TODO: Document toUserRankDto().
+     */
     public UserRankDto toUserRankDto() {
         final var dto = new UserRankDto();
         dto.id = this.id;

@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 
+/**
+ * TODO: Class documentation.
+ */
 public class CommentViewDto {
     public Long id;
     public String content;
@@ -13,7 +16,6 @@ public class CommentViewDto {
     public String username;
     public LocalDateTime created;
 
-    // NEW: For threading and moderation
     public Long parentId;
     public String status; // VISIBLE, HIDDEN, DELETED
     public Integer flagsCount;

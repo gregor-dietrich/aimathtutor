@@ -3,6 +3,9 @@ package de.vptr.aimathtutor.component.dialog;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 
+/**
+ * TODO: Class documentation.
+ */
 public class ConfirmationDialog extends ConfirmDialog {
     private static final String DEFAULT_CANCEL_BUTTON_TEXT = "Cancel";
     private static final String DEFAULT_CONFIRM_BUTTON_TEXT = "Delete";

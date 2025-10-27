@@ -14,6 +14,9 @@ public final class PasswordUtility {
     private PasswordUtility() {
     }
 
+    /**
+     * TODO: Document main().
+     */
     public static void main(final String[] args) {
         if (args.length < 2) {
             printUsage();
@@ -41,8 +44,8 @@ public final class PasswordUtility {
             System.out.println("hash=" + hash);
             System.out.println();
             System.out.println("SQL snippet (example):");
-            System.out.println("INSERT INTO users (username, password, salt, rank_id, activated) VALUES ('newuser', '" +
-                    hash + "', '" + salt + "', 3, TRUE);");
+            System.out.println("INSERT INTO users (username, password, salt, rank_id, activated) VALUES ('newuser', '"
+                    + hash + "', '" + salt + "', 3, TRUE);");
         } catch (final Exception e) {
             System.err.println("Failed to generate hash: " + e.getMessage());
             System.exit(3);

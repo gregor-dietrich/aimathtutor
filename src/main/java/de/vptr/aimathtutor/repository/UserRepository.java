@@ -7,9 +7,15 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class UserRepository extends AbstractRepository {
 
+    /**
+     * TODO: Document findById().
+     */
     public UserEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -17,10 +23,16 @@ public class UserRepository extends AbstractRepository {
         return this.em.find(UserEntity.class, id);
     }
 
+    /**
+     * TODO: Document findByIdOptional().
+     */
     public Optional<UserEntity> findByIdOptional(final Long id) {
         return Optional.ofNullable(this.findById(id));
     }
 
+    /**
+     * TODO: Document findByUsernameOptional().
+     */
     public Optional<UserEntity> findByUsernameOptional(final String username) {
         if (username == null) {
             return Optional.empty();
@@ -31,10 +43,16 @@ public class UserRepository extends AbstractRepository {
         return q.getResultStream().findFirst();
     }
 
+    /**
+     * TODO: Document findByUsername().
+     */
     public UserEntity findByUsername(final String username) {
         return this.findByUsernameOptional(username).orElse(null);
     }
 
+    /**
+     * TODO: Document findByEmailOptional().
+     */
     public Optional<UserEntity> findByEmailOptional(final String email) {
         if (email == null) {
             return Optional.empty();
@@ -45,6 +63,9 @@ public class UserRepository extends AbstractRepository {
         return q.getResultStream().findFirst();
     }
 
+    /**
+     * TODO: Document persist().
+     */
     @Transactional
     public UserEntity persist(final UserEntity user) {
         if (user == null) {
@@ -54,20 +75,32 @@ public class UserRepository extends AbstractRepository {
         return user;
     }
 
+    /**
+     * TODO: Document findAll().
+     */
     public List<UserEntity> findAll() {
-        return listNamed("User.findAllOrdered", UserEntity.class);
+        return this.listNamed("User.findAllOrdered", UserEntity.class);
     }
 
+    /**
+     * TODO: Document findActiveUsers().
+     */
     public List<UserEntity> findActiveUsers() {
-        return listNamed("User.findActive", UserEntity.class);
+        return this.listNamed("User.findActive", UserEntity.class);
     }
 
+    /**
+     * TODO: Document findByRankId().
+     */
     public List<UserEntity> findByRankId(final Long rankId) {
         final var q = this.em.createNamedQuery("User.findByRankId", UserEntity.class);
         q.setParameter("r", rankId);
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document search().
+     */
     public List<UserEntity> search(final String searchTerm) {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             return this.findAll();
@@ -77,6 +110,9 @@ public class UserRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document deleteById().
+     */
     @Transactional
     public boolean deleteById(final Long id) {
         final UserEntity e = this.findById(id);

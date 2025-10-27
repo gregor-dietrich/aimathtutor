@@ -7,6 +7,9 @@ import com.vaadin.flow.router.RouterLink;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.view.admin.*;
 
+/**
+ * TODO: Class documentation.
+ */
 public class AdminNavigationTabs extends Tabs {
 
     public AdminNavigationTabs(final UserRankViewDto userRank) {

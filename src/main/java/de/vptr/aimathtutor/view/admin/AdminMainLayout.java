@@ -26,6 +26,9 @@ import de.vptr.aimathtutor.view.LoginView;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
+/**
+ * TODO: Class documentation.
+ */
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
     private static final long serialVersionUID = 1L;
@@ -59,6 +62,9 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         return this.topBar;
     }
 
+    /**
+     * TODO: Document showRouterLayoutContent().
+     */
     @Override
     public void showRouterLayoutContent(final HasElement content) {
         if (this.contentArea != null) {
@@ -70,12 +76,18 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         }
     }
 
+    /**
+     * TODO: Document onAttach().
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         this.updateLogoutButtonVisibility();
     }
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         // Apply current theme on every navigation

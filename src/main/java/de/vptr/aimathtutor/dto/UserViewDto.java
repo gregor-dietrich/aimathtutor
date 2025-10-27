@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.UserEntity;
 
+/**
+ * TODO: Class documentation.
+ */
 public class UserViewDto {
 
     public Long id;
@@ -45,6 +48,9 @@ public class UserViewDto {
         }
     }
 
+    /**
+     * TODO: Document toUserDto().
+     */
     public UserDto toUserDto() {
         final var dto = new UserDto();
         dto.id = this.id;

@@ -7,6 +7,9 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+/**
+ * TODO: Class documentation.
+ */
 public class SearchButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Search";
 

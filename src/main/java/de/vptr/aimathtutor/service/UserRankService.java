@@ -17,11 +17,17 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class UserRankService {
 
     private static final String USERNAME_KEY = "authenticated.username";
 
+    /**
+     * TODO: Document getCurrentUserRank().
+     */
     @Transactional
     public UserRankViewDto getCurrentUserRank() {
         final var session = VaadinSession.getCurrent();
@@ -42,6 +48,9 @@ public class UserRankService {
         return new UserRankViewDto(user.rank);
     }
 
+    /**
+     * TODO: Document getAllRanks().
+     */
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
         return this.userRankRepository.findAll().stream()
@@ -49,17 +58,26 @@ public class UserRankService {
                 .toList();
     }
 
+    /**
+     * TODO: Document findById().
+     */
     @Transactional
     public Optional<UserRankViewDto> findById(final Long id) {
         return this.userRankRepository.findByIdOptional(id)
                 .map(UserRankViewDto::new);
     }
 
+    /**
+     * TODO: Document findByName().
+     */
     public Optional<UserRankViewDto> findByName(final String name) {
         return this.userRankRepository.findByName(name)
                 .map(UserRankViewDto::new);
     }
 
+    /**
+     * TODO: Document searchRanks().
+     */
     @Transactional
     public List<UserRankViewDto> searchRanks(final String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -72,6 +90,9 @@ public class UserRankService {
                 .toList();
     }
 
+    /**
+     * TODO: Document createRank().
+     */
     @Transactional
     public UserRankViewDto createRank(final UserRankDto rankDto) {
         final UserRankEntity rank = new UserRankEntity();
@@ -104,6 +125,9 @@ public class UserRankService {
         return new UserRankViewDto(rank);
     }
 
+    /**
+     * TODO: Document updateRank().
+     */
     @Transactional
     public UserRankViewDto updateRank(final Long id, final UserRankDto rankDto) {
         final UserRankEntity existingRank = this.userRankRepository.findById(id);
@@ -137,6 +161,9 @@ public class UserRankService {
         return new UserRankViewDto(existingRank);
     }
 
+    /**
+     * TODO: Document patchRank().
+     */
     @Transactional
     public UserRankViewDto patchRank(final Long id, final UserRankDto rankDto) {
         final UserRankEntity existingRank = this.userRankRepository.findById(id);
@@ -210,6 +237,9 @@ public class UserRankService {
         return new UserRankViewDto(existingRank);
     }
 
+    /**
+     * TODO: Document deleteRank().
+     */
     @Transactional
     public boolean deleteRank(final Long id) {
         final UserRankEntity rank = this.userRankRepository.findById(id);
@@ -221,8 +251,9 @@ public class UserRankService {
         final List<UserEntity> usersWithRank = this.userRepository.findByRankId(id);
         if (!usersWithRank.isEmpty()) {
             throw new WebApplicationException(
-                    "Cannot delete rank because " + usersWithRank.size() + " user(s) are assigned to this rank. " +
-                            "Please reassign these users to a different rank before deleting.",
+                    "Cannot delete rank because "
+                            + usersWithRank.size()
+                            + " user(s) are assigned to this rank. Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
         }
 

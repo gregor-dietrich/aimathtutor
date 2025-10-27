@@ -6,13 +6,22 @@ import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class AiInteractionRepository extends AbstractRepository {
 
+    /**
+     * TODO: Document findAll().
+     */
     public List<AiInteractionEntity> findAll() {
         return this.listNamed("AiInteraction.findAll", AiInteractionEntity.class);
     }
 
+    /**
+     * TODO: Document findBySessionId().
+     */
     public List<AiInteractionEntity> findBySessionId(final String sessionId) {
         if (sessionId == null) {
             return List.of();
@@ -22,6 +31,9 @@ public class AiInteractionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document findByUserId().
+     */
     public List<AiInteractionEntity> findByUserId(final Long userId) {
         if (userId == null) {
             return List.of();
@@ -31,6 +43,9 @@ public class AiInteractionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document findByExerciseId().
+     */
     public List<AiInteractionEntity> findByExerciseId(final Long exerciseId) {
         if (exerciseId == null) {
             return List.of();
@@ -40,6 +55,9 @@ public class AiInteractionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * TODO: Document persist().
+     */
     @Transactional
     public AiInteractionEntity persist(final AiInteractionEntity interaction) {
         if (interaction == null) {

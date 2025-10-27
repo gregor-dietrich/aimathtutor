@@ -375,6 +375,9 @@ public class CommentsPanel extends VerticalLayout {
         return dateTime.toString();
     }
 
+    /**
+     * TODO: Document refresh().
+     */
     public void refresh() {
         this.currentPage = 0;
         this.currentParentId = null;

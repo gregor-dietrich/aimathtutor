@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 
+/**
+ * TODO: Class documentation.
+ */
 public class ExerciseViewDto {
 
     public Long id;

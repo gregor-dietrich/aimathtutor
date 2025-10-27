@@ -20,6 +20,9 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAuthenticationRequest> {
 
@@ -34,6 +37,9 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
     @Inject
     PasswordHashingService passwordHashingService;
 
+    /**
+     * TODO: Document getRequestType().
+     */
     @Override
     public Class<UsernamePasswordAuthenticationRequest> getRequestType() {
         return UsernamePasswordAuthenticationRequest.class;

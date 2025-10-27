@@ -24,6 +24,9 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * TODO: Class documentation.
+ */
 @ApplicationScoped
 public class ExerciseService {
 
@@ -83,47 +86,71 @@ public class ExerciseService {
         return dto;
     }
 
+    /**
+     * TODO: Document getAllExercises().
+     */
     public List<ExerciseViewDto> getAllExercises() {
         return this.exerciseRepository.findAllOrdered().stream()
                 .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * TODO: Document findById().
+     */
     public Optional<ExerciseViewDto> findById(final Long id) {
         return this.exerciseRepository.findByIdOptional(id)
                 .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)));
     }
 
+    /**
+     * TODO: Document findPublishedExercises().
+     */
     public List<ExerciseViewDto> findPublishedExercises() {
         return this.exerciseRepository.findPublished().stream()
                 .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)))
                 .toList();
     }
 
+    /**
+     * TODO: Document findByUserId().
+     */
     public List<ExerciseViewDto> findByUserId(final Long userId) {
         return this.exerciseRepository.findByUserId(userId).stream()
                 .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * TODO: Document findByLessonId().
+     */
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
         return this.exerciseRepository.findByLessonId(lessonId).stream()
                 .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)))
                 .toList();
     }
 
+    /**
+     * TODO: Document findGraspableMathExercises().
+     */
     public List<ExerciseViewDto> findGraspableMathExercises() {
         return this.exerciseRepository.findGraspableMathExercises().stream()
                 .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * TODO: Document findGraspableMathExercisesByLesson().
+     */
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
         return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream()
                 .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * TODO: Document createExercise().
+     */
     @Transactional
     public ExerciseViewDto createExercise(final ExerciseDto exerciseDto) {
         if (exerciseDto.title == null || exerciseDto.title.trim().isEmpty()) {
@@ -180,6 +207,9 @@ public class ExerciseService {
         return new ExerciseViewDto(exercise);
     }
 
+    /**
+     * TODO: Document updateExercise().
+     */
     @Transactional
     public ExerciseViewDto updateExercise(final Long id, final ExerciseDto exerciseDto) {
         // Validate required fields for PUT
@@ -243,6 +273,9 @@ public class ExerciseService {
         return new ExerciseViewDto(existingExercise);
     }
 
+    /**
+     * TODO: Document patchExercise().
+     */
     @Transactional
     public ExerciseViewDto patchExercise(final Long id, final ExerciseDto exerciseDto) {
         final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
@@ -304,11 +337,17 @@ public class ExerciseService {
         return new ExerciseViewDto(existingExercise);
     }
 
+    /**
+     * TODO: Document deleteExercise().
+     */
     @Transactional
     public boolean deleteExercise(final Long id) {
         return this.exerciseRepository.deleteById(id);
     }
 
+    /**
+     * TODO: Document searchExercises().
+     */
     public List<ExerciseViewDto> searchExercises(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllExercises();
@@ -319,6 +358,9 @@ public class ExerciseService {
                 .toList();
     }
 
+    /**
+     * TODO: Document findByDateRange().
+     */
     public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
             return this.getAllExercises();

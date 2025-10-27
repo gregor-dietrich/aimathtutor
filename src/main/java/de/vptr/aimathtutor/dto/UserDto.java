@@ -3,6 +3,9 @@ package de.vptr.aimathtutor.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+/**
+ * TODO: Class documentation.
+ */
 public class UserDto {
 
     public Long id;

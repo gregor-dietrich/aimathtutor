@@ -3,6 +3,9 @@ package de.vptr.aimathtutor.util;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 
+/**
+ * TODO: Class documentation.
+ */
 public final class NotificationUtil {
 
     private NotificationUtil() {

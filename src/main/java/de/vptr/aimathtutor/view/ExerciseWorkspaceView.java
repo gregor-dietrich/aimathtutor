@@ -72,6 +72,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient Button backButton;
     private transient String currentExpression;
 
+    /**
+     * TODO: Document beforeEnter().
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         // Extract exerciseId from route parameters
@@ -312,6 +315,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.add(mainContentLayout);
     }
 
+    /**
+     * TODO: Document onAttach().
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
@@ -366,9 +372,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      */
     private void registerServerConnector() {
         UI.getCurrent().getPage().executeJs(
-                "window.graspableViewConnector = { onMathAction: function(type, before, after) { " +
-                        "   $0.$server.onMathAction(type, before, after); " +
-                        "}}",
+                "window.graspableViewConnector = { onMathAction: function(type, before, after) { "
+                        + "   $0.$server.onMathAction(type, before, after); "
+                        + "}}",
                 this.getElement());
     }
 

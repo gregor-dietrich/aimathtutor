@@ -35,14 +35,23 @@ public class GraspableProblemDto {
             this.topic = topic;
         }
 
+        /**
+         * TODO: Document getDisplayName().
+         */
         public String getDisplayName() {
             return this.displayName;
         }
 
+        /**
+         * TODO: Document getTopic().
+         */
         public String getTopic() {
             return this.topic;
         }
 
+        /**
+         * TODO: Document toString().
+         */
         @Override
         public String toString() {
             return this.displayName;
@@ -83,13 +92,16 @@ public class GraspableProblemDto {
         this.initialExpression = initialExpression;
     }
 
+    /**
+     * TODO: Document toString().
+     */
     @Override
     public String toString() {
-        return "GraspableProblemDto{" +
-                "title='" + this.title + '\'' +
-                ", initialExpression='" + this.initialExpression + '\'' +
-                ", targetExpression='" + this.targetExpression + '\'' +
-                ", difficulty='" + this.difficulty + '\'' +
-                '}';
+        return "GraspableProblemDto{"
+                + "title='" + this.title + '\''
+                + ", initialExpression='" + this.initialExpression + '\''
+                + ", targetExpression='" + this.targetExpression + '\''
+                + ", difficulty='" + this.difficulty + '\''
+                + '}';
     }
 }
