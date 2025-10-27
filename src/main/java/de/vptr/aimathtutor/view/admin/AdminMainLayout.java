@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.LoginView;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
@@ -53,7 +54,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     /**
      * Get the shared top bar for views that need to add additional components
      */
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intentionally exposed for child views to append components")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intentionally exposed for child views to append components")
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }

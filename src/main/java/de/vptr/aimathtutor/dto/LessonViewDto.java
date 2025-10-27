@@ -11,9 +11,6 @@ import de.vptr.aimathtutor.entity.LessonEntity;
  * Contains computed fields and safe data for client responses.
  */
 public class LessonViewDto {
-
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Public fields intentionally used for DTO mapping")
-
     public Long id;
     public String name;
     public Long parentId;
