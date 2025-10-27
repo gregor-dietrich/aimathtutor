@@ -96,7 +96,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadLessonsAsync();
         this.loadExercisesAsync();
     }
@@ -136,7 +136,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         }
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Exercises");

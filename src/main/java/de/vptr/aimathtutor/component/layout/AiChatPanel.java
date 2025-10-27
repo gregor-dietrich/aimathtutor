@@ -23,7 +23,7 @@ import de.vptr.aimathtutor.dto.ChatMessageDto;
  * proper styling and layout that matches across all views.
  * Provides a chat-style interface with proper message alignment and styling.
  */
-public class AIChatPanel extends VerticalLayout {
+public class AiChatPanel extends VerticalLayout {
 
     private final VerticalLayout chatHistoryPanel;
     private final TextField chatInput;
@@ -46,7 +46,7 @@ public class AIChatPanel extends VerticalLayout {
      *
      * @param messageSendListener Callback to invoke when user sends a message
      */
-    public AIChatPanel(final MessageSendListener messageSendListener) {
+    public AiChatPanel(final MessageSendListener messageSendListener) {
         this(messageSendListener, "🧒", "🧑‍🏫");
     }
 
@@ -57,7 +57,7 @@ public class AIChatPanel extends VerticalLayout {
      * @param userAvatarEmoji     The emoji to use for user messages
      * @param tutorAvatarEmoji    The emoji to use for AI tutor messages
      */
-    public AIChatPanel(final MessageSendListener messageSendListener,
+    public AiChatPanel(final MessageSendListener messageSendListener,
             final String userAvatarEmoji,
             final String tutorAvatarEmoji) {
         this.messageSendListener = messageSendListener;

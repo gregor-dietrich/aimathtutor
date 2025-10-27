@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.vptr.aimathtutor.dto.AIInteractionViewDto;
+import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
-import de.vptr.aimathtutor.entity.AIInteractionEntity;
+import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.repository.AIInteractionRepository;
+import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -38,7 +38,7 @@ public class AnalyticsService {
         StudentSessionRepository studentSessionRepository;
 
         @Inject
-        AIInteractionRepository aiInteractionRepository;
+        AiInteractionRepository aiInteractionRepository;
 
         @Inject
         UserRepository userRepository;
@@ -172,11 +172,11 @@ public class AnalyticsService {
          * Get all AI interactions
          */
         @Transactional
-        public List<AIInteractionViewDto> getAllAIInteractions() {
+        public List<AiInteractionViewDto> getAllAiInteractions() {
                 LOG.trace("Getting all AI interactions");
-                final List<AIInteractionEntity> interactions = this.aiInteractionRepository.findAll();
+                final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findAll();
                 return interactions.stream()
-                                .map(AIInteractionViewDto::new)
+                                .map(AiInteractionViewDto::new)
                                 .toList();
         }
 
@@ -184,11 +184,11 @@ public class AnalyticsService {
          * Get AI interactions by session ID
          */
         @Transactional
-        public List<AIInteractionViewDto> getAIInteractionsBySession(final String sessionId) {
+        public List<AiInteractionViewDto> getAiInteractionsBySession(final String sessionId) {
                 LOG.trace("Getting AI interactions for session: {}", sessionId);
-                final List<AIInteractionEntity> interactions = this.aiInteractionRepository.findBySessionId(sessionId);
+                final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findBySessionId(sessionId);
                 return interactions.stream()
-                                .map(AIInteractionViewDto::new)
+                                .map(AiInteractionViewDto::new)
                                 .toList();
         }
 
@@ -196,11 +196,11 @@ public class AnalyticsService {
          * Get AI interactions by user ID
          */
         @Transactional
-        public List<AIInteractionViewDto> getAIInteractionsByUser(final Long userId) {
+        public List<AiInteractionViewDto> getAiInteractionsByUser(final Long userId) {
                 LOG.trace("Getting AI interactions for user: {}", userId);
-                final List<AIInteractionEntity> interactions = this.aiInteractionRepository.findByUserId(userId);
+                final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findByUserId(userId);
                 return interactions.stream()
-                                .map(AIInteractionViewDto::new)
+                                .map(AiInteractionViewDto::new)
                                 .toList();
         }
 
@@ -208,12 +208,12 @@ public class AnalyticsService {
          * Get AI interactions by exercise ID
          */
         @Transactional
-        public List<AIInteractionViewDto> getAIInteractionsByExercise(final Long exerciseId) {
+        public List<AiInteractionViewDto> getAiInteractionsByExercise(final Long exerciseId) {
                 LOG.trace("Getting AI interactions for exercise: {}", exerciseId);
-                final List<AIInteractionEntity> interactions = this.aiInteractionRepository
+                final List<AiInteractionEntity> interactions = this.aiInteractionRepository
                                 .findByExerciseId(exerciseId);
                 return interactions.stream()
-                                .map(AIInteractionViewDto::new)
+                                .map(AiInteractionViewDto::new)
                                 .toList();
         }
 

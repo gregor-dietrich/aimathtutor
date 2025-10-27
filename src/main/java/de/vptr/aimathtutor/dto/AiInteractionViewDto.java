@@ -2,13 +2,13 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
-import de.vptr.aimathtutor.entity.AIInteractionEntity;
+import de.vptr.aimathtutor.entity.AiInteractionEntity;
 
 /**
  * DTO for displaying AI interaction information in admin views.
  * Used for analyzing AI feedback and student interactions.
  */
-public class AIInteractionViewDto {
+public class AiInteractionViewDto {
 
     public Long id;
     public String sessionId;
@@ -26,10 +26,10 @@ public class AIInteractionViewDto {
     public Boolean actionCorrect;
     public LocalDateTime timestamp;
 
-    public AIInteractionViewDto() {
+    public AiInteractionViewDto() {
     }
 
-    public AIInteractionViewDto(final AIInteractionEntity entity) {
+    public AiInteractionViewDto(final AiInteractionEntity entity) {
         if (entity != null) {
             this.id = entity.id;
             this.sessionId = entity.sessionId;

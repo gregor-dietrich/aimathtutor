@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class ReplyButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Reply";
+    private static final String DEFAULT_TOOLTIP = "Reply";
 
     public ReplyButton(final ComponentEventListener<ClickEvent<Button>> replyAction, final String tooltipText) {
         super("", replyAction);

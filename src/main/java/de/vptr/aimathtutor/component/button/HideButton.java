@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class HideButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Hide";
+    private static final String DEFAULT_TOOLTIP = "Hide";
 
     public HideButton(final ComponentEventListener<ClickEvent<Button>> hideAction, final String tooltipText) {
         super("", hideAction);

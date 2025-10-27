@@ -12,7 +12,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
         "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO for JSON mapping from OpenAI; public fields intentionally used for Jackson mapping")
-public class OpenAIResponseDto {
+public class OpenAiResponseDto {
 
     public String id;
     public String object;

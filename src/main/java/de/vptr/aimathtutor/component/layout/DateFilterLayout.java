@@ -11,8 +11,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class DateFilterLayout extends HorizontalLayout {
 
-    private final static String DEFAULT_TOOLTIP = "Filter by Date";
-    private final static String DEFAULT_WIDTH = "150px";
+    private static final String DEFAULT_TOOLTIP = "Filter by Date";
+    private static final String DEFAULT_WIDTH = "150px";
 
     private final Button button;
     private final DatePicker startDatePicker;

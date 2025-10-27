@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class LogoutButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Logout";
+    private static final String DEFAULT_TOOLTIP = "Logout";
 
     public LogoutButton(final ComponentEventListener<ClickEvent<Button>> logoutAction, final String tooltipText) {
         super("", logoutAction);

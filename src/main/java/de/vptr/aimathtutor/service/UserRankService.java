@@ -145,46 +145,66 @@ public class UserRankService {
         }
 
         // Partial update (PATCH semantics) - only update provided fields
-        if (rankDto.name != null)
+        if (rankDto.name != null) {
             existingRank.name = rankDto.name;
-        if (rankDto.adminView != null)
+        }
+        if (rankDto.adminView != null) {
             existingRank.adminView = rankDto.adminView;
-        if (rankDto.exerciseAdd != null)
+        }
+        if (rankDto.exerciseAdd != null) {
             existingRank.exerciseAdd = rankDto.exerciseAdd;
-        if (rankDto.exerciseDelete != null)
+        }
+        if (rankDto.exerciseDelete != null) {
             existingRank.exerciseDelete = rankDto.exerciseDelete;
-        if (rankDto.exerciseEdit != null)
+        }
+        if (rankDto.exerciseEdit != null) {
             existingRank.exerciseEdit = rankDto.exerciseEdit;
-        if (rankDto.lessonAdd != null)
+        }
+        if (rankDto.lessonAdd != null) {
             existingRank.lessonAdd = rankDto.lessonAdd;
-        if (rankDto.lessonDelete != null)
+        }
+        if (rankDto.lessonDelete != null) {
             existingRank.lessonDelete = rankDto.lessonDelete;
-        if (rankDto.lessonEdit != null)
+        }
+        if (rankDto.lessonEdit != null) {
             existingRank.lessonEdit = rankDto.lessonEdit;
-        if (rankDto.commentAdd != null)
+        }
+        if (rankDto.commentAdd != null) {
             existingRank.commentAdd = rankDto.commentAdd;
-        if (rankDto.commentDelete != null)
+        }
+        if (rankDto.commentDelete != null) {
             existingRank.commentDelete = rankDto.commentDelete;
-        if (rankDto.commentEdit != null)
+        }
+        if (rankDto.commentEdit != null) {
             existingRank.commentEdit = rankDto.commentEdit;
-        if (rankDto.userAdd != null)
+        }
+        if (rankDto.userAdd != null) {
             existingRank.userAdd = rankDto.userAdd;
-        if (rankDto.userDelete != null)
+        }
+        if (rankDto.userDelete != null) {
             existingRank.userDelete = rankDto.userDelete;
-        if (rankDto.userEdit != null)
+        }
+        if (rankDto.userEdit != null) {
             existingRank.userEdit = rankDto.userEdit;
-        if (rankDto.userGroupAdd != null)
+        }
+        if (rankDto.userGroupAdd != null) {
             existingRank.userGroupAdd = rankDto.userGroupAdd;
-        if (rankDto.userGroupDelete != null)
+        }
+        if (rankDto.userGroupDelete != null) {
             existingRank.userGroupDelete = rankDto.userGroupDelete;
-        if (rankDto.userGroupEdit != null)
+        }
+        if (rankDto.userGroupEdit != null) {
             existingRank.userGroupEdit = rankDto.userGroupEdit;
-        if (rankDto.userRankAdd != null)
+        }
+        if (rankDto.userRankAdd != null) {
             existingRank.userRankAdd = rankDto.userRankAdd;
-        if (rankDto.userRankDelete != null)
+        }
+        if (rankDto.userRankDelete != null) {
             existingRank.userRankDelete = rankDto.userRankDelete;
-        if (rankDto.userRankEdit != null)
+        }
+        if (rankDto.userRankEdit != null) {
             existingRank.userRankEdit = rankDto.userRankEdit;
+        }
 
         this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);

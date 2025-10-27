@@ -32,7 +32,7 @@ AIMathTutor is a monolithic full-stack web application built with **Quarkus** (b
 - **Entities, DTOs, Services, Views:**
   - For each resource, maintain:
     - **DTOs:** Data transfer objects (e.g., `GraspableEventDto`, `AIFeedbackDto`, `CommentDto`).
-    - **Entities:** Hibernate/Panache entities for DB access (e.g., `StudentSessionEntity`, `AIInteractionEntity`, `CommentEntity`).
+    - **Entities:** Hibernate/Panache entities for DB access (e.g., `StudentSessionEntity`, `AiInteractionEntity`, `CommentEntity`).
     - **Services:** Business logic (`@ApplicationScoped`), e.g., `AITutorService`, `GraspableMathService`, `CommentService`, `AnalyticsService`.
     - **Views:** Vaadin UI components (e.g., `MathWorkspaceView`, `ExerciseWorkspaceView`, `LessonsView`).
 
@@ -77,7 +77,7 @@ AIMathTutor is a monolithic full-stack web application built with **Quarkus** (b
 ## Analytics & Progress Tracking
 
 - **StudentSessionEntity:** Tracks sessions per user/exercise.
-- **AIInteractionEntity:** Logs AI feedback and interactions.
+- **AiInteractionEntity:** Logs AI feedback and interactions.
 - **AnalyticsService:** Provides summaries, progress reports, and admin dashboards.
 
 ## Testing Standards

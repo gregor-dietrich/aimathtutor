@@ -75,7 +75,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadLessonsAsync();
     }
 
@@ -147,7 +147,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
                 .toList();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Lessons");

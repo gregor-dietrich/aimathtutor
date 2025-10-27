@@ -44,10 +44,10 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        this.buildUI();
+        this.buildUi();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         // Welcome header

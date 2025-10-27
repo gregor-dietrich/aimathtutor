@@ -8,7 +8,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 
 public class RefreshButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Refresh";
+    private static final String DEFAULT_TOOLTIP = "Refresh";
 
     public RefreshButton(final ComponentEventListener<ClickEvent<Button>> refreshAction, final String tooltipText,
             final ButtonVariant... variants) {

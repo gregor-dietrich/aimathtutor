@@ -24,9 +24,9 @@ import jakarta.inject.Inject;
  * Handles REST API calls to Gemini 2.5 Flash-Lite
  */
 @ApplicationScoped
-public class GeminiAIService {
+public class GeminiAiService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GeminiAIService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GeminiAiService.class);
 
     @ConfigProperty(name = "gemini.api.key")
     String apiKey;

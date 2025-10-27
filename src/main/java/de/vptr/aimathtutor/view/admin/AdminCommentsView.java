@@ -88,7 +88,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
 
         // If navigated with an exerciseId query parameter, filter comments
         final var params = event.getLocation().getQueryParameters().getParameters();
@@ -134,7 +134,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                 });
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Comments");

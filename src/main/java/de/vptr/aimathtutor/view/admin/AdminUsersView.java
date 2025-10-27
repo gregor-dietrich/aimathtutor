@@ -87,7 +87,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadRanksAsync();
         this.loadUsersAsync();
     }
@@ -142,7 +142,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                 });
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Users");
@@ -450,8 +450,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
 
             if (this.currentUser.id == null) {
                 // For new users, set a default password
-                this.currentUser.password = "defaultPassword123"; // You might want to generate a random password
-                                                                  // instead
+                this.currentUser.password = "defaultPassword123";
                 this.userService.createUser(this.currentUser);
                 NotificationUtil
                         .showSuccess("User created successfully. Use the Password button to set a new password.");

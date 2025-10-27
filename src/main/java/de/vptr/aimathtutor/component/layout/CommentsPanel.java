@@ -60,7 +60,7 @@ public class CommentsPanel extends VerticalLayout {
         this.exerciseId = exerciseId;
         this.sessionId = sessionId;
         this.currentUserId = currentUserId;
-        this.initializeUI();
+        this.buildUi();
     }
 
     /**
@@ -71,7 +71,7 @@ public class CommentsPanel extends VerticalLayout {
         return CDI.current().select(CommentService.class).get();
     }
 
-    private void initializeUI() {
+    private void buildUi() {
         this.setWidthFull();
         this.setPadding(true);
         this.setSpacing(true);

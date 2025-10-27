@@ -14,12 +14,12 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "ai_interactions")
 @NamedQueries({
-        @NamedQuery(name = "AIInteraction.findAll", query = "FROM AIInteractionEntity ORDER BY id DESC"),
-        @NamedQuery(name = "AIInteraction.findBySessionId", query = "FROM AIInteractionEntity WHERE sessionId = :s"),
-        @NamedQuery(name = "AIInteraction.findByUserId", query = "FROM AIInteractionEntity WHERE user.id = :u"),
-        @NamedQuery(name = "AIInteraction.findByExerciseId", query = "FROM AIInteractionEntity WHERE exercise.id = :e")
+        @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY id DESC"),
+        @NamedQuery(name = "AiInteraction.findBySessionId", query = "FROM AiInteractionEntity WHERE sessionId = :s"),
+        @NamedQuery(name = "AiInteraction.findByUserId", query = "FROM AiInteractionEntity WHERE user.id = :u"),
+        @NamedQuery(name = "AiInteraction.findByExerciseId", query = "FROM AiInteractionEntity WHERE exercise.id = :e")
 })
-public class AIInteractionEntity extends PanacheEntityBase {
+public class AiInteractionEntity extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

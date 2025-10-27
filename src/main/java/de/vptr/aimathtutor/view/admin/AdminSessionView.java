@@ -19,7 +19,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.dto.AIInteractionViewDto;
+import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
@@ -51,7 +51,7 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
     private transient String sessionId;
     private transient StudentSessionViewDto session;
     private transient VerticalLayout sessionInfoLayout;
-    private transient Grid<AIInteractionViewDto> interactionsGrid;
+    private transient Grid<AiInteractionViewDto> interactionsGrid;
 
     public AdminSessionView() {
         this.setSizeFull();
@@ -74,11 +74,11 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadSessionDetails();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         // Back button
@@ -103,7 +103,7 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         final var interactionsTitle = new H2("Interactions & Feedback");
         this.add(interactionsTitle);
 
-        this.interactionsGrid = new Grid<>(AIInteractionViewDto.class, false);
+        this.interactionsGrid = new Grid<>(AiInteractionViewDto.class, false);
         this.interactionsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.interactionsGrid.setSizeFull();
         this.interactionsGrid.setHeight("400px");
@@ -160,8 +160,8 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
                     return;
                 }
 
-                final List<AIInteractionViewDto> interactions = this.analyticsService
-                        .getAIInteractionsBySession(this.sessionId);
+                final List<AiInteractionViewDto> interactions = this.analyticsService
+                        .getAiInteractionsBySession(this.sessionId);
 
                 this.getUI().ifPresent(ui -> ui.access(() -> {
                     this.updateSessionInfo();
@@ -255,7 +255,7 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.sessionInfoLayout.add(mainCard, metricsCard);
     }
 
-    private void updateInteractionsGrid(final List<AIInteractionViewDto> interactions) {
+    private void updateInteractionsGrid(final List<AiInteractionViewDto> interactions) {
         // Direct update using stored grid reference
         if (this.interactionsGrid != null) {
             this.interactionsGrid.setItems(interactions);

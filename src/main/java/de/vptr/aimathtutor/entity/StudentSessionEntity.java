@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -49,7 +50,7 @@ public class StudentSessionEntity extends PanacheEntityBase {
     public ExerciseEntity exercise;
 
     @Column(name = "start_time")
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity fields are public by design for ORM mapping")
+    @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity fields are public by design for ORM mapping")
     public LocalDateTime startTime;
 
     @Column(name = "end_time")

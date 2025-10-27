@@ -72,11 +72,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.currentUsername = user.username;
         this.currentEmail = user.email;
 
-        this.buildUI();
+        this.buildUi();
         this.loadCurrentSettings();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.setSizeFull();
         this.setSpacing(true);
         this.setPadding(true);

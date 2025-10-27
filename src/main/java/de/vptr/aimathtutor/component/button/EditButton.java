@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class EditButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Edit";
+    private static final String DEFAULT_TOOLTIP = "Edit";
 
     public EditButton(final ComponentEventListener<ClickEvent<Button>> editAction, final String tooltipText) {
         super("", editAction);

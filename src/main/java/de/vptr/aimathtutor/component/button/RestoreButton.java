@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class RestoreButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Restore";
+    private static final String DEFAULT_TOOLTIP = "Restore";
 
     public RestoreButton(final ComponentEventListener<ClickEvent<Button>> restoreAction, final String tooltipText) {
         super("", restoreAction);

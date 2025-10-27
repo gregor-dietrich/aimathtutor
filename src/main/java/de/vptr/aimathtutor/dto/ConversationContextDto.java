@@ -18,17 +18,17 @@ public class ConversationContextDto {
     public List<ChatMessageDto> recentQuestions = new ArrayList<>();
 
     @JsonProperty("recent_ai_messages")
-    public List<ChatMessageDto> recentAIMessages = new ArrayList<>();
+    public List<ChatMessageDto> recentAiMessages = new ArrayList<>();
 
     public ConversationContextDto() {
     }
 
     public ConversationContextDto(final List<GraspableEventDto> recentActions,
             final List<ChatMessageDto> recentQuestions,
-            final List<ChatMessageDto> recentAIMessages) {
+            final List<ChatMessageDto> recentAiMessages) {
         this.recentActions = recentActions != null ? recentActions : new ArrayList<>();
         this.recentQuestions = recentQuestions != null ? recentQuestions : new ArrayList<>();
-        this.recentAIMessages = recentAIMessages != null ? recentAIMessages : new ArrayList<>();
+        this.recentAiMessages = recentAiMessages != null ? recentAiMessages : new ArrayList<>();
     }
 
     /**
@@ -59,13 +59,13 @@ public class ConversationContextDto {
     /**
      * Adds an AI message to the context, keeping only the last 5
      */
-    public void addAIMessage(final ChatMessageDto message) {
+    public void addAiMessage(final ChatMessageDto message) {
         if (message != null && message.sender == ChatMessageDto.Sender.AI
                 && (message.messageType == ChatMessageDto.MessageType.FEEDBACK
                         || message.messageType == ChatMessageDto.MessageType.ANSWER)) {
-            this.recentAIMessages.add(message);
-            if (this.recentAIMessages.size() > 5) {
-                this.recentAIMessages.remove(0); // Remove oldest
+            this.recentAiMessages.add(message);
+            if (this.recentAiMessages.size() > 5) {
+                this.recentAiMessages.remove(0); // Remove oldest
             }
         }
     }
@@ -75,7 +75,7 @@ public class ConversationContextDto {
         return "ConversationContextDto{" +
                 "recentActions=" + this.recentActions.size() +
                 ", recentQuestions=" + this.recentQuestions.size() +
-                ", recentAIMessages=" + this.recentAIMessages.size() +
+                ", recentAIMessages=" + this.recentAiMessages.size() +
                 '}';
     }
 }

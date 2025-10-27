@@ -7,7 +7,7 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
 public class UserViewButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Return to Homepage";
+    private static final String DEFAULT_TOOLTIP = "Return to Homepage";
 
     public UserViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction, final String tooltipText) {
         super("", viewAction);

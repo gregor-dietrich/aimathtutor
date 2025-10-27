@@ -10,7 +10,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 
 public class DeleteButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Delete";
+    private static final String DEFAULT_TOOLTIP = "Delete";
 
     private final ComponentEventListener<ClickEvent<Button>> deleteAction;
 

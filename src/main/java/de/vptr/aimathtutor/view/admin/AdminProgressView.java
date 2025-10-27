@@ -71,11 +71,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadProgressData();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         // Title

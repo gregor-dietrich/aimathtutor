@@ -13,11 +13,11 @@ import de.vptr.aimathtutor.dto.*;
 @ExtendWith(MockitoExtension.class)
 class AITutorServiceTest {
 
-    private AITutorService aiTutorService;
+    private AiTutorService aiTutorService;
 
     @BeforeEach
     void setUp() {
-        this.aiTutorService = new AITutorService();
+        this.aiTutorService = new AiTutorService();
         // Set test configuration values using reflection or test-specific setup
         // For now, the service will use default values
     }
@@ -34,11 +34,11 @@ class AITutorServiceTest {
         event.sessionId = "session-123";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
-        assertEquals(AIFeedbackDto.FeedbackType.POSITIVE, feedback.type);
+        assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, feedback.type);
         assertNotNull(feedback.message);
         assertTrue(feedback.message.toLowerCase().contains("simplif"));
         assertEquals("session-123", feedback.sessionId);
@@ -56,11 +56,11 @@ class AITutorServiceTest {
         event.sessionId = "session-456";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
-        assertEquals(AIFeedbackDto.FeedbackType.CORRECTIVE, feedback.type);
+        assertEquals(AiFeedbackDto.FeedbackType.CORRECTIVE, feedback.type);
         assertNotNull(feedback.message);
         assertFalse(feedback.hints.isEmpty());
     }
@@ -76,11 +76,11 @@ class AITutorServiceTest {
         event.sessionId = "session-789";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
-        assertEquals(AIFeedbackDto.FeedbackType.POSITIVE, feedback.type);
+        assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, feedback.type);
         assertNotNull(feedback.message);
     }
 
@@ -95,11 +95,11 @@ class AITutorServiceTest {
         event.sessionId = "session-101";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
-        assertEquals(AIFeedbackDto.FeedbackType.POSITIVE, feedback.type);
+        assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, feedback.type);
         assertNotNull(feedback.message);
     }
 
@@ -114,11 +114,11 @@ class AITutorServiceTest {
         event.sessionId = "session-202";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
-        assertEquals(AIFeedbackDto.FeedbackType.SUGGESTION, feedback.type);
+        assertEquals(AiFeedbackDto.FeedbackType.SUGGESTION, feedback.type);
         assertNotNull(feedback.message);
     }
 
@@ -133,11 +133,11 @@ class AITutorServiceTest {
         event.sessionId = "session-303";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
-        assertEquals(AIFeedbackDto.FeedbackType.HINT, feedback.type);
+        assertEquals(AiFeedbackDto.FeedbackType.HINT, feedback.type);
         assertNotNull(feedback.message);
     }
 
@@ -150,7 +150,7 @@ class AITutorServiceTest {
         event.sessionId = "session-404";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then - now expects null for insignificant actions
         assertNull(feedback);
@@ -165,7 +165,7 @@ class AITutorServiceTest {
         event.sessionId = "session-505";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then - now expects null for insignificant actions
         assertNull(feedback);
@@ -230,7 +230,7 @@ class AITutorServiceTest {
         event.sessionId = "session-606";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);
@@ -249,7 +249,7 @@ class AITutorServiceTest {
         event.sessionId = "session-707";
 
         // When
-        final AIFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto());
 
         // Then
         assertNotNull(feedback);

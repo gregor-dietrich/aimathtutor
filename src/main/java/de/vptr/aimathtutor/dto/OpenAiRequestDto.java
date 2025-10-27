@@ -12,7 +12,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "Request DTO used for JSON mapping; public fields are intentional")
-public class OpenAIRequestDto {
+public class OpenAiRequestDto {
 
     public String model;
 
@@ -62,10 +62,10 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a simple chat request
      */
-    public static OpenAIRequestDto createChatRequest(final String systemPrompt, final String userPrompt,
+    public static OpenAiRequestDto createChatRequest(final String systemPrompt, final String userPrompt,
             final String model,
             final Double temperature, final Integer maxTokens) {
-        final var request = new OpenAIRequestDto();
+        final var request = new OpenAiRequestDto();
         request.model = model;
         request.temperature = temperature;
         request.maxTokens = maxTokens;
@@ -80,7 +80,7 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a JSON mode request (guarantees valid JSON response)
      */
-    public static OpenAIRequestDto createJsonRequest(final String systemPrompt, final String userPrompt,
+    public static OpenAiRequestDto createJsonRequest(final String systemPrompt, final String userPrompt,
             final String model,
             final Double temperature, final Integer maxTokens) {
         final var request = createChatRequest(systemPrompt, userPrompt, model, temperature, maxTokens);

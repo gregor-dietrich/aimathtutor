@@ -22,12 +22,12 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.component.layout.AIChatPanel;
+import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
-import de.vptr.aimathtutor.service.AITutorService;
+import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -47,13 +47,13 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private transient AuthService authService;
 
     @Inject
-    private transient AITutorService aiTutorService;
+    private transient AiTutorService aiTutorService;
 
     @Inject
     private transient GraspableMathService graspableMathService;
 
     private Div graspableCanvas;
-    private AIChatPanel chatPanel;
+    private AiChatPanel chatPanel;
     private String currentExpression;
     private String targetExpression;
     private String sessionId;
@@ -62,7 +62,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     public MathWorkspaceView() {
-        // Constructor intentionally empty - initialization happens in buildUI()
+        // Constructor intentionally empty - initialization happens in buildUi()
     }
 
     @Override
@@ -74,12 +74,12 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Only build UI once
         if (!this.initialized) {
-            this.buildUI();
+            this.buildUi();
             this.initialized = true;
         }
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         this.setWidthFull(); // Full width only
@@ -136,7 +136,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
                 ? currentUserEntity.tutorAvatarEmoji
                 : "🧑‍🏫";
-        this.chatPanel = new AIChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
+        this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto.system(
@@ -280,7 +280,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                     feedbackMessage.sessionId = this.sessionId;
 
                     // Add AI message to context
-                    this.conversationContext.addAIMessage(feedbackMessage);
+                    this.conversationContext.addAiMessage(feedbackMessage);
 
                     // Display in chat
                     this.chatPanel.addMessage(feedbackMessage);
@@ -319,7 +319,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                         this.chatPanel.hideTypingIndicator();
 
                         // Add AI answer to context
-                        this.conversationContext.addAIMessage(answer);
+                        this.conversationContext.addAiMessage(answer);
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);

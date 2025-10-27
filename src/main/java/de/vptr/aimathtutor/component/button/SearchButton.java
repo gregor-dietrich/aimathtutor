@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class SearchButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Search";
+    private static final String DEFAULT_TOOLTIP = "Search";
 
     public SearchButton(final ComponentEventListener<ClickEvent<Button>> searchAction, final String tooltipText,
             final ButtonVariant... variants) {

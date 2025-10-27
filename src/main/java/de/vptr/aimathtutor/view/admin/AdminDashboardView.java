@@ -56,11 +56,11 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadDashboardData();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
         this.statCardValues.clear();
 

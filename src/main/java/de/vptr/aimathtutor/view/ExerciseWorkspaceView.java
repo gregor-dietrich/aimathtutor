@@ -20,13 +20,13 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.component.layout.AIChatPanel;
+import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.component.layout.CommentsPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.AITutorService;
+import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
@@ -49,7 +49,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient ExerciseService exerciseService;
 
     @Inject
-    private transient AITutorService aiTutorService;
+    private transient AiTutorService aiTutorService;
 
     @Inject
     private transient GraspableMathService graspableMathService;
@@ -65,7 +65,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
     // UI Components
     private transient Div graspableCanvas;
-    private transient AIChatPanel chatPanel;
+    private transient AiChatPanel chatPanel;
     private transient CommentsPanel commentsPanel;
     private transient VerticalLayout hintsPanel;
     private transient Button requestHintButton;
@@ -295,7 +295,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
                 ? currentUserEntity.tutorAvatarEmoji
                 : "🧑‍🏫";
-        this.chatPanel = new AIChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
+        this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto.system(
@@ -442,7 +442,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     // Create feedback message and add to conversation context
                     final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
                     feedbackMessage.sessionId = this.currentSessionId;
-                    this.conversationContext.addAIMessage(feedbackMessage);
+                    this.conversationContext.addAiMessage(feedbackMessage);
 
                     // Display feedback inline (replaces displayFeedback method)
                     final var message = ChatMessageDto.aiFeedback(feedback.message);
@@ -513,7 +513,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                         this.chatPanel.hideTypingIndicator();
 
                         // Add AI answer to conversation context
-                        this.conversationContext.addAIMessage(answer);
+                        this.conversationContext.addAiMessage(answer);
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);

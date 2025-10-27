@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Represents AI-generated feedback for a student's math action.
  * Contains hints, encouragement, corrections, and next steps.
  */
-public class AIFeedbackDto {
+public class AiFeedbackDto {
 
     public enum FeedbackType {
         POSITIVE, // Encouragement for correct action
@@ -42,7 +42,7 @@ public class AIFeedbackDto {
     @JsonProperty("session_id")
     public String sessionId;
 
-    public AIFeedbackDto() {
+    public AiFeedbackDto() {
         this.timestamp = LocalDateTime.now();
         this.hints = new ArrayList<>();
         this.suggestedNextSteps = new ArrayList<>();
@@ -50,34 +50,34 @@ public class AIFeedbackDto {
         this.confidence = 1.0;
     }
 
-    public AIFeedbackDto(final FeedbackType type, final String message) {
+    public AiFeedbackDto(final FeedbackType type, final String message) {
         this();
         this.type = type;
         this.message = message;
     }
 
-    public static AIFeedbackDto positive(final String message) {
-        return new AIFeedbackDto(FeedbackType.POSITIVE, message);
+    public static AiFeedbackDto positive(final String message) {
+        return new AiFeedbackDto(FeedbackType.POSITIVE, message);
     }
 
-    public static AIFeedbackDto corrective(final String message) {
-        return new AIFeedbackDto(FeedbackType.CORRECTIVE, message);
+    public static AiFeedbackDto corrective(final String message) {
+        return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
-    public static AIFeedbackDto hint(final String message) {
-        return new AIFeedbackDto(FeedbackType.HINT, message);
+    public static AiFeedbackDto hint(final String message) {
+        return new AiFeedbackDto(FeedbackType.HINT, message);
     }
 
-    public static AIFeedbackDto suggestion(final String message) {
-        return new AIFeedbackDto(FeedbackType.SUGGESTION, message);
+    public static AiFeedbackDto suggestion(final String message) {
+        return new AiFeedbackDto(FeedbackType.SUGGESTION, message);
     }
 
-    public static AIFeedbackDto neutral(final String message) {
-        return new AIFeedbackDto(FeedbackType.NEUTRAL, message);
+    public static AiFeedbackDto neutral(final String message) {
+        return new AiFeedbackDto(FeedbackType.NEUTRAL, message);
     }
 
-    public static AIFeedbackDto error(final String message) {
-        return new AIFeedbackDto(FeedbackType.CORRECTIVE, message);
+    public static AiFeedbackDto error(final String message) {
+        return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
     @Override

@@ -4,10 +4,10 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 
 public class ConfirmationDialog extends ConfirmDialog {
-    private final static String DEFAULT_CANCEL_BUTTON_TEXT = "Cancel";
-    private final static String DEFAULT_CONFIRM_BUTTON_TEXT = "Delete";
-    private final static String DEFAULT_DIALOG_TITLE = "Confirm";
-    private final static String DEFAULT_DIALOG_TEXT = "Are you sure?";
+    private static final String DEFAULT_CANCEL_BUTTON_TEXT = "Cancel";
+    private static final String DEFAULT_CONFIRM_BUTTON_TEXT = "Delete";
+    private static final String DEFAULT_DIALOG_TITLE = "Confirm";
+    private static final String DEFAULT_DIALOG_TEXT = "Are you sure?";
 
     public ConfirmationDialog(final ComponentEventListener<ConfirmDialog.ConfirmEvent> confirmAction,
             final String dialogTitle, final String dialogText, final String confirmButtonText,

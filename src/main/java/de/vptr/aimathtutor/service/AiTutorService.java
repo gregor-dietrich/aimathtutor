@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.*;
-import de.vptr.aimathtutor.entity.AIInteractionEntity;
+import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.repository.AIInteractionRepository;
+import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -29,9 +29,9 @@ import jakarta.transaction.Transactional;
  * Can be extended to use OpenAI, Ollama, or other AI services.
  */
 @ApplicationScoped
-public class AITutorService {
+public class AiTutorService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AITutorService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AiTutorService.class);
 
     private static final String questionAnsweringPromptPrefix = "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n";
     private static final String questionAnsweringPromptPostfix = "\n\nProvide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:";
@@ -46,10 +46,10 @@ public class AITutorService {
     String aiProvider; // "mock", "openai", "ollama", "gemini"
 
     @Inject
-    GeminiAIService geminiService;
+    GeminiAiService geminiService;
 
     @Inject
-    OpenAIService openAIService;
+    OpenAiService openAiService;
 
     @Inject
     OllamaService ollamaService;
@@ -64,7 +64,7 @@ public class AITutorService {
     ExerciseRepository exerciseRepository;
 
     @Inject
-    AIInteractionRepository aiInteractionRepository;
+    AiInteractionRepository aiInteractionRepository;
 
     /**
      * Analyzes a student's math action and provides AI feedback.
@@ -75,7 +75,7 @@ public class AITutorService {
      *                messages
      * @return AI-generated feedback, or null if no feedback needed
      */
-    public AIFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
+    public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}', context={}",
                 event.eventType, event.expressionBefore, event.expressionAfter, context);
 
@@ -103,9 +103,9 @@ public class AITutorService {
         final String provider = (this.aiProvider != null) ? this.aiProvider.toLowerCase() : "mock";
         return switch (provider) {
             case "gemini" -> this.analyzeWithGemini(event, context);
-            case "openai" -> this.analyzeWithOpenAI(event, context);
+            case "openai" -> this.analyzeWithOpenAi(event, context);
             case "ollama" -> this.analyzeWithOllama(event, context);
-            default -> this.analyzeWithMockAI(event);
+            default -> this.analyzeWithMockAi(event);
         };
     }
 
@@ -115,7 +115,7 @@ public class AITutorService {
      * @param event The completion event
      * @return Congratulatory feedback message
      */
-    private AIFeedbackDto generateCompletionFeedback(final GraspableEventDto event) {
+    private AiFeedbackDto generateCompletionFeedback(final GraspableEventDto event) {
         final String[] congratulatoryMessages = {
                 "🎉 Excellent work! You've solved it correctly!",
                 "🌟 Perfect! You reached the solution: " + event.expressionAfter,
@@ -134,7 +134,7 @@ public class AITutorService {
         final int index = (int) (Math.random() * congratulatoryMessages.length);
         final String message = congratulatoryMessages[index];
 
-        return AIFeedbackDto.positive(message);
+        return AiFeedbackDto.positive(message);
     }
 
     /**
@@ -216,9 +216,9 @@ public class AITutorService {
 
         final String answer = switch (provider) {
             case "gemini" -> this.answerWithGemini(question, currentExpression, context);
-            case "openai" -> this.answerWithOpenAI(question, currentExpression, context);
+            case "openai" -> this.answerWithOpenAi(question, currentExpression, context);
             case "ollama" -> this.answerWithOllama(question, currentExpression, context);
-            default -> this.answerWithMockAI(question, currentExpression);
+            default -> this.answerWithMockAi(question, currentExpression);
         };
 
         final var message = ChatMessageDto.aiAnswer(answer);
@@ -251,7 +251,7 @@ public class AITutorService {
      * @return CompletableFuture containing the AI feedback, or null if no feedback
      *         needed
      */
-    public CompletableFuture<AIFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
+    public CompletableFuture<AiFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
             final ConversationContextDto context) {
         return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event, context));
     }
@@ -260,16 +260,16 @@ public class AITutorService {
      * Mock AI implementation using rule-based logic.
      * Provides reasonable feedback based on action type.
      */
-    private AIFeedbackDto analyzeWithMockAI(final GraspableEventDto event) {
-        final AIFeedbackDto feedback;
+    private AiFeedbackDto analyzeWithMockAi(final GraspableEventDto event) {
+        final AiFeedbackDto feedback;
 
         // Analyze based on event type
         switch (event.eventType != null ? event.eventType.toLowerCase() : "") {
             case "simplify":
                 if (event.correct != null && event.correct) {
-                    feedback = AIFeedbackDto.positive("Great job! You simplified correctly.");
+                    feedback = AiFeedbackDto.positive("Great job! You simplified correctly.");
                 } else if (event.correct != null && !event.correct) {
-                    feedback = AIFeedbackDto.corrective("That simplification doesn't look quite right.");
+                    feedback = AiFeedbackDto.corrective("That simplification doesn't look quite right.");
                     feedback.hints.add("Check if you applied the operation to both sides");
                 } else {
                     // No correctness info provided - be less spammy
@@ -278,40 +278,40 @@ public class AITutorService {
                 break;
 
             case "expand":
-                feedback = AIFeedbackDto.positive("Good expansion!");
+                feedback = AiFeedbackDto.positive("Good expansion!");
                 feedback.suggestedNextSteps.add("Now try to simplify the result");
                 break;
 
             case "factor":
-                feedback = AIFeedbackDto.positive("Nice factoring!");
+                feedback = AiFeedbackDto.positive("Nice factoring!");
                 break;
 
             case "combine":
-                feedback = AIFeedbackDto.suggestion("Combining like terms - make sure they match!");
+                feedback = AiFeedbackDto.suggestion("Combining like terms - make sure they match!");
                 break;
 
             // Graspable Math specific action names
             case "addsubinvertaction":
-                feedback = AIFeedbackDto.hint("Good! You added/subtracted to both sides to maintain balance.");
+                feedback = AiFeedbackDto.hint("Good! You added/subtracted to both sides to maintain balance.");
                 feedback.suggestedNextSteps.add("Continue simplifying to isolate the variable");
                 break;
 
             case "muldivinvertaction":
-                feedback = AIFeedbackDto.hint("Nice! You multiplied/divided both sides to maintain balance.");
+                feedback = AiFeedbackDto.hint("Nice! You multiplied/divided both sides to maintain balance.");
                 feedback.suggestedNextSteps.add("Simplify the result");
                 break;
 
             case "fractioncanceltermsaction":
-                feedback = AIFeedbackDto.positive("Great job simplifying the fraction!");
+                feedback = AiFeedbackDto.positive("Great job simplifying the fraction!");
                 break;
 
             case "move":
                 // Only give feedback if the expression actually changed
-                if (event.expressionBefore != null && event.expressionAfter != null &&
-                        event.expressionBefore.equals(event.expressionAfter)) {
+                if (event.expressionBefore != null && event.expressionAfter != null
+                        && event.expressionBefore.equals(event.expressionAfter)) {
                     return null; // No change, no feedback
                 }
-                feedback = AIFeedbackDto.hint("Remember to change the sign when moving across the equals sign!");
+                feedback = AiFeedbackDto.hint("Remember to change the sign when moving across the equals sign!");
                 break;
 
             default:
@@ -328,7 +328,7 @@ public class AITutorService {
     /**
      * Mock AI implementation for answering student questions.
      */
-    private String answerWithMockAI(final String question, final String currentExpression) {
+    private String answerWithMockAi(final String question, final String currentExpression) {
         final String lowerQuestion = question.toLowerCase();
 
         // Provide context-aware answers based on keywords
@@ -357,7 +357,7 @@ public class AITutorService {
             final ConversationContextDto context) {
         if (!this.geminiService.isConfigured()) {
             LOG.warn("Gemini not configured, using mock AI");
-            return this.answerWithMockAI(question, currentExpression);
+            return this.answerWithMockAi(question, currentExpression);
         }
 
         try {
@@ -365,26 +365,26 @@ public class AITutorService {
             return this.geminiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Gemini for question answering", e);
-            return this.answerWithMockAI(question, currentExpression);
+            return this.answerWithMockAi(question, currentExpression);
         }
     }
 
     /**
      * Answer question using OpenAI with conversation context.
      */
-    private String answerWithOpenAI(final String question, final String currentExpression,
+    private String answerWithOpenAi(final String question, final String currentExpression,
             final ConversationContextDto context) {
-        if (!this.openAIService.isConfigured()) {
+        if (!this.openAiService.isConfigured()) {
             LOG.warn("OpenAI not configured, using mock AI");
-            return this.answerWithMockAI(question, currentExpression);
+            return this.answerWithMockAi(question, currentExpression);
         }
 
         try {
             final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
-            return this.openAIService.generateContent(prompt);
+            return this.openAiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using OpenAI for question answering", e);
-            return this.answerWithMockAI(question, currentExpression);
+            return this.answerWithMockAi(question, currentExpression);
         }
     }
 
@@ -395,7 +395,7 @@ public class AITutorService {
             final ConversationContextDto context) {
         if (!this.ollamaService.isAvailable()) {
             LOG.warn("Ollama not available, using mock AI");
-            return this.answerWithMockAI(question, currentExpression);
+            return this.answerWithMockAi(question, currentExpression);
         }
 
         try {
@@ -403,7 +403,7 @@ public class AITutorService {
             return this.ollamaService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Ollama for question answering", e);
-            return this.answerWithMockAI(question, currentExpression);
+            return this.answerWithMockAi(question, currentExpression);
         }
     }
 
@@ -437,10 +437,10 @@ public class AITutorService {
                 prompt.append("\n");
             }
 
-            if (!context.recentAIMessages.isEmpty()) {
+            if (!context.recentAiMessages.isEmpty()) {
                 prompt.append("Your recent responses:\n");
-                for (int i = 0; i < context.recentAIMessages.size(); i++) {
-                    final var msg = context.recentAIMessages.get(i);
+                for (int i = 0; i < context.recentAiMessages.size(); i++) {
+                    final var msg = context.recentAiMessages.get(i);
                     prompt.append(String.format("%d. \"%s\"%n", i + 1, msg.message));
                 }
                 prompt.append("\n");
@@ -465,13 +465,13 @@ public class AITutorService {
      * Analyzes math action using Google Gemini AI with conversation context.
      * Sends a structured prompt and parses JSON response.
      */
-    private AIFeedbackDto analyzeWithGemini(final GraspableEventDto event, final ConversationContextDto context) {
+    private AiFeedbackDto analyzeWithGemini(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Gemini AI");
 
         // Check if Gemini is configured
         if (!this.geminiService.isConfigured()) {
             LOG.warn("Gemini not configured, falling back to mock AI");
-            return this.analyzeWithMockAI(event);
+            return this.analyzeWithMockAi(event);
         }
 
         try {
@@ -482,11 +482,11 @@ public class AITutorService {
             final var response = this.geminiService.generateContent(prompt);
 
             // Parse response as JSON
-            return this.parseFeedbackFromJSON(response);
+            return this.parseFeedbackFromJson(response);
 
         } catch (final Exception e) {
             LOG.error("Error using Gemini AI, falling back to mock", e);
-            return this.analyzeWithMockAI(event);
+            return this.analyzeWithMockAi(event);
         }
     }
 
@@ -519,10 +519,10 @@ public class AITutorService {
                 }
             }
 
-            if (!context.recentAIMessages.isEmpty()) {
+            if (!context.recentAiMessages.isEmpty()) {
                 prompt.append("\nYour recent feedback:\n");
-                for (int i = 0; i < context.recentAIMessages.size(); i++) {
-                    final var msg = context.recentAIMessages.get(i);
+                for (int i = 0; i < context.recentAiMessages.size(); i++) {
+                    final var msg = context.recentAiMessages.get(i);
                     prompt.append(String.format("%d. \"%s\"%n", i + 1, msg.message));
                 }
             }
@@ -553,7 +553,7 @@ public class AITutorService {
      * Parses Gemini's JSON response into AIFeedbackDto.
      * Falls back to extracting message if JSON parsing fails.
      */
-    private AIFeedbackDto parseFeedbackFromJSON(final String jsonResponse) {
+    private AiFeedbackDto parseFeedbackFromJson(final String jsonResponse) {
         try {
             // Try to extract JSON from response (Gemini might wrap it in markdown)
             String json = jsonResponse.trim();
@@ -571,7 +571,7 @@ public class AITutorService {
             json = json.trim();
 
             // Parse JSON to AIFeedbackDto
-            final var feedback = this.objectMapper.readValue(json, AIFeedbackDto.class);
+            final var feedback = this.objectMapper.readValue(json, AiFeedbackDto.class);
 
             // Set timestamp
             feedback.timestamp = LocalDateTime.now();
@@ -583,7 +583,7 @@ public class AITutorService {
             LOG.warn("Failed to parse Gemini response as JSON, creating simple feedback", e);
 
             // Fallback: create simple positive feedback with the response text
-            final var feedback = AIFeedbackDto.positive(jsonResponse);
+            final var feedback = AiFeedbackDto.positive(jsonResponse);
             feedback.confidence = 0.7;
             return feedback;
         }
@@ -593,13 +593,13 @@ public class AITutorService {
      * Analyzes math action using OpenAI (GPT models) with conversation context.
      * Uses JSON mode for guaranteed valid JSON responses.
      */
-    private AIFeedbackDto analyzeWithOpenAI(final GraspableEventDto event, final ConversationContextDto context) {
+    private AiFeedbackDto analyzeWithOpenAi(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with OpenAI");
 
         // Check if OpenAI is configured
-        if (!this.openAIService.isConfigured()) {
+        if (!this.openAiService.isConfigured()) {
             LOG.warn("OpenAI not configured, falling back to mock AI");
-            return this.analyzeWithMockAI(event);
+            return this.analyzeWithMockAi(event);
         }
 
         try {
@@ -607,14 +607,14 @@ public class AITutorService {
             final String prompt = this.buildMathTutoringPrompt(event, context);
 
             // Call OpenAI API with JSON mode
-            final String response = this.openAIService.generateJsonContent(prompt);
+            final String response = this.openAiService.generateJsonContent(prompt);
 
             // Parse response as JSON
-            return this.parseFeedbackFromJSON(response);
+            return this.parseFeedbackFromJson(response);
 
         } catch (final Exception e) {
             LOG.error("Error using OpenAI, falling back to mock", e);
-            return this.analyzeWithMockAI(event);
+            return this.analyzeWithMockAi(event);
         }
     }
 
@@ -622,13 +622,13 @@ public class AITutorService {
      * Analyzes math action using Ollama (local LLM) with conversation context.
      * Sends structured prompt and parses JSON response.
      */
-    private AIFeedbackDto analyzeWithOllama(final GraspableEventDto event, final ConversationContextDto context) {
+    private AiFeedbackDto analyzeWithOllama(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Ollama");
 
         // Check if Ollama is available
         if (!this.ollamaService.isAvailable()) {
             LOG.warn("Ollama server not available at {}, falling back to mock AI", this.ollamaService.getApiUrl());
-            return this.analyzeWithMockAI(event);
+            return this.analyzeWithMockAi(event);
         }
 
         try {
@@ -639,11 +639,11 @@ public class AITutorService {
             final String response = this.ollamaService.generateContent(prompt);
 
             // Parse response as JSON
-            return this.parseFeedbackFromJSON(response);
+            return this.parseFeedbackFromJson(response);
 
         } catch (final Exception e) {
             LOG.error("Error using Ollama, falling back to mock", e);
-            return this.analyzeWithMockAI(event);
+            return this.analyzeWithMockAi(event);
         }
     }
 
@@ -801,9 +801,9 @@ public class AITutorService {
      * @param feedback The AI's feedback
      */
     @Transactional
-    public void logInteraction(final GraspableEventDto event, final AIFeedbackDto feedback) {
+    public void logInteraction(final GraspableEventDto event, final AiFeedbackDto feedback) {
         try {
-            final var interaction = new AIInteractionEntity();
+            final var interaction = new AiInteractionEntity();
             interaction.sessionId = event.sessionId;
 
             // Look up user and exercise if IDs are provided
@@ -846,7 +846,7 @@ public class AITutorService {
             // This ensures they appear as separate rows in the SessionDetailView grid
 
             // 1. Log the student question
-            final var studentQuestionRecord = new AIInteractionEntity();
+            final var studentQuestionRecord = new AiInteractionEntity();
             studentQuestionRecord.sessionId = sessionId;
             studentQuestionRecord.eventType = "QUESTION";
             studentQuestionRecord.feedbackType = "QUESTION";
@@ -877,7 +877,7 @@ public class AITutorService {
                     studentQuestionRecord.id, studentQuestionRecord.studentMessage);
 
             // 2. Log the AI answer as a separate record
-            final var aiAnswerRecord = new AIInteractionEntity();
+            final var aiAnswerRecord = new AiInteractionEntity();
             aiAnswerRecord.sessionId = sessionId;
             aiAnswerRecord.eventType = "QUESTION_ANSWER";
             aiAnswerRecord.feedbackType = "ANSWER";

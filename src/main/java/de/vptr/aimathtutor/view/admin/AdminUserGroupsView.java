@@ -84,7 +84,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadGroupsAsync();
     }
 
@@ -113,7 +113,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                 });
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("User Groups");

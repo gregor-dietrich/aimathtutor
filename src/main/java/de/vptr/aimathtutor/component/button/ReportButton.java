@@ -10,7 +10,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 
 public class ReportButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Report as inappropriate";
+    private static final String DEFAULT_TOOLTIP = "Report as inappropriate";
 
     private final ComponentEventListener<ClickEvent<Button>> reportAction;
 

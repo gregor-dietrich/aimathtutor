@@ -52,56 +52,75 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
         final Set<String> roles = new HashSet<>();
 
         // View permissions
-        if (Boolean.TRUE.equals(rank.adminView))
+        if (Boolean.TRUE.equals(rank.adminView)) {
             roles.add("admin:view");
+        }
 
         // Exercise permissions
-        if (Boolean.TRUE.equals(rank.exerciseAdd))
+        if (Boolean.TRUE.equals(rank.exerciseAdd)) {
             roles.add("exercise:add");
-        if (Boolean.TRUE.equals(rank.exerciseDelete))
+        }
+        if (Boolean.TRUE.equals(rank.exerciseDelete)) {
             roles.add("exercise:delete");
-        if (Boolean.TRUE.equals(rank.exerciseEdit))
+        }
+        if (Boolean.TRUE.equals(rank.exerciseEdit)) {
             roles.add("exercise:edit");
+        }
 
         // Lesson permissions
-        if (Boolean.TRUE.equals(rank.lessonAdd))
+        if (Boolean.TRUE.equals(rank.lessonAdd)) {
             roles.add("lesson:add");
-        if (Boolean.TRUE.equals(rank.lessonDelete))
+        }
+        if (Boolean.TRUE.equals(rank.lessonDelete)) {
             roles.add("lesson:delete");
-        if (Boolean.TRUE.equals(rank.lessonEdit))
+        }
+        if (Boolean.TRUE.equals(rank.lessonEdit)) {
             roles.add("lesson:edit");
+        }
 
         // Comment permissions
-        if (Boolean.TRUE.equals(rank.commentAdd))
+        if (Boolean.TRUE.equals(rank.commentAdd)) {
             roles.add("comment:add");
-        if (Boolean.TRUE.equals(rank.commentDelete))
+        }
+        if (Boolean.TRUE.equals(rank.commentDelete)) {
             roles.add("comment:delete");
-        if (Boolean.TRUE.equals(rank.commentEdit))
+        }
+        if (Boolean.TRUE.equals(rank.commentEdit)) {
             roles.add("comment:edit");
+        }
 
         // User permissions
-        if (Boolean.TRUE.equals(rank.userAdd))
+        if (Boolean.TRUE.equals(rank.userAdd)) {
             roles.add("user:add");
-        if (Boolean.TRUE.equals(rank.userDelete))
+        }
+        if (Boolean.TRUE.equals(rank.userDelete)) {
             roles.add("user:delete");
-        if (Boolean.TRUE.equals(rank.userEdit))
+        }
+        if (Boolean.TRUE.equals(rank.userEdit)) {
             roles.add("user:edit");
+        }
 
         // User group permissions
-        if (Boolean.TRUE.equals(rank.userGroupAdd))
+        if (Boolean.TRUE.equals(rank.userGroupAdd)) {
             roles.add("user-group:add");
-        if (Boolean.TRUE.equals(rank.userGroupDelete))
+        }
+        if (Boolean.TRUE.equals(rank.userGroupDelete)) {
             roles.add("user-group:delete");
-        if (Boolean.TRUE.equals(rank.userGroupEdit))
+        }
+        if (Boolean.TRUE.equals(rank.userGroupEdit)) {
             roles.add("user-group:edit");
+        }
 
         // User rank permissions
-        if (Boolean.TRUE.equals(rank.userRankAdd))
+        if (Boolean.TRUE.equals(rank.userRankAdd)) {
             roles.add("user-rank:add");
-        if (Boolean.TRUE.equals(rank.userRankDelete))
+        }
+        if (Boolean.TRUE.equals(rank.userRankDelete)) {
             roles.add("user-rank:delete");
-        if (Boolean.TRUE.equals(rank.userRankEdit))
+        }
+        if (Boolean.TRUE.equals(rank.userRankEdit)) {
             roles.add("user-rank:edit");
+        }
 
         return roles;
     }

@@ -14,10 +14,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class SearchLayout extends HorizontalLayout {
 
-    private final static String DEFAULT_LABEL = "Search";
-    private final static String DEFAULT_PLACEHOLDER = "Search...";
-    private final static String DEFAULT_TOOLTIP = "Search";
-    private final static String DEFAULT_WIDTH = "300px";
+    private static final String DEFAULT_LABEL = "Search";
+    private static final String DEFAULT_PLACEHOLDER = "Search...";
+    private static final String DEFAULT_TOOLTIP = "Search";
+    private static final String DEFAULT_WIDTH = "300px";
 
     private Button button;
     private final TextField textField;

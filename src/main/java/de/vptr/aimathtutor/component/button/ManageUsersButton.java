@@ -8,7 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 public class ManageUsersButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Manage Users";
+    private static final String DEFAULT_TOOLTIP = "Manage Users";
 
     public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction, final String tooltipText) {
         super("", addUserAction);

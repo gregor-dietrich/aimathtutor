@@ -73,11 +73,11 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadSessions();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         // Title
