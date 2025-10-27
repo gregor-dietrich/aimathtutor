@@ -10,7 +10,11 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 import de.vptr.aimathtutor.entity.UserGroupMetaEntity;
+import de.vptr.aimathtutor.repository.UserGroupMetaRepository;
+import de.vptr.aimathtutor.repository.UserGroupRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
@@ -19,28 +23,37 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class UserGroupService {
 
+    @Inject
+    UserGroupRepository userGroupRepository;
+
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    UserGroupMetaRepository userGroupMetaRepository;
+
     @Transactional
     public List<UserGroupViewDto> getAllGroups() {
-        return UserGroupEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new UserGroupViewDto((UserGroupEntity) entity))
+        return this.userGroupRepository.findAll().stream()
+                .map(UserGroupViewDto::new)
                 .toList();
     }
 
     @Transactional
     public Optional<UserGroupViewDto> findById(final Long id) {
-        return UserGroupEntity.findByIdOptional(id)
-                .map(entity -> new UserGroupViewDto((UserGroupEntity) entity));
-    }
-
-    @Transactional
-    public Optional<UserGroupViewDto> findByName(final String name) {
-        return Optional.ofNullable(UserGroupEntity.findByName(name))
+        return this.userGroupRepository.findByIdOptional(id)
                 .map(UserGroupViewDto::new);
     }
 
     @Transactional
+    public Optional<UserGroupViewDto> findByName(final String name) {
+        final var group = this.userGroupRepository.findByName(name);
+        return Optional.ofNullable(group).map(UserGroupViewDto::new);
+    }
+
+    @Transactional
     public List<UserViewDto> getUsersInGroup(final Long groupId) {
-        final UserGroupEntity group = UserGroupEntity.findById(groupId);
+        final UserGroupEntity group = this.userGroupRepository.findById(groupId);
         if (group == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
         }
@@ -51,7 +64,7 @@ public class UserGroupService {
 
     @Transactional
     public List<UserGroupViewDto> getGroupsForUser(final Long userId) {
-        final var metas = UserGroupMetaEntity.findByUserId(userId);
+        final var metas = this.userGroupMetaRepository.findByUserId(userId);
         return metas.stream()
                 .map(meta -> new UserGroupViewDto(meta.group))
                 .toList();
@@ -65,7 +78,7 @@ public class UserGroupService {
 
         final UserGroupEntity group = new UserGroupEntity();
         group.name = groupDto.name;
-        group.persist();
+        this.userGroupRepository.persist(group);
 
         return new UserGroupViewDto(group);
     }
@@ -76,21 +89,21 @@ public class UserGroupService {
             throw new ValidationException("Name is required");
         }
 
-        final UserGroupEntity existingGroup = UserGroupEntity.findById(id);
+        final UserGroupEntity existingGroup = this.userGroupRepository.findById(id);
         if (existingGroup == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
         }
 
         // Complete replacement (PUT semantics)
         existingGroup.name = groupDto.name;
-        existingGroup.persist();
+        this.userGroupRepository.persist(existingGroup);
 
         return new UserGroupViewDto(existingGroup);
     }
 
     @Transactional
     public UserGroupViewDto patchGroup(final Long id, final UserGroupDto groupDto) {
-        final UserGroupEntity existingGroup = UserGroupEntity.findById(id);
+        final UserGroupEntity existingGroup = this.userGroupRepository.findById(id);
         if (existingGroup == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
         }
@@ -100,24 +113,24 @@ public class UserGroupService {
             existingGroup.name = groupDto.name;
         }
 
-        existingGroup.persist();
+        this.userGroupRepository.persist(existingGroup);
         return new UserGroupViewDto(existingGroup);
     }
 
     @Transactional
     public boolean deleteGroup(final Long id) {
-        return UserGroupEntity.deleteById(id);
+        return this.userGroupRepository.deleteById(id);
     }
 
     @Transactional
     public UserGroupMetaEntity addUserToGroup(final Long userId, final Long groupId) {
         // Check if association already exists
-        if (UserGroupMetaEntity.isUserInGroup(userId, groupId)) {
+        if (this.userGroupMetaRepository.isUserInGroup(userId, groupId)) {
             throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);
         }
 
-        final UserEntity user = UserEntity.findById(userId);
-        final UserGroupEntity group = UserGroupEntity.findById(groupId);
+        final UserEntity user = this.userRepository.findById(userId);
+        final UserGroupEntity group = this.userGroupRepository.findById(groupId);
 
         if (user == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
@@ -130,23 +143,23 @@ public class UserGroupService {
         meta.user = user;
         meta.group = group;
         meta.timestamp = LocalDateTime.now();
-        meta.persist();
+        this.userGroupMetaRepository.persist(meta);
 
         return meta;
     }
 
     @Transactional
     public boolean removeUserFromGroup(final Long userId, final Long groupId) {
-        final var meta = UserGroupMetaEntity.findByUserAndGroup(userId, groupId);
+        final var meta = this.userGroupMetaRepository.findByUserAndGroup(userId, groupId);
         if (meta == null) {
             return false;
         }
-        meta.delete();
+        this.userGroupMetaRepository.delete(meta);
         return true;
     }
 
     public boolean isUserInGroup(final Long userId, final Long groupId) {
-        return UserGroupMetaEntity.isUserInGroup(userId, groupId);
+        return this.userGroupMetaRepository.isUserInGroup(userId, groupId);
     }
 
     @Transactional
@@ -155,9 +168,8 @@ public class UserGroupService {
             return this.getAllGroups();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        return UserGroupEntity.find("LOWER(name) LIKE ?1 ORDER BY id DESC", searchTerm)
-                .stream()
-                .map(entity -> new UserGroupViewDto((UserGroupEntity) entity))
+        return this.userGroupRepository.search(searchTerm).stream()
+                .map(UserGroupViewDto::new)
                 .toList();
     }
 }

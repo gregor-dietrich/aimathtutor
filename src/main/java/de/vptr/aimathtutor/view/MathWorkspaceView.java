@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.view;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Key;
@@ -11,6 +10,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -41,18 +41,16 @@ import jakarta.inject.Inject;
 public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MathWorkspaceView.class);
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AITutorService aiTutorService;
+    private transient AITutorService aiTutorService;
 
     @Inject
-    ObjectMapper objectMapper;
-
-    @Inject
-    GraspableMathService graspableMathService;
+    private transient GraspableMathService graspableMathService;
 
     private Div graspableCanvas;
     private AIChatPanel chatPanel;
@@ -61,7 +59,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private String sessionId;
     private boolean initialized = false;
     private GraspableProblemDto.ProblemCategory selectedCategory = GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
-    private final ConversationContextDto conversationContext = new ConversationContextDto();
+    private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     public MathWorkspaceView() {
         // Constructor intentionally empty - initialization happens in buildUI()
@@ -189,20 +187,18 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
 
         // Wait for canvas to be ready, then load the problem
-        final String loadScript = String.format("""
-                setTimeout(function() {
-                    var loadProblemWhenReady = function() {
-                        if (window.graspableCanvas && window.graspableMathUtils) {
-                            console.log('[GM] Canvas ready, loading initial problem');
-                            window.graspableMathUtils.loadProblem('%s', 100, 50);
-                        } else {
-                            console.log('[GM] Waiting for canvas...');
-                            setTimeout(loadProblemWhenReady, 200);
-                        }
-                    };
-                    loadProblemWhenReady();
-                }, 500);
-                """, problem.initialExpression);
+        final String loadScript = String.format("setTimeout(function() { %n"
+                + "  var loadProblemWhenReady = function() { %n"
+                + "    if (window.graspableCanvas && window.graspableMathUtils) { %n"
+                + "      console.log('[GM] Canvas ready, loading initial problem'); %n"
+                + "      window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
+                + "    } else { %n"
+                + "      console.log('[GM] Waiting for canvas...'); %n"
+                + "      setTimeout(loadProblemWhenReady, 200); %n"
+                + "    } %n"
+                + "  }; %n"
+                + "  loadProblemWhenReady(); %n"
+                + "}, 500);%n", problem.initialExpression);
 
         UI.getCurrent().getPage().executeJs(loadScript);
 
@@ -362,7 +358,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      * Shows a dialog for selecting problem category before generation.
      */
     private void showProblemCategoryDialog() {
-        final var dialog = new com.vaadin.flow.component.dialog.Dialog();
+        final var dialog = new Dialog();
         dialog.setHeaderTitle("Generate New Problem");
         dialog.setWidth("400px");
 
@@ -403,7 +399,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      * Shows a dialog for entering a custom math problem.
      */
     private void showCustomProblemDialog() {
-        final var dialog = new com.vaadin.flow.component.dialog.Dialog();
+        final var dialog = new Dialog();
         dialog.setHeaderTitle("Enter Custom Problem");
         dialog.setWidth("400px");
 
@@ -456,12 +452,10 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      * Loads a custom problem into the Graspable Math canvas.
      */
     private void loadCustomProblem(final String expression) {
-        final String jsCode = String.format("""
-                if (window.graspableMathUtils) {
-                    window.graspableMathUtils.clearCanvas();
-                    window.graspableMathUtils.loadProblem('%s', 100, 50);
-                }
-                """, expression.replace("'", "\\'"));
+        final String jsCode = String.format("if (window.graspableMathUtils) { %n"
+                + "  window.graspableMathUtils.clearCanvas(); %n"
+                + "  window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
+                + "}%n", expression.replace("'", "\\'"));
 
         UI.getCurrent().getPage().executeJs(jsCode);
 
@@ -475,12 +469,10 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
 
         // Load problem into Graspable Math using the utility function
-        final String jsCode = String.format("""
-                if (window.graspableMathUtils) {
-                    window.graspableMathUtils.clearCanvas();
-                    window.graspableMathUtils.loadProblem('%s', 100, 50);
-                }
-                """, problem.initialExpression);
+        final String jsCode = String.format("if (window.graspableMathUtils) { %n"
+                + "  window.graspableMathUtils.clearCanvas(); %n"
+                + "  window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
+                + "}%n", problem.initialExpression);
 
         UI.getCurrent().getPage().executeJs(jsCode);
 

@@ -40,7 +40,10 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.service.*;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.ExerciseService;
+import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
@@ -50,24 +53,22 @@ import jakarta.inject.Inject;
 public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    ExerciseService exerciseService;
+    private transient ExerciseService exerciseService;
 
     @Inject
-    LessonService lessonService;
+    private transient LessonService lessonService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    UserService userService;
+    private transient UserService userService;
 
     @Inject
-    CommentService commentService;
-
-    @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<ExerciseViewDto> grid;
     private TextField searchField;
@@ -77,10 +78,10 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
     private DatePicker endDatePicker;
     private IntegerField userIdField;
 
-    private Dialog exerciseDialog;
-    private Binder<ExerciseDto> binder;
-    private ExerciseDto currentExercise;
-    private List<LessonViewDto> availableLessons;
+    private transient Dialog exerciseDialog;
+    private transient Binder<ExerciseDto> binder;
+    private transient ExerciseDto currentExercise;
+    private transient List<LessonViewDto> availableLessons;
 
     public AdminExercisesView() {
         this.setSizeFull();

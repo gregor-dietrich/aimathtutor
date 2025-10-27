@@ -49,29 +49,30 @@ import jakarta.inject.Inject;
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
 
     @Inject
-    UserService userService;
+    private transient UserService userService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    UserRankService userRankService;
+    private transient UserRankService userRankService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
-    private Grid<UserViewDto> grid;
-    private TextField searchField;
-    private Button searchButton;
+    private transient Grid<UserViewDto> grid;
+    private transient TextField searchField;
+    private transient Button searchButton;
 
-    private Dialog userDialog;
-    private Dialog passwordDialog;
-    private Binder<UserDto> binder;
-    private UserDto currentUser;
-    private List<UserRankViewDto> availableRanks;
+    private transient Dialog userDialog;
+    private transient Dialog passwordDialog;
+    private transient Binder<UserDto> binder;
+    private transient UserDto currentUser;
+    private transient List<UserRankViewDto> availableRanks;
 
     public AdminUsersView() {
         this.setSizeFull();

@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 
 import de.vptr.aimathtutor.component.button.FilterButton;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class IntegerFilterLayout extends HorizontalLayout {
 
@@ -44,10 +45,12 @@ public class IntegerFilterLayout extends HorizontalLayout {
         this(filterAction, DEFAULT_TOOLTIP);
     }
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose button intentionally for parent views to trigger filter actions")
     public Button getButton() {
         return this.button;
     }
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose IntegerField intentionally for parent views to read/set values")
     public IntegerField getIntegerField() {
         return this.integerField;
     }

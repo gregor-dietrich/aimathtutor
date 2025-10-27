@@ -4,10 +4,14 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Request DTO for OpenAI Chat Completions API
  * Based on OpenAI REST API specification
  */
+@SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "Request DTO used for JSON mapping; public fields are intentional")
 public class OpenAIRequestDto {
 
     public String model;
@@ -58,7 +62,8 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a simple chat request
      */
-    public static OpenAIRequestDto createChatRequest(final String systemPrompt, final String userPrompt, final String model,
+    public static OpenAIRequestDto createChatRequest(final String systemPrompt, final String userPrompt,
+            final String model,
             final Double temperature, final Integer maxTokens) {
         final var request = new OpenAIRequestDto();
         request.model = model;
@@ -75,7 +80,8 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a JSON mode request (guarantees valid JSON response)
      */
-    public static OpenAIRequestDto createJsonRequest(final String systemPrompt, final String userPrompt, final String model,
+    public static OpenAIRequestDto createJsonRequest(final String systemPrompt, final String userPrompt,
+            final String model,
             final Double temperature, final Integer maxTokens) {
         final var request = createChatRequest(systemPrompt, userPrompt, model, temperature, maxTokens);
         request.responseFormat = new ResponseFormat("json_object");

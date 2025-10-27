@@ -11,7 +11,11 @@ import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.StudentSessionRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
@@ -23,6 +27,15 @@ public class GraspableMathService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraspableMathService.class);
 
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    @Inject
+    StudentSessionRepository studentSessionRepository;
+
     /**
      * Creates a new student session for working on an exercise.
      * 
@@ -33,14 +46,13 @@ public class GraspableMathService {
     @Transactional
     public String createSession(final Long userId, final Long exerciseId) {
         final String sessionId = UUID.randomUUID().toString();
-
-        final UserEntity user = UserEntity.findById(userId);
+        final UserEntity user = this.userRepository.findById(userId);
         if (user == null) {
             LOG.error("User not found: {}", userId);
             throw new IllegalArgumentException("User not found: " + userId);
         }
 
-        final ExerciseEntity exercise = ExerciseEntity.findById(exerciseId);
+        final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
         if (exercise == null) {
             LOG.error("Exercise not found: {}", exerciseId);
             throw new IllegalArgumentException("Exercise not found: " + exerciseId);
@@ -56,7 +68,7 @@ public class GraspableMathService {
         session.correctActions = 0;
         session.hintsUsed = 0;
 
-        session.persist();
+        this.studentSessionRepository.persist(session);
         LOG.info("Created new session: {} for user {} on exercise {}", sessionId, userId, exerciseId);
 
         return sessionId;
@@ -69,7 +81,7 @@ public class GraspableMathService {
      * @return The session entity, or null if not found
      */
     public StudentSessionEntity getSession(final String sessionId) {
-        return StudentSessionEntity.findBySessionId(sessionId);
+        return this.studentSessionRepository.findBySessionId(sessionId);
     }
 
     /**
@@ -81,7 +93,7 @@ public class GraspableMathService {
     public void processEvent(final GraspableEventDto event) {
         LOG.debug("Processing Graspable Math event: {}", event);
 
-        final var session = StudentSessionEntity.findBySessionId(event.sessionId);
+        final var session = this.studentSessionRepository.findBySessionId(event.sessionId);
         if (session == null) {
             LOG.warn("Session not found: {}", event.sessionId);
             return;
@@ -98,7 +110,7 @@ public class GraspableMathService {
             session.finalExpression = event.expressionAfter;
         }
 
-        session.persist();
+        this.studentSessionRepository.persist(session);
         LOG.debug("Updated session {}: {} actions, {} correct",
                 event.sessionId, session.actionsCount, session.correctActions);
     }
@@ -110,11 +122,11 @@ public class GraspableMathService {
      */
     @Transactional
     public void completeSession(final String sessionId) {
-        final var session = StudentSessionEntity.findBySessionId(sessionId);
+        final var session = this.studentSessionRepository.findBySessionId(sessionId);
         if (session != null) {
             session.completed = true;
             session.endTime = LocalDateTime.now();
-            session.persist();
+            this.studentSessionRepository.persist(session);
             LOG.info("Completed session: {}", sessionId);
         }
     }
@@ -126,10 +138,10 @@ public class GraspableMathService {
      */
     @Transactional
     public void recordHintUsed(final String sessionId) {
-        final var session = StudentSessionEntity.findBySessionId(sessionId);
+        final var session = this.studentSessionRepository.findBySessionId(sessionId);
         if (session != null) {
             session.hintsUsed++;
-            session.persist();
+            this.studentSessionRepository.persist(session);
             LOG.debug("Hint used in session: {}", sessionId);
         }
     }
@@ -141,7 +153,7 @@ public class GraspableMathService {
      * @return List of sessions
      */
     public List<StudentSessionEntity> getUserSessions(final Long userId) {
-        return StudentSessionEntity.list("user.id", userId);
+        return this.studentSessionRepository.findByUserId(userId);
     }
 
     /**
@@ -151,7 +163,7 @@ public class GraspableMathService {
      * @return List of sessions
      */
     public List<StudentSessionEntity> getExerciseSessions(final Long exerciseId) {
-        return StudentSessionEntity.list("exercise.id", exerciseId);
+        return this.studentSessionRepository.findByExerciseId(exerciseId);
     }
 
     /**
@@ -161,7 +173,7 @@ public class GraspableMathService {
      * @return Accuracy as a percentage (0-100), or null if session not found
      */
     public Double getSessionAccuracy(final String sessionId) {
-        final var session = StudentSessionEntity.findBySessionId(sessionId);
+        final var session = this.studentSessionRepository.findBySessionId(sessionId);
         if (session == null || session.actionsCount == 0) {
             return null;
         }
@@ -240,7 +252,7 @@ public class GraspableMathService {
      */
     @Transactional
     public void markSessionComplete(final String sessionId) {
-        final var session = StudentSessionEntity.findBySessionId(sessionId);
+        final var session = this.studentSessionRepository.findBySessionId(sessionId);
         if (session == null) {
             LOG.warn("Cannot mark session complete - session not found: {}", sessionId);
             return;
@@ -248,7 +260,7 @@ public class GraspableMathService {
 
         session.completed = true;
         session.endTime = LocalDateTime.now();
-        session.persist();
+        this.studentSessionRepository.persist(session);
         LOG.debug("Session marked complete: {}", sessionId);
     }
 }

@@ -4,10 +4,14 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Response DTO for OpenAI Chat Completions API
  * Based on OpenAI REST API specification
  */
+@SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO for JSON mapping from OpenAI; public fields intentionally used for Jackson mapping")
 public class OpenAIResponseDto {
 
     public String id;

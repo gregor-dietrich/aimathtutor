@@ -48,7 +48,7 @@ public class CommentsPanel extends VerticalLayout {
     private final Long exerciseId;
     private final String sessionId;
     private final Long currentUserId;
-    private final int pageSize = 50;
+    private static final int pageSize = 50;
 
     private Div commentsContainer;
     private TextArea commentTextArea;
@@ -126,7 +126,7 @@ public class CommentsPanel extends VerticalLayout {
         try {
             // Always load top-level comments
             final List<CommentViewDto> comments = this.getCommentService()
-                    .listCommentsByExercise(this.exerciseId, this.currentPage, this.pageSize, null);
+                    .listCommentsByExercise(this.exerciseId, this.currentPage, pageSize, null);
             this.displayComments(comments);
         } catch (final Exception e) {
             LOG.error("Failed to load comments", e);
@@ -171,7 +171,7 @@ public class CommentsPanel extends VerticalLayout {
         }
 
         // Add load more button if we got full page
-        if (comments.size() >= this.pageSize) {
+        if (comments.size() >= pageSize) {
             final Button loadMoreButton = new Button("Load More Comments");
             loadMoreButton.addClickListener(e -> {
                 this.currentPage++;

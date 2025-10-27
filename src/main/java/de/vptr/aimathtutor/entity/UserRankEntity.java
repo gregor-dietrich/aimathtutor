@@ -10,6 +10,11 @@ import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "user_ranks")
+@NamedQueries({
+        @NamedQuery(name = "UserRank.findAll", query = "FROM UserRankEntity ORDER BY id DESC"),
+        @NamedQuery(name = "UserRank.findByName", query = "FROM UserRankEntity WHERE name = :n"),
+        @NamedQuery(name = "UserRank.searchByName", query = "FROM UserRankEntity WHERE LOWER(name) LIKE :s ORDER BY id DESC")
+})
 public class UserRankEntity extends PanacheEntityBase {
 
     @Id

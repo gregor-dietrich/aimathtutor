@@ -41,16 +41,18 @@ import jakarta.inject.Inject;
 @PageTitle("Student Sessions - AI Math Tutor")
 public class AdminSessionsView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(AdminSessionsView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<StudentSessionViewDto> grid;
     private TextField searchField;

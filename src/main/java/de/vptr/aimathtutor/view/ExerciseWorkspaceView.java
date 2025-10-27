@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Html;
@@ -43,37 +42,35 @@ import jakarta.inject.Inject;
 @PageTitle("Exercise Workspace")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(ExerciseWorkspaceView.class);
 
     @Inject
-    ExerciseService exerciseService;
+    private transient ExerciseService exerciseService;
 
     @Inject
-    AITutorService aiTutorService;
+    private transient AITutorService aiTutorService;
 
     @Inject
-    GraspableMathService graspableMathService;
+    private transient GraspableMathService graspableMathService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
-    @Inject
-    ObjectMapper objectMapper;
-
-    private Long exerciseId;
-    private ExerciseViewDto exercise;
-    private String currentSessionId;
-    private int hintCount = 0;
-    private final ConversationContextDto conversationContext = new ConversationContextDto();
+    private transient Long exerciseId;
+    private transient ExerciseViewDto exercise;
+    private transient String currentSessionId;
+    private transient int hintCount = 0;
+    private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
-    private Div graspableCanvas;
-    private AIChatPanel chatPanel;
-    private CommentsPanel commentsPanel;
-    private VerticalLayout hintsPanel;
-    private Button requestHintButton;
-    private Button backButton;
-    private String currentExpression;
+    private transient Div graspableCanvas;
+    private transient AIChatPanel chatPanel;
+    private transient CommentsPanel commentsPanel;
+    private transient VerticalLayout hintsPanel;
+    private transient Button requestHintButton;
+    private transient Button backButton;
+    private transient String currentExpression;
 
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -171,6 +168,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 case "advanced":
                 case "expert":
                     badge.getElement().getThemeList().add("error");
+                    break;
+                default:
+                    // Unknown difficulty - keep default styling
                     break;
             }
             badge.getStyle().set("margin-top", "0.5rem");
@@ -337,27 +337,23 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
 
         // Initialize canvas and load problem once ready
-        final String initScript = String.format("""
-                setTimeout(function() {
-                    if (window.initializeGraspableMath) {
-                        window.initializeGraspableMath();
-
-                        // Wait for canvas to be ready, then load the problem
-                        var loadProblemWhenReady = function() {
-                            if (window.graspableCanvas && window.graspableMathUtils) {
-                                console.log('[Exercise] Canvas ready, loading problem');
-                                window.graspableMathUtils.loadProblem('%s', 100, 50);
-                            } else {
-                                console.log('[Exercise] Waiting for canvas...');
-                                setTimeout(loadProblemWhenReady, 200);
-                            }
-                        };
-                        setTimeout(loadProblemWhenReady, 500);
-                    } else {
-                        console.error('[Exercise] Graspable Math initialization function not found');
-                    }
-                }, 100);
-                """, this.exercise.graspableInitialExpression);
+        final String initScript = String.format("setTimeout(function() { %n"
+                + "  if (window.initializeGraspableMath) { %n"
+                + "    window.initializeGraspableMath(); %n"
+                + "    var loadProblemWhenReady = function() { %n"
+                + "      if (window.graspableCanvas && window.graspableMathUtils) { %n"
+                + "        console.log('[Exercise] Canvas ready, loading problem'); %n"
+                + "        window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
+                + "      } else { %n"
+                + "        console.log('[Exercise] Waiting for canvas...'); %n"
+                + "        setTimeout(loadProblemWhenReady, 200); %n"
+                + "      } %n"
+                + "    }; %n"
+                + "    setTimeout(loadProblemWhenReady, 500); %n"
+                + "  } else { %n"
+                + "    console.error('[Exercise] Graspable Math initialization function not found'); %n"
+                + "  } %n"
+                + "}, 100);%n", this.exercise.graspableInitialExpression);
 
         UI.getCurrent().getPage().executeJs(initScript);
 

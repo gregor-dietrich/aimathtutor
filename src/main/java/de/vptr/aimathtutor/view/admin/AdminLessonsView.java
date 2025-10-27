@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,22 +44,23 @@ import jakarta.inject.Inject;
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
 public class AdminLessonsView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminLessonsView.class);
 
     @Inject
-    LessonService lessonService;
+    private transient LessonService lessonService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
-    private TreeGrid<LessonViewDto> treeGrid;
-    private TextField searchField;
-    private Button searchButton;
-    private List<LessonViewDto> allLessons;
+    private transient TreeGrid<LessonViewDto> treeGrid;
+    private transient TextField searchField;
+    private transient Button searchButton;
+    private transient List<LessonViewDto> allLessons;
 
-    private Dialog lessonDialog;
-    private Binder<LessonDto> binder;
-    private LessonDto currentLesson;
+    private transient Dialog lessonDialog;
+    private transient Binder<LessonDto> binder;
+    private transient LessonDto currentLesson;
 
     public AdminLessonsView() {
         this.setSizeFull();
@@ -121,7 +123,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
         // Get all lesson IDs that exist in the search results
         final var lessonIdsInResults = searchResults.stream()
                 .map(cat -> cat.id)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
 
         // Find lessons to show at the top level:
         // 1. Root lessons (no parent)

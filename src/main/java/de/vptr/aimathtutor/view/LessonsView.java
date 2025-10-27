@@ -23,14 +23,16 @@ import jakarta.inject.Inject;
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
-    @Inject
-    AuthService authService;
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    LessonService lessonService;
+    private transient AuthService authService;
 
     @Inject
-    ExerciseService exerciseService;
+    private transient LessonService lessonService;
+
+    @Inject
+    private transient ExerciseService exerciseService;
 
     public LessonsView() {
         this.setAlignItems(Alignment.START);
@@ -207,6 +209,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 case "advanced":
                 case "expert":
                     difficultyBadge.getElement().getThemeList().add("error");
+                    break;
+                default:
+                    // unknown difficulty - no extra styling
                     break;
             }
             badgeLayout.add(difficultyBadge);

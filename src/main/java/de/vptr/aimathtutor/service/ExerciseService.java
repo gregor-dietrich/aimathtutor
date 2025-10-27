@@ -14,6 +14,9 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.LessonRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -31,6 +34,15 @@ public class ExerciseService {
 
     @Inject
     AnalyticsService analyticsService;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    LessonRepository lessonRepository;
 
     /**
      * Enriches an ExerciseViewDto with completion data for the current user.
@@ -72,46 +84,43 @@ public class ExerciseService {
     }
 
     public List<ExerciseViewDto> getAllExercises() {
-        return ExerciseEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findAllOrdered().stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
     public Optional<ExerciseViewDto> findById(final Long id) {
-        return ExerciseEntity.findByIdOptional(id)
-                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)));
+        return this.exerciseRepository.findByIdOptional(id)
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)));
     }
 
     public List<ExerciseViewDto> findPublishedExercises() {
-        return ExerciseEntity.find("published = true ORDER BY id DESC").list().stream()
-                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
+        return this.exerciseRepository.findPublished().stream()
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)))
                 .toList();
     }
 
     public List<ExerciseViewDto> findByUserId(final Long userId) {
-        return ExerciseEntity.find("user.id = ?1 ORDER BY id DESC", userId).list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findByUserId(userId).stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
-        return ExerciseEntity.find("lesson.id = ?1 ORDER BY id DESC", lessonId).list().stream()
-                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
+        return this.exerciseRepository.findByLessonId(lessonId).stream()
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)))
                 .toList();
     }
 
     public List<ExerciseViewDto> findGraspableMathExercises() {
-        return ExerciseEntity.find("graspableEnabled = true AND published = true ORDER BY id DESC").list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findGraspableMathExercises().stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
-        return ExerciseEntity
-                .find("graspableEnabled = true AND published = true AND lesson.id = ?1 ORDER BY id DESC",
-                        lessonId)
-                .list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
@@ -152,7 +161,7 @@ public class ExerciseService {
         exercise.graspableHints = exerciseDto.graspableHints;
 
         // Set user - required for creation
-        final UserEntity user = UserEntity.findById(exerciseDto.userId);
+        final UserEntity user = this.userRepository.findById(exerciseDto.userId);
         if (user == null) {
             throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
         }
@@ -160,14 +169,14 @@ public class ExerciseService {
 
         // Set exercise if provided
         if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = LessonEntity.findById(exerciseDto.lessonId);
+            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
             if (lesson == null) {
                 throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
             }
             exercise.lesson = lesson;
         }
 
-        exercise.persist();
+        this.exerciseRepository.persist(exercise);
         return new ExerciseViewDto(exercise);
     }
 
@@ -181,7 +190,7 @@ public class ExerciseService {
             throw new ValidationException("Content is required for updating an exercise");
         }
 
-        final ExerciseEntity existingExercise = ExerciseEntity.findById(id);
+        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
@@ -211,7 +220,7 @@ public class ExerciseService {
 
         // Set user if provided, otherwise keep existing user
         if (exerciseDto.userId != null) {
-            final UserEntity user = UserEntity.findById(exerciseDto.userId);
+            final UserEntity user = this.userRepository.findById(exerciseDto.userId);
             if (user == null) {
                 throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
             }
@@ -221,7 +230,7 @@ public class ExerciseService {
 
         // Set lesson if provided
         if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = LessonEntity.findById(exerciseDto.lessonId);
+            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
             if (lesson == null) {
                 throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
             }
@@ -230,13 +239,13 @@ public class ExerciseService {
             existingExercise.lesson = null;
         }
 
-        existingExercise.persist();
+        this.exerciseRepository.persist(existingExercise);
         return new ExerciseViewDto(existingExercise);
     }
 
     @Transactional
     public ExerciseViewDto patchExercise(final Long id, final ExerciseDto exerciseDto) {
-        final ExerciseEntity existingExercise = ExerciseEntity.findById(id);
+        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
@@ -274,7 +283,7 @@ public class ExerciseService {
 
         // Set user if provided
         if (exerciseDto.userId != null) {
-            final UserEntity user = UserEntity.findById(exerciseDto.userId);
+            final UserEntity user = this.userRepository.findById(exerciseDto.userId);
             if (user == null) {
                 throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
             }
@@ -283,7 +292,7 @@ public class ExerciseService {
 
         // Set lesson if provided
         if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = LessonEntity.findById(exerciseDto.lessonId);
+            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
             if (lesson == null) {
                 throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
             }
@@ -291,23 +300,20 @@ public class ExerciseService {
         }
 
         existingExercise.lastEdit = LocalDateTime.now();
-        existingExercise.persist();
+        this.exerciseRepository.persist(existingExercise);
         return new ExerciseViewDto(existingExercise);
     }
 
     @Transactional
     public boolean deleteExercise(final Long id) {
-        return ExerciseEntity.deleteById(id);
+        return this.exerciseRepository.deleteById(id);
     }
 
     public List<ExerciseViewDto> searchExercises(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllExercises();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<ExerciseEntity> exercises = ExerciseEntity.find(
-                "LOWER(title) LIKE ?1 OR content LIKE ?1 OR LOWER(user.username) LIKE ?1 ORDER BY id DESC",
-                searchTerm).list();
+        final List<ExerciseEntity> exercises = this.exerciseRepository.search(query);
         return exercises.stream()
                 .map(ExerciseViewDto::new)
                 .toList();
@@ -325,8 +331,7 @@ public class ExerciseService {
             final var startDateTime = start.atStartOfDay();
             final var endDateTime = end.atTime(LocalTime.MAX);
 
-            final List<ExerciseEntity> exercises = ExerciseEntity
-                    .find("created >= ?1 AND created <= ?2 ORDER BY created DESC", startDateTime, endDateTime).list();
+            final List<ExerciseEntity> exercises = this.exerciseRepository.findByDateRange(startDateTime, endDateTime);
             return exercises.stream()
                     .map(ExerciseViewDto::new)
                     .toList();

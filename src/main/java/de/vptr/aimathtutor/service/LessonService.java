@@ -5,7 +5,10 @@ import java.util.Optional;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.LessonRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
@@ -14,30 +17,29 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class LessonService {
 
+    @Inject
+    LessonRepository lessonRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
     @Transactional
     public List<LessonViewDto> getAllLessons() {
-        return LessonEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new LessonViewDto((LessonEntity) entity))
-                .toList();
+        return this.lessonRepository.findAllOrdered().stream().map(LessonViewDto::new).toList();
     }
 
     @Transactional
     public Optional<LessonViewDto> findById(final Long id) {
-        return LessonEntity.findByIdOptional(id)
-                .map(entity -> new LessonViewDto((LessonEntity) entity));
+        return this.lessonRepository.findByIdOptional(id).map(LessonViewDto::new);
     }
 
     @Transactional
     public List<LessonViewDto> findRootLessons() {
-        return LessonEntity.findRootLessons().stream()
-                .map(LessonViewDto::new)
-                .toList();
+        return this.lessonRepository.findRootLessons().stream().map(LessonViewDto::new).toList();
     }
 
     public List<LessonViewDto> findByParentId(final Long parentId) {
-        return LessonEntity.findByParentId(parentId).stream()
-                .map(LessonViewDto::new)
-                .toList();
+        return this.lessonRepository.findByParentId(parentId).stream().map(LessonViewDto::new).toList();
     }
 
     @Transactional
@@ -49,20 +51,20 @@ public class LessonService {
 
         // If parent is specified, ensure it exists
         if (lesson.parent != null && lesson.parent.id != null) {
-            final var existingParent = (LessonEntity) LessonEntity.findById(lesson.parent.id);
+            final var existingParent = this.lessonRepository.findById(lesson.parent.id);
             if (existingParent == null) {
                 throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
             }
             lesson.parent = existingParent;
         }
 
-        lesson.persist();
-        return new LessonViewDto(lesson);
+        final LessonEntity persisted = this.lessonRepository.persist(lesson);
+        return new LessonViewDto(persisted);
     }
 
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
-        final var existingLesson = (LessonEntity) LessonEntity.findById(lesson.id);
+        final var existingLesson = this.lessonRepository.findById(lesson.id);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
         }
@@ -77,7 +79,7 @@ public class LessonService {
 
         // Handle parent change - validate if parent is provided
         if (lesson.parent != null && lesson.parent.id != null) {
-            final LessonEntity newParent = LessonEntity.findById(lesson.parent.id);
+            final LessonEntity newParent = this.lessonRepository.findById(lesson.parent.id);
             if (newParent == null) {
                 throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
             }
@@ -92,13 +94,13 @@ public class LessonService {
             existingLesson.parent = null;
         }
 
-        existingLesson.persist();
-        return new LessonViewDto(existingLesson);
+        final LessonEntity persisted = this.lessonRepository.persist(existingLesson);
+        return new LessonViewDto(persisted);
     }
 
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
-        final var existingLesson = (LessonEntity) LessonEntity.findById(lesson.id);
+        final var existingLesson = this.lessonRepository.findById(lesson.id);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
         }
@@ -111,8 +113,7 @@ public class LessonService {
         // Handle parent change if provided
         if (lesson.parent != null) {
             if (lesson.parent.id != null) {
-                final LessonEntity newParent = (LessonEntity) LessonEntity
-                        .findById(lesson.parent.id);
+                final LessonEntity newParent = this.lessonRepository.findById(lesson.parent.id);
                 if (newParent == null) {
                     throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
                 }
@@ -128,8 +129,8 @@ public class LessonService {
             }
         }
 
-        existingLesson.persist();
-        return new LessonViewDto(existingLesson);
+        final LessonEntity persisted = this.lessonRepository.persist(existingLesson);
+        return new LessonViewDto(persisted);
     }
 
     /**
@@ -149,7 +150,7 @@ public class LessonService {
 
     @Transactional
     public boolean deleteLesson(final Long id) {
-        return LessonEntity.deleteById(id);
+        return this.lessonRepository.deleteById(id);
     }
 
     @Transactional
@@ -157,11 +158,7 @@ public class LessonService {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllLessons();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<LessonEntity> lessons = LessonEntity.find(
-                "LOWER(name) LIKE ?1", searchTerm).list();
-        return lessons.stream()
-                .map(LessonViewDto::new)
-                .toList();
+        final List<LessonEntity> lessons = this.lessonRepository.search(query);
+        return lessons.stream().map(LessonViewDto::new).toList();
     }
 }

@@ -7,6 +7,7 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 import de.vptr.aimathtutor.component.button.FilterButton;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class DateFilterLayout extends HorizontalLayout {
 
@@ -42,14 +43,17 @@ public class DateFilterLayout extends HorizontalLayout {
         this(filterAction, DEFAULT_TOOLTIP);
     }
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "This layout intentionally exposes internal components for composing into larger UIs")
     public Button getButton() {
         return this.button;
     }
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose DatePicker so parent views can wire listeners and read values")
     public DatePicker getStartDatePicker() {
         return this.startDatePicker;
     }
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose DatePicker so parent views can wire listeners and read values")
     public DatePicker getEndDatePicker() {
         return this.endDatePicker;
     }

@@ -22,10 +22,12 @@ import jakarta.inject.Inject;
 @PageTitle("AI Math Tutor - Login")
 public class LoginView extends VerticalLayout {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(LoginView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     public LoginView() {
         this.setSizeFull();

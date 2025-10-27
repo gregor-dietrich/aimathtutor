@@ -47,10 +47,10 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserRanksView.class);
 
     @Inject
-    UserRankService rankService;
+    private transient UserRankService rankService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     private Grid<UserRankViewDto> grid;
     private TextField searchField;
@@ -58,7 +58,9 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
     private Dialog rankDialog;
     private Binder<UserRankDto> binder;
-    private UserRankDto currentRank;
+    private transient UserRankDto currentRank;
+
+    private static final long serialVersionUID = 1L;
 
     public AdminUserRanksView() {
         this.setSizeFull();

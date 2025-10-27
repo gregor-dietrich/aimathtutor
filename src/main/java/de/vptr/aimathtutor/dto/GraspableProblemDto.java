@@ -49,6 +49,7 @@ public class GraspableProblemDto {
 
     public String title;
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Description is optional and used by front-end; public for JSON mapping")
     public String description;
 
     @JsonProperty("initial_expression")

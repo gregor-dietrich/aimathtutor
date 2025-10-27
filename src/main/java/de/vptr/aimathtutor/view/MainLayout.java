@@ -21,11 +21,13 @@ import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
+    private static final long serialVersionUID = 1L;
 
     private Button adminViewButton;
     private Button settingsButton;
@@ -33,13 +35,13 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     private Tabs navigationTabs;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    ThemeService themeService;
+    private transient ThemeService themeService;
 
     @Inject
-    UserRankService userRankService;
+    private transient UserRankService userRankService;
 
     private HorizontalLayout topBar;
     private HorizontalLayout rightSide;
@@ -48,6 +50,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     /**
      * Get the shared top bar for views that need to add additional components
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intended to be shared and extended by child views")
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }

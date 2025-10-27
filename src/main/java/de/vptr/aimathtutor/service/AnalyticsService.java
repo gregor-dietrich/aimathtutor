@@ -14,7 +14,11 @@ import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.entity.AIInteractionEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.AIInteractionRepository;
+import de.vptr.aimathtutor.repository.StudentSessionRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
@@ -28,12 +32,24 @@ public class AnalyticsService {
         private static final Logger LOG = LoggerFactory.getLogger(AnalyticsService.class);
 
         /**
+         * Repository injections
+         */
+        @Inject
+        StudentSessionRepository studentSessionRepository;
+
+        @Inject
+        AIInteractionRepository aiInteractionRepository;
+
+        @Inject
+        UserRepository userRepository;
+
+        /**
          * Get all student sessions
          */
         @Transactional
         public List<StudentSessionViewDto> getAllSessions() {
                 LOG.trace("Getting all student sessions");
-                final List<StudentSessionEntity> sessions = StudentSessionEntity.find("ORDER BY id DESC").list();
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findAll();
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -45,7 +61,7 @@ public class AnalyticsService {
         @Transactional
         public List<StudentSessionViewDto> getSessionsByUser(final Long userId) {
                 LOG.trace("Getting sessions for user: {}", userId);
-                final List<StudentSessionEntity> sessions = StudentSessionEntity.find("user.id = ?1", userId).list();
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByUserId(userId);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -57,8 +73,7 @@ public class AnalyticsService {
         @Transactional
         public List<StudentSessionViewDto> getSessionsByExercise(final Long exerciseId) {
                 LOG.trace("Getting sessions for exercise: {}", exerciseId);
-                final List<StudentSessionEntity> sessions = StudentSessionEntity.find("exercise.id = ?1", exerciseId)
-                                .list();
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByExerciseId(exerciseId);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -72,9 +87,9 @@ public class AnalyticsService {
         @Transactional
         public List<StudentSessionViewDto> getSessionsByUserAndExercise(final Long userId, final Long exerciseId) {
                 LOG.trace("Getting sessions for user: {} on exercise: {}", userId, exerciseId);
-                final List<StudentSessionEntity> sessions = StudentSessionEntity
-                                .find("user.id = ?1 AND exercise.id = ?2", userId, exerciseId)
-                                .list();
+                // Use repository single-query filter
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .findByUserIdAndExerciseId(userId, exerciseId);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -89,10 +104,9 @@ public class AnalyticsService {
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
                 LOG.trace("Getting sessions for user: {} between {} and {}", userId, startDate, endDate);
-                final List<StudentSessionEntity> sessions = StudentSessionEntity
-                                .find("user.id = ?1 AND startTime >= ?2 AND startTime <= ?3",
-                                                userId, startDate, endDate)
-                                .list();
+                // repository can expose a date-range finder if needed; use filter here
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .findByUserIdAndDateRange(userId, startDate, endDate);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -107,10 +121,11 @@ public class AnalyticsService {
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
                 LOG.trace("Getting sessions for exercise: {} between {} and {}", exerciseId, startDate, endDate);
-                final List<StudentSessionEntity> sessions = StudentSessionEntity
-                                .find("exercise.id = ?1 AND startTime >= ?2 AND startTime <= ?3",
-                                                exerciseId, startDate, endDate)
-                                .list();
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByExerciseId(exerciseId)
+                                .stream()
+                                .filter(s -> s.startTime != null && !s.startTime.isBefore(startDate)
+                                                && !s.startTime.isAfter(endDate))
+                                .toList();
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -126,10 +141,8 @@ public class AnalyticsService {
                         final LocalDateTime endDate) {
                 LOG.trace("Getting {} sessions between {} and {}",
                                 completed ? "completed" : "incomplete", startDate, endDate);
-                final List<StudentSessionEntity> sessions = StudentSessionEntity
-                                .find("completed = ?1 AND startTime >= ?2 AND startTime <= ?3",
-                                                completed, startDate, endDate)
-                                .list();
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .findByCompletedAndDateRange(completed, startDate, endDate);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -141,7 +154,7 @@ public class AnalyticsService {
         @Transactional
         public StudentSessionViewDto getSessionById(final Long sessionId) {
                 LOG.trace("Getting session: {}", sessionId);
-                final StudentSessionEntity session = StudentSessionEntity.findById(sessionId);
+                final StudentSessionEntity session = this.studentSessionRepository.findById(sessionId);
                 return session != null ? new StudentSessionViewDto(session) : null;
         }
 
@@ -151,7 +164,7 @@ public class AnalyticsService {
         @Transactional
         public StudentSessionViewDto getSessionBySessionId(final String sessionId) {
                 LOG.trace("Getting session by session ID: {}", sessionId);
-                final StudentSessionEntity session = StudentSessionEntity.findBySessionId(sessionId);
+                final StudentSessionEntity session = this.studentSessionRepository.findBySessionId(sessionId);
                 return session != null ? new StudentSessionViewDto(session) : null;
         }
 
@@ -161,7 +174,7 @@ public class AnalyticsService {
         @Transactional
         public List<AIInteractionViewDto> getAllAIInteractions() {
                 LOG.trace("Getting all AI interactions");
-                final List<AIInteractionEntity> interactions = AIInteractionEntity.find("ORDER BY id DESC").list();
+                final List<AIInteractionEntity> interactions = this.aiInteractionRepository.findAll();
                 return interactions.stream()
                                 .map(AIInteractionViewDto::new)
                                 .toList();
@@ -173,8 +186,7 @@ public class AnalyticsService {
         @Transactional
         public List<AIInteractionViewDto> getAIInteractionsBySession(final String sessionId) {
                 LOG.trace("Getting AI interactions for session: {}", sessionId);
-                final List<AIInteractionEntity> interactions = AIInteractionEntity.find("sessionId = ?1", sessionId)
-                                .list();
+                final List<AIInteractionEntity> interactions = this.aiInteractionRepository.findBySessionId(sessionId);
                 return interactions.stream()
                                 .map(AIInteractionViewDto::new)
                                 .toList();
@@ -186,7 +198,7 @@ public class AnalyticsService {
         @Transactional
         public List<AIInteractionViewDto> getAIInteractionsByUser(final Long userId) {
                 LOG.trace("Getting AI interactions for user: {}", userId);
-                final List<AIInteractionEntity> interactions = AIInteractionEntity.find("user.id = ?1", userId).list();
+                final List<AIInteractionEntity> interactions = this.aiInteractionRepository.findByUserId(userId);
                 return interactions.stream()
                                 .map(AIInteractionViewDto::new)
                                 .toList();
@@ -198,8 +210,8 @@ public class AnalyticsService {
         @Transactional
         public List<AIInteractionViewDto> getAIInteractionsByExercise(final Long exerciseId) {
                 LOG.trace("Getting AI interactions for exercise: {}", exerciseId);
-                final List<AIInteractionEntity> interactions = AIInteractionEntity.find("exercise.id = ?1", exerciseId)
-                                .list();
+                final List<AIInteractionEntity> interactions = this.aiInteractionRepository
+                                .findByExerciseId(exerciseId);
                 return interactions.stream()
                                 .map(AIInteractionViewDto::new)
                                 .toList();
@@ -212,12 +224,12 @@ public class AnalyticsService {
         public StudentProgressSummaryDto getUserProgressSummary(final Long userId) {
                 LOG.trace("Getting progress summary for user: {}", userId);
 
-                final UserEntity user = UserEntity.findById(userId);
+                final UserEntity user = this.userRepository.findById(userId);
                 if (user == null) {
                         return null;
                 }
 
-                final List<StudentSessionEntity> sessions = StudentSessionEntity.find("user.id = ?1", userId).list();
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByUserId(userId);
                 return this.computeProgressSummary(user, sessions);
         }
 
@@ -231,13 +243,18 @@ public class AnalyticsService {
                 LOG.trace("Getting progress summary for all users");
 
                 // Fetch all users
-                final List<UserEntity> users = UserEntity.find("ORDER BY id DESC").list();
+                final List<UserEntity> users = this.userRepository.findAll();
                 if (users.isEmpty()) {
                         return List.of();
                 }
 
                 // Fetch all sessions in a single query
-                final List<StudentSessionEntity> allSessions = StudentSessionEntity.find("ORDER BY id DESC").list();
+                final List<StudentSessionEntity> allSessions = this.studentSessionRepository.findAll();
+                // all
+                // via
+                // repository
+                // if
+                // implemented
 
                 // Group sessions by user ID (filter out sessions with null user to avoid NPE)
                 final Map<Long, List<StudentSessionEntity>> sessionsByUser = allSessions.stream()
@@ -324,9 +341,8 @@ public class AnalyticsService {
         public Map<String, Integer> getProblemCategoryStats() {
                 LOG.trace("Getting problem category statistics");
 
-                final List<StudentSessionEntity> completedSessions = StudentSessionEntity
-                                .find("completed = true")
-                                .list();
+                final List<StudentSessionEntity> completedSessions = this.studentSessionRepository
+                                .findByCompletedAndDateRange(Boolean.TRUE, LocalDateTime.MIN, LocalDateTime.MAX);
 
                 return completedSessions.stream()
                                 .collect(Collectors.groupingBy(
@@ -341,7 +357,8 @@ public class AnalyticsService {
         @Transactional
         public long getTotalSessionsCount() {
                 LOG.trace("Getting total sessions count");
-                return StudentSessionEntity.count();
+                // repository can expose count; fall back to list size
+                return this.studentSessionRepository.countAll();
         }
 
         /**
@@ -350,7 +367,7 @@ public class AnalyticsService {
         @Transactional
         public long getCompletedSessionsCount() {
                 LOG.trace("Getting completed sessions count");
-                return StudentSessionEntity.find("completed = true").count();
+                return this.studentSessionRepository.countByCompleted(Boolean.TRUE);
         }
 
         /**
@@ -360,12 +377,12 @@ public class AnalyticsService {
         public long getActiveStudentsCount() {
                 LOG.trace("Getting active students count");
                 final LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-                final List<StudentSessionEntity> recentSessions = StudentSessionEntity
-                                .find("startTime >= ?1", sevenDaysAgo)
-                                .list();
+                final List<StudentSessionEntity> recentSessions = this.studentSessionRepository
+                                .findByStartTimeAfter(sevenDaysAgo);
 
                 return recentSessions.stream()
-                                .map(s -> s.user.id)
+                                .map(s -> s.user != null ? s.user.id : null)
+                                .filter(id -> id != null)
                                 .distinct()
                                 .count();
         }
@@ -378,10 +395,7 @@ public class AnalyticsService {
                 LOG.trace("Getting today's sessions count");
                 final LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
                 final LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-
-                return StudentSessionEntity
-                                .find("startTime >= ?1 AND startTime <= ?2", startOfDay, endOfDay)
-                                .count();
+                return this.studentSessionRepository.findByStartTimeBetween(startOfDay, endOfDay).size();
         }
 
         /**
@@ -390,10 +404,12 @@ public class AnalyticsService {
         @Transactional
         public List<StudentSessionViewDto> searchSessions(final String searchTerm) {
                 LOG.trace("Searching sessions for term: {}", searchTerm);
-                final String pattern = "%" + searchTerm.toLowerCase() + "%";
-                final List<StudentSessionEntity> sessions = StudentSessionEntity
-                                .find("LOWER(user.username) LIKE ?1 OR LOWER(exercise.title) LIKE ?1", pattern)
-                                .list();
+                if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                        return List.of();
+                }
+                final String pattern = "%" + searchTerm.trim().toLowerCase() + "%";
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .searchByUserOrExerciseTerm(pattern);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();

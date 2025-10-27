@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -122,7 +123,7 @@ public class GeminiAIService {
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
 
-        } catch (final Exception e) {
+        } catch (final IOException | InterruptedException e) {
             LOG.error("Error calling Gemini API", e);
             throw new IllegalStateException("Failed to call Gemini API", e);
         }

@@ -8,10 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import de.vptr.aimathtutor.dto.AIFeedbackDto;
-import de.vptr.aimathtutor.dto.ConversationContextDto;
-import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.dto.*;
 
 @ExtendWith(MockitoExtension.class)
 class AITutorServiceTest {
@@ -273,8 +270,8 @@ class AITutorServiceTest {
 
         // Then
         assertNotNull(answer);
-        assertEquals(de.vptr.aimathtutor.dto.ChatMessageDto.Sender.AI, answer.sender);
-        assertEquals(de.vptr.aimathtutor.dto.ChatMessageDto.MessageType.ANSWER, answer.messageType);
+        assertEquals(ChatMessageDto.Sender.AI, answer.sender);
+        assertEquals(ChatMessageDto.MessageType.ANSWER, answer.messageType);
         assertNotNull(answer.message);
         assertTrue(answer.message.length() > 0);
         assertEquals(sessionId, answer.sessionId);

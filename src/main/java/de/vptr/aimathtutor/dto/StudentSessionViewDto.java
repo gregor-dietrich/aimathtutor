@@ -11,6 +11,8 @@ import de.vptr.aimathtutor.entity.StudentSessionEntity;
  */
 public class StudentSessionViewDto {
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO fields are public for JSON mapping and convenience")
+
     public Long id;
     public String sessionId;
     public Long userId;

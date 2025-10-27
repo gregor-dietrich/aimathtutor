@@ -39,16 +39,18 @@ import jakarta.inject.Inject;
 @PageTitle("Student Progress - AI Math Tutor")
 public class AdminProgressView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(AdminProgressView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<StudentProgressSummaryDto> grid;
     private TextField searchField;

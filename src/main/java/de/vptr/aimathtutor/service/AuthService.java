@@ -9,6 +9,7 @@ import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -20,6 +21,9 @@ public class AuthService {
 
     @Inject
     PasswordHashingService passwordHashingService;
+
+    @Inject
+    UserRepository userRepository;
 
     @Inject
     UserRankService userRankService;
@@ -38,8 +42,8 @@ public class AuthService {
         }
 
         try {
-            // Find user by username directly from database
-            final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+            // Find user by username using repository
+            final var user = this.userRepository.findByUsername(username);
 
             if (user == null) {
                 LOG.trace("Authentication failed - user not found: {}", username);
@@ -67,7 +71,7 @@ public class AuthService {
             // Update last login time and persist the user entity
             try {
                 user.lastLogin = LocalDateTime.now();
-                user.persist();
+                this.userRepository.persist(user);
             } catch (final Exception e) {
                 LOG.warn("Failed to update lastLogin for user {}: {}", username, e.getMessage());
                 // continue with login even if lastLogin couldn't be updated
@@ -113,7 +117,7 @@ public class AuthService {
         if (username == null) {
             return null;
         }
-        final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        final var user = this.userRepository.findByUsername(username);
         return user != null ? user.id : null;
     }
 
@@ -128,6 +132,6 @@ public class AuthService {
         if (username == null) {
             return null;
         }
-        return UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        return this.userRepository.findByUsername(username);
     }
 }

@@ -30,21 +30,23 @@ import jakarta.inject.Inject;
 @PageTitle("Admin Dashboard - AI Math Tutor")
 public class AdminDashboardView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminDashboardView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     // Map to store references to stat card value spans for efficient updates
-    private final Map<String, Span> statCardValues = new HashMap<>();
+    private final transient Map<String, Span> statCardValues = new HashMap<>();
 
     public AdminDashboardView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
+        // transient statCardValues is initialized inline; no further action required
     }
 
     @Override
@@ -141,6 +143,29 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
         final var valueLabel = this.statCardValues.get(title);
         if (valueLabel != null) {
             valueLabel.setText(value);
+        }
+    }
+
+    /**
+     * Ensure transient fields are initialized after deserialization.
+     */
+    private void readObject(final java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        // Reinitialize transient runtime map used for UI updates
+        if (this.statCardValues == null) {
+            // It's safe to reassign a new HashMap here because this field is only used at
+            // runtime
+            final Map<String, Span> m = new HashMap<>();
+            // assign to backing field via reflection isn't necessary since field is
+            // non-final
+            // Use a straightforward approach to set it
+            try {
+                final java.lang.reflect.Field f = AdminDashboardView.class.getDeclaredField("statCardValues");
+                f.setAccessible(true);
+                f.set(this, m);
+            } catch (final Exception e) {
+                // fallback: best-effort initialization
+            }
         }
     }
 }

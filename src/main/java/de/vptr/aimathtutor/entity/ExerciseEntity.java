@@ -11,6 +11,16 @@ import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "exercises")
+@NamedQueries({
+        @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findPublished", query = "FROM ExerciseEntity WHERE published = true ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findByUserId", query = "FROM ExerciseEntity WHERE user.id = :u ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.searchByTerm", query = "FROM ExerciseEntity WHERE LOWER(title) LIKE :s OR content LIKE :s OR LOWER(user.username) LIKE :s ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findByDateRange", query = "FROM ExerciseEntity WHERE created >= :s AND created <= :e ORDER BY created DESC")
+})
 public class ExerciseEntity extends PanacheEntityBase {
 
     @Id

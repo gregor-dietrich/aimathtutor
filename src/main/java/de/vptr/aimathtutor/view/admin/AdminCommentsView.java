@@ -50,15 +50,16 @@ import jakarta.inject.Inject;
 public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminCommentsView.class);
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    CommentService commentService;
+    private transient CommentService commentService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<CommentViewDto> grid;
     private TextField searchField;
@@ -72,7 +73,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
 
     private Dialog commentDialog;
     private Binder<CommentDto> binder;
-    private CommentDto currentComment;
+    private transient CommentDto currentComment;
 
     public AdminCommentsView() {
         this.setSizeFull();

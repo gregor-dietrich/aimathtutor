@@ -2,10 +2,14 @@ package de.vptr.aimathtutor.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Request DTO for Ollama Generate API
  * Based on Ollama REST API specification
  */
+@SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO used as public data carrier for JSON mapping; intentional public fields")
 public class OllamaRequestDto {
 
     public String model;
@@ -34,7 +38,8 @@ public class OllamaRequestDto {
     /**
      * Helper method to create a simple generate request
      */
-    public static OllamaRequestDto createGenerateRequest(final String prompt, final String model, final Double temperature,
+    public static OllamaRequestDto createGenerateRequest(final String prompt, final String model,
+            final Double temperature,
             final Integer maxTokens) {
         final var request = new OllamaRequestDto();
         request.model = model;

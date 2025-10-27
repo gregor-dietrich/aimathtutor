@@ -17,15 +17,16 @@ public class PasswordHashingService {
     private static final int SALT_LENGTH = 32; // 32 bytes = 256 bits
     private static final int HASH_LENGTH = 8 * SALT_LENGTH; // 256 bits
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     /**
      * Generates a random salt
      * 
      * @return Base64 encoded salt
      */
     public String generateSalt() {
-        final var random = new SecureRandom();
         final var salt = new byte[SALT_LENGTH];
-        random.nextBytes(salt);
+        SECURE_RANDOM.nextBytes(salt);
         return Base64.getEncoder().encodeToString(salt);
     }
 

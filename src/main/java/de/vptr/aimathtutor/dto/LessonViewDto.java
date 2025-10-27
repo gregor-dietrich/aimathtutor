@@ -2,6 +2,8 @@ package de.vptr.aimathtutor.dto;
 
 import java.util.List;
 
+import org.hibernate.LazyInitializationException;
+
 import de.vptr.aimathtutor.entity.LessonEntity;
 
 /**
@@ -9,6 +11,8 @@ import de.vptr.aimathtutor.entity.LessonEntity;
  * Contains computed fields and safe data for client responses.
  */
 public class LessonViewDto {
+
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Public fields intentionally used for DTO mapping")
 
     public Long id;
     public String name;
@@ -45,7 +49,7 @@ public class LessonViewDto {
                 this.childrenCount = 0;
                 this.childrenIds = List.of();
             }
-        } catch (final org.hibernate.LazyInitializationException e) {
+        } catch (final LazyInitializationException e) {
             // Collection not initialized, set defaults
             this.childrenCount = 0;
             this.childrenIds = List.of();
@@ -58,7 +62,7 @@ public class LessonViewDto {
             } else {
                 this.exercisesCount = 0;
             }
-        } catch (final org.hibernate.LazyInitializationException e) {
+        } catch (final LazyInitializationException e) {
             // Collection not initialized, set default
             this.exercisesCount = 0;
         }

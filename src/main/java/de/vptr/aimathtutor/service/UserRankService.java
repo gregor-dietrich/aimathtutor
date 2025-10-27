@@ -9,7 +9,10 @@ import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -30,8 +33,8 @@ public class UserRankService {
         if (username == null) {
             return null; // Return null instead of throwing when not authenticated
         }
-
-        final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        // Use UserRepository to look up the user by username
+        final var user = this.userRepository.findByUsername(username);
         if (user == null || user.rank == null) {
             return null; // Return null instead of throwing when user or rank not found
         }
@@ -41,20 +44,20 @@ public class UserRankService {
 
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
-        return UserRankEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new UserRankViewDto((UserRankEntity) entity))
+        return this.userRankRepository.findAll().stream()
+                .map(UserRankViewDto::new)
                 .toList();
     }
 
     @Transactional
     public Optional<UserRankViewDto> findById(final Long id) {
-        return UserRankEntity.findByIdOptional(id)
-                .map(entity -> new UserRankViewDto((UserRankEntity) entity));
+        return this.userRankRepository.findByIdOptional(id)
+                .map(UserRankViewDto::new);
     }
 
     public Optional<UserRankViewDto> findByName(final String name) {
-        return UserRankEntity.find("name", name).firstResultOptional()
-                .map(entity -> new UserRankViewDto((UserRankEntity) entity));
+        return this.userRankRepository.findByName(name)
+                .map(UserRankViewDto::new);
     }
 
     @Transactional
@@ -63,8 +66,7 @@ public class UserRankService {
             return this.getAllRanks();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<UserRankEntity> ranks = UserRankEntity.find("LOWER(name) LIKE ?1 ORDER BY id DESC", searchTerm)
-                .list();
+        final List<UserRankEntity> ranks = this.userRankRepository.search(searchTerm);
         return ranks.stream()
                 .map(UserRankViewDto::new)
                 .toList();
@@ -98,13 +100,13 @@ public class UserRankService {
         rank.userRankDelete = rankDto.userRankDelete != null ? rankDto.userRankDelete : false;
         rank.userRankEdit = rankDto.userRankEdit != null ? rankDto.userRankEdit : false;
 
-        rank.persist();
+        this.userRankRepository.persist(rank);
         return new UserRankViewDto(rank);
     }
 
     @Transactional
     public UserRankViewDto updateRank(final Long id, final UserRankDto rankDto) {
-        final UserRankEntity existingRank = UserRankEntity.findById(id);
+        final UserRankEntity existingRank = this.userRankRepository.findById(id);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }
@@ -131,13 +133,13 @@ public class UserRankService {
         existingRank.userRankDelete = rankDto.userRankDelete != null ? rankDto.userRankDelete : false;
         existingRank.userRankEdit = rankDto.userRankEdit != null ? rankDto.userRankEdit : false;
 
-        existingRank.persist();
+        this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
     }
 
     @Transactional
     public UserRankViewDto patchRank(final Long id, final UserRankDto rankDto) {
-        final UserRankEntity existingRank = UserRankEntity.findById(id);
+        final UserRankEntity existingRank = this.userRankRepository.findById(id);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }
@@ -184,19 +186,19 @@ public class UserRankService {
         if (rankDto.userRankEdit != null)
             existingRank.userRankEdit = rankDto.userRankEdit;
 
-        existingRank.persist();
+        this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
     }
 
     @Transactional
     public boolean deleteRank(final Long id) {
-        final UserRankEntity rank = UserRankEntity.findById(id);
+        final UserRankEntity rank = this.userRankRepository.findById(id);
         if (rank == null) {
             return false;
         }
 
         // Check if rank has associated users
-        final List<UserEntity> usersWithRank = UserEntity.find("rank.id = ?1", id).list();
+        final List<UserEntity> usersWithRank = this.userRepository.findByRankId(id);
         if (!usersWithRank.isEmpty()) {
             throw new WebApplicationException(
                     "Cannot delete rank because " + usersWithRank.size() + " user(s) are assigned to this rank. " +
@@ -204,6 +206,12 @@ public class UserRankService {
                     Response.Status.CONFLICT);
         }
 
-        return UserRankEntity.deleteById(id);
+        return this.userRankRepository.deleteById(id);
     }
+
+    @Inject
+    UserRankRepository userRankRepository;
+
+    @Inject
+    UserRepository userRepository;
 }

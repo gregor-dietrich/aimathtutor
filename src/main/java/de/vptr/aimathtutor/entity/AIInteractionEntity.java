@@ -12,6 +12,12 @@ import jakarta.validation.constraints.NotBlank;
  */
 @Entity
 @Table(name = "ai_interactions")
+@NamedQueries({
+        @NamedQuery(name = "AIInteraction.findAll", query = "FROM AIInteractionEntity ORDER BY id DESC"),
+        @NamedQuery(name = "AIInteraction.findBySessionId", query = "FROM AIInteractionEntity WHERE sessionId = :s"),
+        @NamedQuery(name = "AIInteraction.findByUserId", query = "FROM AIInteractionEntity WHERE user.id = :u"),
+        @NamedQuery(name = "AIInteraction.findByExerciseId", query = "FROM AIInteractionEntity WHERE exercise.id = :e")
+})
 public class AIInteractionEntity extends PanacheEntityBase {
 
     @Id
@@ -58,6 +64,7 @@ public class AIInteractionEntity extends PanacheEntityBase {
     @Column(name = "conversation_context", columnDefinition = "TEXT")
     public String conversationContext; // JSON string of context sent with AI request
 
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity field intentionally public for ORM mapping")
     public LocalDateTime timestamp;
 
     @PrePersist

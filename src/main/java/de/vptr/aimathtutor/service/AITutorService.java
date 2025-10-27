@@ -2,8 +2,8 @@ package de.vptr.aimathtutor.service;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -15,6 +15,9 @@ import de.vptr.aimathtutor.dto.*;
 import de.vptr.aimathtutor.entity.AIInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.AIInteractionRepository;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -53,6 +56,15 @@ public class AITutorService {
 
     @Inject
     ObjectMapper objectMapper;
+
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    @Inject
+    AIInteractionRepository aiInteractionRepository;
 
     /**
      * Analyzes a student's math action and provides AI feedback.
@@ -410,7 +422,7 @@ public class AITutorService {
                 prompt.append("Recent student actions:\n");
                 for (int i = 0; i < context.recentActions.size(); i++) {
                     final var action = context.recentActions.get(i);
-                    prompt.append(String.format("%d. %s: '%s' → '%s'\n",
+                    prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                             i + 1, action.eventType, action.expressionBefore, action.expressionAfter));
                 }
                 prompt.append("\n");
@@ -420,7 +432,7 @@ public class AITutorService {
                 prompt.append("Recent student questions:\n");
                 for (int i = 0; i < context.recentQuestions.size(); i++) {
                     final var q = context.recentQuestions.get(i);
-                    prompt.append(String.format("%d. \"%s\"\n", i + 1, q.message));
+                    prompt.append(String.format("%d. \"%s\"%n", i + 1, q.message));
                 }
                 prompt.append("\n");
             }
@@ -429,7 +441,7 @@ public class AITutorService {
                 prompt.append("Your recent responses:\n");
                 for (int i = 0; i < context.recentAIMessages.size(); i++) {
                     final var msg = context.recentAIMessages.get(i);
-                    prompt.append(String.format("%d. \"%s\"\n", i + 1, msg.message));
+                    prompt.append(String.format("%d. \"%s\"%n", i + 1, msg.message));
                 }
                 prompt.append("\n");
             }
@@ -494,7 +506,7 @@ public class AITutorService {
                 prompt.append("\nRecent actions (for context):\n");
                 for (int i = 0; i < context.recentActions.size(); i++) {
                     final var action = context.recentActions.get(i);
-                    prompt.append(String.format("%d. %s: '%s' → '%s'\n",
+                    prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                             i + 1, action.eventType, action.expressionBefore, action.expressionAfter));
                 }
             }
@@ -503,7 +515,7 @@ public class AITutorService {
                 prompt.append("\nRecent student questions:\n");
                 for (int i = 0; i < context.recentQuestions.size(); i++) {
                     final var q = context.recentQuestions.get(i);
-                    prompt.append(String.format("%d. \"%s\"\n", i + 1, q.message));
+                    prompt.append(String.format("%d. \"%s\"%n", i + 1, q.message));
                 }
             }
 
@@ -511,7 +523,7 @@ public class AITutorService {
                 prompt.append("\nYour recent feedback:\n");
                 for (int i = 0; i < context.recentAIMessages.size(); i++) {
                     final var msg = context.recentAIMessages.get(i);
-                    prompt.append(String.format("%d. \"%s\"\n", i + 1, msg.message));
+                    prompt.append(String.format("%d. \"%s\"%n", i + 1, msg.message));
                 }
             }
         }
@@ -651,7 +663,7 @@ public class AITutorService {
         problem.category = category != null ? category : GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
 
         // Generate random problems based on category
-        final Random random = new Random();
+        final var random = ThreadLocalRandom.current();
 
         switch (problem.category) {
             case LINEAR_EQUATIONS:
@@ -796,10 +808,10 @@ public class AITutorService {
 
             // Look up user and exercise if IDs are provided
             if (event.studentId != null) {
-                interaction.user = UserEntity.findById(event.studentId);
+                interaction.user = this.userRepository.findById(event.studentId);
             }
             if (event.exerciseId != null) {
-                interaction.exercise = ExerciseEntity.findById(event.exerciseId);
+                interaction.exercise = this.exerciseRepository.findById(event.exerciseId);
             }
 
             interaction.eventType = event.eventType;
@@ -810,7 +822,7 @@ public class AITutorService {
             interaction.confidenceScore = feedback.confidence;
             interaction.actionCorrect = event.correct;
 
-            interaction.persist();
+            this.aiInteractionRepository.persist(interaction);
             LOG.debug("Logged AI interaction: {}", interaction.id);
         } catch (final Exception e) {
             LOG.error("Failed to log AI interaction", e);
@@ -842,7 +854,7 @@ public class AITutorService {
 
             UserEntity user = null;
             if (userId != null) {
-                user = UserEntity.findById(userId);
+                user = this.userRepository.findById(userId);
                 if (user == null) {
                     LOG.warn("User not found for logging question interaction: userId={}", userId);
                 } else {
@@ -852,7 +864,7 @@ public class AITutorService {
 
             ExerciseEntity exercise = null;
             if (exerciseId != null) {
-                exercise = ExerciseEntity.findById(exerciseId);
+                exercise = this.exerciseRepository.findById(exerciseId);
                 if (exercise == null) {
                     LOG.warn("Exercise not found for logging question interaction: exerciseId={}", exerciseId);
                 } else {
@@ -860,7 +872,7 @@ public class AITutorService {
                 }
             }
 
-            studentQuestionRecord.persist();
+            this.aiInteractionRepository.persist(studentQuestionRecord);
             LOG.info("Successfully logged student question: id={}, studentMessage={}",
                     studentQuestionRecord.id, studentQuestionRecord.studentMessage);
 
@@ -872,7 +884,7 @@ public class AITutorService {
             aiAnswerRecord.feedbackMessage = aiAnswer;
 
             if (userId != null) {
-                user = UserEntity.findById(userId);
+                user = this.userRepository.findById(userId);
                 if (user == null) {
                     LOG.warn("User not found for logging AI answer: userId={}", userId);
                 } else {
@@ -881,7 +893,7 @@ public class AITutorService {
             }
 
             if (exerciseId != null) {
-                exercise = ExerciseEntity.findById(exerciseId);
+                exercise = this.exerciseRepository.findById(exerciseId);
                 if (exercise == null) {
                     LOG.warn("Exercise not found for logging AI answer: exerciseId={}", exerciseId);
                 } else {
@@ -889,7 +901,7 @@ public class AITutorService {
                 }
             }
 
-            aiAnswerRecord.persist();
+            this.aiInteractionRepository.persist(aiAnswerRecord);
             LOG.info("Successfully logged AI answer: id={}, feedbackMessage={}",
                     aiAnswerRecord.id, aiAnswerRecord.feedbackMessage);
         } catch (final Exception e) {

@@ -13,6 +13,21 @@ import jakarta.validation.constraints.NotNull;
  */
 @Entity
 @Table(name = "student_sessions")
+@NamedQueries({
+        @NamedQuery(name = "StudentSession.findBySessionId", query = "FROM StudentSessionEntity WHERE sessionId = :s"),
+        @NamedQuery(name = "StudentSession.findByUserId", query = "FROM StudentSessionEntity WHERE user.id = :u"),
+        @NamedQuery(name = "StudentSession.findByExerciseId", query = "FROM StudentSessionEntity WHERE exercise.id = :e"),
+        @NamedQuery(name = "StudentSession.findAllOrdered", query = "FROM StudentSessionEntity ORDER BY id DESC"),
+        @NamedQuery(name = "StudentSession.findByUserAndExercise", query = "FROM StudentSessionEntity WHERE user.id = :u and exercise.id = :e ORDER BY id DESC"),
+        @NamedQuery(name = "StudentSession.findByUserAndDateRange", query = "FROM StudentSessionEntity WHERE user.id = :u and startTime >= :s and startTime <= :e ORDER BY startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByExerciseAndDateRange", query = "FROM StudentSessionEntity WHERE exercise.id = :e and startTime >= :s and startTime <= :en ORDER BY startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByCompletedAndDateRange", query = "FROM StudentSessionEntity WHERE completed = :c and startTime >= :s and startTime <= :e ORDER BY startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByStartTimeAfter", query = "FROM StudentSessionEntity WHERE startTime >= :t ORDER BY startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByStartTimeBetween", query = "FROM StudentSessionEntity WHERE startTime >= :s and startTime <= :e ORDER BY startTime DESC"),
+        @NamedQuery(name = "StudentSession.countByCompleted", query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE completed = :c"),
+        @NamedQuery(name = "StudentSession.countAll", query = "SELECT COUNT(s) FROM StudentSessionEntity s"),
+        @NamedQuery(name = "StudentSession.searchByUserOrExercise", query = "FROM StudentSessionEntity WHERE lower(user.username) like :p or lower(exercise.title) like :p ORDER BY startTime DESC")
+})
 public class StudentSessionEntity extends PanacheEntityBase {
 
     @Id

@@ -36,21 +36,22 @@ import jakarta.inject.Inject;
 @PageTitle("Session Details - AI Math Tutor")
 public class AdminSessionView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminSessionView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
-    private String sessionId;
-    private StudentSessionViewDto session;
-    private VerticalLayout sessionInfoLayout;
-    private Grid<AIInteractionViewDto> interactionsGrid;
+    private transient String sessionId;
+    private transient StudentSessionViewDto session;
+    private transient VerticalLayout sessionInfoLayout;
+    private transient Grid<AIInteractionViewDto> interactionsGrid;
 
     public AdminSessionView() {
         this.setSizeFull();

@@ -25,15 +25,19 @@ public class GeminiResponseDto {
     }
 
     public static class Content {
+        @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+                "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD" }, justification = "JSON mapping DTO fields are intentionally public and populated by Jackson")
         public List<Part> parts;
         public String role;
     }
 
     public static class Part {
+        @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "JSON mapping DTO fields are public and populated by Jackson")
         public String text;
     }
 
     public static class SafetyRating {
+        @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Safety rating fields are optional in API responses")
         public String lesson;
         public String probability;
     }
