@@ -3,7 +3,7 @@ package de.vptr.aimathtutor.component.dialog;
 import com.vaadin.flow.component.dialog.Dialog;
 
 /**
- * TODO: Class documentation.
+ * Base dialog for forms with predefined sizing and close behavior.
  */
 public class FormDialog extends Dialog {
 

@@ -47,7 +47,7 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Admin view for managing users: list, edit, create and remove user accounts.
  */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {

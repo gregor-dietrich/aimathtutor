@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.CommentEntity;
 
 /**
- * TODO: Class documentation.
+ * View DTO for comments used in UI grids and panels.
  */
 public class CommentViewDto {
     public Long id;

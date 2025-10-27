@@ -50,7 +50,8 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Called before the view is shown. Ensures authentication and triggers UI
+     * construction and data loading.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

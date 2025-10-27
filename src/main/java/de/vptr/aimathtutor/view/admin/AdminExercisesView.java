@@ -50,7 +50,7 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Admin view for managing exercises: listing, editing, and publishing.
  */
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
 public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {

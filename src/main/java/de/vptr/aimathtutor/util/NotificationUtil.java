@@ -4,7 +4,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 
 /**
- * TODO: Class documentation.
+ * Utility helper for displaying user notifications (info/warning/error).
  */
 public final class NotificationUtil {
 

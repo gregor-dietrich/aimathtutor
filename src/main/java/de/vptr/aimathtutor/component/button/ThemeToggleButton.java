@@ -8,7 +8,7 @@ import de.vptr.aimathtutor.service.ThemeService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * TODO: Class documentation.
+ * Toggle between available UI themes. Renders an icon reflecting current theme.
  */
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Service reference is transient and intentionally stored for runtime behavior; not serialized")
 public class ThemeToggleButton extends Button {
@@ -43,6 +43,8 @@ public class ThemeToggleButton extends Button {
             case SYSTEM:
                 this.setIcon(LineAwesomeIcon.DESKTOP_SOLID.create());
                 this.setTooltipText("Switch to Light Theme");
+                break;
+            default:
                 break;
         }
     }

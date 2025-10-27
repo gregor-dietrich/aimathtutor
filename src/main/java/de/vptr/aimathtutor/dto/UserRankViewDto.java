@@ -3,7 +3,7 @@ package de.vptr.aimathtutor.dto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
 /**
- * TODO: Class documentation.
+ * DTO representing a user rank/permission set for UI display.
  */
 public class UserRankViewDto {
 

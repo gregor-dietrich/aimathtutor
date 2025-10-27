@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 /**
- * TODO: Class documentation.
+ * DTO representing a user used for API and UI binding.
  */
 public class UserDto {
 

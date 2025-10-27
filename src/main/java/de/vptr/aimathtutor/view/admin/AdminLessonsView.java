@@ -42,7 +42,7 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Admin view for managing lessons and their hierarchy.
  */
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
 public class AdminLessonsView extends VerticalLayout implements BeforeEnterObserver {

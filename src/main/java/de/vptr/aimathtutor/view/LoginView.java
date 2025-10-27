@@ -19,7 +19,9 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Login view for the application. Provides username/password fields and
+ * handles user authentication via the
+ * {@link de.vptr.aimathtutor.service.AuthService}.
  */
 @Route(value = "login", layout = MainLayout.class)
 @PageTitle("AI Math Tutor - Login")

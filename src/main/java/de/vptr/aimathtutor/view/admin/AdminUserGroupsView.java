@@ -42,7 +42,7 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Admin view for managing user groups and their memberships.
  */
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
 public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterObserver {

@@ -21,7 +21,7 @@ import de.vptr.aimathtutor.service.LessonService;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Public lessons view listing available lessons and their exercises.
  */
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {

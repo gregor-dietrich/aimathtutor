@@ -32,13 +32,10 @@ import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
- * CommentsPanel: Reusable Vaadin component for displaying and creating comments
- * on exercises. Supports threading, permission-based UI, and pagination.
- *
- * NOTE: This component is NOT a CDI bean and is instantiated directly via
- * new().
- * The @Vetoed annotation excludes it from CDI bean discovery.
- * CommentService is looked up programmatically at runtime rather than injected.
+ * CommentsPanel: Reusable Vaadin component for displaying and creating
+ * comments on exercises. Supports threading, permission-based UI, and
+ * pagination. This component is not a CDI bean and performs a programmatic
+ * lookup of {@link de.vptr.aimathtutor.service.CommentService} when needed.
  */
 @Vetoed
 public class CommentsPanel extends VerticalLayout {

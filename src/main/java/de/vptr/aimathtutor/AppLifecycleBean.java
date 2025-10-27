@@ -9,7 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
 /**
- * TODO: Class documentation.
+ * Application lifecycle bean used for startup/shutdown hooks and initialization
+ * tasks.
  */
 @ApplicationScoped
 public class AppLifecycleBean {

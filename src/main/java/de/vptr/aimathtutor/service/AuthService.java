@@ -16,7 +16,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Authentication helper service offering login/logout and current user info.
  */
 @ApplicationScoped
 public class AuthService {

@@ -25,7 +25,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Main application layout wrapping views with navigation and header.
  */
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 

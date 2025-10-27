@@ -47,7 +47,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Administrative view for managing comments. Provides search, filtering,
+ * editing and moderation tools for administrators.
  */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
 public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
@@ -85,7 +86,8 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Lifecycle callback invoked before entering the view. Ensures the user is
+     * authenticated and initializes the UI and data loading.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

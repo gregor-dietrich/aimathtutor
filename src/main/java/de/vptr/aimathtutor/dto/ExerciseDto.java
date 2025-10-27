@@ -68,14 +68,18 @@ public class ExerciseDto {
         }
 
         /**
-         * TODO: Document setId().
+         * Set the nested user's id.
+         *
+         * @param id user id
          */
         public void setId(final Long id) {
             this.id = id;
         }
 
         /**
-         * TODO: Document setUsername().
+         * Set the nested user's username.
+         *
+         * @param username username string
          */
         public void setUsername(final String username) {
             this.username = username;

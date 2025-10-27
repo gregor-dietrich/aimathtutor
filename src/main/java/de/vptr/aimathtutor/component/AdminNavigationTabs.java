@@ -8,7 +8,8 @@ import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.view.admin.*;
 
 /**
- * TODO: Class documentation.
+ * Vertical navigation tabs used in the admin area. Tabs are created based on
+ * the provided user's rank/permissions.
  */
 public class AdminNavigationTabs extends Tabs {
 

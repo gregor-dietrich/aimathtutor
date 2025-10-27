@@ -160,55 +160,6 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document updateComment().
-     */
-    @Transactional
-    public CommentViewDto updateComment(final CommentEntity comment) {
-        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
-        if (existingComment == null) {
-            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        // Validate content is provided for complete replacement (PUT)
-        if (comment.content == null || comment.content.trim().isEmpty()) {
-            throw new ValidationException("Content is required for updating a comment");
-        }
-
-        // Only update content field for PUT (since we only allow content in DTO)
-        existingComment.content = comment.content;
-
-        this.commentRepository.persist(existingComment);
-        return new CommentViewDto(existingComment);
-    }
-
-    /**
-     * TODO: Document patchComment().
-     */
-    @Transactional
-    public CommentViewDto patchComment(final CommentEntity comment) {
-        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
-        if (existingComment == null) {
-            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        // Partial update (PATCH semantics) - only update provided fields
-        if (comment.content != null) {
-            existingComment.content = comment.content;
-        }
-
-        this.commentRepository.persist(existingComment);
-        return new CommentViewDto(existingComment);
-    }
-
-    /**
-     * TODO: Document deleteComment().
-     */
-    @Transactional
-    public boolean deleteComment(final Long id) {
-        return this.commentRepository.deleteById(id);
-    }
-
-    /**
      * Create a new comment with rate limiting and validation
      */
     @Transactional
@@ -305,46 +256,52 @@ public class CommentService {
     }
 
     /**
-     * Edit a comment with permission check
+     * TODO: Document updateComment().
      */
     @Transactional
-    public CommentViewDto editComment(final Long commentId, final CommentDto dto, final Long editorId) {
-        LOG.info("Attempting to edit comment: commentId={}, editorId={}", commentId, editorId);
-
-        final CommentEntity comment = this.commentRepository.findById(commentId);
-        if (comment == null) {
-            LOG.warn("Edit comment failed: comment not found commentId={}, editorId={}", commentId, editorId);
+    public CommentViewDto updateComment(final CommentEntity comment) {
+        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
+        if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        // Check permission: only author or moderator/admin
-        final UserEntity editor = this.userRepository.findById(editorId);
-        if (editor == null) {
-            LOG.warn("Edit comment failed: editor not found editorId={}", editorId);
-            throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
+        // Validate content is provided for complete replacement (PUT)
+        if (comment.content == null || comment.content.trim().isEmpty()) {
+            throw new ValidationException("Content is required for updating a comment");
         }
 
-        final boolean isAuthor = comment.user.id.equals(editorId);
-        final boolean isModerator = this.isModerator(editor);
+        // Only update content field for PUT (since we only allow content in DTO)
+        existingComment.content = comment.content;
 
-        if (!isAuthor && !isModerator) {
-            LOG.warn("Edit comment unauthorized: commentId={}, editorId={}, isAuthor={}, isModerator={}", commentId,
-                    editorId, isAuthor, isModerator);
-            throw new WebApplicationException("Not authorized to edit this comment",
-                    Response.Status.FORBIDDEN);
+        this.commentRepository.persist(existingComment);
+        return new CommentViewDto(existingComment);
+    }
+
+    /**
+     * TODO: Document patchComment().
+     */
+    @Transactional
+    public CommentViewDto patchComment(final CommentEntity comment) {
+        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
+        if (existingComment == null) {
+            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        // Update content
-        if (dto.content != null && !dto.content.trim().isEmpty()) {
-            comment.content = dto.content.trim();
-            comment.editedAt = LocalDateTime.now();
-            this.commentRepository.persist(comment);
-            LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
-                    isAuthor);
+        // Partial update (PATCH semantics) - only update provided fields
+        if (comment.content != null) {
+            existingComment.content = comment.content;
         }
 
-        // no-op: repository methods return entities with needed relations when used
-        return new CommentViewDto(comment);
+        this.commentRepository.persist(existingComment);
+        return new CommentViewDto(existingComment);
+    }
+
+    /**
+     * TODO: Document deleteComment().
+     */
+    @Transactional
+    public boolean deleteComment(final Long id) {
+        return this.commentRepository.deleteById(id);
     }
 
     /**
@@ -395,6 +352,49 @@ public class CommentService {
             this.commentRepository.deleteById(commentId);
             LOG.info("Comment hard-deleted: commentId={}, requesterId={}", commentId, requesterId);
         }
+    }
+
+    /**
+     * Edit a comment with permission check
+     */
+    @Transactional
+    public CommentViewDto editComment(final Long commentId, final CommentDto dto, final Long editorId) {
+        LOG.info("Attempting to edit comment: commentId={}, editorId={}", commentId, editorId);
+
+        final CommentEntity comment = this.commentRepository.findById(commentId);
+        if (comment == null) {
+            LOG.warn("Edit comment failed: comment not found commentId={}, editorId={}", commentId, editorId);
+            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
+        }
+
+        // Check permission: only author or moderator/admin
+        final UserEntity editor = this.userRepository.findById(editorId);
+        if (editor == null) {
+            LOG.warn("Edit comment failed: editor not found editorId={}", editorId);
+            throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
+        }
+
+        final boolean isAuthor = comment.user.id.equals(editorId);
+        final boolean isModerator = this.isModerator(editor);
+
+        if (!isAuthor && !isModerator) {
+            LOG.warn("Edit comment unauthorized: commentId={}, editorId={}, isAuthor={}, isModerator={}", commentId,
+                    editorId, isAuthor, isModerator);
+            throw new WebApplicationException("Not authorized to edit this comment",
+                    Response.Status.FORBIDDEN);
+        }
+
+        // Update content
+        if (dto.content != null && !dto.content.trim().isEmpty()) {
+            comment.content = dto.content.trim();
+            comment.editedAt = LocalDateTime.now();
+            this.commentRepository.persist(comment);
+            LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
+                    isAuthor);
+        }
+
+        // no-op: repository methods return entities with needed relations when used
+        return new CommentViewDto(comment);
     }
 
     /**

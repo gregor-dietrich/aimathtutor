@@ -42,7 +42,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 /**
- * TODO: Class documentation.
+ * Admin view for creating, editing and deleting user ranks (permission sets).
  */
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
 public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObserver {
@@ -72,7 +72,8 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Ensure the current user is authenticated and initialize the UI and
+     * asynchronous data loading for ranks.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
