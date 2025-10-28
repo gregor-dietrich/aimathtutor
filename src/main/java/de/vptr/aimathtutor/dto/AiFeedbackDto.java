@@ -45,6 +45,9 @@ public class AiFeedbackDto {
     @JsonProperty("session_id")
     public String sessionId;
 
+    /**
+     * Constructs an AiFeedbackDto with default values.
+     */
     public AiFeedbackDto() {
         this.timestamp = LocalDateTime.now();
         this.hints = new ArrayList<>();

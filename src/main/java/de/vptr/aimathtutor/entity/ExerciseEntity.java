@@ -9,6 +9,9 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Entity representing math exercises in the system.
+ */
 @Entity
 @Table(name = "exercises")
 @NamedQueries({
@@ -19,9 +22,6 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY id DESC"),
         @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY id DESC"),
 })
-/**
- * Entity representing math exercises in the system.
- */
 public class ExerciseEntity extends PanacheEntityBase {
 
     @Id

@@ -6,6 +6,9 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Entity representing user groups in the system.
+ */
 @Entity
 @Table(name = "user_groups")
 @NamedQueries({
@@ -13,9 +16,6 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "UserGroup.findByName", query = "FROM UserGroupEntity WHERE name = :n"),
         @NamedQuery(name = "UserGroup.searchByName", query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY id DESC")
 })
-/**
- * Entity representing user groups in the system.
- */
 public class UserGroupEntity extends PanacheEntityBase {
 
     @Id

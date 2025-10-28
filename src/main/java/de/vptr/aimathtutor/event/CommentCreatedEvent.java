@@ -15,6 +15,9 @@ public class CommentCreatedEvent {
     public final String content;
     public final LocalDateTime createdAt;
 
+    /**
+     * Constructs a CommentCreatedEvent with the specified parameters.
+     */
     public CommentCreatedEvent(final Long commentId, final Long exerciseId, final Long userId,
             final String username, final String content, final LocalDateTime createdAt) {
         this.commentId = commentId;

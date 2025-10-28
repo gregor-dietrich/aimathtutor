@@ -7,6 +7,9 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Entity representing comments on exercises.
+ */
 @NamedQueries({
         @NamedQuery(name = "Comment.findAllOrdered", query = "FROM CommentEntity ORDER BY id DESC"),
         @NamedQuery(name = "Comment.findAllWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment ORDER BY c.id DESC"),
@@ -19,9 +22,6 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findRecentWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findBySessionId", query = "FROM CommentEntity WHERE sessionId = :s ORDER BY created DESC"),
 })
-/**
- * Entity representing comments on exercises.
- */
 @Entity
 @Table(name = "comments")
 public class CommentEntity extends PanacheEntityBase {
