@@ -79,6 +79,9 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
     private Binder<CommentDto> binder;
     private transient CommentDto currentComment;
 
+    /**
+     * Construct the admin comments view and initialize layout properties.
+     */
     public AdminCommentsView() {
         this.setSizeFull();
         this.setPadding(true);

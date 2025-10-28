@@ -77,6 +77,9 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
     private transient UserDto currentUser;
     private transient List<UserRankViewDto> availableRanks;
 
+    /**
+     * Construct the admin users view and initialize default layout settings.
+     */
     public AdminUsersView() {
         this.setSizeFull();
         this.setPadding(true);
@@ -84,7 +87,8 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Lifecycle callback executed before the view is entered. Verifies the
+     * user is authenticated and triggers UI construction and data loading.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

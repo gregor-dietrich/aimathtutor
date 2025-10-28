@@ -67,7 +67,8 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Ensure authentication and prepare session listing before entering the
+     * view.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

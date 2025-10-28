@@ -1,12 +1,13 @@
 package de.vptr.aimathtutor.dto;
 
 /**
- * TODO: Class documentation.
+ * Result object returned by authentication operations. Encapsulates a status
+ * and an optional user-facing message.
  */
 public class AuthResultDto {
 
     /**
-     * TODO: Class documentation.
+     * Status codes for authentication results.
      */
     public enum Status {
         SUCCESS,
@@ -24,49 +25,51 @@ public class AuthResultDto {
     }
 
     /**
-     * TODO: Document success().
+     * Convenience factory for a successful authentication result.
      */
     public static AuthResultDto success() {
         return new AuthResultDto(Status.SUCCESS, "Authentication successful");
     }
 
     /**
-     * TODO: Document invalidCredentials().
+     * Convenience factory for invalid credential result.
      */
     public static AuthResultDto invalidCredentials() {
         return new AuthResultDto(Status.INVALID_CREDENTIALS, "Invalid username or password");
     }
 
     /**
-     * TODO: Document backendUnavailable().
+     * Convenience factory for backend-unavailable result with details.
      */
     public static AuthResultDto backendUnavailable(final String details) {
         return new AuthResultDto(Status.BACKEND_UNAVAILABLE, "Backend service unavailable: " + details);
     }
 
     /**
-     * TODO: Document invalidInput().
+     * Convenience factory for invalid input result.
      */
     public static AuthResultDto invalidInput() {
         return new AuthResultDto(Status.INVALID_INPUT, "Username and password are required");
     }
 
     /**
-     * TODO: Document getStatus().
+     * Return the authentication status code.
      */
     public Status getStatus() {
         return this.status;
     }
 
     /**
-     * TODO: Document getMessage().
+     * Return the user-facing message associated with this result.
      */
     public String getMessage() {
         return this.message;
     }
 
     /**
-     * TODO: Document isSuccess().
+     * Convenience boolean indicating whether authentication succeeded.
+     *
+     * @return true if status == SUCCESS
      */
     public boolean isSuccess() {
         return this.status == Status.SUCCESS;

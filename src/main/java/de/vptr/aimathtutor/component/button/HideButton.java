@@ -8,7 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * TODO: Class documentation.
+ * Button that hides or conceals an item. Displays an eye-slash icon and
+ * delegates the action to the provided click listener.
  */
 public class HideButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Hide";

@@ -39,6 +39,12 @@ public class DateFilterLayout extends HorizontalLayout {
         this.add(this.startDatePicker, this.endDatePicker, this.button);
     }
 
+    /**
+     * Construct a date filter layout with custom tooltip and field size.
+     *
+     * @param filterAction listener invoked when the filter button is pressed
+     * @param tooltipText  tooltip for the filter button
+     */
     public DateFilterLayout(final ComponentEventListener<ClickEvent<Button>> filterAction,
             final String tooltipText) {
         this(filterAction, tooltipText, DEFAULT_WIDTH);

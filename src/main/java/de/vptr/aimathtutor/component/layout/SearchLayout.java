@@ -50,6 +50,16 @@ public class SearchLayout extends HorizontalLayout {
         this.add(this.textField, this.button);
     }
 
+    /**
+     * Create a search layout combining a text field and a search button.
+     *
+     * @param listener        value change listener for the text field
+     * @param searchAction    click listener for the search button
+     * @param placeholderText placeholder text shown in the text field
+     * @param tooltipText     tooltip text for the button
+     * @param fieldLabel      label for the text field
+     */
+
     public SearchLayout(final HasValue.ValueChangeListener<ComponentValueChangeEvent<TextField, String>> listener,
             final ComponentEventListener<ClickEvent<Button>> searchAction, final String placeholderText,
             final String tooltipText, final String fieldLabel) {

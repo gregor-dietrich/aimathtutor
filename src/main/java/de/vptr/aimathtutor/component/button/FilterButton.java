@@ -8,7 +8,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * TODO: Class documentation.
+ * Button that triggers a filter action. Displays a filter icon and applies
+ * any provided theme variants. Parent layouts can use this button to start
+ * search or filter operations.
  */
 public class FilterButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Search";

@@ -51,8 +51,15 @@ public class CommentsPanel extends VerticalLayout {
     private TextArea commentTextArea;
     private Button submitButton;
     private int currentPage = 0;
-    private Long currentParentId = null; // For threading
+    private Long currentParentId = null;
 
+    /**
+     * Create a comments panel for the specified exercise/session and user.
+     *
+     * @param exerciseId    id of the exercise to display comments for
+     * @param sessionId     external session id (optional)
+     * @param currentUserId current user database id (may be null)
+     */
     public CommentsPanel(final Long exerciseId, final String sessionId, final Long currentUserId) {
         this.exerciseId = exerciseId;
         this.sessionId = sessionId;

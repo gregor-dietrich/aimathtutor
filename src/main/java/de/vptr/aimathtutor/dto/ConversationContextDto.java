@@ -71,7 +71,7 @@ public class ConversationContextDto {
     }
 
     /**
-     * TODO: Document toString().
+     * Return a compact summary of the conversation context for logging.
      */
     @Override
     public String toString() {

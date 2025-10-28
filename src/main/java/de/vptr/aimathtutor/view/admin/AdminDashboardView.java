@@ -42,6 +42,9 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
     // Map to store references to stat card value spans for efficient updates
     private final transient Map<String, Span> statCardValues = new HashMap<>();
 
+    /**
+     * Create a new admin dashboard view with default layout initialization.
+     */
     public AdminDashboardView() {
         this.setSizeFull();
         this.setPadding(true);

@@ -81,7 +81,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Verify authentication and initialize the view before navigation.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

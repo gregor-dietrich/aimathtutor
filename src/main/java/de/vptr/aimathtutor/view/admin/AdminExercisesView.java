@@ -93,7 +93,8 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Verify authentication and set up the exercise management UI before the
+     * view is displayed.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

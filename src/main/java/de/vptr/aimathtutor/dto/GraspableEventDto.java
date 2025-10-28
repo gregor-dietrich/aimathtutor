@@ -54,7 +54,7 @@ public class GraspableEventDto {
     }
 
     /**
-     * TODO: Document toString().
+     * Debug-friendly string representation of the event.
      */
     @Override
     public String toString() {

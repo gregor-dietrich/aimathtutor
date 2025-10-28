@@ -10,7 +10,9 @@ import de.vptr.aimathtutor.component.button.FilterButton;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * TODO: Class documentation.
+ * Composite layout containing an integer input field and a filter button.
+ * Parent views can read the entered integer and trigger the filter using the
+ * exposed button. Designed for compact numeric filters in list views.
  */
 public class IntegerFilterLayout extends HorizontalLayout {
 
@@ -49,7 +51,10 @@ public class IntegerFilterLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getButton().
+     * Return the internal filter button so callers can attach listeners or
+     * programmatically trigger the filter action.
+     *
+     * @return filter button contained in this layout
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose button intentionally for parent views to trigger filter actions")
     public Button getButton() {
@@ -57,7 +62,10 @@ public class IntegerFilterLayout extends HorizontalLayout {
     }
 
     /**
-     * TODO: Document getIntegerField().
+     * Return the integer field used to enter the filter value. Parent views
+     * can read or set the value and attach listeners as needed.
+     *
+     * @return the integer input field
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose IntegerField intentionally for parent views to read/set values")
     public IntegerField getIntegerField() {

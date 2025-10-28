@@ -65,7 +65,8 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Perform authentication check and construct the progress dashboard before
+     * the view becomes visible.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

@@ -60,7 +60,8 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Lifecycle method executed before entering the session detail view; it
+     * enforces authentication and prepares view data.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

@@ -72,7 +72,8 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Ensure user authorization and initialize lesson management components
+     * before the view becomes visible.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

@@ -29,10 +29,6 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findByStatus", query = "FROM CommentEntity WHERE status = :st"),
         @NamedQuery(name = "Comment.findFlaggedComments", query = "FROM CommentEntity WHERE flagsCount >= :m ORDER BY flagsCount DESC")
 })
-/**
- * JPA entity representing a comment posted by a user on an exercise. Supports
- * threading through parentCommentId and soft deletion via status fields.
- */
 @Entity
 @Table(name = "comments")
 public class CommentEntity extends PanacheEntityBase {
