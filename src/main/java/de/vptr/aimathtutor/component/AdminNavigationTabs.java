@@ -13,6 +13,11 @@ import de.vptr.aimathtutor.view.admin.*;
  */
 public class AdminNavigationTabs extends Tabs {
 
+    /**
+     * Constructs AdminNavigationTabs with tabs based on user rank permissions.
+     *
+     * @param userRank the user's rank and permissions
+     */
     public AdminNavigationTabs(final UserRankViewDto userRank) {
         this.setOrientation(Orientation.VERTICAL);
         this.setWidthFull();

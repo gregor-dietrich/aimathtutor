@@ -27,6 +27,17 @@ public class SearchLayout extends HorizontalLayout {
     private Button button;
     private final TextField textField;
 
+    /**
+     * Constructs a SearchLayout with text field and search button.
+     *
+     * @param listener        the value change listener for the text field
+     * @param searchAction    the action to perform when the search button is
+     *                        clicked
+     * @param placeholderText the placeholder text for the text field
+     * @param tooltipText     the tooltip text for the button
+     * @param fieldLabel      the label for the text field
+     * @param fieldWidth      the width of the text field
+     */
     public SearchLayout(final HasValue.ValueChangeListener<ComponentValueChangeEvent<TextField, String>> listener,
             final ComponentEventListener<ClickEvent<Button>> searchAction, final String placeholderText,
             final String tooltipText, final String fieldLabel, final String fieldWidth) {

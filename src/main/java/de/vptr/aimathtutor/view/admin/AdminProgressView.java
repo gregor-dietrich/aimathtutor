@@ -58,6 +58,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
 
+    /**
+     * Constructs the AdminProgressView with full size and padding.
+     */
     public AdminProgressView() {
         this.setSizeFull();
         this.setPadding(true);
@@ -142,6 +145,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         this.add(this.grid);
     }
 
+    /**
+     * Create the search layout including date filters and reset button.
+     *
+     * @return the constructed SearchLayout
+     */
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
@@ -168,6 +176,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         return searchLayout;
     }
 
+    /**
+     * Create the button layout for the progress view.
+     *
+     * @return a horizontal layout containing action buttons
+     */
     private HorizontalLayout createButtonLayout() {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -178,6 +191,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         return layout;
     }
 
+    /**
+     * Search for students by username and update the grid with results.
+     */
     private void searchStudents() {
         final String searchTerm = this.searchField.getValue();
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
@@ -197,6 +213,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         }
     }
 
+    /**
+     * Load aggregated progress data asynchronously and populate the grid.
+     */
     private void loadProgressData() {
         CompletableFuture.supplyAsync(() -> {
             try {
@@ -218,6 +237,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         });
     }
 
+    /**
+     * Filter the progress data by the selected start and end date.
+     */
     private void filterByDateRange() {
         try {
             final var allProgress = this.analyticsService.getAllUsersProgressSummary();

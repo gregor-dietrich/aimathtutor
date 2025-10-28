@@ -74,6 +74,9 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
     private transient ComboBox<UserViewDto> availableUsersCombo;
     private transient UserGroupViewDto selectedGroup;
 
+    /**
+     * Construct the admin view for managing user groups.
+     */
     public AdminUserGroupsView() {
         this.setSizeFull();
         this.setPadding(true);

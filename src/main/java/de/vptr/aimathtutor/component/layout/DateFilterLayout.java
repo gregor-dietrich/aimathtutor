@@ -23,6 +23,14 @@ public class DateFilterLayout extends HorizontalLayout {
     private final DatePicker startDatePicker;
     private final DatePicker endDatePicker;
 
+    /**
+     * Constructs a DateFilterLayout with start and end date pickers and a filter
+     * button.
+     *
+     * @param filterAction the action to perform when the filter button is clicked
+     * @param tooltipText  the tooltip text for the button
+     * @param fieldWidth   the width of the date picker fields
+     */
     public DateFilterLayout(final ComponentEventListener<ClickEvent<Button>> filterAction,
             final String tooltipText, final String fieldWidth) {
         this.setAlignItems(Alignment.END);

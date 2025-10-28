@@ -37,6 +37,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     @Inject
     private transient ExerciseService exerciseService;
 
+    /**
+     * Constructs the LessonsView with alignment and padding.
+     */
     public LessonsView() {
         this.setAlignItems(Alignment.START);
         this.setJustifyContentMode(JustifyContentMode.START);
@@ -46,7 +49,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Prepare the lessons view before navigation by building the UI.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

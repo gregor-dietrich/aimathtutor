@@ -13,6 +13,15 @@ public class ConfirmationDialog extends ConfirmDialog {
     private static final String DEFAULT_DIALOG_TITLE = "Confirm";
     private static final String DEFAULT_DIALOG_TEXT = "Are you sure?";
 
+    /**
+     * Constructs a ConfirmationDialog with the specified parameters.
+     *
+     * @param confirmAction     the action to perform on confirmation
+     * @param dialogTitle       the title of the dialog
+     * @param dialogText        the text of the dialog
+     * @param confirmButtonText the text for the confirm button
+     * @param cancelButtonText  the text for the cancel button
+     */
     public ConfirmationDialog(final ComponentEventListener<ConfirmDialog.ConfirmEvent> confirmAction,
             final String dialogTitle, final String dialogText, final String confirmButtonText,
             final String cancelButtonText) {

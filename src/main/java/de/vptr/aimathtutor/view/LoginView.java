@@ -34,6 +34,10 @@ public class LoginView extends VerticalLayout {
     @Inject
     private transient AuthService authService;
 
+    /**
+     * Construct the login view with username/password fields and a login
+     * handler.
+     */
     public LoginView() {
         this.setSizeFull();
         this.setAlignItems(Alignment.CENTER);

@@ -53,6 +53,9 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
     private transient VerticalLayout sessionInfoLayout;
     private transient Grid<AiInteractionViewDto> interactionsGrid;
 
+    /**
+     * Constructs the AdminSessionView with full size and padding.
+     */
     public AdminSessionView() {
         this.setSizeFull();
         this.setPadding(true);
@@ -82,6 +85,9 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.loadSessionDetails();
     }
 
+    /**
+     * Build the UI layout for session detail view.
+     */
     private void buildUi() {
         this.removeAll();
 
@@ -152,6 +158,9 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.add(this.interactionsGrid);
     }
 
+    /**
+     * Load details for the session and its AI interactions asynchronously.
+     */
     private void loadSessionDetails() {
         CompletableFuture.runAsync(() -> {
             try {
@@ -181,6 +190,9 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         });
     }
 
+    /**
+     * Populate the session info panel with details for the loaded session.
+     */
     private void updateSessionInfo() {
         if (this.session == null || this.sessionInfoLayout == null) {
             return;
@@ -259,6 +271,11 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.sessionInfoLayout.add(mainCard, metricsCard);
     }
 
+    /**
+     * Update the interactions grid with the provided list of AI interactions.
+     *
+     * @param interactions the interactions to display
+     */
     private void updateInteractionsGrid(final List<AiInteractionViewDto> interactions) {
         // Direct update using stored grid reference
         if (this.interactionsGrid != null) {

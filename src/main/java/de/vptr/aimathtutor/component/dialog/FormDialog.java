@@ -9,6 +9,9 @@ public class FormDialog extends Dialog {
 
     private static final String DEFAULT_WIDTH = "800px";
 
+    /**
+     * Constructs a FormDialog with default width.
+     */
     public FormDialog() {
         this(DEFAULT_WIDTH);
     }

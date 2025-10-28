@@ -60,6 +60,9 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
     private DatePicker endDatePicker;
     private Button resetFiltersButton;
 
+    /**
+     * Constructs the AdminSessionsView with full size and padding.
+     */
     public AdminSessionsView() {
         this.setSizeFull();
         this.setPadding(true);
@@ -145,6 +148,11 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         this.add(this.grid);
     }
 
+    /**
+     * Create the search layout used to filter sessions by text and date.
+     *
+     * @return the search layout
+     */
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
@@ -171,6 +179,11 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         return searchLayout;
     }
 
+    /**
+     * Create the layout that contains action buttons for the sessions view.
+     *
+     * @return a horizontal layout with action buttons
+     */
     private HorizontalLayout createButtonLayout() {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -181,6 +194,9 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         return layout;
     }
 
+    /**
+     * Search for sessions by the current search term and update the grid.
+     */
     private void searchSessions() {
         final String searchTerm = this.searchField.getValue();
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
@@ -197,6 +213,9 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         }
     }
 
+    /**
+     * Load all sessions asynchronously and populate the grid.
+     */
     private void loadSessions() {
         CompletableFuture.supplyAsync(() -> {
             try {
@@ -218,6 +237,9 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         });
     }
 
+    /**
+     * Filter sessions by the selected start and end dates.
+     */
     private void filterByDateRange() {
         try {
             final var allSessions = this.analyticsService.getAllSessions();
