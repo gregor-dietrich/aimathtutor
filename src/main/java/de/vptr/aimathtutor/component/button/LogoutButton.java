@@ -13,6 +13,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class LogoutButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Logout";
 
+    /**
+     * Constructs a LogoutButton with the specified action and tooltip.
+     */
     public LogoutButton(final ComponentEventListener<ClickEvent<Button>> logoutAction, final String tooltipText) {
         super("", logoutAction);
         this.addThemeVariants(ButtonVariant.LUMO_ERROR);

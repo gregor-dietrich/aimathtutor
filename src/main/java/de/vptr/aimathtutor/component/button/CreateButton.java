@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class CreateButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Create";
 
+    /**
+     * Constructs a CreateButton with the specified action and tooltip.
+     */
     public CreateButton(final ComponentEventListener<ClickEvent<Button>> createAction, final String tooltipText) {
         super("", createAction);
         this.addThemeVariants(ButtonVariant.LUMO_SUCCESS);

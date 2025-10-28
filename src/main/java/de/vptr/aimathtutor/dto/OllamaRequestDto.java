@@ -17,6 +17,9 @@ public class OllamaRequestDto {
     public Boolean stream; // false for single response
     public Options options;
 
+    /**
+     * Represents options for the Ollama request.
+     */
     public static class Options {
         public Double temperature;
         @JsonProperty("num_predict")

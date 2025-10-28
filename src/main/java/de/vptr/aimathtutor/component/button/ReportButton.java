@@ -17,6 +17,9 @@ public class ReportButton extends Button {
 
     private final ComponentEventListener<ClickEvent<Button>> reportAction;
 
+    /**
+     * Constructs a ReportButton with the specified action and tooltip.
+     */
     public ReportButton(final ComponentEventListener<ClickEvent<Button>> reportAction, final String tooltipText) {
         super("");
         this.reportAction = reportAction;

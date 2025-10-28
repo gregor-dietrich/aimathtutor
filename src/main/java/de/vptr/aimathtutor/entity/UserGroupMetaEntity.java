@@ -6,11 +6,14 @@ import java.util.List;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
+/**
+ * Entity representing metadata for user group memberships.
+ */
 @Entity
 @Table(name = "user_groups_meta")
 @NamedQueries({
         @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
-        @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity WHERE user.id = :u AND group.id = :g"),
+        @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity WHERE user.id = :u AND m.group.id = :g"),
         @NamedQuery(name = "UserGroupMeta.countByUserAndGroup", query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
         @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g")
 })

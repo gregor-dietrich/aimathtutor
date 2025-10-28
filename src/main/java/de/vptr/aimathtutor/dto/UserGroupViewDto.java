@@ -14,6 +14,9 @@ public class UserGroupViewDto {
     public UserGroupViewDto() {
     }
 
+    /**
+     * Constructs a UserGroupViewDto from a UserGroupEntity.
+     */
     public UserGroupViewDto(final UserGroupEntity entity) {
         this.id = entity.id;
         this.name = entity.name;

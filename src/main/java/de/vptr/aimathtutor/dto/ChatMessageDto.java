@@ -49,6 +49,14 @@ public class ChatMessageDto {
         this.timestamp = LocalDateTime.now();
     }
 
+    /**
+     * Constructs a ChatMessageDto with the specified sender, type, and message.
+     *
+     * @param sender      the sender of the message (USER or AI)
+     * @param messageType the type of the message (QUESTION, FEEDBACK, ANSWER,
+     *                    SYSTEM)
+     * @param message     the content of the message
+     */
     public ChatMessageDto(final Sender sender, final MessageType messageType, final String message) {
         this();
         this.sender = sender;

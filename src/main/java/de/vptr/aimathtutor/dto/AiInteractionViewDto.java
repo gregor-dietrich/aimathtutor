@@ -29,6 +29,9 @@ public class AiInteractionViewDto {
     public AiInteractionViewDto() {
     }
 
+    /**
+     * Constructs an AiInteractionViewDto from an AiInteractionEntity.
+     */
     public AiInteractionViewDto(final AiInteractionEntity entity) {
         if (entity != null) {
             this.id = entity.id;

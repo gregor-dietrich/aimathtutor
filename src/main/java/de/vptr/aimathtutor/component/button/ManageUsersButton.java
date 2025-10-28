@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class ManageUsersButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Manage Users";
 
+    /**
+     * Constructs a ManageUsersButton with the specified action and tooltip.
+     */
     public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction, final String tooltipText) {
         super("", addUserAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);

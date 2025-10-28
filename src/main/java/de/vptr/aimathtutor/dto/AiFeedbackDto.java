@@ -53,6 +53,9 @@ public class AiFeedbackDto {
         this.confidence = 1.0;
     }
 
+    /**
+     * Constructs an AiFeedbackDto with the specified type and message.
+     */
     public AiFeedbackDto(final FeedbackType type, final String message) {
         this();
         this.type = type;
@@ -60,7 +63,7 @@ public class AiFeedbackDto {
     }
 
     /**
-     * TODO: Document positive().
+     * Creates a positive feedback DTO with the specified message.
      */
     public static AiFeedbackDto positive(final String message) {
         return new AiFeedbackDto(FeedbackType.POSITIVE, message);

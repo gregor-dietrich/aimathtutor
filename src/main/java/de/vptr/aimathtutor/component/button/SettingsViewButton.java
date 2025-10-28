@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.Button;
 public class SettingsViewButton extends Button {
     private static final String DEFAULT_TOOLTIP = "User Settings";
 
+    /**
+     * Constructs a SettingsViewButton with the specified action and tooltip.
+     */
     public SettingsViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction, final String tooltipText) {
         super("", viewAction);
         this.setIcon(LineAwesomeIcon.COG_SOLID.create());

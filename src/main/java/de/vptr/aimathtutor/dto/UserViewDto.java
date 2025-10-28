@@ -29,6 +29,9 @@ public class UserViewDto {
     public UserViewDto() {
     }
 
+    /**
+     * Constructs a UserViewDto from a UserEntity.
+     */
     public UserViewDto(final UserEntity entity) {
         if (entity != null) {
             this.id = entity.id;

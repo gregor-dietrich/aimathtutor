@@ -19,6 +19,9 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "User.findByRankId", query = "FROM UserEntity WHERE rank.id = :r ORDER BY id DESC"),
         @NamedQuery(name = "User.searchByTerm", query = "FROM UserEntity WHERE LOWER(username) LIKE :s OR LOWER(email) LIKE :s ORDER BY id DESC")
 })
+/**
+ * Entity representing users in the system.
+ */
 @Entity
 @Table(name = "users")
 public class UserEntity extends PanacheEntityBase {

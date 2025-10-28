@@ -37,6 +37,9 @@ public class ExerciseViewDto {
     public ExerciseViewDto() {
     }
 
+    /**
+     * Constructs an ExerciseViewDto from an ExerciseEntity.
+     */
     public ExerciseViewDto(final ExerciseEntity entity) {
         if (entity != null) {
             this.id = entity.id;

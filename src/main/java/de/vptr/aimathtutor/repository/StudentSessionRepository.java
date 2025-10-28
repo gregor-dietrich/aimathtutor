@@ -98,6 +98,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * Finds student sessions by user ID and date range.
+     */
     public List<StudentSessionEntity> findByUserIdAndDateRange(final Long userId, final LocalDateTime start,
             final LocalDateTime end) {
         if (userId == null || start == null || end == null) {
@@ -110,6 +113,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * Finds student sessions by exercise ID and date range.
+     */
     public List<StudentSessionEntity> findByExerciseIdAndDateRange(final Long exerciseId, final LocalDateTime start,
             final LocalDateTime end) {
         if (exerciseId == null || start == null || end == null) {
@@ -122,6 +128,9 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * Finds student sessions by completion status and date range.
+     */
     public List<StudentSessionEntity> findByCompletedAndDateRange(final Boolean completed, final LocalDateTime start,
             final LocalDateTime end) {
         if (completed == null || start == null || end == null) {

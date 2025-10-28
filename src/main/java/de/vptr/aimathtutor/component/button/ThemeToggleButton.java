@@ -16,6 +16,9 @@ public class ThemeToggleButton extends Button {
     private static final long serialVersionUID = 1L;
     private final transient ThemeService themeService;
 
+    /**
+     * Constructs a ThemeToggleButton with the specified theme service.
+     */
     public ThemeToggleButton(final ThemeService themeService) {
         // store as transient to avoid serializing non-serializable service
         this.themeService = themeService;

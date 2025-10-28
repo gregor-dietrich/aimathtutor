@@ -26,6 +26,9 @@ public class CommentViewDto {
     public CommentViewDto() {
     }
 
+    /**
+     * Constructs a CommentViewDto from a CommentEntity.
+     */
     public CommentViewDto(final CommentEntity entity) {
         this.id = entity.id;
         this.content = entity.content;

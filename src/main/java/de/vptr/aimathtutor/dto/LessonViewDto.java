@@ -24,6 +24,9 @@ public class LessonViewDto {
         // Default constructor for Jackson
     }
 
+    /**
+     * Constructs a LessonViewDto from a LessonEntity.
+     */
     public LessonViewDto(final LessonEntity entity) {
         this.id = entity.id;
         this.name = entity.name;

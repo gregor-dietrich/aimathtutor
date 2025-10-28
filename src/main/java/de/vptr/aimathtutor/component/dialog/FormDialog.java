@@ -16,6 +16,9 @@ public class FormDialog extends Dialog {
         this(DEFAULT_WIDTH);
     }
 
+    /**
+     * Constructs a FormDialog with the specified width.
+     */
     public FormDialog(final String width) {
         this.setWidth(width);
         this.setCloseOnEsc(true);

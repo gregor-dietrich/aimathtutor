@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class RestoreButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Restore";
 
+    /**
+     * Constructs a RestoreButton with the specified action and tooltip.
+     */
     public RestoreButton(final ComponentEventListener<ClickEvent<Button>> restoreAction, final String tooltipText) {
         super("", restoreAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);

@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class ShowButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Show";
 
+    /**
+     * Constructs a ShowButton with the specified action and tooltip.
+     */
     public ShowButton(final ComponentEventListener<ClickEvent<Button>> showAction, final String tooltipText) {
         super("", showAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);

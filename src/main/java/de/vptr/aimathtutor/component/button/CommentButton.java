@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class CommentButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Add Comment";
 
+    /**
+     * Constructs a CommentButton with the specified action and tooltip.
+     */
     public CommentButton(final ComponentEventListener<ClickEvent<Button>> addUserAction, final String tooltipText) {
         super("", addUserAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);

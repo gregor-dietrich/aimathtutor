@@ -21,6 +21,9 @@ public class OpenAiResponseDto {
     public List<Choice> choices;
     public Usage usage;
 
+    /**
+     * Represents a choice in the OpenAI response.
+     */
     public static class Choice {
         public Integer index;
         public Message message;
@@ -28,11 +31,17 @@ public class OpenAiResponseDto {
         public String finishReason;
     }
 
+    /**
+     * Represents a message in the OpenAI response.
+     */
     public static class Message {
         public String role;
         public String content;
     }
 
+    /**
+     * Represents usage statistics in the OpenAI response.
+     */
     public static class Usage {
         @JsonProperty("prompt_tokens")
         public Integer promptTokens;

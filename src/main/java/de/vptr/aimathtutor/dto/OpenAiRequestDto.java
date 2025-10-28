@@ -35,6 +35,9 @@ public class OpenAiRequestDto {
     @JsonProperty("response_format")
     public ResponseFormat responseFormat;
 
+    /**
+     * Represents a message in the OpenAI request.
+     */
     public static class Message {
         public String role; // "system", "user", "assistant"
         public String content;
@@ -48,6 +51,9 @@ public class OpenAiRequestDto {
         }
     }
 
+    /**
+     * Represents the response format in the OpenAI request.
+     */
     public static class ResponseFormat {
         public String type; // "text" or "json_object"
 

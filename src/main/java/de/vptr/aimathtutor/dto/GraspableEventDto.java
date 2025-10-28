@@ -41,6 +41,9 @@ public class GraspableEventDto {
         this.timestamp = LocalDateTime.now();
     }
 
+    /**
+     * Constructs a GraspableEventDto with the specified parameters.
+     */
     public GraspableEventDto(final String eventType, final String expressionBefore,
             final String expressionAfter, final Long studentId,
             final Long exerciseId, final String sessionId) {

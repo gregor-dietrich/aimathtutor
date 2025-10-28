@@ -49,6 +49,9 @@ public class UserRankViewDto {
     public UserRankViewDto() {
     }
 
+    /**
+     * Constructs a UserRankViewDto from a UserRankEntity.
+     */
     public UserRankViewDto(final UserRankEntity entity) {
         if (entity != null) {
             this.id = entity.id;

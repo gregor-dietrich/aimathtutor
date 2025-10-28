@@ -18,9 +18,10 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY id DESC"),
         @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY id DESC"),
         @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.searchByTerm", query = "FROM ExerciseEntity WHERE LOWER(title) LIKE :s OR content LIKE :s OR LOWER(user.username) LIKE :s ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.findByDateRange", query = "FROM ExerciseEntity WHERE created >= :s AND created <= :e ORDER BY created DESC")
 })
+/**
+ * Entity representing math exercises in the system.
+ */
 public class ExerciseEntity extends PanacheEntityBase {
 
     @Id

@@ -22,6 +22,9 @@ public class GeminiRequestDto {
     @JsonProperty("safetySettings")
     public List<SafetySetting> safetySettings;
 
+    /**
+     * Represents content in the Gemini request.
+     */
     public static class Content {
         public List<Part> parts;
         public String role; // "user" or "model"
@@ -35,6 +38,9 @@ public class GeminiRequestDto {
         }
     }
 
+    /**
+     * Represents a part in the Gemini request content.
+     */
     public static class Part {
         public String text;
 
@@ -46,6 +52,9 @@ public class GeminiRequestDto {
         }
     }
 
+    /**
+     * Represents generation configuration in the Gemini request.
+     */
     public static class GenerationConfig {
         public Double temperature; // 0.0 to 1.0
         @JsonProperty("maxOutputTokens")
@@ -64,6 +73,9 @@ public class GeminiRequestDto {
         }
     }
 
+    /**
+     * Represents a safety setting in the Gemini request.
+     */
     public static class SafetySetting {
         public String category;
         public String threshold;

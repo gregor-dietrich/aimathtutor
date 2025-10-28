@@ -14,6 +14,9 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Lesson.findByParentId", query = "FROM LessonEntity WHERE parent.id = :p ORDER BY id DESC"),
         @NamedQuery(name = "Lesson.searchByName", query = "FROM LessonEntity WHERE LOWER(name) LIKE :s")
 })
+/**
+ * Entity representing lessons in the system.
+ */
 public class LessonEntity extends PanacheEntityBase {
 
     @Id

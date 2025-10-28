@@ -31,6 +31,9 @@ public class UserDto {
     public UserDto() {
     }
 
+    /**
+     * Constructs a UserDto with the specified parameters.
+     */
     public UserDto(final String username, final String password, final String email, final Long rankId,
             final Boolean banned, final Boolean activated, final String activationKey) {
         this.username = username;

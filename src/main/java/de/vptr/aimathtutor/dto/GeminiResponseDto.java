@@ -17,6 +17,9 @@ public class GeminiResponseDto {
     @JsonProperty("promptFeedback")
     public PromptFeedback promptFeedback;
 
+    /**
+     * Represents a candidate in the Gemini response.
+     */
     public static class Candidate {
         @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Populated by Jackson at runtime")
         public Content content;
@@ -28,6 +31,9 @@ public class GeminiResponseDto {
         public List<SafetyRating> safetyRatings;
     }
 
+    /**
+     * Represents content in the Gemini response.
+     */
     public static class Content {
         @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Populated by Jackson at runtime")
         public List<Part> parts;
@@ -35,11 +41,17 @@ public class GeminiResponseDto {
         public String role;
     }
 
+    /**
+     * Represents a part in the Gemini response content.
+     */
     public static class Part {
         @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "JSON mapping DTO fields are public and populated by Jackson")
         public String text;
     }
 
+    /**
+     * Represents a safety rating in the Gemini response.
+     */
     public static class SafetyRating {
         @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Safety rating fields are optional in API responses")
         public String lesson;
@@ -47,6 +59,9 @@ public class GeminiResponseDto {
         public String probability;
     }
 
+    /**
+     * Represents prompt feedback in the Gemini response.
+     */
     public static class PromptFeedback {
         @JsonProperty("safetyRatings")
         public List<SafetyRating> safetyRatings;

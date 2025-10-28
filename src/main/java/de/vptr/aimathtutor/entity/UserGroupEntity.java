@@ -13,6 +13,9 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "UserGroup.findByName", query = "FROM UserGroupEntity WHERE name = :n"),
         @NamedQuery(name = "UserGroup.searchByName", query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY id DESC")
 })
+/**
+ * Entity representing user groups in the system.
+ */
 public class UserGroupEntity extends PanacheEntityBase {
 
     @Id

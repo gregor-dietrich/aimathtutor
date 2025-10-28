@@ -23,6 +23,9 @@ public class ConversationContextDto {
     public ConversationContextDto() {
     }
 
+    /**
+     * Constructs a ConversationContextDto with the specified lists.
+     */
     public ConversationContextDto(final List<GraspableEventDto> recentActions,
             final List<ChatMessageDto> recentQuestions,
             final List<ChatMessageDto> recentAiMessages) {

@@ -17,6 +17,9 @@ public class RemoveUserButton extends Button {
 
     private final ComponentEventListener<ClickEvent<Button>> deleteAction;
 
+    /**
+     * Constructs a RemoveUserButton with the specified action and tooltip.
+     */
     public RemoveUserButton(final ComponentEventListener<ClickEvent<Button>> deleteAction, final String tooltipText) {
         super("");
         this.deleteAction = deleteAction;

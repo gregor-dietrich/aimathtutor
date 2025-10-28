@@ -13,6 +13,9 @@ import com.vaadin.flow.component.button.Button;
 public class UserViewButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Return to Homepage";
 
+    /**
+     * Constructs a UserViewButton with the specified action and tooltip.
+     */
     public UserViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction, final String tooltipText) {
         super("", viewAction);
         this.setIcon(LineAwesomeIcon.HOME_SOLID.create());

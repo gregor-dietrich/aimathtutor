@@ -14,6 +14,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class ReplyButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Reply";
 
+    /**
+     * Constructs a ReplyButton with the specified action and tooltip.
+     */
     public ReplyButton(final ComponentEventListener<ClickEvent<Button>> replyAction, final String tooltipText) {
         super("", replyAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);

@@ -23,6 +23,9 @@ public class IntegerFilterLayout extends HorizontalLayout {
     private final Button button;
     private final IntegerField integerField;
 
+    /**
+     * Constructs an IntegerFilterLayout with the specified parameters.
+     */
     public IntegerFilterLayout(final ComponentEventListener<ClickEvent<Button>> filterAction,
             final String tooltipText, final String fieldLabel, final String fieldWidth) {
         this.setAlignItems(Alignment.END);

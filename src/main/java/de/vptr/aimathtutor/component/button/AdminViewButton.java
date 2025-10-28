@@ -12,6 +12,9 @@ import com.vaadin.flow.component.button.Button;
 public class AdminViewButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Admin Panel";
 
+    /**
+     * Constructs an AdminViewButton with the specified action and tooltip.
+     */
     public AdminViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction, final String tooltipText) {
         super("", viewAction);
         this.setIcon(LineAwesomeIcon.TOOLS_SOLID.create());

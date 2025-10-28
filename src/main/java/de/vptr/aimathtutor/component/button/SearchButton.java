@@ -14,6 +14,10 @@ import com.vaadin.flow.component.button.ButtonVariant;
 public class SearchButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Search";
 
+    /**
+     * Constructs a SearchButton with the specified action, tooltip, and button
+     * variants.
+     */
     public SearchButton(final ComponentEventListener<ClickEvent<Button>> searchAction, final String tooltipText,
             final ButtonVariant... variants) {
         super("", searchAction);

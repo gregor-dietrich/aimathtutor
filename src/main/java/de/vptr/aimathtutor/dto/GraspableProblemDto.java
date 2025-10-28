@@ -90,6 +90,10 @@ public class GraspableProblemDto {
         this.hints = new ArrayList<>();
     }
 
+    /**
+     * Constructs a GraspableProblemDto with the specified title and initial
+     * expression.
+     */
     public GraspableProblemDto(final String title, final String initialExpression) {
         this();
         this.title = title;
