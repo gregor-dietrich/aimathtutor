@@ -21,6 +21,15 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findRecent", query = "FROM CommentEntity ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findRecentWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findBySessionId", query = "FROM CommentEntity WHERE sessionId = :s ORDER BY created DESC"),
+        @NamedQuery(name = "Comment.findBySessionIdWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.sessionId = :s ORDER BY c.created DESC"),
+        @NamedQuery(name = "Comment.findReplies", query = "FROM CommentEntity WHERE parentComment.id = :p AND status != 'DELETED' ORDER BY created ASC"),
+        @NamedQuery(name = "Comment.findRepliesWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.parentComment.id = :p AND c.status != 'DELETED' ORDER BY c.created ASC"),
+        @NamedQuery(name = "Comment.findTopLevelByExercise", query = "FROM CommentEntity WHERE exercise.id = :e AND parentComment IS NULL AND status != 'DELETED' ORDER BY id DESC"),
+        @NamedQuery(name = "Comment.countByUserSince", query = "SELECT COUNT(c) FROM CommentEntity c WHERE c.user.id = :u AND c.created >= :s"),
+        @NamedQuery(name = "Comment.searchByTerm", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE LOWER(c.content) LIKE LOWER(:s) AND c.status != 'DELETED' ORDER BY c.created DESC"),
+        @NamedQuery(name = "Comment.findByDateRange", query = "FROM CommentEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
+        @NamedQuery(name = "Comment.findByStatus", query = "FROM CommentEntity WHERE status = :st ORDER BY created DESC"),
+        @NamedQuery(name = "Comment.findFlaggedComments", query = "FROM CommentEntity WHERE flagsCount >= :m AND status = 'VISIBLE' ORDER BY flagsCount DESC"),
 })
 @Entity
 @Table(name = "comments")
