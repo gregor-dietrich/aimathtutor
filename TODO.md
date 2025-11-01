@@ -4,6 +4,11 @@
 
 ### Implementation Priority
 
+**Minor issues:**
+
+- Hidden comments are not actually hidden in the ExerciseWorkspaceView.
+- Lessons are only hidden if they have 0 exercises, but not if they have at least 1 unpublished exercise. Lessons should only be visible if they have at least 1 published exercise.
+
 1. **Graspable Math Action Validation (isValidAction)** (Task 7)
    Requires math parsing/normalization or CAS integration, careful testing and rollout.
 
