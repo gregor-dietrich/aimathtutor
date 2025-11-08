@@ -152,27 +152,4 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
             valueLabel.setText(value);
         }
     }
-
-    /**
-     * Ensure transient fields are initialized after deserialization.
-     */
-    private void readObject(final java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        // Reinitialize transient runtime map used for UI updates
-        if (this.statCardValues == null) {
-            // It's safe to reassign a new HashMap here because this field is only used at
-            // runtime
-            final Map<String, Span> m = new HashMap<>();
-            // assign to backing field via reflection isn't necessary since field is
-            // non-final
-            // Use a straightforward approach to set it
-            try {
-                final java.lang.reflect.Field f = AdminDashboardView.class.getDeclaredField("statCardValues");
-                f.setAccessible(true);
-                f.set(this, m);
-            } catch (final Exception e) {
-                // fallback: best-effort initialization
-            }
-        }
-    }
 }
