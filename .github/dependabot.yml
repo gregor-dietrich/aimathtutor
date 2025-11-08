@@ -14,8 +14,10 @@ updates:
     multi-ecosystem-group: "infrastructure"
     ignore:
       - dependency-name: "eclipse-temurin"
+        versions: ["<21.0.0", ">=22.0.0"]
+      - dependency-name: "eclipse-temurin"
         versions: ["21-jre-alpine-3.22"]
-        # Ignore the unpinned convenience tag; allow patch/build updates like 21.0.9_x or 21.0.8_10
+        # Ignore unpinned convenience tags; allow only pinned patch/build updates like 21.0.9_x
 
   - package-ecosystem: "maven"
     directory: "/"
