@@ -69,6 +69,7 @@ public class AiTutorService {
      *                messages
      * @return AI-generated feedback, or null if no feedback needed
      */
+    @Transactional
     public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}', context={}",
                 event.eventType, event.expressionBefore, event.expressionAfter, context);
@@ -94,7 +95,7 @@ public class AiTutorService {
         }
 
         // Load dynamic provider configuration
-    final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
+        final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
         LOG.info("Action is significant, generating feedback with provider: {}", aiProvider);
 
         // Use different AI provider based on configuration
@@ -200,19 +201,20 @@ public class AiTutorService {
      *                          and AI messages
      * @return AI-generated answer
      */
+    @Transactional
     public ChatMessageDto answerQuestion(final String question, final String currentExpression,
             final String sessionId, final ConversationContextDto context) {
         LOG.debug("Answering question: {} (session: {}, context: {})", question, sessionId, context);
 
-    // Load dynamic configuration (null-safe)
-    final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
+        // Load dynamic configuration (null-safe)
+        final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
         if (!aiEnabled) {
             return ChatMessageDto.aiAnswer(
                     "I'm currently offline, but keep working on the problem! You can ask your teacher for help.");
         }
 
         // Use different AI provider based on configuration
-    final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
+        final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
         final String provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
 
         final String answer = switch (provider) {
@@ -416,10 +418,10 @@ public class AiTutorService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-    final String prefix = this.getConfigString("ai.prompt.question.answering.prefix",
-        "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n");
-    final String postfix = this.getConfigString("ai.prompt.question.answering.postfix",
-        "\n\nProvide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
+        final String prefix = this.getConfigString("ai.prompt.question.answering.prefix",
+                "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n");
+        final String postfix = this.getConfigString("ai.prompt.question.answering.postfix",
+                "\n\nProvide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
 
         prompt.append(prefix);
 
@@ -528,10 +530,10 @@ public class AiTutorService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-    final String prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
-        "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.\n\nStudent Action:\n- Action Type: ");
-    final String postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
-        "\nProvide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
+        final String prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
+                "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.\n\nStudent Action:\n- Action Type: ");
+        final String postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
+                "\nProvide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
 
         prompt.append(prefix);
 
