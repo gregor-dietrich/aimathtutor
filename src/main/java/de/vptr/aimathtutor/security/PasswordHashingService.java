@@ -22,6 +22,17 @@ public class PasswordHashingService {
     private static final int SALT_LENGTH = 32; // 32 bytes = 256 bits
     private static final int HASH_LENGTH = 8 * SALT_LENGTH; // 256 bits
 
+    /**
+     * Cryptographically secure random number generator for salt generation.
+     * Initialized once at class loading time and reused for all instances.
+     * While SecureRandom initialization can be slow on some systems, this static
+     * pattern is optimal because:
+     * - Initialization happens only once per JVM startup
+     * - SecureRandom is thread-safe and expensive to instantiate
+     * - Reusing a single instance is both secure and efficient
+     * This is the recommended pattern for cryptographic randomness in production
+     * systems.
+     */
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /**

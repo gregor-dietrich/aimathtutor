@@ -663,6 +663,11 @@ public class AiTutorService {
         problem.category = category != null ? category : GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
 
         // Generate random problems based on category
+        // ThreadLocalRandom is used (not SecureRandom) because:
+        // - Problem generation does not require cryptographic security
+        // - ThreadLocalRandom is more efficient for concurrent access
+        // - Each thread has its own random instance, avoiding contention
+        // - No initialization overhead compared to SecureRandom
         final var random = ThreadLocalRandom.current();
 
         switch (problem.category) {
