@@ -30,13 +30,15 @@ import jakarta.validation.ValidationException;
 @PageTitle("Settings")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(UserSettingsView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    UserService userService;
+    private transient UserService userService;
 
     private PasswordField currentPasswordField;
     private PasswordField newPasswordField;
@@ -50,6 +52,13 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private String currentUsername;
     private String currentEmail;
 
+    /**
+     * Called before navigation occurs. Checks authentication, loads current user
+     * information,
+     * and builds the settings UI. Redirects to login if not authenticated.
+     *
+     * @param event the before enter navigation event
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         // Check authentication
@@ -70,11 +79,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.currentUsername = user.username;
         this.currentEmail = user.email;
 
-        this.buildUI();
+        this.buildUi();
         this.loadCurrentSettings();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.setSizeFull();
         this.setSpacing(true);
         this.setPadding(true);

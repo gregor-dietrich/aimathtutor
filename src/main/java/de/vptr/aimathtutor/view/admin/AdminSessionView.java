@@ -19,7 +19,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.dto.AIInteractionViewDto;
+import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
@@ -36,28 +36,36 @@ import jakarta.inject.Inject;
 @PageTitle("Session Details - AI Math Tutor")
 public class AdminSessionView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminSessionView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
-    private String sessionId;
-    private StudentSessionViewDto session;
-    private VerticalLayout sessionInfoLayout;
-    private Grid<AIInteractionViewDto> interactionsGrid;
+    private transient String sessionId;
+    private transient StudentSessionViewDto session;
+    private transient VerticalLayout sessionInfoLayout;
+    private transient Grid<AiInteractionViewDto> interactionsGrid;
 
+    /**
+     * Constructs the AdminSessionView with full size and padding.
+     */
     public AdminSessionView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Lifecycle method executed before entering the session detail view; it
+     * enforces authentication and prepares view data.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -73,11 +81,14 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadSessionDetails();
     }
 
-    private void buildUI() {
+    /**
+     * Build the UI layout for session detail view.
+     */
+    private void buildUi() {
         this.removeAll();
 
         // Back button
@@ -102,7 +113,7 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         final var interactionsTitle = new H2("Interactions & Feedback");
         this.add(interactionsTitle);
 
-        this.interactionsGrid = new Grid<>(AIInteractionViewDto.class, false);
+        this.interactionsGrid = new Grid<>(AiInteractionViewDto.class, false);
         this.interactionsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.interactionsGrid.setSizeFull();
         this.interactionsGrid.setHeight("400px");
@@ -147,6 +158,9 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.add(this.interactionsGrid);
     }
 
+    /**
+     * Load details for the session and its AI interactions asynchronously.
+     */
     private void loadSessionDetails() {
         CompletableFuture.runAsync(() -> {
             try {
@@ -159,8 +173,8 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
                     return;
                 }
 
-                final List<AIInteractionViewDto> interactions = this.analyticsService
-                        .getAIInteractionsBySession(this.sessionId);
+                final List<AiInteractionViewDto> interactions = this.analyticsService
+                        .getAiInteractionsBySession(this.sessionId);
 
                 this.getUI().ifPresent(ui -> ui.access(() -> {
                     this.updateSessionInfo();
@@ -176,6 +190,9 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         });
     }
 
+    /**
+     * Populate the session info panel with details for the loaded session.
+     */
     private void updateSessionInfo() {
         if (this.session == null || this.sessionInfoLayout == null) {
             return;
@@ -254,7 +271,12 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.sessionInfoLayout.add(mainCard, metricsCard);
     }
 
-    private void updateInteractionsGrid(final List<AIInteractionViewDto> interactions) {
+    /**
+     * Update the interactions grid with the provided list of AI interactions.
+     *
+     * @param interactions the interactions to display
+     */
+    private void updateInteractionsGrid(final List<AiInteractionViewDto> interactions) {
         // Direct update using stored grid reference
         if (this.interactionsGrid != null) {
             this.interactionsGrid.setItems(interactions);

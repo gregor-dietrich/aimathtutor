@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Html;
@@ -21,13 +20,13 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.component.layout.AIChatPanel;
+import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.component.layout.CommentsPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.AITutorService;
+import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
@@ -43,38 +42,45 @@ import jakarta.inject.Inject;
 @PageTitle("Exercise Workspace")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(ExerciseWorkspaceView.class);
 
     @Inject
-    ExerciseService exerciseService;
+    private transient ExerciseService exerciseService;
 
     @Inject
-    AITutorService aiTutorService;
+    private transient AiTutorService aiTutorService;
 
     @Inject
-    GraspableMathService graspableMathService;
+    private transient GraspableMathService graspableMathService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
-    @Inject
-    ObjectMapper objectMapper;
-
-    private Long exerciseId;
-    private ExerciseViewDto exercise;
-    private String currentSessionId;
-    private int hintCount = 0;
-    private final ConversationContextDto conversationContext = new ConversationContextDto();
+    private transient Long exerciseId;
+    private transient ExerciseViewDto exercise;
+    private transient String currentSessionId;
+    private transient int hintCount = 0;
+    private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
-    private Div graspableCanvas;
-    private AIChatPanel chatPanel;
-    private CommentsPanel commentsPanel;
-    private VerticalLayout hintsPanel;
-    private Button requestHintButton;
-    private Button backButton;
-    private String currentExpression;
+    private transient Div graspableCanvas;
+    private transient AiChatPanel chatPanel;
+    private transient CommentsPanel commentsPanel;
+    private transient VerticalLayout hintsPanel;
+    private transient Button requestHintButton;
+    private transient Button backButton;
+    private transient String currentExpression;
 
+    /**
+     * Called before navigation occurs. Extracts exercise ID from route, loads
+     * exercise data,
+     * initializes session ID, validates exercise is published/commentable, and
+     * builds workspace UI.
+     * Redirects to lessons view if exercise not found or invalid.
+     *
+     * @param event the before enter navigation event
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         // Extract exerciseId from route parameters
@@ -171,6 +177,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 case "advanced":
                 case "expert":
                     badge.getElement().getThemeList().add("error");
+                    break;
+                default:
+                    // Unknown difficulty - keep default styling
                     break;
             }
             badge.getStyle().set("margin-top", "0.5rem");
@@ -295,7 +304,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
                 ? currentUserEntity.tutorAvatarEmoji
                 : "🧑‍🏫";
-        this.chatPanel = new AIChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
+        this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto.system(
@@ -312,6 +321,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.add(mainContentLayout);
     }
 
+    /**
+     * Attaches event listener when view is added to the UI tree.
+     * Initializes Graspable Math JavaScript widget if enabled for the exercise.
+     *
+     * @param attachEvent the attach event containing lifecycle information
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
@@ -337,27 +352,23 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
 
         // Initialize canvas and load problem once ready
-        final String initScript = String.format("""
-                setTimeout(function() {
-                    if (window.initializeGraspableMath) {
-                        window.initializeGraspableMath();
-
-                        // Wait for canvas to be ready, then load the problem
-                        var loadProblemWhenReady = function() {
-                            if (window.graspableCanvas && window.graspableMathUtils) {
-                                console.log('[Exercise] Canvas ready, loading problem');
-                                window.graspableMathUtils.loadProblem('%s', 100, 50);
-                            } else {
-                                console.log('[Exercise] Waiting for canvas...');
-                                setTimeout(loadProblemWhenReady, 200);
-                            }
-                        };
-                        setTimeout(loadProblemWhenReady, 500);
-                    } else {
-                        console.error('[Exercise] Graspable Math initialization function not found');
-                    }
-                }, 100);
-                """, this.exercise.graspableInitialExpression);
+        final String initScript = String.format("setTimeout(function() { %n"
+                + "  if (window.initializeGraspableMath) { %n"
+                + "    window.initializeGraspableMath(); %n"
+                + "    var loadProblemWhenReady = function() { %n"
+                + "      if (window.graspableCanvas && window.graspableMathUtils) { %n"
+                + "        console.log('[Exercise] Canvas ready, loading problem'); %n"
+                + "        window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
+                + "      } else { %n"
+                + "        console.log('[Exercise] Waiting for canvas...'); %n"
+                + "        setTimeout(loadProblemWhenReady, 200); %n"
+                + "      } %n"
+                + "    }; %n"
+                + "    setTimeout(loadProblemWhenReady, 500); %n"
+                + "  } else { %n"
+                + "    console.error('[Exercise] Graspable Math initialization function not found'); %n"
+                + "  } %n"
+                + "}, 100);%n", this.exercise.graspableInitialExpression);
 
         UI.getCurrent().getPage().executeJs(initScript);
 
@@ -370,9 +381,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      */
     private void registerServerConnector() {
         UI.getCurrent().getPage().executeJs(
-                "window.graspableViewConnector = { onMathAction: function(type, before, after) { " +
-                        "   $0.$server.onMathAction(type, before, after); " +
-                        "}}",
+                "window.graspableViewConnector = { onMathAction: function(type, before, after) { "
+                        + "   $0.$server.onMathAction(type, before, after); "
+                        + "}}",
                 this.getElement());
     }
 
@@ -446,7 +457,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     // Create feedback message and add to conversation context
                     final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
                     feedbackMessage.sessionId = this.currentSessionId;
-                    this.conversationContext.addAIMessage(feedbackMessage);
+                    this.conversationContext.addAiMessage(feedbackMessage);
 
                     // Display feedback inline (replaces displayFeedback method)
                     final var message = ChatMessageDto.aiFeedback(feedback.message);
@@ -517,7 +528,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                         this.chatPanel.hideTypingIndicator();
 
                         // Add AI answer to conversation context
-                        this.conversationContext.addAIMessage(answer);
+                        this.conversationContext.addAiMessage(answer);
 
                         // Display AI answer
                         this.chatPanel.addMessage(answer);

@@ -14,6 +14,13 @@ public final class PasswordUtility {
     private PasswordUtility() {
     }
 
+    /**
+     * Entry point for the password hashing utility CLI.
+     * Accepts command-line arguments to generate password hashes and salts.
+     * Supports "generate" command with password as argument.
+     *
+     * @param args command-line arguments (command name and parameters)
+     */
     public static void main(final String[] args) {
         if (args.length < 2) {
             printUsage();

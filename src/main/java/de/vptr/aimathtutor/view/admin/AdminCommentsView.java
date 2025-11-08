@@ -46,19 +46,24 @@ import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
+/**
+ * Administrative view for managing comments. Provides search, filtering,
+ * editing and moderation tools for administrators.
+ */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
 public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminCommentsView.class);
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    CommentService commentService;
+    private transient CommentService commentService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<CommentViewDto> grid;
     private TextField searchField;
@@ -72,14 +77,21 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
 
     private Dialog commentDialog;
     private Binder<CommentDto> binder;
-    private CommentDto currentComment;
+    private transient CommentDto currentComment;
 
+    /**
+     * Construct the admin comments view and initialize layout properties.
+     */
     public AdminCommentsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Lifecycle callback invoked before entering the view. Ensures the user is
+     * authenticated and initializes the UI and data loading.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -87,7 +99,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
 
         // If navigated with an exerciseId query parameter, filter comments
         final var params = event.getLocation().getQueryParameters().getParameters();
@@ -133,7 +145,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                 });
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Comments");

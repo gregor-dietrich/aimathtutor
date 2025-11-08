@@ -39,16 +39,18 @@ import jakarta.inject.Inject;
 @PageTitle("Student Progress - AI Math Tutor")
 public class AdminProgressView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(AdminProgressView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<StudentProgressSummaryDto> grid;
     private TextField searchField;
@@ -56,12 +58,19 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
 
+    /**
+     * Constructs the AdminProgressView with full size and padding.
+     */
     public AdminProgressView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Perform authentication check and construct the progress dashboard before
+     * the view becomes visible.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -69,11 +78,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadProgressData();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         // Title
@@ -136,6 +145,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         this.add(this.grid);
     }
 
+    /**
+     * Create the search layout including date filters and reset button.
+     *
+     * @return the constructed SearchLayout
+     */
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
@@ -162,6 +176,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         return searchLayout;
     }
 
+    /**
+     * Create the button layout for the progress view.
+     *
+     * @return a horizontal layout containing action buttons
+     */
     private HorizontalLayout createButtonLayout() {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -172,6 +191,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         return layout;
     }
 
+    /**
+     * Search for students by username and update the grid with results.
+     */
     private void searchStudents() {
         final String searchTerm = this.searchField.getValue();
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
@@ -191,6 +213,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         }
     }
 
+    /**
+     * Load aggregated progress data asynchronously and populate the grid.
+     */
     private void loadProgressData() {
         CompletableFuture.supplyAsync(() -> {
             try {
@@ -212,6 +237,9 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         });
     }
 
+    /**
+     * Filter the progress data by the selected start and end date.
+     */
     private void filterByDateRange() {
         try {
             final var allProgress = this.analyticsService.getAllUsersProgressSummary();

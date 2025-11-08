@@ -10,6 +10,11 @@ import javax.crypto.spec.PBEKeySpec;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * Service for secure password hashing and verification using PBKDF2.
+ * Implements OWASP-recommended password hashing with random salts and multiple
+ * iterations.
+ */
 @ApplicationScoped
 public class PasswordHashingService {
 
@@ -18,14 +23,26 @@ public class PasswordHashingService {
     private static final int HASH_LENGTH = 8 * SALT_LENGTH; // 256 bits
 
     /**
+     * Cryptographically secure random number generator for salt generation.
+     * Initialized once at class loading time and reused for all instances.
+     * While SecureRandom initialization can be slow on some systems, this static
+     * pattern is optimal because:
+     * - Initialization happens only once per JVM startup
+     * - SecureRandom is thread-safe and expensive to instantiate
+     * - Reusing a single instance is both secure and efficient
+     * This is the recommended pattern for cryptographic randomness in production
+     * systems.
+     */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    /**
      * Generates a random salt
      * 
      * @return Base64 encoded salt
      */
     public String generateSalt() {
-        final var random = new SecureRandom();
         final var salt = new byte[SALT_LENGTH];
-        random.nextBytes(salt);
+        SECURE_RANDOM.nextBytes(salt);
         return Base64.getEncoder().encodeToString(salt);
     }
 

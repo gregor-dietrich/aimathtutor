@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -22,41 +23,58 @@ import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.LoginView;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
+/**
+ * Main layout for the admin panel providing navigation, top bar, and content
+ * area.
+ * Implements authentication checks, admin permission validation, and theme
+ * application.
+ * Routes child admin views through a sidebar navigation and content area
+ * layout.
+ */
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminMainLayout.class);
 
-    private Button userViewButton;
-    private Button logoutButton;
-    private Tabs navigationTabs;
+    private transient Button userViewButton;
+    private transient Button logoutButton;
+    private transient Tabs navigationTabs;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    ThemeService themeService;
+    private transient ThemeService themeService;
 
     @Inject
-    UserRankService userRankService;
+    private transient UserRankService userRankService;
 
-    private HorizontalLayout topBar;
-    private HorizontalLayout rightSide;
-    private HorizontalLayout mainLayout;
-    private VerticalLayout sidebar;
-    private VerticalLayout contentArea;
-    private boolean initialized = false;
+    private transient HorizontalLayout topBar;
+    private transient HorizontalLayout rightSide;
+    private transient HorizontalLayout mainLayout;
+    private transient VerticalLayout sidebar;
+    private transient VerticalLayout contentArea;
+    private transient boolean initialized = false;
 
     /**
      * Get the shared top bar for views that need to add additional components
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intentionally exposed for child views to append components")
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }
 
+    /**
+     * Shows the router-managed content in the content area of the admin layout.
+     * Removes previous content and appends the new content element.
+     *
+     * @param content the Vaadin component to display
+     */
     @Override
-    public void showRouterLayoutContent(final com.vaadin.flow.component.HasElement content) {
+    public void showRouterLayoutContent(final HasElement content) {
         if (this.contentArea != null) {
             this.contentArea.getElement().removeAllChildren();
             this.contentArea.getElement().appendChild(content.getElement());
@@ -66,12 +84,27 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         }
     }
 
+    /**
+     * Attaches event listener when admin layout is added to the UI tree.
+     * Updates logout button visibility based on authentication state.
+     *
+     * @param attachEvent the attach event containing lifecycle information
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         this.updateLogoutButtonVisibility();
     }
 
+    /**
+     * Called before navigation occurs. Initializes layout on first entry, applies
+     * theme,
+     * checks authentication and admin permissions, hides navigation for login view,
+     * and shows/hides tabs.
+     * Redirects to login or home if authentication/permission checks fail.
+     *
+     * @param event the before enter navigation event
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         // Apply current theme on every navigation

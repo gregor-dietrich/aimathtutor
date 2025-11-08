@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Size;
  * - PUT: content required (validated by service), exerciseId ignored (from URL)
  * - PATCH: content optional (allows null), exerciseId ignored (from URL)
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO public fields intentionally used for JSON mapping and simplicity")
 public class CommentDto {
 
     public Long id;

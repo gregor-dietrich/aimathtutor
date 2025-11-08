@@ -8,6 +8,10 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
+/**
+ * Application lifecycle bean used for startup/shutdown hooks and initialization
+ * tasks.
+ */
 @ApplicationScoped
 public class AppLifecycleBean {
 

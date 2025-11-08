@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 
 class AIFeedbackDtoTest {
 
-    private AIFeedbackDto feedbackDto;
+    private AiFeedbackDto feedbackDto;
 
     @BeforeEach
     void setUp() {
-        this.feedbackDto = new AIFeedbackDto();
+        this.feedbackDto = new AiFeedbackDto();
     }
 
     @Test
@@ -33,12 +33,12 @@ class AIFeedbackDtoTest {
     @DisplayName("Should create AIFeedbackDto with parameterized constructor")
     void shouldCreateAIFeedbackDtoWithParameterizedConstructor() {
         // When
-        final AIFeedbackDto dto = new AIFeedbackDto(
-                AIFeedbackDto.FeedbackType.POSITIVE,
+        final AiFeedbackDto dto = new AiFeedbackDto(
+                AiFeedbackDto.FeedbackType.POSITIVE,
                 "Great job!");
 
         // Then
-        assertEquals(AIFeedbackDto.FeedbackType.POSITIVE, dto.type);
+        assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, dto.type);
         assertEquals("Great job!", dto.message);
         assertNotNull(dto.timestamp);
         assertEquals(1.0, dto.confidence);
@@ -48,10 +48,10 @@ class AIFeedbackDtoTest {
     @DisplayName("Should create positive feedback using factory method")
     void shouldCreatePositiveFeedbackUsingFactoryMethod() {
         // When
-        final AIFeedbackDto dto = AIFeedbackDto.positive("Excellent work!");
+        final AiFeedbackDto dto = AiFeedbackDto.positive("Excellent work!");
 
         // Then
-        assertEquals(AIFeedbackDto.FeedbackType.POSITIVE, dto.type);
+        assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, dto.type);
         assertEquals("Excellent work!", dto.message);
     }
 
@@ -59,10 +59,10 @@ class AIFeedbackDtoTest {
     @DisplayName("Should create corrective feedback using factory method")
     void shouldCreateCorrectiveFeedbackUsingFactoryMethod() {
         // When
-        final AIFeedbackDto dto = AIFeedbackDto.corrective("That's not quite right.");
+        final AiFeedbackDto dto = AiFeedbackDto.corrective("That's not quite right.");
 
         // Then
-        assertEquals(AIFeedbackDto.FeedbackType.CORRECTIVE, dto.type);
+        assertEquals(AiFeedbackDto.FeedbackType.CORRECTIVE, dto.type);
         assertEquals("That's not quite right.", dto.message);
     }
 
@@ -70,10 +70,10 @@ class AIFeedbackDtoTest {
     @DisplayName("Should create hint feedback using factory method")
     void shouldCreateHintFeedbackUsingFactoryMethod() {
         // When
-        final AIFeedbackDto dto = AIFeedbackDto.hint("Try factoring first.");
+        final AiFeedbackDto dto = AiFeedbackDto.hint("Try factoring first.");
 
         // Then
-        assertEquals(AIFeedbackDto.FeedbackType.HINT, dto.type);
+        assertEquals(AiFeedbackDto.FeedbackType.HINT, dto.type);
         assertEquals("Try factoring first.", dto.message);
     }
 
@@ -81,10 +81,10 @@ class AIFeedbackDtoTest {
     @DisplayName("Should create suggestion feedback using factory method")
     void shouldCreateSuggestionFeedbackUsingFactoryMethod() {
         // When
-        final AIFeedbackDto dto = AIFeedbackDto.suggestion("Consider a different approach.");
+        final AiFeedbackDto dto = AiFeedbackDto.suggestion("Consider a different approach.");
 
         // Then
-        assertEquals(AIFeedbackDto.FeedbackType.SUGGESTION, dto.type);
+        assertEquals(AiFeedbackDto.FeedbackType.SUGGESTION, dto.type);
         assertEquals("Consider a different approach.", dto.message);
     }
 
@@ -130,14 +130,14 @@ class AIFeedbackDtoTest {
     @DisplayName("Should set all fields correctly")
     void shouldSetAllFieldsCorrectly() {
         // When
-        this.feedbackDto.type = AIFeedbackDto.FeedbackType.HINT;
+        this.feedbackDto.type = AiFeedbackDto.FeedbackType.HINT;
         this.feedbackDto.message = "Try this approach";
         this.feedbackDto.detailedExplanation = "Here's why...";
         this.feedbackDto.confidence = 0.95;
         this.feedbackDto.sessionId = "session-123";
 
         // Then
-        assertEquals(AIFeedbackDto.FeedbackType.HINT, this.feedbackDto.type);
+        assertEquals(AiFeedbackDto.FeedbackType.HINT, this.feedbackDto.type);
         assertEquals("Try this approach", this.feedbackDto.message);
         assertEquals("Here's why...", this.feedbackDto.detailedExplanation);
         assertEquals(0.95, this.feedbackDto.confidence);
@@ -148,7 +148,7 @@ class AIFeedbackDtoTest {
     @DisplayName("Should generate toString with all fields")
     void shouldGenerateToStringWithAllFields() {
         // Given
-        this.feedbackDto.type = AIFeedbackDto.FeedbackType.POSITIVE;
+        this.feedbackDto.type = AiFeedbackDto.FeedbackType.POSITIVE;
         this.feedbackDto.message = "Well done!";
         this.feedbackDto.confidence = 0.88;
         this.feedbackDto.sessionId = "session-456";
@@ -168,11 +168,11 @@ class AIFeedbackDtoTest {
     @DisplayName("Should test all feedback types")
     void shouldTestAllFeedbackTypes() {
         // Test all enum values
-        assertEquals(5, AIFeedbackDto.FeedbackType.values().length);
-        assertNotNull(AIFeedbackDto.FeedbackType.POSITIVE);
-        assertNotNull(AIFeedbackDto.FeedbackType.CORRECTIVE);
-        assertNotNull(AIFeedbackDto.FeedbackType.HINT);
-        assertNotNull(AIFeedbackDto.FeedbackType.SUGGESTION);
-        assertNotNull(AIFeedbackDto.FeedbackType.NEUTRAL);
+        assertEquals(5, AiFeedbackDto.FeedbackType.values().length);
+        assertNotNull(AiFeedbackDto.FeedbackType.POSITIVE);
+        assertNotNull(AiFeedbackDto.FeedbackType.CORRECTIVE);
+        assertNotNull(AiFeedbackDto.FeedbackType.HINT);
+        assertNotNull(AiFeedbackDto.FeedbackType.SUGGESTION);
+        assertNotNull(AiFeedbackDto.FeedbackType.NEUTRAL);
     }
 }

@@ -13,10 +13,13 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.entity.CommentFlagEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
+import de.vptr.aimathtutor.repository.CommentFlagRepository;
+import de.vptr.aimathtutor.repository.CommentRepository;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -25,6 +28,10 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Service for managing comments: creation, editing, deletion, listing and
+ * moderation.
+ */
 @ApplicationScoped
 public class CommentService {
 
@@ -39,80 +46,107 @@ public class CommentService {
     @Inject
     Event<CommentCreatedEvent> commentCreatedEvent;
 
+    @Inject
+    CommentRepository commentRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    CommentFlagRepository commentFlagRepository;
+
+    /**
+     * Retrieves all comments in the system with loaded relationships.
+     *
+     * @return a list of all {@link CommentViewDto}s with exercise, user, and parent
+     *         data
+     */
     @Transactional
     public List<CommentViewDto> getAllComments() {
-        final List<CommentEntity> comments = CommentEntity.find("ORDER BY id DESC").list();
-        // Force load lazy fields within transaction
-        for (final CommentEntity comment : comments) {
-            comment.exercise.title.length(); // Force load exercise title
-            comment.user.username.length(); // Force load username
-            comment.content.length(); // Force load content
-        }
+        final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations();
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Finds a single comment by ID with loaded relationships.
+     *
+     * @param id the comment ID
+     * @return an {@link Optional} containing the {@link CommentViewDto} with
+     *         exercise/user data, or empty if not found
+     */
     @Transactional
     public Optional<CommentViewDto> findById(final Long id) {
-        final Optional<CommentEntity> comment = CommentEntity.findByIdOptional(id);
+        final Optional<CommentEntity> comment = this.commentRepository.findByIdOptionalWithRelations(id);
         if (comment.isPresent()) {
             final CommentEntity entity = comment.get();
-            // Force load lazy fields within transaction
-            entity.exercise.title.length(); // Force load exercise title
-            entity.user.username.length(); // Force load username
-            entity.content.length(); // Force load content
             return Optional.of(new CommentViewDto(entity));
         }
         return Optional.empty();
     }
 
+    /**
+     * Retrieves all top-level and threaded comments for a specific exercise.
+     *
+     * @param exerciseId the exercise ID
+     * @return a list of {@link CommentViewDto}s in the exercise with loaded
+     *         relationships
+     */
     @Transactional
     public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
-        final List<CommentEntity> comments = CommentEntity.find("exercise.id", exerciseId).list();
-        // Force load lazy fields within transaction
-        for (final CommentEntity comment : comments) {
-            comment.exercise.title.length(); // Force load exercise title
-            comment.user.username.length(); // Force load username
-            comment.content.length(); // Force load content
-        }
+        final List<CommentEntity> comments = this.commentRepository.findByExerciseIdWithRelations(exerciseId);
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves all comments authored by a specific user.
+     *
+     * @param userId the user ID
+     * @return a list of {@link CommentViewDto}s authored by the user with loaded
+     *         relationships
+     */
     @Transactional
     public List<CommentViewDto> findByUserId(final Long userId) {
-        final List<CommentEntity> comments = CommentEntity.find("user.id", userId).list();
-        // Force load lazy fields within transaction
-        for (final CommentEntity comment : comments) {
-            comment.exercise.title.length(); // Force load exercise title
-            comment.user.username.length(); // Force load username
-            comment.content.length(); // Force load content
-        }
+        final List<CommentEntity> comments = this.commentRepository.findByUserIdWithRelations(userId);
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves the most recently created comments with a limit on count.
+     *
+     * @param limit the maximum number of comments to return
+     * @return a list of up to {@code limit} recent {@link CommentViewDto}s with
+     *         loaded relationships
+     */
     @Transactional
     public List<CommentViewDto> findRecentComments(final int limit) {
-        final List<CommentEntity> comments = CommentEntity.findRecentComments(limit);
-        // Force initialization of lazy fields
-        for (final CommentEntity comment : comments) {
-            if (comment.exercise != null) {
-                comment.exercise.title.length(); // Force lazy loading
-            }
-            if (comment.user != null) {
-                comment.user.username.length(); // Force lazy loading
-            }
-            comment.content.length(); // Force load content
-        }
+        final List<CommentEntity> comments = this.commentRepository.findRecentCommentsWithRelations(limit);
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Creates a new comment with minimal validation (basic overload).
+     * Assigns current user and sets created timestamp. Validates exercise exists,
+     * is published, and allows comments.
+     *
+     * @param comment         the comment entity with content, exercise, and
+     *                        optional parent
+     * @param currentUsername the username of the current user for auto-assignment
+     * @return the created {@link CommentViewDto}
+     * @throws ValidationException     if content is missing or empty
+     * @throws WebApplicationException if exercise not found or not commentable
+     *                                 (BAD_REQUEST)
+     */
     @Transactional
     public CommentViewDto createComment(final CommentEntity comment, final String currentUsername) {
         // Validate content is provided for creation
@@ -121,7 +155,7 @@ public class CommentService {
         }
 
         // Validate exercise exists
-        final ExerciseEntity existingExercise = ExerciseEntity
+        final ExerciseEntity existingExercise = this.exerciseRepository
                 .findById(comment.exercise != null ? comment.exercise.id : null);
         if (existingExercise == null) {
             throw new WebApplicationException(
@@ -146,79 +180,12 @@ public class CommentService {
 
         // Auto-assign current user if not provided (skip existence check)
         if (comment.user == null) {
-            comment.user = (UserEntity) UserEntity.find("username", currentUsername).firstResultOptional().orElse(null);
+            comment.user = this.userRepository.findByUsernameOptional(currentUsername).orElse(null);
         }
 
         comment.created = LocalDateTime.now();
-        comment.persist();
-
-        // Force load lazy fields to avoid LazyInitializationException
-        if (comment.exercise != null) {
-            comment.exercise.title.length(); // Force lazy loading
-        }
-        if (comment.user != null) {
-            comment.user.username.length(); // Force lazy loading
-        }
-
+        this.commentRepository.persist(comment);
         return new CommentViewDto(comment);
-    }
-
-    @Transactional
-    public CommentViewDto updateComment(final CommentEntity comment) {
-        final CommentEntity existingComment = CommentEntity.findById(comment.id);
-        if (existingComment == null) {
-            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        // Validate content is provided for complete replacement (PUT)
-        if (comment.content == null || comment.content.trim().isEmpty()) {
-            throw new ValidationException("Content is required for updating a comment");
-        }
-
-        // Only update content field for PUT (since we only allow content in DTO)
-        existingComment.content = comment.content;
-
-        existingComment.persist();
-
-        // Force initialization of lazy fields to avoid LazyInitializationException
-        if (existingComment.exercise != null) {
-            existingComment.exercise.title.length(); // Force lazy loading
-        }
-        if (existingComment.user != null) {
-            existingComment.user.username.length(); // Force lazy loading
-        }
-
-        return new CommentViewDto(existingComment);
-    }
-
-    @Transactional
-    public CommentViewDto patchComment(final CommentEntity comment) {
-        final CommentEntity existingComment = CommentEntity.findById(comment.id);
-        if (existingComment == null) {
-            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        // Partial update (PATCH semantics) - only update provided fields
-        if (comment.content != null) {
-            existingComment.content = comment.content;
-        }
-
-        existingComment.persist();
-
-        // Force initialization of lazy fields to avoid LazyInitializationException
-        if (existingComment.exercise != null) {
-            existingComment.exercise.title.length(); // Force lazy loading
-        }
-        if (existingComment.user != null) {
-            existingComment.user.username.length(); // Force lazy loading
-        }
-
-        return new CommentViewDto(existingComment);
-    }
-
-    @Transactional
-    public boolean deleteComment(final Long id) {
-        return CommentEntity.deleteById(id);
     }
 
     /**
@@ -247,7 +214,7 @@ public class CommentService {
         }
 
         // 3. Validate exercise exists and allows comments
-        final ExerciseEntity exercise = ExerciseEntity.findById(dto.exerciseId);
+        final ExerciseEntity exercise = this.exerciseRepository.findById(dto.exerciseId);
         if (exercise == null) {
             LOG.warn("Comment creation failed: exercise not found for exerciseId={}, authorId={}", dto.exerciseId,
                     authorId);
@@ -271,7 +238,7 @@ public class CommentService {
         if (dto.parentCommentId != null) {
             LOG.debug("Creating reply comment: parentId={} for exerciseId={}, authorId={}", dto.parentCommentId,
                     dto.exerciseId, authorId);
-            parentComment = CommentEntity.findById(dto.parentCommentId);
+            parentComment = this.commentRepository.findById(dto.parentCommentId);
             if (parentComment == null) {
                 LOG.warn("Comment creation failed: parent comment not found for parentId={}, authorId={}",
                         dto.parentCommentId, authorId);
@@ -286,7 +253,7 @@ public class CommentService {
         }
 
         // 5. Get author
-        final UserEntity author = UserEntity.findById(authorId);
+        final UserEntity author = this.userRepository.findById(authorId);
         if (author == null) {
             LOG.warn("Comment creation failed: user not found for authorId={}", authorId);
             throw new WebApplicationException("User not found", Response.Status.BAD_REQUEST);
@@ -302,10 +269,10 @@ public class CommentService {
         comment.created = LocalDateTime.now();
         comment.status = "VISIBLE";
         comment.flagsCount = 0;
-        comment.persist();
+        this.commentRepository.persist(comment);
 
-        // 7. Force load lazy fields
-        this.forceLoadLazyFields(comment);
+        // 7. (relations are loaded by persist when returned) - no manual forcing
+        // required
 
         // 8. Fire CDI event for real-time updates
         this.commentCreatedEvent.fire(new CommentCreatedEvent(
@@ -318,46 +285,68 @@ public class CommentService {
     }
 
     /**
-     * Edit a comment with permission check
+     * Completely replaces an existing comment (PUT semantics).
+     * Only content field is updated; exercise, user, and parent remain unchanged.
+     *
+     * @param comment the comment entity with id and updated content
+     * @return the updated {@link CommentViewDto}
+     * @throws WebApplicationException if comment not found (NOT_FOUND status)
+     * @throws ValidationException     if content is missing or empty
      */
     @Transactional
-    public CommentViewDto editComment(final Long commentId, final CommentDto dto, final Long editorId) {
-        LOG.info("Attempting to edit comment: commentId={}, editorId={}", commentId, editorId);
-
-        final CommentEntity comment = CommentEntity.findById(commentId);
-        if (comment == null) {
-            LOG.warn("Edit comment failed: comment not found commentId={}, editorId={}", commentId, editorId);
+    public CommentViewDto updateComment(final CommentEntity comment) {
+        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
+        if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        // Check permission: only author or moderator/admin
-        final UserEntity editor = UserEntity.findById(editorId);
-        if (editor == null) {
-            LOG.warn("Edit comment failed: editor not found editorId={}", editorId);
-            throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
+        // Validate content is provided for complete replacement (PUT)
+        if (comment.content == null || comment.content.trim().isEmpty()) {
+            throw new ValidationException("Content is required for updating a comment");
         }
 
-        final boolean isAuthor = comment.user.id.equals(editorId);
-        final boolean isModerator = this.isModerator(editor);
+        // Only update content field for PUT (since we only allow content in DTO)
+        existingComment.content = comment.content;
 
-        if (!isAuthor && !isModerator) {
-            LOG.warn("Edit comment unauthorized: commentId={}, editorId={}, isAuthor={}, isModerator={}", commentId,
-                    editorId, isAuthor, isModerator);
-            throw new WebApplicationException("Not authorized to edit this comment",
-                    Response.Status.FORBIDDEN);
+        this.commentRepository.persist(existingComment);
+        return new CommentViewDto(existingComment);
+    }
+
+    /**
+     * Partially updates an existing comment (PATCH semantics).
+     * Only updates comment properties that are explicitly provided in the entity;
+     * null values are ignored.
+     *
+     * @param comment the comment entity with id and partial fields to update
+     * @return the updated {@link CommentViewDto}
+     * @throws WebApplicationException if comment not found (NOT_FOUND status)
+     */
+    @Transactional
+    public CommentViewDto patchComment(final CommentEntity comment) {
+        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
+        if (existingComment == null) {
+            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        // Update content
-        if (dto.content != null && !dto.content.trim().isEmpty()) {
-            comment.content = dto.content.trim();
-            comment.editedAt = LocalDateTime.now();
-            comment.persist();
-            LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
-                    isAuthor);
+        // Partial update (PATCH semantics) - only update provided fields
+        if (comment.content != null) {
+            existingComment.content = comment.content;
         }
 
-        this.forceLoadLazyFields(comment);
-        return new CommentViewDto(comment);
+        this.commentRepository.persist(existingComment);
+        return new CommentViewDto(existingComment);
+    }
+
+    /**
+     * Deletes a comment by ID (basic overload).
+     *
+     * @param id the comment ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if comment not
+     *         found
+     */
+    @Transactional
+    public boolean deleteComment(final Long id) {
+        return this.commentRepository.deleteById(id);
     }
 
     /**
@@ -368,13 +357,13 @@ public class CommentService {
         LOG.info("Attempting to delete comment: commentId={}, requesterId={}, softDelete={}", commentId, requesterId,
                 softDelete);
 
-        final CommentEntity comment = CommentEntity.findById(commentId);
+        final CommentEntity comment = this.commentRepository.findById(commentId);
         if (comment == null) {
             LOG.warn("Delete comment failed: comment not found commentId={}, requesterId={}", commentId, requesterId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        final UserEntity requester = UserEntity.findById(requesterId);
+        final UserEntity requester = this.userRepository.findById(requesterId);
         if (requester == null) {
             LOG.warn("Delete comment failed: requester not found requesterId={}", requesterId);
             throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
@@ -395,7 +384,7 @@ public class CommentService {
             comment.status = "DELETED";
             comment.deletedBy = requester;
             comment.deletedAt = LocalDateTime.now();
-            comment.persist();
+            this.commentRepository.persist(comment);
             LOG.info("Comment soft-deleted: commentId={}, requesterId={}, isAuthor={}", commentId, requesterId,
                     isAuthor);
         } else {
@@ -405,9 +394,52 @@ public class CommentService {
                 throw new WebApplicationException("Only moderators can permanently delete",
                         Response.Status.FORBIDDEN);
             }
-            CommentEntity.deleteById(commentId);
+            this.commentRepository.deleteById(commentId);
             LOG.info("Comment hard-deleted: commentId={}, requesterId={}", commentId, requesterId);
         }
+    }
+
+    /**
+     * Edit a comment with permission check
+     */
+    @Transactional
+    public CommentViewDto editComment(final Long commentId, final CommentDto dto, final Long editorId) {
+        LOG.info("Attempting to edit comment: commentId={}, editorId={}", commentId, editorId);
+
+        final CommentEntity comment = this.commentRepository.findById(commentId);
+        if (comment == null) {
+            LOG.warn("Edit comment failed: comment not found commentId={}, editorId={}", commentId, editorId);
+            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
+        }
+
+        // Check permission: only author or moderator/admin
+        final UserEntity editor = this.userRepository.findById(editorId);
+        if (editor == null) {
+            LOG.warn("Edit comment failed: editor not found editorId={}", editorId);
+            throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
+        }
+
+        final boolean isAuthor = comment.user.id.equals(editorId);
+        final boolean isModerator = this.isModerator(editor);
+
+        if (!isAuthor && !isModerator) {
+            LOG.warn("Edit comment unauthorized: commentId={}, editorId={}, isAuthor={}, isModerator={}", commentId,
+                    editorId, isAuthor, isModerator);
+            throw new WebApplicationException("Not authorized to edit this comment",
+                    Response.Status.FORBIDDEN);
+        }
+
+        // Update content
+        if (dto.content != null && !dto.content.trim().isEmpty()) {
+            comment.content = dto.content.trim();
+            comment.editedAt = LocalDateTime.now();
+            this.commentRepository.persist(comment);
+            LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
+                    isAuthor);
+        }
+
+        // no-op: repository methods return entities with needed relations when used
+        return new CommentViewDto(comment);
     }
 
     /**
@@ -417,7 +449,7 @@ public class CommentService {
     public void flagComment(final Long commentId, final Long flaggerId, final String reason) {
         LOG.info("Flagging comment: commentId={}, flaggerId={}, reason={}", commentId, flaggerId, reason);
 
-        final CommentEntity comment = CommentEntity.findById(commentId);
+        final CommentEntity comment = this.commentRepository.findById(commentId);
         if (comment == null) {
             LOG.warn("Flag comment failed: comment not found commentId={}, flaggerId={}", commentId, flaggerId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
@@ -429,18 +461,9 @@ public class CommentService {
             throw new WebApplicationException("Cannot flag your own comment", Response.Status.BAD_REQUEST);
         }
 
-        // Check if user has already flagged this comment
-        if (CommentFlagEntity.hasUserFlaggedComment(commentId, flaggerId)) {
-            LOG.info("User already flagged this comment: commentId={}, flaggerId={}", commentId, flaggerId);
-            throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
-        }
-
-        // Create flag record
-        final CommentFlagEntity flag = new CommentFlagEntity();
-        flag.comment = comment;
-        flag.flagger = UserEntity.findById(flaggerId);
-        flag.created = LocalDateTime.now();
-        flag.persist();
+        // Create flag record via repository (repository handles duplicate-check)
+        final var flagger = this.userRepository.findById(flaggerId);
+        this.commentFlagRepository.createFlag(comment, flagger);
 
         // Increment flag count
         comment.flagsCount = (comment.flagsCount != null ? comment.flagsCount : 0) + 1;
@@ -451,7 +474,7 @@ public class CommentService {
             LOG.warn("Comment auto-hidden due to flags: commentId={}, flagCount={}", commentId, comment.flagsCount);
         }
 
-        comment.persist();
+        this.commentRepository.persist(comment);
         LOG.info("Comment flagged: commentId={}, flaggerId={}, newFlagCount={}", commentId, flaggerId,
                 comment.flagsCount);
     }
@@ -468,24 +491,11 @@ public class CommentService {
 
         List<CommentEntity> comments;
         if (parentId == null) {
-            // Top-level comments
-            comments = CommentEntity.find(
-                    "exercise.id = ?1 AND parentComment IS NULL AND status = 'VISIBLE' ORDER BY created DESC",
-                    exerciseId)
-                    .page(page, pageSize)
-                    .list();
+            // Top-level comments (these methods already fetch relations)
+            comments = this.commentRepository.findTopLevelByExercise(exerciseId, page, pageSize);
         } else {
             // Replies to specific parent
-            comments = CommentEntity.find(
-                    "parentComment.id = ?1 AND status = 'VISIBLE' ORDER BY created ASC",
-                    parentId)
-                    .page(page, pageSize)
-                    .list();
-        }
-
-        // Force load lazy fields
-        for (final CommentEntity comment : comments) {
-            this.forceLoadLazyFields(comment);
+            comments = this.commentRepository.findRepliesPaged(parentId, page, pageSize);
         }
 
         return comments.stream()
@@ -498,11 +508,7 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> listCommentsBySession(final String sessionId) {
-        final List<CommentEntity> comments = CommentEntity.findBySessionId(sessionId);
-
-        for (final CommentEntity comment : comments) {
-            this.forceLoadLazyFields(comment);
-        }
+        final List<CommentEntity> comments = this.commentRepository.findBySessionIdWithRelations(sessionId);
 
         return comments.stream()
                 .map(CommentViewDto::new)
@@ -521,13 +527,13 @@ public class CommentService {
         LOG.info("Moderating comment: commentId={}, action={}, moderatorId={}, reason={}", commentId, action,
                 moderatorId, reason);
 
-        final CommentEntity comment = CommentEntity.findById(commentId);
+        final CommentEntity comment = this.commentRepository.findById(commentId);
         if (comment == null) {
             LOG.warn("Moderate comment failed: comment not found commentId={}, moderatorId={}", commentId, moderatorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        final UserEntity moderator = UserEntity.findById(moderatorId);
+        final UserEntity moderator = this.userRepository.findById(moderatorId);
         if (!this.isModerator(moderator)) {
             LOG.warn("Moderate comment unauthorized: commentId={}, moderatorId={}", commentId, moderatorId);
             throw new WebApplicationException("Only moderators can perform moderation",
@@ -563,7 +569,7 @@ public class CommentService {
                 throw new ValidationException("Invalid moderation action: " + action);
         }
 
-        comment.persist();
+        this.commentRepository.persist(comment);
     }
 
     /**
@@ -571,11 +577,7 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> findReplies(final Long parentCommentId) {
-        final List<CommentEntity> replies = CommentEntity.findReplies(parentCommentId);
-
-        for (final CommentEntity reply : replies) {
-            this.forceLoadLazyFields(reply);
-        }
+        final List<CommentEntity> replies = this.commentRepository.findRepliesWithRelations(parentCommentId);
 
         return replies.stream()
                 .map(CommentViewDto::new)
@@ -584,30 +586,16 @@ public class CommentService {
 
     // HELPER METHODS
 
-    private void forceLoadLazyFields(final CommentEntity comment) {
-        if (comment.exercise != null) {
-            comment.exercise.title.length();
-        }
-        if (comment.user != null) {
-            comment.user.username.length();
-        }
-        if (comment.parentComment != null) {
-            comment.parentComment.content.length();
-        }
-    }
-
     private boolean isModerator(final UserEntity user) {
         // Check if user has teacher or admin rank
-        return user != null && user.rank != null && (Boolean.TRUE.equals(user.rank.exerciseEdit) ||
-                Boolean.TRUE.equals(user.rank.adminView));
+        return user != null && user.rank != null && (Boolean.TRUE.equals(user.rank.exerciseEdit)
+                || Boolean.TRUE.equals(user.rank.adminView));
     }
 
     private void checkRateLimit(final Long userId) {
         // Get user's last comment timestamp
         final LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(RATE_LIMIT_WINDOW_SECONDS);
-        final long recentCount = CommentEntity.find(
-                "user.id = ?1 AND created > ?2",
-                userId, fiveSecondsAgo).count();
+        final long recentCount = this.commentRepository.countByUserSince(userId, fiveSecondsAgo);
 
         if (recentCount > 0) {
             LOG.debug("Rate limit exceeded (5-second window): userId={}, recentCount={}", userId, recentCount);
@@ -617,9 +605,7 @@ public class CommentService {
 
         // Check daily limit
         final LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
-        final long dailyCount = CommentEntity.find(
-                "user.id = ?1 AND created > ?2",
-                userId, oneDayAgo).count();
+        final long dailyCount = this.commentRepository.countByUserSince(userId, oneDayAgo);
 
         if (dailyCount >= RATE_LIMIT_DAILY) {
             LOG.warn("Daily comment limit exceeded: userId={}, dailyCount={}, limit={}", userId, dailyCount,
@@ -629,30 +615,34 @@ public class CommentService {
         }
     }
 
+    /**
+     * Searches comments by content using the provided query string
+     * (case-insensitive).
+     * Returns all comments if query is null or empty.
+     *
+     * @param query the search query string (content match)
+     * @return a list of matching {@link CommentViewDto}s
+     */
     public List<CommentViewDto> searchComments(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllComments();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<CommentEntity> comments = CommentEntity.find(
-                "content LIKE ?1 OR LOWER(user.username) LIKE ?1", searchTerm).list();
-
-        // Force load lazy fields
-        for (final CommentEntity comment : comments) {
-            if (comment.exercise != null) {
-                comment.exercise.title.length();
-            }
-            if (comment.user != null) {
-                comment.user.username.length();
-            }
-            comment.content.length();
-        }
-
+        final List<CommentEntity> comments = this.commentRepository.search(searchTerm);
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Finds comments created within a date range (inclusive).
+     * Date strings are parsed as ISO-8601 dates. Returns all comments if parsing
+     * fails or dates are null.
+     *
+     * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
+     * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
+     * @return a list of {@link CommentViewDto}s created within the date range
+     */
     @Transactional
     public List<CommentViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
@@ -666,20 +656,7 @@ public class CommentService {
             final LocalDateTime startDateTime = start.atStartOfDay();
             final LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
 
-            final List<CommentEntity> comments = CommentEntity
-                    .find("created >= ?1 AND created <= ?2", startDateTime, endDateTime).list();
-
-            // Force load lazy fields
-            for (final CommentEntity comment : comments) {
-                if (comment.exercise != null) {
-                    comment.exercise.title.length();
-                }
-                if (comment.user != null) {
-                    comment.user.username.length();
-                }
-                comment.content.length();
-            }
-
+            final List<CommentEntity> comments = this.commentRepository.findByDateRange(startDateTime, endDateTime);
             return comments.stream()
                     .map(CommentViewDto::new)
                     .collect(Collectors.toList());
@@ -694,19 +671,7 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> findByStatus(final String status) {
-        final List<CommentEntity> comments = CommentEntity.find("status = ?1", status).list();
-
-        // Force load lazy fields
-        for (final CommentEntity comment : comments) {
-            if (comment.exercise != null) {
-                comment.exercise.title.length();
-            }
-            if (comment.user != null) {
-                comment.user.username.length();
-            }
-            comment.content.length();
-        }
-
+        final List<CommentEntity> comments = this.commentRepository.findByStatus(status);
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
@@ -717,20 +682,7 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> findFlaggedComments(final Integer minFlags) {
-        final List<CommentEntity> comments = CommentEntity.find("flagsCount >= ?1 ORDER BY flagsCount DESC", minFlags)
-                .list();
-
-        // Force load lazy fields
-        for (final CommentEntity comment : comments) {
-            if (comment.exercise != null) {
-                comment.exercise.title.length();
-            }
-            if (comment.user != null) {
-                comment.user.username.length();
-            }
-            comment.content.length();
-        }
-
+        final List<CommentEntity> comments = this.commentRepository.findFlaggedComments(minFlags);
         return comments.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());

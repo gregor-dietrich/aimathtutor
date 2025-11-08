@@ -14,6 +14,9 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.LessonRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -21,6 +24,14 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Service for managing exercises and their Graspable Math integration.
+ * Provides CRUD operations, search, and filtering with user-specific completion
+ * tracking.
+ * Works with {@link ExerciseEntity}, {@link LessonEntity}, and
+ * {@link UserEntity} to
+ * maintain exercise-lesson hierarchies and user-exercise relationships.
+ */
 @ApplicationScoped
 public class ExerciseService {
 
@@ -31,6 +42,15 @@ public class ExerciseService {
 
     @Inject
     AnalyticsService analyticsService;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    LessonRepository lessonRepository;
 
     /**
      * Enriches an ExerciseViewDto with completion data for the current user.
@@ -71,50 +91,102 @@ public class ExerciseService {
         return dto;
     }
 
+    /**
+     * Retrieves all exercises ordered by creation/modification date.
+     *
+     * @return a list of all {@link ExerciseViewDto} in the system
+     */
     public List<ExerciseViewDto> getAllExercises() {
-        return ExerciseEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findAllOrdered().stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * Retrieves a single exercise by ID with user completion tracking.
+     *
+     * @param id the exercise ID
+     * @return an {@link Optional} containing the {@link ExerciseViewDto} with
+     *         completion data, or empty if not found
+     */
     public Optional<ExerciseViewDto> findById(final Long id) {
-        return ExerciseEntity.findByIdOptional(id)
-                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)));
+        return this.exerciseRepository.findByIdOptional(id)
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)));
     }
 
+    /**
+     * Retrieves all published exercises with user completion tracking.
+     *
+     * @return a list of published {@link ExerciseViewDto}s with enriched completion
+     *         data
+     */
     public List<ExerciseViewDto> findPublishedExercises() {
-        return ExerciseEntity.find("published = true ORDER BY id DESC").list().stream()
-                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
+        return this.exerciseRepository.findPublished().stream()
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)))
                 .toList();
     }
 
+    /**
+     * Retrieves all exercises created by a specific user.
+     *
+     * @param userId the user ID
+     * @return a list of {@link ExerciseViewDto}s authored by the user
+     */
     public List<ExerciseViewDto> findByUserId(final Long userId) {
-        return ExerciseEntity.find("user.id = ?1 ORDER BY id DESC", userId).list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findByUserId(userId).stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * Retrieves all exercises in a specific lesson with user completion tracking.
+     *
+     * @param lessonId the lesson ID
+     * @return a list of {@link ExerciseViewDto}s in the lesson with enriched
+     *         completion data
+     */
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
-        return ExerciseEntity.find("lesson.id = ?1 ORDER BY id DESC", lessonId).list().stream()
-                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto((ExerciseEntity) entity)))
+        return this.exerciseRepository.findByLessonId(lessonId).stream()
+                .map(entity -> this.enrichWithCompletionData(new ExerciseViewDto(entity)))
                 .toList();
     }
 
+    /**
+     * Retrieves all exercises that use Graspable Math symbolic manipulation.
+     *
+     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s
+     */
     public List<ExerciseViewDto> findGraspableMathExercises() {
-        return ExerciseEntity.find("graspableEnabled = true AND published = true ORDER BY id DESC").list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findGraspableMathExercises().stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * Retrieves all Graspable Math exercises within a specific lesson.
+     *
+     * @param lessonId the lesson ID
+     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s in the
+     *         lesson
+     */
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
-        return ExerciseEntity
-                .find("graspableEnabled = true AND published = true AND lesson.id = ?1 ORDER BY id DESC",
-                        lessonId)
-                .list().stream()
-                .map(entity -> new ExerciseViewDto((ExerciseEntity) entity))
+        return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream()
+                .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * Creates a new exercise with provided information.
+     * Validates required fields (title, content, userId) and Graspable Math
+     * configuration if enabled.
+     * Sets creation/last edit timestamps and associates with user and optional
+     * lesson.
+     *
+     * @param exerciseDto the exercise data transfer object with creation details
+     * @return the created {@link ExerciseViewDto}
+     * @throws ValidationException if required fields are missing or references are
+     *                             invalid
+     */
     @Transactional
     public ExerciseViewDto createExercise(final ExerciseDto exerciseDto) {
         if (exerciseDto.title == null || exerciseDto.title.trim().isEmpty()) {
@@ -152,7 +224,7 @@ public class ExerciseService {
         exercise.graspableHints = exerciseDto.graspableHints;
 
         // Set user - required for creation
-        final UserEntity user = UserEntity.findById(exerciseDto.userId);
+        final UserEntity user = this.userRepository.findById(exerciseDto.userId);
         if (user == null) {
             throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
         }
@@ -160,17 +232,30 @@ public class ExerciseService {
 
         // Set exercise if provided
         if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = LessonEntity.findById(exerciseDto.lessonId);
+            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
             if (lesson == null) {
                 throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
             }
             exercise.lesson = lesson;
         }
 
-        exercise.persist();
+        this.exerciseRepository.persist(exercise);
         return new ExerciseViewDto(exercise);
     }
 
+    /**
+     * Completely replaces an existing exercise (PUT semantics).
+     * Validates required fields and updates all exercise properties including
+     * Graspable Math configuration.
+     * Updates last edit timestamp. Preserves existing user if userId not provided.
+     *
+     * @param id          the exercise ID to update
+     * @param exerciseDto the new exercise data
+     * @return the updated {@link ExerciseViewDto}
+     * @throws WebApplicationException if exercise not found (NOT_FOUND status)
+     * @throws ValidationException     if required fields are missing or references
+     *                                 are invalid
+     */
     @Transactional
     public ExerciseViewDto updateExercise(final Long id, final ExerciseDto exerciseDto) {
         // Validate required fields for PUT
@@ -181,7 +266,7 @@ public class ExerciseService {
             throw new ValidationException("Content is required for updating an exercise");
         }
 
-        final ExerciseEntity existingExercise = ExerciseEntity.findById(id);
+        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
@@ -211,7 +296,7 @@ public class ExerciseService {
 
         // Set user if provided, otherwise keep existing user
         if (exerciseDto.userId != null) {
-            final UserEntity user = UserEntity.findById(exerciseDto.userId);
+            final UserEntity user = this.userRepository.findById(exerciseDto.userId);
             if (user == null) {
                 throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
             }
@@ -221,7 +306,7 @@ public class ExerciseService {
 
         // Set lesson if provided
         if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = LessonEntity.findById(exerciseDto.lessonId);
+            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
             if (lesson == null) {
                 throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
             }
@@ -230,13 +315,26 @@ public class ExerciseService {
             existingExercise.lesson = null;
         }
 
-        existingExercise.persist();
+        this.exerciseRepository.persist(existingExercise);
         return new ExerciseViewDto(existingExercise);
     }
 
+    /**
+     * Partially updates an existing exercise (PATCH semantics).
+     * Only updates exercise properties that are explicitly provided in the DTO;
+     * null values are ignored.
+     * Updates last edit timestamp. Validates user and lesson references if
+     * provided.
+     *
+     * @param id          the exercise ID to update
+     * @param exerciseDto the partial exercise data with selected fields to update
+     * @return the updated {@link ExerciseViewDto}
+     * @throws WebApplicationException if exercise not found (NOT_FOUND status)
+     * @throws ValidationException     if provided references are invalid
+     */
     @Transactional
     public ExerciseViewDto patchExercise(final Long id, final ExerciseDto exerciseDto) {
-        final ExerciseEntity existingExercise = ExerciseEntity.findById(id);
+        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
@@ -274,7 +372,7 @@ public class ExerciseService {
 
         // Set user if provided
         if (exerciseDto.userId != null) {
-            final UserEntity user = UserEntity.findById(exerciseDto.userId);
+            final UserEntity user = this.userRepository.findById(exerciseDto.userId);
             if (user == null) {
                 throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
             }
@@ -283,7 +381,7 @@ public class ExerciseService {
 
         // Set lesson if provided
         if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = LessonEntity.findById(exerciseDto.lessonId);
+            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
             if (lesson == null) {
                 throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
             }
@@ -291,28 +389,48 @@ public class ExerciseService {
         }
 
         existingExercise.lastEdit = LocalDateTime.now();
-        existingExercise.persist();
+        this.exerciseRepository.persist(existingExercise);
         return new ExerciseViewDto(existingExercise);
     }
 
+    /**
+     * Deletes an exercise by ID.
+     *
+     * @param id the exercise ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if exercise not
+     *         found
+     */
     @Transactional
     public boolean deleteExercise(final Long id) {
-        return ExerciseEntity.deleteById(id);
+        return this.exerciseRepository.deleteById(id);
     }
 
+    /**
+     * Searches exercises by title and content using the provided query string.
+     * Returns all exercises if query is null or empty.
+     *
+     * @param query the search query string (title/content match)
+     * @return a list of matching {@link ExerciseViewDto}s
+     */
     public List<ExerciseViewDto> searchExercises(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllExercises();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<ExerciseEntity> exercises = ExerciseEntity.find(
-                "LOWER(title) LIKE ?1 OR content LIKE ?1 OR LOWER(user.username) LIKE ?1 ORDER BY id DESC",
-                searchTerm).list();
+        final List<ExerciseEntity> exercises = this.exerciseRepository.search(query);
         return exercises.stream()
                 .map(ExerciseViewDto::new)
                 .toList();
     }
 
+    /**
+     * Finds exercises created within a date range (inclusive).
+     * Date strings are parsed as ISO-8601 dates. Returns all exercises if parsing
+     * fails or dates are null.
+     *
+     * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
+     * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
+     * @return a list of {@link ExerciseViewDto}s created within the date range
+     */
     public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
             return this.getAllExercises();
@@ -325,8 +443,7 @@ public class ExerciseService {
             final var startDateTime = start.atStartOfDay();
             final var endDateTime = end.atTime(LocalTime.MAX);
 
-            final List<ExerciseEntity> exercises = ExerciseEntity
-                    .find("created >= ?1 AND created <= ?2 ORDER BY created DESC", startDateTime, endDateTime).list();
+            final List<ExerciseEntity> exercises = this.exerciseRepository.findByDateRange(startDateTime, endDateTime);
             return exercises.stream()
                     .map(ExerciseViewDto::new)
                     .toList();

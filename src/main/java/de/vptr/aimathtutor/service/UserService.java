@@ -1,14 +1,21 @@
 package de.vptr.aimathtutor.service;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserDto;
+import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
+import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -17,35 +24,68 @@ import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Service for managing user accounts and authentication.
+ * Provides CRUD operations with password hashing, email normalization, and rank
+ * assignment.
+ * Handles username/email uniqueness validation and password verification.
+ */
 @ApplicationScoped
 public class UserService {
 
     @Inject
     PasswordHashingService passwordHashingService;
 
+    @Inject
+    UserRepository userRepository;
+
+    @Inject
+    UserRankRepository userRankRepository;
+
+    /**
+     * Retrieves all users in the system.
+     *
+     * @return a list of all {@link UserViewDto}s
+     */
     @Transactional
     public List<UserViewDto> getAllUsers() {
-        return UserEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new UserViewDto((UserEntity) entity))
-                .toList();
+        return this.userRepository.findAll().stream().map(UserViewDto::new).toList();
     }
 
+    /**
+     * Finds a user by username.
+     *
+     * @param username the username to search for
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
+     */
     @Transactional
     public Optional<UserViewDto> findByUsername(final String username) {
-        return UserEntity.find("username", username).firstResultOptional()
-                .map(entity -> new UserViewDto((UserEntity) entity));
+        return this.userRepository.findByUsernameOptional(username).map(UserViewDto::new);
     }
 
+    /**
+     * Finds a user by ID.
+     *
+     * @param id the user ID
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
+     */
     @Transactional
     public Optional<UserViewDto> findById(final Long id) {
-        return UserEntity.findByIdOptional(id)
-                .map(entity -> new UserViewDto((UserEntity) entity));
+        return this.userRepository.findByIdOptional(id).map(UserViewDto::new);
     }
 
+    /**
+     * Finds a user by email address.
+     *
+     * @param email the email address to search for
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
+     */
     @Transactional
     public Optional<UserViewDto> findByEmail(final String email) {
-        return UserEntity.find("email", email).firstResultOptional()
-                .map(entity -> new UserViewDto((UserEntity) entity));
+        return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
     }
 
     /**
@@ -61,6 +101,18 @@ public class UserService {
         return email.trim();
     }
 
+    /**
+     * Creates a new user account with provided information.
+     * Validates required fields (username, password), checks for duplicate
+     * username/email,
+     * hashes password with PBKDF2 salt, and assigns default rank if not specified.
+     *
+     * @param userDto the user data transfer object with creation details
+     * @return the created {@link UserViewDto}
+     * @throws ValidationException     if username/email is duplicate or required
+     *                                 fields are missing
+     * @throws WebApplicationException if password hashing fails
+     */
     @Transactional
     public UserViewDto createUser(final UserDto userDto) {
         // Validate required fields for POST
@@ -88,7 +140,7 @@ public class UserService {
         user.banned = userDto.banned != null ? userDto.banned : false;
         user.activated = userDto.activated != null ? userDto.activated : false;
         user.activationKey = userDto.activationKey != null ? userDto.activationKey
-                : java.util.UUID.randomUUID().toString();
+                : UUID.randomUUID().toString();
 
         // Generate salt and hash password
         final var salt = this.passwordHashingService.generateSalt();
@@ -96,7 +148,7 @@ public class UserService {
             final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
             user.salt = salt;
             user.password = hashedPassword;
-        } catch (final Exception e) {
+        } catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
         }
 
@@ -105,13 +157,13 @@ public class UserService {
 
         // Set rank if provided, otherwise default to rank 1
         if (userDto.rankId != null) {
-            final UserRankEntity rank = UserRankEntity.findById(userDto.rankId);
+            final var rank = this.userRankRepository.findById(userDto.rankId);
             if (rank == null) {
                 throw new ValidationException("Rank with ID " + userDto.rankId + " not found");
             }
             user.rank = rank;
         } else {
-            user.rank = UserRankEntity.findById(1L);
+            user.rank = this.userRankRepository.findById(1L);
         }
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
@@ -122,10 +174,24 @@ public class UserService {
             user.tutorAvatarEmoji = "🤖";
         }
 
-        user.persist();
+        this.userRepository.persist(user);
         return new UserViewDto(user);
     }
 
+    /**
+     * Completely replaces an existing user account (PUT semantics).
+     * Updates username, email, banned/activated status, rank, and password if
+     * provided.
+     * Validates duplicate username/email (skipping current values) and hashes new
+     * passwords.
+     *
+     * @param id      the user ID to update
+     * @param userDto the new user data
+     * @return the updated {@link UserViewDto}
+     * @throws WebApplicationException if user not found (NOT_FOUND status)
+     * @throws ValidationException     if username/email is duplicate or required
+     *                                 fields missing
+     */
     @Transactional
     public UserViewDto updateUser(final Long id, final UserDto userDto) {
         // Validate required fields for PUT
@@ -133,7 +199,7 @@ public class UserService {
             throw new ValidationException("Username is required for updating a user");
         }
 
-        final UserEntity existingUser = UserEntity.findById(id);
+        final UserEntity existingUser = this.userRepository.findById(id);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
@@ -168,30 +234,43 @@ public class UserService {
                 final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
                 existingUser.salt = salt;
                 existingUser.password = hashedPassword;
-            } catch (final Exception e) {
+            } catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
                 throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
 
         // Set rank if provided
         if (userDto.rankId != null) {
-            final UserRankEntity rank = UserRankEntity.findById(userDto.rankId);
+            final var rank = this.userRankRepository.findById(userDto.rankId);
             if (rank == null) {
                 throw new ValidationException("Rank with ID " + userDto.rankId + " not found");
             }
             existingUser.rank = rank;
         } else {
             // For PUT, null rank should reset to default
-            existingUser.rank = UserRankEntity.findById(1L);
+            existingUser.rank = this.userRankRepository.findById(1L);
         }
 
-        existingUser.persist();
+        this.userRepository.persist(existingUser);
         return new UserViewDto(existingUser);
     }
 
+    /**
+     * Partially updates an existing user account (PATCH semantics).
+     * Only updates user properties that are explicitly provided in the DTO; null
+     * values are ignored.
+     * Validates duplicate username/email if being changed, and hashes new passwords
+     * if provided.
+     *
+     * @param id      the user ID to update
+     * @param userDto the partial user data with selected fields to update
+     * @return the updated {@link UserViewDto}
+     * @throws WebApplicationException if user not found (NOT_FOUND status)
+     * @throws ValidationException     if username/email is duplicate
+     */
     @Transactional
     public UserViewDto patchUser(final Long id, final UserDto userDto) {
-        final UserEntity existingUser = UserEntity.findById(id);
+        final UserEntity existingUser = this.userRepository.findById(id);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
@@ -245,47 +324,60 @@ public class UserService {
 
         // Set rank if provided
         if (userDto.rankId != null) {
-            final UserRankEntity rank = UserRankEntity.findById(userDto.rankId);
+            final var rank = this.userRankRepository.findById(userDto.rankId);
             if (rank == null) {
                 throw new ValidationException("Rank with ID " + userDto.rankId + " not found");
             }
             existingUser.rank = rank;
         }
 
-        existingUser.persist();
+        this.userRepository.persist(existingUser);
         return new UserViewDto(existingUser);
     }
 
+    /**
+     * Deletes a user account by ID.
+     *
+     * @param id the user ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if user not found
+     */
     @Transactional
     public boolean deleteUser(final Long id) {
-        return UserEntity.deleteById(id);
+        return this.userRepository.deleteById(id);
     }
 
+    /**
+     * Retrieves all active (non-banned, activated) users in the system.
+     *
+     * @return a list of active {@link UserViewDto}s
+     */
     public List<UserViewDto> findActiveUsers() {
-        return UserEntity.find("activated = true and banned = false ORDER BY id DESC").list().stream()
-                .map(entity -> new UserViewDto((UserEntity) entity))
-                .toList();
+        return this.userRepository.findActiveUsers().stream().map(UserViewDto::new).toList();
     }
 
+    /**
+     * Searches users by username or email using the provided query string
+     * (case-insensitive).
+     * Returns all users if query is null or empty.
+     *
+     * @param query the search query string (username/email match)
+     * @return a list of matching {@link UserViewDto}s
+     */
     @Transactional
     public List<UserViewDto> searchUsers(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllUsers();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<UserEntity> users = UserEntity.find(
-                "LOWER(username) LIKE ?1 OR LOWER(email) LIKE ?1 ORDER BY id DESC",
-                searchTerm).list();
-        return users.stream()
-                .map(UserViewDto::new)
-                .toList();
+        final List<UserEntity> users = this.userRepository.search(searchTerm);
+        return users.stream().map(UserViewDto::new).toList();
     }
 
     /**
      * Get current user from session
      */
     public UserViewDto getCurrentUser() {
-        final var session = com.vaadin.flow.server.VaadinSession.getCurrent();
+        final var session = VaadinSession.getCurrent();
         if (session == null) {
             throw new WebApplicationException("No active session", Response.Status.UNAUTHORIZED);
         }
@@ -306,7 +398,7 @@ public class UserService {
      */
     @Transactional
     public void changePassword(final Long userId, final String currentPassword, final String newPassword) {
-        final UserEntity user = UserEntity.findById(userId);
+        final UserEntity user = this.userRepository.findById(userId);
         if (user == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
@@ -330,8 +422,8 @@ public class UserService {
             final var hashedPassword = this.passwordHashingService.hashPassword(newPassword, newSalt);
             user.salt = newSalt;
             user.password = hashedPassword;
-            user.persist();
-        } catch (final Exception e) {
+            this.userRepository.persist(user);
+        } catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -345,7 +437,7 @@ public class UserService {
      */
     @Transactional
     public void updateAvatars(final Long userId, final String userEmoji, final String tutorEmoji) {
-        final UserEntity user = UserEntity.findById(userId);
+        final UserEntity user = this.userRepository.findById(userId);
         if (user == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
@@ -366,7 +458,7 @@ public class UserService {
 
         user.userAvatarEmoji = userEmoji;
         user.tutorAvatarEmoji = tutorEmoji;
-        user.persist();
+        this.userRepository.persist(user);
     }
 
     /**
@@ -376,13 +468,13 @@ public class UserService {
      * @return UserSettingsDto with avatar settings
      */
     @Transactional
-    public de.vptr.aimathtutor.dto.UserSettingsDto getSettings(final Long userId) {
-        final UserEntity user = UserEntity.findById(userId);
+    public UserSettingsDto getSettings(final Long userId) {
+        final UserEntity user = this.userRepository.findById(userId);
         if (user == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
 
-        return new de.vptr.aimathtutor.dto.UserSettingsDto(
+        return new UserSettingsDto(
                 user.userAvatarEmoji != null ? user.userAvatarEmoji : "🧒",
                 user.tutorAvatarEmoji != null ? user.tutorAvatarEmoji : "🧑‍🏫");
     }

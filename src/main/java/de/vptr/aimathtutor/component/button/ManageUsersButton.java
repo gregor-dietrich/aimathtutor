@@ -7,9 +7,16 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+/**
+ * Button used to open the manage users view. Shows an appropriate icon and
+ * optional tooltip.
+ */
 public class ManageUsersButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Manage Users";
+    private static final String DEFAULT_TOOLTIP = "Manage Users";
 
+    /**
+     * Constructs a ManageUsersButton with the specified action and tooltip.
+     */
     public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction, final String tooltipText) {
         super("", addUserAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);

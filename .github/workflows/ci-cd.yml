@@ -63,8 +63,18 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
       - name: Build with Maven
         run: ./mvnw clean install package -DskipTests -Pproduction
+        - name: Run SpotBugs
+          run: ./mvnw spotbugs:check
+        - name: Run Checkstyle
+          run: ./mvnw checkstyle:check
 
   # publish:
   #   runs-on: ubuntu-latest

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,9 +24,9 @@ import jakarta.inject.Inject;
  * Handles REST API calls to Gemini 2.5 Flash-Lite
  */
 @ApplicationScoped
-public class GeminiAIService {
+public class GeminiAiService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GeminiAIService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GeminiAiService.class);
 
     @ConfigProperty(name = "gemini.api.key")
     String apiKey;
@@ -122,7 +123,7 @@ public class GeminiAIService {
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
 
-        } catch (final Exception e) {
+        } catch (final IOException | InterruptedException e) {
             LOG.error("Error calling Gemini API", e);
             throw new IllegalStateException("Failed to call Gemini API", e);
         }

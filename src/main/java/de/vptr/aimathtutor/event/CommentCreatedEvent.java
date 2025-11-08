@@ -15,6 +15,9 @@ public class CommentCreatedEvent {
     public final String content;
     public final LocalDateTime createdAt;
 
+    /**
+     * Constructs a CommentCreatedEvent with the specified parameters.
+     */
     public CommentCreatedEvent(final Long commentId, final Long exerciseId, final Long userId,
             final String username, final String content, final LocalDateTime createdAt) {
         this.commentId = commentId;
@@ -25,26 +28,44 @@ public class CommentCreatedEvent {
         this.createdAt = createdAt;
     }
 
+    /**
+     * Get the id of the created comment.
+     */
     public Long getCommentId() {
         return this.commentId;
     }
 
+    /**
+     * Get the exercise id the comment belongs to.
+     */
     public Long getExerciseId() {
         return this.exerciseId;
     }
 
+    /**
+     * Get the id of the user who created the comment.
+     */
     public Long getUserId() {
         return this.userId;
     }
 
+    /**
+     * Get the username of the comment author.
+     */
     public String getUsername() {
         return this.username;
     }
 
+    /**
+     * Get the comment content text.
+     */
     public String getContent() {
         return this.content;
     }
 
+    /**
+     * Get the timestamp when the comment was created.
+     */
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }

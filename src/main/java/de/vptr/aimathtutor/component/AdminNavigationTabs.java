@@ -7,8 +7,17 @@ import com.vaadin.flow.router.RouterLink;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.view.admin.*;
 
+/**
+ * Vertical navigation tabs used in the admin area. Tabs are created based on
+ * the provided user's rank/permissions.
+ */
 public class AdminNavigationTabs extends Tabs {
 
+    /**
+     * Constructs AdminNavigationTabs with tabs based on user rank permissions.
+     *
+     * @param userRank the user's rank and permissions
+     */
     public AdminNavigationTabs(final UserRankViewDto userRank) {
         this.setOrientation(Orientation.VERTICAL);
         this.setWidthFull();

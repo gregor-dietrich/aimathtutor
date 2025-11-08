@@ -7,9 +7,17 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+/**
+ * Button that triggers a search action. Displays a search icon and calls the
+ * provided click listener when pressed.
+ */
 public class SearchButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Search";
+    private static final String DEFAULT_TOOLTIP = "Search";
 
+    /**
+     * Constructs a SearchButton with the specified action, tooltip, and button
+     * variants.
+     */
     public SearchButton(final ComponentEventListener<ClickEvent<Button>> searchAction, final String tooltipText,
             final ButtonVariant... variants) {
         super("", searchAction);

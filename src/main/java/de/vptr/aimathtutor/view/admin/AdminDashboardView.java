@@ -30,23 +30,32 @@ import jakarta.inject.Inject;
 @PageTitle("Admin Dashboard - AI Math Tutor")
 public class AdminDashboardView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminDashboardView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    AnalyticsService analyticsService;
+    private transient AnalyticsService analyticsService;
 
     // Map to store references to stat card value spans for efficient updates
-    private final Map<String, Span> statCardValues = new HashMap<>();
+    private final transient Map<String, Span> statCardValues = new HashMap<>();
 
+    /**
+     * Create a new admin dashboard view with default layout initialization.
+     */
     public AdminDashboardView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
+        // transient statCardValues is initialized inline; no further action required
     }
 
+    /**
+     * Called before the view is shown. Ensures authentication and triggers UI
+     * construction and data loading.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -54,11 +63,11 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadDashboardData();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
         this.statCardValues.clear();
 

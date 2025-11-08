@@ -7,9 +7,16 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+/**
+ * Button used to open an edit form for an entity. Shows an edit icon and
+ * delegates click handling to the provided listener.
+ */
 public class EditButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Edit";
+    private static final String DEFAULT_TOOLTIP = "Edit";
 
+    /**
+     * Constructs an EditButton with the specified action and tooltip.
+     */
     public EditButton(final ComponentEventListener<ClickEvent<Button>> editAction, final String tooltipText) {
         super("", editAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);

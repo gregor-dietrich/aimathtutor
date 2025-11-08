@@ -10,17 +10,34 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 
 import de.vptr.aimathtutor.component.button.SearchButton;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+/**
+ * Composite layout containing a search text field and a search button. The
+ * component wires default Enter key handling and exposes internal
+ * components for parent views to reuse.
+ */
 public class SearchLayout extends HorizontalLayout {
 
-    private final static String DEFAULT_LABEL = "Search";
-    private final static String DEFAULT_PLACEHOLDER = "Search...";
-    private final static String DEFAULT_TOOLTIP = "Search";
-    private final static String DEFAULT_WIDTH = "300px";
+    private static final String DEFAULT_LABEL = "Search";
+    private static final String DEFAULT_PLACEHOLDER = "Search...";
+    private static final String DEFAULT_TOOLTIP = "Search";
+    private static final String DEFAULT_WIDTH = "300px";
 
     private Button button;
     private final TextField textField;
 
+    /**
+     * Constructs a SearchLayout with text field and search button.
+     *
+     * @param listener        the value change listener for the text field
+     * @param searchAction    the action to perform when the search button is
+     *                        clicked
+     * @param placeholderText the placeholder text for the text field
+     * @param tooltipText     the tooltip text for the button
+     * @param fieldLabel      the label for the text field
+     * @param fieldWidth      the width of the text field
+     */
     public SearchLayout(final HasValue.ValueChangeListener<ComponentValueChangeEvent<TextField, String>> listener,
             final ComponentEventListener<ClickEvent<Button>> searchAction, final String placeholderText,
             final String tooltipText, final String fieldLabel, final String fieldWidth) {
@@ -44,6 +61,16 @@ public class SearchLayout extends HorizontalLayout {
         this.add(this.textField, this.button);
     }
 
+    /**
+     * Create a search layout combining a text field and a search button.
+     *
+     * @param listener        value change listener for the text field
+     * @param searchAction    click listener for the search button
+     * @param placeholderText placeholder text shown in the text field
+     * @param tooltipText     tooltip text for the button
+     * @param fieldLabel      label for the text field
+     */
+
     public SearchLayout(final HasValue.ValueChangeListener<ComponentValueChangeEvent<TextField, String>> listener,
             final ComponentEventListener<ClickEvent<Button>> searchAction, final String placeholderText,
             final String tooltipText, final String fieldLabel) {
@@ -66,10 +93,24 @@ public class SearchLayout extends HorizontalLayout {
         this(listener, searchAction, DEFAULT_PLACEHOLDER);
     }
 
+    /**
+     * Return the internal search button. Useful to trigger a search from the
+     * parent view or to attach additional listeners.
+     *
+     * @return the search button
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose button intentionally so parent views can trigger searches or reuse it")
     public Button getButton() {
         return this.button;
     }
 
+    /**
+     * Return the text field used for entering the search term. Parent views
+     * can read or set the value and attach listeners as needed.
+     *
+     * @return the search text field
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Expose textField intentionally so parent views can read/set value and attach listeners")
     public TextField getTextfield() {
         return this.textField;
     }

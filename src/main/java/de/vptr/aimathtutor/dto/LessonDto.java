@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -10,6 +11,7 @@ import jakarta.validation.constraints.Size;
  * changes
  * - PATCH: name optional (allows null), parentId optional for parent changes
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO public fields intentionally used for JSON mapping and convenience")
 public class LessonDto {
 
     public Long id;

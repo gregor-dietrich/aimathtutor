@@ -21,11 +21,16 @@ import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
+/**
+ * Main application layout wrapping views with navigation and header.
+ */
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
+    private static final long serialVersionUID = 1L;
 
     private Button adminViewButton;
     private Button settingsButton;
@@ -33,13 +38,13 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     private Tabs navigationTabs;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    ThemeService themeService;
+    private transient ThemeService themeService;
 
     @Inject
-    UserRankService userRankService;
+    private transient UserRankService userRankService;
 
     private HorizontalLayout topBar;
     private HorizontalLayout rightSide;
@@ -48,16 +53,30 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     /**
      * Get the shared top bar for views that need to add additional components
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intended to be shared and extended by child views")
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }
 
+    /**
+     * Attaches event listener when layout is added to the UI tree.
+     * Updates logout button visibility based on authentication state.
+     *
+     * @param attachEvent the attach event containing lifecycle information
+     */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         this.updateLogoutButtonVisibility();
     }
 
+    /**
+     * Called before navigation occurs. Initializes layout on first entry, applies
+     * theme,
+     * checks authentication, and shows/hides navigation tabs based on target view.
+     *
+     * @param event the before enter navigation event
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.initialized) {

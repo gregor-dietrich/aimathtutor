@@ -32,13 +32,10 @@ import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
- * CommentsPanel: Reusable Vaadin component for displaying and creating comments
- * on exercises. Supports threading, permission-based UI, and pagination.
- *
- * NOTE: This component is NOT a CDI bean and is instantiated directly via
- * new().
- * The @Vetoed annotation excludes it from CDI bean discovery.
- * CommentService is looked up programmatically at runtime rather than injected.
+ * CommentsPanel: Reusable Vaadin component for displaying and creating
+ * comments on exercises. Supports threading, permission-based UI, and
+ * pagination. This component is not a CDI bean and performs a programmatic
+ * lookup of {@link de.vptr.aimathtutor.service.CommentService} when needed.
  */
 @Vetoed
 public class CommentsPanel extends VerticalLayout {
@@ -48,19 +45,26 @@ public class CommentsPanel extends VerticalLayout {
     private final Long exerciseId;
     private final String sessionId;
     private final Long currentUserId;
-    private final int pageSize = 50;
+    private static final int pageSize = 50;
 
     private Div commentsContainer;
     private TextArea commentTextArea;
     private Button submitButton;
     private int currentPage = 0;
-    private Long currentParentId = null; // For threading
+    private Long currentParentId = null;
 
+    /**
+     * Create a comments panel for the specified exercise/session and user.
+     *
+     * @param exerciseId    id of the exercise to display comments for
+     * @param sessionId     external session id (optional)
+     * @param currentUserId current user database id (may be null)
+     */
     public CommentsPanel(final Long exerciseId, final String sessionId, final Long currentUserId) {
         this.exerciseId = exerciseId;
         this.sessionId = sessionId;
         this.currentUserId = currentUserId;
-        this.initializeUI();
+        this.buildUi();
     }
 
     /**
@@ -71,7 +75,7 @@ public class CommentsPanel extends VerticalLayout {
         return CDI.current().select(CommentService.class).get();
     }
 
-    private void initializeUI() {
+    private void buildUi() {
         this.setWidthFull();
         this.setPadding(true);
         this.setSpacing(true);
@@ -126,7 +130,7 @@ public class CommentsPanel extends VerticalLayout {
         try {
             // Always load top-level comments
             final List<CommentViewDto> comments = this.getCommentService()
-                    .listCommentsByExercise(this.exerciseId, this.currentPage, this.pageSize, null);
+                    .listCommentsByExercise(this.exerciseId, this.currentPage, pageSize, null);
             this.displayComments(comments);
         } catch (final Exception e) {
             LOG.error("Failed to load comments", e);
@@ -171,7 +175,7 @@ public class CommentsPanel extends VerticalLayout {
         }
 
         // Add load more button if we got full page
-        if (comments.size() >= this.pageSize) {
+        if (comments.size() >= pageSize) {
             final Button loadMoreButton = new Button("Load More Comments");
             loadMoreButton.addClickListener(e -> {
                 this.currentPage++;
@@ -199,8 +203,7 @@ public class CommentsPanel extends VerticalLayout {
                 .set("display", "block")
                 .set("font-weight", "600")
                 .set("font-size", "0.875rem")
-                .set("color", "var(--lumo-contrast-70pct)")
-                .set("margin-bottom", "0.5rem");
+                .set("color", "var(--lumo-contrast-70pct)");
 
         // Content with line break from header
         final String displayContent = "DELETED".equals(comment.status) ? "[deleted]" : comment.content;
@@ -239,7 +242,7 @@ public class CommentsPanel extends VerticalLayout {
             actions.add(deleteButton);
         }
 
-        commentDiv.add(header, content, actions);
+        commentDiv.add(header);
 
         // Add edit timestamp if applicable
         if (comment.editedAt != null) {
@@ -247,10 +250,11 @@ public class CommentsPanel extends VerticalLayout {
             editedNote.addClassName("comment-edited");
             editedNote.getStyle()
                     .set("font-size", "0.75rem")
-                    .set("color", "var(--lumo-contrast-50pct)")
-                    .set("margin-left", "0.5rem");
+                    .set("color", "var(--lumo-contrast-50pct)");
             commentDiv.add(editedNote);
         }
+
+        commentDiv.add(content, actions);
 
         return commentDiv;
     }
@@ -375,6 +379,10 @@ public class CommentsPanel extends VerticalLayout {
         return dateTime.toString();
     }
 
+    /**
+     * Refresh the comments list by resetting pagination and reloading from the
+     * service. Safe to call from UI threads.
+     */
     public void refresh() {
         this.currentPage = 0;
         this.currentParentId = null;

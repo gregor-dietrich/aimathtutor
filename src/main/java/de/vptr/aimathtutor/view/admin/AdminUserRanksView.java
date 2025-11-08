@@ -41,16 +41,19 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
+/**
+ * Admin view for creating, editing and deleting user ranks (permission sets).
+ */
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
 public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserRanksView.class);
 
     @Inject
-    UserRankService rankService;
+    private transient UserRankService rankService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     private Grid<UserRankViewDto> grid;
     private TextField searchField;
@@ -58,14 +61,23 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
     private Dialog rankDialog;
     private Binder<UserRankDto> binder;
-    private UserRankDto currentRank;
+    private transient UserRankDto currentRank;
 
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Constructs the AdminUserRanksView with full size and padding.
+     */
     public AdminUserRanksView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Ensure the current user is authenticated and initialize the UI and
+     * asynchronous data loading for ranks.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -73,7 +85,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadRanksAsync();
     }
 
@@ -102,7 +114,10 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
                 });
     }
 
-    private void buildUI() {
+    /**
+     * Construct UI elements for the user ranks admin view.
+     */
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("User Ranks");
@@ -114,6 +129,11 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         this.add(header, searchLayout, buttonLayout, this.grid);
     }
 
+    /**
+     * Create the search layout for searching ranks.
+     *
+     * @return the created search layout
+     */
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
@@ -131,6 +151,11 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         return searchLayout;
     }
 
+    /**
+     * Create the button layout containing create/refresh actions.
+     *
+     * @return the horizontal layout with action buttons
+     */
     private HorizontalLayout createButtonLayout() {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -374,6 +399,12 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("150px").setFlexGrow(0);
     }
 
+    /**
+     * Create action buttons for a rank row (edit/delete).
+     *
+     * @param rank the rank dto
+     * @return a horizontal layout with action buttons
+     */
     private HorizontalLayout createActionButtons(final UserRankViewDto rank) {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -385,6 +416,11 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         return layout;
     }
 
+    /**
+     * Open a dialog to edit or create a user rank.
+     *
+     * @param rank the rank to edit or null to create a new one
+     */
     private void openRankDialog(final UserRankViewDto rank) {
         this.rankDialog.removeAll();
         this.currentRank = rank != null ? rank.toUserRankDto() : new UserRankDto();

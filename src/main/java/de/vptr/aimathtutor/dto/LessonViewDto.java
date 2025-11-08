@@ -2,6 +2,8 @@ package de.vptr.aimathtutor.dto;
 
 import java.util.List;
 
+import org.hibernate.LazyInitializationException;
+
 import de.vptr.aimathtutor.entity.LessonEntity;
 
 /**
@@ -9,7 +11,6 @@ import de.vptr.aimathtutor.entity.LessonEntity;
  * Contains computed fields and safe data for client responses.
  */
 public class LessonViewDto {
-
     public Long id;
     public String name;
     public Long parentId;
@@ -23,6 +24,9 @@ public class LessonViewDto {
         // Default constructor for Jackson
     }
 
+    /**
+     * Constructs a LessonViewDto from a LessonEntity.
+     */
     public LessonViewDto(final LessonEntity entity) {
         this.id = entity.id;
         this.name = entity.name;
@@ -45,20 +49,22 @@ public class LessonViewDto {
                 this.childrenCount = 0;
                 this.childrenIds = List.of();
             }
-        } catch (final org.hibernate.LazyInitializationException e) {
+        } catch (final LazyInitializationException e) {
             // Collection not initialized, set defaults
             this.childrenCount = 0;
             this.childrenIds = List.of();
         }
 
-        // Compute exercises count safely
+        // Compute exercises count safely (only count published exercises)
         try {
             if (entity.exercises != null) {
-                this.exercisesCount = entity.exercises.size();
+                this.exercisesCount = (int) entity.exercises.stream()
+                        .filter(ex -> Boolean.TRUE.equals(ex.published))
+                        .count();
             } else {
                 this.exercisesCount = 0;
             }
-        } catch (final org.hibernate.LazyInitializationException e) {
+        } catch (final LazyInitializationException e) {
             // Collection not initialized, set default
             this.exercisesCount = 0;
         }

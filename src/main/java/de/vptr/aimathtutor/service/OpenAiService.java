@@ -4,8 +4,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.vptr.aimathtutor.dto.OpenAIRequestDto;
-import de.vptr.aimathtutor.dto.OpenAIResponseDto;
+import de.vptr.aimathtutor.dto.OpenAiRequestDto;
+import de.vptr.aimathtutor.dto.OpenAiResponseDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
@@ -19,9 +19,9 @@ import jakarta.ws.rs.core.Response;
  * Supports GPT-4o, GPT-4o-mini, GPT-3.5-turbo, etc.
  */
 @ApplicationScoped
-public class OpenAIService {
+public class OpenAiService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OpenAIService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
 
     @ConfigProperty(name = "openai.api.key")
     String apiKey;
@@ -49,10 +49,10 @@ public class OpenAIService {
      * @param prompt The user prompt
      * @return The generated text response
      */
-    public String generateContent(String prompt) {
+    public String generateContent(final String prompt) {
         LOG.debug("Generating content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 
-        if (apiKey == null || apiKey.isBlank() || apiKey.startsWith("${")) {
+        if (this.apiKey == null || this.apiKey.isBlank() || this.apiKey.startsWith("${")) {
             LOG.warn("OpenAI API key not configured");
             throw new IllegalStateException(
                     "OpenAI API key not configured. Please set openai.api.key in application.properties or OPENAI_API_KEY environment variable");
@@ -63,29 +63,29 @@ public class OpenAIService {
             final String systemPrompt = "You are an encouraging AI math tutor helping students learn algebra. "
                     + "Provide clear, supportive feedback that guides students' thinking without giving away answers.";
 
-            final var request = OpenAIRequestDto.createChatRequest(
+            final var request = OpenAiRequestDto.createChatRequest(
                     systemPrompt,
                     prompt,
-                    model,
-                    temperature,
-                    maxTokens);
+                    this.model,
+                    this.temperature,
+                    this.maxTokens);
 
             // Build API URL
-            final String url = baseUrl + "/chat/completions";
+            final String url = this.baseUrl + "/chat/completions";
 
             // Get or create client
-            if (client == null) {
-                client = ClientBuilder.newClient();
+            if (this.client == null) {
+                this.client = ClientBuilder.newClient();
             }
 
             // Build request with headers
-            var requestBuilder = client.target(url)
+            var requestBuilder = this.client.target(url)
                     .request(MediaType.APPLICATION_JSON)
-                    .header("Authorization", "Bearer " + apiKey);
+                    .header("Authorization", "Bearer " + this.apiKey);
 
             // Add organization header if configured
-            if (organizationId != null && !organizationId.isBlank()) {
-                requestBuilder = requestBuilder.header("OpenAI-Organization", organizationId);
+            if (this.organizationId != null && !this.organizationId.isBlank()) {
+                requestBuilder = requestBuilder.header("OpenAI-Organization", this.organizationId);
             }
 
             // Make API call
@@ -99,27 +99,27 @@ public class OpenAIService {
             }
 
             // Parse response
-            final var openAIResponse = response.readEntity(OpenAIResponseDto.class);
+            final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
 
-            if (!openAIResponse.isComplete()) {
+            if (!openAiResponse.isComplete()) {
                 LOG.warn("OpenAI response not complete. Finish reason: {}",
-                        openAIResponse.choices != null && !openAIResponse.choices.isEmpty()
-                                ? openAIResponse.choices.get(0).finishReason
+                        openAiResponse.choices != null && !openAiResponse.choices.isEmpty()
+                                ? openAiResponse.choices.get(0).finishReason
                                 : "unknown");
             }
 
-            final String content = openAIResponse.getTextContent();
+            final String content = openAiResponse.getTextContent();
             if (content == null || content.isBlank()) {
                 LOG.warn("OpenAI returned empty content");
                 throw new IllegalStateException("Empty response from OpenAI");
             }
 
             // Log token usage if available
-            if (openAIResponse.usage != null) {
+            if (openAiResponse.usage != null) {
                 LOG.debug("OpenAI usage - Prompt: {} tokens, Completion: {} tokens, Total: {} tokens",
-                        openAIResponse.usage.promptTokens,
-                        openAIResponse.usage.completionTokens,
-                        openAIResponse.usage.totalTokens);
+                        openAiResponse.usage.promptTokens,
+                        openAiResponse.usage.completionTokens,
+                        openAiResponse.usage.totalTokens);
             }
 
             LOG.debug("Successfully generated content from OpenAI, length: {}", content.length());
@@ -137,35 +137,35 @@ public class OpenAIService {
     /**
      * Generate content with JSON mode (guarantees valid JSON)
      */
-    public String generateJsonContent(String prompt) {
+    public String generateJsonContent(final String prompt) {
         LOG.debug("Generating JSON content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 
-        if (apiKey == null || apiKey.isBlank() || apiKey.startsWith("${")) {
+        if (this.apiKey == null || this.apiKey.isBlank() || this.apiKey.startsWith("${")) {
             throw new IllegalStateException("OpenAI API key not configured");
         }
 
         try {
             final String systemPrompt = "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";
 
-            final var request = OpenAIRequestDto.createJsonRequest(
+            final var request = OpenAiRequestDto.createJsonRequest(
                     systemPrompt,
                     prompt,
-                    model,
-                    temperature,
-                    maxTokens);
+                    this.model,
+                    this.temperature,
+                    this.maxTokens);
 
-            final String url = baseUrl + "/chat/completions";
+            final String url = this.baseUrl + "/chat/completions";
 
-            if (client == null) {
-                client = ClientBuilder.newClient();
+            if (this.client == null) {
+                this.client = ClientBuilder.newClient();
             }
 
-            var requestBuilder = client.target(url)
+            var requestBuilder = this.client.target(url)
                     .request(MediaType.APPLICATION_JSON)
-                    .header("Authorization", "Bearer " + apiKey);
+                    .header("Authorization", "Bearer " + this.apiKey);
 
-            if (organizationId != null && !organizationId.isBlank()) {
-                requestBuilder = requestBuilder.header("OpenAI-Organization", organizationId);
+            if (this.organizationId != null && !this.organizationId.isBlank()) {
+                requestBuilder = requestBuilder.header("OpenAI-Organization", this.organizationId);
             }
 
             final var response = requestBuilder.post(Entity.json(request));
@@ -177,8 +177,8 @@ public class OpenAIService {
                         response.getStatus());
             }
 
-            final var openAIResponse = response.readEntity(OpenAIResponseDto.class);
-            final String content = openAIResponse.getTextContent();
+            final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
+            final String content = openAiResponse.getTextContent();
 
             if (content == null || content.isBlank()) {
                 throw new IllegalStateException("Empty response from OpenAI");
@@ -197,13 +197,13 @@ public class OpenAIService {
      * Check if OpenAI is properly configured
      */
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("${");
+        return this.apiKey != null && !this.apiKey.isBlank() && !this.apiKey.startsWith("${");
     }
 
     /**
      * Get the current model name
      */
     public String getModel() {
-        return model;
+        return this.model;
     }
 }
