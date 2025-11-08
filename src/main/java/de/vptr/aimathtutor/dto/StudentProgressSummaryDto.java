@@ -22,6 +22,9 @@ public class StudentProgressSummaryDto {
     public StudentProgressSummaryDto() {
     }
 
+    /**
+     * Constructs a StudentProgressSummaryDto with the specified parameters.
+     */
     public StudentProgressSummaryDto(
             final Long userId,
             final String username,

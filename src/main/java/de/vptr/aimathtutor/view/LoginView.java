@@ -18,15 +18,26 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
+/**
+ * Login view for the application. Provides username/password fields and
+ * handles user authentication via the
+ * {@link de.vptr.aimathtutor.service.AuthService}.
+ */
 @Route(value = "login", layout = MainLayout.class)
 @PageTitle("AI Math Tutor - Login")
 public class LoginView extends VerticalLayout {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOG = LoggerFactory.getLogger(LoginView.class);
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
+    /**
+     * Construct the login view with username/password fields and a login
+     * handler.
+     */
     public LoginView() {
         this.setSizeFull();
         this.setAlignItems(Alignment.CENTER);

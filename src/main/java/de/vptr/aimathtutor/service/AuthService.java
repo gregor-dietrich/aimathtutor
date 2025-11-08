@@ -9,11 +9,15 @@ import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+/**
+ * Authentication helper service offering login/logout and current user info.
+ */
 @ApplicationScoped
 public class AuthService {
     private static final Logger LOG = LoggerFactory.getLogger(AuthService.class);
@@ -22,12 +26,25 @@ public class AuthService {
     PasswordHashingService passwordHashingService;
 
     @Inject
+    UserRepository userRepository;
+
+    @Inject
     UserRankService userRankService;
 
     private static final String USERNAME_KEY = "authenticated.username";
     private static final String PASSWORD_KEY = "authenticated.password";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
 
+    /**
+     * Authenticates a user with the provided credentials.
+     * Validates username and password, checks user activation and ban status,
+     * updates last login time, and stores authentication information in the
+     * session.
+     *
+     * @param username the username to authenticate
+     * @param password the plaintext password to verify
+     * @return an {@link AuthResultDto} indicating success or the reason for failure
+     */
     @Transactional
     public AuthResultDto authenticate(final String username, final String password) {
         LOG.trace("Starting authentication for user: {}", username);
@@ -38,8 +55,8 @@ public class AuthService {
         }
 
         try {
-            // Find user by username directly from database
-            final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+            // Find user by username using repository
+            final var user = this.userRepository.findByUsername(username);
 
             if (user == null) {
                 LOG.trace("Authentication failed - user not found: {}", username);
@@ -67,7 +84,7 @@ public class AuthService {
             // Update last login time and persist the user entity
             try {
                 user.lastLogin = LocalDateTime.now();
-                user.persist();
+                this.userRepository.persist(user);
             } catch (final Exception e) {
                 LOG.warn("Failed to update lastLogin for user {}: {}", username, e.getMessage());
                 // continue with login even if lastLogin couldn't be updated
@@ -86,6 +103,11 @@ public class AuthService {
         }
     }
 
+    /**
+     * Clears the current user's authentication session.
+     * Removes stored username, password, and authentication status from the
+     * session.
+     */
     public void logout() {
         final var username = this.getUsername();
         LOG.trace("Logging out user: {}", username);
@@ -97,6 +119,11 @@ public class AuthService {
         LOG.trace("User logged out");
     }
 
+    /**
+     * Checks if the current user is authenticated.
+     *
+     * @return true if the user has an active authenticated session, false otherwise
+     */
     public boolean isAuthenticated() {
         final var authenticated = (Boolean) VaadinSession.getCurrent().getAttribute(AUTHENTICATED_KEY);
         final var result = authenticated != null && authenticated;
@@ -104,16 +131,27 @@ public class AuthService {
         return result;
     }
 
+    /**
+     * Retrieves the username of the currently authenticated user.
+     *
+     * @return the username of the current user, or null if not authenticated
+     */
     public String getUsername() {
         return (String) VaadinSession.getCurrent().getAttribute(USERNAME_KEY);
     }
 
+    /**
+     * Retrieves the user ID of the currently authenticated user.
+     *
+     * @return the ID of the current user, or null if not authenticated or user not
+     *         found
+     */
     public Long getUserId() {
         final String username = this.getUsername();
         if (username == null) {
             return null;
         }
-        final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        final var user = this.userRepository.findByUsername(username);
         return user != null ? user.id : null;
     }
 
@@ -128,6 +166,6 @@ public class AuthService {
         if (username == null) {
             return null;
         }
-        return UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        return this.userRepository.findByUsername(username);
     }
 }

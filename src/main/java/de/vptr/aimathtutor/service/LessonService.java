@@ -5,41 +5,83 @@ import java.util.Optional;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.LessonRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Service for managing hierarchical lesson structures.
+ * Provides CRUD operations and parent-child relationship management.
+ * Prevents circular references in lesson hierarchies and validates parent
+ * changes.
+ */
 @ApplicationScoped
 public class LessonService {
 
+    @Inject
+    LessonRepository lessonRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    /**
+     * Retrieves all lessons in the system ordered by hierarchy.
+     *
+     * @return a list of all {@link LessonViewDto}s
+     */
     @Transactional
     public List<LessonViewDto> getAllLessons() {
-        return LessonEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new LessonViewDto((LessonEntity) entity))
-                .toList();
+        return this.lessonRepository.findAllOrdered().stream().map(LessonViewDto::new).toList();
     }
 
+    /**
+     * Finds a lesson by ID.
+     *
+     * @param id the lesson ID
+     * @return an {@link Optional} containing the {@link LessonViewDto}, or empty if
+     *         not found
+     */
     @Transactional
     public Optional<LessonViewDto> findById(final Long id) {
-        return LessonEntity.findByIdOptional(id)
-                .map(entity -> new LessonViewDto((LessonEntity) entity));
+        return this.lessonRepository.findByIdOptional(id).map(LessonViewDto::new);
     }
 
+    /**
+     * Retrieves all root-level lessons (lessons without a parent).
+     *
+     * @return a list of root {@link LessonViewDto}s
+     */
     @Transactional
     public List<LessonViewDto> findRootLessons() {
-        return LessonEntity.findRootLessons().stream()
-                .map(LessonViewDto::new)
-                .toList();
+        return this.lessonRepository.findRootLessons().stream().map(LessonViewDto::new).toList();
     }
 
+    /**
+     * Retrieves all lessons that are direct children of a parent lesson.
+     *
+     * @param parentId the parent lesson ID
+     * @return a list of child {@link LessonViewDto}s
+     */
     public List<LessonViewDto> findByParentId(final Long parentId) {
-        return LessonEntity.findByParentId(parentId).stream()
-                .map(LessonViewDto::new)
-                .toList();
+        return this.lessonRepository.findByParentId(parentId).stream().map(LessonViewDto::new).toList();
     }
 
+    /**
+     * Creates a new lesson with provided information.
+     * Validates name is provided, verifies parent exists if specified, and prevents
+     * circular references.
+     *
+     * @param lesson the lesson entity with creation details
+     * @return the created {@link LessonViewDto}
+     * @throws ValidationException     if name is missing or empty
+     * @throws WebApplicationException if parent lesson not found or circular
+     *                                 reference detected (BAD_REQUEST)
+     */
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
         // Validate name is provided for creation
@@ -49,20 +91,31 @@ public class LessonService {
 
         // If parent is specified, ensure it exists
         if (lesson.parent != null && lesson.parent.id != null) {
-            final var existingParent = (LessonEntity) LessonEntity.findById(lesson.parent.id);
+            final var existingParent = this.lessonRepository.findById(lesson.parent.id);
             if (existingParent == null) {
                 throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
             }
             lesson.parent = existingParent;
         }
 
-        lesson.persist();
-        return new LessonViewDto(lesson);
+        final LessonEntity persisted = this.lessonRepository.persist(lesson);
+        return new LessonViewDto(persisted);
     }
 
+    /**
+     * Completely replaces an existing lesson (PUT semantics).
+     * Updates name and parent relationship, validates parent exists, and prevents
+     * circular references.
+     *
+     * @param lesson the lesson entity with replacement details (must have id set)
+     * @return the updated {@link LessonViewDto}
+     * @throws WebApplicationException if lesson/parent not found or circular
+     *                                 reference (NOT_FOUND/BAD_REQUEST)
+     * @throws ValidationException     if name is missing or empty
+     */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
-        final var existingLesson = (LessonEntity) LessonEntity.findById(lesson.id);
+        final var existingLesson = this.lessonRepository.findById(lesson.id);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
         }
@@ -77,7 +130,7 @@ public class LessonService {
 
         // Handle parent change - validate if parent is provided
         if (lesson.parent != null && lesson.parent.id != null) {
-            final LessonEntity newParent = LessonEntity.findById(lesson.parent.id);
+            final LessonEntity newParent = this.lessonRepository.findById(lesson.parent.id);
             if (newParent == null) {
                 throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
             }
@@ -92,13 +145,25 @@ public class LessonService {
             existingLesson.parent = null;
         }
 
-        existingLesson.persist();
-        return new LessonViewDto(existingLesson);
+        final LessonEntity persisted = this.lessonRepository.persist(existingLesson);
+        return new LessonViewDto(persisted);
     }
 
+    /**
+     * Partially updates an existing lesson (PATCH semantics).
+     * Only updates lesson properties that are explicitly provided; null values are
+     * ignored.
+     * Validates parent if being changed and prevents circular references.
+     *
+     * @param lesson the lesson entity with partial update details (must have id
+     *               set)
+     * @return the updated {@link LessonViewDto}
+     * @throws WebApplicationException if lesson/parent not found or circular
+     *                                 reference (NOT_FOUND/BAD_REQUEST)
+     */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
-        final var existingLesson = (LessonEntity) LessonEntity.findById(lesson.id);
+        final var existingLesson = this.lessonRepository.findById(lesson.id);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
         }
@@ -111,8 +176,7 @@ public class LessonService {
         // Handle parent change if provided
         if (lesson.parent != null) {
             if (lesson.parent.id != null) {
-                final LessonEntity newParent = (LessonEntity) LessonEntity
-                        .findById(lesson.parent.id);
+                final LessonEntity newParent = this.lessonRepository.findById(lesson.parent.id);
                 if (newParent == null) {
                     throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
                 }
@@ -128,8 +192,8 @@ public class LessonService {
             }
         }
 
-        existingLesson.persist();
-        return new LessonViewDto(existingLesson);
+        final LessonEntity persisted = this.lessonRepository.persist(existingLesson);
+        return new LessonViewDto(persisted);
     }
 
     /**
@@ -147,21 +211,30 @@ public class LessonService {
         return false;
     }
 
+    /**
+     * Deletes a lesson by ID.
+     *
+     * @param id the lesson ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if lesson not found
+     */
     @Transactional
     public boolean deleteLesson(final Long id) {
-        return LessonEntity.deleteById(id);
+        return this.lessonRepository.deleteById(id);
     }
 
+    /**
+     * Searches lessons by name using the provided query string (case-insensitive).
+     * Returns all lessons if query is null or empty.
+     *
+     * @param query the search query string (lesson name match)
+     * @return a list of matching {@link LessonViewDto}s
+     */
     @Transactional
     public List<LessonViewDto> searchLessons(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllLessons();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<LessonEntity> lessons = LessonEntity.find(
-                "LOWER(name) LIKE ?1", searchTerm).list();
-        return lessons.stream()
-                .map(LessonViewDto::new)
-                .toList();
+        final List<LessonEntity> lessons = this.lessonRepository.search(query);
+        return lessons.stream().map(LessonViewDto::new).toList();
     }
 }

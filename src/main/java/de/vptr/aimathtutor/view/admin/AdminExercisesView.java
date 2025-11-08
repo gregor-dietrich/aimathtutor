@@ -40,34 +40,38 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.service.*;
+import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.ExerciseService;
+import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
+/**
+ * Admin view for managing exercises: listing, editing, and publishing.
+ */
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
 public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    ExerciseService exerciseService;
+    private transient ExerciseService exerciseService;
 
     @Inject
-    LessonService lessonService;
+    private transient LessonService lessonService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    UserService userService;
+    private transient UserService userService;
 
     @Inject
-    CommentService commentService;
-
-    @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
     private Grid<ExerciseViewDto> grid;
     private TextField searchField;
@@ -77,17 +81,24 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
     private DatePicker endDatePicker;
     private IntegerField userIdField;
 
-    private Dialog exerciseDialog;
-    private Binder<ExerciseDto> binder;
-    private ExerciseDto currentExercise;
-    private List<LessonViewDto> availableLessons;
+    private transient Dialog exerciseDialog;
+    private transient Binder<ExerciseDto> binder;
+    private transient ExerciseDto currentExercise;
+    private transient List<LessonViewDto> availableLessons;
 
+    /**
+     * Constructs the AdminExercisesView with full size and padding.
+     */
     public AdminExercisesView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Verify authentication and set up the exercise management UI before the
+     * view is displayed.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -95,7 +106,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadLessonsAsync();
         this.loadExercisesAsync();
     }
@@ -135,7 +146,10 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         }
     }
 
-    private void buildUI() {
+    /**
+     * Build the UI for exercise management, including header, search and grid.
+     */
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Exercises");
@@ -147,6 +161,11 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.add(header, searchLayout, buttonLayout, this.grid);
     }
 
+    /**
+     * Create the search layout for filtering exercises by text, date and user.
+     *
+     * @return the search layout
+     */
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
@@ -180,6 +199,11 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         return searchLayout;
     }
 
+    /**
+     * Create the layout holding action buttons for exercises.
+     *
+     * @return a horizontal layout with action buttons
+     */
     private HorizontalLayout createButtonLayout() {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -247,6 +271,12 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
     }
 
+    /**
+     * Create action buttons (edit, delete, comment) for an exercise row.
+     *
+     * @param exercise the exercise view dto
+     * @return a horizontal layout with action buttons
+     */
     private HorizontalLayout createActionButtons(final ExerciseViewDto exercise) {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
@@ -260,6 +290,11 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         return layout;
     }
 
+    /**
+     * Open a dialog to edit or create an exercise.
+     *
+     * @param exercise the exercise to edit or null to create a new one
+     */
     private void openExerciseDialog(final ExerciseViewDto exercise) {
         this.exerciseDialog.removeAll();
         this.currentExercise = exercise != null ? exercise.toExerciseDto() : new ExerciseDto();
@@ -383,8 +418,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 .withValidator((value, ctx) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
-                        return ValidationResult
-                                .error("Initial Expression is required when Graspable Math is enabled");
+                        return ValidationResult.error("Initial Expression is required when Graspable Math is enabled");
                     }
                     return ValidationResult.ok();
                 })
@@ -394,8 +428,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 .withValidator((value, ctx) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
-                        return ValidationResult
-                                .error("Target Expression is required when Graspable Math is enabled");
+                        return ValidationResult.error("Target Expression is required when Graspable Math is enabled");
                     }
                     return ValidationResult.ok();
                 })
@@ -462,6 +495,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.exerciseDialog.open();
     }
 
+    /**
+     * Save the current exercise being edited in the dialog.
+     */
     private void saveExercise() {
         try {
             // Validate the form before attempting to save
@@ -498,6 +534,11 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         }
     }
 
+    /**
+     * Delete the provided exercise.
+     *
+     * @param exercise the exercise to delete
+     */
     private void deleteExercise(final ExerciseViewDto exercise) {
         try {
             if (this.exerciseService.deleteExercise(exercise.id)) {
@@ -513,6 +554,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         }
     }
 
+    /**
+     * Search for exercises using the current search query and update the grid.
+     */
     private void searchExercise() {
         final String query = this.searchField.getValue();
         if (query == null || query.trim().isEmpty()) {
@@ -533,6 +577,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         }
     }
 
+    /**
+     * Filter the exercises by the selected date range.
+     */
     private void filterByDateRange() {
         final var startDate = this.startDatePicker.getValue();
         final var endDate = this.endDatePicker.getValue();

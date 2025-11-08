@@ -116,6 +116,10 @@ Implement rate limits. These should be configurable with generous but sensible d
 
 Review init.sql as well as all queries in the project for optimization potential. Notable examples would be `filterByDateRange` methods.
 
+### 4.7 Refactoring: Database Access
+
+Refactor services and entities so that services no longer include database queries, maintaining separation of concerns between layers.
+
 ---
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management

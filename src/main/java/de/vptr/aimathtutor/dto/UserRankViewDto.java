@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
+/**
+ * DTO representing a user rank/permission set for UI display.
+ */
 public class UserRankViewDto {
 
     public Long id;
@@ -46,6 +49,9 @@ public class UserRankViewDto {
     public UserRankViewDto() {
     }
 
+    /**
+     * Constructs a UserRankViewDto from a UserRankEntity.
+     */
     public UserRankViewDto(final UserRankEntity entity) {
         if (entity != null) {
             this.id = entity.id;
@@ -90,40 +96,66 @@ public class UserRankViewDto {
     }
 
     // Helper methods for permission checking
+
+    /**
+     * Whether this rank grants access to the admin view features.
+     */
     public boolean canAdminView() {
         return Boolean.TRUE.equals(this.adminView);
     }
 
+    /**
+     * Whether this rank has any exercise-related permissions (add/edit/delete).
+     */
     public boolean hasAnyExercisePermission() {
         return Boolean.TRUE.equals(this.exerciseAdd) || Boolean.TRUE.equals(this.exerciseEdit)
                 || Boolean.TRUE.equals(this.exerciseDelete);
     }
 
+    /**
+     * Whether this rank has any lesson-related permissions (add/edit/delete).
+     */
     public boolean hasAnyLessonPermission() {
         return Boolean.TRUE.equals(this.lessonAdd) || Boolean.TRUE.equals(this.lessonEdit)
                 || Boolean.TRUE.equals(this.lessonDelete);
     }
 
+    /**
+     * Whether this rank has any comment-related permissions (add/edit/delete).
+     */
     public boolean hasAnyCommentPermission() {
         return Boolean.TRUE.equals(this.commentAdd) || Boolean.TRUE.equals(this.commentEdit)
                 || Boolean.TRUE.equals(this.commentDelete);
     }
 
+    /**
+     * Whether this rank has any user-management permissions.
+     */
     public boolean hasAnyUserPermission() {
         return Boolean.TRUE.equals(this.userAdd) || Boolean.TRUE.equals(this.userEdit)
                 || Boolean.TRUE.equals(this.userDelete);
     }
 
+    /**
+     * Whether this rank has any user-group management permissions.
+     */
     public boolean hasAnyUserGroupPermission() {
         return Boolean.TRUE.equals(this.userGroupAdd) || Boolean.TRUE.equals(this.userGroupEdit)
                 || Boolean.TRUE.equals(this.userGroupDelete);
     }
 
+    /**
+     * Whether this rank has any user-rank management permissions.
+     */
     public boolean hasAnyUserRankPermission() {
         return Boolean.TRUE.equals(this.userRankAdd) || Boolean.TRUE.equals(this.userRankEdit)
                 || Boolean.TRUE.equals(this.userRankDelete);
     }
 
+    /**
+     * Convert this view into a mutable {@link UserRankDto} used for editing
+     * and persistence.
+     */
     public UserRankDto toUserRankDto() {
         final var dto = new UserRankDto();
         dto.id = this.id;

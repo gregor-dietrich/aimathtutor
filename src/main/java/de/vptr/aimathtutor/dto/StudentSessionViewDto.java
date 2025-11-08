@@ -32,6 +32,9 @@ public class StudentSessionViewDto {
     public StudentSessionViewDto() {
     }
 
+    /**
+     * Constructs a StudentSessionViewDto from a StudentSessionEntity.
+     */
     public StudentSessionViewDto(final StudentSessionEntity entity) {
         if (entity != null) {
             this.id = entity.id;

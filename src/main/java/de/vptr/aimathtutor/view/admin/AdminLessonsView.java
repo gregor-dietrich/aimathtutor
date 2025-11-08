@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,32 +41,43 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
+/**
+ * Admin view for managing lessons and their hierarchy.
+ */
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
 public class AdminLessonsView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminLessonsView.class);
 
     @Inject
-    LessonService lessonService;
+    private transient LessonService lessonService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
-    private TreeGrid<LessonViewDto> treeGrid;
-    private TextField searchField;
-    private Button searchButton;
-    private List<LessonViewDto> allLessons;
+    private transient TreeGrid<LessonViewDto> treeGrid;
+    private transient TextField searchField;
+    private transient Button searchButton;
+    private transient List<LessonViewDto> allLessons;
 
-    private Dialog lessonDialog;
-    private Binder<LessonDto> binder;
-    private LessonDto currentLesson;
+    private transient Dialog lessonDialog;
+    private transient Binder<LessonDto> binder;
+    private transient LessonDto currentLesson;
 
+    /**
+     * Constructs the AdminLessonsView with full size and padding.
+     */
     public AdminLessonsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Ensure user authorization and initialize lesson management components
+     * before the view becomes visible.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -73,7 +85,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadLessonsAsync();
     }
 
@@ -103,6 +115,9 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
                 });
     }
 
+    /**
+     * Update the tree grid to show the current lesson hierarchy.
+     */
     private void updateTreeGrid() {
         // Find root lessons (lessons without parent)
         final var rootLessons = this.allLessons.stream()
@@ -113,6 +128,11 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
         this.treeGrid.expandRecursively(rootLessons, 2); // Expand up to 2 levels
     }
 
+    /**
+     * Update the tree grid to show only the lessons returned by a search.
+     *
+     * @param searchResults list of lessons matching the search
+     */
     private void updateSearchTreeGrid(final List<LessonViewDto> searchResults) {
         // For search results, we want to show all matching lessons
         // If a matching lesson has a parent that's not in the search results,
@@ -121,7 +141,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
         // Get all lesson IDs that exist in the search results
         final var lessonIdsInResults = searchResults.stream()
                 .map(cat -> cat.id)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
 
         // Find lessons to show at the top level:
         // 1. Root lessons (no parent)
@@ -139,13 +159,22 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
         this.treeGrid.expandRecursively(topLevelLessons, 10);
     }
 
+    /**
+     * Return the children of the provided parent lesson.
+     *
+     * @param parent the parent lesson view dto
+     * @return list of child lessons
+     */
     private List<LessonViewDto> getChildrenOfLesson(final LessonViewDto parent) {
         return this.allLessons.stream()
                 .filter(lesson -> lesson.parentId != null && lesson.parentId.equals(parent.id))
                 .toList();
     }
 
-    private void buildUI() {
+    /**
+     * Build the UI for the lessons administration view.
+     */
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Lessons");
@@ -157,6 +186,11 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
         this.add(header, searchLayout, buttonLayout, this.treeGrid);
     }
 
+    /**
+     * Create the search layout for lessons.
+     *
+     * @return the search layout
+     */
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {

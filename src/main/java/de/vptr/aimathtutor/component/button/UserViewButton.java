@@ -6,9 +6,16 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
+/**
+ * Button that navigates the user to the main user/home view. Displays a
+ * home icon and forwards click events to the provided listener.
+ */
 public class UserViewButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Return to Homepage";
+    private static final String DEFAULT_TOOLTIP = "Return to Homepage";
 
+    /**
+     * Constructs a UserViewButton with the specified action and tooltip.
+     */
     public UserViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction, final String tooltipText) {
         super("", viewAction);
         this.setIcon(LineAwesomeIcon.HOME_SOLID.create());

@@ -2,8 +2,14 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO for exercise data.
+ */
+@SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class ExerciseDto {
 
     public Long id;
@@ -40,6 +46,16 @@ public class ExerciseDto {
     public ExerciseDto() {
     }
 
+    /**
+     * Constructs an ExerciseDto with the specified parameters.
+     *
+     * @param title       the title of the exercise
+     * @param content     the content of the exercise
+     * @param userId      the ID of the user who created the exercise
+     * @param lessonId    the ID of the lesson associated with the exercise
+     * @param published   whether the exercise is published or not
+     * @param commentable whether the exercise is commentable or not
+     */
     public ExerciseDto(final String title, final String content, final Long userId, final Long lessonId,
             final Boolean published, final Boolean commentable) {
         this.title = title;
@@ -51,7 +67,7 @@ public class ExerciseDto {
     }
 
     /**
-     * Helper classes for nested field access
+     * Helper class for nested user field access.
      */
     public static class UserField {
         public Long id;
@@ -64,15 +80,28 @@ public class ExerciseDto {
             this.id = id;
         }
 
+        /**
+         * Set the nested user's id.
+         *
+         * @param id user id
+         */
         public void setId(final Long id) {
             this.id = id;
         }
 
+        /**
+         * Set the nested user's username.
+         *
+         * @param username username string
+         */
         public void setUsername(final String username) {
             this.username = username;
         }
     }
 
+    /**
+     * Helper class for nested lesson field access.
+     */
     public static class LessonField {
         public Long id;
         public String name;

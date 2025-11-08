@@ -15,9 +15,9 @@ updates:
     ignore:
       - dependency-name: "eclipse-temurin"
         versions: ["<21.0.0", ">=22.0.0"]
-      - dependency-name: "eclipse-temurin:21-jre-alpine-3.22"
-        # Ignore the unpinned convenience tag suggestion; keep pinning to specific build tokens instead
+      - dependency-name: "eclipse-temurin"
         versions: ["21-jre-alpine-3.22"]
+        # Ignore unpinned convenience tags; allow only pinned patch/build updates like 21.0.9_x
 
   - package-ecosystem: "maven"
     directory: "/"

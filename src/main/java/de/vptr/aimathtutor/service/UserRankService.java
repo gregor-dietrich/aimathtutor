@@ -9,16 +9,36 @@ import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+/**
+ * Service for managing user ranks and their associated permissions.
+ * Provides operations for querying, creating, updating, and deleting user
+ * ranks.
+ */
 @ApplicationScoped
 public class UserRankService {
 
+    @Inject
+    UserRankRepository userRankRepository;
+
+    @Inject
+    UserRepository userRepository;
+
     private static final String USERNAME_KEY = "authenticated.username";
 
+    /**
+     * Retrieves the rank of the currently authenticated user.
+     *
+     * @return a {@link UserRankViewDto} of the current user's rank, or null if not
+     *         authenticated
+     */
     @Transactional
     public UserRankViewDto getCurrentUserRank() {
         final var session = VaadinSession.getCurrent();
@@ -30,8 +50,8 @@ public class UserRankService {
         if (username == null) {
             return null; // Return null instead of throwing when not authenticated
         }
-
-        final var user = UserEntity.<UserEntity>find("username = ?1", username).firstResult();
+        // Use UserRepository to look up the user by username
+        final var user = this.userRepository.findByUsername(username);
         if (user == null || user.rank == null) {
             return null; // Return null instead of throwing when user or rank not found
         }
@@ -39,37 +59,69 @@ public class UserRankService {
         return new UserRankViewDto(user.rank);
     }
 
+    /**
+     * Retrieves all available user ranks in the system.
+     *
+     * @return a list of all {@link UserRankViewDto} objects
+     */
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
-        return UserRankEntity.find("ORDER BY id DESC").list().stream()
-                .map(entity -> new UserRankViewDto((UserRankEntity) entity))
+        return this.userRankRepository.findAll().stream()
+                .map(UserRankViewDto::new)
                 .toList();
     }
 
+    /**
+     * Retrieves a user rank by its unique identifier.
+     *
+     * @param id the rank ID to search for
+     * @return an {@link Optional} containing the rank if found, empty otherwise
+     */
     @Transactional
     public Optional<UserRankViewDto> findById(final Long id) {
-        return UserRankEntity.findByIdOptional(id)
-                .map(entity -> new UserRankViewDto((UserRankEntity) entity));
+        return this.userRankRepository.findByIdOptional(id)
+                .map(UserRankViewDto::new);
     }
 
+    /**
+     * Retrieves a user rank by its name.
+     *
+     * @param name the name of the rank to search for
+     * @return an {@link Optional} containing the rank if found, empty otherwise
+     */
     public Optional<UserRankViewDto> findByName(final String name) {
-        return UserRankEntity.find("name", name).firstResultOptional()
-                .map(entity -> new UserRankViewDto((UserRankEntity) entity));
+        return this.userRankRepository.findByName(name)
+                .map(UserRankViewDto::new);
     }
 
+    /**
+     * Searches for user ranks matching the given query term.
+     *
+     * @param query the search term to match against rank names;
+     *              if null or empty, returns all ranks
+     * @return a list of matching {@link UserRankViewDto} objects
+     */
     @Transactional
     public List<UserRankViewDto> searchRanks(final String query) {
         if (query == null || query.trim().isEmpty()) {
             return this.getAllRanks();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
-        final List<UserRankEntity> ranks = UserRankEntity.find("LOWER(name) LIKE ?1 ORDER BY id DESC", searchTerm)
-                .list();
+        final List<UserRankEntity> ranks = this.userRankRepository.search(searchTerm);
         return ranks.stream()
                 .map(UserRankViewDto::new)
                 .toList();
     }
 
+    /**
+     * Creates a new user rank with the provided permissions.
+     * Initializes all permissions from the DTO with false defaults for unspecified
+     * values.
+     *
+     * @param rankDto the rank data including name and permissions
+     * @return the newly created {@link UserRankViewDto}
+     * @throws IllegalArgumentException if rank name is invalid
+     */
     @Transactional
     public UserRankViewDto createRank(final UserRankDto rankDto) {
         final UserRankEntity rank = new UserRankEntity();
@@ -98,13 +150,22 @@ public class UserRankService {
         rank.userRankDelete = rankDto.userRankDelete != null ? rankDto.userRankDelete : false;
         rank.userRankEdit = rankDto.userRankEdit != null ? rankDto.userRankEdit : false;
 
-        rank.persist();
+        this.userRankRepository.persist(rank);
         return new UserRankViewDto(rank);
     }
 
+    /**
+     * Updates an existing user rank with new permission values.
+     * Performs complete replacement of all permissions (PUT semantics).
+     *
+     * @param id      the ID of the rank to update
+     * @param rankDto the new rank data with updated permissions
+     * @return the updated {@link UserRankViewDto}
+     * @throws WebApplicationException if rank is not found (NOT_FOUND status)
+     */
     @Transactional
     public UserRankViewDto updateRank(final Long id, final UserRankDto rankDto) {
-        final UserRankEntity existingRank = UserRankEntity.findById(id);
+        final UserRankEntity existingRank = this.userRankRepository.findById(id);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }
@@ -131,79 +192,118 @@ public class UserRankService {
         existingRank.userRankDelete = rankDto.userRankDelete != null ? rankDto.userRankDelete : false;
         existingRank.userRankEdit = rankDto.userRankEdit != null ? rankDto.userRankEdit : false;
 
-        existingRank.persist();
+        this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
     }
 
+    /**
+     * Partially updates an existing user rank (PATCH semantics).
+     * Only updates permissions that are explicitly provided in the DTO; null values
+     * are ignored.
+     *
+     * @param id      the ID of the rank to update
+     * @param rankDto the partial rank data with selected permissions to update
+     * @return the updated {@link UserRankViewDto}
+     * @throws WebApplicationException if rank is not found (NOT_FOUND status)
+     */
     @Transactional
     public UserRankViewDto patchRank(final Long id, final UserRankDto rankDto) {
-        final UserRankEntity existingRank = UserRankEntity.findById(id);
+        final UserRankEntity existingRank = this.userRankRepository.findById(id);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }
 
         // Partial update (PATCH semantics) - only update provided fields
-        if (rankDto.name != null)
+        if (rankDto.name != null) {
             existingRank.name = rankDto.name;
-        if (rankDto.adminView != null)
+        }
+        if (rankDto.adminView != null) {
             existingRank.adminView = rankDto.adminView;
-        if (rankDto.exerciseAdd != null)
+        }
+        if (rankDto.exerciseAdd != null) {
             existingRank.exerciseAdd = rankDto.exerciseAdd;
-        if (rankDto.exerciseDelete != null)
+        }
+        if (rankDto.exerciseDelete != null) {
             existingRank.exerciseDelete = rankDto.exerciseDelete;
-        if (rankDto.exerciseEdit != null)
+        }
+        if (rankDto.exerciseEdit != null) {
             existingRank.exerciseEdit = rankDto.exerciseEdit;
-        if (rankDto.lessonAdd != null)
+        }
+        if (rankDto.lessonAdd != null) {
             existingRank.lessonAdd = rankDto.lessonAdd;
-        if (rankDto.lessonDelete != null)
+        }
+        if (rankDto.lessonDelete != null) {
             existingRank.lessonDelete = rankDto.lessonDelete;
-        if (rankDto.lessonEdit != null)
+        }
+        if (rankDto.lessonEdit != null) {
             existingRank.lessonEdit = rankDto.lessonEdit;
-        if (rankDto.commentAdd != null)
+        }
+        if (rankDto.commentAdd != null) {
             existingRank.commentAdd = rankDto.commentAdd;
-        if (rankDto.commentDelete != null)
+        }
+        if (rankDto.commentDelete != null) {
             existingRank.commentDelete = rankDto.commentDelete;
-        if (rankDto.commentEdit != null)
+        }
+        if (rankDto.commentEdit != null) {
             existingRank.commentEdit = rankDto.commentEdit;
-        if (rankDto.userAdd != null)
+        }
+        if (rankDto.userAdd != null) {
             existingRank.userAdd = rankDto.userAdd;
-        if (rankDto.userDelete != null)
+        }
+        if (rankDto.userDelete != null) {
             existingRank.userDelete = rankDto.userDelete;
-        if (rankDto.userEdit != null)
+        }
+        if (rankDto.userEdit != null) {
             existingRank.userEdit = rankDto.userEdit;
-        if (rankDto.userGroupAdd != null)
+        }
+        if (rankDto.userGroupAdd != null) {
             existingRank.userGroupAdd = rankDto.userGroupAdd;
-        if (rankDto.userGroupDelete != null)
+        }
+        if (rankDto.userGroupDelete != null) {
             existingRank.userGroupDelete = rankDto.userGroupDelete;
-        if (rankDto.userGroupEdit != null)
+        }
+        if (rankDto.userGroupEdit != null) {
             existingRank.userGroupEdit = rankDto.userGroupEdit;
-        if (rankDto.userRankAdd != null)
+        }
+        if (rankDto.userRankAdd != null) {
             existingRank.userRankAdd = rankDto.userRankAdd;
-        if (rankDto.userRankDelete != null)
+        }
+        if (rankDto.userRankDelete != null) {
             existingRank.userRankDelete = rankDto.userRankDelete;
-        if (rankDto.userRankEdit != null)
+        }
+        if (rankDto.userRankEdit != null) {
             existingRank.userRankEdit = rankDto.userRankEdit;
+        }
 
-        existingRank.persist();
+        this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
     }
 
+    /**
+     * Deletes a user rank by ID.
+     * Prevents deletion if users are currently assigned to this rank.
+     *
+     * @param id the ID of the rank to delete
+     * @return {@code true} if deletion succeeded, {@code false} if rank not found
+     * @throws WebApplicationException if rank has assigned users (CONFLICT status)
+     */
     @Transactional
     public boolean deleteRank(final Long id) {
-        final UserRankEntity rank = UserRankEntity.findById(id);
+        final UserRankEntity rank = this.userRankRepository.findById(id);
         if (rank == null) {
             return false;
         }
 
         // Check if rank has associated users
-        final List<UserEntity> usersWithRank = UserEntity.find("rank.id = ?1", id).list();
+        final List<UserEntity> usersWithRank = this.userRepository.findByRankId(id);
         if (!usersWithRank.isEmpty()) {
             throw new WebApplicationException(
-                    "Cannot delete rank because " + usersWithRank.size() + " user(s) are assigned to this rank. " +
-                            "Please reassign these users to a different rank before deleting.",
+                    "Cannot delete rank because "
+                            + usersWithRank.size()
+                            + " user(s) are assigned to this rank. Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
         }
 
-        return UserRankEntity.deleteById(id);
+        return this.userRankRepository.deleteById(id);
     }
 }

@@ -4,11 +4,15 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Request DTO for OpenAI Chat Completions API
  * Based on OpenAI REST API specification
  */
-public class OpenAIRequestDto {
+@SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "Request DTO used for JSON mapping; public fields are intentional")
+public class OpenAiRequestDto {
 
     public String model;
 
@@ -31,6 +35,9 @@ public class OpenAIRequestDto {
     @JsonProperty("response_format")
     public ResponseFormat responseFormat;
 
+    /**
+     * Represents a message in the OpenAI request.
+     */
     public static class Message {
         public String role; // "system", "user", "assistant"
         public String content;
@@ -44,6 +51,9 @@ public class OpenAIRequestDto {
         }
     }
 
+    /**
+     * Represents the response format in the OpenAI request.
+     */
     public static class ResponseFormat {
         public String type; // "text" or "json_object"
 
@@ -58,9 +68,10 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a simple chat request
      */
-    public static OpenAIRequestDto createChatRequest(final String systemPrompt, final String userPrompt, final String model,
+    public static OpenAiRequestDto createChatRequest(final String systemPrompt, final String userPrompt,
+            final String model,
             final Double temperature, final Integer maxTokens) {
-        final var request = new OpenAIRequestDto();
+        final var request = new OpenAiRequestDto();
         request.model = model;
         request.temperature = temperature;
         request.maxTokens = maxTokens;
@@ -75,7 +86,8 @@ public class OpenAIRequestDto {
     /**
      * Helper method to create a JSON mode request (guarantees valid JSON response)
      */
-    public static OpenAIRequestDto createJsonRequest(final String systemPrompt, final String userPrompt, final String model,
+    public static OpenAiRequestDto createJsonRequest(final String systemPrompt, final String userPrompt,
+            final String model,
             final Double temperature, final Integer maxTokens) {
         final var request = createChatRequest(systemPrompt, userPrompt, model, temperature, maxTokens);
         request.responseFormat = new ResponseFormat("json_object");

@@ -46,39 +46,50 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
+/**
+ * Admin view for managing users: list, edit, create and remove user accounts.
+ */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
 
     @Inject
-    UserService userService;
+    private transient UserService userService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    UserRankService userRankService;
+    private transient UserRankService userRankService;
 
     @Inject
-    DateTimeFormatterUtil dateTimeFormatter;
+    private transient DateTimeFormatterUtil dateTimeFormatter;
 
-    private Grid<UserViewDto> grid;
-    private TextField searchField;
-    private Button searchButton;
+    private transient Grid<UserViewDto> grid;
+    private transient TextField searchField;
+    private transient Button searchButton;
 
-    private Dialog userDialog;
-    private Dialog passwordDialog;
-    private Binder<UserDto> binder;
-    private UserDto currentUser;
-    private List<UserRankViewDto> availableRanks;
+    private transient Dialog userDialog;
+    private transient Dialog passwordDialog;
+    private transient Binder<UserDto> binder;
+    private transient UserDto currentUser;
+    private transient List<UserRankViewDto> availableRanks;
 
+    /**
+     * Construct the admin users view and initialize default layout settings.
+     */
     public AdminUsersView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Lifecycle callback executed before the view is entered. Verifies the
+     * user is authenticated and triggers UI construction and data loading.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -86,7 +97,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadRanksAsync();
         this.loadUsersAsync();
     }
@@ -141,7 +152,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                 });
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("Users");
@@ -449,8 +460,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
 
             if (this.currentUser.id == null) {
                 // For new users, set a default password
-                this.currentUser.password = "defaultPassword123"; // You might want to generate a random password
-                                                                  // instead
+                this.currentUser.password = "defaultPassword123";
                 this.userService.createUser(this.currentUser);
                 NotificationUtil
                         .showSuccess("User created successfully. Use the Password button to set a new password.");

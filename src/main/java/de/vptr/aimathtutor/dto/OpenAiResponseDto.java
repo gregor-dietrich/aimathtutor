@@ -4,11 +4,15 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Response DTO for OpenAI Chat Completions API
  * Based on OpenAI REST API specification
  */
-public class OpenAIResponseDto {
+@SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+        "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO for JSON mapping from OpenAI; public fields intentionally used for Jackson mapping")
+public class OpenAiResponseDto {
 
     public String id;
     public String object;
@@ -17,6 +21,9 @@ public class OpenAIResponseDto {
     public List<Choice> choices;
     public Usage usage;
 
+    /**
+     * Represents a choice in the OpenAI response.
+     */
     public static class Choice {
         public Integer index;
         public Message message;
@@ -24,11 +31,17 @@ public class OpenAIResponseDto {
         public String finishReason;
     }
 
+    /**
+     * Represents a message in the OpenAI response.
+     */
     public static class Message {
         public String role;
         public String content;
     }
 
+    /**
+     * Represents usage statistics in the OpenAI response.
+     */
     public static class Usage {
         @JsonProperty("prompt_tokens")
         public Integer promptTokens;

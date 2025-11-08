@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Represents a Graspable Math problem definition.
  * This DTO is used to initialize the Graspable Math canvas with a specific
@@ -33,14 +35,27 @@ public class GraspableProblemDto {
             this.topic = topic;
         }
 
+        /**
+         * Get the human-readable display name for this category.
+         *
+         * @return display name
+         */
         public String getDisplayName() {
             return this.displayName;
         }
 
+        /**
+         * Get the short topic identifier associated with this category.
+         *
+         * @return topic id
+         */
         public String getTopic() {
             return this.topic;
         }
 
+        /**
+         * Return the display name when converting to string.
+         */
         @Override
         public String toString() {
             return this.displayName;
@@ -49,6 +64,7 @@ public class GraspableProblemDto {
 
     public String title;
 
+    @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Description is optional and used by front-end; public for JSON mapping")
     public String description;
 
     @JsonProperty("initial_expression")
@@ -74,19 +90,28 @@ public class GraspableProblemDto {
         this.hints = new ArrayList<>();
     }
 
+    /**
+     * Constructs a GraspableProblemDto with the specified title and initial
+     * expression.
+     */
     public GraspableProblemDto(final String title, final String initialExpression) {
         this();
         this.title = title;
         this.initialExpression = initialExpression;
     }
 
+    /**
+     * Returns a string representation of the GraspableProblemDto.
+     *
+     * @return a string containing the title, expressions, and difficulty level
+     */
     @Override
     public String toString() {
-        return "GraspableProblemDto{" +
-                "title='" + this.title + '\'' +
-                ", initialExpression='" + this.initialExpression + '\'' +
-                ", targetExpression='" + this.targetExpression + '\'' +
-                ", difficulty='" + this.difficulty + '\'' +
-                '}';
+        return "GraspableProblemDto{"
+                + "title='" + this.title + '\''
+                + ", initialExpression='" + this.initialExpression + '\''
+                + ", targetExpression='" + this.targetExpression + '\''
+                + ", difficulty='" + this.difficulty + '\''
+                + '}';
     }
 }

@@ -9,11 +9,17 @@ import com.vaadin.flow.component.button.ButtonVariant;
 
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 
+/**
+ * Small report button used to flag content. Applies a warning/secondary style.
+ */
 public class ReportButton extends Button {
-    private final static String DEFAULT_TOOLTIP = "Report as inappropriate";
+    private static final String DEFAULT_TOOLTIP = "Report as inappropriate";
 
     private final ComponentEventListener<ClickEvent<Button>> reportAction;
 
+    /**
+     * Constructs a ReportButton with the specified action and tooltip.
+     */
     public ReportButton(final ComponentEventListener<ClickEvent<Button>> reportAction, final String tooltipText) {
         super("");
         this.reportAction = reportAction;

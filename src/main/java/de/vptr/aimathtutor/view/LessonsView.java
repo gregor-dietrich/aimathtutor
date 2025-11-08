@@ -20,18 +20,26 @@ import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import jakarta.inject.Inject;
 
+/**
+ * Public lessons view listing available lessons and their exercises.
+ */
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
-    @Inject
-    AuthService authService;
+    private static final long serialVersionUID = 1L;
 
     @Inject
-    LessonService lessonService;
+    private transient AuthService authService;
 
     @Inject
-    ExerciseService exerciseService;
+    private transient LessonService lessonService;
 
+    @Inject
+    private transient ExerciseService exerciseService;
+
+    /**
+     * Constructs the LessonsView with alignment and padding.
+     */
     public LessonsView() {
         this.setAlignItems(Alignment.START);
         this.setJustifyContentMode(JustifyContentMode.START);
@@ -40,12 +48,15 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         this.setSizeFull();
     }
 
+    /**
+     * Prepare the lessons view before navigation by building the UI.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        this.buildUI();
+        this.buildUi();
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         // Welcome header
@@ -207,6 +218,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 case "advanced":
                 case "expert":
                     difficultyBadge.getElement().getThemeList().add("error");
+                    break;
+                default:
+                    // unknown difficulty - no extra styling
                     break;
             }
             badgeLayout.add(difficultyBadge);

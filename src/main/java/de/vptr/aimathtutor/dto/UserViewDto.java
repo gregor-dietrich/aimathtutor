@@ -4,6 +4,10 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.UserEntity;
 
+/**
+ * DTO used to present a user in list and detail views. Contains non-sensitive
+ * fields intended for UI consumption.
+ */
 public class UserViewDto {
 
     public Long id;
@@ -25,6 +29,9 @@ public class UserViewDto {
     public UserViewDto() {
     }
 
+    /**
+     * Constructs a UserViewDto from a UserEntity.
+     */
     public UserViewDto(final UserEntity entity) {
         if (entity != null) {
             this.id = entity.id;
@@ -45,6 +52,13 @@ public class UserViewDto {
         }
     }
 
+    /**
+     * Convert this view DTO to a minimal editable {@link UserDto} instance.
+     * Sensitive fields like password are not transferred and must be handled
+     * separately.
+     *
+     * @return a new UserDto populated from view fields
+     */
     public UserDto toUserDto() {
         final var dto = new UserDto();
         dto.id = this.id;

@@ -41,6 +41,9 @@ public class GraspableEventDto {
         this.timestamp = LocalDateTime.now();
     }
 
+    /**
+     * Constructs a GraspableEventDto with the specified parameters.
+     */
     public GraspableEventDto(final String eventType, final String expressionBefore,
             final String expressionAfter, final Long studentId,
             final Long exerciseId, final String sessionId) {
@@ -53,17 +56,20 @@ public class GraspableEventDto {
         this.sessionId = sessionId;
     }
 
+    /**
+     * Debug-friendly string representation of the event.
+     */
     @Override
     public String toString() {
-        return "GraspableEventDto{" +
-                "eventType='" + this.eventType + '\'' +
-                ", expressionBefore='" + this.expressionBefore + '\'' +
-                ", expressionAfter='" + this.expressionAfter + '\'' +
-                ", studentId=" + this.studentId +
-                ", exerciseId=" + this.exerciseId +
-                ", sessionId='" + this.sessionId + '\'' +
-                ", timestamp=" + this.timestamp +
-                ", correct=" + this.correct +
-                '}';
+        return "GraspableEventDto{"
+                + "eventType='" + this.eventType + '\''
+                + ", expressionBefore='" + this.expressionBefore + '\''
+                + ", expressionAfter='" + this.expressionAfter + '\''
+                + ", studentId=" + this.studentId
+                + ", exerciseId=" + this.exerciseId
+                + ", sessionId='" + this.sessionId + '\''
+                + ", timestamp=" + this.timestamp
+                + ", correct=" + this.correct
+                + '}';
     }
 }

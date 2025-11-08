@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +13,13 @@ import jakarta.validation.constraints.NotBlank;
  */
 @Entity
 @Table(name = "ai_interactions")
-public class AIInteractionEntity extends PanacheEntityBase {
+@NamedQueries({
+        @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY id DESC"),
+        @NamedQuery(name = "AiInteraction.findBySessionId", query = "FROM AiInteractionEntity WHERE sessionId = :s"),
+        @NamedQuery(name = "AiInteraction.findByUserId", query = "FROM AiInteractionEntity WHERE user.id = :u"),
+        @NamedQuery(name = "AiInteraction.findByExerciseId", query = "FROM AiInteractionEntity WHERE exercise.id = :e")
+})
+public class AiInteractionEntity extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,8 +65,13 @@ public class AIInteractionEntity extends PanacheEntityBase {
     @Column(name = "conversation_context", columnDefinition = "TEXT")
     public String conversationContext; // JSON string of context sent with AI request
 
+    @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity field intentionally public for ORM mapping")
     public LocalDateTime timestamp;
 
+    /**
+     * JPA lifecycle callback method invoked before persisting the entity.
+     * Sets the timestamp to the current date and time if not already set.
+     */
     @PrePersist
     public void prePersist() {
         if (this.timestamp == null) {

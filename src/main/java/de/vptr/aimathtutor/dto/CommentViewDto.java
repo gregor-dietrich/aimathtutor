@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 
+/**
+ * View DTO for comments used in UI grids and panels.
+ */
 public class CommentViewDto {
     public Long id;
     public String content;
@@ -13,7 +16,6 @@ public class CommentViewDto {
     public String username;
     public LocalDateTime created;
 
-    // NEW: For threading and moderation
     public Long parentId;
     public String status; // VISIBLE, HIDDEN, DELETED
     public Integer flagsCount;
@@ -24,6 +26,9 @@ public class CommentViewDto {
     public CommentViewDto() {
     }
 
+    /**
+     * Constructs a CommentViewDto from a CommentEntity.
+     */
     public CommentViewDto(final CommentEntity entity) {
         this.id = entity.id;
         this.content = entity.content;

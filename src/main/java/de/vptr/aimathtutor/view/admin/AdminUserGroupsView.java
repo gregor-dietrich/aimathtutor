@@ -23,6 +23,7 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
@@ -40,41 +41,51 @@ import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
+/**
+ * Admin view for managing user groups and their memberships.
+ */
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
 public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupsView.class);
 
     @Inject
-    UserGroupService groupService;
+    private transient UserGroupService groupService;
 
     @Inject
-    AuthService authService;
+    private transient AuthService authService;
 
     @Inject
-    UserService userService;
+    private transient UserService userService;
 
-    private Grid<UserGroupViewDto> grid;
-    private TextField searchField;
-    private Button searchButton;
-    private IntegerField userIdField;
+    private transient Grid<UserGroupViewDto> grid;
+    private transient TextField searchField;
+    private transient Button searchButton;
+    private transient IntegerField userIdField;
 
-    private Dialog groupDialog;
-    private Binder<UserGroupDto> binder;
-    private UserGroupDto currentGroup;
+    private transient Dialog groupDialog;
+    private transient Binder<UserGroupDto> binder;
+    private transient UserGroupDto currentGroup;
 
     // User management components
-    private Dialog userManagementDialog;
-    private Grid<UserViewDto> userGrid;
-    private ComboBox<UserViewDto> availableUsersCombo;
-    private UserGroupViewDto selectedGroup;
+    private transient Dialog userManagementDialog;
+    private transient Grid<UserViewDto> userGrid;
+    private transient ComboBox<UserViewDto> availableUsersCombo;
+    private transient UserGroupViewDto selectedGroup;
 
+    /**
+     * Construct the admin view for managing user groups.
+     */
     public AdminUserGroupsView() {
         this.setSizeFull();
         this.setPadding(true);
         this.setSpacing(true);
     }
 
+    /**
+     * Verify authentication and initialize the view before navigation.
+     */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
@@ -82,7 +93,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
             return;
         }
 
-        this.buildUI();
+        this.buildUi();
         this.loadGroupsAsync();
     }
 
@@ -111,7 +122,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                 });
     }
 
-    private void buildUI() {
+    private void buildUi() {
         this.removeAll();
 
         final var header = new H2("User Groups");
@@ -398,11 +409,11 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
             final var allUsers = this.userService.getAllUsers();
 
             // Filter out users already in this group
-            final var currentUsers = this.userGrid.getDataProvider().fetch(new com.vaadin.flow.data.provider.Query<>())
+            final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
                     .collect(Collectors.toList());
             final var currentUserIds = currentUsers.stream()
                     .map(user -> user.id)
-                    .collect(java.util.stream.Collectors.toSet());
+                    .collect(Collectors.toSet());
 
             final var availableUsers = allUsers.stream()
                     .filter(user -> !currentUserIds.contains(user.id))
@@ -423,7 +434,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         }
 
         // Check if user is already in the group
-        final var currentUsers = this.userGrid.getDataProvider().fetch(new com.vaadin.flow.data.provider.Query<>())
+        final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
                 .collect(Collectors.toList());
         final boolean alreadyInGroup = currentUsers.stream()
                 .anyMatch(user -> user.id.equals(selectedUser.id));
