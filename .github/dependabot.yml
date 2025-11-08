@@ -16,8 +16,10 @@ updates:
       - dependency-name: "eclipse-temurin"
         versions: ["<21.0.0", ">=22.0.0"]
       - dependency-name: "eclipse-temurin"
-        versions: ["21-jre-alpine-3.22"]
-        # Ignore unpinned convenience tags; allow only pinned patch/build updates like 21.0.9_x
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "eclipse-temurin"
+        versions: ["*-jre-alpine*"]
+        # Ignore unpinned convenience tags and major/minor bumps; allow only pinned patch/build updates
 
   - package-ecosystem: "maven"
     directory: "/"
