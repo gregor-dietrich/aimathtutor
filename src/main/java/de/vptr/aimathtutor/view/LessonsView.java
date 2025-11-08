@@ -26,8 +26,6 @@ import jakarta.inject.Inject;
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final long serialVersionUID = 1L;
-
     @Inject
     private transient AuthService authService;
 

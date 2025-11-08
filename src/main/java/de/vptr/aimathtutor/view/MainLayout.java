@@ -30,7 +30,6 @@ import jakarta.inject.Inject;
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
-    private static final long serialVersionUID = 1L;
 
     private Button adminViewButton;
     private Button settingsButton;

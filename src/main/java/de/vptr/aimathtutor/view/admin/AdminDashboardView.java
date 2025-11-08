@@ -30,7 +30,6 @@ import jakarta.inject.Inject;
 @PageTitle("Admin Dashboard - AI Math Tutor")
 public class AdminDashboardView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminDashboardView.class);
 
     @Inject

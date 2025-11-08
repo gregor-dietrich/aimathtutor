@@ -56,7 +56,6 @@ import jakarta.inject.Inject;
 public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
-    private static final long serialVersionUID = 1L;
 
     @Inject
     private transient ExerciseService exerciseService;

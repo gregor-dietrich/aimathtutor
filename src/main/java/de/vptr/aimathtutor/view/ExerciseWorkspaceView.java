@@ -41,8 +41,6 @@ import jakarta.inject.Inject;
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
-
-    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(ExerciseWorkspaceView.class);
 
     @Inject

@@ -12,8 +12,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Service reference is transient and intentionally stored for runtime behavior; not serialized")
 public class ThemeToggleButton extends Button {
-
-    private static final long serialVersionUID = 1L;
     private final transient ThemeService themeService;
 
     /**
