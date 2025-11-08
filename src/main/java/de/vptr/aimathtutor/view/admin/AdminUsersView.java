@@ -51,8 +51,6 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
-
-    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
 
     @Inject

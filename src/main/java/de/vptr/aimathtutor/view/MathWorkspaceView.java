@@ -41,7 +41,6 @@ import jakarta.inject.Inject;
 public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MathWorkspaceView.class);
-    private static final long serialVersionUID = 1L;
 
     @Inject
     private transient AuthService authService;

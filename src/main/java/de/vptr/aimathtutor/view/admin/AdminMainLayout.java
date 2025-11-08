@@ -35,8 +35,6 @@ import jakarta.inject.Inject;
  * layout.
  */
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
-
-    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AdminMainLayout.class);
 
     private transient Button userViewButton;

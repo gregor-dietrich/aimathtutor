@@ -39,8 +39,6 @@ import jakarta.inject.Inject;
 @PageTitle("Student Progress - AI Math Tutor")
 public class AdminProgressView extends VerticalLayout implements BeforeEnterObserver {
 
-    private static final long serialVersionUID = 1L;
-
     private static final Logger LOG = LoggerFactory.getLogger(AdminProgressView.class);
 
     @Inject

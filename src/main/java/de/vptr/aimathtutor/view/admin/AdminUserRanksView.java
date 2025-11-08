@@ -63,8 +63,6 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
     private Binder<UserRankDto> binder;
     private transient UserRankDto currentRank;
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * Constructs the AdminUserRanksView with full size and padding.
      */

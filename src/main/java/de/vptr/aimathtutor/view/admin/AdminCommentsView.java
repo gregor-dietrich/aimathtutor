@@ -54,7 +54,6 @@ import jakarta.inject.Inject;
 public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminCommentsView.class);
-    private static final long serialVersionUID = 1L;
 
     @Inject
     private transient CommentService commentService;
