@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs Exclusion Filter
+  
+  This filter excludes false positives and intentional design patterns that SpotBugs flags.
+  
+  SE_NO_SERIALVERSIONID:
+    Vaadin Flow components are UI components that are never serialized. They are ephemeral
+    and created per-request/session. Adding serialVersionUID to suppress this warning is
+    unnecessary boilerplate and creates a false sense of serialization support.
+  
+  SE_TRANSIENT_FIELD_NOT_RESTORED:
+    Similar to above - transient fields in Vaadin components are never deserialized
+    because the components themselves are never serialized.
+-->
+<FindBugsFilter xmlns="http://findbugs.sourceforge.net/filter/3.0.0">
+  <!-- Suppress all SE_ pattern warnings (serialization issues) for the entire project -->
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID" />
+  </Match>
+
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED" />
+  </Match>
+</FindBugsFilter>
