@@ -250,11 +250,6 @@ public class AnalyticsService {
 
                 // Fetch all sessions in a single query
                 final List<StudentSessionEntity> allSessions = this.studentSessionRepository.findAll();
-                // all
-                // via
-                // repository
-                // if
-                // implemented
 
                 // Group sessions by user ID (filter out sessions with null user to avoid NPE)
                 final Map<Long, List<StudentSessionEntity>> sessionsByUser = allSessions.stream()
