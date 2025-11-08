@@ -55,10 +55,12 @@ public class LessonViewDto {
             this.childrenIds = List.of();
         }
 
-        // Compute exercises count safely
+        // Compute exercises count safely (only count published exercises)
         try {
             if (entity.exercises != null) {
-                this.exercisesCount = entity.exercises.size();
+                this.exercisesCount = (int) entity.exercises.stream()
+                        .filter(ex -> Boolean.TRUE.equals(ex.published))
+                        .count();
             } else {
                 this.exercisesCount = 0;
             }
