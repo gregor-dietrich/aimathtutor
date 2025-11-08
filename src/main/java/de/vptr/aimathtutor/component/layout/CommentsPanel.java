@@ -203,8 +203,7 @@ public class CommentsPanel extends VerticalLayout {
                 .set("display", "block")
                 .set("font-weight", "600")
                 .set("font-size", "0.875rem")
-                .set("color", "var(--lumo-contrast-70pct)")
-                .set("margin-bottom", "0.5rem");
+                .set("color", "var(--lumo-contrast-70pct)");
 
         // Content with line break from header
         final String displayContent = "DELETED".equals(comment.status) ? "[deleted]" : comment.content;
@@ -243,7 +242,7 @@ public class CommentsPanel extends VerticalLayout {
             actions.add(deleteButton);
         }
 
-        commentDiv.add(header, content, actions);
+        commentDiv.add(header);
 
         // Add edit timestamp if applicable
         if (comment.editedAt != null) {
@@ -251,10 +250,11 @@ public class CommentsPanel extends VerticalLayout {
             editedNote.addClassName("comment-edited");
             editedNote.getStyle()
                     .set("font-size", "0.75rem")
-                    .set("color", "var(--lumo-contrast-50pct)")
-                    .set("margin-left", "0.5rem");
+                    .set("color", "var(--lumo-contrast-50pct)");
             commentDiv.add(editedNote);
         }
+
+        commentDiv.add(content, actions);
 
         return commentDiv;
     }
