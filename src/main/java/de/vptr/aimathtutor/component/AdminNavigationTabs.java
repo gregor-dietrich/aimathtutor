@@ -24,6 +24,7 @@ public class AdminNavigationTabs extends Tabs {
 
         if (userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission()) {
             this.add(new Tab(new RouterLink("Dashboard", AdminDashboardView.class)));
+            this.add(new Tab(new RouterLink("Configuration", AdminConfigView.class)));
             this.add(new Tab(new RouterLink("Sessions", AdminSessionsView.class)));
             this.add(new Tab(new RouterLink("Progress", AdminProgressView.class)));
         }
