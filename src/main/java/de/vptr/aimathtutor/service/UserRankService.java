@@ -23,6 +23,12 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class UserRankService {
 
+    @Inject
+    UserRankRepository userRankRepository;
+
+    @Inject
+    UserRepository userRepository;
+
     private static final String USERNAME_KEY = "authenticated.username";
 
     /**
@@ -259,10 +265,4 @@ public class UserRankService {
 
         return this.userRankRepository.deleteById(id);
     }
-
-    @Inject
-    UserRankRepository userRankRepository;
-
-    @Inject
-    UserRepository userRepository;
 }
