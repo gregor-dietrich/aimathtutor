@@ -66,7 +66,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Called before navigation occurs. Checks authentication and builds the
+     * Graspable Math UI
+     * once on first entry. Redirects to login if not authenticated.
+     *
+     * @param event the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -149,7 +153,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
-     * TODO: Document onAttach().
+     * Attaches event listener when view is added to the UI tree.
+     * Initializes the Graspable Math JavaScript widget for math expression
+     * manipulation.
+     *
+     * @param attachEvent the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {

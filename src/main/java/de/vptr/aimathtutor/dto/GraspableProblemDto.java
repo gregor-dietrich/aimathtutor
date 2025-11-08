@@ -101,7 +101,9 @@ public class GraspableProblemDto {
     }
 
     /**
-     * TODO: Document toString().
+     * Returns a string representation of the GraspableProblemDto.
+     *
+     * @return a string containing the title, expressions, and difficulty level
      */
     @Override
     public String toString() {

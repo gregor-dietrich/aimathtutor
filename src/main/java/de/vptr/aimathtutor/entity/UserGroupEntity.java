@@ -31,7 +31,10 @@ public class UserGroupEntity extends PanacheEntityBase {
     // Helper method to find group by name
 
     /**
-     * TODO: Document findByName().
+     * Finds a user group by its name.
+     *
+     * @param name the name of the group to find
+     * @return the {@link UserGroupEntity} if found, null otherwise
      */
     public static UserGroupEntity findByName(final String name) {
         return find("name", name).firstResult();
@@ -40,7 +43,9 @@ public class UserGroupEntity extends PanacheEntityBase {
     // Helper method to get users in this group
 
     /**
-     * TODO: Document getUsers().
+     * Retrieves all users that are members of this group.
+     *
+     * @return a list of {@link UserEntity} objects that are members of this group
      */
     public List<UserEntity> getUsers() {
         return this.userGroupMetas.stream()
@@ -51,7 +56,10 @@ public class UserGroupEntity extends PanacheEntityBase {
     // Helper method to get user count in this group
 
     /**
-     * TODO: Document getUserCount().
+     * Counts the number of users that are members of this group.
+     *
+     * @return the number of members in this group, or 0 if no members or metadata
+     *         is null
      */
     public long getUserCount() {
         return this.userGroupMetas != null ? this.userGroupMetas.size() : 0;

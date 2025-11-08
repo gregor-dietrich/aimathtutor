@@ -11,7 +11,9 @@ import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Repository for managing lesson entities.
+ * Provides database access and query operations for lessons including
+ * find by ID, hierarchical navigation, and search operations.
  */
 @ApplicationScoped
 public class LessonRepository {
@@ -20,7 +22,10 @@ public class LessonRepository {
     EntityManager em;
 
     /**
-     * TODO: Document findById().
+     * Retrieves a lesson by its unique identifier.
+     *
+     * @param id the lesson ID
+     * @return the {@link LessonEntity} if found, null otherwise
      */
     public LessonEntity findById(final Long id) {
         if (id == null) {
@@ -30,14 +35,20 @@ public class LessonRepository {
     }
 
     /**
-     * TODO: Document findByIdOptional().
+     * Retrieves an optional lesson by its unique identifier.
+     *
+     * @param id the lesson ID
+     * @return an {@link Optional} containing the lesson if found, empty otherwise
      */
     public Optional<LessonEntity> findByIdOptional(final Long id) {
         return Optional.ofNullable(this.findById(id));
     }
 
     /**
-     * TODO: Document findAllOrdered().
+     * Retrieves all lessons from the database in a defined order (descending by
+     * ID).
+     *
+     * @return a list of all {@link LessonEntity} objects ordered
      */
     public List<LessonEntity> findAllOrdered() {
         final TypedQuery<LessonEntity> q = this.em.createQuery("FROM LessonEntity ORDER BY id DESC",
@@ -46,7 +57,9 @@ public class LessonRepository {
     }
 
     /**
-     * TODO: Document findRootLessons().
+     * Retrieves all root-level lessons (lessons with no parent).
+     *
+     * @return a list of root {@link LessonEntity} objects ordered descending by ID
      */
     public List<LessonEntity> findRootLessons() {
         final TypedQuery<LessonEntity> q = this.em.createQuery(
@@ -56,7 +69,10 @@ public class LessonRepository {
     }
 
     /**
-     * TODO: Document findByParentId().
+     * Retrieves all lessons that are children of a specific parent lesson.
+     *
+     * @param parentId the ID of the parent lesson to filter by
+     * @return a list of child {@link LessonEntity} objects ordered descending by ID
      */
     public List<LessonEntity> findByParentId(final Long parentId) {
         final TypedQuery<LessonEntity> q = this.em.createQuery(
@@ -67,7 +83,11 @@ public class LessonRepository {
     }
 
     /**
-     * TODO: Document search().
+     * Searches for lessons matching the given search term in their names.
+     *
+     * @param searchTerm the search term to match against lesson names;
+     *                   if null or empty, returns all lessons ordered
+     * @return a list of {@link LessonEntity} objects matching the search term
      */
     public List<LessonEntity> search(final String searchTerm) {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
@@ -81,7 +101,10 @@ public class LessonRepository {
     }
 
     /**
-     * TODO: Document deleteById().
+     * Deletes a lesson by its unique identifier.
+     *
+     * @param id the ID of the lesson to delete
+     * @return true if the lesson was successfully deleted, false if not found
      */
     @Transactional
     public boolean deleteById(final Long id) {
@@ -94,7 +117,10 @@ public class LessonRepository {
     }
 
     /**
-     * TODO: Document persist().
+     * Persists a lesson entity to the database.
+     *
+     * @param lesson the lesson to persist; null values are ignored
+     * @return the persisted {@link LessonEntity}, or null if the input was null
      */
     @Transactional
     public LessonEntity persist(final LessonEntity lesson) {

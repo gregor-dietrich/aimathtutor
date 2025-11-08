@@ -39,7 +39,9 @@ public class LessonEntity extends PanacheEntityBase {
     // Helper method to check if this is a root lesson
 
     /**
-     * TODO: Document isRootLesson().
+     * Checks if this lesson is a root-level lesson (has no parent).
+     *
+     * @return true if this lesson has no parent, false otherwise
      */
     public boolean isRootLesson() {
         return this.parent == null;
@@ -48,7 +50,12 @@ public class LessonEntity extends PanacheEntityBase {
     // Helper method to get all sub-lessons recursively
 
     /**
-     * TODO: Document findByParentId().
+     * Finds all lessons that have a specific parent lesson.
+     *
+     * @param parentId the ID of the parent lesson; if null, returns all root
+     *                 lessons
+     * @return a list of {@link LessonEntity} objects that are children of the
+     *         parent
      */
     public static List<LessonEntity> findByParentId(final Long parentId) {
         if (parentId == null) {
@@ -60,7 +67,9 @@ public class LessonEntity extends PanacheEntityBase {
     // Helper method to find root lessons
 
     /**
-     * TODO: Document findRootLessons().
+     * Finds all root-level lessons (lessons with no parent).
+     *
+     * @return a list of root {@link LessonEntity} objects
      */
     public static List<LessonEntity> findRootLessons() {
         return find("parent IS NULL").list();

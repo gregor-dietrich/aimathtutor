@@ -15,7 +15,10 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * TODO: Class documentation.
+ * Service for managing hierarchical lesson structures.
+ * Provides CRUD operations and parent-child relationship management.
+ * Prevents circular references in lesson hierarchies and validates parent
+ * changes.
  */
 @ApplicationScoped
 public class LessonService {
@@ -27,7 +30,9 @@ public class LessonService {
     ExerciseRepository exerciseRepository;
 
     /**
-     * TODO: Document getAllLessons().
+     * Retrieves all lessons in the system ordered by hierarchy.
+     *
+     * @return a list of all {@link LessonViewDto}s
      */
     @Transactional
     public List<LessonViewDto> getAllLessons() {
@@ -35,7 +40,11 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document findById().
+     * Finds a lesson by ID.
+     *
+     * @param id the lesson ID
+     * @return an {@link Optional} containing the {@link LessonViewDto}, or empty if
+     *         not found
      */
     @Transactional
     public Optional<LessonViewDto> findById(final Long id) {
@@ -43,7 +52,9 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document findRootLessons().
+     * Retrieves all root-level lessons (lessons without a parent).
+     *
+     * @return a list of root {@link LessonViewDto}s
      */
     @Transactional
     public List<LessonViewDto> findRootLessons() {
@@ -51,14 +62,25 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document findByParentId().
+     * Retrieves all lessons that are direct children of a parent lesson.
+     *
+     * @param parentId the parent lesson ID
+     * @return a list of child {@link LessonViewDto}s
      */
     public List<LessonViewDto> findByParentId(final Long parentId) {
         return this.lessonRepository.findByParentId(parentId).stream().map(LessonViewDto::new).toList();
     }
 
     /**
-     * TODO: Document createLesson().
+     * Creates a new lesson with provided information.
+     * Validates name is provided, verifies parent exists if specified, and prevents
+     * circular references.
+     *
+     * @param lesson the lesson entity with creation details
+     * @return the created {@link LessonViewDto}
+     * @throws ValidationException     if name is missing or empty
+     * @throws WebApplicationException if parent lesson not found or circular
+     *                                 reference detected (BAD_REQUEST)
      */
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
@@ -81,7 +103,15 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document updateLesson().
+     * Completely replaces an existing lesson (PUT semantics).
+     * Updates name and parent relationship, validates parent exists, and prevents
+     * circular references.
+     *
+     * @param lesson the lesson entity with replacement details (must have id set)
+     * @return the updated {@link LessonViewDto}
+     * @throws WebApplicationException if lesson/parent not found or circular
+     *                                 reference (NOT_FOUND/BAD_REQUEST)
+     * @throws ValidationException     if name is missing or empty
      */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
@@ -120,7 +150,16 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document patchLesson().
+     * Partially updates an existing lesson (PATCH semantics).
+     * Only updates lesson properties that are explicitly provided; null values are
+     * ignored.
+     * Validates parent if being changed and prevents circular references.
+     *
+     * @param lesson the lesson entity with partial update details (must have id
+     *               set)
+     * @return the updated {@link LessonViewDto}
+     * @throws WebApplicationException if lesson/parent not found or circular
+     *                                 reference (NOT_FOUND/BAD_REQUEST)
      */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
@@ -173,7 +212,10 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document deleteLesson().
+     * Deletes a lesson by ID.
+     *
+     * @param id the lesson ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if lesson not found
      */
     @Transactional
     public boolean deleteLesson(final Long id) {
@@ -181,7 +223,11 @@ public class LessonService {
     }
 
     /**
-     * TODO: Document searchLessons().
+     * Searches lessons by name using the provided query string (case-insensitive).
+     * Returns all lessons if query is null or empty.
+     *
+     * @param query the search query string (lesson name match)
+     * @return a list of matching {@link LessonViewDto}s
      */
     @Transactional
     public List<LessonViewDto> searchLessons(final String query) {

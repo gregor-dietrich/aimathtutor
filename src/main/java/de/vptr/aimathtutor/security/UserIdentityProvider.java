@@ -21,7 +21,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Quarkus identity provider for username/password authentication.
+ * Validates user credentials against the database and creates security
+ * identities for authenticated users.
  */
 @ApplicationScoped
 public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAuthenticationRequest> {
@@ -38,7 +40,9 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
     PasswordHashingService passwordHashingService;
 
     /**
-     * TODO: Document getRequestType().
+     * Returns the type of authentication request this provider handles.
+     *
+     * @return the class of username/password authentication requests
      */
     @Override
     public Class<UsernamePasswordAuthenticationRequest> getRequestType() {

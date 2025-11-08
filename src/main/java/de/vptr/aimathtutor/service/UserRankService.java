@@ -18,7 +18,9 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * TODO: Class documentation.
+ * Service for managing user ranks and their associated permissions.
+ * Provides operations for querying, creating, updating, and deleting user
+ * ranks.
  */
 @ApplicationScoped
 public class UserRankService {
@@ -32,7 +34,10 @@ public class UserRankService {
     private static final String USERNAME_KEY = "authenticated.username";
 
     /**
-     * TODO: Document getCurrentUserRank().
+     * Retrieves the rank of the currently authenticated user.
+     *
+     * @return a {@link UserRankViewDto} of the current user's rank, or null if not
+     *         authenticated
      */
     @Transactional
     public UserRankViewDto getCurrentUserRank() {
@@ -55,7 +60,9 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document getAllRanks().
+     * Retrieves all available user ranks in the system.
+     *
+     * @return a list of all {@link UserRankViewDto} objects
      */
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
@@ -65,7 +72,10 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document findById().
+     * Retrieves a user rank by its unique identifier.
+     *
+     * @param id the rank ID to search for
+     * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     @Transactional
     public Optional<UserRankViewDto> findById(final Long id) {
@@ -74,7 +84,10 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document findByName().
+     * Retrieves a user rank by its name.
+     *
+     * @param name the name of the rank to search for
+     * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     public Optional<UserRankViewDto> findByName(final String name) {
         return this.userRankRepository.findByName(name)
@@ -82,7 +95,11 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document searchRanks().
+     * Searches for user ranks matching the given query term.
+     *
+     * @param query the search term to match against rank names;
+     *              if null or empty, returns all ranks
+     * @return a list of matching {@link UserRankViewDto} objects
      */
     @Transactional
     public List<UserRankViewDto> searchRanks(final String query) {
@@ -97,7 +114,13 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document createRank().
+     * Creates a new user rank with the provided permissions.
+     * Initializes all permissions from the DTO with false defaults for unspecified
+     * values.
+     *
+     * @param rankDto the rank data including name and permissions
+     * @return the newly created {@link UserRankViewDto}
+     * @throws IllegalArgumentException if rank name is invalid
      */
     @Transactional
     public UserRankViewDto createRank(final UserRankDto rankDto) {
@@ -132,7 +155,13 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document updateRank().
+     * Updates an existing user rank with new permission values.
+     * Performs complete replacement of all permissions (PUT semantics).
+     *
+     * @param id      the ID of the rank to update
+     * @param rankDto the new rank data with updated permissions
+     * @return the updated {@link UserRankViewDto}
+     * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
     public UserRankViewDto updateRank(final Long id, final UserRankDto rankDto) {
@@ -168,7 +197,14 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document patchRank().
+     * Partially updates an existing user rank (PATCH semantics).
+     * Only updates permissions that are explicitly provided in the DTO; null values
+     * are ignored.
+     *
+     * @param id      the ID of the rank to update
+     * @param rankDto the partial rank data with selected permissions to update
+     * @return the updated {@link UserRankViewDto}
+     * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
     public UserRankViewDto patchRank(final Long id, final UserRankDto rankDto) {
@@ -244,7 +280,12 @@ public class UserRankService {
     }
 
     /**
-     * TODO: Document deleteRank().
+     * Deletes a user rank by ID.
+     * Prevents deletion if users are currently assigned to this rank.
+     *
+     * @param id the ID of the rank to delete
+     * @return {@code true} if deletion succeeded, {@code false} if rank not found
+     * @throws WebApplicationException if rank has assigned users (CONFLICT status)
      */
     @Transactional
     public boolean deleteRank(final Long id) {

@@ -10,7 +10,9 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 
 /**
- * TODO: Class documentation.
+ * A custom button component for removing users.
+ * Displays a confirmation dialog before executing the delete action to prevent
+ * accidental removals.
  */
 public class RemoveUserButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Remove User";

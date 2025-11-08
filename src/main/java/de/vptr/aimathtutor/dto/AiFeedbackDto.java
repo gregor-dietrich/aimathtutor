@@ -13,7 +13,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AiFeedbackDto {
 
     /**
-     * TODO: Class documentation.
+     * Enumeration of feedback types for AI responses.
+     * Indicates the nature and intent of the feedback provided to the student.
      */
     public enum FeedbackType {
         POSITIVE, // Encouragement for correct action
@@ -73,42 +74,65 @@ public class AiFeedbackDto {
     }
 
     /**
-     * TODO: Document corrective().
+     * Creates a corrective feedback DTO with the specified message.
+     * Used when the student has made an error that needs correction.
+     *
+     * @param message the corrective feedback message
+     * @return an AiFeedbackDto with corrective feedback type
      */
     public static AiFeedbackDto corrective(final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
     /**
-     * TODO: Document hint().
+     * Creates a hint feedback DTO with the specified message.
+     * Used when the student needs guidance without giving away the complete answer.
+     *
+     * @param message the hint message
+     * @return an AiFeedbackDto with hint feedback type
      */
     public static AiFeedbackDto hint(final String message) {
         return new AiFeedbackDto(FeedbackType.HINT, message);
     }
 
     /**
-     * TODO: Document suggestion().
+     * Creates a suggestion feedback DTO with the specified message.
+     * Used when offering alternative approaches or improvements.
+     *
+     * @param message the suggestion message
+     * @return an AiFeedbackDto with suggestion feedback type
      */
     public static AiFeedbackDto suggestion(final String message) {
         return new AiFeedbackDto(FeedbackType.SUGGESTION, message);
     }
 
     /**
-     * TODO: Document neutral().
+     * Creates a neutral feedback DTO with the specified message.
+     * Used for informational feedback that is neither positive nor corrective.
+     *
+     * @param message the neutral feedback message
+     * @return an AiFeedbackDto with neutral feedback type
      */
     public static AiFeedbackDto neutral(final String message) {
         return new AiFeedbackDto(FeedbackType.NEUTRAL, message);
     }
 
     /**
-     * TODO: Document error().
+     * Creates an error feedback DTO with the specified message.
+     * Convenience method that creates corrective feedback for error scenarios.
+     *
+     * @param message the error feedback message
+     * @return an AiFeedbackDto with corrective feedback type
      */
     public static AiFeedbackDto error(final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
     /**
-     * TODO: Document toString().
+     * Returns a string representation of the AiFeedbackDto.
+     *
+     * @return a string containing the feedback type, message, confidence,
+     *         timestamp, and session ID
      */
     @Override
     public String toString() {

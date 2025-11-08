@@ -53,7 +53,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private String currentEmail;
 
     /**
-     * TODO: Document beforeEnter().
+     * Called before navigation occurs. Checks authentication, loads current user
+     * information,
+     * and builds the settings UI. Redirects to login if not authenticated.
+     *
+     * @param event the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

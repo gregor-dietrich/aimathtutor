@@ -59,7 +59,10 @@ public class CommentService {
     CommentFlagRepository commentFlagRepository;
 
     /**
-     * TODO: Document getAllComments().
+     * Retrieves all comments in the system with loaded relationships.
+     *
+     * @return a list of all {@link CommentViewDto}s with exercise, user, and parent
+     *         data
      */
     @Transactional
     public List<CommentViewDto> getAllComments() {
@@ -70,7 +73,11 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document findById().
+     * Finds a single comment by ID with loaded relationships.
+     *
+     * @param id the comment ID
+     * @return an {@link Optional} containing the {@link CommentViewDto} with
+     *         exercise/user data, or empty if not found
      */
     @Transactional
     public Optional<CommentViewDto> findById(final Long id) {
@@ -83,7 +90,11 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document findByExerciseId().
+     * Retrieves all top-level and threaded comments for a specific exercise.
+     *
+     * @param exerciseId the exercise ID
+     * @return a list of {@link CommentViewDto}s in the exercise with loaded
+     *         relationships
      */
     @Transactional
     public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
@@ -94,7 +105,11 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document findByUserId().
+     * Retrieves all comments authored by a specific user.
+     *
+     * @param userId the user ID
+     * @return a list of {@link CommentViewDto}s authored by the user with loaded
+     *         relationships
      */
     @Transactional
     public List<CommentViewDto> findByUserId(final Long userId) {
@@ -105,7 +120,11 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document findRecentComments().
+     * Retrieves the most recently created comments with a limit on count.
+     *
+     * @param limit the maximum number of comments to return
+     * @return a list of up to {@code limit} recent {@link CommentViewDto}s with
+     *         loaded relationships
      */
     @Transactional
     public List<CommentViewDto> findRecentComments(final int limit) {
@@ -116,7 +135,17 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document createComment().
+     * Creates a new comment with minimal validation (basic overload).
+     * Assigns current user and sets created timestamp. Validates exercise exists,
+     * is published, and allows comments.
+     *
+     * @param comment         the comment entity with content, exercise, and
+     *                        optional parent
+     * @param currentUsername the username of the current user for auto-assignment
+     * @return the created {@link CommentViewDto}
+     * @throws ValidationException     if content is missing or empty
+     * @throws WebApplicationException if exercise not found or not commentable
+     *                                 (BAD_REQUEST)
      */
     @Transactional
     public CommentViewDto createComment(final CommentEntity comment, final String currentUsername) {
@@ -256,7 +285,13 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document updateComment().
+     * Completely replaces an existing comment (PUT semantics).
+     * Only content field is updated; exercise, user, and parent remain unchanged.
+     *
+     * @param comment the comment entity with id and updated content
+     * @return the updated {@link CommentViewDto}
+     * @throws WebApplicationException if comment not found (NOT_FOUND status)
+     * @throws ValidationException     if content is missing or empty
      */
     @Transactional
     public CommentViewDto updateComment(final CommentEntity comment) {
@@ -278,7 +313,13 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document patchComment().
+     * Partially updates an existing comment (PATCH semantics).
+     * Only updates comment properties that are explicitly provided in the entity;
+     * null values are ignored.
+     *
+     * @param comment the comment entity with id and partial fields to update
+     * @return the updated {@link CommentViewDto}
+     * @throws WebApplicationException if comment not found (NOT_FOUND status)
      */
     @Transactional
     public CommentViewDto patchComment(final CommentEntity comment) {
@@ -297,7 +338,11 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document deleteComment().
+     * Deletes a comment by ID (basic overload).
+     *
+     * @param id the comment ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if comment not
+     *         found
      */
     @Transactional
     public boolean deleteComment(final Long id) {
@@ -571,7 +616,12 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document searchComments().
+     * Searches comments by content using the provided query string
+     * (case-insensitive).
+     * Returns all comments if query is null or empty.
+     *
+     * @param query the search query string (content match)
+     * @return a list of matching {@link CommentViewDto}s
      */
     public List<CommentViewDto> searchComments(final String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -585,7 +635,13 @@ public class CommentService {
     }
 
     /**
-     * TODO: Document findByDateRange().
+     * Finds comments created within a date range (inclusive).
+     * Date strings are parsed as ISO-8601 dates. Returns all comments if parsing
+     * fails or dates are null.
+     *
+     * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
+     * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
+     * @return a list of {@link CommentViewDto}s created within the date range
      */
     @Transactional
     public List<CommentViewDto> findByDateRange(final String startDate, final String endDate) {

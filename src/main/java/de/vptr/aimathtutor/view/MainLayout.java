@@ -59,7 +59,10 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     /**
-     * TODO: Document onAttach().
+     * Attaches event listener when layout is added to the UI tree.
+     * Updates logout button visibility based on authentication state.
+     *
+     * @param attachEvent the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
@@ -68,7 +71,11 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Called before navigation occurs. Initializes layout on first entry, applies
+     * theme,
+     * checks authentication, and shows/hides navigation tabs based on target view.
+     *
+     * @param event the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

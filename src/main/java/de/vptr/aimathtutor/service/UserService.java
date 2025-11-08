@@ -25,7 +25,10 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * TODO: Class documentation.
+ * Service for managing user accounts and authentication.
+ * Provides CRUD operations with password hashing, email normalization, and rank
+ * assignment.
+ * Handles username/email uniqueness validation and password verification.
  */
 @ApplicationScoped
 public class UserService {
@@ -40,7 +43,9 @@ public class UserService {
     UserRankRepository userRankRepository;
 
     /**
-     * TODO: Document getAllUsers().
+     * Retrieves all users in the system.
+     *
+     * @return a list of all {@link UserViewDto}s
      */
     @Transactional
     public List<UserViewDto> getAllUsers() {
@@ -48,7 +53,11 @@ public class UserService {
     }
 
     /**
-     * TODO: Document findByUsername().
+     * Finds a user by username.
+     *
+     * @param username the username to search for
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
      */
     @Transactional
     public Optional<UserViewDto> findByUsername(final String username) {
@@ -56,7 +65,11 @@ public class UserService {
     }
 
     /**
-     * TODO: Document findById().
+     * Finds a user by ID.
+     *
+     * @param id the user ID
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
      */
     @Transactional
     public Optional<UserViewDto> findById(final Long id) {
@@ -64,7 +77,11 @@ public class UserService {
     }
 
     /**
-     * TODO: Document findByEmail().
+     * Finds a user by email address.
+     *
+     * @param email the email address to search for
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
      */
     @Transactional
     public Optional<UserViewDto> findByEmail(final String email) {
@@ -85,7 +102,16 @@ public class UserService {
     }
 
     /**
-     * TODO: Document createUser().
+     * Creates a new user account with provided information.
+     * Validates required fields (username, password), checks for duplicate
+     * username/email,
+     * hashes password with PBKDF2 salt, and assigns default rank if not specified.
+     *
+     * @param userDto the user data transfer object with creation details
+     * @return the created {@link UserViewDto}
+     * @throws ValidationException     if username/email is duplicate or required
+     *                                 fields are missing
+     * @throws WebApplicationException if password hashing fails
      */
     @Transactional
     public UserViewDto createUser(final UserDto userDto) {
@@ -153,7 +179,18 @@ public class UserService {
     }
 
     /**
-     * TODO: Document updateUser().
+     * Completely replaces an existing user account (PUT semantics).
+     * Updates username, email, banned/activated status, rank, and password if
+     * provided.
+     * Validates duplicate username/email (skipping current values) and hashes new
+     * passwords.
+     *
+     * @param id      the user ID to update
+     * @param userDto the new user data
+     * @return the updated {@link UserViewDto}
+     * @throws WebApplicationException if user not found (NOT_FOUND status)
+     * @throws ValidationException     if username/email is duplicate or required
+     *                                 fields missing
      */
     @Transactional
     public UserViewDto updateUser(final Long id, final UserDto userDto) {
@@ -219,7 +256,17 @@ public class UserService {
     }
 
     /**
-     * TODO: Document patchUser().
+     * Partially updates an existing user account (PATCH semantics).
+     * Only updates user properties that are explicitly provided in the DTO; null
+     * values are ignored.
+     * Validates duplicate username/email if being changed, and hashes new passwords
+     * if provided.
+     *
+     * @param id      the user ID to update
+     * @param userDto the partial user data with selected fields to update
+     * @return the updated {@link UserViewDto}
+     * @throws WebApplicationException if user not found (NOT_FOUND status)
+     * @throws ValidationException     if username/email is duplicate
      */
     @Transactional
     public UserViewDto patchUser(final Long id, final UserDto userDto) {
@@ -289,7 +336,10 @@ public class UserService {
     }
 
     /**
-     * TODO: Document deleteUser().
+     * Deletes a user account by ID.
+     *
+     * @param id the user ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if user not found
      */
     @Transactional
     public boolean deleteUser(final Long id) {
@@ -297,14 +347,21 @@ public class UserService {
     }
 
     /**
-     * TODO: Document findActiveUsers().
+     * Retrieves all active (non-banned, activated) users in the system.
+     *
+     * @return a list of active {@link UserViewDto}s
      */
     public List<UserViewDto> findActiveUsers() {
         return this.userRepository.findActiveUsers().stream().map(UserViewDto::new).toList();
     }
 
     /**
-     * TODO: Document searchUsers().
+     * Searches users by username or email using the provided query string
+     * (case-insensitive).
+     * Returns all users if query is null or empty.
+     *
+     * @param query the search query string (username/email match)
+     * @return a list of matching {@link UserViewDto}s
      */
     @Transactional
     public List<UserViewDto> searchUsers(final String query) {

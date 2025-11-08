@@ -8,27 +8,38 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Repository for managing user group entities.
+ * Provides database access and query operations for user groups including
+ * find, search, persist, and delete operations.
  */
 @ApplicationScoped
 public class UserGroupRepository extends AbstractRepository {
 
     /**
-     * TODO: Document findAll().
+     * Retrieves all user groups from the database.
+     *
+     * @return a list of all {@link UserGroupEntity} objects
      */
     public List<UserGroupEntity> findAll() {
         return this.listNamed("UserGroup.findAll", UserGroupEntity.class);
     }
 
     /**
-     * TODO: Document findByIdOptional().
+     * Retrieves an optional user group by its unique identifier.
+     *
+     * @param id the user group ID
+     * @return an {@link Optional} containing the user group if found, empty
+     *         otherwise
      */
     public Optional<UserGroupEntity> findByIdOptional(final Long id) {
         return Optional.ofNullable(this.findById(id));
     }
 
     /**
-     * TODO: Document findById().
+     * Retrieves a user group by its unique identifier.
+     *
+     * @param id the user group ID
+     * @return the {@link UserGroupEntity} if found, null otherwise
      */
     public UserGroupEntity findById(final Long id) {
         if (id == null) {
@@ -38,7 +49,10 @@ public class UserGroupRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByName().
+     * Retrieves a user group by its name.
+     *
+     * @param name the name of the user group to find
+     * @return the {@link UserGroupEntity} if found, null otherwise
      */
     public UserGroupEntity findByName(final String name) {
         final var q = this.em.createNamedQuery("UserGroup.findByName", UserGroupEntity.class);
@@ -48,7 +62,10 @@ public class UserGroupRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document search().
+     * Searches for user groups matching the given search term.
+     *
+     * @param searchTerm the search term to match against user group names
+     * @return a list of {@link UserGroupEntity} objects matching the search term
      */
     public List<UserGroupEntity> search(final String searchTerm) {
         final var q = this.em.createNamedQuery("UserGroup.searchByName", UserGroupEntity.class);
@@ -57,7 +74,9 @@ public class UserGroupRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document persist().
+     * Persists a user group entity to the database.
+     *
+     * @param group the user group to persist; null values are ignored
      */
     @Transactional
     public void persist(final UserGroupEntity group) {
@@ -68,7 +87,10 @@ public class UserGroupRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document deleteById().
+     * Deletes a user group by its unique identifier.
+     *
+     * @param id the ID of the user group to delete
+     * @return true if the user group was successfully deleted, false if not found
      */
     @Transactional
     public boolean deleteById(final Long id) {

@@ -69,7 +69,8 @@ public class AiInteractionEntity extends PanacheEntityBase {
     public LocalDateTime timestamp;
 
     /**
-     * TODO: Document prePersist().
+     * JPA lifecycle callback method invoked before persisting the entity.
+     * Sets the timestamp to the current date and time if not already set.
      */
     @PrePersist
     public void prePersist() {

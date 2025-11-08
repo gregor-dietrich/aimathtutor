@@ -11,7 +11,9 @@ import javax.crypto.spec.PBEKeySpec;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * TODO: Class documentation.
+ * Service for secure password hashing and verification using PBKDF2.
+ * Implements OWASP-recommended password hashing with random salts and multiple
+ * iterations.
  */
 @ApplicationScoped
 public class PasswordHashingService {

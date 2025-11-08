@@ -17,7 +17,10 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Quarkus security identity augmentor that adds user ranks and associated roles
+ * to authenticated users.
+ * Enriches the security identity with permission-based roles derived from the
+ * user's rank.
  */
 @ApplicationScoped
 public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
@@ -26,7 +29,12 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
     ManagedExecutor executor;
 
     /**
-     * TODO: Document augment().
+     * Augments the authenticated user's security identity with their rank and
+     * associated roles/permissions.
+     *
+     * @param identity the current security identity
+     * @param context  the authentication request context
+     * @return a Uni containing the augmented security identity
      */
     @Override
     public Uni<SecurityIdentity> augment(final SecurityIdentity identity, final AuthenticationRequestContext context) {

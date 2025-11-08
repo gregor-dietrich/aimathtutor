@@ -8,13 +8,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Repository for managing user entities.
+ * Provides database access and query operations for users including
+ * find by ID, username, email, and search operations.
  */
 @ApplicationScoped
 public class UserRepository extends AbstractRepository {
 
     /**
-     * TODO: Document findById().
+     * Retrieves a user by its unique identifier.
+     *
+     * @param id the user ID
+     * @return the {@link UserEntity} if found, null otherwise
      */
     public UserEntity findById(final Long id) {
         if (id == null) {
@@ -24,14 +29,20 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByIdOptional().
+     * Retrieves an optional user by its unique identifier.
+     *
+     * @param id the user ID
+     * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByIdOptional(final Long id) {
         return Optional.ofNullable(this.findById(id));
     }
 
     /**
-     * TODO: Document findByUsernameOptional().
+     * Retrieves an optional user by its username.
+     *
+     * @param username the username to search for
+     * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByUsernameOptional(final String username) {
         if (username == null) {
@@ -44,14 +55,20 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByUsername().
+     * Retrieves a user by its username.
+     *
+     * @param username the username to search for
+     * @return the {@link UserEntity} if found, null otherwise
      */
     public UserEntity findByUsername(final String username) {
         return this.findByUsernameOptional(username).orElse(null);
     }
 
     /**
-     * TODO: Document findByEmailOptional().
+     * Retrieves an optional user by its email address.
+     *
+     * @param email the email address to search for
+     * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByEmailOptional(final String email) {
         if (email == null) {
@@ -64,7 +81,10 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document persist().
+     * Persists a user entity to the database.
+     *
+     * @param user the user to persist; null values are ignored
+     * @return the persisted {@link UserEntity}, or null if the input was null
      */
     @Transactional
     public UserEntity persist(final UserEntity user) {
@@ -76,21 +96,28 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findAll().
+     * Retrieves all users from the database in a defined order.
+     *
+     * @return a list of all {@link UserEntity} objects
      */
     public List<UserEntity> findAll() {
         return this.listNamed("User.findAllOrdered", UserEntity.class);
     }
 
     /**
-     * TODO: Document findActiveUsers().
+     * Retrieves all active users from the database.
+     *
+     * @return a list of active {@link UserEntity} objects
      */
     public List<UserEntity> findActiveUsers() {
         return this.listNamed("User.findActive", UserEntity.class);
     }
 
     /**
-     * TODO: Document findByRankId().
+     * Retrieves all users with a specific rank.
+     *
+     * @param rankId the rank ID to filter by
+     * @return a list of {@link UserEntity} objects with the specified rank
      */
     public List<UserEntity> findByRankId(final Long rankId) {
         final var q = this.em.createNamedQuery("User.findByRankId", UserEntity.class);
@@ -99,7 +126,11 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document search().
+     * Searches for users matching the given search term.
+     *
+     * @param searchTerm the search term to match against user properties;
+     *                   if null or empty, returns all users
+     * @return a list of {@link UserEntity} objects matching the search term
      */
     public List<UserEntity> search(final String searchTerm) {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
@@ -111,7 +142,10 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document deleteById().
+     * Deletes a user by its unique identifier.
+     *
+     * @param id the ID of the user to delete
+     * @return true if the user was successfully deleted, false if not found
      */
     @Transactional
     public boolean deleteById(final Long id) {

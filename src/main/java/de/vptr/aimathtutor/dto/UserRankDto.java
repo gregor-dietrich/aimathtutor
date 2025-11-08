@@ -3,7 +3,9 @@ package de.vptr.aimathtutor.dto;
 import jakarta.validation.constraints.Size;
 
 /**
- * TODO: Class documentation.
+ * Data transfer object for user ranks.
+ * Contains role information and permission flags for different operations
+ * on exercises, lessons, comments, and administrative functions.
  */
 public class UserRankDto {
 

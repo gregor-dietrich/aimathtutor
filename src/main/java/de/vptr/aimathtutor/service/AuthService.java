@@ -36,7 +36,14 @@ public class AuthService {
     private static final String AUTHENTICATED_KEY = "authenticated.status";
 
     /**
-     * TODO: Document authenticate().
+     * Authenticates a user with the provided credentials.
+     * Validates username and password, checks user activation and ban status,
+     * updates last login time, and stores authentication information in the
+     * session.
+     *
+     * @param username the username to authenticate
+     * @param password the plaintext password to verify
+     * @return an {@link AuthResultDto} indicating success or the reason for failure
      */
     @Transactional
     public AuthResultDto authenticate(final String username, final String password) {
@@ -97,7 +104,9 @@ public class AuthService {
     }
 
     /**
-     * TODO: Document logout().
+     * Clears the current user's authentication session.
+     * Removes stored username, password, and authentication status from the
+     * session.
      */
     public void logout() {
         final var username = this.getUsername();
@@ -111,7 +120,9 @@ public class AuthService {
     }
 
     /**
-     * TODO: Document isAuthenticated().
+     * Checks if the current user is authenticated.
+     *
+     * @return true if the user has an active authenticated session, false otherwise
      */
     public boolean isAuthenticated() {
         final var authenticated = (Boolean) VaadinSession.getCurrent().getAttribute(AUTHENTICATED_KEY);
@@ -121,14 +132,19 @@ public class AuthService {
     }
 
     /**
-     * TODO: Document getUsername().
+     * Retrieves the username of the currently authenticated user.
+     *
+     * @return the username of the current user, or null if not authenticated
      */
     public String getUsername() {
         return (String) VaadinSession.getCurrent().getAttribute(USERNAME_KEY);
     }
 
     /**
-     * TODO: Document getUserId().
+     * Retrieves the user ID of the currently authenticated user.
+     *
+     * @return the ID of the current user, or null if not authenticated or user not
+     *         found
      */
     public Long getUserId() {
         final String username = this.getUsername();

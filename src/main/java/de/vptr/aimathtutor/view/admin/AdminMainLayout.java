@@ -27,7 +27,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
 /**
- * TODO: Class documentation.
+ * Main layout for the admin panel providing navigation, top bar, and content
+ * area.
+ * Implements authentication checks, admin permission validation, and theme
+ * application.
+ * Routes child admin views through a sidebar navigation and content area
+ * layout.
  */
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
@@ -63,7 +68,10 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     /**
-     * TODO: Document showRouterLayoutContent().
+     * Shows the router-managed content in the content area of the admin layout.
+     * Removes previous content and appends the new content element.
+     *
+     * @param content the Vaadin component to display
      */
     @Override
     public void showRouterLayoutContent(final HasElement content) {
@@ -77,7 +85,10 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     /**
-     * TODO: Document onAttach().
+     * Attaches event listener when admin layout is added to the UI tree.
+     * Updates logout button visibility based on authentication state.
+     *
+     * @param attachEvent the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
@@ -86,7 +97,13 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     /**
-     * TODO: Document beforeEnter().
+     * Called before navigation occurs. Initializes layout on first entry, applies
+     * theme,
+     * checks authentication and admin permissions, hides navigation for login view,
+     * and shows/hides tabs.
+     * Redirects to login or home if authentication/permission checks fail.
+     *
+     * @param event the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {

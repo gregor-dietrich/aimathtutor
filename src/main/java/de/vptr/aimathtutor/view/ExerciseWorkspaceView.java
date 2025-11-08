@@ -73,7 +73,13 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient String currentExpression;
 
     /**
-     * TODO: Document beforeEnter().
+     * Called before navigation occurs. Extracts exercise ID from route, loads
+     * exercise data,
+     * initializes session ID, validates exercise is published/commentable, and
+     * builds workspace UI.
+     * Redirects to lessons view if exercise not found or invalid.
+     *
+     * @param event the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -316,7 +322,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     /**
-     * TODO: Document onAttach().
+     * Attaches event listener when view is added to the UI tree.
+     * Initializes Graspable Math JavaScript widget if enabled for the exercise.
+     *
+     * @param attachEvent the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {

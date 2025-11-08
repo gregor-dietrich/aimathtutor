@@ -25,7 +25,12 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * TODO: Class documentation.
+ * Service for managing exercises and their Graspable Math integration.
+ * Provides CRUD operations, search, and filtering with user-specific completion
+ * tracking.
+ * Works with {@link ExerciseEntity}, {@link LessonEntity}, and
+ * {@link UserEntity} to
+ * maintain exercise-lesson hierarchies and user-exercise relationships.
  */
 @ApplicationScoped
 public class ExerciseService {
@@ -87,7 +92,9 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document getAllExercises().
+     * Retrieves all exercises ordered by creation/modification date.
+     *
+     * @return a list of all {@link ExerciseViewDto} in the system
      */
     public List<ExerciseViewDto> getAllExercises() {
         return this.exerciseRepository.findAllOrdered().stream()
@@ -96,7 +103,11 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findById().
+     * Retrieves a single exercise by ID with user completion tracking.
+     *
+     * @param id the exercise ID
+     * @return an {@link Optional} containing the {@link ExerciseViewDto} with
+     *         completion data, or empty if not found
      */
     public Optional<ExerciseViewDto> findById(final Long id) {
         return this.exerciseRepository.findByIdOptional(id)
@@ -104,7 +115,10 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findPublishedExercises().
+     * Retrieves all published exercises with user completion tracking.
+     *
+     * @return a list of published {@link ExerciseViewDto}s with enriched completion
+     *         data
      */
     public List<ExerciseViewDto> findPublishedExercises() {
         return this.exerciseRepository.findPublished().stream()
@@ -113,7 +127,10 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findByUserId().
+     * Retrieves all exercises created by a specific user.
+     *
+     * @param userId the user ID
+     * @return a list of {@link ExerciseViewDto}s authored by the user
      */
     public List<ExerciseViewDto> findByUserId(final Long userId) {
         return this.exerciseRepository.findByUserId(userId).stream()
@@ -122,7 +139,11 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findByLessonId().
+     * Retrieves all exercises in a specific lesson with user completion tracking.
+     *
+     * @param lessonId the lesson ID
+     * @return a list of {@link ExerciseViewDto}s in the lesson with enriched
+     *         completion data
      */
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
         return this.exerciseRepository.findByLessonId(lessonId).stream()
@@ -131,7 +152,9 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findGraspableMathExercises().
+     * Retrieves all exercises that use Graspable Math symbolic manipulation.
+     *
+     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s
      */
     public List<ExerciseViewDto> findGraspableMathExercises() {
         return this.exerciseRepository.findGraspableMathExercises().stream()
@@ -140,7 +163,11 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findGraspableMathExercisesByLesson().
+     * Retrieves all Graspable Math exercises within a specific lesson.
+     *
+     * @param lessonId the lesson ID
+     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s in the
+     *         lesson
      */
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
         return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream()
@@ -149,7 +176,16 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document createExercise().
+     * Creates a new exercise with provided information.
+     * Validates required fields (title, content, userId) and Graspable Math
+     * configuration if enabled.
+     * Sets creation/last edit timestamps and associates with user and optional
+     * lesson.
+     *
+     * @param exerciseDto the exercise data transfer object with creation details
+     * @return the created {@link ExerciseViewDto}
+     * @throws ValidationException if required fields are missing or references are
+     *                             invalid
      */
     @Transactional
     public ExerciseViewDto createExercise(final ExerciseDto exerciseDto) {
@@ -208,7 +244,17 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document updateExercise().
+     * Completely replaces an existing exercise (PUT semantics).
+     * Validates required fields and updates all exercise properties including
+     * Graspable Math configuration.
+     * Updates last edit timestamp. Preserves existing user if userId not provided.
+     *
+     * @param id          the exercise ID to update
+     * @param exerciseDto the new exercise data
+     * @return the updated {@link ExerciseViewDto}
+     * @throws WebApplicationException if exercise not found (NOT_FOUND status)
+     * @throws ValidationException     if required fields are missing or references
+     *                                 are invalid
      */
     @Transactional
     public ExerciseViewDto updateExercise(final Long id, final ExerciseDto exerciseDto) {
@@ -274,7 +320,17 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document patchExercise().
+     * Partially updates an existing exercise (PATCH semantics).
+     * Only updates exercise properties that are explicitly provided in the DTO;
+     * null values are ignored.
+     * Updates last edit timestamp. Validates user and lesson references if
+     * provided.
+     *
+     * @param id          the exercise ID to update
+     * @param exerciseDto the partial exercise data with selected fields to update
+     * @return the updated {@link ExerciseViewDto}
+     * @throws WebApplicationException if exercise not found (NOT_FOUND status)
+     * @throws ValidationException     if provided references are invalid
      */
     @Transactional
     public ExerciseViewDto patchExercise(final Long id, final ExerciseDto exerciseDto) {
@@ -338,7 +394,11 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document deleteExercise().
+     * Deletes an exercise by ID.
+     *
+     * @param id the exercise ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if exercise not
+     *         found
      */
     @Transactional
     public boolean deleteExercise(final Long id) {
@@ -346,7 +406,11 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document searchExercises().
+     * Searches exercises by title and content using the provided query string.
+     * Returns all exercises if query is null or empty.
+     *
+     * @param query the search query string (title/content match)
+     * @return a list of matching {@link ExerciseViewDto}s
      */
     public List<ExerciseViewDto> searchExercises(final String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -359,7 +423,13 @@ public class ExerciseService {
     }
 
     /**
-     * TODO: Document findByDateRange().
+     * Finds exercises created within a date range (inclusive).
+     * Date strings are parsed as ISO-8601 dates. Returns all exercises if parsing
+     * fails or dates are null.
+     *
+     * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
+     * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
+     * @return a list of {@link ExerciseViewDto}s created within the date range
      */
     public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {

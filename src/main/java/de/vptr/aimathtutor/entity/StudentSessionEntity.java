@@ -72,14 +72,18 @@ public class StudentSessionEntity extends PanacheEntityBase {
     public String finalExpression;
 
     /**
-     * TODO: Document findBySessionId().
+     * Finds a student session by its unique session identifier.
+     *
+     * @param sessionId the session ID to search for
+     * @return the {@link StudentSessionEntity} if found, null otherwise
      */
     public static StudentSessionEntity findBySessionId(final String sessionId) {
         return find("sessionId", sessionId).firstResult();
     }
 
     /**
-     * TODO: Document prePersist().
+     * JPA lifecycle callback method invoked before persisting the entity.
+     * Sets the start time to the current date and time if not already set.
      */
     @PrePersist
     public void prePersist() {

@@ -8,27 +8,37 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * TODO: Class documentation.
+ * Repository for managing user rank entities.
+ * Provides database access and query operations for user ranks including
+ * find, search, persist, and delete operations.
  */
 @ApplicationScoped
 public class UserRankRepository extends AbstractRepository {
 
     /**
-     * TODO: Document findAll().
+     * Retrieves all user ranks from the database.
+     *
+     * @return a list of all {@link UserRankEntity} objects
      */
     public List<UserRankEntity> findAll() {
         return this.listNamed("UserRank.findAll", UserRankEntity.class);
     }
 
     /**
-     * TODO: Document findByIdOptional().
+     * Retrieves an optional user rank by its unique identifier.
+     *
+     * @param id the user rank ID
+     * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     public Optional<UserRankEntity> findByIdOptional(final Long id) {
         return Optional.ofNullable(this.findById(id));
     }
 
     /**
-     * TODO: Document findById().
+     * Retrieves a user rank by its unique identifier.
+     *
+     * @param id the user rank ID
+     * @return the {@link UserRankEntity} if found, null otherwise
      */
     public UserRankEntity findById(final Long id) {
         if (id == null) {
@@ -38,7 +48,10 @@ public class UserRankRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document findByName().
+     * Retrieves an optional user rank by its name.
+     *
+     * @param name the name of the user rank to find
+     * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     public Optional<UserRankEntity> findByName(final String name) {
         final var q = this.em.createNamedQuery("UserRank.findByName", UserRankEntity.class);
@@ -48,7 +61,10 @@ public class UserRankRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document search().
+     * Searches for user ranks matching the given search term.
+     *
+     * @param searchTerm the search term to match against user rank names
+     * @return a list of {@link UserRankEntity} objects matching the search term
      */
     public List<UserRankEntity> search(final String searchTerm) {
         final var q = this.em.createNamedQuery("UserRank.searchByName", UserRankEntity.class);
@@ -57,7 +73,9 @@ public class UserRankRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document persist().
+     * Persists a user rank entity to the database.
+     *
+     * @param rank the user rank to persist; null values are ignored
      */
     @Transactional
     public void persist(final UserRankEntity rank) {
@@ -68,7 +86,10 @@ public class UserRankRepository extends AbstractRepository {
     }
 
     /**
-     * TODO: Document deleteById().
+     * Deletes a user rank by its unique identifier.
+     *
+     * @param id the ID of the user rank to delete
+     * @return true if the rank was successfully deleted, false if not found
      */
     @Transactional
     public boolean deleteById(final Long id) {
