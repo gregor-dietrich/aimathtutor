@@ -16,8 +16,8 @@ services:
       # Provider-specific settings (model, temperature, etc.) are configured
       # at runtime via the Admin Settings UI at /admin/config after login
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_ORG_ID: ${OPENAI_ORG_ID}
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
     ports:
       - "80:9001"
     volumes:

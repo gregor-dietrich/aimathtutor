@@ -103,8 +103,8 @@ services:
 
       # AI API Keys (sourced from .env file above)
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_ORG_ID: ${OPENAI_ORG_ID}
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
     ports:
       - "80:9001/tcp"
     volumes:
