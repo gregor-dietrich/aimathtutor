@@ -41,6 +41,22 @@ class AiConfigServiceTest {
     @BeforeEach
     @Transactional
     void setUp() {
+        // Clean up any test configuration records from previous test runs
+        // This ensures tests are isolated and don't fail on subsequent runs
+        final var testKeys = List.of(
+                "nonexistent.key", "test.key", "nonexistent.int", "test.int", "test.invalid.int",
+                "nonexistent.double", "test.double", "test.invalid.double", "nonexistent.bool",
+                "test.bool.true", "test.bool.false", "test.bool.one", "test.bool.zero",
+                "test.config1", "test.config2", "test.config3", "update.test",
+                "batch.config1", "batch.config2", "batch.config3",
+                "cache.test", "cache.clear.test");
+        for (final var key : testKeys) {
+            final var entity = this.aiConfigRepository.findByConfigKey(key);
+            if (entity.isPresent()) {
+                this.aiConfigRepository.deleteById(entity.get().id);
+            }
+        }
+
         // Setup: Get or create admin user for testing
         final var adminRank = new UserRankEntity();
         adminRank.id = 1L;
