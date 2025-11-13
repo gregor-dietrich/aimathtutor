@@ -314,8 +314,9 @@ CREATE INDEX ai_interactions_exercise_id_idx ON ai_interactions (exercise_id);
 CREATE TABLE ai_config (
   id BIGSERIAL PRIMARY KEY,
   config_key VARCHAR(255) NOT NULL UNIQUE,
-  config_value TEXT NOT NULL,
+  config_value TEXT,
   config_type VARCHAR(50),
+  is_optional BOOLEAN NOT NULL DEFAULT false,
   category VARCHAR(50),
   description TEXT,
   last_updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -324,35 +325,35 @@ CREATE TABLE ai_config (
 );
 
 -- Seed AI configuration with defaults from application.properties and hardcoded prompts
-INSERT INTO ai_config (config_key, config_value, config_type, category, description, last_updated_by) VALUES
+INSERT INTO ai_config (config_key, config_value, config_type, category, description, is_optional, last_updated_by) VALUES
 -- General settings
-('ai.tutor.enabled', 'true', 'BOOLEAN', 'GENERAL', 'Enable or disable AI tutor functionality', 1),
-('ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, gemini, openai, or ollama', 1),
+('ai.tutor.enabled', 'true', 'BOOLEAN', 'GENERAL', 'Enable or disable AI tutor functionality', false, 1),
+('ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, gemini, openai, or ollama', false, 1),
 
 -- Gemini settings
-('gemini.model', 'gemini-2.5-flash-lite', 'STRING', 'GEMINI', 'Gemini model name', 1),
-('gemini.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GEMINI', 'Gemini API base URL', 1),
-('gemini.temperature', '0.7', 'DOUBLE', 'GEMINI', 'Gemini temperature setting (0.0-2.0)', 1),
-('gemini.max-tokens', '1000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', 1),
+('gemini.model', 'gemini-2.5-flash-lite', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
+('gemini.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GEMINI', 'Gemini API base URL', false, 1),
+('gemini.temperature', '0.7', 'DOUBLE', 'GEMINI', 'Gemini temperature setting (0.0-2.0)', false, 1),
+('gemini.max-tokens', '1000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', false, 1),
 
 -- OpenAI settings
-('openai.model', 'gpt-4o-mini', 'STRING', 'OPENAI', 'OpenAI model name', 1),
-('openai.organization-id', '', 'STRING', 'OPENAI', 'OpenAI organization ID (optional)', 1),
-('openai.api.base-url', 'https://api.openai.com/v1', 'STRING', 'OPENAI', 'OpenAI API base URL', 1),
-('openai.temperature', '0.7', 'DOUBLE', 'OPENAI', 'OpenAI temperature setting (0.0-2.0)', 1),
-('openai.max-tokens', '1000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', 1),
+('openai.model', 'gpt-4o-mini', 'STRING', 'OPENAI', 'OpenAI model name', false, 1),
+('openai.organization-id', '', 'STRING', 'OPENAI', 'OpenAI organization ID (optional)', true, 1),
+('openai.api.base-url', 'https://api.openai.com/v1', 'STRING', 'OPENAI', 'OpenAI API base URL', false, 1),
+('openai.temperature', '0.7', 'DOUBLE', 'OPENAI', 'OpenAI temperature setting (0.0-2.0)', false, 1),
+('openai.max-tokens', '1000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', false, 1),
 
 -- Ollama settings
-('ollama.api.url', 'http://localhost:11434', 'STRING', 'OLLAMA', 'Ollama API URL', 1),
-('ollama.model', 'llama3.1:8b', 'STRING', 'OLLAMA', 'Ollama model name', 1),
-('ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', 1),
-('ollama.max-tokens', '1000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', 1),
-('ollama.timeout-seconds', '30', 'INTEGER', 'OLLAMA', 'Ollama API timeout in seconds', 1),
+('ollama.api.url', 'http://localhost:11434', 'STRING', 'OLLAMA', 'Ollama API URL', false, 1),
+('ollama.model', 'llama3.1:8b', 'STRING', 'OLLAMA', 'Ollama model name', false, 1),
+('ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', false, 1),
+('ollama.max-tokens', '1000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, 1),
+('ollama.timeout-seconds', '30', 'INTEGER', 'OLLAMA', 'Ollama API timeout in seconds', false, 1),
 
 -- Prompt settings
 ('ai.prompt.question.answering.prefix', 'You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.
 
-', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', 1),
+', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', false, 1),
 ('ai.prompt.question.answering.postfix', '
 
 Provide a helpful, encouraging answer that:
@@ -362,11 +363,11 @@ Provide a helpful, encouraging answer that:
 - Uses clear, simple language
 - Encourages them to try the next step
 
-Your answer:', 'TEXT', 'PROMPTS', 'Postfix prompt for question answering', 1),
+Your answer:', 'TEXT', 'PROMPTS', 'Postfix prompt for question answering', false, 1),
 ('ai.prompt.math.tutoring.prefix', 'You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student''s action and provide brief, helpful feedback.
 
 Student Action:
-- Action Type: ', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', 1),
+- Action Type: ', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', false, 1),
 ('ai.prompt.math.tutoring.postfix', '
 Provide feedback in the following JSON format:
 {
@@ -385,7 +386,7 @@ IMPORTANT Guidelines:
 - Only provide hints array if student made a mistake (max 1-2 hints)
 - Do NOT provide hints for correct actions
 - Leave suggestedNextSteps empty unless specifically needed
-- Be specific about what they did, not generic', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', 1);
+- Be specific about what they did, not generic', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', false, 1);
 
 -- Performance indexes
 CREATE INDEX ai_config_key_idx ON ai_config (config_key);
