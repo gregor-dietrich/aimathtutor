@@ -258,8 +258,9 @@ class AiConfigServiceTest {
     @DisplayName("Type validation - INTEGER type")
     @Transactional
     void testValidateIntegerType() {
-        // Create an INTEGER type config
-        final var entity = new AiConfigEntity("test.integer", "100", "INTEGER", "TEST");
+        // Create an INTEGER type config (marked as optional so empty values are
+        // allowed)
+        final var entity = new AiConfigEntity("test.integer", "100", "INTEGER", "TEST", null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -278,8 +279,8 @@ class AiConfigServiceTest {
     @DisplayName("Type validation - DOUBLE type")
     @Transactional
     void testValidateDoubleType() {
-        // Create a DOUBLE type config
-        final var entity = new AiConfigEntity("test.double", "3.14", "DOUBLE", "TEST");
+        // Create a DOUBLE type config (marked as optional so empty values are allowed)
+        final var entity = new AiConfigEntity("test.double", "3.14", "DOUBLE", "TEST", null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -298,8 +299,8 @@ class AiConfigServiceTest {
     @DisplayName("Type validation - BOOLEAN type")
     @Transactional
     void testValidateBooleanType() {
-        // Create a BOOLEAN type config
-        final var entity = new AiConfigEntity("test.boolean", "true", "BOOLEAN", "TEST");
+        // Create a BOOLEAN type config (marked as optional so empty values are allowed)
+        final var entity = new AiConfigEntity("test.boolean", "true", "BOOLEAN", "TEST", null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -321,8 +322,8 @@ class AiConfigServiceTest {
     @DisplayName("Type validation - STRING type accepts anything")
     @Transactional
     void testValidateStringType() {
-        // Create a STRING type config
-        final var entity = new AiConfigEntity("test.string", "value", "STRING", "TEST");
+        // Create a STRING type config (marked as optional so empty values are allowed)
+        final var entity = new AiConfigEntity("test.string", "value", "STRING", "TEST", null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
