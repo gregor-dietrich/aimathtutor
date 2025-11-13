@@ -36,6 +36,9 @@ public class AiConfigEntity extends PanacheEntityBase {
     @Column(name = "config_type")
     public String configType; // "STRING", "INTEGER", "DOUBLE", "BOOLEAN", "TEXT"
 
+    @Column(name = "is_optional", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+    public Boolean isOptional = false; // Whether this config can have empty/null values
+
     @Column(name = "category")
     public String category; // "GENERAL", "GEMINI", "OPENAI", "OLLAMA", "PROMPTS"
 
@@ -65,15 +68,29 @@ public class AiConfigEntity extends PanacheEntityBase {
         this.configValue = configValue;
         this.configType = configType;
         this.category = category;
+        this.isOptional = false;
         this.lastUpdatedAt = LocalDateTime.now();
     }
 
     /**
-     * Constructor with all fields.
+     * Constructor with all fields including optionality.
+     */
+    public AiConfigEntity(final String configKey, final String configValue, final String configType,
+            final String category, final String description, final Boolean isOptional) {
+        this.configKey = configKey;
+        this.configValue = configValue;
+        this.configType = configType;
+        this.category = category;
+        this.description = description;
+        this.isOptional = isOptional != null ? isOptional : false;
+        this.lastUpdatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Constructor with description but default optionality (not optional).
      */
     public AiConfigEntity(final String configKey, final String configValue, final String configType,
             final String category, final String description) {
-        this(configKey, configValue, configType, category);
-        this.description = description;
+        this(configKey, configValue, configType, category, description, false);
     }
 }
