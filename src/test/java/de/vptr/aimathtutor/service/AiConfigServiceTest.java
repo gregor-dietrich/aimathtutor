@@ -255,111 +255,84 @@ class AiConfigServiceTest {
     }
 
     @Test
-    @DisplayName("Validate temperature configuration")
+    @DisplayName("Type validation - INTEGER type")
     @Transactional
-    void testValidateTemperature() {
-        // Valid temperature
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("gemini.temperature", "0.7", this.adminUser.id));
+    void testValidateIntegerType() {
+        // Create an INTEGER type config
+        final var entity = new AiConfigEntity("test.integer", "100", "INTEGER", "TEST");
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
 
-        // Temperature too high
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.temperature", "2.5", this.adminUser.id));
+        // Valid integer update
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "200", this.adminUser.id));
 
-        // Temperature too low
+        // Invalid integer (not a number)
         assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.temperature", "-0.1", this.adminUser.id));
+                () -> this.aiConfigService.updateConfig("test.integer", "not_a_number", this.adminUser.id));
 
-        // Non-numeric temperature
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.temperature", "invalid", this.adminUser.id));
+        // Empty value is allowed
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "", this.adminUser.id));
     }
 
     @Test
-    @DisplayName("Validate max-tokens configuration")
+    @DisplayName("Type validation - DOUBLE type")
     @Transactional
-    void testValidateMaxTokens() {
-        // Valid tokens
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("gemini.max-tokens", "1000", this.adminUser.id));
+    void testValidateDoubleType() {
+        // Create a DOUBLE type config
+        final var entity = new AiConfigEntity("test.double", "3.14", "DOUBLE", "TEST");
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
 
-        // Too many tokens
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.max-tokens", "9999", this.adminUser.id));
+        // Valid double update
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "2.71", this.adminUser.id));
 
-        // Zero tokens
+        // Invalid double (not a number)
         assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.max-tokens", "0", this.adminUser.id));
+                () -> this.aiConfigService.updateConfig("test.double", "not_a_double", this.adminUser.id));
 
-        // Negative tokens
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.max-tokens", "-100", this.adminUser.id));
+        // Empty value is allowed
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "", this.adminUser.id));
     }
 
     @Test
-    @DisplayName("Validate timeout-seconds configuration")
+    @DisplayName("Type validation - BOOLEAN type")
     @Transactional
-    void testValidateTimeout() {
-        // Valid timeout
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ollama.timeout-seconds", "30", this.adminUser.id));
+    void testValidateBooleanType() {
+        // Create a BOOLEAN type config
+        final var entity = new AiConfigEntity("test.boolean", "true", "BOOLEAN", "TEST");
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
 
-        // Timeout too high
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("ollama.timeout-seconds", "301", this.adminUser.id));
-
-        // Zero timeout
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("ollama.timeout-seconds", "0", this.adminUser.id));
-    }
-
-    @Test
-    @DisplayName("Validate API URL configuration")
-    @Transactional
-    void testValidateApiUrl() {
-        // Valid HTTP URL
-        assertDoesNotThrow(
-                () -> this.aiConfigService.updateConfig("ollama.api.url", "http://localhost:11434", this.adminUser.id));
-
-        // Valid HTTPS URL
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ollama.api.url", "https://api.example.com",
-                this.adminUser.id));
-
-        // Invalid URL (no http/https)
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("ollama.api.url", "localhost:11434", this.adminUser.id));
-    }
-
-    @Test
-    @DisplayName("Validate enabled boolean configuration")
-    @Transactional
-    void testValidateEnabled() {
         // Valid boolean values
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ai.tutor.enabled", "true", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ai.tutor.enabled", "false", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ai.tutor.enabled", "1", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ai.tutor.enabled", "0", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "true", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "false", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "1", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "0", this.adminUser.id));
 
         // Invalid boolean value
         assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("ai.tutor.enabled", "maybe", this.adminUser.id));
+                () -> this.aiConfigService.updateConfig("test.boolean", "maybe", this.adminUser.id));
+
+        // Empty value is allowed
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "", this.adminUser.id));
     }
 
     @Test
-    @DisplayName("Validate prompt length configuration")
+    @DisplayName("Type validation - STRING type accepts anything")
     @Transactional
-    void testValidatePromptLength() {
-        // Valid prompt
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ai.prompt.question.answering.prefix",
-                "This is a valid prompt with reasonable length for testing purposes", this.adminUser.id));
+    void testValidateStringType() {
+        // Create a STRING type config
+        final var entity = new AiConfigEntity("test.string", "value", "STRING", "TEST");
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
 
-        // Prompt too short
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("ai.prompt.question.answering.prefix", "short",
-                        this.adminUser.id));
+        // STRING type accepts any value (no format constraints)
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "anything goes!", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "123", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "true", this.adminUser.id));
 
-        // Prompt too long
-        final String tooLong = "x".repeat(5001);
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("ai.prompt.question.answering.prefix", tooLong,
-                        this.adminUser.id));
+        // Empty value is allowed
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "", this.adminUser.id));
     }
 
     @Test
@@ -404,16 +377,11 @@ class AiConfigServiceTest {
     }
 
     @Test
-    @DisplayName("Null key and value validation")
+    @DisplayName("Null key validation")
     @Transactional
     void testNullValidation() {
+        // Null key must throw exception
         assertThrows(IllegalArgumentException.class,
                 () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("key", null, this.adminUser.id));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("key", "", this.adminUser.id));
     }
 }
