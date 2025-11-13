@@ -284,25 +284,33 @@ public class AiConfigService {
     }
 
     /**
-     * Validates a configuration value based on its type.
-     * Type validation is determined by the entity's configType field, not
-     * hardcoded.
-     * Empty values are allowed - database constraints handle optionality.
+     * Validates a configuration value based on its type and optionality.
+     * Type validation is determined by the entity's configType field.
+     * Optionality is determined by the entity's isOptional flag.
      *
      * @param configKey   the configuration key
      * @param configValue the value to validate
-     * @throws IllegalArgumentException if type validation fails
+     * @throws IllegalArgumentException if validation fails
      */
     private void validateConfigValue(final String configKey, final String configValue) {
-        // Empty values are allowed
-        if (configValue == null || configValue.trim().isEmpty()) {
+        // Fetch the entity to get its declared type and optionality
+        final Optional<AiConfigEntity> existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
+
+        // Check if value is empty
+        final boolean isEmpty = configValue == null || configValue.trim().isEmpty();
+
+        if (isEmpty) {
+            // If empty, check if the config allows empty values
+            if (existingEntity.isPresent() && !existingEntity.get().isOptional) {
+                throw new IllegalArgumentException("Configuration '" + configKey + "' does not allow empty values");
+            }
+            // If optional or doesn't exist yet, empty is allowed
             return;
         }
 
-        // Fetch the entity to get its declared type
-        final Optional<AiConfigEntity> existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
+        // Value is not empty, proceed with type validation
         if (existingEntity.isEmpty()) {
-            // New config - no type constraints yet, DB will enforce on insert
+            // New config - no type constraints yet
             return;
         }
 
