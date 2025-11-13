@@ -21,7 +21,7 @@ public class ErrorMessageUtil {
             // Try to read the response body as a structured error
             if (response.hasEntity() && response.getStatus() >= 400) {
                 final String responseBody = response.readEntity(String.class);
-                if (responseBody != null && !responseBody.trim().isEmpty()) {
+                if (responseBody != null && !responseBody.isBlank()) {
                     if (responseBody.contains("\"message\"")) {
                         int messageStart = responseBody.indexOf("\"message\"");
                         if (messageStart != -1) {

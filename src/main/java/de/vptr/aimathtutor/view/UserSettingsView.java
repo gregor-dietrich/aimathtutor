@@ -274,12 +274,12 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final String confirmPassword = this.confirmPasswordField.getValue();
 
         // Validation
-        if (currentPassword == null || currentPassword.trim().isEmpty()) {
+        if (currentPassword == null || currentPassword.isBlank()) {
             NotificationUtil.showError("Please enter your current password");
             return;
         }
 
-        if (newPassword == null || newPassword.trim().isEmpty()) {
+        if (newPassword == null || newPassword.isBlank()) {
             NotificationUtil.showError("Please enter a new password");
             return;
         }
@@ -319,12 +319,12 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final String userEmoji = this.userAvatarSelect.getValue();
         final String tutorEmoji = this.tutorAvatarSelect.getValue();
 
-        if (userEmoji == null || userEmoji.trim().isEmpty()) {
+        if (userEmoji == null || userEmoji.isBlank()) {
             NotificationUtil.showError("Please select a user avatar");
             return;
         }
 
-        if (tutorEmoji == null || tutorEmoji.trim().isEmpty()) {
+        if (tutorEmoji == null || tutorEmoji.isBlank()) {
             NotificationUtil.showError("Please select a tutor avatar");
             return;
         }

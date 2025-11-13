@@ -192,7 +192,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.updateTreeGrid();
                     }
                 },
@@ -294,7 +294,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
 
         // Bind fields
         this.binder.forField(nameField)
-                .withValidator(name -> name != null && !name.trim().isEmpty(), "Name is required")
+                .withValidator(name -> name != null && !name.isBlank(), "Name is required")
                 .bind(cat -> cat.name, (cat, value) -> cat.name = value);
         this.binder.forField(parentField)
                 .bind(
@@ -439,7 +439,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
 
     private void searchLessons() {
         final String query = this.searchField.getValue();
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             // If query is empty, return to normal view
             this.updateTreeGrid();
             return;

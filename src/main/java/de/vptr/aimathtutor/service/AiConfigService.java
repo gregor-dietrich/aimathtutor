@@ -297,7 +297,7 @@ public class AiConfigService {
         final Optional<AiConfigEntity> existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
 
         // Check if value is empty
-        final boolean isEmpty = configValue == null || configValue.trim().isEmpty();
+        final boolean isEmpty = configValue == null || configValue.isBlank();
 
         if (isEmpty) {
             // If empty, check if the config allows empty values

@@ -133,7 +133,7 @@ public class UserRepository extends AbstractRepository {
      * @return a list of {@link UserEntity} objects matching the search term
      */
     public List<UserEntity> search(final String searchTerm) {
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+        if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAll();
         }
         final var q = this.em.createNamedQuery("User.searchByTerm", UserEntity.class);

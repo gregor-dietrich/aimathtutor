@@ -150,7 +150,7 @@ public class CommentService {
     @Transactional
     public CommentViewDto createComment(final CommentEntity comment, final String currentUsername) {
         // Validate content is provided for creation
-        if (comment.content == null || comment.content.trim().isEmpty()) {
+        if (comment.content == null || comment.content.isBlank()) {
             throw new ValidationException("Content is required for creating a comment");
         }
 
@@ -196,7 +196,7 @@ public class CommentService {
         LOG.info("Creating comment for exerciseId={}, authorId={}", dto.exerciseId, authorId);
 
         // 1. Validate input
-        if (dto.content == null || dto.content.trim().isEmpty()) {
+        if (dto.content == null || dto.content.isBlank()) {
             LOG.warn("Comment creation failed: empty content for exerciseId={}, authorId={}", dto.exerciseId, authorId);
             throw new ValidationException("Content is required");
         }
@@ -301,7 +301,7 @@ public class CommentService {
         }
 
         // Validate content is provided for complete replacement (PUT)
-        if (comment.content == null || comment.content.trim().isEmpty()) {
+        if (comment.content == null || comment.content.isBlank()) {
             throw new ValidationException("Content is required for updating a comment");
         }
 
@@ -430,7 +430,7 @@ public class CommentService {
         }
 
         // Update content
-        if (dto.content != null && !dto.content.trim().isEmpty()) {
+        if (dto.content != null && !dto.content.isBlank()) {
             comment.content = dto.content.trim();
             comment.editedAt = LocalDateTime.now();
             this.commentRepository.persist(comment);
@@ -624,7 +624,7 @@ public class CommentService {
      * @return a list of matching {@link CommentViewDto}s
      */
     public List<CommentViewDto> searchComments(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.getAllComments();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";

@@ -23,7 +23,7 @@ class UserRankServiceTest {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = null;
 
-        assertTrue(rankDto.name == null || rankDto.name.trim().isEmpty());
+        assertTrue(rankDto.name == null || rankDto.name.isBlank());
     }
 
     @Test
@@ -32,7 +32,7 @@ class UserRankServiceTest {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "";
 
-        assertTrue(rankDto.name == null || rankDto.name.trim().isEmpty());
+        assertTrue(rankDto.name == null || rankDto.name.isBlank());
     }
 
     @Test
@@ -41,7 +41,7 @@ class UserRankServiceTest {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "   ";
 
-        assertTrue(rankDto.name == null || rankDto.name.trim().isEmpty());
+        assertTrue(rankDto.name == null || rankDto.name.isBlank());
     }
 
     @Test
@@ -50,6 +50,6 @@ class UserRankServiceTest {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "Administrator";
 
-        assertFalse(rankDto.name == null || rankDto.name.trim().isEmpty());
+        assertFalse(rankDto.name == null || rankDto.name.isBlank());
     }
 }

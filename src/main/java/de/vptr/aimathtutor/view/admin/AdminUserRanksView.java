@@ -135,7 +135,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.loadRanksAsync();
                     }
                 },
@@ -470,7 +470,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
         // Bind fields
         this.binder.forField(nameField)
-                .withValidator(value -> value != null && !value.trim().isEmpty(), "Name is required")
+                .withValidator(value -> value != null && !value.isBlank(), "Name is required")
                 .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
 
         // View permissions bindings
@@ -630,7 +630,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
     private void searchRanks() {
         final String query = this.searchField.getValue();
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             this.loadRanksAsync();
             return;
         }

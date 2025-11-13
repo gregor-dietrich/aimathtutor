@@ -456,7 +456,7 @@ public class AiTutorService {
             }
         }
 
-        if (currentExpression != null && !currentExpression.trim().isEmpty()) {
+        if (currentExpression != null && !currentExpression.isBlank()) {
             prompt.append("Current problem state: ").append(currentExpression).append("\n\n");
         }
 
