@@ -190,9 +190,9 @@ public class AiConfigService {
      */
     @Transactional
     public void updateConfig(final String configKey, final String configValue, final Long userId) {
-        // Validate the input first (tests expect validation errors before auth errors)
-        if (configKey == null || configValue == null) {
-            throw new IllegalArgumentException("Configuration key and value cannot be null");
+        // Only require configKey to be non-null. Values can be null or empty
+        if (configKey == null) {
+            throw new IllegalArgumentException("Configuration key cannot be null");
         }
 
         this.validateConfigValue(configKey, configValue);
@@ -251,8 +251,8 @@ public class AiConfigService {
 
         // Validate all updates first
         for (final AiConfigUpdateDto update : updates) {
-            if (update.configKey == null || update.configValue == null) {
-                throw new IllegalArgumentException("Configuration key and value cannot be null");
+            if (update.configKey == null) {
+                throw new IllegalArgumentException("Configuration key cannot be null");
             }
             this.validateConfigValue(update.configKey, update.configValue);
         }
@@ -284,73 +284,62 @@ public class AiConfigService {
     }
 
     /**
-     * Validates a configuration value based on its key and expected type.
-     * Throws IllegalArgumentException if validation fails.
+     * Validates a configuration value based on its type.
+     * Type validation is determined by the entity's configType field, not
+     * hardcoded.
+     * Empty values are allowed - database constraints handle optionality.
      *
      * @param configKey   the configuration key
      * @param configValue the value to validate
-     * @throws IllegalArgumentException if validation fails
+     * @throws IllegalArgumentException if type validation fails
      */
     private void validateConfigValue(final String configKey, final String configValue) {
+        // Empty values are allowed
         if (configValue == null || configValue.trim().isEmpty()) {
-            throw new IllegalArgumentException("Configuration value cannot be empty: " + configKey);
+            return;
         }
 
-        // Type-specific validation based on config key
-        if (configKey.contains("temperature")) {
-            try {
-                final double temp = Double.parseDouble(configValue);
-                if (temp < 0.0 || temp > 2.0) {
-                    throw new IllegalArgumentException("Temperature must be between 0.0 and 2.0, got: " + temp);
+        // Fetch the entity to get its declared type
+        final Optional<AiConfigEntity> existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
+        if (existingEntity.isEmpty()) {
+            // New config - no type constraints yet, DB will enforce on insert
+            return;
+        }
+
+        final String configType = existingEntity.get().configType;
+        if (configType == null) {
+            // No type constraint defined
+            return;
+        }
+
+        // Type-based validation
+        switch (configType.toUpperCase()) {
+            case "INTEGER" -> {
+                try {
+                    Integer.parseInt(configValue);
+                } catch (final NumberFormatException e) {
+                    throw new IllegalArgumentException(
+                            "Value must be a valid integer for key '" + configKey + "', got: " + configValue);
                 }
-            } catch (final NumberFormatException e) {
-                throw new IllegalArgumentException("Temperature must be a valid decimal number, got: " + configValue);
             }
-        }
-
-        if (configKey.contains("max-tokens")) {
-            try {
-                final int tokens = Integer.parseInt(configValue);
-                if (tokens < 1 || tokens > 8192) {
-                    throw new IllegalArgumentException("Max tokens must be between 1 and 8192, got: " + tokens);
+            case "DOUBLE" -> {
+                try {
+                    Double.parseDouble(configValue);
+                } catch (final NumberFormatException e) {
+                    throw new IllegalArgumentException(
+                            "Value must be a valid decimal for key '" + configKey + "', got: " + configValue);
                 }
-            } catch (final NumberFormatException e) {
-                throw new IllegalArgumentException("Max tokens must be a valid integer, got: " + configValue);
             }
-        }
-
-        if (configKey.contains("timeout-seconds")) {
-            try {
-                final int seconds = Integer.parseInt(configValue);
-                if (seconds < 1 || seconds > 300) {
-                    throw new IllegalArgumentException("Timeout must be between 1 and 300 seconds, got: " + seconds);
+            case "BOOLEAN" -> {
+                final String lower = configValue.toLowerCase().trim();
+                if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
+                    throw new IllegalArgumentException(
+                            "Value must be boolean (true/false/1/0) for key '" + configKey + "', got: " + configValue);
                 }
-            } catch (final NumberFormatException e) {
-                throw new IllegalArgumentException("Timeout must be a valid integer, got: " + configValue);
             }
-        }
-
-        // URL validation for API endpoints
-        if (configKey.contains("api.base-url") || configKey.contains("api.url")) {
-            if (!configValue.startsWith("http://") && !configValue.startsWith("https://")) {
-                throw new IllegalArgumentException("API URL must start with http:// or https://, got: " + configValue);
-            }
-        }
-
-        // Boolean validation
-        if (configKey.contains("enabled")) {
-            final String lower = configValue.toLowerCase().trim();
-            if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
-                throw new IllegalArgumentException(
-                        "Boolean value must be 'true', 'false', '1', or '0', got: " + configValue);
-            }
-        }
-
-        // Prompt length validation
-        if (configKey.contains("prompt")) {
-            if (configValue.length() < 10 || configValue.length() > 5000) {
-                throw new IllegalArgumentException(
-                        "Prompt length must be between 10 and 5000 characters, got: " + configValue.length());
+            // STRING and TEXT types accept anything
+            default -> {
+                // No specific validation
             }
         }
     }
