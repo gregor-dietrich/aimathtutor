@@ -30,8 +30,7 @@ public class AiConfigEntity extends PanacheEntityBase {
     @Column(name = "config_key", unique = true, nullable = false)
     public String configKey;
 
-    @NotBlank
-    @Column(name = "config_value", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "config_value", columnDefinition = "TEXT")
     public String configValue;
 
     @Column(name = "config_type")
