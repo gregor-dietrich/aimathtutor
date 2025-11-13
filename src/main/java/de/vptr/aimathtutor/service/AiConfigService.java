@@ -321,6 +321,12 @@ public class AiConfigService {
         }
 
         // Type-based validation
+        // Note: configValue is guaranteed non-null and non-blank here due to isEmpty
+        // check above
+        if (configValue == null) {
+            return; // Safety check for static analysis
+        }
+
         switch (configType.toUpperCase()) {
             case "INTEGER" -> {
                 try {
