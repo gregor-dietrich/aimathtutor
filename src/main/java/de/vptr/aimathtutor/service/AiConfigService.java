@@ -198,15 +198,15 @@ public class AiConfigService {
         this.validateConfigValue(configKey, configValue);
 
         // Verify admin permission
-        final UserEntity user = this.userRepository.findById(userId);
+        final var user = this.userRepository.findById(userId);
         if (user == null || user.rank == null || user.rank.id != 1L) {
             throw new IllegalStateException("Only admins can update configuration");
         }
 
         // Find existing or create new
-        final Optional<AiConfigEntity> existing = this.aiConfigRepository.findByConfigKey(configKey);
-        final AiConfigEntity entity = existing.orElseGet(() -> {
-            final AiConfigEntity newEntity = new AiConfigEntity();
+        final var existing = this.aiConfigRepository.findByConfigKey(configKey);
+        final var entity = existing.orElseGet(() -> {
+            final var newEntity = new AiConfigEntity();
             newEntity.configKey = configKey;
             return newEntity;
         });
@@ -294,10 +294,10 @@ public class AiConfigService {
      */
     private void validateConfigValue(final String configKey, final String configValue) {
         // Fetch the entity to get its declared type and optionality
-        final Optional<AiConfigEntity> existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
+        final var existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
 
         // Check if value is empty
-        final boolean isEmpty = configValue == null || configValue.isBlank();
+        final var isEmpty = configValue == null || configValue.isBlank();
 
         if (isEmpty) {
             // If empty, check if the config allows empty values
@@ -314,19 +314,13 @@ public class AiConfigService {
             return;
         }
 
-        final String configType = existingEntity.get().configType;
+        final var configType = existingEntity.get().configType;
         if (configType == null) {
             // No type constraint defined
             return;
         }
 
         // Type-based validation
-        // Note: configValue is guaranteed non-null and non-blank here due to isEmpty
-        // check above
-        if (configValue == null) {
-            return; // Safety check for static analysis
-        }
-
         switch (configType.toUpperCase()) {
             case "INTEGER" -> {
                 try {
@@ -345,7 +339,8 @@ public class AiConfigService {
                 }
             }
             case "BOOLEAN" -> {
-                final String lower = configValue.toLowerCase().trim();
+                @SuppressWarnings("null") // false positive
+                final var lower = configValue.toLowerCase().trim();
                 if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
                     throw new IllegalArgumentException(
                             "Value must be boolean (true/false/1/0) for key '" + configKey + "', got: " + configValue);
