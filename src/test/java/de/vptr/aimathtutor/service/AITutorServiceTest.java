@@ -2,28 +2,23 @@ package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.*;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class AITutorServiceTest {
 
+    @Inject
     private AiTutorService aiTutorService;
-
-    @BeforeEach
-    void setUp() {
-        this.aiTutorService = new AiTutorService();
-        // Set test configuration values using reflection or test-specific setup
-        // For now, the service will use default values
-    }
 
     @Test
     @DisplayName("Should analyze simplify action with correct result")
+    @Transactional
     void shouldAnalyzeSimplifyActionWithCorrectResult() {
         // Given
         final var event = new GraspableEventDto();
@@ -46,6 +41,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should analyze simplify action with incorrect result")
+    @Transactional
     void shouldAnalyzeSimplifyActionWithIncorrectResult() {
         // Given
         final var event = new GraspableEventDto();
@@ -67,6 +63,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should analyze expand action")
+    @Transactional
     void shouldAnalyzeExpandAction() {
         // Given
         final var event = new GraspableEventDto();
@@ -86,6 +83,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should analyze factor action")
+    @Transactional
     void shouldAnalyzeFactorAction() {
         // Given
         final var event = new GraspableEventDto();
@@ -105,6 +103,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should analyze combine action")
+    @Transactional
     void shouldAnalyzeCombineAction() {
         // Given
         final var event = new GraspableEventDto();
@@ -124,6 +123,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should analyze move action with expression change")
+    @Transactional
     void shouldAnalyzeMoveAction() {
         // Given
         final var event = new GraspableEventDto();
@@ -143,6 +143,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should return null for unknown event type (insignificant action)")
+    @Transactional
     void shouldHandleUnknownEventType() {
         // Given
         final var event = new GraspableEventDto();
@@ -158,6 +159,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should return null for null event type (insignificant action)")
+    @Transactional
     void shouldHandleNullEventType() {
         // Given
         final var event = new GraspableEventDto();
@@ -173,6 +175,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should generate algebra problem")
+    @Transactional
     void shouldGenerateAlgebraProblem() {
         // When
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate",
@@ -190,6 +193,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should generate factoring problem")
+    @Transactional
     void shouldGenerateFactoringProblem() {
         // When
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("advanced",
@@ -206,6 +210,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should generate polynomial simplification problem")
+    @Transactional
     void shouldGeneratePolynomialSimplificationProblem() {
         // When
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("beginner",
@@ -220,6 +225,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should set confidence score in feedback for significant actions")
+    @Transactional
     void shouldSetConfidenceScoreInFeedback() {
         // Given - use a significant action type
         final var event = new GraspableEventDto();
@@ -240,6 +246,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should include timestamp in feedback")
+    @Transactional
     void shouldIncludeTimestampInFeedback() {
         // Given
         final var event = new GraspableEventDto();
@@ -258,6 +265,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should answer student question about solving")
+    @Transactional
     void shouldAnswerQuestionAboutSolving() {
         // Given
         final String question = "How do I solve this equation?";
@@ -279,6 +287,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should answer question about next steps")
+    @Transactional
     void shouldAnswerQuestionAboutNextSteps() {
         // Given
         final String question = "What should I do next?";
@@ -297,6 +306,7 @@ class AITutorServiceTest {
 
     @Test
     @DisplayName("Should handle question without current expression")
+    @Transactional
     void shouldHandleQuestionWithoutExpression() {
         // Given
         final String question = "Can you explain algebra?";
