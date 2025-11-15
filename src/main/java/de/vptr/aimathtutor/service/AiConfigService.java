@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +31,8 @@ public class AiConfigService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AiConfigService.class);
 
-    // Internal cache for configuration values to reduce database hits
-    private final Map<String, String> configCache = new HashMap<>();
+    // Internal cache for configuration values to reduce database hits.
+    private final Map<String, String> configCache = new ConcurrentHashMap<>();
 
     @Inject
     private AiConfigRepository aiConfigRepository;
