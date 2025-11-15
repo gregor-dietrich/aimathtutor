@@ -154,8 +154,8 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         providerCombo.setWidthFull();
 
         // Save button
-        final var saveBtn = new Button("Save", event -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
-        saveBtn.addClickListener(e -> LOG.info("General config save clicked"));
+        final var saveBtn = new Button("Save", _ -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
+        saveBtn.addClickListener(_ -> LOG.info("General config save clicked"));
 
         panel.add(enabledCheckbox, providerCombo, saveBtn);
         return panel;
@@ -203,7 +203,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                event -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+                _ -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
 
         panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, saveBtn);
         return panel;
@@ -255,7 +255,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                event -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
+                _ -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
 
         panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField, saveBtn);
         return panel;
@@ -304,7 +304,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                event -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
+                _ -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
 
         panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField, saveBtn);
         return panel;
@@ -345,7 +345,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                event -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+                _ -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
         return panel;
@@ -375,11 +375,15 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
     private void saveGeminiConfig(final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         try {
+            final var tempValue = tempField.getValue();
+            final var maxTokensValue = maxTokensField.getValue();
+
             final var updates = List.of(
                     new AiConfigUpdateDto("gemini.model", modelField.getValue()),
                     new AiConfigUpdateDto("gemini.api.base-url", urlField.getValue()),
-                    new AiConfigUpdateDto("gemini.temperature", tempField.getValue().toString()),
-                    new AiConfigUpdateDto("gemini.max-tokens", maxTokensField.getValue().intValue() + ""));
+                    new AiConfigUpdateDto("gemini.temperature", tempValue != null ? tempValue.toString() : "0.7"),
+                    new AiConfigUpdateDto("gemini.max-tokens",
+                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "1000"));
 
             final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
@@ -398,12 +402,16 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
     private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         try {
+            final var tempValue = tempField.getValue();
+            final var maxTokensValue = maxTokensField.getValue();
+
             final var updates = List.of(
                     new AiConfigUpdateDto("openai.organization-id", orgIdField.getValue()),
                     new AiConfigUpdateDto("openai.model", modelField.getValue()),
                     new AiConfigUpdateDto("openai.api.base-url", urlField.getValue()),
-                    new AiConfigUpdateDto("openai.temperature", tempField.getValue().toString()),
-                    new AiConfigUpdateDto("openai.max-tokens", maxTokensField.getValue().intValue() + ""));
+                    new AiConfigUpdateDto("openai.temperature", tempValue != null ? tempValue.toString() : "0.7"),
+                    new AiConfigUpdateDto("openai.max-tokens",
+                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "1000"));
 
             final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
@@ -422,12 +430,18 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
     private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField,
             final NumberField tempField, final NumberField maxTokensField, final NumberField timeoutField) {
         try {
+            final var tempValue = tempField.getValue();
+            final var maxTokensValue = maxTokensField.getValue();
+            final var timeoutValue = timeoutField.getValue();
+
             final var updates = List.of(
                     new AiConfigUpdateDto("ollama.api.url", apiUrlField.getValue()),
                     new AiConfigUpdateDto("ollama.model", modelField.getValue()),
-                    new AiConfigUpdateDto("ollama.temperature", tempField.getValue().toString()),
-                    new AiConfigUpdateDto("ollama.max-tokens", maxTokensField.getValue().intValue() + ""),
-                    new AiConfigUpdateDto("ollama.timeout-seconds", timeoutField.getValue().intValue() + ""));
+                    new AiConfigUpdateDto("ollama.temperature", tempValue != null ? tempValue.toString() : "0.7"),
+                    new AiConfigUpdateDto("ollama.max-tokens",
+                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "1000"),
+                    new AiConfigUpdateDto("ollama.timeout-seconds",
+                            timeoutValue != null ? timeoutValue.intValue() + "" : "30"));
 
             final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
