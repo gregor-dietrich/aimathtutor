@@ -136,16 +136,6 @@ public class GeminiAiService {
     }
 
     /**
-     * Generate content with custom temperature and max tokens
-     */
-    public String generateContent(final String prompt, final Double customTemperature, final Integer customMaxTokens) {
-        // Note: This method is kept for backward compatibility but should not be used.
-        // All configuration should be loaded from AiConfigService.
-        LOG.warn("generateContent with custom parameters called - using config from database instead");
-        return this.generateContent(prompt);
-    }
-
-    /**
      * Check if Gemini is properly configured
      */
     public boolean isConfigured() {
