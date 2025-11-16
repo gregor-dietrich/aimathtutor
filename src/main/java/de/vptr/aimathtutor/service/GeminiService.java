@@ -25,11 +25,11 @@ import jakarta.inject.Inject;
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
-public class GeminiAiService {
+public class GeminiService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GeminiAiService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GeminiService.class);
 
-    @ConfigProperty(name = "gemini.api.key")
+    @ConfigProperty(name = "gemini.api.key", defaultValue = "")
     String apiKey; // API key is always read from environment variable, never from database
 
     @Inject

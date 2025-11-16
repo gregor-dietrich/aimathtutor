@@ -40,7 +40,7 @@ public class AiTutorService {
     AiConfigService aiConfigService;
 
     @Inject
-    GeminiAiService geminiService;
+    GeminiService geminiService;
 
     @Inject
     OpenAiService openAiService;

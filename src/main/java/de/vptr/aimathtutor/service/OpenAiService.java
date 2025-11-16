@@ -25,7 +25,7 @@ public class OpenAiService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
 
-    @ConfigProperty(name = "openai.api.key")
+    @ConfigProperty(name = "openai.api.key", defaultValue = "")
     String apiKey; // API key is always read from environment variable, never from database
 
     @Inject
