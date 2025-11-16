@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.AiConfigDto;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
+import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
@@ -39,9 +40,6 @@ public class AiConfigService {
 
     @Inject
     private UserRepository userRepository;
-
-    @Inject
-    private UserRankService userRankService;
 
     /**
      * Retrieves a configuration value as a String.
@@ -207,11 +205,7 @@ public class AiConfigService {
             throw new IllegalStateException("User not found or has no rank assigned");
         }
 
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null) {
-            throw new IllegalStateException("Unable to determine user permissions");
-        }
-
+        final var userRank = new UserRankViewDto(user.rank);
         final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
         if (!hasPermission) {
             throw new IllegalStateException(
@@ -264,11 +258,7 @@ public class AiConfigService {
             throw new IllegalStateException("User not found or has no rank assigned");
         }
 
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null) {
-            throw new IllegalStateException("Unable to determine user permissions");
-        }
-
+        final var userRank = new UserRankViewDto(user.rank);
         final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
         if (!hasPermission) {
             throw new IllegalStateException(
