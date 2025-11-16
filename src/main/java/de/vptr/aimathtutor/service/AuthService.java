@@ -49,7 +49,7 @@ public class AuthService {
     public AuthResultDto authenticate(final String username, final String password) {
         LOG.trace("Starting authentication for user: {}", username);
 
-        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
             LOG.trace("Username or password is empty");
             return AuthResultDto.invalidInput();
         }

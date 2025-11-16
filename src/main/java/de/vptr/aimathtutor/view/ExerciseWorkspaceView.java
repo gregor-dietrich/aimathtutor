@@ -211,7 +211,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         // Exercise content/instructions in a separate section
-        if (this.exercise.content != null && !this.exercise.content.trim().isEmpty()) {
+        if (this.exercise.content != null && !this.exercise.content.isBlank()) {
             final var contentSection = new VerticalLayout();
             contentSection.setPadding(true);
             contentSection.setSpacing(true);
@@ -341,7 +341,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      */
     private void initializeGraspableMath() {
         if (this.exercise.graspableInitialExpression == null
-                || this.exercise.graspableInitialExpression.trim().isEmpty()) {
+                || this.exercise.graspableInitialExpression.isBlank()) {
             LOG.warn("No initial expression configured for exercise {}", this.exerciseId);
             return;
         }
@@ -420,7 +420,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Check if problem is completed (only if target expression is defined)
         if (this.exercise.graspableTargetExpression != null
-                && !this.exercise.graspableTargetExpression.trim().isEmpty()) {
+                && !this.exercise.graspableTargetExpression.isBlank()) {
             final boolean isComplete = this.graspableMathService.checkCompletion(
                     expressionAfter,
                     this.exercise.graspableTargetExpression);
@@ -544,7 +544,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     private void showNextHint() {
-        if (this.exercise.graspableHints == null || this.exercise.graspableHints.trim().isEmpty()) {
+        if (this.exercise.graspableHints == null || this.exercise.graspableHints.isBlank()) {
             NotificationUtil.showInfo("No hints available for this exercise");
             return;
         }

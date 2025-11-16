@@ -154,7 +154,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.loadSessions();
                     }
                 },
@@ -197,7 +197,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
      */
     private void searchSessions() {
         final String searchTerm = this.searchField.getValue();
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+        if (searchTerm == null || searchTerm.isBlank()) {
             this.loadSessions();
             return;
         }

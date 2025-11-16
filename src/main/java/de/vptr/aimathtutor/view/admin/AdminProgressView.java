@@ -151,7 +151,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.loadProgressData();
                     }
                 },
@@ -194,7 +194,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
      */
     private void searchStudents() {
         final String searchTerm = this.searchField.getValue();
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+        if (searchTerm == null || searchTerm.isBlank()) {
             this.loadProgressData();
             return;
         }

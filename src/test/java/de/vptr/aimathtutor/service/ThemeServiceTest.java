@@ -111,7 +111,7 @@ class ThemeServiceTest {
         // Verify each theme has proper display name
         for (final Theme theme : themes) {
             assertNotNull(theme.getDisplayName());
-            assertFalse(theme.getDisplayName().trim().isEmpty());
+            assertFalse(theme.getDisplayName().isBlank());
         }
     }
 

@@ -258,7 +258,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.conversationContext.addAction(event);
 
         // Check if problem is completed (if target is set)
-        if (this.targetExpression != null && !this.targetExpression.trim().isEmpty()) {
+        if (this.targetExpression != null && !this.targetExpression.isBlank()) {
             final boolean isComplete = this.graspableMathService.checkCompletion(
                     expressionAfter,
                     this.targetExpression);
@@ -446,7 +446,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         loadButton.setEnabled(false);
 
         expressionField.addValueChangeListener(e -> {
-            loadButton.setEnabled(!e.getValue().trim().isEmpty());
+            loadButton.setEnabled(!e.getValue().isBlank());
         });
 
         // Allow Enter to submit

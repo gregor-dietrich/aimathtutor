@@ -40,10 +40,10 @@ AIMathTutor is a monolithic full-stack web application built with **Quarkus** (b
 
 - **Gemini (Google):**
   - Configure via `gemini.api.key`, `gemini.model`, etc.
-  - See `GeminiAIService.java` and DTOs for integration.
+  - See `GeminiService.java` and DTOs for integration.
 - **OpenAI:**
   - Configure via `openai.api.key`, `openai.model`, etc.
-  - See `OpenAIService.java` and DTOs for integration.
+  - See `OpenAiService.java` and DTOs for integration.
 - **Ollama (local LLM):**
   - Configure via `ollama.api.url`, `ollama.model`, etc.
   - See `OllamaService.java` and DTOs for integration.

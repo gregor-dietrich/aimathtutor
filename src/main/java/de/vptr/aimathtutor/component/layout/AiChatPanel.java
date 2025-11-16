@@ -111,7 +111,7 @@ public class AiChatPanel extends VerticalLayout {
         this.sendButton.addClickListener(e -> this.handleSend());
 
         // Set up value change listener after sendButton is initialized
-        this.chatInput.addValueChangeListener(e -> this.sendButton.setEnabled(!e.getValue().trim().isEmpty()));
+        this.chatInput.addValueChangeListener(e -> this.sendButton.setEnabled(!e.getValue().isBlank()));
 
         // Allow Enter key to send
         this.chatInput.addKeyPressListener(Key.ENTER, e -> {

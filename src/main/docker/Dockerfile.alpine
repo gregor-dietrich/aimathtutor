@@ -78,7 +78,7 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
-FROM eclipse-temurin:21.0.9_10-jre-alpine-3.22
+FROM eclipse-temurin:25-jre-alpine-3.22
 
 ENV LANGUAGE='en_US:en'
 
@@ -99,7 +99,7 @@ USER 185
 WORKDIR /deployments
 
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-ENV JAVA_OPTS_APPEND=""
+ENV JAVA_OPTS_APPEND="--add-opens java.base/java.lang=ALL-UNNAMED"
 
 ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
 CMD []

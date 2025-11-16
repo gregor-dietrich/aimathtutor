@@ -8,7 +8,7 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 | Name | Build | Run | Download |
 |----------|----------|----------|----------|
-| JDK 21 | ✅ | ❌ | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=21) |
+| JDK 25 | ✅ | ❌ | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=25) |
 | Maven | ✅ | ❌ | [Apache](https://maven.apache.org/download.cgi) |
 | Docker | ❌ | ✅ | (see below) |
 
@@ -19,7 +19,31 @@ For Docker, you have 2 options:
 
 ## 🔧 Setup
 
-Edit `src/main/resources/application.properties` as needed, then run:
+### 1. Set Environment Variables for AI API Keys
+
+For development, set the following environment variables (only needed if using real AI providers):
+
+```sh
+export GEMINI_API_KEY=your_gemini_api_key_here
+export OPENAI_API_KEY=your_openai_api_key_here
+export OPENAI_ORG_ID=your_openai_org_id_here  # Optional
+```
+
+Alternatively, create a `.env` file in the project root and source it:
+
+```sh
+# .env
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_ORG_ID=your_openai_org_id_here
+
+# source it
+source .env
+```
+
+> **_NOTE:_** API keys are immutable configuration sourced from environment variables. All other AI settings (model, temperature, prompts, etc.) are configured at runtime via the Admin Settings UI (`/admin/config`) after logging in.
+
+### 2. Install Dependencies and Build
 
 ```sh
 make install   # Installs dependencies, skips tests

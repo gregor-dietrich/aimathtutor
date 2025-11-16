@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -17,29 +18,18 @@ import jakarta.ws.rs.core.Response;
 /**
  * Service for interacting with OpenAI Chat Completions API
  * Supports GPT-4o, GPT-4o-mini, GPT-3.5-turbo, etc.
+ * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
 public class OpenAiService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
 
-    @ConfigProperty(name = "openai.api.key")
-    String apiKey;
+    @ConfigProperty(name = "openai.api.key", defaultValue = "")
+    String apiKey; // API key is always read from environment variable, never from database
 
-    @ConfigProperty(name = "openai.model", defaultValue = "gpt-4o-mini")
-    String model;
-
-    @ConfigProperty(name = "openai.api.base-url", defaultValue = "https://api.openai.com/v1")
-    String baseUrl;
-
-    @ConfigProperty(name = "openai.temperature", defaultValue = "0.7")
-    Double temperature;
-
-    @ConfigProperty(name = "openai.max-tokens", defaultValue = "1000")
-    Integer maxTokens;
-
-    @ConfigProperty(name = "openai.organization-id")
-    String organizationId;
+    @Inject
+    AiConfigService aiConfigService;
 
     private Client client;
 
@@ -55,7 +45,21 @@ public class OpenAiService {
         if (this.apiKey == null || this.apiKey.isBlank() || this.apiKey.startsWith("${")) {
             LOG.warn("OpenAI API key not configured");
             throw new IllegalStateException(
-                    "OpenAI API key not configured. Please set openai.api.key in application.properties or OPENAI_API_KEY environment variable");
+                    "OpenAI API key not configured. Please set OPENAI_API_KEY environment variable");
+        }
+
+        // Load dynamic configuration
+        final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
+        final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
+        final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 1000);
+        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
+
+        if (model == null || model.isBlank()) {
+            throw new IllegalStateException("OpenAI model not configured. Please configure via admin settings.");
+        }
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalStateException("OpenAI API URL not configured. Please configure via admin settings.");
         }
 
         try {
@@ -66,12 +70,12 @@ public class OpenAiService {
             final var request = OpenAiRequestDto.createChatRequest(
                     systemPrompt,
                     prompt,
-                    this.model,
-                    this.temperature,
-                    this.maxTokens);
+                    model,
+                    temperature,
+                    maxTokens);
 
             // Build API URL
-            final String url = this.baseUrl + "/chat/completions";
+            final String url = baseUrl + "/chat/completions";
 
             // Get or create client
             if (this.client == null) {
@@ -84,8 +88,8 @@ public class OpenAiService {
                     .header("Authorization", "Bearer " + this.apiKey);
 
             // Add organization header if configured
-            if (this.organizationId != null && !this.organizationId.isBlank()) {
-                requestBuilder = requestBuilder.header("OpenAI-Organization", this.organizationId);
+            if (organizationId != null && !organizationId.isBlank()) {
+                requestBuilder = requestBuilder.header("OpenAI-Organization", organizationId);
             }
 
             // Make API call
@@ -144,17 +148,24 @@ public class OpenAiService {
             throw new IllegalStateException("OpenAI API key not configured");
         }
 
+        // Load dynamic configuration
+        final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
+        final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
+        final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 1000);
+        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
+
         try {
             final String systemPrompt = "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";
 
             final var request = OpenAiRequestDto.createJsonRequest(
                     systemPrompt,
                     prompt,
-                    this.model,
-                    this.temperature,
-                    this.maxTokens);
+                    model,
+                    temperature,
+                    maxTokens);
 
-            final String url = this.baseUrl + "/chat/completions";
+            final String url = baseUrl + "/chat/completions";
 
             if (this.client == null) {
                 this.client = ClientBuilder.newClient();
@@ -164,8 +175,8 @@ public class OpenAiService {
                     .request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);
 
-            if (this.organizationId != null && !this.organizationId.isBlank()) {
-                requestBuilder = requestBuilder.header("OpenAI-Organization", this.organizationId);
+            if (organizationId != null && !organizationId.isBlank()) {
+                requestBuilder = requestBuilder.header("OpenAI-Organization", organizationId);
             }
 
             final var response = requestBuilder.post(Entity.json(request));
@@ -204,6 +215,6 @@ public class OpenAiService {
      * Get the current model name
      */
     public String getModel() {
-        return this.model;
+        return this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
     }
 }

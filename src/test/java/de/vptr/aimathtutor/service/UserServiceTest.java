@@ -4,26 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.UserDto;
-import de.vptr.aimathtutor.security.PasswordHashingService;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class UserServiceTest {
 
-    @Mock
-    private PasswordHashingService passwordHashingService;
-
-    @InjectMocks
+    @Inject
     private UserService userService;
 
     @Test
     @DisplayName("Should throw ValidationException when creating user with null username")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingUserWithNullUsername() {
         final UserDto userDto = new UserDto();
         userDto.username = null;
@@ -37,6 +33,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating user with empty username")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingUserWithEmptyUsername() {
         final UserDto userDto = new UserDto();
         userDto.username = "";
@@ -50,6 +47,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating user with null password")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingUserWithNullPassword() {
         final UserDto userDto = new UserDto();
         userDto.username = "testuser";
@@ -63,6 +61,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating user with empty password")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingUserWithEmptyPassword() {
         final UserDto userDto = new UserDto();
         userDto.username = "testuser";

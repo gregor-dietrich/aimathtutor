@@ -1,12 +1,12 @@
 package de.vptr.aimathtutor.service;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -17,26 +17,15 @@ import jakarta.ws.rs.core.Response;
 /**
  * Service for interacting with Ollama local LLM API
  * Supports llama3.1, qwen2.5, phi3, deepseek-coder, and other Ollama models
+ * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
 public class OllamaService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OllamaService.class);
 
-    @ConfigProperty(name = "ollama.api.url", defaultValue = "http://localhost:11434")
-    String apiUrl;
-
-    @ConfigProperty(name = "ollama.model", defaultValue = "llama3.1:8b")
-    String model;
-
-    @ConfigProperty(name = "ollama.temperature", defaultValue = "0.7")
-    Double temperature;
-
-    @ConfigProperty(name = "ollama.max-tokens", defaultValue = "1000")
-    Integer maxTokens;
-
-    @ConfigProperty(name = "ollama.timeout-seconds", defaultValue = "60")
-    Integer timeoutSeconds;
+    @Inject
+    AiConfigService aiConfigService;
 
     private Client client;
 
@@ -49,20 +38,25 @@ public class OllamaService {
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
 
-        try {
-            // Check if Ollama is available
-            if (!this.isAvailable()) {
-                LOG.warn("Ollama server not available at {}", this.apiUrl);
-                throw new IllegalStateException(
-                        "Ollama server not available. Please ensure Ollama is running at " + this.apiUrl);
-            }
+        // Load dynamic configuration
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
+        final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.1:8b");
+        final Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 1000);
 
+        if (apiUrl == null || apiUrl.isBlank()) {
+            throw new IllegalStateException("Ollama API URL not configured. Please configure via admin settings.");
+        }
+        if (model == null || model.isBlank()) {
+            throw new IllegalStateException("Ollama model not configured. Please configure via admin settings.");
+        }
+
+        try {
             // Create request
-            final var request = OllamaRequestDto.createGenerateRequest(prompt, this.model, this.temperature,
-                    this.maxTokens);
+            final var request = OllamaRequestDto.createGenerateRequest(prompt, model, temperature, maxTokens);
 
             // Build API URL
-            final String url = this.apiUrl + "/api/generate";
+            final String url = apiUrl + "/api/generate";
 
             // Get or create client
             if (this.client == null) {
@@ -124,28 +118,29 @@ public class OllamaService {
      * Check if Ollama server is available
      */
     public boolean isAvailable() {
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
         try {
             if (this.client == null) {
                 this.client = ClientBuilder.newClient();
             }
 
             // Check /api/tags endpoint (lists installed models)
-            final var response = this.client.target(this.apiUrl + "/api/tags")
+            final var response = this.client.target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
             final boolean available = response.getStatus() == Response.Status.OK.getStatusCode();
 
             if (available) {
-                LOG.debug("Ollama server is available at {}", this.apiUrl);
+                LOG.debug("Ollama server is available at {}", apiUrl);
             } else {
-                LOG.debug("Ollama server not available at {} (status: {})", this.apiUrl, response.getStatus());
+                LOG.debug("Ollama server not available at {} (status: {})", apiUrl, response.getStatus());
             }
 
             return available;
 
         } catch (final Exception e) {
-            LOG.debug("Ollama server not available at {}: {}", this.apiUrl, e.getMessage());
+            LOG.debug("Ollama server not available at {}: {}", apiUrl, e.getMessage());
             return false;
         }
     }
@@ -154,12 +149,13 @@ public class OllamaService {
      * Check if a specific model is installed
      */
     public boolean isModelInstalled(final String modelName) {
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
         try {
             if (this.client == null) {
                 this.client = ClientBuilder.newClient();
             }
 
-            final var response = this.client.target(this.apiUrl + "/api/tags")
+            final var response = this.client.target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
@@ -188,13 +184,13 @@ public class OllamaService {
      * Get the current model name
      */
     public String getModel() {
-        return this.model;
+        return this.aiConfigService.getConfigValue("ollama.model", "llama3.1:8b");
     }
 
     /**
      * Get the API URL
      */
     public String getApiUrl() {
-        return this.apiUrl;
+        return this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
     }
 }

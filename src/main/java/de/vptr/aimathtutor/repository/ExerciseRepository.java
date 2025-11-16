@@ -142,7 +142,7 @@ public class ExerciseRepository extends AbstractRepository {
      * @return a list of {@link ExerciseEntity} objects matching the search query
      */
     public List<ExerciseEntity> search(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.findAllOrdered();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";

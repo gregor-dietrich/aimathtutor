@@ -55,10 +55,11 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
-  -e ai.tutor.provider=gemini \
-  -e gemini.api.key=your_gemini_api_key \
-  gregordietrich/aimathtutor:1.2.0-SNAPSHOT
+  -e GEMINI_API_KEY=your_gemini_api_key \
+  gregordietrich/aimathtutor:2.0.0-SNAPSHOT
 ```
+
+> **_NOTE:_** Model names, temperatures, and other AI provider settings (other than API keys) must be configured after startup via the **Admin Settings UI** at `/admin/config` after logging in with admin credentials.
 
 ### Using Docker Compose
 
@@ -69,12 +70,21 @@ Paste in the contents of [init.sql](https://github.com/gregor-dietrich/aimathtut
 #### 2. Create a `.env` file in the same directory
 
 ```properties
-GEMINI_API_KEY=your_gemini_api_key
-SQL_DATABASE=any_database_name
-SQL_USERNAME=any_username
-SQL_PASSWORD=safe_password_here
+# Database
+SQL_DATABASE=aimathtutor
+SQL_USERNAME=aimathtutor
+SQL_PASSWORD=changeit
+
+# AI API Keys (required if you want to use the respective AI provider)
+# Get API keys from: https://aistudio.google.com/app/apikey (Gemini)
+#                    https://platform.openai.com/api-keys (OpenAI)
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_ORG_ID=your_openai_org_id_here
+
+# Admin UI
 PGADMIN_EMAIL=your@email.com
-PGADMIN_PASSWORD=another_safe_password_here
+PGADMIN_PASSWORD=safe_password_here
 ```
 
 #### 3. Create a `docker-compose.yml` file in the same directory
@@ -82,7 +92,7 @@ PGADMIN_PASSWORD=another_safe_password_here
 ```yml
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:1.2.0-SNAPSHOT
+    image: gregordietrich/aimathtutor:2.0.0-SNAPSHOT
     restart: unless-stopped
     env_file:
       - .env
@@ -91,21 +101,10 @@ services:
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
-      # Google Gemini config
-      ai.tutor.provider: gemini
-      gemini.model: gemini-2.5-flash-lite
-      gemini.api.key: ${GEMINI_API_KEY}
-
-      # OpenAI (ChatGPT) config
-      # ai.tutor.provider: openai
-      # openai.model: gpt-4o-mini
-      # openai.api.key: ${OPENAI_API_KEY}
-      # openai.organization-id: ${OPENAI_ORG_ID}
-
-      # Ollama config
-      # ai.tutor.provider: ollama
-      # ollama.model: llama3.1:8b
-      # ollama.api.url: http://localhost:11434
+      # AI API Keys (sourced from .env file above)
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
     ports:
       - "80:9001/tcp"
     volumes:
@@ -180,3 +179,14 @@ volumes:
 ```sh
 docker compose up -d
 ```
+
+#### 5. Configure AI Provider Settings
+
+After the stack is running, log in to the application with admin credentials (default: `admin` / `admin`) and navigate to **Admin Settings** (`/admin/config`) to:
+
+- Select your AI provider (Gemini, OpenAI, or Ollama)
+- Set the model name
+- Adjust temperature, max tokens, and other provider-specific settings
+- Configure custom prompts
+
+These settings are persisted in the database and can be changed at runtime without restarting the application.

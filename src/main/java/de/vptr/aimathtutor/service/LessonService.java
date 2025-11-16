@@ -85,7 +85,7 @@ public class LessonService {
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
         // Validate name is provided for creation
-        if (lesson.name == null || lesson.name.trim().isEmpty()) {
+        if (lesson.name == null || lesson.name.isBlank()) {
             throw new ValidationException("Name is required for creating a lesson");
         }
 
@@ -121,7 +121,7 @@ public class LessonService {
         }
 
         // Validate name is provided for complete replacement (PUT)
-        if (lesson.name == null || lesson.name.trim().isEmpty()) {
+        if (lesson.name == null || lesson.name.isBlank()) {
             throw new ValidationException("Name is required for updating a lesson");
         }
 
@@ -231,7 +231,7 @@ public class LessonService {
      */
     @Transactional
     public List<LessonViewDto> searchLessons(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.getAllLessons();
         }
         final List<LessonEntity> lessons = this.lessonRepository.search(query);

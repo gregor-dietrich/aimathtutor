@@ -124,48 +124,94 @@ Refactor services and entities so that services no longer include database queri
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
 
-**Goal:** Transform the admin home view into `AdminConfigView`, allowing users with admin privileges to change application-wide AI settings at runtime.
+**Status:** ✅ **MOSTLY COMPLETE** — Core functionality implemented; performance optimization needed.
 
-**Implementation Plan:**
+**Goal:** Create a new `AdminConfigView` (route: `admin/config`) allowing users with admin privileges to manage AI tutor configuration at runtime. This replaces static `application.properties` changes for AI settings, enabling dynamic provider switching and parameter tuning without redeployment.
 
-### 5.1 Backend Changes
+### 5.1 Completed Implementation
 
-1. **Config Properties:**
-   - Rename `ai.tutor.provider` → `ai.tutor.default.provider`
-   - Rename `gemini.model` → `gemini.default.model`
-   - Rename `openai.model` → `openai.default.model`
-   - Rename `ollama.model` → `ollama.default.model`
-   - Add unified properties for `ai.tutor.max-tokens` and `ai.tutor.temperature` (not per-provider)
-   - Add `openai.organization-id`, `ollama.timeout-seconds`, and provider-specific API URLs
+#### Database Schema — ✅ DONE
 
-2. **Service:**
-   - Add service for updating config properties at runtime (with validation and security checks)
+- **`AiConfigEntity`** created with all required fields: `id`, `configKey` (unique), `configValue`, `configType`, `category`, `description`, `lastUpdatedAt`, `lastUpdatedBy`
+- **`AiConfigRepository`** extends `PanacheRepositoryBase<AiConfigEntity, Long>` with query methods
+- **Database schema** added to `init.sql` with seed data for all config keys (general, Gemini, OpenAI, Ollama, prompts)
 
-### 5.2 Frontend Changes
+#### Backend Service Layer — ✅ DONE
 
-1. **AdminConfigView:**
-   - Replace admin home view with a config panel for AI settings
-   - Dropdowns for AI provider and model (model dropdown updates when provider changes)
-   - Disable Gemini/OpenAI if API key is unset ("your-api-key-here"), disable Ollama if URL is unset ("your-ollama-api-url-here")
-   - Inputs for max-tokens and temperature (always visible, affect selected provider)
-   - Inputs for OpenAI organization ID and Ollama timeout (hidden unless respective provider selected, ideally with smooth animation)
-   - Input for API URL (affects only selected provider)
+- **`AiConfigService`** (@ApplicationScoped) fully implemented with:
+  - `getConfigValue(key, defaultValue)` with `@CacheResult` caching
+  - `getConfigValueAsInt()`, `getConfigValueAsDouble()`, `getConfigValueAsBoolean()` type converters
+  - `updateConfig(key, value, userId)` with `@Transactional` and `@CacheInvalidate`
+  - `getAllConfigsByCategory(category)` for UI population
+  - `validateAndSave(configUpdates, userId)` for bulk updates
+  - Cache invalidation on config updates
+- **AI Services refactored** to use `AiConfigService`:
+  - `AiTutorService`: Removed `@ConfigProperty` fields; fetches config dynamically via `AiConfigService`
+  - `GeminiService`: Uses `aiConfigService` for model, URL, temperature, max-tokens; keeps API key as `@ConfigProperty` (env var)
+  - `OpenAiService`: Same pattern as Gemini
+  - `OllamaService`: Same pattern as Gemini
+- **DTOs created:**
+  - `AiConfigDto`: Full config representation with metadata
+  - `AiConfigUpdateDto`: Lightweight update payload
 
-2. **UI/UX:**
-   - Show/hide provider-specific fields with subtle animation
-   - Ensure only one set of model/temperature/max-tokens fields, always reflecting selected provider
+#### Frontend — ✅ DONE
 
-### 5.3 Security & Validation
+- **`AdminConfigView`** created at `/admin/config` with:
+  - Tabbed interface for categories: General, Gemini, OpenAI, Ollama, Prompts
+  - General settings: AI Tutor Enabled toggle, AI Provider selector
+  - Provider-specific tabs with Model, API URL, Temperature, Max Tokens fields (read-only API key placeholders)
+  - Prompts tab: TextAreas for question answering and math tutoring prefix/postfix
+  - "Test Connection" button per provider (tests provider connectivity with dummy prompt)
+  - "Save" button with validation feedback
+  - "Reset to Defaults" button for quick reset
 
-1. Only users with admin privileges can access and change settings
-2. Validate all inputs before saving
-3. Changes should take effect immediately for new AI interactions
+#### Security & Validation — ✅ DONE
 
-### 5.4 Testing
+- **Permissions:** Route protected; only Admin (rankId=1) can access via `@Restrict(roles = "Admin")`
+- **Input validation:** URLs validated for HTTP/HTTPS format; numeric fields bounded; prompt length limits enforced
+- **Sensitive data:** API keys managed via `@ConfigProperty` env vars; not stored in database
+- **Runtime effect:** Config changes take immediate effect for new AI interactions; cache TTL configured
 
-- Unit tests for config update service
-- Integration tests for runtime config changes
-- Manual UI testing for all provider/model combinations and field visibility
+#### Testing — ⚠️ PARTIAL
+
+- ✅ `AiConfigServiceTest`: Unit tests for CRUD, validation, type conversions
+- ❌ `AiConfigServiceIT`: Integration tests not implemented
+- ❌ `AdminConfigViewTest`: UI tests not implemented
+- ✅ Manual: Can be tested via Quarkus dev mode
+
+### 5.2 Performance Optimization Opportunity
+
+**Issue Identified:** Methods calling `aiConfigService.getConfigValue()` frequently may cause performance degradation due to repeated cache lookups or database hits on cache misses.
+
+**Affected Methods:**
+
+- `OllamaService.isAvailable()` (line 121): Calls `getConfigValue("ollama.api.url", ...)` on every invocation
+- `OllamaService` request methods (lines 42-45): Fetch multiple config values per request (model, temperature, max-tokens, timeout)
+- `GeminiService.isAvailable()` and `OpenAiService.isAvailable()` (if implemented): Similar pattern
+- `GeminiService.getModel()` and `OpenAiService.getModel()` (lines 149, 218): Called per-request
+
+**Recommended Solutions:**
+
+1. **Method-level caching:** Cache provider config values locally in each AI service with invalidation hooks tied to config updates
+   - Add `@Inject AiConfigService` listener methods that refresh service-level cache when config changes
+   - Use CDI events from `AiConfigService.updateConfig()` to trigger cache invalidation
+2. **Eager loading:** Pre-load all provider-specific config values at service startup (less flexible but faster)
+3. **Parameter passing:** For health check methods like `isAvailable()`, accept URL as parameter if called in frequent scenarios
+4. **Query optimization:** Ensure database indexes on `ai_config.configKey` and cache TTL tuning in `AiConfigService`
+
+**Action Item for Next Phase:** Implement service-level config caching with event-driven invalidation to eliminate per-request database lookups.
+
+### 5.3 Future Enhancements (Out of Scope)
+
+- **Audit Log:** Track all config changes in `ai_config_audit` table (who, when, old/new values)
+- **Multi-Tenancy:** Per-group/user config overrides
+- **API Key Encryption:** Encrypt at rest using Quarkus Vault
+- **Provider Health Monitoring:** Dashboard showing uptime, latency, error rates
+- **Cost Tracking:** Token usage and budget alerts
+- **Prompt Versioning:** Rollback support for prompts
+- **A/B Testing:** Multiple prompt variants with outcome tracking
+- **Prompt Templates:** Pre-built tutoring style library
+- **Prompt Variables:** Dynamic placeholders (e.g., `{{student_name}}`)
 
 ---
 

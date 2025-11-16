@@ -22,26 +22,18 @@ import jakarta.inject.Inject;
 /**
  * Service for interacting with Google Gemini AI API
  * Handles REST API calls to Gemini 2.5 Flash-Lite
+ * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
-public class GeminiAiService {
+public class GeminiService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GeminiAiService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GeminiService.class);
 
-    @ConfigProperty(name = "gemini.api.key")
-    String apiKey;
+    @ConfigProperty(name = "gemini.api.key", defaultValue = "")
+    String apiKey; // API key is always read from environment variable, never from database
 
-    @ConfigProperty(name = "gemini.model", defaultValue = "gemini-2.5-flash-lite")
-    String model;
-
-    @ConfigProperty(name = "gemini.api.base-url", defaultValue = "https://generativelanguage.googleapis.com")
-    String baseUrl;
-
-    @ConfigProperty(name = "gemini.temperature", defaultValue = "0.7")
-    Double temperature;
-
-    @ConfigProperty(name = "gemini.max-tokens", defaultValue = "1000")
-    Integer maxTokens;
+    @Inject
+    AiConfigService aiConfigService;
 
     @Inject
     ObjectMapper objectMapper;
@@ -56,7 +48,7 @@ public class GeminiAiService {
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
 
-        LOG.debug("Initialized Gemini HttpClient for model: {}", this.model);
+        LOG.debug("Initialized Gemini HttpClient");
     }
 
     /**
@@ -71,19 +63,33 @@ public class GeminiAiService {
         if (this.apiKey == null || this.apiKey.isBlank() || this.apiKey.startsWith("${")) {
             LOG.warn("Gemini API key not configured");
             throw new IllegalStateException(
-                    "Gemini API key not configured. Please set gemini.api.key in application.properties or GEMINI_API_KEY environment variable");
+                    "Gemini API key not configured. Please set GEMINI_API_KEY environment variable");
+        }
+
+        // Load dynamic configuration
+        final String model = this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite");
+        final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url",
+                "https://generativelanguage.googleapis.com");
+        final Double temperature = this.aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.7);
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 1000);
+
+        if (model == null || model.isBlank()) {
+            throw new IllegalStateException("Gemini model not configured. Please configure via admin settings.");
+        }
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new IllegalStateException("Gemini API URL not configured. Please configure via admin settings.");
         }
 
         try {
             // Create request DTO
-            final var requestDto = GeminiRequestDto.createTextRequest(prompt, this.temperature, this.maxTokens);
+            final var requestDto = GeminiRequestDto.createTextRequest(prompt, temperature, maxTokens);
 
             // Convert to JSON
             final String requestJson = this.objectMapper.writeValueAsString(requestDto);
 
             // Build API URL
             final String url = String.format("%s/v1beta/models/%s:generateContent?key=%s",
-                    this.baseUrl, this.model, this.apiKey);
+                    baseUrl, model, this.apiKey);
 
             LOG.debug("Calling Gemini API at: {}", url.replaceAll("key=[^&]+", "key=***"));
 
@@ -130,23 +136,6 @@ public class GeminiAiService {
     }
 
     /**
-     * Generate content with custom temperature and max tokens
-     */
-    public String generateContent(final String prompt, final Double customTemperature, final Integer customMaxTokens) {
-        final Double originalTemp = this.temperature;
-        final Integer originalMaxTokens = this.maxTokens;
-
-        try {
-            this.temperature = customTemperature;
-            this.maxTokens = customMaxTokens;
-            return this.generateContent(prompt);
-        } finally {
-            this.temperature = originalTemp;
-            this.maxTokens = originalMaxTokens;
-        }
-    }
-
-    /**
      * Check if Gemini is properly configured
      */
     public boolean isConfigured() {
@@ -157,6 +146,6 @@ public class GeminiAiService {
      * Get the current model name
      */
     public String getModel() {
-        return this.model;
+        return this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite");
     }
 }

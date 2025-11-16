@@ -399,7 +399,7 @@ public class AnalyticsService {
         @Transactional
         public List<StudentSessionViewDto> searchSessions(final String searchTerm) {
                 LOG.trace("Searching sessions for term: {}", searchTerm);
-                if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                if (searchTerm == null || searchTerm.isBlank()) {
                         return List.of();
                 }
                 final String pattern = "%" + searchTerm.trim().toLowerCase() + "%";

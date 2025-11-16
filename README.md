@@ -35,7 +35,12 @@ See the [Makefile](Makefile) or use `make help` for all available commands and s
 - [Ollama](https://ollama.com/download)
 - [OpenAI](https://platform.openai.com/api-keys)
 
-Configure providers in `src/main/resources/application.properties` or via environment variables. See [docs/QUICKSTART.md](docs/QUICKSTART.md) for details.
+**Configuration:**
+
+- **API Keys**: Set environment variables `GEMINI_API_KEY`, `OPENAI_API_KEY`, and `OPENAI_ORG_ID` (immutable at runtime).
+- **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable, database-backed).
+
+See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
 
 ## 📖 Documentation
 

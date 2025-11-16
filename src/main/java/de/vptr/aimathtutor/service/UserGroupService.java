@@ -117,7 +117,7 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto createGroup(final UserGroupDto groupDto) {
-        if (groupDto.name == null || groupDto.name.trim().isEmpty()) {
+        if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
 
@@ -139,7 +139,7 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto updateGroup(final Long id, final UserGroupDto groupDto) {
-        if (groupDto.name == null || groupDto.name.trim().isEmpty()) {
+        if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
 
@@ -173,7 +173,7 @@ public class UserGroupService {
         }
 
         // Partial update (PATCH semantics) - only update provided fields
-        if (groupDto.name != null && !groupDto.name.trim().isEmpty()) {
+        if (groupDto.name != null && !groupDto.name.isBlank()) {
             existingGroup.name = groupDto.name;
         }
 
@@ -266,7 +266,7 @@ public class UserGroupService {
      */
     @Transactional
     public List<UserGroupViewDto> searchGroups(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.getAllGroups();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
