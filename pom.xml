@@ -244,7 +244,7 @@
                 <version>${quarkus.platform.version}</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED</jvmArgs>
+                    <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED -XX:+EnableDynamicAgentLoading</jvmArgs>
                 </configuration>
                 <executions>
                     <execution>
