@@ -40,6 +40,9 @@ public class AiConfigService {
     @Inject
     private UserRepository userRepository;
 
+    @Inject
+    private UserRankService userRankService;
+
     /**
      * Retrieves a configuration value as a String.
      * Falls back to defaultValue if not found.
@@ -198,10 +201,21 @@ public class AiConfigService {
 
         this.validateConfigValue(configKey, configValue);
 
-        // Verify admin permission
+        // Verify permission - user must have exercise or lesson management permissions
         final var user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null || user.rank.id != 1L) {
-            throw new IllegalStateException("Only admins can update configuration");
+        if (user == null || user.rank == null) {
+            throw new IllegalStateException("User not found or has no rank assigned");
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null) {
+            throw new IllegalStateException("Unable to determine user permissions");
+        }
+
+        final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
+        if (!hasPermission) {
+            throw new IllegalStateException(
+                    "Only users with exercise or lesson management permissions can update configuration");
         }
 
         // Find existing or create new
@@ -244,10 +258,21 @@ public class AiConfigService {
             return;
         }
 
-        // Verify admin permission once
+        // Verify permission once
         final UserEntity user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null || user.rank.id != 1L) {
-            throw new IllegalStateException("Only admins can update configuration");
+        if (user == null || user.rank == null) {
+            throw new IllegalStateException("User not found or has no rank assigned");
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null) {
+            throw new IllegalStateException("Unable to determine user permissions");
+        }
+
+        final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
+        if (!hasPermission) {
+            throw new IllegalStateException(
+                    "Only users with exercise or lesson management permissions can update configuration");
         }
 
         // Validate all updates first
