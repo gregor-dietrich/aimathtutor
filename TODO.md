@@ -124,240 +124,94 @@ Refactor services and entities so that services no longer include database queri
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
 
+**Status:** ✅ **MOSTLY COMPLETE** — Core functionality implemented; performance optimization needed.
+
 **Goal:** Create a new `AdminConfigView` (route: `admin/config`) allowing users with admin privileges to manage AI tutor configuration at runtime. This replaces static `application.properties` changes for AI settings, enabling dynamic provider switching and parameter tuning without redeployment.
 
-**Context:**
+### 5.1 Completed Implementation
 
-- Current AI configuration is entirely static via `@ConfigProperty` injections in `AiTutorService`, `GeminiAiService`, `OpenAiService`, and `OllamaService`.
-- Quarkus `@ConfigProperty` does NOT support runtime updates by default — values are injected once at startup.
-- Runtime configuration requires either:
-  1. A custom configuration entity stored in the database (preferred for persistence and multi-instance deployments).
-  2. Use of `ConfigProvider` API with a custom `ConfigSource` (more complex, less user-friendly for persistence).
-- We strongly favor the custom configuration entity stored in the database due to lower complexity and better handling for persistence.
-- Current admin views: `AdminDashboardView`, `AdminUsersView`, `AdminExercisesView`, etc. — no config view exists yet.
-- **No backward compatibility:** All `@ConfigProperty` fields and hardcoded constants will be removed. Configuration must be managed via database only.
+#### Database Schema — ✅ DONE
 
-**Implementation Plan:**
+- **`AiConfigEntity`** created with all required fields: `id`, `configKey` (unique), `configValue`, `configType`, `category`, `description`, `lastUpdatedAt`, `lastUpdatedBy`
+- **`AiConfigRepository`** extends `PanacheRepositoryBase<AiConfigEntity, Long>` with query methods
+- **Database schema** added to `init.sql` with seed data for all config keys (general, Gemini, OpenAI, Ollama, prompts)
 
-### 5.1 Database Schema Changes
+#### Backend Service Layer — ✅ DONE
 
-1. **New Entity: `AiConfigEntity`**
-   - Fields:
-     - `id` (Long, primary key)
-     - `configKey` (String, unique index) — e.g., "ai.tutor.provider", "gemini.model", "ai.prompt.math.tutoring.prefix"
-     - `configValue` (String or TEXT for longer prompts) — e.g., "gemini", "gemini-2.5-flash-lite", or full prompt text
-     - `configType` (String) — data type hint: "STRING", "INTEGER", "DOUBLE", "BOOLEAN", "TEXT"
-     - `category` (String) — grouping: "GENERAL", "GEMINI", "OPENAI", "OLLAMA", "PROMPTS"
-     - `description` (String, nullable) — human-readable help text
-     - `lastUpdatedAt` (LocalDateTime)
-     - `lastUpdatedBy` (Long, FK to `users.id`)
-   - Add table `ai_config` to existing `init.sql` (do NOT create separate migration scripts per project style).
-   - Seed with current defaults from `application.properties` AND hardcoded prompts from `AiTutorService` so existing deployments have baseline config.
-   - **Configuration Keys to Add (in database):**
-     - `ai.tutor.enabled` — e.g., "true"
-     - `ai.tutor.provider` — e.g., "gemini", "openai", "ollama", "mock"
-     - `gemini.model` — e.g., "gemini-2.5-flash-lite"
-     - `gemini.api.base-url` — e.g., "<https://generativelanguage.googleapis.com>"
-     - `gemini.temperature` — e.g., "0.7"
-     - `gemini.max-tokens` — e.g., "1000"
-     - `openai.model` — e.g., "gpt-4o-mini"
-     - `openai.organization-id` — e.g., "" (optional)
-     - `openai.api.base-url` — e.g., "<https://api.openai.com/v1>"
-     - `openai.temperature` — e.g., "0.7"
-     - `openai.max-tokens` — e.g., "1000"
-     - `ollama.api.url` — e.g., "<http://localhost:11434>"
-     - `ollama.model` — e.g., "llama3.1:8b"
-     - `ollama.temperature` — e.g., "0.7"
-     - `ollama.max-tokens` — e.g., "1000"
-     - `ollama.timeout-seconds` — e.g., "30"
-     - `ai.prompt.question.answering.prefix` — currently `questionAnsweringPromptPrefix` in `AiTutorService`
-     - `ai.prompt.question.answering.postfix` — currently `questionAnsweringPromptPostfix` in `AiTutorService`
-     - `ai.prompt.math.tutoring.prefix` — currently `mathTutoringPromptPrefix` in `AiTutorService`
-     - `ai.prompt.math.tutoring.postfix` — currently `mathTutoringPromptPostfix` in `AiTutorService`
-   - **API Keys remain as `@ConfigProperty` via environment variables:**
-     - `gemini.api.key` — injected via `@ConfigProperty`, sourced from `GEMINI_API_KEY` environment variable
-     - `openai.api.key` — injected via `@ConfigProperty`, sourced from `OPENAI_API_KEY` environment variable
-     - No changes to existing API key handling
+- **`AiConfigService`** (@ApplicationScoped) fully implemented with:
+  - `getConfigValue(key, defaultValue)` with `@CacheResult` caching
+  - `getConfigValueAsInt()`, `getConfigValueAsDouble()`, `getConfigValueAsBoolean()` type converters
+  - `updateConfig(key, value, userId)` with `@Transactional` and `@CacheInvalidate`
+  - `getAllConfigsByCategory(category)` for UI population
+  - `validateAndSave(configUpdates, userId)` for bulk updates
+  - Cache invalidation on config updates
+- **AI Services refactored** to use `AiConfigService`:
+  - `AiTutorService`: Removed `@ConfigProperty` fields; fetches config dynamically via `AiConfigService`
+  - `GeminiService`: Uses `aiConfigService` for model, URL, temperature, max-tokens; keeps API key as `@ConfigProperty` (env var)
+  - `OpenAiService`: Same pattern as Gemini
+  - `OllamaService`: Same pattern as Gemini
+- **DTOs created:**
+  - `AiConfigDto`: Full config representation with metadata
+  - `AiConfigUpdateDto`: Lightweight update payload
 
-2. **Repository: `AiConfigRepository`**
-   - Extend `PanacheRepositoryBase<AiConfigEntity, Long>`
-   - Methods:
-     - `Optional<AiConfigEntity> findByConfigKey(String key)`
-     - `List<AiConfigEntity> findByCategory(String category)`
-     - `void upsert(String key, String value, String type, String category, Long userId)` — insert or update
+#### Frontend — ✅ DONE
 
-### 5.2 Backend Service Layer
+- **`AdminConfigView`** created at `/admin/config` with:
+  - Tabbed interface for categories: General, Gemini, OpenAI, Ollama, Prompts
+  - General settings: AI Tutor Enabled toggle, AI Provider selector
+  - Provider-specific tabs with Model, API URL, Temperature, Max Tokens fields (read-only API key placeholders)
+  - Prompts tab: TextAreas for question answering and math tutoring prefix/postfix
+  - "Test Connection" button per provider (tests provider connectivity with dummy prompt)
+  - "Save" button with validation feedback
+  - "Reset to Defaults" button for quick reset
 
-1. **New Service: `AiConfigService` (@ApplicationScoped)**
-   - Injections:
-     - `AiConfigRepository`
-     - `AuthService` (for permission checks)
-   - Methods:
-     - `String getConfigValue(String key, String defaultValue)` — fetches from DB, falls back to default
-     - `Integer getConfigValueAsInt(String key, Integer defaultValue)`
-     - `Double getConfigValueAsDouble(String key, Double defaultValue)`
-     - `Boolean getConfigValueAsBoolean(String key, Boolean defaultValue)`
-     - `void updateConfig(String key, String value, Long userId)` (@Transactional) — validates, updates DB, invalidates cache
-     - `Map<String, String> getAllConfigsByCategory(String category)` — returns key-value map for UI population
-     - `void validateAndSave(Map<String, String> configUpdates, Long userId)` — bulk validation and save
-   - **Caching:** Use `@CacheResult` on read methods with invalidation on updates to avoid DB hits per AI request.
-   - **Validation:** Check format (e.g., URL format for API endpoints, numeric ranges for temperature/max-tokens).
-   - **Note:** The `defaultValue` parameters in getter methods are used ONLY during initial seeding or if admin explicitly triggers a "reset to defaults" action. All normal operations must read from database.
+#### Security & Validation — ✅ DONE
 
-2. **Refactor AI Services to Use `AiConfigService`**
-   - `AiTutorService`:
-     - Inject `AiConfigService`
-     - **Remove ALL `@ConfigProperty` fields** (`aiEnabled`, `aiProvider`)
-     - **Remove ALL hardcoded prompt constants** (`questionAnsweringPromptPrefix`, `questionAnsweringPromptPostfix`, `mathTutoringPromptPrefix`, `mathTutoringPromptPostfix`)
-     - Replace with dynamic loading from `AiConfigService`:
-       - Check enabled status: `aiConfigService.getConfigValueAsBoolean("ai.tutor.enabled", true)`
-       - Get provider: `aiConfigService.getConfigValue("ai.tutor.provider", "mock")`
-       - In `buildQuestionAnsweringPrompt()`: fetch prefix/postfix via `aiConfigService.getConfigValue("ai.prompt.question.answering.prefix", "")` and `aiConfigService.getConfigValue("ai.prompt.question.answering.postfix", "")`
-       - In `buildMathTutoringPrompt()`: fetch prefix/postfix via `aiConfigService.getConfigValue("ai.prompt.math.tutoring.prefix", "")` and `aiConfigService.getConfigValue("ai.prompt.math.tutoring.postfix", "")`
-       - If any config value is missing/empty, throw `IllegalStateException` with clear error message directing admin to configure via UI
-   - `GeminiAiService`, `OpenAiService`, `OllamaService`:
-     - Inject `AiConfigService`
-     - **Keep existing `@ConfigProperty` for API keys** — no changes to current API key injection
-     - Replace other config fields with `AiConfigService` calls (e.g., `model = aiConfigService.getConfigValue("gemini.model", "")`, `temperature = aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.7)`)
-     - Throw `IllegalStateException` if required config (model, URL, etc.) is missing
-     - Fetch config values per-request or on-demand rather than caching in instance fields to ensure runtime updates take effect immediately.
+- **Permissions:** Route protected; only Admin (rankId=1) can access via `@Restrict(roles = "Admin")`
+- **Input validation:** URLs validated for HTTP/HTTPS format; numeric fields bounded; prompt length limits enforced
+- **Sensitive data:** API keys managed via `@ConfigProperty` env vars; not stored in database
+- **Runtime effect:** Config changes take immediate effect for new AI interactions; cache TTL configured
 
-3. **DTOs:**
-   - `AiConfigDto`: `{ configKey, configValue, configType, category, description, lastUpdatedAt, lastUpdatedBy }`
-   - `AiConfigUpdateDto`: `{ configKey, configValue }` (for batch updates from UI)
+#### Testing — ⚠️ PARTIAL
 
-### 5.3 Frontend Changes
+- ✅ `AiConfigServiceTest`: Unit tests for CRUD, validation, type conversions
+- ❌ `AiConfigServiceIT`: Integration tests not implemented
+- ❌ `AdminConfigViewTest`: UI tests not implemented
+- ✅ Manual: Can be tested via Quarkus dev mode
 
-1. **New View: `AdminConfigView`**
-   - Route: `@Route(value = "admin/config", layout = AdminMainLayout.class)`
-   - Page Title: `@PageTitle("AI Configuration - AI Math Tutor")`
-   - Inject: `AiConfigService`, `AuthService`
-   - Layout: Tabbed interface or accordion for categories (General, Gemini, OpenAI, Ollama).
+### 5.2 Performance Optimization Opportunity
 
-2. **UI Components (General Settings Tab):**
-   - **AI Tutor Enabled:** Checkbox bound to `ai.tutor.enabled`
-   - **AI Provider:** ComboBox with options: `mock`, `gemini`, `openai`, `ollama`
-     - On selection change, update visible provider-specific tabs/sections
+**Issue Identified:** Methods calling `aiConfigService.getConfigValue()` frequently may cause performance degradation due to repeated cache lookups or database hits on cache misses.
 
-3. **UI Components (Provider-Specific Tabs):**
-   - **Gemini Tab:**
-     - API Key: PasswordField (masked, placeholder: "API key is managed via environment variable `GEMINI_API_KEY`", disabled/read-only)
-     - Model: TextField (default: `gemini-2.5-flash-lite`, editable)
-     - API Base URL: TextField (default: `https://generativelanguage.googleapis.com`, editable)
-     - Temperature: NumberField (0.0-2.0, step 0.1, default 0.7, editable)
-     - Max Tokens: IntegerField (1-4096, default 1000, editable)
-     - Help text: Link to <https://aistudio.google.com/app/apikey>
-   - **OpenAI Tab:**
-     - API Key: PasswordField (masked, placeholder: "API key is managed via environment variable `OPENAI_API_KEY`", disabled/read-only)
-     - Organization ID: TextField (optional, placeholder: "Enter org ID if applicable", editable)
-     - Model: TextField (default: `gpt-4o-mini`, editable)
-     - API Base URL: TextField (default: `https://api.openai.com/v1`, editable)
-     - Temperature: NumberField (0.0-2.0, step 0.1, default 0.7, editable)
-     - Max Tokens: IntegerField (1-4096, default 1000, editable)
-     - Help text: Link to <https://platform.openai.com/api-keys>
-   - **Ollama Tab:**
-     - API URL: TextField (default: `http://localhost:11434`, editable)
-     - Model: TextField (default: `llama3.1:8b`, editable)
-     - Temperature: NumberField (0.0-2.0, step 0.1, default 0.7, editable)
-     - Max Tokens: IntegerField (1-4096, default 1000, editable)
-     - Timeout (seconds): IntegerField (1-300, default 30, editable)
-     - Help text: Link to <https://ollama.com/download> with note: "Ollama does not require an API key"
-   - **Prompts Tab:**
-     - **Question Answering Prompt Prefix:** TextArea (multi-line, expandable, default: current `questionAnsweringPromptPrefix` value)
-     - **Question Answering Prompt Postfix:** TextArea (multi-line, expandable, default: current `questionAnsweringPromptPostfix` value)
-     - **Math Tutoring Prompt Prefix:** TextArea (multi-line, expandable, default: current `mathTutoringPromptPrefix` value)
-     - **Math Tutoring Prompt Postfix:** TextArea (multi-line, expandable, default: current `mathTutoringPromptPostfix` value)
-     - Help text: Explain that these prompts are sent to the AI provider and control the AI's behavior/tone. Include character count indicators for each field.
-     - **Preview Button:** Shows a dialog with example prompt construction using current values (helps admins understand how prompts are assembled).
+**Affected Methods:**
 
-4. **UI Behavior:**
-   - Load current config from `AiConfigService.getAllConfigsByCategory()` on view init.
-   - Disable provider-specific tabs if provider not selected (grayed out or hidden).
-   - Show warning icon/tooltip next to API key fields if value is empty or placeholder (`"your-api-key-here"`).
-   - **Save Button:** Validates all fields, calls `AiConfigService.validateAndSave()`, shows success notification or error details.
-   - **Reset to Defaults Button:** Restores `application.properties` defaults (optional feature).
-   - **Test Connection Button (per provider):** Sends a test prompt to verify API key/URL/model work (calls respective AI service with a dummy prompt, shows result in dialog).
+- `OllamaService.isAvailable()` (line 121): Calls `getConfigValue("ollama.api.url", ...)` on every invocation
+- `OllamaService` request methods (lines 42-45): Fetch multiple config values per request (model, temperature, max-tokens, timeout)
+- `GeminiService.isAvailable()` and `OpenAiService.isAvailable()` (if implemented): Similar pattern
+- `GeminiService.getModel()` and `OpenAiService.getModel()` (lines 149, 218): Called per-request
 
-5. **Animations & Polish:**
-   - Smooth expand/collapse for provider-specific sections (Vaadin `Details` component or custom CSS transitions).
-   - Field validation with immediate feedback (e.g., red border + tooltip for invalid URL format).
-   - Loading indicators during save/test operations.
+**Recommended Solutions:**
 
-### 5.4 Security & Validation
+1. **Method-level caching:** Cache provider config values locally in each AI service with invalidation hooks tied to config updates
+   - Add `@Inject AiConfigService` listener methods that refresh service-level cache when config changes
+   - Use CDI events from `AiConfigService.updateConfig()` to trigger cache invalidation
+2. **Eager loading:** Pre-load all provider-specific config values at service startup (less flexible but faster)
+3. **Parameter passing:** For health check methods like `isAvailable()`, accept URL as parameter if called in frequent scenarios
+4. **Query optimization:** Ensure database indexes on `ai_config.configKey` and cache TTL tuning in `AiConfigService`
 
-1. **Permissions:**
-   - Only users with `rankId = 1` (Admin) can access `/admin/config` route.
-   - Enforce via `@BeforeEnterObserver` in view: check `authService.getCurrentUser().rankId == 1`.
-   - Add server-side validation in `AiConfigService.updateConfig()` to double-check admin rank before persisting.
+**Action Item for Next Phase:** Implement service-level config caching with event-driven invalidation to eliminate per-request database lookups.
 
-2. **Input Validation:**
-   - URLs: Valid HTTP/HTTPS format, reachable (optional DNS check).
-   - Temperature: 0.0 ≤ value ≤ 2.0
-   - Max Tokens: 1 ≤ value ≤ 8192 (adjust per provider limits)
-   - Timeout: 1 ≤ value ≤ 300 seconds
-   - Model names: Non-empty strings, no special characters except hyphen/underscore.
-   - **Prompts:** Non-empty strings, reasonable length limits (e.g., 10-5000 characters per prompt field to prevent abuse/performance issues).
+### 5.3 Future Enhancements (Out of Scope)
 
-3. **Sensitive Data Handling:**
-   - API keys are managed via `@ConfigProperty` reading from environment variables — no database storage.
-   - Do NOT log API keys in service methods (mask in logs).
-
-4. **Runtime Effect:**
-   - Config changes take effect **immediately** for new AI interactions (no restart required).
-   - Existing in-flight requests use old config (acceptable).
-   - Cache invalidation ensures fresh config reads within seconds (tune cache TTL if needed).
-
-### 5.5 Testing
-
-1. **Unit Tests:**
-   - `AiConfigServiceTest`: Test CRUD operations, validation logic, fallback to defaults, type conversions.
-   - Mock `AiConfigRepository` to verify upsert, findByKey, and caching behavior.
-   - Test prompt loading and fallback to hardcoded defaults when DB entries missing.
-
-2. **Integration Tests:**
-   - `AiConfigServiceIT`: Test with real H2/PostgreSQL DB, verify transactions, concurrent updates, cache invalidation.
-   - Test that `AiTutorService` picks up config changes without restart (mock DB config change, call `analyzeMathAction()`, verify correct provider used).
-   - Test that prompt changes take effect immediately in `buildQuestionAnsweringPrompt()` and `buildMathTutoringPrompt()` methods.
-
-3. **UI Tests:**
-   - Manual: Navigate to `/admin/config`, change provider, verify provider-specific fields show/hide correctly.
-   - Manual: Edit prompts in Prompts tab, save, trigger AI interaction, verify new prompts are used.
-   - Manual: Use "Preview" button to verify prompt assembly logic with current configuration.
-   - Manual: Save config, restart app (optional), verify settings persist and AI interactions use new config.
-   - Manual: Test "Test Connection" for each provider (requires valid API keys or mock responses).
-
-4. **Edge Cases:**
-   - Missing DB entries: Application should fail fast with clear error messages directing admin to configure settings via UI.
-   - Invalid config values (should reject with clear error messages).
-   - Concurrent admin updates (last-write-wins, consider optimistic locking if needed).
-   - Very long prompts (test performance impact, enforce reasonable limits).
-
-### 5.6 Migration & Rollout
-
-1. **Deployment Steps:**
-   - Add `ai_config` table to `init.sql` with seed data matching current `application.properties` AND hardcoded prompt values from `AiTutorService`.
-   - Remove all `@ConfigProperty` fields from `AiTutorService`, `GeminiAiService`, `OpenAiService`, and `OllamaService` EXCEPT API key fields.
-   - Remove hardcoded prompt constants from `AiTutorService`.
-   - All configuration except API keys must be loaded from database via `AiConfigService` — no fallbacks.
-   - Deploy updated services and `AdminConfigView` together (atomic deployment).
-
-2. **Phased Rollout:**
-   - Phase 1: Implement `AiConfigEntity`, `AiConfigService`, and DB-backed config loading. Test with direct DB inserts. Include prompt configuration keys.
-   - Phase 2: Build `AdminConfigView` with basic fields (provider, model, API key). Enable for admins.
-   - Phase 3: Add Prompts tab with TextArea fields for all four prompt components (prefix/postfix for question answering and math tutoring).
-   - Phase 4: Add advanced features (test connection, preview prompt assembly, reset to defaults, audit log of config changes).
-
-### 5.7 Future Enhancements (Out of Scope for Initial Implementation)
-
-- **Audit Log:** Track all config changes in separate `ai_config_audit` table (who, when, old/new values).
-- **Multi-Tenancy:** Per-group or per-user AI config overrides (requires more complex config resolution logic).
-- **API Key Encryption:** Encrypt API keys at rest using Quarkus Vault or similar.
-- **Provider Health Monitoring:** Dashboard showing uptime, latency, error rates per provider.
-- **Cost Tracking:** Log tokens used per provider, estimate costs, set budget alerts.
-- **Prompt Versioning:** Track prompt changes over time, allow rollback to previous versions.
-- **A/B Testing:** Support multiple prompt variants, track which performs better based on student outcomes.
-- **Prompt Templates:** Library of pre-built prompts for different tutoring styles (Socratic, encouraging, strict, etc.).
-- **Prompt Variables:** Support dynamic placeholders in prompts (e.g., `{{student_name}}`, `{{difficulty_level}}`) that get replaced at runtime.
+- **Audit Log:** Track all config changes in `ai_config_audit` table (who, when, old/new values)
+- **Multi-Tenancy:** Per-group/user config overrides
+- **API Key Encryption:** Encrypt at rest using Quarkus Vault
+- **Provider Health Monitoring:** Dashboard showing uptime, latency, error rates
+- **Cost Tracking:** Token usage and budget alerts
+- **Prompt Versioning:** Rollback support for prompts
+- **A/B Testing:** Multiple prompt variants with outcome tracking
+- **Prompt Templates:** Pre-built tutoring style library
+- **Prompt Variables:** Dynamic placeholders (e.g., `{{student_name}}`)
 
 ---
 
