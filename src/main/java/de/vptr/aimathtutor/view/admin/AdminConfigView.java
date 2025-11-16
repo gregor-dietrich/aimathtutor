@@ -22,7 +22,9 @@ import com.vaadin.flow.router.Route;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.service.AiConfigService;
 import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -43,6 +45,9 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
     @Inject
     private transient AiConfigService aiConfigService;
 
+    @Inject
+    private transient UserRankService userRankService;
+
     /**
      * Create a new admin config view with default layout initialization.
      */
@@ -53,19 +58,28 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
     }
 
     /**
-     * Called before the view is shown. Ensures authentication and triggers UI
-     * construction and data loading.
+     * Called before the view is shown. Ensures authentication and proper
+     * permissions.
+     * Configuration can only be managed by users with exercise or lesson
+     * permissions.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
-            event.forwardTo("login");
+            event.forwardTo(LoginView.class);
             return;
         }
 
-        // Check if user is admin
-        final var currentUser = this.authService.getCurrentUserEntity();
-        if (currentUser == null || currentUser.rank == null || currentUser.rank.id != 1L) {
+        // Configuration view requires exercise or lesson management permissions
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null) {
+            NotificationUtil.showError("You do not have permission to access this page");
+            event.forwardTo("/");
+            return;
+        }
+
+        final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
+        if (!hasPermission) {
             NotificationUtil.showError("You do not have permission to access this page");
             event.forwardTo("/");
             return;
