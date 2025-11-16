@@ -49,7 +49,7 @@ class AiConfigServiceTest {
                 "test.bool.true", "test.bool.false", "test.bool.one", "test.bool.zero",
                 "test.config1", "test.config2", "test.config3", "update.test",
                 "batch.config1", "batch.config2", "batch.config3",
-                "cache.test", "cache.clear.test");
+                "cache.test", "cache.clear.test", "test.integer", "test.boolean", "test.string");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
