@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -38,7 +37,7 @@ class UserRankServiceTest {
         final List<String> testRankNames = List.of("TestRank", "TestRankToUpdate", "TestRankToDelete",
                 "TestAdminRank123", "TestUserRank456");
         for (final String name : testRankNames) {
-            final Optional<UserRankEntity> existing = this.userRankRepository.findByName(name);
+            final var existing = this.userRankRepository.findByName(name);
             if (existing.isPresent()) {
                 this.userRankRepository.deleteById(existing.get().id);
             }
@@ -189,5 +188,35 @@ class UserRankServiceTest {
         updateDto.name = "NonExistent";
 
         assertThrows(Exception.class, () -> this.userRankService.updateRank(99999L, updateDto));
+    }
+
+    @Test
+    @DisplayName("Create rank with null name throws validation exception")
+    @Transactional
+    void testCreateRankWithNullName() {
+        final UserRankDto rankDto = new UserRankDto();
+        rankDto.name = null;
+
+        assertThrows(Exception.class, () -> this.userRankService.createRank(rankDto));
+    }
+
+    @Test
+    @DisplayName("Create rank with empty name throws validation exception")
+    @Transactional
+    void testCreateRankWithEmptyName() {
+        final UserRankDto rankDto = new UserRankDto();
+        rankDto.name = "";
+
+        assertThrows(Exception.class, () -> this.userRankService.createRank(rankDto));
+    }
+
+    @Test
+    @DisplayName("Create rank with blank name throws validation exception")
+    @Transactional
+    void testCreateRankWithBlankName() {
+        final UserRankDto rankDto = new UserRankDto();
+        rankDto.name = "   ";
+
+        assertThrows(Exception.class, () -> this.userRankService.createRank(rankDto));
     }
 }
