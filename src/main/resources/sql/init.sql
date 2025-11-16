@@ -351,12 +351,8 @@ INSERT INTO ai_config (config_key, config_value, config_type, category, descript
 ('ollama.timeout-seconds', '30', 'INTEGER', 'OLLAMA', 'Ollama API timeout in seconds', false, 1),
 
 -- Prompt settings
-('ai.prompt.question.answering.prefix', 'You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.
-
-', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', false, 1),
-('ai.prompt.question.answering.postfix', '
-
-Provide a helpful, encouraging answer that:
+('ai.prompt.question.answering.prefix', 'You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', false, 1),
+('ai.prompt.question.answering.postfix', 'Provide a helpful, encouraging answer that:
 - Guides the student''s thinking without solving it for them
 - Is concise (2-3 sentences max)
 - Relates to their current problem if possible
@@ -364,12 +360,8 @@ Provide a helpful, encouraging answer that:
 - Encourages them to try the next step
 
 Your answer:', 'TEXT', 'PROMPTS', 'Postfix prompt for question answering', false, 1),
-('ai.prompt.math.tutoring.prefix', 'You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student''s action and provide brief, helpful feedback.
-
-Student Action:
-- Action Type: ', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', false, 1),
-('ai.prompt.math.tutoring.postfix', '
-Provide feedback in the following JSON format:
+('ai.prompt.math.tutoring.prefix', 'You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student''s action and provide brief, helpful feedback.', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', false, 1),
+('ai.prompt.math.tutoring.postfix', 'Provide feedback in the following JSON format:
 {
   "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
   "message": "Your brief, encouraging feedback (ONE sentence only)",

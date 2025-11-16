@@ -418,12 +418,13 @@ public class AiTutorService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final String prefix = this.getConfigString("ai.prompt.question.answering.prefix",
-                "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.\n\n");
+        final var prefix = this.getConfigString("ai.prompt.question.answering.prefix",
+                "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.");
         final String postfix = this.getConfigString("ai.prompt.question.answering.postfix",
-                "\n\nProvide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
+                "Provide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
 
         prompt.append(prefix);
+        prompt.append("\n\n");
 
         // Add conversation context if available
         if (context != null) {
@@ -462,6 +463,7 @@ public class AiTutorService {
 
         prompt.append("Student question: ").append(question);
 
+        prompt.append("\n\n");
         prompt.append(postfix);
 
         final var promptString = prompt.toString();
@@ -531,12 +533,12 @@ public class AiTutorService {
 
         // Load dynamic prompt configuration
         final String prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
-                "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.\n\nStudent Action:\n- Action Type: ");
+                "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.");
         final String postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
-                "\nProvide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
+                "Provide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
 
         prompt.append(prefix);
-
+        prompt.append("\n\nStudent Action:\n- Action Type: ");
         prompt.append(event.eventType != null ? event.eventType : "unknown").append("\n");
 
         // Add conversation context if available
@@ -580,6 +582,7 @@ public class AiTutorService {
             prompt.append("- Is Correct: ").append(event.correct).append("\n");
         }
 
+        prompt.append('\n');
         prompt.append(postfix);
 
         final var promptString = prompt.toString();
