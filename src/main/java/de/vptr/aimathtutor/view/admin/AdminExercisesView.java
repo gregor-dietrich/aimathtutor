@@ -168,7 +168,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.loadExercisesAsync();
                     }
                 },
@@ -345,10 +345,10 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
 
         // Bind fields
         this.binder.forField(titleField)
-                .withValidator(value -> value != null && !value.trim().isEmpty(), "Title is required")
+                .withValidator(value -> value != null && !value.isBlank(), "Title is required")
                 .bind(exercise1 -> exercise1.title, (exercise1, value) -> exercise1.title = value);
         this.binder.forField(contentField)
-                .withValidator(value -> value != null && !value.trim().isEmpty(), "Content is required")
+                .withValidator(value -> value != null && !value.isBlank(), "Content is required")
                 .bind(exercise1 -> exercise1.content, (exercise1, value) -> exercise1.content = value);
         this.binder.bind(publishedField, exercise1 -> exercise1.published != null ? exercise1.published : false,
                 (exercise1, value) -> exercise1.published = value);
@@ -416,7 +416,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.binder.forField(graspableInitialExpressionField)
                 .withValidator((value, ctx) -> {
                     // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                    if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult.error("Initial Expression is required when Graspable Math is enabled");
                     }
                     return ValidationResult.ok();
@@ -426,7 +426,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.binder.forField(graspableTargetExpressionField)
                 .withValidator((value, ctx) -> {
                     // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                    if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult.error("Target Expression is required when Graspable Math is enabled");
                     }
                     return ValidationResult.ok();
@@ -436,7 +436,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.binder.forField(graspableDifficultyField)
                 .withValidator((value, ctx) -> {
                     // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && (value == null || value.trim().isEmpty())) {
+                    if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult
                                 .error("Difficulty is required when Graspable Math is enabled");
                     }
@@ -558,7 +558,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
      */
     private void searchExercise() {
         final String query = this.searchField.getValue();
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             NotificationUtil.showWarning("Please enter a search query");
             return;
         }

@@ -90,7 +90,7 @@ public class LessonRepository {
      * @return a list of {@link LessonEntity} objects matching the search term
      */
     public List<LessonEntity> search(final String searchTerm) {
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+        if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAllOrdered();
         }
         final var pattern = "%" + searchTerm.trim().toLowerCase() + "%";

@@ -189,10 +189,10 @@ public class ExerciseService {
      */
     @Transactional
     public ExerciseViewDto createExercise(final ExerciseDto exerciseDto) {
-        if (exerciseDto.title == null || exerciseDto.title.trim().isEmpty()) {
+        if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for creating an exercise");
         }
-        if (exerciseDto.content == null || exerciseDto.content.trim().isEmpty()) {
+        if (exerciseDto.content == null || exerciseDto.content.isBlank()) {
             throw new ValidationException("Content is required for creating an exercise");
         }
         if (exerciseDto.userId == null) {
@@ -202,7 +202,7 @@ public class ExerciseService {
         // Validate Graspable Math: if enabled, target expression is required
         if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
             if (exerciseDto.graspableTargetExpression == null
-                    || exerciseDto.graspableTargetExpression.trim().isEmpty()) {
+                    || exerciseDto.graspableTargetExpression.isBlank()) {
                 throw new ValidationException(
                         "Graspable Math target expression is required when Graspable Math is enabled");
             }
@@ -259,10 +259,10 @@ public class ExerciseService {
     @Transactional
     public ExerciseViewDto updateExercise(final Long id, final ExerciseDto exerciseDto) {
         // Validate required fields for PUT
-        if (exerciseDto.title == null || exerciseDto.title.trim().isEmpty()) {
+        if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for updating an exercise");
         }
-        if (exerciseDto.content == null || exerciseDto.content.trim().isEmpty()) {
+        if (exerciseDto.content == null || exerciseDto.content.isBlank()) {
             throw new ValidationException("Content is required for updating an exercise");
         }
 
@@ -274,7 +274,7 @@ public class ExerciseService {
         // Validate Graspable Math: if enabled, target expression is required
         if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
             if (exerciseDto.graspableTargetExpression == null
-                    || exerciseDto.graspableTargetExpression.trim().isEmpty()) {
+                    || exerciseDto.graspableTargetExpression.isBlank()) {
                 throw new ValidationException(
                         "Graspable Math target expression is required when Graspable Math is enabled");
             }
@@ -340,10 +340,10 @@ public class ExerciseService {
         }
 
         // Partial update (PATCH semantics) - only update provided fields
-        if (exerciseDto.title != null && !exerciseDto.title.trim().isEmpty()) {
+        if (exerciseDto.title != null && !exerciseDto.title.isBlank()) {
             existingExercise.title = exerciseDto.title;
         }
-        if (exerciseDto.content != null && !exerciseDto.content.trim().isEmpty()) {
+        if (exerciseDto.content != null && !exerciseDto.content.isBlank()) {
             existingExercise.content = exerciseDto.content;
         }
         if (exerciseDto.published != null) {
@@ -413,7 +413,7 @@ public class ExerciseService {
      * @return a list of matching {@link ExerciseViewDto}s
      */
     public List<ExerciseViewDto> searchExercises(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.getAllExercises();
         }
         final List<ExerciseEntity> exercises = this.exerciseRepository.search(query);

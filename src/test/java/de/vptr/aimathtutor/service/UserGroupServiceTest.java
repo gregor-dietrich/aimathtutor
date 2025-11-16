@@ -4,21 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.UserGroupDto;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class UserGroupServiceTest {
 
-    @InjectMocks
+    @Inject
     private UserGroupService userGroupService;
 
     @Test
     @DisplayName("Should throw ValidationException when creating group with null name")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingGroupWithNullName() {
         final UserGroupDto groupDto = new UserGroupDto();
         groupDto.name = null;
@@ -30,6 +31,7 @@ class UserGroupServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating group with empty name")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingGroupWithEmptyName() {
         final UserGroupDto groupDto = new UserGroupDto();
         groupDto.name = "";
@@ -41,6 +43,7 @@ class UserGroupServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating group with whitespace name")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingGroupWithWhitespaceName() {
         final UserGroupDto groupDto = new UserGroupDto();
         groupDto.name = "   ";

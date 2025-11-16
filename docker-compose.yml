@@ -1,6 +1,6 @@
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:1.2.0-SNAPSHOT
+    image: gregordietrich/aimathtutor:2.0.0-SNAPSHOT
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.alpine
@@ -12,21 +12,12 @@ services:
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
-      # Google Gemini config
-      ai.tutor.provider: gemini
-      gemini.model: gemini-2.5-flash-lite
-      gemini.api.key: ${GEMINI_API_KEY}
-
-      # OpenAI (ChatGPT) config
-      # ai.tutor.provider: openai
-      # openai.model: gpt-4o-mini
-      # openai.api.key: ${OPENAI_API_KEY}
-      # openai.organization-id: ${OPENAI_ORG_ID}
-
-      # Ollama config
-      # ai.tutor.provider: ollama
-      # ollama.model: llama3.1:8b
-      # ollama.api.url: http://localhost:11434
+      # AI API Keys (sourced from .env file)
+      # Provider-specific settings (model, temperature, etc.) are configured
+      # at runtime via the Admin Settings UI at /admin/config after login
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
     ports:
       - "80:9001"
     volumes:

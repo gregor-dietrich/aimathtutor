@@ -103,7 +103,7 @@ public class UserRankService {
      */
     @Transactional
     public List<UserRankViewDto> searchRanks(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.getAllRanks();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";

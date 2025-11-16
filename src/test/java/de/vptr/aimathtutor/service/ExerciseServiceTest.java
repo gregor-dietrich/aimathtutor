@@ -4,21 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.dto.ExerciseDto;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class ExerciseServiceTest {
 
-    @InjectMocks
+    @Inject
     private ExerciseService exerciseService;
 
     @Test
     @DisplayName("Should throw ValidationException when creating exercise with null title")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingExerciseWithNullTitle() {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = null;
@@ -32,6 +33,7 @@ class ExerciseServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating exercise with empty title")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingExerciseWithEmptyTitle() {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "";
@@ -45,6 +47,7 @@ class ExerciseServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating exercise with null content")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingExerciseWithNullContent() {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";
@@ -58,6 +61,7 @@ class ExerciseServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating exercise with empty content")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingExerciseWithEmptyContent() {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";

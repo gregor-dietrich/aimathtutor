@@ -95,7 +95,7 @@ public class UserService {
      * preventing unique constraint violations from multiple empty strings.
      */
     private String normalizeEmail(final String email) {
-        if (email == null || email.trim().isEmpty()) {
+        if (email == null || email.isBlank()) {
             return null;
         }
         return email.trim();
@@ -116,10 +116,10 @@ public class UserService {
     @Transactional
     public UserViewDto createUser(final UserDto userDto) {
         // Validate required fields for POST
-        if (userDto.username == null || userDto.username.trim().isEmpty()) {
+        if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for creating a user");
         }
-        if (userDto.password == null || userDto.password.trim().isEmpty()) {
+        if (userDto.password == null || userDto.password.isBlank()) {
             throw new ValidationException("Password is required for creating a user");
         }
 
@@ -195,7 +195,7 @@ public class UserService {
     @Transactional
     public UserViewDto updateUser(final Long id, final UserDto userDto) {
         // Validate required fields for PUT
-        if (userDto.username == null || userDto.username.trim().isEmpty()) {
+        if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for updating a user");
         }
 
@@ -228,7 +228,7 @@ public class UserService {
         existingUser.activationKey = userDto.activationKey;
 
         // Handle password update if provided
-        if (userDto.password != null && !userDto.password.trim().isEmpty()) {
+        if (userDto.password != null && !userDto.password.isBlank()) {
             final var salt = this.passwordHashingService.generateSalt();
             try {
                 final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
@@ -276,7 +276,7 @@ public class UserService {
         }
 
         // Check for duplicate username if username is being updated
-        if (userDto.username != null && !userDto.username.trim().isEmpty()
+        if (userDto.username != null && !userDto.username.isBlank()
                 && !userDto.username.equals(existingUser.username)) {
             if (this.findByUsername(userDto.username).isPresent()) {
                 throw new ValidationException("Username '" + userDto.username + "' is already taken");
@@ -294,7 +294,7 @@ public class UserService {
         }
 
         // Partial update (PATCH semantics) - only update provided fields
-        if (userDto.username != null && !userDto.username.trim().isEmpty()) {
+        if (userDto.username != null && !userDto.username.isBlank()) {
             existingUser.username = userDto.username;
         }
         if (userDto.email != null) {
@@ -311,7 +311,7 @@ public class UserService {
         }
 
         // Handle password update if provided
-        if (userDto.password != null && !userDto.password.trim().isEmpty()) {
+        if (userDto.password != null && !userDto.password.isBlank()) {
             final var salt = this.passwordHashingService.generateSalt();
             try {
                 final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
@@ -365,7 +365,7 @@ public class UserService {
      */
     @Transactional
     public List<UserViewDto> searchUsers(final String query) {
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             return this.getAllUsers();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
@@ -409,7 +409,7 @@ public class UserService {
         }
 
         // Validate new password
-        if (newPassword == null || newPassword.trim().isEmpty()) {
+        if (newPassword == null || newPassword.isBlank()) {
             throw new ValidationException("New password cannot be empty");
         }
         if (newPassword.length() < 4) {
@@ -443,10 +443,10 @@ public class UserService {
         }
 
         // Validate emojis
-        if (userEmoji == null || userEmoji.trim().isEmpty()) {
+        if (userEmoji == null || userEmoji.isBlank()) {
             throw new ValidationException("User avatar emoji cannot be empty");
         }
-        if (tutorEmoji == null || tutorEmoji.trim().isEmpty()) {
+        if (tutorEmoji == null || tutorEmoji.isBlank()) {
             throw new ValidationException("Tutor avatar emoji cannot be empty");
         }
         if (userEmoji.length() > 10) {

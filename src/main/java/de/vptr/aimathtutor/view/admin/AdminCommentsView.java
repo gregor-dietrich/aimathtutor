@@ -159,7 +159,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.loadCommentsAsync();
                     }
                 },
@@ -416,7 +416,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
 
     private void searchComments() {
         final String query = this.searchField.getValue();
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             this.loadCommentsAsync();
             return;
         }

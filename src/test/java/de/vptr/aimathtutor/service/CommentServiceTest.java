@@ -4,25 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 class CommentServiceTest {
 
-    @Mock
-    private UserService userService;
-
-    @InjectMocks
+    @Inject
     private CommentService commentService;
 
     @Test
     @DisplayName("Should throw ValidationException when creating comment with null content")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithNullContent() {
         final CommentEntity comment = new CommentEntity();
         comment.content = null;
@@ -34,6 +31,7 @@ class CommentServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating comment with empty content")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithEmptyContent() {
         final CommentEntity comment = new CommentEntity();
         comment.content = "";
@@ -45,6 +43,7 @@ class CommentServiceTest {
 
     @Test
     @DisplayName("Should throw ValidationException when creating comment with whitespace content")
+    @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithWhitespaceContent() {
         final CommentEntity comment = new CommentEntity();
         comment.content = "   ";

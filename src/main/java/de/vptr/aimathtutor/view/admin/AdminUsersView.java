@@ -166,7 +166,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
     private HorizontalLayout createSearchLayout() {
         final var searchLayout = new SearchLayout(
                 e -> {
-                    if (e.getValue() == null || e.getValue().trim().isEmpty()) {
+                    if (e.getValue() == null || e.getValue().isBlank()) {
                         this.loadUsersAsync();
                     }
                 },
@@ -327,14 +327,14 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
 
         this.binder.forField(emailField)
                 .withValidator(email -> {
-                    if (email == null || email.trim().isEmpty()) {
+                    if (email == null || email.isBlank()) {
                         return true; // Empty is allowed
                     }
                     // Simple but effective email regex pattern
                     return email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
                 }, "Email must be valid or empty")
                 .bind(user1 -> user1.email,
-                        (user1, value) -> user1.email = (value == null || value.trim().isEmpty()) ? null
+                        (user1, value) -> user1.email = (value == null || value.isBlank()) ? null
                                 : value.trim());
 
         this.binder.bind(activatedField, user1 -> user1.activated != null ? user1.activated : false,
@@ -409,7 +409,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
             final String newPassword = newPasswordField.getValue();
             final String confirmPassword = confirmPasswordField.getValue();
 
-            if (newPassword == null || newPassword.trim().isEmpty()) {
+            if (newPassword == null || newPassword.isBlank()) {
                 NotificationUtil.showError("Password is required");
                 return;
             }
@@ -494,7 +494,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
 
     private void searchUsers() {
         final String query = this.searchField.getValue();
-        if (query == null || query.trim().isEmpty()) {
+        if (query == null || query.isBlank()) {
             NotificationUtil.showWarning("Please enter a search query");
             return;
         }
