@@ -15,7 +15,7 @@ services:
       # AI API Keys (sourced from .env file)
       # Provider-specific settings (model, temperature, etc.) are configured
       # at runtime via the Admin Settings UI at /admin/config after login
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # GEMINI_API_KEY: ${GEMINI_API_KEY}
       # OPENAI_API_KEY: ${OPENAI_API_KEY}
       # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
     ports:
@@ -62,7 +62,7 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://pgadmin/ || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -71,7 +71,21 @@ services:
       postgres:
         condition: service_healthy
 
+  # Uncomment if you want to use Ollama:
+  # ollama:
+  #   image: ollama/ollama:0.13.0
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   healthcheck:
+  #     test: ["CMD", "ollama", "ls"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
+
 volumes:
   aimathtutor_logs:
+  # ollama_data: # Uncomment if you want to use Ollama
   pgadmin_data:
   postgres_data:
