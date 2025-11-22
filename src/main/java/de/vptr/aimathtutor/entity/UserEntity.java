@@ -48,10 +48,8 @@ public class UserEntity extends PanacheEntityBase {
     @Column(unique = true)
     public String email;
 
-    @Column(columnDefinition = "TINYINT(1)")
     public Boolean banned;
 
-    @Column(columnDefinition = "TINYINT(1)")
     public Boolean activated;
 
     @Column(name = "activation_key")

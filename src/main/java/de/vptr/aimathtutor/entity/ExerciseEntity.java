@@ -43,10 +43,8 @@ public class ExerciseEntity extends PanacheEntityBase {
     @JoinColumn(name = "lesson_id")
     public LessonEntity lesson;
 
-    @Column(columnDefinition = "TINYINT(1)")
     public Boolean published = false;
 
-    @Column(columnDefinition = "TINYINT(1)")
     public Boolean commentable = false;
 
     public LocalDateTime created;
@@ -59,7 +57,7 @@ public class ExerciseEntity extends PanacheEntityBase {
     public List<CommentEntity> comments;
 
     // Graspable Math Configuration
-    @Column(name = "graspable_enabled", columnDefinition = "TINYINT(1)")
+    @Column(name = "graspable_enabled")
     public Boolean graspableEnabled = false;
 
     @Column(name = "graspable_initial_expression", columnDefinition = "TEXT")
