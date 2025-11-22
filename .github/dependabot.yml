@@ -17,7 +17,8 @@ updates:
         versions: ["<21.0.0", ">=22.0.0"]
       - dependency-name: "eclipse-temurin"
         update-types: ["version-update:semver-major"]
-        # Ignore major bumps; allow only pinned minor/patch updates like 21.x.x_x
+      - dependency-name: "eclipse-temurin"
+        versions: ["21-jre-alpine*", "21.0-jre-alpine*"]
 
   - package-ecosystem: "maven"
     directory: "/"
