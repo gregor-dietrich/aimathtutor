@@ -10,7 +10,7 @@ multi-ecosystem-groups:
 updates:
   - package-ecosystem: "docker"
     directory: "/src/main/docker"
-    patterns: ["eclipse-temurin:21.0.*"]
+    patterns: ["eclipse-temurin:21.*.*"]
     multi-ecosystem-group: "infrastructure"
 
   - package-ecosystem: "maven"
