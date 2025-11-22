@@ -194,11 +194,110 @@ These settings are persisted in the database and can be changed at runtime witho
 
 ### 🏠 Using Ollama (Local LLM)
 
-For privacy-focused, offline AI tutoring without cloud dependencies:
+For privacy-focused, offline AI tutoring without cloud dependencies, enable the Ollama service included in `docker-compose.yml`.
 
-#### Prerequisites
+#### Setup with Docker Compose (Recommended)
 
-1. **Install Ollama** on your host machine (not inside Docker):
+#### Step 1: Enable Ollama Service
+
+In your `docker-compose.yml`, uncomment the Ollama service and volume:
+
+```yml
+services:
+  # ... existing services ...
+
+  ollama:
+    # Choose image based on your hardware:
+    image: ollama/ollama:0.13.0        # CPU or NVIDIA GPU
+    # image: ollama/ollama:0.13.0-rocm  # AMD GPU (ROCm)
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    
+    # Optional: Enable NVIDIA GPU support
+    # Requires: NVIDIA GPU, drivers, and NVIDIA Container Toolkit
+    # See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    
+    # Optional: Enable AMD GPU support (use with 0.13.0-rocm image)
+    # Requires: AMD GPU (RX 6000/7000 series or newer) with ROCm drivers
+    # devices:
+    #   - /dev/kfd
+    #   - /dev/dri
+    # group_add:
+    #   - video
+    
+    healthcheck:
+      test: ["CMD", "ollama", "ls"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  aimathtutor_logs:
+  ollama_data:  # Uncomment this line
+  pgadmin_data:
+  postgres_data:
+```
+
+#### Step 2: Start the Stack
+
+```sh
+docker compose up -d
+```
+
+#### Step 3: Pull a Model
+
+Pull models directly into the Ollama container:
+
+```sh
+# Recommended options:
+docker compose exec ollama ollama pull qwen3:8b       # High quality, 5.4GB
+docker compose exec ollama ollama pull qwen3:4b       # Best balance, 2.5GB
+docker compose exec ollama ollama pull llama3.1:8b    # Meta's flagship, 4.7GB
+docker compose exec ollama ollama pull llama3.2:3b    # Efficient small model, 2GB
+
+# Verify installed models:
+docker compose exec ollama ollama list
+```
+
+> **Note:** Models are stored in the `ollama_data` Docker volume and persist across container restarts.
+
+#### Step 4: CPU vs GPU Configuration
+
+- **CPU Mode (Default):** Works immediately, no additional setup. Inference takes 5-30 seconds per response depending on model size.
+- **NVIDIA GPU Mode:** Uncomment the NVIDIA `deploy` section. Requires:
+  - NVIDIA GPU (GTX 1060 or better recommended)
+  - NVIDIA drivers installed on host
+  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+  - Significantly faster: 1-5 seconds per response
+- **AMD GPU Mode (ROCm):** Change image to `ollama/ollama:0.13.0-rocm` and uncomment AMD device mappings. Requires:
+  - AMD GPU (RX 6000/7000 series or newer)
+  - ROCm drivers installed on host
+  - Similar performance to NVIDIA: 1-5 seconds per response
+
+Verify GPU is available:
+
+```sh
+# NVIDIA:
+docker compose exec ollama nvidia-smi
+
+# AMD:
+docker compose exec ollama rocm-smi
+```
+
+#### Alternative: Host Installation
+
+If you prefer running Ollama directly on your host machine:
+
+1. **Install Ollama:**
 
    ```sh
    # Linux
@@ -207,56 +306,46 @@ For privacy-focused, offline AI tutoring without cloud dependencies:
    # macOS/Windows: Download from https://ollama.com/download
    ```
 
-2. **Pull a model** (use command line, not the desktop app GUI):
+2. **Pull a model:**
 
    ```sh
-   ollama pull qwen3:8b   # Recommended for math tutoring (2025)
-   ollama pull qwen3:4b   # Lighter option, only 2.5GB, rivals 7B models!
-   # Or try: deepseek-r1:8b, gemma3:12b, phi4-mini:3.8b
+   ollama pull qwen3:8b   # Or qwen3:4b, llama3.1:8b, etc.
    ```
 
-   > **Note:** The Ollama desktop app may not show all available models. Use the command line to pull any model from [ollama.com/library](https://ollama.com/library).
-
-3. **Verify Ollama is running**:
+3. **Verify Ollama is running:**
 
    ```sh
    curl http://localhost:11434/api/tags
    ```
 
-#### Docker Setup for Ollama
+4. **Configure Docker access to host:**
 
-When running AIMathTutor in Docker, configure it to access Ollama on your host:
+   Add to your `docker-compose.yml`:
 
-**Linux/macOS:** Use `host.docker.internal` or your host's IP address
-
-**Windows (WSL2):** Use the WSL IP address
-
-Update your `docker-compose.yml` environment:
-
-```yml
-services:
-  aimathtutor:
-    # ... existing config ...
-    extra_hosts:
-      - "host.docker.internal:host-gateway"  # Enables access to host services
-```
+   ```yml
+   services:
+     aimathtutor:
+       # ... existing config ...
+       extra_hosts:
+         - "host.docker.internal:host-gateway"
+   ```
 
 #### Application Configuration
 
 After starting the application:
 
-1. Log in as admin
+1. Log in as admin (default: `admin` / `admin`)
 2. Navigate to **Admin Settings** (`/admin/config`)
 3. Configure Ollama:
    - **AI Provider**: `ollama`
    - **Ollama API URL**:
-     - Local development: `http://localhost:11434`
-     - Docker (Linux/macOS): `http://host.docker.internal:11434`
-     - Docker (Windows WSL): `http://172.x.x.x:11434` (your WSL IP)
-   - **Model**: `qwen3:8b` or `qwen3:4b` (or your chosen model: `deepseek-r1:8b`, `gemma3:12b`, etc.)
+     - **Docker Compose Ollama service:** `http://ollama:11434` ⭐ **Recommended**
+     - **Host Ollama (dev mode):** `http://localhost:11434`
+     - **Host Ollama (Docker accessing host):** `http://host.docker.internal:11434`
+   - **Model**: `qwen3:8b`, `qwen3:4b`, `llama3.1:8b`, `llama3.2:3b`, etc.
    - **Temperature**: `0.7` (0.0 = deterministic, 2.0 = creative)
    - **Max Tokens**: `1000` (response length limit)
-   - **Timeout**: `30` seconds
+   - **Timeout**: `30` seconds (increase to 60-90s for CPU mode with larger models)
 
 #### Model Recommendations (2025)
 
@@ -286,18 +375,41 @@ After starting the application:
 
 **Connection refused:**
 
-- Verify Ollama is running: `ollama list`
-- Check firewall settings
-- For Docker, ensure `host.docker.internal` is accessible
+- **Docker Compose:** Verify service is running: `docker compose ps` (should show `ollama` as `Up`)
+- **Host Installation:** Verify Ollama is running: `ollama list`
+- Check the Ollama API URL in Admin Settings matches your setup
+- For host Ollama with Docker, ensure `host.docker.internal` or `extra_hosts` is configured
 
-**Slow responses:**
+**Slow responses (taking 30+ seconds):**
 
-- Use smaller models (e.g., `qwen4:1.6b` instead of `qwen4:4b`)
-- Reduce max tokens
-- Ensure sufficient RAM/CPU resources
+- **CPU Mode:** Normal for larger models (8B+). Use smaller models: `qwen3:4b` (2.5GB), `llama3.2:3b` (2GB), `qwen3:1.7b` (1.3GB)
+- **Enable GPU:** If you have an NVIDIA GPU, uncomment the GPU configuration in `docker-compose.yml` for 5-10x speedup
+- Reduce max tokens in Admin Settings (try 500 instead of 1000)
+- Increase timeout to 60-90 seconds for large models on CPU
 
 **Model not found:**
 
-- Pull the model first: `ollama pull <model-name>`
+- **Docker Compose:** Pull into container: `docker compose exec ollama ollama pull <model-name>`
+- **Host Installation:** Pull the model: `ollama pull <model-name>`
+- Verify with: `docker compose exec ollama ollama list` or `ollama list`
+- Ensure model name in Admin Settings matches exactly (case-sensitive)
+
+**GPU not detected:**
+
+_NVIDIA:_
+
+- Install NVIDIA Container Toolkit: [Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+- Verify host GPU: `nvidia-smi`
+- Restart Docker daemon: `sudo systemctl restart docker`
+- Recreate container: `docker compose down && docker compose up -d`
+- Check GPU in container: `docker compose exec ollama nvidia-smi`
+
+_AMD (ROCm):_
+
+- Ensure you're using the `ollama/ollama:0.13.0-rocm` image
+- Install ROCm drivers: [AMD ROCm Installation](https://rocm.docs.amd.com/en/latest/deploy/linux/quick_start.html)
+- Verify host GPU: `rocm-smi`
+- Check GPU in container: `docker compose exec ollama rocm-smi`
+- Verify devices are accessible: `ls -la /dev/kfd /dev/dri`
 - Verify with: `ollama list`
 - Ensure model name in admin settings matches exactly
