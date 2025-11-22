@@ -34,6 +34,15 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Testcontainers BOM - Must be BEFORE Quarkus BOM to override -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>2.0.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Quarkus -->
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
@@ -223,7 +232,8 @@
                 <version>${quarkus.platform.version}</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED -XX:+EnableDynamicAgentLoading</jvmArgs>
+                    <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED
+                        -XX:+EnableDynamicAgentLoading</jvmArgs>
                 </configuration>
                 <executions>
                     <execution>
