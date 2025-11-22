@@ -56,7 +56,7 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
   -e GEMINI_API_KEY=your_gemini_api_key \
-  gregordietrich/aimathtutor:2.0.0
+  gregordietrich/aimathtutor:2.1.0-SNAPSHOT
 ```
 
 > **_NOTE:_** Model names, temperatures, and other AI provider settings (other than API keys) must be configured after startup via the **Admin Settings UI** at `/admin/config` after logging in with admin credentials.
@@ -92,7 +92,7 @@ PGADMIN_PASSWORD=safe_password_here
 ```yml
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:2.0.0
+    image: gregordietrich/aimathtutor:2.1.0-SNAPSHOT
     restart: unless-stopped
     env_file:
       - .env

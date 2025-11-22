@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.vptr</groupId>
     <artifactId>aimathtutor</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0-SNAPSHOT</version>
 
     <properties>
-        <java.version>25</java.version>
+        <java.version>21</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -25,17 +25,24 @@
         <compiler-plugin.version>3.14.1</compiler-plugin.version>
         <license-plugin.version>2.7.0</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
-        <netty.version>4.2.7.Final</netty.version>
-        <quarkus.platform.version>3.27.0</quarkus.platform.version>
+        <quarkus.platform.version>3.27.1</quarkus.platform.version>
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.1</spotbugs-plugin.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
         <vaadin.version>24.9.5</vaadin.version>
-        <vertx.version>4.5.22</vertx.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Testcontainers BOM - Must be BEFORE Quarkus BOM to override -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>2.0.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Quarkus -->
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
@@ -52,18 +59,6 @@
                 <version>${vaadin.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!-- CVE-2025-11965 & CVE-2025-11966 -->
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-core</artifactId>
-                <version>${vertx.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web</artifactId>
-                <version>${vertx.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -152,13 +147,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- CVE-2025-59419 -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec-smtp</artifactId>
-            <version>${netty.version}</version>
-        </dependency>
-
         <!-- SpotBugs annotations for suppressing specific warnings -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
@@ -244,7 +232,8 @@
                 <version>${quarkus.platform.version}</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED -XX:+EnableDynamicAgentLoading</jvmArgs>
+                    <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED
+                        -XX:+EnableDynamicAgentLoading</jvmArgs>
                 </configuration>
                 <executions>
                     <execution>

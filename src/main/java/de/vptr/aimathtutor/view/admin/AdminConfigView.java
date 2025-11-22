@@ -168,8 +168,8 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         providerCombo.setWidthFull();
 
         // Save button
-        final var saveBtn = new Button("Save", _ -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
-        saveBtn.addClickListener(_ -> LOG.info("General config save clicked"));
+        final var saveBtn = new Button("Save", e -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
+        saveBtn.addClickListener(e -> LOG.info("General config save clicked"));
 
         panel.add(enabledCheckbox, providerCombo, saveBtn);
         return panel;
@@ -217,7 +217,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+                e -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
 
         panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, saveBtn);
         return panel;
@@ -269,7 +269,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
+                e -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
 
         panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField, saveBtn);
         return panel;
@@ -318,7 +318,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
+                e -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
 
         panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField, saveBtn);
         return panel;
@@ -359,7 +359,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+                e -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
         return panel;
