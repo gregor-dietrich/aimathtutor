@@ -21,7 +21,7 @@ For Docker, you have 2 options:
 
 ### 1. Set Environment Variables for AI API Keys
 
-For development, set the following environment variables (only needed if using real AI providers):
+For development, set the following environment variables (only needed if using cloud AI providers):
 
 ```sh
 export GEMINI_API_KEY=your_gemini_api_key_here
@@ -42,6 +42,71 @@ source .env
 ```
 
 > **_NOTE:_** API keys are immutable configuration sourced from environment variables. All other AI settings (model, temperature, prompts, etc.) are configured at runtime via the Admin Settings UI (`/admin/config`) after logging in.
+
+### 1a. Setting Up Ollama (Optional)
+
+If you want to use Ollama as your AI provider for local, privacy-focused LLM inference:
+
+#### Install Ollama
+
+Download and install Ollama from [ollama.com/download](https://ollama.com/download):
+
+**Linux:**
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**macOS/Windows:**
+Download the installer from the website.
+
+#### Pull a Model
+
+Ollama requires you to download models before use. **Important:** The Ollama desktop app may not show all available models in its GUI - you need to pull models using the command line even if they don't appear in the app.
+
+Open a terminal/command prompt and run one of the following:
+
+```sh
+# Top Recommendations for Math Tutoring (2025):
+ollama pull qwen3:0.6b                  # Ultra-light, 0.5GB, best for low-resource systems
+ollama pull qwen3:1.7b                  # Compact model, 1.3GB, good balance for basic math
+ollama pull qwen3:4b                    # Recommended balanced option, 2.5GB, rivals 7B performance
+ollama pull qwen3:8b                    # High-quality math tutoring, 5.4GB, 40K context
+ollama pull llama3.2:1b                 # Meta's tiny model, 1.3GB, fast and efficient
+ollama pull llama3.2:3b                 # Meta's small model, 2GB, good reasoning
+ollama pull llama3.1:8b                 # Meta's flagship 8B, 4.7GB, excellent general AI
+ollama pull phi4-mini:3.8b              # Microsoft's efficient model, 2.2GB, strong reasoning
+ollama pull phi4-mini-reasoning:3.8b    # Enhanced reasoning variant, 2.2GB, step-by-step math
+ollama pull phi4:14b                    # Full-size model, 8.8GB, top-tier performance
+ollama pull phi4-reasoning:14b          # Reasoning-optimized 14B, 8.8GB, best for complex problems
+ollama pull deepseek-r1:1.5b            # Tiny reasoning model, 1.1GB, ultra-fast
+ollama pull deepseek-r1:7b              # Strong reasoning at 7B, 4.7GB, excellent for math
+ollama pull deepseek-r1:8b              # Enhanced reasoning model, 5.1GB, superior math ability
+ollama pull gemma3:270m                 # Google's smallest, 0.2GB, experimental but fast
+ollama pull gemma3:1b                   # Google's compact model, 0.7GB, efficient baseline
+ollama pull gemma3:4b                   # Google's mid-size, 2.7GB, solid math performance
+```
+
+After pulling, the models will appear in your Ollama app and be available for use.
+
+#### Verify Ollama is Running
+
+```sh
+curl http://localhost:11434/api/tags
+```
+
+This should return a JSON list of installed models.
+
+#### Configure AIMathTutor to Use Ollama
+
+After starting the application, log in with admin credentials and navigate to **Admin Settings** (`/admin/config`):
+
+1. Set **AI Provider** to `ollama`
+2. Set **Ollama API URL** to `http://localhost:11434` (default)
+3. Set **Ollama Model** to the model you pulled (e.g., `qwen3:8b`, `deepseek-r1:8b`, or `gemma3:12b`)
+4. Adjust temperature (0.0-2.0, default 0.7) and max tokens as needed
+
+> **_NOTE:_** Unlike cloud providers, Ollama runs locally and doesn't require API keys. All processing happens on your machine, ensuring data privacy.
 
 ### 2. Install Dependencies and Build
 
