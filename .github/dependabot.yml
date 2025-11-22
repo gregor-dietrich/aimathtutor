@@ -10,11 +10,8 @@ multi-ecosystem-groups:
 updates:
   - package-ecosystem: "docker"
     directory: "/src/main/docker"
-    patterns: ["*"]
+    patterns: ["eclipse-temurin:21.0.*"]
     multi-ecosystem-group: "infrastructure"
-    ignore:
-      - dependency-name: "eclipse-temurin"
-        versions: ["<21.0.0", ">=22.0.0", "21-jre-alpine-3.22", "21.0-jre-alpine-3.22"]
 
   - package-ecosystem: "maven"
     directory: "/"
