@@ -17,6 +17,8 @@ make build
 
 make tag
 
+docker login
+
 docker push "$TAG"
 
 cd - > /dev/null

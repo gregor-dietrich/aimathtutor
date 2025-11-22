@@ -14,10 +14,7 @@ updates:
     multi-ecosystem-group: "infrastructure"
     ignore:
       - dependency-name: "eclipse-temurin"
-        versions: ["<21.0.0", ">=22.0.0"]
-      - dependency-name: "eclipse-temurin"
-        update-types: ["version-update:semver-major"]
-        # Ignore major bumps; allow only pinned minor/patch updates like 21.x.x_x
+        versions: ["<21.0.0", ">=22.0.0", "21-jre-alpine-3.22", "21.0-jre-alpine-3.22"]
 
   - package-ecosystem: "maven"
     directory: "/"
