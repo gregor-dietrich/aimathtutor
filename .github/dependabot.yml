@@ -10,11 +10,8 @@ multi-ecosystem-groups:
 updates:
   - package-ecosystem: "docker"
     directory: "/src/main/docker"
-    patterns: ["*"]
+    patterns: ["eclipse-temurin:21.*.*"]
     multi-ecosystem-group: "infrastructure"
-    ignore:
-      - dependency-name: "eclipse-temurin"
-        versions: ["<21.0.0", ">=22.0.0", "21-jre-alpine-3.22", "21.0-jre-alpine-3.22"]
 
   - package-ecosystem: "maven"
     directory: "/"
@@ -25,5 +22,3 @@ updates:
         versions: [">=3.28.0"]
       - dependency-name: "io.quarkus.platform:*"
         versions: [">=3.28.0"]
-      - dependency-name: "io.vertx:*"
-        versions: [">=5.0.0"]
