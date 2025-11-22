@@ -1,6 +1,6 @@
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:2.1.0-SNAPSHOT
+    image: gregordietrich/aimathtutor:2.0.1
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.alpine
