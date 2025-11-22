@@ -75,9 +75,10 @@ SQL_DATABASE=aimathtutor
 SQL_USERNAME=aimathtutor
 SQL_PASSWORD=changeit
 
-# AI API Keys (required if you want to use the respective AI provider)
+# AI API Keys (required only for cloud AI providers)
 # Get API keys from: https://aistudio.google.com/app/apikey (Gemini)
 #                    https://platform.openai.com/api-keys (OpenAI)
+# Not needed for Ollama (local LLM)
 GEMINI_API_KEY=your_gemini_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_ORG_ID=your_openai_org_id_here
@@ -190,3 +191,113 @@ After the stack is running, log in to the application with admin credentials (de
 - Configure custom prompts
 
 These settings are persisted in the database and can be changed at runtime without restarting the application.
+
+### 🏠 Using Ollama (Local LLM)
+
+For privacy-focused, offline AI tutoring without cloud dependencies:
+
+#### Prerequisites
+
+1. **Install Ollama** on your host machine (not inside Docker):
+
+   ```sh
+   # Linux
+   curl -fsSL https://ollama.com/install.sh | sh
+   
+   # macOS/Windows: Download from https://ollama.com/download
+   ```
+
+2. **Pull a model** (use command line, not the desktop app GUI):
+
+   ```sh
+   ollama pull qwen3:8b   # Recommended for math tutoring (2025)
+   ollama pull qwen3:4b   # Lighter option, only 2.5GB, rivals 7B models!
+   # Or try: deepseek-r1:8b, gemma3:12b, phi4-mini:3.8b
+   ```
+
+   > **Note:** The Ollama desktop app may not show all available models. Use the command line to pull any model from [ollama.com/library](https://ollama.com/library).
+
+3. **Verify Ollama is running**:
+
+   ```sh
+   curl http://localhost:11434/api/tags
+   ```
+
+#### Docker Setup for Ollama
+
+When running AIMathTutor in Docker, configure it to access Ollama on your host:
+
+**Linux/macOS:** Use `host.docker.internal` or your host's IP address
+
+**Windows (WSL2):** Use the WSL IP address
+
+Update your `docker-compose.yml` environment:
+
+```yml
+services:
+  aimathtutor:
+    # ... existing config ...
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Enables access to host services
+```
+
+#### Application Configuration
+
+After starting the application:
+
+1. Log in as admin
+2. Navigate to **Admin Settings** (`/admin/config`)
+3. Configure Ollama:
+   - **AI Provider**: `ollama`
+   - **Ollama API URL**:
+     - Local development: `http://localhost:11434`
+     - Docker (Linux/macOS): `http://host.docker.internal:11434`
+     - Docker (Windows WSL): `http://172.x.x.x:11434` (your WSL IP)
+   - **Model**: `qwen3:8b` or `qwen3:4b` (or your chosen model: `deepseek-r1:8b`, `gemma3:12b`, etc.)
+   - **Temperature**: `0.7` (0.0 = deterministic, 2.0 = creative)
+   - **Max Tokens**: `1000` (response length limit)
+   - **Timeout**: `30` seconds
+
+#### Model Recommendations (2025)
+
+| Model | Size | RAM | Speed | Math Ability | Best For |
+|-------|------|-----|-------|--------------|----------|
+| `qwen3:0.6b` | 0.5GB | 2GB | ⚡⚡⚡ | ⭐⭐ | Ultra-low resource systems, quick responses |
+| `qwen3:1.7b` | 1.3GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Budget hardware, basic algebra |
+| `qwen3:4b` | 2.5GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Best balance: 7B performance at 4B size |
+| `qwen3:8b` | 5.4GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | High-quality tutoring, complex problems |
+| `llama3.2:1b` | 1.3GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Meta's efficient small model, fast |
+| `llama3.2:3b` | 2GB | 4GB | ⚡⚡ | ⭐⭐⭐⭐ | Good reasoning, solid math performance |
+| `llama3.1:8b` | 4.7GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | Meta's flagship, excellent all-rounder |
+| `phi4-mini:3.8b` | 2.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Microsoft's efficient model, strong logic |
+| `phi4-mini-reasoning:3.8b` | 2.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Step-by-step explanations, detailed work |
+| `phi4:14b` | 8.8GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Top-tier performance, advanced math |
+| `phi4-reasoning:14b` | 8.8GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Best for complex proofs and derivations |
+| `deepseek-r1:1.5b` | 1.1GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Ultra-fast reasoning, low latency |
+| `deepseek-r1:7b` | 4.7GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | Strong math reasoning, excellent value |
+| `deepseek-r1:8b` | 5.1GB | 9GB | ⚡ | ⭐⭐⭐⭐⭐ | Enhanced reasoning, superior math ability |
+| `gemma3:270m` | 0.2GB | 1.5GB | ⚡⚡⚡ | ⭐⭐ | Experimental, extreme low-resource |
+| `gemma3:1b` | 0.7GB | 2GB | ⚡⚡⚡ | ⭐⭐⭐ | Google's compact baseline, efficient |
+| `gemma3:4b` | 2.7GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Google's mid-tier, solid performance |
+
+> **💡 Pro Tip:** If you have limited RAM/GPU (4-6GB), start with `qwen3:4b`. According to Qwen's benchmarks, it performs as well as larger 7B models while being half the size, and it has an impressive 256K context window (vs 40K for the 8B variant).
+
+#### Troubleshooting
+
+**Connection refused:**
+
+- Verify Ollama is running: `ollama list`
+- Check firewall settings
+- For Docker, ensure `host.docker.internal` is accessible
+
+**Slow responses:**
+
+- Use smaller models (e.g., `qwen4:1.6b` instead of `qwen4:4b`)
+- Reduce max tokens
+- Ensure sufficient RAM/CPU resources
+
+**Model not found:**
+
+- Pull the model first: `ollama pull <model-name>`
+- Verify with: `ollama list`
+- Ensure model name in admin settings matches exactly

@@ -344,8 +344,8 @@ INSERT INTO ai_config (config_key, config_value, config_type, category, descript
 ('openai.max-tokens', '1000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', false, 1),
 
 -- Ollama settings
-('ollama.api.url', 'http://localhost:11434', 'STRING', 'OLLAMA', 'Ollama API URL', false, 1),
-('ollama.model', 'llama3.1:8b', 'STRING', 'OLLAMA', 'Ollama model name', false, 1),
+('ollama.api.url', 'http://ollama:11434', 'STRING', 'OLLAMA', 'Ollama API URL', false, 1),
+('ollama.model', 'qwen3:0.6b', 'STRING', 'OLLAMA', 'Ollama model name', false, 1),
 ('ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', false, 1),
 ('ollama.max-tokens', '1000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, 1),
 ('ollama.timeout-seconds', '30', 'INTEGER', 'OLLAMA', 'Ollama API timeout in seconds', false, 1),

@@ -16,7 +16,7 @@ import jakarta.ws.rs.core.Response;
 
 /**
  * Service for interacting with Ollama local LLM API
- * Supports llama3.1, qwen2.5, phi3, deepseek-coder, and other Ollama models
+ * Supports phi4, qwen3, deepseek, and other Ollama models
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
@@ -39,8 +39,8 @@ public class OllamaService {
         LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
-        final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.1:8b");
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
+        final String model = this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
         final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 1000);
 
@@ -118,7 +118,7 @@ public class OllamaService {
      * Check if Ollama server is available
      */
     public boolean isAvailable() {
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
             if (this.client == null) {
                 this.client = ClientBuilder.newClient();
@@ -149,7 +149,7 @@ public class OllamaService {
      * Check if a specific model is installed
      */
     public boolean isModelInstalled(final String modelName) {
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
             if (this.client == null) {
                 this.client = ClientBuilder.newClient();
@@ -184,13 +184,13 @@ public class OllamaService {
      * Get the current model name
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue("ollama.model", "llama3.1:8b");
+        return this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b");
     }
 
     /**
      * Get the API URL
      */
     public String getApiUrl() {
-        return this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434");
+        return this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
     }
 }

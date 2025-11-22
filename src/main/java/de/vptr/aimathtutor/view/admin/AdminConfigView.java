@@ -282,15 +282,15 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // API URL
         final var apiUrlField = new TextField("API URL");
-        apiUrlField.setValue(this.aiConfigService.getConfigValue("ollama.api.url", "http://localhost:11434"));
+        apiUrlField.setValue(this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434"));
         apiUrlField.setWidthFull();
         apiUrlField.setHelperText("Ollama API URL (e.g., http://localhost:11434)");
 
         // Model field
         final var modelField = new TextField("Model");
-        modelField.setValue(this.aiConfigService.getConfigValue("ollama.model", "llama3.1:8b"));
+        modelField.setValue(this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b"));
         modelField.setWidthFull();
-        modelField.setHelperText("Ollama model name (e.g., llama3.1:8b)");
+        modelField.setHelperText("Ollama model name (e.g., qwen3:0.6b)");
 
         // Temperature
         final var tempField = new NumberField("Temperature");
