@@ -351,23 +351,23 @@ After starting the application:
 
 | Model | Size | RAM | Speed | Math Ability | Best For |
 |-------|------|-----|-------|--------------|----------|
-| `qwen3:0.6b` | 0.5GB | 2GB | ⚡⚡⚡ | ⭐⭐ | Ultra-low resource systems, quick responses |
-| `qwen3:1.7b` | 1.3GB | 3GB | ⚡⚡ | ⭐⭐⭐ | Budget hardware, basic algebra |
-| `qwen3:4b` | 2.5GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Best balance: 7B performance at 4B size |
-| `qwen3:8b` | 5.4GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | High-quality tutoring, complex problems |
-| `llama3.2:1b` | 1.3GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Meta's efficient small model, fast |
-| `llama3.2:3b` | 2GB | 4GB | ⚡⚡ | ⭐⭐⭐⭐ | Good reasoning, solid math performance |
-| `llama3.1:8b` | 4.7GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | Meta's flagship, excellent all-rounder |
-| `phi4-mini:3.8b` | 2.2GB | 5GB | ⚡⚡⚡ | ⭐⭐⭐⭐ | Microsoft's efficient model, strong logic |
-| `phi4-mini-reasoning:3.8b` | 2.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Step-by-step explanations, detailed work |
-| `phi4:14b` | 8.8GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Top-tier performance, advanced math |
-| `phi4-reasoning:14b` | 8.8GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Best for complex proofs and derivations |
-| `deepseek-r1:1.5b` | 1.1GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Ultra-fast reasoning, low latency |
-| `deepseek-r1:7b` | 4.7GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | Strong math reasoning, excellent value |
-| `deepseek-r1:8b` | 5.1GB | 9GB | ⚡ | ⭐⭐⭐⭐⭐ | Enhanced reasoning, superior math ability |
-| `gemma3:270m` | 0.2GB | 1.5GB | ⚡⚡⚡ | ⭐⭐ | Experimental, extreme low-resource |
-| `gemma3:1b` | 0.7GB | 2GB | ⚡⚡⚡ | ⭐⭐⭐ | Google's compact baseline, efficient |
-| `gemma3:4b` | 2.7GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Google's mid-tier, solid performance |
+| `gemma3:270m` | 291MB | 1.5GB | ⚡⚡⚡⚡⚡ | ⭐⭐ | Experimental, extreme low-resource |
+| `gemma3:1b` | 815MB | 2GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐ | Google's compact baseline, efficient |
+| `llama3.2:1b` | 1.3GB | 3GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐ | Meta's efficient small model, fast |
+| `llama3.2:3b` | 2.0GB | 4GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Good reasoning, solid math performance |
+| `deepseek-r1:1.5b` | 1.1GB | 3GB | ⚡⚡⚡⚡ | ⭐⭐⭐ | Ultra-fast reasoning, low latency |
+| `gemma3:4b` | 3.3GB | 5GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Google's mid-tier, solid performance |
+| `llama3.1:8b` | 4.9GB | 8GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐ | Meta's flagship, excellent all-rounder |
+| `phi4-mini:3.8b` | 2.5GB | 5GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Microsoft's efficient model, strong logic |
+| `qwen3:0.6b` | 522MB | 2GB | ⚡⚡⚡⚡ | ⭐⭐ | Ultra-low resource systems, quick responses |
+| `deepseek-r1:7b` | 4.7GB | 8GB | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | Strong math reasoning, excellent value |
+| `qwen3:1.7b` | 1.4GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Budget hardware, basic algebra |
+| `qwen3:4b` | 2.5GB | 5GB | ⚡⚡⚡ | ⭐⭐⭐⭐ | Best balance: 7B performance at 4B size |
+| `deepseek-r1:8b` | 5.2GB | 9GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Enhanced reasoning, superior math ability |
+| `phi4-mini-reasoning:3.8b` | 3.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Step-by-step explanations, detailed work |
+| `phi4:14b` | 9.1GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Top-tier performance, advanced math |
+| `qwen3:8b` | 5.2GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | High-quality tutoring, complex problems |
+| `phi4-reasoning:14b` | 11GB | 16GB | 🐌 | ⭐⭐⭐⭐⭐ | Best for complex proofs and derivations |
 
 > **💡 Pro Tip:** If you have limited RAM/GPU (4-6GB), start with `qwen3:4b`. According to Qwen's benchmarks, it performs as well as larger 7B models while being half the size, and it has an impressive 256K context window (vs 40K for the 8B variant).
 
