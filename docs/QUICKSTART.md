@@ -352,13 +352,13 @@ After starting the application:
 | Model | Size | RAM | Speed | Math Ability | Best For |
 |-------|------|-----|-------|--------------|----------|
 | `qwen3:0.6b` | 0.5GB | 2GB | ⚡⚡⚡ | ⭐⭐ | Ultra-low resource systems, quick responses |
-| `qwen3:1.7b` | 1.3GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Budget hardware, basic algebra |
+| `qwen3:1.7b` | 1.3GB | 3GB | ⚡⚡ | ⭐⭐⭐ | Budget hardware, basic algebra |
 | `qwen3:4b` | 2.5GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Best balance: 7B performance at 4B size |
 | `qwen3:8b` | 5.4GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | High-quality tutoring, complex problems |
 | `llama3.2:1b` | 1.3GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Meta's efficient small model, fast |
 | `llama3.2:3b` | 2GB | 4GB | ⚡⚡ | ⭐⭐⭐⭐ | Good reasoning, solid math performance |
 | `llama3.1:8b` | 4.7GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | Meta's flagship, excellent all-rounder |
-| `phi4-mini:3.8b` | 2.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐ | Microsoft's efficient model, strong logic |
+| `phi4-mini:3.8b` | 2.2GB | 5GB | ⚡⚡⚡ | ⭐⭐⭐⭐ | Microsoft's efficient model, strong logic |
 | `phi4-mini-reasoning:3.8b` | 2.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Step-by-step explanations, detailed work |
 | `phi4:14b` | 8.8GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Top-tier performance, advanced math |
 | `phi4-reasoning:14b` | 8.8GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Best for complex proofs and derivations |
