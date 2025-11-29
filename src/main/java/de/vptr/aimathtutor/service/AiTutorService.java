@@ -222,12 +222,15 @@ public class AiTutorService {
         final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
         final String provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
 
-        final String answer = switch (provider) {
+        String answer = switch (provider) {
             case "gemini" -> this.answerWithGemini(question, currentExpression, context);
             case "openai" -> this.answerWithOpenAi(question, currentExpression, context);
             case "ollama" -> this.answerWithOllama(question, currentExpression, context);
             default -> this.answerWithMockAi(question, currentExpression);
         };
+
+        // Strip leading and trailing quotation marks from AI response
+        answer = this.stripQuotationMarks(answer);
 
         final var message = ChatMessageDto.aiAnswer(answer);
         message.sessionId = sessionId;
@@ -913,6 +916,36 @@ public class AiTutorService {
             LOG.error("Failed to log AI interaction", e);
             // Don't fail the request if logging fails
         }
+    }
+
+    /**
+     * Strips matching leading and trailing quotation marks from a string.
+     * Only removes quotes if they wrap the entire string (both start and end
+     * match).
+     * Handles both double quotes (") and smart quotes.
+     * 
+     * @param text The text to process
+     * @return The text with quotation marks removed, or the original text if null
+     */
+    private String stripQuotationMarks(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        text = text.trim();
+
+        // Remove matching quotation marks (only if both start and end match)
+        while (!text.isEmpty()) {
+            if ((text.startsWith("\"") && text.endsWith("\"")) ||
+                    (text.startsWith("\u201C") && text.endsWith("\u201D")) ||
+                    (text.startsWith("\u201D") && text.endsWith("\u201C"))) {
+                text = text.substring(1, text.length() - 1).trim();
+            } else {
+                break;
+            }
+        }
+
+        return text;
     }
 
     /**
