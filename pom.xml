@@ -153,6 +153,12 @@
             <artifactId>spotbugs-annotations</artifactId>
             <version>${spotbugs-annotations.version}</version>
         </dependency>
+
+        <!-- MicroProfile Fault Tolerance for retry, timeout, fallback patterns -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>
