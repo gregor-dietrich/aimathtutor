@@ -49,6 +49,7 @@ public class AiConfigService {
      * @param defaultValue the default value if not found
      * @return the configuration value or default
      */
+    @Transactional
     public String getConfigValue(final String key, final String defaultValue) {
         if (key == null) {
             return defaultValue;
@@ -78,6 +79,7 @@ public class AiConfigService {
      * @param defaultValue the default value if not found or parsing fails
      * @return the configuration value or default
      */
+    @Transactional
     public Integer getConfigValueAsInt(final String key, final Integer defaultValue) {
         final String value = this.getConfigValue(key, null);
         if (value == null) {
@@ -99,6 +101,7 @@ public class AiConfigService {
      * @param defaultValue the default value if not found or parsing fails
      * @return the configuration value or default
      */
+    @Transactional
     public Double getConfigValueAsDouble(final String key, final Double defaultValue) {
         final String value = this.getConfigValue(key, null);
         if (value == null) {
@@ -121,6 +124,7 @@ public class AiConfigService {
      * @param defaultValue the default value if not found
      * @return the configuration value or default
      */
+    @Transactional
     public Boolean getConfigValueAsBoolean(final String key, final Boolean defaultValue) {
         final String value = this.getConfigValue(key, null);
         if (value == null) {
@@ -145,6 +149,7 @@ public class AiConfigService {
      * @param category the category to retrieve
      * @return a map of all config keys and values in the category
      */
+    @Transactional
     public Map<String, String> getAllConfigsByCategory(final String category) {
         if (category == null) {
             return new HashMap<>();
@@ -162,6 +167,7 @@ public class AiConfigService {
      *
      * @return a list of all {@link AiConfigDto} objects
      */
+    @Transactional
     public List<AiConfigDto> getAllConfigs() {
         return this.aiConfigRepository.findAll().stream()
                 .map(this::entityToDto)
@@ -174,6 +180,7 @@ public class AiConfigService {
      * @param category the category to retrieve
      * @return a list of {@link AiConfigDto} objects in the category
      */
+    @Transactional
     public List<AiConfigDto> getConfigsByCategory(final String category) {
         return this.aiConfigRepository.findByCategory(category).stream()
                 .map(this::entityToDto)

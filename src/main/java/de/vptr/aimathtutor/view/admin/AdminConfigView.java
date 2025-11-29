@@ -107,19 +107,19 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         final var geminiTab = new Tab("Gemini");
         final var geminiPanel = this.buildGeminiPanel();
 
-        // OpenAI tab
-        final var openaiTab = new Tab("OpenAI");
-        final var openaiPanel = this.buildOpenAiPanel();
-
         // Ollama tab
         final var ollamaTab = new Tab("Ollama");
         final var ollamaPanel = this.buildOllamaPanel();
+
+        // OpenAI tab
+        final var openaiTab = new Tab("OpenAI");
+        final var openaiPanel = this.buildOpenAiPanel();
 
         // Prompts tab
         final var promptsTab = new Tab("Prompts");
         final var promptsPanel = this.buildPromptsPanel();
 
-        tabs.add(generalTab, geminiTab, openaiTab, ollamaTab, promptsTab);
+        tabs.add(generalTab, geminiTab, ollamaTab, openaiTab, promptsTab);
 
         this.add(tabs);
 
@@ -163,7 +163,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // AI Provider selection
         final var providerCombo = new com.vaadin.flow.component.combobox.ComboBox<String>("AI Provider");
-        providerCombo.setItems("mock", "gemini", "openai", "ollama");
+        providerCombo.setItems("mock", "gemini", "ollama", "openai");
         providerCombo.setValue(this.aiConfigService.getConfigValue("ai.tutor.provider", "mock"));
         providerCombo.setWidthFull();
 
@@ -288,9 +288,9 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Model field
         final var modelField = new TextField("Model");
-        modelField.setValue(this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b"));
+        modelField.setValue(this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b"));
         modelField.setWidthFull();
-        modelField.setHelperText("Ollama model name (e.g., qwen3:0.6b)");
+        modelField.setHelperText("Ollama model name (e.g., llama3.2:3b)");
 
         // Temperature
         final var tempField = new NumberField("Temperature");
