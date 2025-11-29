@@ -39,7 +39,8 @@
   "microprofile.tools.validation.unknown.excluded": [
     "quarkus.log.*",
     "quarkus.datasource.*",
-    "quarkus.hibernate-orm.*"
+    "quarkus.hibernate-orm.*",
+    "openai.organization-id"
   ],
   "quarkus.tools.alwaysShowWelcomePage": false,
   "redhat.telemetry.enabled": false,

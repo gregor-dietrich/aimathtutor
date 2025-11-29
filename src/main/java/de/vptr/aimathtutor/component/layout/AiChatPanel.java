@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.component.layout;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -32,6 +34,7 @@ public class AiChatPanel extends VerticalLayout {
     private String userAvatarEmoji = "🧒";
     private String tutorAvatarEmoji = "🧑‍🏫";
     private HorizontalLayout currentTypingIndicator; // Track current typing indicator
+    private final AtomicInteger pendingRequestsCount = new AtomicInteger(0); // Track number of pending AI requests
 
     /**
      * Callback interface for handling message sends.
@@ -230,12 +233,18 @@ public class AiChatPanel extends VerticalLayout {
     /**
      * Shows a typing indicator (simple version that doesn't require tracking the
      * indicator).
+     * Increments the pending requests counter and only creates indicator if none
+     * exists.
+     * This method is synchronized to prevent race conditions when called from
+     * multiple async callbacks.
      */
-    public void showTypingIndicator() {
-        // Remove any existing typing indicator first
-        this.hideTypingIndicator();
+    public synchronized void showTypingIndicator() {
+        this.pendingRequestsCount.incrementAndGet();
 
-        this.currentTypingIndicator = this.createTypingIndicator();
+        // Only create indicator if one doesn't already exist
+        if (this.currentTypingIndicator == null) {
+            this.currentTypingIndicator = this.createTypingIndicator();
+        }
     }
 
     /**
@@ -288,18 +297,30 @@ public class AiChatPanel extends VerticalLayout {
 
     /**
      * Hides the typing indicator (simple version that uses tracked indicator).
+     * Decrements the pending requests counter and only removes indicator when
+     * counter reaches zero.
+     * This method is synchronized to prevent race conditions when called from
+     * multiple async callbacks.
      */
-    public void hideTypingIndicator() {
-        final HorizontalLayout indicatorToRemove = this.currentTypingIndicator;
-        if (indicatorToRemove != null) {
-            UI.getCurrent().access(() -> {
-                try {
-                    this.chatHistoryPanel.remove(indicatorToRemove);
-                } catch (final Exception e) {
-                    // Indicator might have already been removed, ignore
-                }
+    public synchronized void hideTypingIndicator() {
+        // Decrement counter (ensure it doesn't go negative)
+        final var count = this.pendingRequestsCount.updateAndGet(c -> c > 0 ? c - 1 : 0);
+
+        // Only remove indicator when all pending requests are complete
+        if (count == 0) {
+            final var indicatorToRemove = this.currentTypingIndicator;
+            if (indicatorToRemove != null) {
+                // Clear reference immediately within synchronized block to prevent
+                // another thread from seeing stale reference
                 this.currentTypingIndicator = null;
-            });
+                UI.getCurrent().access(() -> {
+                    try {
+                        this.chatHistoryPanel.remove(indicatorToRemove);
+                    } catch (final Exception e) {
+                        // Indicator might have already been removed, ignore
+                    }
+                });
+            }
         }
     }
 

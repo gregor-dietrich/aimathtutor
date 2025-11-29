@@ -1,10 +1,14 @@
 package de.vptr.aimathtutor.service;
 
+import java.util.concurrent.TimeUnit;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -27,7 +31,46 @@ public class OllamaService {
     @Inject
     AiConfigService aiConfigService;
 
-    private Client client;
+    @Inject
+    @ConfigProperty(name = "ollama.client.connect-timeout-seconds", defaultValue = "10")
+    int connectTimeoutSeconds;
+
+    @Inject
+    @ConfigProperty(name = "ollama.client.read-timeout-seconds", defaultValue = "60")
+    int readTimeoutSeconds;
+
+    private volatile Client client;
+
+    /**
+     * Get or create the JAX-RS client with thread-safe lazy initialization.
+     * This avoids creating the client if Ollama is not the active AI provider.
+     * 
+     * @return The configured JAX-RS Client instance
+     */
+    private synchronized Client getClient() {
+        if (this.client == null) {
+            this.client = ClientBuilder.newBuilder()
+                    .connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
+                    .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS)
+                    .build();
+            LOG.debug("Initialized Ollama JAX-RS Client (connectTimeout={}s, readTimeout={}s)",
+                    this.connectTimeoutSeconds, this.readTimeoutSeconds);
+        }
+        return this.client;
+    }
+
+    /**
+     * Clean up resources when the bean is destroyed.
+     * Synchronized to ensure consistent access to the client field.
+     */
+    @PreDestroy
+    synchronized void cleanup() {
+        if (this.client != null) {
+            this.client.close();
+            this.client = null;
+            LOG.debug("Closed Ollama JAX-RS Client");
+        }
+    }
 
     /**
      * Generate content using Ollama Generate API
@@ -40,7 +83,7 @@ public class OllamaService {
 
         // Load dynamic configuration
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
-        final String model = this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b");
+        final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
         final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 1000);
 
@@ -58,14 +101,9 @@ public class OllamaService {
             // Build API URL
             final String url = apiUrl + "/api/generate";
 
-            // Get or create client
-            if (this.client == null) {
-                this.client = ClientBuilder.newClient();
-            }
-
             // Make API call
             final long startTime = System.currentTimeMillis();
-            final var response = this.client.target(url)
+            final var response = this.getClient().target(url)
                     .request(MediaType.APPLICATION_JSON)
                     .post(Entity.json(request));
 
@@ -120,12 +158,8 @@ public class OllamaService {
     public boolean isAvailable() {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
-            if (this.client == null) {
-                this.client = ClientBuilder.newClient();
-            }
-
             // Check /api/tags endpoint (lists installed models)
-            final var response = this.client.target(apiUrl + "/api/tags")
+            final var response = this.getClient().target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
@@ -151,11 +185,7 @@ public class OllamaService {
     public boolean isModelInstalled(final String modelName) {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
-            if (this.client == null) {
-                this.client = ClientBuilder.newClient();
-            }
-
-            final var response = this.client.target(apiUrl + "/api/tags")
+            final var response = this.getClient().target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
@@ -184,7 +214,7 @@ public class OllamaService {
      * Get the current model name
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b");
+        return this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
     }
 
     /**

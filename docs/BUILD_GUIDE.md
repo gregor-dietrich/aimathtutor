@@ -45,9 +45,77 @@ source .env
 
 ### 1a. Setting Up Ollama (Optional)
 
-If you want to use Ollama as your AI provider for local, privacy-focused LLM inference:
+If you want to use Ollama as your AI provider for local, privacy-focused LLM inference, you have two options:
 
-#### Install Ollama
+#### Option 1: Docker Compose (Recommended for Production)
+
+The project includes an Ollama service in `docker-compose.yml` that you can enable:
+
+1. **Uncomment the Ollama service** in `docker-compose.yml`:
+
+   ```yml
+   ollama:
+     # Choose image based on your GPU:
+     image: ollama/ollama:0.13.0        # CPU or NVIDIA GPU
+     # image: ollama/ollama:0.13.0-rocm  # AMD GPU (ROCm)
+     restart: unless-stopped
+     volumes:
+       - ollama_data:/root/.ollama
+     # For NVIDIA GPU support, uncomment below:
+     # deploy:
+     #   resources:
+     #     reservations:
+     #       devices:
+     #         - driver: nvidia
+     #           count: all
+     #           capabilities: [gpu]
+     # For AMD GPU support:
+     # 1. Use image: ollama/ollama:0.13.0-rocm above
+     # 2. Uncomment below:
+     # devices:
+     #   - /dev/kfd
+     #   - /dev/dri
+     # group_add:
+     #   - video
+     healthcheck:
+       test: ["CMD", "ollama", "ls"]
+       interval: 10s
+       timeout: 3s
+       retries: 3
+       start_period: 10s
+   ```
+
+2. **Uncomment the volume** in the `volumes:` section:
+
+   ```yml
+   volumes:
+     aimathtutor_logs:
+     ollama_data:  # Uncomment this line
+     pgadmin_data:
+     postgres_data:
+   ```
+
+3. **Start the stack:**
+
+   ```sh
+   docker compose up -d
+   ```
+
+4. **Pull a model** into the Ollama container:
+
+   ```sh
+   docker compose exec ollama ollama pull qwen3:8b
+   # Or: docker compose exec ollama ollama pull qwen3:4b
+   ```
+
+5. **Configure AIMathTutor** to use `http://ollama:11434` as the Ollama API URL in Admin Settings.
+
+> **GPU Support:** By default, Ollama runs on CPU. For GPU acceleration:
+>
+> - **NVIDIA:** Uncomment the `deploy` section. Requires NVIDIA GPU, drivers, and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+> - **AMD:** Use `ollama/ollama:0.13.0-rocm` image and uncomment AMD device mappings. Requires AMD GPU with ROCm support (RX 6000/7000 series or newer)
+
+#### Option 2: Host Installation (Development)
 
 Download and install Ollama from [ollama.com/download](https://ollama.com/download):
 
@@ -102,11 +170,31 @@ This should return a JSON list of installed models.
 After starting the application, log in with admin credentials and navigate to **Admin Settings** (`/admin/config`):
 
 1. Set **AI Provider** to `ollama`
-2. Set **Ollama API URL** to `http://localhost:11434` (default)
-3. Set **Ollama Model** to the model you pulled (e.g., `qwen3:8b`, `deepseek-r1:8b`, or `gemma3:12b`)
+2. Set **Ollama API URL**:
+   - **Docker Compose:** `http://ollama:11434`
+   - **Host Installation (dev mode):** `http://localhost:11434`
+   - **Host Installation (Docker, accessing host):** `http://host.docker.internal:11434`
+3. Set **Ollama Model** to the model you pulled (e.g., `qwen3:8b`, `deepseek-r1:8b`, `llama3.1:8b`)
 4. Adjust temperature (0.0-2.0, default 0.7) and max tokens as needed
 
 > **_NOTE:_** Unlike cloud providers, Ollama runs locally and doesn't require API keys. All processing happens on your machine, ensuring data privacy.
+
+#### GPU vs CPU Performance
+
+- **CPU Mode (Default):** Works on any system, slower inference (~5-30 seconds per response depending on model size)
+- **NVIDIA GPU Mode:** Requires NVIDIA GPU + Container Toolkit, significantly faster (~1-5 seconds per response)
+- **AMD GPU Mode (ROCm):** Requires AMD GPU (RX 6000/7000 series or newer) with ROCm drivers, similar performance to NVIDIA
+- **Recommendation:** Start with CPU mode and smaller models (`qwen3:4b`, `llama3.2:3b`) for testing. If performance is critical and you have a compatible GPU, enable GPU support.
+
+To check GPU availability in the Ollama container:
+
+```sh
+# NVIDIA:
+docker compose exec ollama nvidia-smi
+
+# AMD:
+docker compose exec ollama rocm-smi
+```
 
 ### 2. Install Dependencies and Build
 
