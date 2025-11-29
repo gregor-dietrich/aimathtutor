@@ -209,7 +209,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Max Tokens
         final var maxTokensField = new NumberField("Max Tokens");
-        maxTokensField.setValue(this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 1000).doubleValue());
+        maxTokensField.setValue(this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 2000).doubleValue());
         maxTokensField.setMin(1);
         maxTokensField.setMax(8192);
         maxTokensField.setStep(1);
@@ -261,7 +261,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Max Tokens
         final var maxTokensField = new NumberField("Max Tokens");
-        maxTokensField.setValue(this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 1000).doubleValue());
+        maxTokensField.setValue(this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000).doubleValue());
         maxTokensField.setMin(1);
         maxTokensField.setMax(8192);
         maxTokensField.setStep(1);
@@ -302,11 +302,11 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Max Tokens
         final var maxTokensField = new NumberField("Max Tokens");
-        maxTokensField.setValue(this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 1000).doubleValue());
+        maxTokensField.setValue(this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 2000).doubleValue());
         maxTokensField.setMin(1);
         maxTokensField.setMax(8192);
         maxTokensField.setStep(1);
-        maxTokensField.setHelperText("Maximum tokens in response (1-8192)");
+        maxTokensField.setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
 
         // Timeout
         final var timeoutField = new NumberField("Timeout (seconds)");
@@ -397,7 +397,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
                     new AiConfigUpdateDto("gemini.api.base-url", urlField.getValue()),
                     new AiConfigUpdateDto("gemini.temperature", tempValue != null ? tempValue.toString() : "0.7"),
                     new AiConfigUpdateDto("gemini.max-tokens",
-                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "1000"));
+                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "2000"));
 
             final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
@@ -425,7 +425,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
                     new AiConfigUpdateDto("openai.api.base-url", urlField.getValue()),
                     new AiConfigUpdateDto("openai.temperature", tempValue != null ? tempValue.toString() : "0.7"),
                     new AiConfigUpdateDto("openai.max-tokens",
-                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "1000"));
+                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "2000"));
 
             final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
@@ -453,7 +453,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
                     new AiConfigUpdateDto("ollama.model", modelField.getValue()),
                     new AiConfigUpdateDto("ollama.temperature", tempValue != null ? tempValue.toString() : "0.7"),
                     new AiConfigUpdateDto("ollama.max-tokens",
-                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "1000"),
+                            maxTokensValue != null ? maxTokensValue.intValue() + "" : "2000"),
                     new AiConfigUpdateDto("ollama.timeout-seconds",
                             timeoutValue != null ? timeoutValue.intValue() + "" : "30"));
 

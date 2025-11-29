@@ -100,7 +100,7 @@ class CommentDtoTest {
     void shouldHandleLongContent() {
         // Given
         final StringBuilder longContent = new StringBuilder();
-        for (int i = 0; i < 5000; i++) {
+        for (int i = 0; i < 5000; ++i) {
             longContent.append("This is a very long comment. ");
         }
 

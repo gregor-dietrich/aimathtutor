@@ -56,7 +56,7 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
   -e GEMINI_API_KEY=your_gemini_api_key \
-  gregordietrich/aimathtutor:2.1.0-SNAPSHOT
+  gregordietrich/aimathtutor:2.1.0
 ```
 
 > **_NOTE:_** Model names, temperatures, and other AI provider settings (other than API keys) must be configured after startup via the **Admin Settings UI** at `/admin/config` after logging in with admin credentials.
@@ -93,7 +93,7 @@ PGADMIN_PASSWORD=safe_password_here
 ```yml
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:2.1.0-SNAPSHOT
+    image: gregordietrich/aimathtutor:2.1.0
     restart: unless-stopped
     env_file:
       - .env
@@ -344,7 +344,7 @@ After starting the application:
      - **Host Ollama (Docker accessing host):** `http://host.docker.internal:11434`
    - **Model**: `qwen3:8b`, `qwen3:4b`, `llama3.1:8b`, `llama3.2:3b`, etc.
    - **Temperature**: `0.7` (0.0 = deterministic, 2.0 = creative)
-   - **Max Tokens**: `1000` (response length limit)
+   - **Max Tokens**: `2000` (response length limit)
    - **Timeout**: `30` seconds (increase to 60-90s for CPU mode with larger models)
 
 #### Model Recommendations (2025)
@@ -384,7 +384,7 @@ After starting the application:
 
 - **CPU Mode:** Normal for larger models (8B+). Use smaller models: `qwen3:4b` (2.5GB), `llama3.2:3b` (2GB), `qwen3:1.7b` (1.3GB)
 - **Enable GPU:** If you have an NVIDIA GPU, uncomment the GPU configuration in `docker-compose.yml` for 5-10x speedup
-- Reduce max tokens in Admin Settings (try 500 instead of 1000)
+- Reduce max tokens in Admin Settings (try 1000 instead of 2000)
 - Increase timeout to 60-90 seconds for large models on CPU
 
 **Model not found:**

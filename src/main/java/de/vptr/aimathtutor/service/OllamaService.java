@@ -85,7 +85,8 @@ public class OllamaService {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 1000);
+        // Default to 2000 tokens to prevent truncated JSON responses
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 2000);
 
         if (apiUrl == null || apiUrl.isBlank()) {
             throw new IllegalStateException("Ollama API URL not configured. Please configure via admin settings.");

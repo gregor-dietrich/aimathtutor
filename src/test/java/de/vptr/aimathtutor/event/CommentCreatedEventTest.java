@@ -223,7 +223,7 @@ class CommentCreatedEventTest {
                 commentId, exerciseId, userId, username, content, createdAt);
 
         // When/Then - Call getters multiple times and verify consistency
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; ++i) {
             assertEquals(commentId, event.getCommentId());
             assertEquals(exerciseId, event.getExerciseId());
             assertEquals(userId, event.getUserId());
