@@ -548,8 +548,9 @@ class AiTutorServiceTest {
     @Test
     @DisplayName("repairTruncatedJson should handle consecutive backslashes before quote")
     void repairTruncatedJsonShouldHandleConsecutiveBackslashes() {
-        // \\\\" is: escaped backslash (\\) + escaped quote (\")
-        // The quote after \\\\ is NOT escaped because \\\\ is two escaped backslashes
+        // Java literal "C:\\\\Users\\\\" becomes the string: C:\\Users\\ In JSON, \\
+        // represents a single escaped backslash, so both quotes are unescaped and
+        // properly close/open the string value - this is valid JSON
         final String json = "{\"path\": \"C:\\\\Users\\\\\"}";
         final String repaired = this.aiTutorService.repairTruncatedJson(json);
         assertEquals(json, repaired); // Should not modify valid JSON
