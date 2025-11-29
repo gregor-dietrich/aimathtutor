@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service;
 
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,14 @@ public class OllamaService {
     @Inject
     AiConfigService aiConfigService;
 
+    @Inject
+    @ConfigProperty(name = "ollama.client.connect-timeout-seconds", defaultValue = "10")
+    int connectTimeoutSeconds;
+
+    @Inject
+    @ConfigProperty(name = "ollama.client.read-timeout-seconds", defaultValue = "60")
+    int readTimeoutSeconds;
+
     private volatile Client client;
 
     /**
@@ -41,10 +50,11 @@ public class OllamaService {
     private synchronized Client getClient() {
         if (this.client == null) {
             this.client = ClientBuilder.newBuilder()
-                    .connectTimeout(10, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
+                    .connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
+                    .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS)
                     .build();
-            LOG.debug("Initialized Ollama JAX-RS Client");
+            LOG.debug("Initialized Ollama JAX-RS Client (connectTimeout={}s, readTimeout={}s)",
+                    this.connectTimeoutSeconds, this.readTimeoutSeconds);
         }
         return this.client;
     }
