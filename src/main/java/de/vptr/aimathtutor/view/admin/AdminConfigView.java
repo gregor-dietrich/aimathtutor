@@ -288,9 +288,9 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Model field
         final var modelField = new TextField("Model");
-        modelField.setValue(this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b"));
+        modelField.setValue(this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b"));
         modelField.setWidthFull();
-        modelField.setHelperText("Ollama model name (e.g., qwen3:0.6b)");
+        modelField.setHelperText("Ollama model name (e.g., llama3.2:3b)");
 
         // Temperature
         final var tempField = new NumberField("Temperature");

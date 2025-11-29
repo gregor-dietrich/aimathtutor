@@ -73,7 +73,7 @@ public class OllamaService {
 
         // Load dynamic configuration
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
-        final String model = this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b");
+        final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
         final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 1000);
 
@@ -204,7 +204,7 @@ public class OllamaService {
      * Get the current model name
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue("ollama.model", "qwen3:0.6b");
+        return this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
     }
 
     /**
