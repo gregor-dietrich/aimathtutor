@@ -154,7 +154,7 @@ class UserDtoTest {
         final StringBuilder longPassword = new StringBuilder();
         final StringBuilder longEmail = new StringBuilder();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 100; ++i) {
             longUsername.append("u");
             longPassword.append("p");
             longEmail.append("e");

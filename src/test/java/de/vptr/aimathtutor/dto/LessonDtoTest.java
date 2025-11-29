@@ -166,7 +166,7 @@ class LessonDtoTest {
     void shouldHandleLongLessonNames() {
         // Given
         final StringBuilder longName = new StringBuilder();
-        for (int i = 0; i < 300; i++) {
+        for (int i = 0; i < 300; ++i) {
             longName.append("c");
         }
 
