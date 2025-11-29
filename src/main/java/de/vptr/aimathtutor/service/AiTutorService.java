@@ -97,11 +97,11 @@ public class AiTutorService {
         }
 
         // Load dynamic provider configuration
-        final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
+        final var aiProvider = this.getConfigString("ai.tutor.provider", "mock");
         LOG.info("Action is significant, generating feedback with provider: {}", aiProvider);
 
         // Use different AI provider based on configuration
-        final String provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+        final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
         return switch (provider) {
             case "gemini" -> this.analyzeWithGemini(event, context);
             case "openai" -> this.analyzeWithOpenAi(event, context);
@@ -133,7 +133,7 @@ public class AiTutorService {
 
         // Pick a random congratulatory message
         final int index = (int) (Math.random() * congratulatoryMessages.length);
-        final String message = congratulatoryMessages[index];
+        final var message = congratulatoryMessages[index];
 
         return AiFeedbackDto.positive(message);
     }
@@ -147,7 +147,7 @@ public class AiTutorService {
             return false;
         }
 
-        final String type = event.eventType.toLowerCase();
+        final var type = event.eventType.toLowerCase();
 
         // Graspable Math specific action names (from the actual GM API)
         if (type.contains("addsubinvert") // Adding/subtracting to both sides
@@ -219,10 +219,10 @@ public class AiTutorService {
         }
 
         // Use different AI provider based on configuration
-        final String aiProvider = this.getConfigString("ai.tutor.provider", "mock");
-        final String provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+        final var aiProvider = this.getConfigString("ai.tutor.provider", "mock");
+        final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
 
-        String answer = switch (provider) {
+        var answer = switch (provider) {
             case "gemini" -> this.answerWithGemini(question, currentExpression, context);
             case "openai" -> this.answerWithOpenAi(question, currentExpression, context);
             case "ollama" -> this.answerWithOllama(question, currentExpression, context);
@@ -340,7 +340,7 @@ public class AiTutorService {
      * Mock AI implementation for answering student questions.
      */
     private String answerWithMockAi(final String question, final String currentExpression) {
-        final String lowerQuestion = question.toLowerCase();
+        final var lowerQuestion = question.toLowerCase();
 
         // Provide context-aware answers based on keywords
         if (lowerQuestion.contains("how") && lowerQuestion.contains("solve")) {
@@ -380,7 +380,7 @@ public class AiTutorService {
         }
 
         try {
-            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
             return this.geminiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Gemini for question answering", e);
@@ -399,7 +399,7 @@ public class AiTutorService {
         }
 
         try {
-            final String prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
             return this.openAiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using OpenAI for question answering", e);
@@ -456,7 +456,7 @@ public class AiTutorService {
         // Load dynamic prompt configuration
         final var prefix = this.getConfigString("ai.prompt.question.answering.prefix",
                 "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.");
-        final String postfix = this.getConfigString("ai.prompt.question.answering.postfix",
+        final var postfix = this.getConfigString("ai.prompt.question.answering.postfix",
                 "Provide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
 
         prompt.append(prefix);
@@ -568,9 +568,9 @@ public class AiTutorService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final String prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
+        final var prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
                 "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.");
-        final String postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
+        final var postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
                 "Provide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
 
         prompt.append(prefix);
@@ -634,7 +634,7 @@ public class AiTutorService {
     private AiFeedbackDto parseFeedbackFromJson(final String jsonResponse) {
         try {
             // Try to extract JSON from response (AI provider might wrap it in markdown)
-            String json = jsonResponse.trim();
+            var json = jsonResponse.trim();
 
             // Remove markdown code block if present
             if (json.startsWith("```json")) {
@@ -682,10 +682,10 @@ public class AiTutorService {
 
         try {
             // Build the prompt with context
-            final String prompt = this.buildMathTutoringPrompt(event, context);
+            final var prompt = this.buildMathTutoringPrompt(event, context);
 
             // Call OpenAI API with JSON mode
-            final String response = this.openAiService.generateJsonContent(prompt);
+            final var response = this.openAiService.generateJsonContent(prompt);
 
             // Parse response as JSON
             return this.parseFeedbackFromJson(response);
@@ -716,21 +716,14 @@ public class AiTutorService {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 // Build the prompt with context
-                final String prompt = this.buildMathTutoringPrompt(event, context);
+                final var prompt = this.buildMathTutoringPrompt(event, context);
 
                 // Call Ollama API
-                final String response = this.ollamaService.generateContent(prompt);
+                final var response = this.ollamaService.generateContent(prompt);
 
-                // Parse response as JSON
-                final AiFeedbackDto feedback = this.parseFeedbackFromJson(response);
-
-                // Check if parsing was successful (parseFeedbackFromJson creates a fallback on
+                // Parse response as JSON (always returns non-null, with fallback on parse
                 // error)
-                // A successful parse will have structured data, while fallback just wraps the
-                // raw text
-                if (feedback != null) {
-                    return feedback;
-                }
+                return this.parseFeedbackFromJson(response);
 
             } catch (final Exception e) {
                 lastException = e;
@@ -885,7 +878,6 @@ public class AiTutorService {
                 return this.generateProblem(difficulty, GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS);
             }
         }
-        ;
 
         return problem;
     }
