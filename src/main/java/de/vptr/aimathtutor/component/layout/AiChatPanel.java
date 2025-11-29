@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.component.layout;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -32,7 +34,7 @@ public class AiChatPanel extends VerticalLayout {
     private String userAvatarEmoji = "🧒";
     private String tutorAvatarEmoji = "🧑‍🏫";
     private HorizontalLayout currentTypingIndicator; // Track current typing indicator
-    private int pendingRequestsCount = 0; // Track number of pending AI requests
+    private final AtomicInteger pendingRequestsCount = new AtomicInteger(0); // Track number of pending AI requests
 
     /**
      * Callback interface for handling message sends.
@@ -237,7 +239,7 @@ public class AiChatPanel extends VerticalLayout {
      * multiple async callbacks.
      */
     public synchronized void showTypingIndicator() {
-        this.pendingRequestsCount++;
+        this.pendingRequestsCount.incrementAndGet();
 
         // Only create indicator if one doesn't already exist
         if (this.currentTypingIndicator == null) {
@@ -302,13 +304,11 @@ public class AiChatPanel extends VerticalLayout {
      */
     public synchronized void hideTypingIndicator() {
         // Decrement counter (ensure it doesn't go negative)
-        if (this.pendingRequestsCount > 0) {
-            this.pendingRequestsCount--;
-        }
+        final var count = this.pendingRequestsCount.updateAndGet(c -> c > 0 ? c - 1 : 0);
 
         // Only remove indicator when all pending requests are complete
-        if (this.pendingRequestsCount == 0) {
-            final HorizontalLayout indicatorToRemove = this.currentTypingIndicator;
+        if (count == 0) {
+            final var indicatorToRemove = this.currentTypingIndicator;
             if (indicatorToRemove != null) {
                 // Clear reference immediately within synchronized block to prevent
                 // another thread from seeing stale reference
