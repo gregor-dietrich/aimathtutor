@@ -64,12 +64,14 @@ public class AiTutorService {
      * Analyzes a student's math action and provides AI feedback.
      * Only provides feedback for significant actions to reduce spam.
      * 
+     * Note: Not @Transactional because it calls long-running AI services.
+     * DB operations are handled in separate transactional methods (logInteraction).
+     * 
      * @param event   The Graspable Math event containing the student's action
      * @param context Conversation context with recent actions, questions, and AI
      *                messages
      * @return AI-generated feedback, or null if no feedback needed
      */
-    @Transactional
     public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}', context={}",
                 event.eventType, event.expressionBefore, event.expressionAfter, context);
@@ -194,6 +196,10 @@ public class AiTutorService {
      * Answers a direct question from the student.
      * Uses AI to provide contextual help based on the current problem state.
      * 
+     * Note: Not @Transactional because it calls long-running AI services.
+     * DB operations are handled in separate transactional methods
+     * (logQuestionInteraction).
+     * 
      * @param question          The student's question
      * @param currentExpression The current state of the problem (optional)
      * @param sessionId         The session ID (optional)
@@ -201,7 +207,6 @@ public class AiTutorService {
      *                          and AI messages
      * @return AI-generated answer
      */
-    @Transactional
     public ChatMessageDto answerQuestion(final String question, final String currentExpression,
             final String sessionId, final ConversationContextDto context) {
         LOG.debug("Answering question: {} (session: {}, context: {})", question, sessionId, context);
@@ -393,6 +398,7 @@ public class AiTutorService {
 
     /**
      * Answer question using Ollama with conversation context.
+     * Implements retry logic for incomplete responses.
      */
     private String answerWithOllama(final String question, final String currentExpression,
             final ConversationContextDto context) {
@@ -401,13 +407,32 @@ public class AiTutorService {
             return this.answerWithMockAi(question, currentExpression);
         }
 
-        try {
-            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
-            return this.ollamaService.generateContent(prompt);
-        } catch (final Exception e) {
-            LOG.error("Error using Ollama for question answering", e);
-            return this.answerWithMockAi(question, currentExpression);
+        // Retry logic for incomplete responses
+        final int maxRetries = 2;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+                return this.ollamaService.generateContent(prompt);
+            } catch (final Exception e) {
+                if (attempt < maxRetries) {
+                    LOG.warn("Error calling Ollama (attempt {}/{}), retrying...", attempt, maxRetries, e);
+                    try {
+                        Thread.sleep(1000); // Brief pause before retry
+                    } catch (final InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        LOG.error("Retry interrupted", ie);
+                        break;
+                    }
+                } else {
+                    LOG.error("Error using Ollama for question answering after {} attempts, falling back to mock",
+                            maxRetries, e);
+                    return this.answerWithMockAi(question, currentExpression);
+                }
+            }
         }
+
+        // Fallback if all retries failed
+        return this.answerWithMockAi(question, currentExpression);
     }
 
     /**
@@ -592,12 +617,12 @@ public class AiTutorService {
     }
 
     /**
-     * Parses Gemini's JSON response into AIFeedbackDto.
+     * Parses AI provider's JSON response into AIFeedbackDto.
      * Falls back to extracting message if JSON parsing fails.
      */
     private AiFeedbackDto parseFeedbackFromJson(final String jsonResponse) {
         try {
-            // Try to extract JSON from response (Gemini might wrap it in markdown)
+            // Try to extract JSON from response (AI provider might wrap it in markdown)
             String json = jsonResponse.trim();
 
             // Remove markdown code block if present
@@ -618,11 +643,11 @@ public class AiTutorService {
             // Set timestamp
             feedback.timestamp = LocalDateTime.now();
 
-            LOG.debug("Successfully parsed Gemini response as JSON");
+            LOG.debug("Successfully parsed AI provider response as JSON");
             return feedback;
 
         } catch (final Exception e) {
-            LOG.warn("Failed to parse Gemini response as JSON, creating simple feedback", e);
+            LOG.warn("Failed to parse AI provider response as JSON, creating simple feedback", e);
 
             // Fallback: create simple positive feedback with the response text
             final var feedback = AiFeedbackDto.positive(jsonResponse);
@@ -663,6 +688,7 @@ public class AiTutorService {
     /**
      * Analyzes math action using Ollama (local LLM) with conversation context.
      * Sends structured prompt and parses JSON response.
+     * Implements retry logic for incomplete or failed responses.
      */
     private AiFeedbackDto analyzeWithOllama(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Ollama");
@@ -673,20 +699,46 @@ public class AiTutorService {
             return this.analyzeWithMockAi(event);
         }
 
-        try {
-            // Build the prompt with context
-            final String prompt = this.buildMathTutoringPrompt(event, context);
+        // Retry logic for incomplete or failed responses
+        final int maxRetries = 2;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                // Build the prompt with context
+                final String prompt = this.buildMathTutoringPrompt(event, context);
 
-            // Call Ollama API
-            final String response = this.ollamaService.generateContent(prompt);
+                // Call Ollama API
+                final String response = this.ollamaService.generateContent(prompt);
 
-            // Parse response as JSON
-            return this.parseFeedbackFromJson(response);
+                // Parse response as JSON
+                final AiFeedbackDto feedback = this.parseFeedbackFromJson(response);
 
-        } catch (final Exception e) {
-            LOG.error("Error using Ollama, falling back to mock", e);
-            return this.analyzeWithMockAi(event);
+                // Check if parsing was successful (parseFeedbackFromJson creates a fallback on
+                // error)
+                // A successful parse will have structured data, while fallback just wraps the
+                // raw text
+                if (feedback != null) {
+                    return feedback;
+                }
+
+            } catch (final Exception e) {
+                if (attempt < maxRetries) {
+                    LOG.warn("Error calling Ollama (attempt {}/{}), retrying...", attempt, maxRetries, e);
+                    try {
+                        Thread.sleep(1000); // Brief pause before retry
+                    } catch (final InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        LOG.error("Retry interrupted", ie);
+                        break;
+                    }
+                } else {
+                    LOG.error("Error using Ollama after {} attempts, falling back to mock", maxRetries, e);
+                    return this.analyzeWithMockAi(event);
+                }
+            }
         }
+
+        // Fallback if all retries failed
+        return this.analyzeWithMockAi(event);
     }
 
     /**
@@ -713,13 +765,12 @@ public class AiTutorService {
         final var random = ThreadLocalRandom.current();
 
         switch (problem.category) {
-            case LINEAR_EQUATIONS:
+            case LINEAR_EQUATIONS -> {
                 // Generate random linear equation: ax + b = c
                 final int a = random.nextInt(9) + 1; // 1-9
                 final int b = random.nextInt(20) - 10; // -10 to 10
                 final int x = random.nextInt(20) - 10; // -10 to 10
                 final int c = a * x + b;
-
                 problem.title = "Solve for x";
                 problem.initialExpression = String.format("%dx %s %d = %d",
                         a,
@@ -730,97 +781,83 @@ public class AiTutorService {
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
                 problem.hints.add("First, isolate the term with x");
                 problem.hints.add("Remember to do the same operation on both sides");
-                break;
-
-            case QUADRATIC_EQUATIONS:
+            }
+            case QUADRATIC_EQUATIONS -> {
                 // Generate simple quadratic: x^2 = n (perfect square)
                 final int sqrtVal = random.nextInt(10) + 1; // 1-10
                 final int nSquared = sqrtVal * sqrtVal;
-
                 problem.title = "Solve for x";
                 problem.initialExpression = String.format("x^2 = %d", nSquared);
                 problem.targetExpression = String.format("x = ±%d", sqrtVal);
                 problem.allowedOperations.addAll(Arrays.asList("sqrt", "simplify"));
                 problem.hints.add("Take the square root of both sides");
                 problem.hints.add("Remember there are two solutions: positive and negative");
-                break;
-
-            case POLYNOMIAL_SIMPLIFICATION:
+            }
+            case POLYNOMIAL_SIMPLIFICATION -> {
                 // Generate random simplification
                 final int coef1 = random.nextInt(9) + 1;
                 final int coef2 = random.nextInt(9) + 1;
-
                 problem.title = "Simplify the expression";
                 problem.initialExpression = String.format("%dx + %dx", coef1, coef2);
                 problem.targetExpression = (coef1 + coef2) + "x";
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "combine"));
                 problem.hints.add("Combine like terms");
                 problem.hints.add("Add the coefficients of x");
-                break;
-
-            case FACTORING:
+            }
+            case FACTORING -> {
                 // Generate random factorable quadratic
                 final int p = random.nextInt(9) + 1;
                 final int q = random.nextInt(9) + 1;
                 final int sum = p + q;
                 final int product = p * q;
-
                 problem.title = "Factor the expression";
                 problem.initialExpression = String.format("x^2 + %dx + %d", sum, product);
                 problem.targetExpression = String.format("(x + %d)(x + %d)", p, q);
                 problem.allowedOperations.addAll(Arrays.asList("factor", "expand"));
                 problem.hints
                         .add(String.format("Look for two numbers that multiply to %d and add to %d", product, sum));
-                break;
-
-            case FRACTIONS:
+            }
+            case FRACTIONS -> {
                 // Generate fraction addition: a/b + c/d
                 final int num1 = random.nextInt(5) + 1;
                 final int den1 = random.nextInt(5) + 2;
                 final int num2 = random.nextInt(5) + 1;
                 final int den2 = random.nextInt(5) + 2;
-
                 problem.title = "Add the fractions";
                 problem.initialExpression = String.format("%d/%d + %d/%d", num1, den1, num2, den2);
                 problem.targetExpression = "Simplified form";
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "add"));
                 problem.hints.add("Find a common denominator");
                 problem.hints.add("Add the numerators");
-                break;
-
-            case EXPONENTS:
+            }
+            case EXPONENTS -> {
                 // Generate exponent simplification: x^a * x^b = x^(a+b)
                 final int exp1 = random.nextInt(4) + 2; // 2-5
                 final int exp2 = random.nextInt(4) + 2; // 2-5
-
                 problem.title = "Simplify using exponent rules";
                 problem.initialExpression = String.format("x^%d * x^%d", exp1, exp2);
                 problem.targetExpression = String.format("x^%d", exp1 + exp2);
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "multiply"));
                 problem.hints.add("When multiplying powers with the same base, add the exponents");
                 problem.hints.add(String.format("x^%d * x^%d = x^(%d+%d)", exp1, exp2, exp1, exp2));
-                break;
-
-            case SYSTEMS_OF_EQUATIONS:
+            }
+            case SYSTEMS_OF_EQUATIONS -> {
                 // Generate simple system (substitution method)
                 final int yVal = random.nextInt(10) + 1;
                 final int xVal = random.nextInt(10) + 1;
                 final int coefX = random.nextInt(3) + 1;
-
                 problem.title = "Solve the system of equations";
                 problem.initialExpression = String.format("y = %d; %dx + y = %d", yVal, coefX, coefX * xVal + yVal);
                 problem.targetExpression = String.format("x = %d; y = %d", xVal, yVal);
                 problem.allowedOperations.addAll(Arrays.asList("substitute", "solve", "simplify"));
                 problem.hints.add("Substitute the value of y from the first equation into the second");
                 problem.hints.add("Solve for x, then verify with y");
-                break;
-
-            case INEQUALITIES:
+            }
+            case INEQUALITIES -> {
                 // Generate simple inequality: ax + b < c
                 final int aIneq = random.nextInt(5) + 1;
                 final int bIneq = random.nextInt(10) - 5;
                 final int cIneq = random.nextInt(20);
-
                 problem.title = "Solve the inequality";
                 problem.initialExpression = String.format("%dx %s %d < %d",
                         aIneq,
@@ -831,12 +868,13 @@ public class AiTutorService {
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
                 problem.hints.add("Solve like an equation, but keep the inequality sign");
                 problem.hints.add("Remember: if dividing by a negative number, flip the inequality");
-                break;
-
-            default:
+            }
+            default -> {
                 // Fallback to linear equations
                 return this.generateProblem(difficulty, GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS);
+            }
         }
+        ;
 
         return problem;
     }

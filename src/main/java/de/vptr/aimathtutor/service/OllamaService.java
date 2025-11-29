@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.service;
 
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,9 +60,12 @@ public class OllamaService {
             // Build API URL
             final String url = apiUrl + "/api/generate";
 
-            // Get or create client
+            // Get or create client with appropriate timeouts
             if (this.client == null) {
-                this.client = ClientBuilder.newClient();
+                this.client = ClientBuilder.newBuilder()
+                        .connectTimeout(10, TimeUnit.SECONDS) // Connection timeout
+                        .readTimeout(60, TimeUnit.SECONDS) // Read timeout for long AI responses
+                        .build();
             }
 
             // Make API call
@@ -121,7 +126,10 @@ public class OllamaService {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
             if (this.client == null) {
-                this.client = ClientBuilder.newClient();
+                this.client = ClientBuilder.newBuilder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(60, TimeUnit.SECONDS)
+                        .build();
             }
 
             // Check /api/tags endpoint (lists installed models)
@@ -152,7 +160,10 @@ public class OllamaService {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
             if (this.client == null) {
-                this.client = ClientBuilder.newClient();
+                this.client = ClientBuilder.newBuilder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(60, TimeUnit.SECONDS)
+                        .build();
             }
 
             final var response = this.client.target(apiUrl + "/api/tags")
