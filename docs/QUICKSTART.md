@@ -411,5 +411,3 @@ _AMD (ROCm):_
 - Verify host GPU: `rocm-smi`
 - Check GPU in container: `docker compose exec ollama rocm-smi`
 - Verify devices are accessible: `ls -la /dev/kfd /dev/dri`
-- Verify with: `ollama list`
-- Ensure model name in admin settings matches exactly
