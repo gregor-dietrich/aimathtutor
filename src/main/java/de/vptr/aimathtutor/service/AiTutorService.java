@@ -478,7 +478,7 @@ public class AiTutorService {
         if (context != null) {
             if (!context.recentActions.isEmpty()) {
                 prompt.append("Recent student actions:\n");
-                for (int i = 0; i < context.recentActions.size(); i++) {
+                for (int i = 0; i < context.recentActions.size(); ++i) {
                     final var action = context.recentActions.get(i);
                     prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                             i + 1, action.eventType, action.expressionBefore, action.expressionAfter));
@@ -488,7 +488,7 @@ public class AiTutorService {
 
             if (!context.recentQuestions.isEmpty()) {
                 prompt.append("Recent student questions:\n");
-                for (int i = 0; i < context.recentQuestions.size(); i++) {
+                for (int i = 0; i < context.recentQuestions.size(); ++i) {
                     final var q = context.recentQuestions.get(i);
                     prompt.append(String.format("%d. \"%s\"%n", i + 1, q.message));
                 }
@@ -497,7 +497,7 @@ public class AiTutorService {
 
             if (!context.recentAiMessages.isEmpty()) {
                 prompt.append("Your recent responses:\n");
-                for (int i = 0; i < context.recentAiMessages.size(); i++) {
+                for (int i = 0; i < context.recentAiMessages.size(); ++i) {
                     final var msg = context.recentAiMessages.get(i);
                     prompt.append(String.format("%d. \"%s\"%n", i + 1, msg.message));
                 }
@@ -593,7 +593,7 @@ public class AiTutorService {
         if (context != null) {
             if (!context.recentActions.isEmpty()) {
                 prompt.append("\nRecent actions (for context):\n");
-                for (int i = 0; i < context.recentActions.size(); i++) {
+                for (int i = 0; i < context.recentActions.size(); ++i) {
                     final var action = context.recentActions.get(i);
                     prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                             i + 1, action.eventType, action.expressionBefore, action.expressionAfter));
@@ -602,7 +602,7 @@ public class AiTutorService {
 
             if (!context.recentQuestions.isEmpty()) {
                 prompt.append("\nRecent student questions:\n");
-                for (int i = 0; i < context.recentQuestions.size(); i++) {
+                for (int i = 0; i < context.recentQuestions.size(); ++i) {
                     final var q = context.recentQuestions.get(i);
                     prompt.append(String.format("%d. \"%s\"%n", i + 1, q.message));
                 }
@@ -610,7 +610,7 @@ public class AiTutorService {
 
             if (!context.recentAiMessages.isEmpty()) {
                 prompt.append("\nYour recent feedback:\n");
-                for (int i = 0; i < context.recentAiMessages.size(); i++) {
+                for (int i = 0; i < context.recentAiMessages.size(); ++i) {
                     final var msg = context.recentAiMessages.get(i);
                     prompt.append(String.format("%d. \"%s\"%n", i + 1, msg.message));
                 }
@@ -660,6 +660,9 @@ public class AiTutorService {
             }
             json = json.trim();
 
+            // Try to repair truncated JSON (missing closing braces/brackets)
+            json = this.repairTruncatedJson(json);
+
             // Parse JSON to AIFeedbackDto
             final var feedback = this.objectMapper.readValue(json, AiFeedbackDto.class);
 
@@ -672,11 +675,120 @@ public class AiTutorService {
         } catch (final Exception e) {
             LOG.warn("Failed to parse AI provider response as JSON, creating simple feedback", e);
 
-            // Fallback: create simple positive feedback with the response text
-            final var feedback = AiFeedbackDto.positive(jsonResponse);
+            // Fallback: try to extract the message field from truncated JSON
+            final var feedback = this.extractFeedbackFromTruncatedResponse(jsonResponse);
             feedback.confidence = 0.7;
             return feedback;
         }
+    }
+
+    /**
+     * Attempts to repair truncated JSON by adding missing closing braces and
+     * brackets.
+     * This handles cases where Ollama runs out of tokens mid-response.
+     */
+    private String repairTruncatedJson(final String json) {
+        if (json == null || json.isEmpty()) {
+            return json;
+        }
+
+        // Count opening and closing braces/brackets
+        int openBraces = 0;
+        int openBrackets = 0;
+        boolean inString = false;
+        char prevChar = 0;
+
+        for (int i = 0; i < json.length(); ++i) {
+            final char c = json.charAt(i);
+            // Track string state (ignore escaped quotes)
+            if (c == '"' && prevChar != '\\') {
+                inString = !inString;
+            } else if (!inString) {
+                if (c == '{') {
+                    openBraces++;
+                } else if (c == '}') {
+                    openBraces--;
+                } else if (c == '[') {
+                    openBrackets++;
+                } else if (c == ']') {
+                    openBrackets--;
+                }
+            }
+            prevChar = c;
+        }
+
+        // If unbalanced, try to repair
+        if (openBraces > 0 || openBrackets > 0) {
+            LOG.debug("Attempting to repair truncated JSON: {} open braces, {} open brackets",
+                    openBraces, openBrackets);
+
+            final var repaired = new StringBuilder(json);
+
+            // Close any open string
+            if (inString) {
+                repaired.append('"');
+            }
+
+            // Close open brackets first (they're usually inside braces)
+            for (int i = 0; i < openBrackets; ++i) {
+                repaired.append(']');
+            }
+
+            // Then close open braces
+            for (int i = 0; i < openBraces; ++i) {
+                repaired.append('}');
+            }
+
+            return repaired.toString();
+        }
+
+        return json;
+    }
+
+    /**
+     * Extracts feedback from a truncated or malformed AI response.
+     * Tries to salvage the message field if present.
+     */
+    private AiFeedbackDto extractFeedbackFromTruncatedResponse(final String response) {
+        if (response == null || response.isEmpty()) {
+            return AiFeedbackDto.hint("I'm having trouble analyzing that step. Try another action!");
+        }
+
+        // Try to extract the "message" field using regex
+        final var messagePattern = java.util.regex.Pattern.compile(
+                "\"message\"\\s*:\\s*\"([^\"]+)\"",
+                java.util.regex.Pattern.CASE_INSENSITIVE);
+        final var matcher = messagePattern.matcher(response);
+
+        if (matcher.find()) {
+            final String extractedMessage = matcher.group(1);
+            LOG.debug("Extracted message from truncated response: {}", extractedMessage);
+
+            // Try to determine the type
+            final var typePattern = java.util.regex.Pattern.compile(
+                    "\"type\"\\s*:\\s*\"([^\"]+)\"",
+                    java.util.regex.Pattern.CASE_INSENSITIVE);
+            final var typeMatcher = typePattern.matcher(response);
+
+            AiFeedbackDto feedback;
+            if (typeMatcher.find()) {
+                final String type = typeMatcher.group(1).toUpperCase();
+                feedback = switch (type) {
+                    case "CORRECTIVE" -> AiFeedbackDto.corrective(extractedMessage);
+                    case "HINT" -> AiFeedbackDto.hint(extractedMessage);
+                    case "SUGGESTION" -> AiFeedbackDto.suggestion(extractedMessage);
+                    default -> AiFeedbackDto.positive(extractedMessage);
+                };
+            } else {
+                feedback = AiFeedbackDto.positive(extractedMessage);
+            }
+
+            return feedback;
+        }
+
+        // If we can't extract anything useful, return a generic response
+        LOG.debug("Could not extract message from response, using generic feedback");
+        return AiFeedbackDto.hint("Keep going! Try your next step.");
     }
 
     /**
