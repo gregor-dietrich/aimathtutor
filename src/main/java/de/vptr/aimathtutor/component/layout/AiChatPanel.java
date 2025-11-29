@@ -233,8 +233,10 @@ public class AiChatPanel extends VerticalLayout {
      * indicator).
      * Increments the pending requests counter and only creates indicator if none
      * exists.
+     * This method is synchronized to prevent race conditions when called from
+     * multiple async callbacks.
      */
-    public void showTypingIndicator() {
+    public synchronized void showTypingIndicator() {
         this.pendingRequestsCount++;
 
         // Only create indicator if one doesn't already exist
@@ -295,8 +297,10 @@ public class AiChatPanel extends VerticalLayout {
      * Hides the typing indicator (simple version that uses tracked indicator).
      * Decrements the pending requests counter and only removes indicator when
      * counter reaches zero.
+     * This method is synchronized to prevent race conditions when called from
+     * multiple async callbacks.
      */
-    public void hideTypingIndicator() {
+    public synchronized void hideTypingIndicator() {
         // Decrement counter (ensure it doesn't go negative)
         if (this.pendingRequestsCount > 0) {
             this.pendingRequestsCount--;
@@ -306,13 +310,15 @@ public class AiChatPanel extends VerticalLayout {
         if (this.pendingRequestsCount == 0) {
             final HorizontalLayout indicatorToRemove = this.currentTypingIndicator;
             if (indicatorToRemove != null) {
+                // Clear reference immediately within synchronized block to prevent
+                // another thread from seeing stale reference
+                this.currentTypingIndicator = null;
                 UI.getCurrent().access(() -> {
                     try {
                         this.chatHistoryPanel.remove(indicatorToRemove);
                     } catch (final Exception e) {
                         // Indicator might have already been removed, ignore
                     }
-                    this.currentTypingIndicator = null;
                 });
             }
         }
