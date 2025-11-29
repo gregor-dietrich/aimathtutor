@@ -37,6 +37,13 @@ public class AiTutorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AiTutorService.class);
 
+    // Smart quote characters for stripping from AI responses
+    // Using constants avoids checkstyle's AvoidEscapedUnicodeCharacters warning
+    private static final String LEFT_DOUBLE_QUOTE = "\u201C"; // "
+    private static final String RIGHT_DOUBLE_QUOTE = "\u201D"; // "
+    private static final String LEFT_SINGLE_QUOTE = "\u2018"; // '
+    private static final String RIGHT_SINGLE_QUOTE = "\u2019"; // '
+
     @Inject
     AiConfigService aiConfigService;
 
@@ -921,9 +928,9 @@ public class AiTutorService {
         // Length check (> 1) prevents StringIndexOutOfBoundsException for single-char
         // strings
         while (text.length() > 1) {
-            if ((text.startsWith("\"") && text.endsWith("\"")) ||
-                    (text.startsWith("\u201C") && text.endsWith("\u201D")) ||
-                    (text.startsWith("\u2018") && text.endsWith("\u2019"))) {
+            if ((text.startsWith("\"") && text.endsWith("\""))
+                    || (text.startsWith(LEFT_DOUBLE_QUOTE) && text.endsWith(RIGHT_DOUBLE_QUOTE))
+                    || (text.startsWith(LEFT_SINGLE_QUOTE) && text.endsWith(RIGHT_SINGLE_QUOTE))) {
                 text = text.substring(1, text.length() - 1).trim();
             } else {
                 break;
