@@ -50,12 +50,14 @@ public class OllamaService {
     }
 
     /**
-     * Clean up resources when the bean is destroyed
+     * Clean up resources when the bean is destroyed.
+     * Synchronized to ensure consistent access to the client field.
      */
     @PreDestroy
-    void cleanup() {
+    synchronized void cleanup() {
         if (this.client != null) {
             this.client.close();
+            this.client = null;
             LOG.debug("Closed Ollama JAX-RS Client");
         }
     }
