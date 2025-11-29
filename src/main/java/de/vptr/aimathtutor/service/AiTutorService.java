@@ -935,10 +935,11 @@ public class AiTutorService {
         text = text.trim();
 
         // Remove matching quotation marks (only if both start and end match)
+        // Handles: "text", "text" (smart double), 'text' (smart single)
         while (!text.isEmpty()) {
             if ((text.startsWith("\"") && text.endsWith("\"")) ||
                     (text.startsWith("\u201C") && text.endsWith("\u201D")) ||
-                    (text.startsWith("\u201D") && text.endsWith("\u201C"))) {
+                    (text.startsWith("\u2018") && text.endsWith("\u2019"))) {
                 text = text.substring(1, text.length() - 1).trim();
             } else {
                 break;
