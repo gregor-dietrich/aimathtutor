@@ -105,20 +105,20 @@ INSERT INTO ai_config (config_key, config_value, config_type, category, descript
 ('gemini.model', 'gemini-2.5-flash-lite', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
 ('gemini.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GEMINI', 'Gemini API base URL', false, 1),
 ('gemini.temperature', '0.7', 'DOUBLE', 'GEMINI', 'Gemini temperature setting (0.0-2.0)', false, 1),
-('gemini.max-tokens', '1000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', false, 1),
+('gemini.max-tokens', '2000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', false, 1),
 
 -- OpenAI settings
 ('openai.model', 'gpt-4o-mini', 'STRING', 'OPENAI', 'OpenAI model name', false, 1),
 ('openai.organization-id', '', 'STRING', 'OPENAI', 'OpenAI organization ID (optional)', true, 1),
 ('openai.api.base-url', 'https://api.openai.com/v1', 'STRING', 'OPENAI', 'OpenAI API base URL', false, 1),
 ('openai.temperature', '0.7', 'DOUBLE', 'OPENAI', 'OpenAI temperature setting (0.0-2.0)', false, 1),
-('openai.max-tokens', '1000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', false, 1),
+('openai.max-tokens', '2000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', false, 1),
 
 -- Ollama settings
 ('ollama.api.url', 'http://ollama:11434', 'STRING', 'OLLAMA', 'Ollama API URL', false, 1),
 ('ollama.model', 'llama3.2:3b', 'STRING', 'OLLAMA', 'Ollama model name', false, 1),
 ('ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', false, 1),
-('ollama.max-tokens', '1000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, 1),
+('ollama.max-tokens', '2000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, 1),
 ('ollama.timeout-seconds', '30', 'INTEGER', 'OLLAMA', 'Ollama API timeout in seconds', false, 1),
 
 -- Prompt settings

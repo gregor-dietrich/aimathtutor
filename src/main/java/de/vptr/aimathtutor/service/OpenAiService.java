@@ -52,7 +52,7 @@ public class OpenAiService {
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 1000);
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         if (model == null || model.isBlank()) {
@@ -152,7 +152,7 @@ public class OpenAiService {
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 1000);
+        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         try {
