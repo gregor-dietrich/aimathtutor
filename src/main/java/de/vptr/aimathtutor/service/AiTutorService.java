@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -409,7 +410,7 @@ public class AiTutorService {
 
     /**
      * Answer question using Ollama with conversation context.
-     * Implements retry logic for incomplete responses.
+     * Uses MicroProfile Fault Tolerance @Retry for automatic retries with jitter.
      */
     private String answerWithOllama(final String question, final String currentExpression,
             final ConversationContextDto context) {
@@ -418,32 +419,23 @@ public class AiTutorService {
             return this.answerWithMockAi(question, currentExpression);
         }
 
-        // Retry logic for incomplete responses
-        final int maxRetries = 3;
-        Exception lastException = null;
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
-                return this.ollamaService.generateContent(prompt);
-            } catch (final Exception e) {
-                lastException = e;
-                LOG.warn("Error calling Ollama (attempt {}/{})", attempt, maxRetries, e);
-                if (attempt < maxRetries) {
-                    try {
-                        Thread.sleep(1000); // Brief pause before retry
-                    } catch (final InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        LOG.error("Retry interrupted", ie);
-                        break;
-                    }
-                }
-            }
+        try {
+            return this.callOllamaForQuestion(question, currentExpression, context);
+        } catch (final Exception e) {
+            LOG.error("Error using Ollama for question answering after retries, falling back to mock", e);
+            return this.answerWithMockAi(question, currentExpression);
         }
+    }
 
-        // Fallback after all retries failed
-        LOG.error("Error using Ollama for question answering after {} attempts, falling back to mock",
-                maxRetries, lastException);
-        return this.answerWithMockAi(question, currentExpression);
+    /**
+     * Internal method to call Ollama for question answering.
+     * Separated to allow @Retry annotation to work properly.
+     */
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    String callOllamaForQuestion(final String question, final String currentExpression,
+            final ConversationContextDto context) {
+        final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+        return this.ollamaService.generateContent(prompt);
     }
 
     /**
@@ -699,7 +691,7 @@ public class AiTutorService {
     /**
      * Analyzes math action using Ollama (local LLM) with conversation context.
      * Sends structured prompt and parses JSON response.
-     * Implements retry logic for incomplete or failed responses.
+     * Uses MicroProfile Fault Tolerance @Retry for automatic retries with jitter.
      */
     private AiFeedbackDto analyzeWithOllama(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Ollama");
@@ -710,39 +702,29 @@ public class AiTutorService {
             return this.analyzeWithMockAi(event);
         }
 
-        // Retry logic for incomplete or failed responses
-        final int maxRetries = 3;
-        Exception lastException = null;
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                // Build the prompt with context
-                final var prompt = this.buildMathTutoringPrompt(event, context);
-
-                // Call Ollama API
-                final var response = this.ollamaService.generateContent(prompt);
-
-                // Parse response as JSON (always returns non-null, with fallback on parse
-                // error)
-                return this.parseFeedbackFromJson(response);
-
-            } catch (final Exception e) {
-                lastException = e;
-                LOG.warn("Error calling Ollama (attempt {}/{})", attempt, maxRetries, e);
-                if (attempt < maxRetries) {
-                    try {
-                        Thread.sleep(1000); // Brief pause before retry
-                    } catch (final InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        LOG.error("Retry interrupted", ie);
-                        break;
-                    }
-                }
-            }
+        try {
+            return this.callOllamaForAnalysis(event, context);
+        } catch (final Exception e) {
+            LOG.error("Error using Ollama after retries, falling back to mock", e);
+            return this.analyzeWithMockAi(event);
         }
+    }
 
-        // Fallback after all retries failed
-        LOG.error("Error using Ollama after {} attempts, falling back to mock", maxRetries, lastException);
-        return this.analyzeWithMockAi(event);
+    /**
+     * Internal method to call Ollama for math action analysis.
+     * Separated to allow @Retry annotation to work properly.
+     */
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    AiFeedbackDto callOllamaForAnalysis(final GraspableEventDto event, final ConversationContextDto context) {
+        // Build the prompt with context
+        final var prompt = this.buildMathTutoringPrompt(event, context);
+
+        // Call Ollama API
+        final var response = this.ollamaService.generateContent(prompt);
+
+        // Parse response as JSON (always returns non-null, with fallback on parse
+        // error)
+        return this.parseFeedbackFromJson(response);
     }
 
     /**
@@ -936,7 +918,9 @@ public class AiTutorService {
 
         // Remove matching quotation marks (only if both start and end match)
         // Handles: "text", "text" (smart double), 'text' (smart single)
-        while (!text.isEmpty()) {
+        // Length check (> 1) prevents StringIndexOutOfBoundsException for single-char
+        // strings
+        while (text.length() > 1) {
             if ((text.startsWith("\"") && text.endsWith("\"")) ||
                     (text.startsWith("\u201C") && text.endsWith("\u201D")) ||
                     (text.startsWith("\u2018") && text.endsWith("\u2019"))) {
