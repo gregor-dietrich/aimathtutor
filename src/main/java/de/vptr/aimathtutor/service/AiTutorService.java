@@ -444,6 +444,12 @@ public class AiTutorService {
     /**
      * Internal method to call Ollama for question answering.
      * Separated to allow @Retry annotation to work properly.
+     * <p>
+     * NOTE: This method must remain package-private (no access modifier) so that
+     * CDI proxies
+     * can intercept it and apply the @Retry annotation. Making it private would
+     * prevent
+     * MicroProfile Fault Tolerance from working correctly.
      */
     @Retry(maxRetries = 3, delay = 1000, jitter = 200)
     String callOllamaForQuestion(final String question, final String currentExpression,
@@ -727,6 +733,12 @@ public class AiTutorService {
     /**
      * Internal method to call Ollama for math action analysis.
      * Separated to allow @Retry annotation to work properly.
+     * <p>
+     * NOTE: This method must remain package-private (no access modifier) so that
+     * CDI proxies
+     * can intercept it and apply the @Retry annotation. Making it private would
+     * prevent
+     * MicroProfile Fault Tolerance from working correctly.
      */
     @Retry(maxRetries = 3, delay = 1000, jitter = 200)
     AiFeedbackDto callOllamaForAnalysis(final GraspableEventDto event, final ConversationContextDto context) {
@@ -919,11 +931,14 @@ public class AiTutorService {
      * Only removes quotes if they wrap the entire string (both start and end
      * match).
      * Handles both double quotes (") and smart quotes.
+     * <p>
+     * NOTE: This method is package-private (no access modifier) rather than private
+     * to allow unit testing. See AITutorServiceTest for test coverage.
      * 
      * @param text The text to process
      * @return The text with quotation marks removed, or the original text if null
      */
-    private String stripQuotationMarks(String text) {
+    String stripQuotationMarks(String text) {
         if (text == null || text.isEmpty()) {
             return text;
         }
