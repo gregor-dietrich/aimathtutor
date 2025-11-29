@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.faulttolerance.Retry;
@@ -686,8 +687,11 @@ public class AiTutorService {
      * Attempts to repair truncated JSON by adding missing closing braces and
      * brackets.
      * This handles cases where Ollama runs out of tokens mid-response.
+     * <p>
+     * NOTE: This method is package-private (no access modifier) rather than private
+     * to allow unit testing. See AiTutorServiceTest for test coverage.
      */
-    private String repairTruncatedJson(final String json) {
+    String repairTruncatedJson(final String json) {
         if (json == null || json.isEmpty()) {
             return json;
         }
@@ -696,12 +700,15 @@ public class AiTutorService {
         int openBraces = 0;
         int openBrackets = 0;
         boolean inString = false;
-        char prevChar = 0;
+        // Track whether the previous character is an unescaped backslash
+        // This correctly handles consecutive backslashes (e.g., \\" is escaped
+        // backslash + quote)
+        boolean prevCharIsEscape = false;
 
         for (int i = 0; i < json.length(); ++i) {
             final char c = json.charAt(i);
             // Track string state (ignore escaped quotes)
-            if (c == '"' && prevChar != '\\') {
+            if (c == '"' && !prevCharIsEscape) {
                 inString = !inString;
             } else if (!inString) {
                 if (c == '{') {
@@ -714,7 +721,8 @@ public class AiTutorService {
                     openBrackets--;
                 }
             }
-            prevChar = c;
+            // A backslash is only an escape if it's not itself escaped
+            prevCharIsEscape = (c == '\\' && !prevCharIsEscape);
         }
 
         // If unbalanced, try to repair
@@ -748,16 +756,21 @@ public class AiTutorService {
     /**
      * Extracts feedback from a truncated or malformed AI response.
      * Tries to salvage the message field if present.
+     * <p>
+     * NOTE: This method is package-private (no access modifier) rather than private
+     * to allow unit testing. See AiTutorServiceTest for test coverage.
      */
-    private AiFeedbackDto extractFeedbackFromTruncatedResponse(final String response) {
+    AiFeedbackDto extractFeedbackFromTruncatedResponse(final String response) {
         if (response == null || response.isEmpty()) {
             return AiFeedbackDto.hint("I'm having trouble analyzing that step. Try another action!");
         }
 
         // Try to extract the "message" field using regex
-        final var messagePattern = java.util.regex.Pattern.compile(
-                "\"message\"\\s*:\\s*\"([^\"]+)\"",
-                java.util.regex.Pattern.CASE_INSENSITIVE);
+        // Pattern handles escaped quotes within the value: matches
+        // non-quote/non-backslash chars OR escape sequences
+        final var messagePattern = Pattern.compile(
+                "\"message\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"",
+                Pattern.CASE_INSENSITIVE);
         final var matcher = messagePattern.matcher(response);
 
         if (matcher.find()) {
@@ -765,9 +778,11 @@ public class AiTutorService {
             LOG.debug("Extracted message from truncated response: {}", extractedMessage);
 
             // Try to determine the type
-            final var typePattern = java.util.regex.Pattern.compile(
-                    "\"type\"\\s*:\\s*\"([^\"]+)\"",
-                    java.util.regex.Pattern.CASE_INSENSITIVE);
+            // Pattern handles escaped quotes within the value: matches
+            // non-quote/non-backslash chars OR escape sequences
+            final var typePattern = Pattern.compile(
+                    "\"type\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"",
+                    Pattern.CASE_INSENSITIVE);
             final var typeMatcher = typePattern.matcher(response);
 
             AiFeedbackDto feedback;
