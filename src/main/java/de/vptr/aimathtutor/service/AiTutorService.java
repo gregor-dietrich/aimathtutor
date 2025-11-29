@@ -345,20 +345,28 @@ public class AiTutorService {
         // Provide context-aware answers based on keywords
         if (lowerQuestion.contains("how") && lowerQuestion.contains("solve")) {
             return "To solve an equation, try to isolate the variable on one side. Work step by step, performing the same operation on both sides.";
-        } else if (lowerQuestion.contains("what") && (lowerQuestion.contains("next") || lowerQuestion.contains("do"))) {
+        }
+
+        if (lowerQuestion.contains("what") && (lowerQuestion.contains("next") || lowerQuestion.contains("do"))) {
             if (currentExpression != null && currentExpression.contains("+")) {
                 return "Try combining like terms or moving terms to isolate the variable.";
             }
             return "Look at what you have now and think about what operation would help simplify or isolate the variable.";
-        } else if (lowerQuestion.contains("why") || lowerQuestion.contains("explain")) {
-            return "That's a great question! In algebra, we maintain balance by doing the same operation on both sides. This keeps the equation true.";
-        } else if (lowerQuestion.contains("stuck") || lowerQuestion.contains("help")) {
-            return "No worries! Try breaking it down into smaller steps. What's the first thing you can simplify or isolate?";
-        } else if (lowerQuestion.contains("hint")) {
-            return "💡 Look for terms you can combine, or operations you can undo to isolate the variable.";
-        } else {
-            return "I'm here to help! Can you be more specific about what you're stuck on?";
         }
+
+        if (lowerQuestion.contains("why") || lowerQuestion.contains("explain")) {
+            return "That's a great question! In algebra, we maintain balance by doing the same operation on both sides. This keeps the equation true.";
+        }
+
+        if (lowerQuestion.contains("stuck") || lowerQuestion.contains("help")) {
+            return "No worries! Try breaking it down into smaller steps. What's the first thing you can simplify or isolate?";
+        }
+
+        if (lowerQuestion.contains("hint")) {
+            return "💡 Look for terms you can combine, or operations you can undo to isolate the variable.";
+        }
+
+        return "I'm here to help! Can you be more specific about what you're stuck on?";
     }
 
     /**
@@ -411,14 +419,16 @@ public class AiTutorService {
         }
 
         // Retry logic for incomplete responses
-        final int maxRetries = 2;
+        final int maxRetries = 3;
+        Exception lastException = null;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
                 return this.ollamaService.generateContent(prompt);
             } catch (final Exception e) {
+                lastException = e;
+                LOG.warn("Error calling Ollama (attempt {}/{})", attempt, maxRetries, e);
                 if (attempt < maxRetries) {
-                    LOG.warn("Error calling Ollama (attempt {}/{}), retrying...", attempt, maxRetries, e);
                     try {
                         Thread.sleep(1000); // Brief pause before retry
                     } catch (final InterruptedException ie) {
@@ -426,15 +436,13 @@ public class AiTutorService {
                         LOG.error("Retry interrupted", ie);
                         break;
                     }
-                } else {
-                    LOG.error("Error using Ollama for question answering after {} attempts, falling back to mock",
-                            maxRetries, e);
-                    return this.answerWithMockAi(question, currentExpression);
                 }
             }
         }
 
-        // Fallback if all retries failed
+        // Fallback after all retries failed
+        LOG.error("Error using Ollama for question answering after {} attempts, falling back to mock",
+                maxRetries, lastException);
         return this.answerWithMockAi(question, currentExpression);
     }
 
@@ -703,7 +711,8 @@ public class AiTutorService {
         }
 
         // Retry logic for incomplete or failed responses
-        final int maxRetries = 2;
+        final int maxRetries = 3;
+        Exception lastException = null;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 // Build the prompt with context
@@ -724,8 +733,9 @@ public class AiTutorService {
                 }
 
             } catch (final Exception e) {
+                lastException = e;
+                LOG.warn("Error calling Ollama (attempt {}/{})", attempt, maxRetries, e);
                 if (attempt < maxRetries) {
-                    LOG.warn("Error calling Ollama (attempt {}/{}), retrying...", attempt, maxRetries, e);
                     try {
                         Thread.sleep(1000); // Brief pause before retry
                     } catch (final InterruptedException ie) {
@@ -733,14 +743,12 @@ public class AiTutorService {
                         LOG.error("Retry interrupted", ie);
                         break;
                     }
-                } else {
-                    LOG.error("Error using Ollama after {} attempts, falling back to mock", maxRetries, e);
-                    return this.analyzeWithMockAi(event);
                 }
             }
         }
 
-        // Fallback if all retries failed
+        // Fallback after all retries failed
+        LOG.error("Error using Ollama after {} attempts, falling back to mock", maxRetries, lastException);
         return this.analyzeWithMockAi(event);
     }
 
