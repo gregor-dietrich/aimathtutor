@@ -30,7 +30,7 @@ public class OllamaService {
     @Inject
     AiConfigService aiConfigService;
 
-    private Client client;
+    private volatile Client client;
 
     /**
      * Get or create the JAX-RS client with thread-safe lazy initialization.
