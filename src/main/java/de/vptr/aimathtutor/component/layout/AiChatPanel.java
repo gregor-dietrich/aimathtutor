@@ -32,6 +32,7 @@ public class AiChatPanel extends VerticalLayout {
     private String userAvatarEmoji = "🧒";
     private String tutorAvatarEmoji = "🧑‍🏫";
     private HorizontalLayout currentTypingIndicator; // Track current typing indicator
+    private int pendingRequestsCount = 0; // Track number of pending AI requests
 
     /**
      * Callback interface for handling message sends.
@@ -230,12 +231,16 @@ public class AiChatPanel extends VerticalLayout {
     /**
      * Shows a typing indicator (simple version that doesn't require tracking the
      * indicator).
+     * Increments the pending requests counter and only creates indicator if none
+     * exists.
      */
     public void showTypingIndicator() {
-        // Remove any existing typing indicator first
-        this.hideTypingIndicator();
+        this.pendingRequestsCount++;
 
-        this.currentTypingIndicator = this.createTypingIndicator();
+        // Only create indicator if one doesn't already exist
+        if (this.currentTypingIndicator == null) {
+            this.currentTypingIndicator = this.createTypingIndicator();
+        }
     }
 
     /**
@@ -288,18 +293,28 @@ public class AiChatPanel extends VerticalLayout {
 
     /**
      * Hides the typing indicator (simple version that uses tracked indicator).
+     * Decrements the pending requests counter and only removes indicator when
+     * counter reaches zero.
      */
     public void hideTypingIndicator() {
-        final HorizontalLayout indicatorToRemove = this.currentTypingIndicator;
-        if (indicatorToRemove != null) {
-            UI.getCurrent().access(() -> {
-                try {
-                    this.chatHistoryPanel.remove(indicatorToRemove);
-                } catch (final Exception e) {
-                    // Indicator might have already been removed, ignore
-                }
-                this.currentTypingIndicator = null;
-            });
+        // Decrement counter (ensure it doesn't go negative)
+        if (this.pendingRequestsCount > 0) {
+            this.pendingRequestsCount--;
+        }
+
+        // Only remove indicator when all pending requests are complete
+        if (this.pendingRequestsCount == 0) {
+            final HorizontalLayout indicatorToRemove = this.currentTypingIndicator;
+            if (indicatorToRemove != null) {
+                UI.getCurrent().access(() -> {
+                    try {
+                        this.chatHistoryPanel.remove(indicatorToRemove);
+                    } catch (final Exception e) {
+                        // Indicator might have already been removed, ignore
+                    }
+                    this.currentTypingIndicator = null;
+                });
+            }
         }
     }
 
