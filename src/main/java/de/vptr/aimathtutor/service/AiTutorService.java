@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,9 @@ public class AiTutorService {
 
     @Inject
     AiInteractionRepository aiInteractionRepository;
+
+    @Inject
+    ManagedExecutor managedExecutor;
 
     /**
      * Analyzes a student's math action and provides AI feedback.
@@ -248,6 +252,7 @@ public class AiTutorService {
     /**
      * Async version of answerQuestion that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
+     * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      *
      * @param question          The student's question
      * @param currentExpression The current math expression
@@ -257,13 +262,14 @@ public class AiTutorService {
      */
     public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
             final String currentExpression, final String sessionId, final ConversationContextDto context) {
-        return CompletableFuture
-                .supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId, context));
+        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId, context),
+                this.managedExecutor);
     }
 
     /**
      * Async version of analyzeMathAction that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
+     * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      *
      * @param event   The Graspable Math event
      * @param context Conversation context
@@ -272,7 +278,8 @@ public class AiTutorService {
      */
     public CompletableFuture<AiFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
             final ConversationContextDto context) {
-        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event, context));
+        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event, context),
+                this.managedExecutor);
     }
 
     /**
