@@ -103,6 +103,10 @@ else
 fi
 
 echo ""
+read -p "Push image to Docker Hub? [Y/n]: " PUSH_IMAGE
+PUSH_IMAGE="${PUSH_IMAGE:-y}"
+
+echo ""
 echo "Downloading: $SELECTED_ASSET"
 
 # Construct download URL and download the asset
@@ -113,5 +117,13 @@ curl -fsSL "$DOWNLOAD_URL" | tar zx -C payload
 echo ""
 echo "Download complete: $SELECTED_ASSET"
 
-IMAGE_TAG="${SELECTED_TAG#v}"
-docker build -t "gregordietrich/ollama:$IMAGE_TAG" -f "$DOCKERFILE" .
+IMAGE_TAG="gregordietrich/ollama:${SELECTED_TAG#v}"
+docker build -t "$IMAGE_TAG" -f "$DOCKERFILE" .
+
+if [[ "$PUSH_IMAGE" =~ ^[Yy]$ ]]; then
+    docker login
+    docker push "$IMAGE_TAG"
+    echo "Image pushed: $IMAGE_TAG"
+else
+    echo "Skipping push. Image available locally: $IMAGE_TAG"
+fi
