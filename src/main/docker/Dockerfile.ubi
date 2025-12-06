@@ -80,7 +80,13 @@
 ###
 FROM redhat/ubi9-minimal:9.7
 
+ARG JAVA_PACKAGE=java-21-openjdk-headless
 ENV LANGUAGE='en_US:en'
+
+# Install Java runtime and wget (for healthcheck compatibility with docker-compose.yml)
+RUN microdnf install -y ${JAVA_PACKAGE} wget \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum
 
 # We make four distinct layers so if there are application changes the library layers can be re-used
 COPY --chown=185 target/quarkus-app/lib/ /deployments/lib/
