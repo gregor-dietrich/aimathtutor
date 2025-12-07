@@ -3,7 +3,7 @@
 . "$(dirname "$0")"/lib/get_dir.sh
 . "$DIR/lib/get_maven.sh"
 
-TAG="gregordietrich/aimathtutor:2.1.0"
+TAG="gregordietrich/aimathtutor:2.1.1"
 DOCKERFILE_ALPINE="src/main/docker/Dockerfile.alpine"
 DOCKERFILE_UBI="src/main/docker/Dockerfile.ubi"
 PLATFORMS="linux/amd64,linux/arm64"
