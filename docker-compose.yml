@@ -1,6 +1,6 @@
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:2.1.0
+    image: gregordietrich/aimathtutor:2.1.1
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.ubi
