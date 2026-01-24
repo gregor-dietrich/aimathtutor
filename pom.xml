@@ -29,21 +29,11 @@
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.2</spotbugs-plugin.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
-        <testcontainers.version>2.0.3</testcontainers.version>
         <vaadin.version>25.0.3</vaadin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Testcontainers BOM - Must be BEFORE Quarkus BOM to override -->
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers-bom</artifactId>
-                <version>${testcontainers.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <!-- Quarkus -->
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
@@ -159,6 +149,13 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+        </dependency>
+
+        <!-- Override vertx-core to fix CVE (static handler cache vulnerability) -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+            <version>[4.5.24,4.6.0)</version>
         </dependency>
     </dependencies>
 
