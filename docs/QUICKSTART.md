@@ -208,8 +208,8 @@ services:
 
   ollama:
     # Choose image based on your hardware:
-    image: ollama/ollama:0.15.2        # CPU or NVIDIA GPU
-    # image: ollama/ollama:0.15.2rocm  # AMD GPU (ROCm)
+    image: gregordietrich/ollama:0.15.2        # CPU or NVIDIA GPU
+    # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama

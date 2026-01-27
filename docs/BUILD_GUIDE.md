@@ -56,7 +56,7 @@ The project includes an Ollama service in `docker-compose.yml` that you can enab
    ```yml
    ollama:
      # Choose image based on your GPU:
-     image: ollama/ollama:0.15.2 # CPU or NVIDIA GPU
+     image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
      # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
      restart: unless-stopped
      volumes:
