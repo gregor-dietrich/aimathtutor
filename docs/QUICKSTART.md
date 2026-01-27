@@ -56,7 +56,7 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
   -e GEMINI_API_KEY=your_gemini_api_key \
-  gregordietrich/aimathtutor:2.1.2
+  gregordietrich/aimathtutor:2.1.3
 ```
 
 > **_NOTE:_** Model names, temperatures, and other AI provider settings (other than API keys) must be configured after startup via the **Admin Settings UI** at `/admin/config` after logging in with admin credentials.
@@ -93,7 +93,7 @@ PGADMIN_PASSWORD=safe_password_here
 ```yml
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:2.1.2
+    image: gregordietrich/aimathtutor:2.1.3
     restart: unless-stopped
     env_file:
       - .env
@@ -148,7 +148,7 @@ services:
       start_period: 5s
 
   pgadmin:
-    image: dpage/pgadmin4:9.10.0
+    image: dpage/pgadmin4:9.11.0
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
@@ -208,8 +208,8 @@ services:
 
   ollama:
     # Choose image based on your hardware:
-    image: ollama/ollama:0.13.0        # CPU or NVIDIA GPU
-    # image: ollama/ollama:0.13.0-rocm  # AMD GPU (ROCm)
+    image: gregordietrich/ollama:0.15.2        # CPU or NVIDIA GPU
+    # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
@@ -225,7 +225,7 @@ services:
     #           count: all
     #           capabilities: [gpu]
     
-    # Optional: Enable AMD GPU support (use with 0.13.0-rocm image)
+    # Optional: Enable AMD GPU support (use with 0.15.2-rocm image)
     # Requires: AMD GPU (RX 6000/7000 series or newer) with ROCm drivers
     # devices:
     #   - /dev/kfd
@@ -278,7 +278,7 @@ docker compose exec ollama ollama list
   - NVIDIA drivers installed on host
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
   - Significantly faster: 1-5 seconds per response
-- **AMD GPU Mode (ROCm):** Change image to `ollama/ollama:0.13.0-rocm` and uncomment AMD device mappings. Requires:
+- **AMD GPU Mode (ROCm):** Change image to `ollama/ollama:0.15.2-rocm` and uncomment AMD device mappings. Requires:
   - AMD GPU (RX 6000/7000 series or newer)
   - ROCm drivers installed on host
   - Similar performance to NVIDIA: 1-5 seconds per response
@@ -406,7 +406,7 @@ _NVIDIA:_
 
 _AMD (ROCm):_
 
-- Ensure you're using the `ollama/ollama:0.13.0-rocm` image
+- Ensure you're using the `ollama/ollama:0.15.2-rocm` image
 - Install ROCm drivers: [AMD ROCm Installation](https://rocm.docs.amd.com/en/latest/deploy/linux/quick_start.html)
 - Verify host GPU: `rocm-smi`
 - Check GPU in container: `docker compose exec ollama rocm-smi`

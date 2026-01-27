@@ -6,11 +6,11 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 ## ⚠️ Requirements
 
-| Name | Build | Run | Download |
-|----------|----------|----------|----------|
-| JDK 21 | ✅ | ❌ | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=21) |
-| Maven | ✅ | ❌ | [Apache](https://maven.apache.org/download.cgi) |
-| Docker | ❌ | ✅ | (see below) |
+| Name   | Build | Run | Download                                                                      |
+| ------ | ----- | --- | ----------------------------------------------------------------------------- |
+| JDK 21 | ✅    | ❌  | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=21) |
+| Maven  | ✅    | ❌  | [Apache](https://maven.apache.org/download.cgi)                               |
+| Docker | ❌    | ✅  | (see below)                                                                   |
 
 For Docker, you have 2 options:
 
@@ -56,8 +56,8 @@ The project includes an Ollama service in `docker-compose.yml` that you can enab
    ```yml
    ollama:
      # Choose image based on your GPU:
-     image: ollama/ollama:0.13.0        # CPU or NVIDIA GPU
-     # image: ollama/ollama:0.13.0-rocm  # AMD GPU (ROCm)
+     image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
+     # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
      restart: unless-stopped
      volumes:
        - ollama_data:/root/.ollama
@@ -70,7 +70,7 @@ The project includes an Ollama service in `docker-compose.yml` that you can enab
      #           count: all
      #           capabilities: [gpu]
      # For AMD GPU support:
-     # 1. Use image: ollama/ollama:0.13.0-rocm above
+     # 1. Use image: ollama/ollama:0.15.2-rocm above
      # 2. Uncomment below:
      # devices:
      #   - /dev/kfd
@@ -90,7 +90,7 @@ The project includes an Ollama service in `docker-compose.yml` that you can enab
    ```yml
    volumes:
      aimathtutor_logs:
-     ollama_data:  # Uncomment this line
+     ollama_data: # Uncomment this line
      pgadmin_data:
      postgres_data:
    ```
@@ -113,7 +113,7 @@ The project includes an Ollama service in `docker-compose.yml` that you can enab
 > **GPU Support:** By default, Ollama runs on CPU. For GPU acceleration:
 >
 > - **NVIDIA:** Uncomment the `deploy` section. Requires NVIDIA GPU, drivers, and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-> - **AMD:** Use `ollama/ollama:0.13.0-rocm` image and uncomment AMD device mappings. Requires AMD GPU with ROCm support (RX 6000/7000 series or newer)
+> - **AMD:** Use `ollama/ollama:0.15.2-rocm` image and uncomment AMD device mappings. Requires AMD GPU with ROCm support (RX 6000/7000 series or newer)
 
 #### Option 2: Host Installation (Development)
 

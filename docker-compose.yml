@@ -1,6 +1,6 @@
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:2.1.2
+    image: gregordietrich/aimathtutor:2.1.3
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.ubi
@@ -51,29 +51,30 @@ services:
       retries: 3
       start_period: 5s
 
-  pgadmin:
-    image: dpage/pgadmin4:9.10.0
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
-    ports:
-      - "42069:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://pgadmin/ || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # Uncomment if you want to use pgAdmin:
+  # pgadmin:
+  #   image: dpage/pgadmin4:9.11.0
+  #   restart: unless-stopped
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
+  #   ports:
+  #     - "42069:80"
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://pgadmin/ || exit 1"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
   # Uncomment if you want to use Ollama:
   # ollama:
-  #   image: gregordietrich/ollama:0.13.0
+  #   image: gregordietrich/ollama:0.15.2
   #   restart: unless-stopped
   #   volumes:
   #     - ollama_data:/root/.ollama
@@ -87,5 +88,5 @@ services:
 volumes:
   aimathtutor_logs:
   # ollama_data: # Uncomment if you want to use Ollama
-  pgadmin_data:
+  # pgadmin_data: # Uncomment if you want to use pgAdmin
   postgres_data:
