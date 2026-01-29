@@ -9,6 +9,8 @@ cd "$DIR/../.."
 
 make check
 
-${MVN_CMD} clean install -DskipTests
+REVISION=${REVISION:-1.0.0-SNAPSHOT}
+
+${MVN_CMD} clean install -DskipTests -Drevision=${REVISION}
 
 cd - > /dev/null

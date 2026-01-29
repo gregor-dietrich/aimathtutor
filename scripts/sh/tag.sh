@@ -9,7 +9,7 @@ cd "$DIR/../.."
 git fetch
 
 LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
-LATEST_TAG=${LATEST_TAG:-2.1.3}
+LATEST_TAG=${LATEST_TAG:-1.0.0-SNAPSHOT}
 
 if [[ "$LATEST_TAG" =~ ^([0-9]+(\.[0-9]+)*)(.*)$ ]]; then
     BASE="${BASH_REMATCH[1]}"
@@ -34,11 +34,15 @@ else
     LATEST_VERSION="$LATEST_TAG"
 fi
 
-read -p "Enter the new tag [${LATEST_VERSION}]: " VERSION
-VERSION=${VERSION:-$LATEST_VERSION}
-if [[ -z "$VERSION" ]]; then
-    echo "Tag is required. Exiting."
-    exit 1
+if [[ -z "$REVISION" ]]; then
+    read -p "Enter the new tag [${LATEST_VERSION}]: " VERSION
+    VERSION=${VERSION:-$LATEST_VERSION}
+    if [[ -z "$VERSION" ]]; then
+        echo "Tag is required. Exiting."
+        exit 1
+    fi
+else
+    VERSION=${REVISION}
 fi
 
 echo "Creating and pushing tag ${VERSION}..."
