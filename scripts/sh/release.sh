@@ -1,9 +1,8 @@
 #!/bin/bash
 
-. "$(dirname "$0")"/lib/get_dir.sh
+IMAGE_NAME=gregordietrich/aimathtutor
 
-# Allow tag to be set via first argument or TAG env var, fallback to default
-TAG="${1:-${TAG:-gregordietrich/aimathtutor:2.1.3}}"
+. "$(dirname "$0")"/lib/get_dir.sh
 
 prompt_yes_no() {
     local question="$1"
@@ -39,6 +38,11 @@ prompt_yes_no() {
 
 set -e
 
+read -p "Enter the new tag [1.0.0-SNAPSHOT]: " REVISION
+REVISION=${REVISION:-1.0.0-SNAPSHOT}
+TAG="${IMAGE_NAME}:${REVISION}"
+export REVISION=${REVISION}
+
 RUN_TESTS=false
 if prompt_yes_no "Do you want to run tests" n; then
     RUN_TESTS=true
@@ -64,8 +68,16 @@ make tag
 
 docker login
 
-docker push "$TAG"
 docker push "$TAG"-alpine
 docker push "$TAG"-ubi
+docker push "$TAG"
+
+docker tag "$TAG"-alpine "$IMAGE_NAME":alpine
+docker tag "$TAG"-ubi "$IMAGE_NAME":ubi
+docker tag "$TAG" "$IMAGE_NAME":latest
+
+docker push "$IMAGE_NAME":alpine
+docker push "$IMAGE_NAME":ubi
+docker push "$IMAGE_NAME":latest
 
 cd - > /dev/null

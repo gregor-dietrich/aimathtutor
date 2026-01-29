@@ -7,6 +7,8 @@ set -e
 
 cd "$DIR/../.."
 
-${MVN_CMD} test
+REVISION=${REVISION:-1.0.0-SNAPSHOT}
+
+${MVN_CMD} test -Drevision=${REVISION}
 
 cd - > /dev/null
