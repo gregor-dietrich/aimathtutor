@@ -7,7 +7,9 @@ set -e
 
 cd "$DIR/../.."
 
-${MVN_CMD} clean
+REVISION=${REVISION:-1.0.0-SNAPSHOT}
+
+${MVN_CMD} clean -Drevision=${REVISION}
 
 rm -rf logs
 rm -rf node_modules
