@@ -11,12 +11,18 @@ set -e
 
 cd "$DIR/../.."
 
+# Run environment check first
+"$DIR/check.sh"
+
 if [[ -z "$REVISION" ]]; then
     read -p "Enter the new tag [1.0.0-SNAPSHOT]: " REVISION
     REVISION=${REVISION:-1.0.0-SNAPSHOT}
 fi
 
 TAG="gregordietrich/aimathtutor:${REVISION}"
+
+# Clean before building to avoid corrupted workspace files
+${MVN_CMD} clean -Drevision=${REVISION}
 
 ${MVN_CMD} package -DskipTests -Pproduction -Drevision=${REVISION}
 
