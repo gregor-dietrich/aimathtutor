@@ -31,7 +31,7 @@
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.2</spotbugs-plugin.version>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
-        <vaadin.version>25.0.4</vaadin.version>
+        <vaadin.version>25.0.5</vaadin.version>
     </properties>
 
     <dependencyManagement>
