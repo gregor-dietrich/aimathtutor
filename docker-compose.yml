@@ -33,7 +33,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:18.1-alpine3.23
+    image: postgres:18.2-alpine3.23
     restart: unless-stopped
     command: ["postgres", "-c", "max_connections=200"]
     environment:
@@ -53,7 +53,7 @@ services:
 
   # Uncomment if you want to use pgAdmin:
   # pgadmin:
-  #   image: dpage/pgadmin4:9.11.0
+  #   image: dpage/pgadmin4:9.12.0
   #   restart: unless-stopped
   #   environment:
   #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
