@@ -2,6 +2,12 @@
 
 set -e
 
+# Ensure zstd is installed for tar decompression
+if ! command -v zstd &> /dev/null; then
+    echo "Installing zstd..."
+    sudo apt update && sudo apt install -y zstd
+fi
+
 DOCKERFILE="Dockerfile"
 
 # Fetch the 5 latest tags from Ollama releases
@@ -57,7 +63,7 @@ echo "Using tag: $SELECTED_TAG"
 echo ""
 echo "Fetching available Linux assets for $SELECTED_TAG..."
 ASSETS=$(curl -s "https://api.github.com/repos/ollama/ollama/releases/tags/$SELECTED_TAG" | \
-    grep -oP '"name":\s*"\K[^"]+' | grep -E '.*-linux-.*\.tgz$')
+    grep -oP '"name":\s*"\K[^"]+' | grep -E '.*-linux-.*\.(tgz|tar\.zst)$' || true)
 
 if [ -z "$ASSETS" ]; then
     echo "Error: No Linux .tgz assets found for release $SELECTED_TAG"
@@ -112,7 +118,13 @@ echo "Downloading: $SELECTED_ASSET"
 # Construct download URL and download the asset
 DOWNLOAD_URL="https://github.com/ollama/ollama/releases/download/$SELECTED_TAG/$SELECTED_ASSET"
 rm -rf payload && mkdir payload
-curl -fsSL "$DOWNLOAD_URL" | tar zx -C payload
+
+# Handle both .tgz and .tar.zst formats
+if [[ "$SELECTED_ASSET" == *.tar.zst ]]; then
+    curl -fsSL "$DOWNLOAD_URL" | tar -I zstd -x -C payload
+else
+    curl -fsSL "$DOWNLOAD_URL" | tar zx -C payload
+fi
 
 echo ""
 echo "Download complete: $SELECTED_ASSET"
