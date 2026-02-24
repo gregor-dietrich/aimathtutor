@@ -30,8 +30,13 @@
         <quarkus.platform.version>3.27.2</quarkus.platform.version>
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.2</spotbugs-plugin.version>
-        <surefire-plugin.version>3.5.4</surefire-plugin.version>
-        <vaadin.version>25.0.5</vaadin.version>
+        <surefire-plugin.version>3.5.5</surefire-plugin.version>
+        <vaadin.version>25.0.6</vaadin.version>
+
+        <!-- Security overrides -->
+        <jackson2.version>2.21.1</jackson2.version>
+        <jackson2.annotations.version>2.21</jackson2.annotations.version>
+        <jackson3.version>3.1.0</jackson3.version>
     </properties>
 
     <dependencyManagement>
@@ -52,6 +57,35 @@
                 <version>${vaadin.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- Jackson 2.x override (CVE: async parser DoS) -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson2.annotations.version}</version>
+            </dependency>
+
+            <!-- Jackson 3.x override (CVE: async parser DoS) -->
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson3.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
