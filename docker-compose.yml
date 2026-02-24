@@ -1,9 +1,9 @@
 services:
   aimathtutor:
-    image: gregordietrich/aimathtutor:${REVISION:-latest}
+    image: gregordietrich/aimathtutor:2.1.6-ubuntu
     build:
       context: .
-      dockerfile: src/main/docker/Dockerfile.ubi
+      dockerfile: src/main/docker/Dockerfile.ubuntu
     restart: unless-stopped
     env_file:
       - .env

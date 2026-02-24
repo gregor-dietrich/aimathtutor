@@ -70,14 +70,17 @@ docker login
 
 docker push "$TAG"-alpine
 docker push "$TAG"-ubi
+docker push "$TAG"-ubuntu
 docker push "$TAG"
 
 docker tag "$TAG"-alpine "$IMAGE_NAME":alpine
 docker tag "$TAG"-ubi "$IMAGE_NAME":ubi
+docker tag "$TAG"-ubuntu "$IMAGE_NAME":ubuntu
 docker tag "$TAG" "$IMAGE_NAME":latest
 
 docker push "$IMAGE_NAME":alpine
 docker push "$IMAGE_NAME":ubi
+docker push "$IMAGE_NAME":ubuntu
 docker push "$IMAGE_NAME":latest
 
 cd - > /dev/null
