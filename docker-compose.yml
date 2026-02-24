@@ -3,7 +3,7 @@ services:
     image: gregordietrich/aimathtutor:${REVISION:-latest}
     build:
       context: .
-      dockerfile: src/main/docker/Dockerfile.ubi
+      dockerfile: src/main/docker/Dockerfile.ubuntu
     restart: unless-stopped
     env_file:
       - .env
