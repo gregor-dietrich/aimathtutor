@@ -33,7 +33,8 @@ if docker buildx inspect default >/dev/null 2>&1; then
 	echo "Using buildx 'default' builder to build image. If you want to push multi-arch images, add --push."
 
 	# Register QEMU binfmt handlers to enable cross-platform emulation (required for linux/arm64 on amd64 hosts)
-	if docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null 2>&1; then
+	# Image is pinned to a specific digest to prevent supply chain attacks from a mutable tag.
+	if docker run --privileged --rm tonistiigi/binfmt:qemu-v10.2.1@sha256:d3b963f787999e6c0219a48dba02978769286ff61a5f4d26245cb6a6e5567ea3 --install all >/dev/null 2>&1; then
 		echo "QEMU binfmt handlers installed for multi-platform builds."
 	else
 		echo "Warning: failed to install QEMU binfmt handlers; linux/arm64 builds may fail on this host."
