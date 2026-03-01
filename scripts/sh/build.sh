@@ -32,6 +32,13 @@ ${MVN_CMD} package -DskipTests -Pproduction -Drevision=${REVISION}
 if docker buildx inspect default >/dev/null 2>&1; then
 	echo "Using buildx 'default' builder to build image. If you want to push multi-arch images, add --push."
 
+	# Register QEMU binfmt handlers to enable cross-platform emulation (required for linux/arm64 on amd64 hosts)
+	if docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null 2>&1; then
+		echo "QEMU binfmt handlers installed for multi-platform builds."
+	else
+		echo "Warning: failed to install QEMU binfmt handlers; linux/arm64 builds may fail on this host."
+	fi
+
     # Alpine-based image
 	if docker buildx build --builder default --platform "$PLATFORMS" -t "$TAG"-alpine -f "$DOCKERFILE_ALPINE" .; then
 		echo "buildx multi-platform build finished (results kept in buildx cache). Use --push to publish or --load for a single-platform image."
