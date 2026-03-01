@@ -143,6 +143,6 @@
     "@vaadin/upload": "25.0.4",
     "@vaadin/vertical-layout": "25.0.4",
     "@vaadin/virtual-list": "25.0.4",
-    "serialize-javascript": ">=7.0.3"
+    "serialize-javascript": "7.0.3"
   }
 }
