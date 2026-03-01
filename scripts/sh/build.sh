@@ -32,12 +32,35 @@ ${MVN_CMD} package -DskipTests -Pproduction -Drevision=${REVISION}
 if docker buildx inspect default >/dev/null 2>&1; then
 	echo "Using buildx 'default' builder to build image. If you want to push multi-arch images, add --push."
 
-	# Register QEMU binfmt handlers to enable cross-platform emulation (required for linux/arm64 on amd64 hosts)
-	# Image is pinned to a specific digest to prevent supply chain attacks from a mutable tag.
-	if docker run --privileged --rm tonistiigi/binfmt:qemu-v10.2.1@sha256:d3b963f787999e6c0219a48dba02978769286ff61a5f4d26245cb6a6e5567ea3 --install all >/dev/null 2>&1; then
-		echo "QEMU binfmt handlers installed for multi-platform builds."
+	# Register QEMU binfmt handlers only for non-native target platforms,
+	# and only if not already enabled, to minimize privileged side effects.
+	_native_arch="$(uname -m)"
+	_binfmt_install_targets=""
+	for _platform in ${PLATFORMS//,/ }; do
+		_arch="${_platform#linux/}"
+		case "$_arch" in
+			amd64) _native_equiv="x86_64";  _qemu_entry="qemu-x86_64"  ;;
+			arm64) _native_equiv="aarch64"; _qemu_entry="qemu-aarch64" ;;
+			*)     continue ;;
+		esac
+		[[ "$_native_arch" == "$_native_equiv" ]] && continue
+		grep -q "enabled" "/proc/sys/fs/binfmt_misc/${_qemu_entry}" 2>/dev/null && continue
+		_binfmt_install_targets="${_binfmt_install_targets} ${_arch}"
+	done
+	_binfmt_install_targets="${_binfmt_install_targets# }"
+
+	if [[ -n "$_binfmt_install_targets" ]]; then
+		echo "Registering QEMU binfmt handlers for: ${_binfmt_install_targets}"
+		# Image is pinned to a specific digest to prevent supply chain attacks from a mutable tag.
+		if docker run --privileged --rm \
+			tonistiigi/binfmt:qemu-v10.2.1@sha256:d3b963f787999e6c0219a48dba02978769286ff61a5f4d26245cb6a6e5567ea3 \
+			--install "${_binfmt_install_targets}" >/dev/null 2>&1; then
+			echo "QEMU binfmt handlers installed."
+		else
+			echo "Warning: failed to install QEMU binfmt handlers; ${_binfmt_install_targets} builds may fail on this host."
+		fi
 	else
-		echo "Warning: failed to install QEMU binfmt handlers; linux/arm64 builds may fail on this host."
+		echo "QEMU binfmt handlers already registered; skipping installation."
 	fi
 
     # Alpine-based image
