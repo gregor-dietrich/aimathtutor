@@ -8,7 +8,7 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 | Name   | Build | Run | Download                                                                      |
 | ------ | ----- | --- | ----------------------------------------------------------------------------- |
-| JDK 21 | ✅    | ❌  | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=21) |
+| JDK 25 | ✅    | ❌  | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=25) |
 | Maven  | ✅    | ❌  | [Apache](https://maven.apache.org/download.cgi)                               |
 | Docker | ❌    | ✅  | (see below)                                                                   |
 

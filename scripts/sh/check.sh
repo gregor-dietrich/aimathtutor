@@ -3,7 +3,7 @@
 . "$(dirname "$0")"/lib/get_dir.sh
 . "$DIR/lib/get_maven.sh"
 
-REQUIRED_JDK_VERSION="21"
+REQUIRED_JDK_VERSION="25"
 REQUIRED_MAVEN_VERSION="3.9.9"
 
 set -e
