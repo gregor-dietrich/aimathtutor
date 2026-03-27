@@ -26,6 +26,7 @@
 
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
+        <dependency-check-plugin.version>12.2.0</dependency-check-plugin.version>
         <license-plugin.version>2.7.1</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
         <quarkus.platform.version>3.33.1</quarkus.platform.version>
@@ -192,6 +193,17 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${dependency-check-plugin.version}</version>
+                <configuration>
+                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <suppressionFiles>
+                        <suppressionFile>dependency-check-suppression.xml</suppressionFile>
+                    </suppressionFiles>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>

@@ -85,7 +85,7 @@
     "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
     "@vaadin/aura": "$@vaadin/aura",
     "@vaadin/router": "2.0.1",
-    "serialize-javascript": "7.0.3",
+    "serialize-javascript": "7.0.5",
     "@vaadin/a11y-base": "25.1.0",
     "@vaadin/accordion": "25.1.0",
     "@vaadin/app-layout": "25.1.0",
