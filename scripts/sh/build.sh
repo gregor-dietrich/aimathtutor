@@ -4,7 +4,6 @@
 . "$DIR/lib/get_maven.sh"
 
 DOCKERFILE_ALPINE="src/main/docker/Dockerfile.alpine"
-DOCKERFILE_UBI="src/main/docker/Dockerfile.ubi"
 DOCKERFILE_UBUNTU="src/main/docker/Dockerfile.ubuntu"
 PLATFORMS="linux/amd64,linux/arm64"
 
@@ -75,18 +74,6 @@ if docker buildx inspect default >/dev/null 2>&1; then
 		fi
 	fi
 
-    # UBI-based image
-    if docker buildx build --builder default --platform "$PLATFORMS" -t "$TAG"-ubi -f "$DOCKERFILE_UBI" .; then
-		echo "buildx multi-platform build finished (results kept in buildx cache). Use --push to publish or --load for a single-platform image."
-	else
-		echo "buildx multi-platform build failed; attempting single-platform local build with --load for current arch."
-		# Try loading a single-platform image into local docker (amd64). If that fails, fallback to plain docker build.
-		if ! docker buildx build --load --platform linux/amd64 -t "$TAG"-ubi -f "$DOCKERFILE_UBI" .; then
-			echo "--load build failed; falling back to plain 'docker build' (single-platform)."
-			docker build -t "$TAG"-ubi -f "$DOCKERFILE_UBI" .
-		fi
-	fi
-
     # Ubuntu-based image
     if docker buildx build --builder default --platform "$PLATFORMS" -t "$TAG"-ubuntu -f "$DOCKERFILE_UBUNTU" .; then
 		echo "buildx multi-platform build finished (results kept in buildx cache). Use --push to publish or --load for a single-platform image."
@@ -101,7 +88,6 @@ if docker buildx inspect default >/dev/null 2>&1; then
 else
 	echo "buildx 'default' builder not available; performing plain docker build (single-platform)."
 	docker build -t "$TAG"-alpine -f "$DOCKERFILE_ALPINE" .
-	docker build -t "$TAG"-ubi -f "$DOCKERFILE_UBI" .
 	docker build -t "$TAG"-ubuntu -f "$DOCKERFILE_UBUNTU" .
 fi
 
