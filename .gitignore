@@ -2,6 +2,7 @@
 tsconfig.json
 types.d.ts
 vite.config.ts
+src/main/bundles/*.bundle
 
 # gm-api
 docs/gm-api
