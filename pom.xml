@@ -6,6 +6,7 @@
     <groupId>de.vptr</groupId>
     <artifactId>aimathtutor</artifactId>
     <version>${revision}</version>
+    <packaging>quarkus</packaging>
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
