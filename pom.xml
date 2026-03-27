@@ -6,11 +6,12 @@
     <groupId>de.vptr</groupId>
     <artifactId>aimathtutor</artifactId>
     <version>${revision}</version>
+    <packaging>quarkus</packaging>
 
     <properties>
         <revision>1.0.0-SNAPSHOT</revision>
 
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -27,16 +28,11 @@
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <license-plugin.version>2.7.1</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
-        <quarkus.platform.version>3.27.2</quarkus.platform.version>
+        <quarkus.platform.version>3.33.1</quarkus.platform.version>
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.2</spotbugs-plugin.version>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
-        <vaadin.version>25.0.6</vaadin.version>
-
-        <!-- Security overrides -->
-        <jackson2.version>2.21.1</jackson2.version>
-        <jackson2.annotations.version>2.21</jackson2.annotations.version>
-        <jackson3.version>3.1.0</jackson3.version>
+        <vaadin.version>25.1.0</vaadin.version>
     </properties>
 
     <dependencyManagement>
@@ -57,35 +53,6 @@
                 <version>${vaadin.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!-- Jackson 2.x override (CVE: async parser DoS) -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson2.annotations.version}</version>
-            </dependency>
-
-            <!-- Jackson 3.x override (CVE: async parser DoS) -->
-            <dependency>
-                <groupId>tools.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>tools.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson3.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -156,14 +123,14 @@
         <!-- Quarkus Test Framework for unit and integration tests -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
         </dependency>
 
         <!-- Mockito for mocking dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5-mockito</artifactId>
+            <artifactId>quarkus-junit-mockito</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -185,13 +152,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
-        </dependency>
-
-        <!-- Override vertx-core to fix CVE-2026-1002 -->
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-core</artifactId>
-            <version>[4.5.24,4.6.0)</version>
         </dependency>
     </dependencies>
 
@@ -275,16 +235,6 @@
                     <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED
                         -XX:+EnableDynamicAgentLoading</jvmArgs>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>generate-code</goal>
-                            <goal>generate-code-tests</goal>
-                            <goal>native-image-agent</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -297,11 +247,11 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
                 <configuration>
+                    <argLine>@{argLine}</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
-                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
             <plugin>

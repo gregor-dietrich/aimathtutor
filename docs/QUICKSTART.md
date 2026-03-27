@@ -125,7 +125,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:18.2-alpine3.23
+    image: postgres:18.3-alpine3.23
     restart: unless-stopped
     command: ["postgres", "-c", "max_connections=200"]
     environment:

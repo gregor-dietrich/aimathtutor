@@ -18,4 +18,4 @@ include:
   - component: $CI_SERVER_FQDN/components/secret-detection/secret-detection@main
   - component: $CI_SERVER_FQDN/to-be-continuous/maven/gitlab-ci-maven@4.3.2
     inputs:
-      image: docker.io/library/maven:3.9-eclipse-temurin-21-alpine
+      image: docker.io/library/maven:3.9-eclipse-temurin-25-alpine
