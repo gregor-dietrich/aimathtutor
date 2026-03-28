@@ -104,3 +104,6 @@ ENV JAVA_OPTS_APPEND="--add-opens java.base/java.lang=ALL-UNNAMED"
 ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
 CMD []
 
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 --start-period=10s \
+    CMD curl --fail --silent http://localhost:9001/q/health/ready || exit 1
+

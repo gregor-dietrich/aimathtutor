@@ -22,12 +22,6 @@ services:
       - "80:9001"
     volumes:
       - aimathtutor_logs:/deployments/logs
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9001/q/health/ready || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
@@ -42,7 +36,7 @@ services:
       POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
       POSTGRES_PORT: 5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/18/docker
       - ./src/main/resources/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}"]
