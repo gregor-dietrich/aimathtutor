@@ -92,13 +92,13 @@ PGADMIN_PASSWORD=safe_password_here
 
 ```yml
 services:
-  aimathtutor:
+  app:
     image: gregordietrich/aimathtutor:latest
     restart: unless-stopped
     env_file:
       - .env
     environment:
-      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/${SQL_DATABASE:-aimathtutor}
+      quarkus.datasource.jdbc.url: jdbc:postgresql://db:5432/${SQL_DATABASE:-aimathtutor}
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
@@ -110,21 +110,11 @@ services:
       - "80:9001/tcp"
     volumes:
       - aimathtutor_logs:/deployments/logs
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://aimathtutor:9001 || exit 1",
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
 
-  postgres:
+  db:
     image: postgres:18.3-alpine3.23
     restart: unless-stopped
     command: ["postgres", "-c", "max_connections=200"]
@@ -134,7 +124,7 @@ services:
       POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
       POSTGRES_PORT: 5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/18/docker
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test:
@@ -164,7 +154,7 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
 
 volumes:
@@ -208,12 +198,12 @@ services:
 
   ollama:
     # Choose image based on your hardware:
-    image: gregordietrich/ollama:0.15.2        # CPU or NVIDIA GPU
+    image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
     # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
-    
+
     # Optional: Enable NVIDIA GPU support
     # Requires: NVIDIA GPU, drivers, and NVIDIA Container Toolkit
     # See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
@@ -224,7 +214,7 @@ services:
     #         - driver: nvidia
     #           count: all
     #           capabilities: [gpu]
-    
+
     # Optional: Enable AMD GPU support (use with 0.15.2-rocm image)
     # Requires: AMD GPU (RX 6000/7000 series or newer) with ROCm drivers
     # devices:
@@ -232,7 +222,7 @@ services:
     #   - /dev/dri
     # group_add:
     #   - video
-    
+
     healthcheck:
       test: ["CMD", "ollama", "ls"]
       interval: 10s
@@ -242,7 +232,7 @@ services:
 
 volumes:
   aimathtutor_logs:
-  ollama_data:  # Uncomment this line
+  ollama_data: # Uncomment this line
   pgadmin_data:
   postgres_data:
 ```
@@ -302,7 +292,7 @@ If you prefer running Ollama directly on your host machine:
    ```sh
    # Linux
    curl -fsSL https://ollama.com/install.sh | sh
-   
+
    # macOS/Windows: Download from https://ollama.com/download
    ```
 
@@ -349,25 +339,25 @@ After starting the application:
 
 #### Model Recommendations (2025)
 
-| Model | Size | RAM | Speed | Math Ability | Best For |
-|-------|------|-----|-------|--------------|----------|
-| `gemma3:270m` | 291MB | 1.5GB | ⚡⚡⚡⚡⚡ | ⭐⭐ | Experimental, extreme low-resource |
-| `gemma3:1b` | 815MB | 2GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐ | Google's compact baseline, efficient |
-| `llama3.2:1b` | 1.3GB | 3GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐ | Meta's efficient small model, fast |
-| `llama3.2:3b` | 2.0GB | 4GB | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Good reasoning, solid math performance |
-| `deepseek-r1:1.5b` | 1.1GB | 3GB | ⚡⚡⚡⚡ | ⭐⭐⭐ | Ultra-fast reasoning, low latency |
-| `gemma3:4b` | 3.3GB | 5GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Google's mid-tier, solid performance |
-| `llama3.1:8b` | 4.9GB | 8GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐⭐ | Meta's flagship, excellent all-rounder |
-| `phi4-mini:3.8b` | 2.5GB | 5GB | ⚡⚡⚡⚡ | ⭐⭐⭐⭐ | Microsoft's efficient model, strong logic |
-| `qwen3:0.6b` | 522MB | 2GB | ⚡⚡⚡⚡ | ⭐⭐ | Ultra-low resource systems, quick responses |
-| `deepseek-r1:7b` | 4.7GB | 8GB | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | Strong math reasoning, excellent value |
-| `qwen3:1.7b` | 1.4GB | 3GB | ⚡⚡⚡ | ⭐⭐⭐ | Budget hardware, basic algebra |
-| `qwen3:4b` | 2.5GB | 5GB | ⚡⚡⚡ | ⭐⭐⭐⭐ | Best balance: 7B performance at 4B size |
-| `deepseek-r1:8b` | 5.2GB | 9GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Enhanced reasoning, superior math ability |
-| `phi4-mini-reasoning:3.8b` | 3.2GB | 5GB | ⚡⚡ | ⭐⭐⭐⭐⭐ | Step-by-step explanations, detailed work |
-| `phi4:14b` | 9.1GB | 16GB | ⚡ | ⭐⭐⭐⭐⭐ | Top-tier performance, advanced math |
-| `qwen3:8b` | 5.2GB | 8GB | ⚡ | ⭐⭐⭐⭐⭐ | High-quality tutoring, complex problems |
-| `phi4-reasoning:14b` | 11GB | 16GB | 🐌 | ⭐⭐⭐⭐⭐ | Best for complex proofs and derivations |
+| Model                      | Size  | RAM   | Speed      | Math Ability | Best For                                    |
+| -------------------------- | ----- | ----- | ---------- | ------------ | ------------------------------------------- |
+| `gemma3:270m`              | 291MB | 1.5GB | ⚡⚡⚡⚡⚡ | ⭐⭐         | Experimental, extreme low-resource          |
+| `gemma3:1b`                | 815MB | 2GB   | ⚡⚡⚡⚡⚡ | ⭐⭐⭐       | Google's compact baseline, efficient        |
+| `llama3.2:1b`              | 1.3GB | 3GB   | ⚡⚡⚡⚡⚡ | ⭐⭐⭐       | Meta's efficient small model, fast          |
+| `llama3.2:3b`              | 2.0GB | 4GB   | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐     | Good reasoning, solid math performance      |
+| `deepseek-r1:1.5b`         | 1.1GB | 3GB   | ⚡⚡⚡⚡   | ⭐⭐⭐       | Ultra-fast reasoning, low latency           |
+| `gemma3:4b`                | 3.3GB | 5GB   | ⚡⚡⚡⚡   | ⭐⭐⭐⭐     | Google's mid-tier, solid performance        |
+| `llama3.1:8b`              | 4.9GB | 8GB   | ⚡⚡⚡⚡   | ⭐⭐⭐⭐⭐   | Meta's flagship, excellent all-rounder      |
+| `phi4-mini:3.8b`           | 2.5GB | 5GB   | ⚡⚡⚡⚡   | ⭐⭐⭐⭐     | Microsoft's efficient model, strong logic   |
+| `qwen3:0.6b`               | 522MB | 2GB   | ⚡⚡⚡⚡   | ⭐⭐         | Ultra-low resource systems, quick responses |
+| `deepseek-r1:7b`           | 4.7GB | 8GB   | ⚡⚡⚡     | ⭐⭐⭐⭐⭐   | Strong math reasoning, excellent value      |
+| `qwen3:1.7b`               | 1.4GB | 3GB   | ⚡⚡⚡     | ⭐⭐⭐       | Budget hardware, basic algebra              |
+| `qwen3:4b`                 | 2.5GB | 5GB   | ⚡⚡⚡     | ⭐⭐⭐⭐     | Best balance: 7B performance at 4B size     |
+| `deepseek-r1:8b`           | 5.2GB | 9GB   | ⚡⚡       | ⭐⭐⭐⭐⭐   | Enhanced reasoning, superior math ability   |
+| `phi4-mini-reasoning:3.8b` | 3.2GB | 5GB   | ⚡⚡       | ⭐⭐⭐⭐⭐   | Step-by-step explanations, detailed work    |
+| `phi4:14b`                 | 9.1GB | 16GB  | ⚡         | ⭐⭐⭐⭐⭐   | Top-tier performance, advanced math         |
+| `qwen3:8b`                 | 5.2GB | 8GB   | ⚡         | ⭐⭐⭐⭐⭐   | High-quality tutoring, complex problems     |
+| `phi4-reasoning:14b`       | 11GB  | 16GB  | 🐌         | ⭐⭐⭐⭐⭐   | Best for complex proofs and derivations     |
 
 > **💡 Pro Tip:** If you have limited RAM/GPU (4-6GB), start with `qwen3:4b`. According to Qwen's benchmarks, it performs as well as larger 7B models while being half the size, and it has an impressive 256K context window (vs 40K for the 8B variant).
 
