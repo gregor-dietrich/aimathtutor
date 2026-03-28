@@ -82,6 +82,8 @@ FROM eclipse-temurin:25.0.2_10-jre-noble
 
 ENV LANGUAGE='en_US:en'
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Create application user
 RUN groupadd -g 185 jboss && useradd -u 185 -g jboss -d /deployments -s /sbin/nologin jboss
 

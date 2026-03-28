@@ -82,6 +82,8 @@ FROM eclipse-temurin:25.0.2_10-jre-alpine-3.23
 
 ENV LANGUAGE='en_US:en'
 
+RUN apk add --no-cache wget
+
 # Create application user
 RUN addgroup -g 185 -S jboss && adduser -u 185 -S -G jboss -h /deployments -s /sbin/nologin jboss
 
