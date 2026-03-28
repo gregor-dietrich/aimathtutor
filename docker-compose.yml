@@ -29,7 +29,7 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
 
   db:
@@ -69,7 +69,7 @@ services:
   #     retries: 3
   #     start_period: 10s
   #   depends_on:
-  #     postgres:
+  #     db:
   #       condition: service_healthy
 
   # Uncomment if you want to use Ollama:
