@@ -118,6 +118,12 @@
             <artifactId>quarkus-security</artifactId>
         </dependency>
 
+        <!-- Health checks via MicroProfile Health / SmallRye -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+
         <!-- JSON formatter for logging -->
         <dependency>
             <groupId>io.quarkus</groupId>

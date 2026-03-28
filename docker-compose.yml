@@ -1,5 +1,5 @@
 services:
-  aimathtutor:
+  app:
     image: gregordietrich/aimathtutor:${REVISION:-latest}
     build:
       context: .
@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     environment:
-      quarkus.datasource.jdbc.url: jdbc:postgresql://postgres:5432/${SQL_DATABASE:-aimathtutor}
+      quarkus.datasource.jdbc.url: jdbc:postgresql://db:5432/${SQL_DATABASE:-aimathtutor}
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
@@ -23,16 +23,16 @@ services:
     volumes:
       - aimathtutor_logs:/deployments/logs
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://aimathtutor:9001 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9001/q/health/ready || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 10s
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
 
-  postgres:
+  db:
     image: postgres:18.3-alpine3.23
     restart: unless-stopped
     command: ["postgres", "-c", "max_connections=200"]
@@ -69,7 +69,7 @@ services:
   #     retries: 3
   #     start_period: 10s
   #   depends_on:
-  #     postgres:
+  #     db:
   #       condition: service_healthy
 
   # Uncomment if you want to use Ollama:
