@@ -75,6 +75,13 @@
                 <artifactId>plexus-utils</artifactId>
                 <version>${plexus-utils.version}</version>
             </dependency>
+
+            <!-- Security: Force patched jackson-core -->
+            <dependency>
+                <groupId>tools.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>[3.1.2,)</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
