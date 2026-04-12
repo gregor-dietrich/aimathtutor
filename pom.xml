@@ -36,6 +36,7 @@
         <vaadin.version>25.1.1</vaadin.version>
 
         <!-- Security: Pin vulnerable dependencies -->
+        <jackson-core.version>3.1.2</jackson-core.version>
         <netty.version>4.2.12.Final</netty.version>
         <plexus-utils.version>4.0.3</plexus-utils.version>
     </properties>
@@ -80,7 +81,7 @@
             <dependency>
                 <groupId>tools.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>[3.1.2,)</version>
+                <version>${jackson-core.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
