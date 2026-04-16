@@ -1,7 +1,4 @@
 # Generated
-tsconfig.json
-types.d.ts
-vite.config.ts
 src/main/bundles/*.bundle
 
 # gm-api
@@ -76,6 +73,9 @@ src/main/frontend/generated/
 pnpmfile.js
 vite.generated.ts
 webpack.generated.js
+tsconfig.json
+types.d.ts
+vite.config.ts
 
 # Ollama
 ollama/payload
