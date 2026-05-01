@@ -475,7 +475,13 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
             NotificationUtil.showError("Please check the form for errors");
         } catch (final ConstraintViolationException e) {
             final var messages = e.getConstraintViolations().stream()
-                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .map(v -> {
+                        String fieldName = null;
+                        for (final var node : v.getPropertyPath()) {
+                            fieldName = node.getName();
+                        }
+                        return (fieldName != null ? fieldName : "field") + ": " + v.getMessage();
+                    })
                     .reduce((a, b) -> a + "; " + b)
                     .orElse("Invalid input");
             NotificationUtil.showError(messages);

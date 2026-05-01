@@ -176,8 +176,8 @@ Refactor services and entities so that services no longer include database queri
   - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
   - `AdminConfigView` shows `e.getMessage()` in error notifications.
     Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
-- **Add explicit timeouts to OpenAI client.** `OpenAiService` uses `ClientBuilder.newClient()` with no connect/read timeout. Set explicit timeouts (e.g., 10s connect, 60s read) to prevent thread pool exhaustion. **When fixing, check all external HTTP clients for identical missing-timeout issues.**
-- **Add retry consistency across AI providers.** Only `OllamaService` has `@Retry`. Add `@Retry` (or equivalent fault tolerance with exponential backoff) to `GeminiService` and `OpenAiService`. **When fixing, check all external service calls for inconsistent resilience patterns.**
+- **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
+- **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
 - **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
 
 ### 4.9 Code Quality & Architecture
@@ -205,7 +205,7 @@ Refactor services and entities so that services no longer include database queri
   - Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.
   - Retry config: `maxRetries = 3`, `delay = 1000`, `jitter = 200`.
   - Difficulty levels: `"beginner"`, `"intermediate"`, `"advanced"`, `"expert"` -> use enum.
-  - Password min length: `4` (currently hardcoded in service and view).
+  - Password min length: `8` (enforced by UserService.PASSWORD_MIN_LENGTH and DTO validations using `@Size(min = 8, ...)`).
   - Auto-hide flag threshold: `5` in `CommentService`.
   - Notification durations in `NotificationUtil`.
   - Canvas heights: `"77vh"`, `"80vh"`.
@@ -232,7 +232,7 @@ Refactor services and entities so that services no longer include database queri
   - Enforce server-side hard caps on `maxTokens` in `GeminiService` and `OpenAiService` regardless of DB config.
   - `AdminConfigView` uses client-side `setMax()` on NumberFields; this can be bypassed. Enforce the same limits server-side.
     **When fixing, check all numeric config values for identical missing validation.**
-- **Validate AI base URLs to prevent SSRF.** (Covered in 4.5.3; keep cross-reference here.)
+- **Validate AI base URLs to prevent SSRF.** (See 4.5 Security Considerations for related topics; add URL validation subsection if implementing.)
 - **Improve response handling.**
   - `AiTutorService.parseFeedbackFromJson` catches generic `Exception`, masking `JsonMappingException` and `OutOfMemoryError`. Catch specific `JsonProcessingException`/`IOException` only.
   - `GeminiResponseDto.isBlocked()` conflates null/empty response with safety blocks. Distinguish explicitly.
@@ -476,7 +476,7 @@ Implementation plan:
 
 - Backend changes (data/metrics):
   1.  Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
-  2.  Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or roll-out mode (log only).
+  2.  Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
 
 - Tests:
   1.  Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).

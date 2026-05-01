@@ -71,7 +71,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         }
 
         final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
+        if (userRank == null || !(userRank.canAdminView() || userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission())) {
             NotificationUtil.showError("You do not have permission to access this page");
             event.forwardTo("/");
             return;

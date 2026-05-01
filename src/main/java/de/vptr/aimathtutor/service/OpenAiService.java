@@ -33,17 +33,42 @@ public class OpenAiService {
     @Inject
     AiConfigService aiConfigService;
 
-    private Client client;
+    private volatile Client client;
+
+    /**
+     * Get or create the JAX-RS Client with thread-safe double-checked locking.
+     */
+    private Client getClient() {
+        Client localClient = this.client;
+        if (localClient == null) {
+            synchronized (this) {
+                localClient = this.client;
+                if (localClient == null) {
+                    this.client = localClient = ClientBuilder.newBuilder()
+                            .connectTimeout(10, TimeUnit.SECONDS)
+                            .readTimeout(60, TimeUnit.SECONDS)
+                            .build();
+                    LOG.debug("Created OpenAI JAX-RS Client");
+                }
+            }
+        }
+        return localClient;
+    }
 
     /**
      * Clean up JAX-RS client resources when the bean is destroyed.
      */
     @jakarta.annotation.PreDestroy
     void cleanup() {
-        if (this.client != null) {
-            this.client.close();
-            this.client = null;
-            LOG.debug("Closed OpenAI JAX-RS Client");
+        final Client localClient = this.client;
+        if (localClient != null) {
+            synchronized (this) {
+                if (this.client != null) {
+                    this.client.close();
+                    this.client = null;
+                    LOG.debug("Closed OpenAI JAX-RS Client");
+                }
+            }
         }
     }
 
@@ -91,16 +116,8 @@ public class OpenAiService {
             // Build API URL
             final String url = baseUrl + "/chat/completions";
 
-            // Get or create client with explicit timeouts
-            if (this.client == null) {
-                this.client = ClientBuilder.newBuilder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(60, TimeUnit.SECONDS)
-                        .build();
-            }
-
             // Build request with headers
-            var requestBuilder = this.client.target(url)
+            var requestBuilder = this.getClient().target(url)
                     .request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);
 
@@ -184,15 +201,7 @@ public class OpenAiService {
 
             final String url = baseUrl + "/chat/completions";
 
-            // Get or create client with explicit timeouts
-            if (this.client == null) {
-                this.client = ClientBuilder.newBuilder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(60, TimeUnit.SECONDS)
-                        .build();
-            }
-
-            var requestBuilder = this.client.target(url)
+            var requestBuilder = this.getClient().target(url)
                     .request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);
 

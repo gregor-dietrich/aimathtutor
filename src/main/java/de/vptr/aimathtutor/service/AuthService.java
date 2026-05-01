@@ -70,32 +70,32 @@ public class AuthService {
         }
 
         try {
-            // Find user by username using repository
-            final var user = this.userRepository.findByUsername(username);
+            // Find user by normalized username using repository
+            final var user = this.userRepository.findByUsername(usernameKey);
 
             if (user == null) {
-                LOG.trace("Authentication failed - user not found: {}", username);
+                LOG.trace("Authentication failed - user not found: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Check if user is banned
             if (user.banned != null && user.banned) {
-                LOG.trace("Authentication failed - user is banned: {}", username);
+                LOG.trace("Authentication failed - user is banned: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Check if user is activated
             if (user.activated == null || !user.activated) {
-                LOG.trace("Authentication failed - user is not activated: {}", username);
+                LOG.trace("Authentication failed - user is not activated: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
-                LOG.trace("Authentication failed - invalid password for user: {}", username);
+                LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
@@ -105,12 +105,12 @@ public class AuthService {
                 user.lastLogin = LocalDateTime.now();
                 this.userRepository.persist(user);
             } catch (final Exception e) {
-                LOG.warn("Failed to update lastLogin for user {}: {}", username, e.getMessage());
+                LOG.warn("Failed to update lastLogin for user {}: {}", user.username, e.getMessage());
                 // continue with login even if lastLogin couldn't be updated
             }
 
             this.loginAttemptService.recordSuccessfulLogin(usernameKey);
-            VaadinSession.getCurrent().setAttribute(USERNAME_KEY, username);
+            VaadinSession.getCurrent().setAttribute(USERNAME_KEY, user.username);
             VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, true);
 
             LOG.trace("User authenticated successfully: {}", username);
@@ -143,11 +143,6 @@ public class AuthService {
      * @return true if the user has an active authenticated session, false otherwise
      */
     public boolean isAuthenticated() {
-        // Unify with Quarkus SecurityIdentity when available
-        if (this.securityIdentity != null && !this.securityIdentity.isAnonymous()) {
-            return true;
-        }
-
         final var session = VaadinSession.getCurrent();
         if (session == null) {
             return false;

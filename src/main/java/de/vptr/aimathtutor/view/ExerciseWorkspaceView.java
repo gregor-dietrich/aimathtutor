@@ -231,6 +231,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             contentSection.add(instructionsHeader);
 
             final var contentDiv = new Div();
+            contentDiv.getStyle().set("white-space", "pre-wrap");
             contentDiv.add(new com.vaadin.flow.component.Text(this.exercise.content));
             contentSection.add(contentDiv);
 
@@ -357,7 +358,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Initialize canvas and load problem once ready
         UI.getCurrent().getPage().executeJs(
                 """
-                setTimeout(function() {
+                var initAttempts = 0;
+                var maxInitAttempts = 50;
+                var checkAndInitialize = function() {
                   if (window.initializeGraspableMath) {
                     window.initializeGraspableMath();
                     var loadProblemWhenReady = function() {
@@ -371,9 +374,16 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     };
                     setTimeout(loadProblemWhenReady, 500);
                   } else {
-                    console.error('[Exercise] Graspable Math initialization function not found');
+                    initAttempts++;
+                    if (initAttempts < maxInitAttempts) {
+                      console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
+                      setTimeout(checkAndInitialize, 100);
+                    } else {
+                      console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
+                    }
                   }
-                }, 100);
+                };
+                checkAndInitialize();
                 """,
                 this.exercise.graspableInitialExpression);
 
@@ -451,8 +461,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Don't show typing indicator for math actions - only show it when we get
         // actual feedback
         final var ui = UI.getCurrent();
+        final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext).thenAccept(feedback -> {
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
             ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
@@ -505,13 +516,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Get user ID and exercise ID before async call (to avoid context issues)
         final var userId = this.authService.getUserId();
+        final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         final var exerciseId = this.exercise != null ? this.exercise.id : null;
         final var sessionId = this.currentSessionId;
 
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext)
+                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     // Log the question and answer interaction BEFORE UI access (to ensure proper
                     // transaction context)
