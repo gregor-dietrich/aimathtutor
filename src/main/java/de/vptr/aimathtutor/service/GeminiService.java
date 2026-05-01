@@ -67,7 +67,7 @@ public class GeminiService {
         }
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite");
+        final String model = this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
         final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url",
                 "https://generativelanguage.googleapis.com");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.7);
@@ -147,6 +147,6 @@ public class GeminiService {
      * Get the current model name
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite");
+        return this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
     }
 }
