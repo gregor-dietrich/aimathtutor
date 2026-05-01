@@ -59,6 +59,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient ExerciseViewDto exercise;
     private transient String currentSessionId;
     private transient int hintCount = 0;
+    private transient boolean problemSolved = false;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
@@ -139,6 +140,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             LOG.error("Failed to create session", e);
             this.currentSessionId = "session-" + System.currentTimeMillis();
         }
+
+        this.problemSolved = false;
 
         // Left side: Exercise content and Graspable Math canvas (70%)
         final var leftPanel = new VerticalLayout();
@@ -435,8 +438,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Add event to conversation context
         this.conversationContext.addAction(event);
 
+        final boolean wasAlreadySolved = this.problemSolved;
+
         // Check if problem is completed (only if target expression is defined)
-        if (this.exercise.graspableTargetExpression != null
+        if (!wasAlreadySolved && this.exercise.graspableTargetExpression != null
                 && !this.exercise.graspableTargetExpression.isBlank()) {
             final boolean isComplete = this.graspableMathService.checkCompletion(
                     expressionAfter,
@@ -444,6 +449,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             if (isComplete) {
                 event.isComplete = true;
+                this.problemSolved = true;
                 // Mark session as completed
                 this.graspableMathService.markSessionComplete(this.currentSessionId);
 
@@ -456,6 +462,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Process event through GraspableMathService (for session tracking)
         this.graspableMathService.processEvent(event);
+
+        // Skip action analysis if problem was already solved before this action
+        if (wasAlreadySolved) {
+            return;
+        }
 
         // Get AI feedback asynchronously (may return null if action is insignificant)
         // Don't show typing indicator for math actions - only show it when we get
@@ -523,7 +534,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext, userIdStr)
+                .answerQuestionAsync(question, this.currentExpression,
+                        this.exercise != null ? this.exercise.graspableInitialExpression : null,
+                        this.exercise != null ? this.exercise.graspableTargetExpression : null,
+                        this.currentSessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     // Log the question and answer interaction BEFORE UI access (to ensure proper
                     // transaction context)

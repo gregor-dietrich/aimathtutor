@@ -244,15 +244,18 @@ public class AiTutorService {
      * DB operations are handled in separate transactional methods
      * (logQuestionInteraction).
      *
-     * @param question          The student's question
-     * @param currentExpression The current state of the problem (optional)
-     * @param sessionId         The session ID (optional)
-     * @param context           Conversation context with recent actions, questions,
-     *                          and AI messages
-     * @param userIdStr         the user ID (as string) for rate limiting
+     * @param question           The student's question
+     * @param currentExpression  The current state of the problem (optional)
+     * @param initialExpression  The original problem state (optional)
+     * @param targetExpression   The target solution state (optional)
+     * @param sessionId          The session ID (optional)
+     * @param context            Conversation context with recent actions, questions,
+     *                           and AI messages
+     * @param userIdStr          the user ID (as string) for rate limiting
      * @return AI-generated answer
      */
     ChatMessageDto answerQuestion(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
             final String sessionId, final ConversationContextDto context, final String userIdStr) {
         LOG.debug("Answering question: {} (session: {}, context: {})", question, sessionId, context);
 
@@ -274,9 +277,9 @@ public class AiTutorService {
         }
 
         var answer = switch (provider) {
-            case "gemini" -> this.answerWithGemini(question, currentExpression, context);
-            case "openai" -> this.answerWithOpenAi(question, currentExpression, context);
-            case "ollama" -> this.answerWithOllama(question, currentExpression, context);
+            case "gemini" -> this.answerWithGemini(question, currentExpression, initialExpression, targetExpression, context);
+            case "openai" -> this.answerWithOpenAi(question, currentExpression, initialExpression, targetExpression, context);
+            case "ollama" -> this.answerWithOllama(question, currentExpression, initialExpression, targetExpression, context);
             default -> this.answerWithMockAi(question, currentExpression);
         };
 
@@ -293,16 +296,19 @@ public class AiTutorService {
      * This allows the UI to show a typing indicator while waiting for the response.
      * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      *
-     * @param question          The student's question
-     * @param currentExpression The current math expression
-     * @param sessionId         The session identifier
-     * @param context           Conversation context
-     * @param userIdStr         the user ID (as string) captured from UI thread
+     * @param question           The student's question
+     * @param currentExpression  The current math expression
+     * @param initialExpression  The original problem state (optional)
+     * @param targetExpression   The target solution state (optional)
+     * @param sessionId          The session identifier
+     * @param context            Conversation context
+     * @param userIdStr          the user ID (as string) captured from UI thread
      * @return CompletableFuture containing the AI's answer
      */
     public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
-            final String currentExpression, final String sessionId, final ConversationContextDto context, final String userIdStr) {
-        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId, context, userIdStr),
+            final String currentExpression, final String initialExpression, final String targetExpression,
+            final String sessionId, final ConversationContextDto context, final String userIdStr) {
+        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, initialExpression, targetExpression, sessionId, context, userIdStr),
                 this.managedExecutor);
     }
 
@@ -429,6 +435,7 @@ public class AiTutorService {
      * Answer question using Gemini with conversation context.
      */
     private String answerWithGemini(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
         if (!this.geminiService.isConfigured()) {
             LOG.warn("Gemini not configured, using mock AI");
@@ -436,7 +443,7 @@ public class AiTutorService {
         }
 
         try {
-            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, initialExpression, targetExpression, context);
             return this.geminiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using Gemini for question answering", e);
@@ -448,6 +455,7 @@ public class AiTutorService {
      * Answer question using OpenAI with conversation context.
      */
     private String answerWithOpenAi(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
         if (!this.openAiService.isConfigured()) {
             LOG.warn("OpenAI not configured, using mock AI");
@@ -455,7 +463,7 @@ public class AiTutorService {
         }
 
         try {
-            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, initialExpression, targetExpression, context);
             return this.openAiService.generateContent(prompt);
         } catch (final Exception e) {
             LOG.error("Error using OpenAI for question answering", e);
@@ -468,6 +476,7 @@ public class AiTutorService {
      * Uses MicroProfile Fault Tolerance @Retry for automatic retries with jitter.
      */
     private String answerWithOllama(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
         if (!this.ollamaService.isAvailable()) {
             LOG.warn("Ollama not available, using mock AI");
@@ -475,7 +484,7 @@ public class AiTutorService {
         }
 
         try {
-            return this.callOllamaForQuestion(question, currentExpression, context);
+            return this.callOllamaForQuestion(question, currentExpression, initialExpression, targetExpression, context);
         } catch (final Exception e) {
             LOG.error("Error using Ollama for question answering after retries, falling back to mock", e);
             return this.answerWithMockAi(question, currentExpression);
@@ -494,8 +503,9 @@ public class AiTutorService {
      */
     @Retry(maxRetries = 3, delay = 1000, jitter = 200)
     String callOllamaForQuestion(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
-        final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, context);
+        final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, initialExpression, targetExpression, context);
         return this.ollamaService.generateContent(prompt);
     }
 
@@ -503,6 +513,7 @@ public class AiTutorService {
      * Builds a prompt for answering student questions.
      */
     private String buildQuestionAnsweringPrompt(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
         final var prompt = new StringBuilder();
 
@@ -547,8 +558,15 @@ public class AiTutorService {
         }
 
         if (currentExpression != null && !currentExpression.isBlank()) {
-            prompt.append("Current problem state: ").append(currentExpression).append("\n\n");
+            prompt.append("Current problem state: ").append(currentExpression).append("\n");
         }
+        if (initialExpression != null && !initialExpression.isBlank()) {
+            prompt.append("Original problem: ").append(initialExpression).append("\n");
+        }
+        if (targetExpression != null && !targetExpression.isBlank()) {
+            prompt.append("Target solution: ").append(targetExpression).append("\n");
+        }
+        prompt.append("\n");
 
         prompt.append("Student question: ").append(question);
 

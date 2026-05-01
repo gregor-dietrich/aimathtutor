@@ -273,7 +273,7 @@ class AiTutorServiceTest {
         final String sessionId = "session-808";
 
         // When
-        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, sessionId,
+        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, null, null, sessionId,
                 new ConversationContextDto(), "test-user");
 
         // Then
@@ -295,7 +295,7 @@ class AiTutorServiceTest {
         final String sessionId = "session-909";
 
         // When
-        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, sessionId,
+        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, null, null, sessionId,
                 new ConversationContextDto(), "test-user");
 
         // Then
@@ -313,7 +313,7 @@ class AiTutorServiceTest {
         final String sessionId = "session-010";
 
         // When
-        final var answer = this.aiTutorService.answerQuestion(question, null, sessionId, new ConversationContextDto(), "test-user");
+        final var answer = this.aiTutorService.answerQuestion(question, null, null, null, sessionId, new ConversationContextDto(), "test-user");
 
         // Then
         assertNotNull(answer);
@@ -436,7 +436,7 @@ class AiTutorServiceTest {
         // When - calling directly tests the method (retry logic tested in integration)
         // If Ollama is not available, this will fail which is expected behavior
         try {
-            final String answer = this.aiTutorService.callOllamaForQuestion(question, currentExpression, context);
+            final String answer = this.aiTutorService.callOllamaForQuestion(question, currentExpression, null, null, context);
             // Then - if Ollama is available, we should get a non-null response
             assertNotNull(answer);
         } catch (final Exception e) {
@@ -479,7 +479,7 @@ class AiTutorServiceTest {
         // Verify the method exists and is accessible (package-private)
         // This test documents the requirement that the method must not be private
         final var method = AiTutorService.class.getDeclaredMethod(
-                "callOllamaForQuestion", String.class, String.class, ConversationContextDto.class);
+                "callOllamaForQuestion", String.class, String.class, String.class, String.class, ConversationContextDto.class);
         assertNotNull(method);
         // Package-private methods are accessible within the same package
         assertTrue(method.canAccess(this.aiTutorService),
