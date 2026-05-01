@@ -37,8 +37,10 @@ import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserGroupService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -53,6 +55,9 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private transient UserRankService userRankService;
 
     @Inject
     private transient UserService userService;
@@ -87,7 +92,13 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
-            event.forwardTo("login");
+            event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 

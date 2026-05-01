@@ -200,20 +200,22 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
 
         // Wait for canvas to be ready, then load the problem
-        final String loadScript = String.format("setTimeout(function() { %n"
-                + "  var loadProblemWhenReady = function() { %n"
-                + "    if (window.graspableCanvas && window.graspableMathUtils) { %n"
-                + "      console.log('[GM] Canvas ready, loading initial problem'); %n"
-                + "      window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
-                + "    } else { %n"
-                + "      console.log('[GM] Waiting for canvas...'); %n"
-                + "      setTimeout(loadProblemWhenReady, 200); %n"
-                + "    } %n"
-                + "  }; %n"
-                + "  loadProblemWhenReady(); %n"
-                + "}, 500);%n", problem.initialExpression);
-
-        UI.getCurrent().getPage().executeJs(loadScript);
+        UI.getCurrent().getPage().executeJs(
+                """
+                setTimeout(function() {
+                  var loadProblemWhenReady = function() {
+                    if (window.graspableCanvas && window.graspableMathUtils) {
+                      console.log('[GM] Canvas ready, loading initial problem');
+                      window.graspableMathUtils.loadProblem($0, 100, 50);
+                    } else {
+                      console.log('[GM] Waiting for canvas...');
+                      setTimeout(loadProblemWhenReady, 200);
+                    }
+                  };
+                  loadProblemWhenReady();
+                }, 500);
+                """,
+                problem.initialExpression);
 
         // Store initial expression and target for completion checking
         this.currentExpression = problem.initialExpression;
@@ -280,8 +282,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Don't show typing indicator for math actions - only show it when we get
         // actual feedback
         final var ui = UI.getCurrent();
+        final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext).thenAccept(feedback -> {
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
             ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
@@ -324,8 +327,10 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
+        final var userId = this.authService.getUserId();
+        final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.sessionId, this.conversationContext)
+                .answerQuestionAsync(question, this.currentExpression, this.sessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator
@@ -465,12 +470,14 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      * Loads a custom problem into the Graspable Math canvas.
      */
     private void loadCustomProblem(final String expression) {
-        final String jsCode = String.format("if (window.graspableMathUtils) { %n"
-                + "  window.graspableMathUtils.clearCanvas(); %n"
-                + "  window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
-                + "}%n", expression.replace("'", "\\'"));
-
-        UI.getCurrent().getPage().executeJs(jsCode);
+        UI.getCurrent().getPage().executeJs(
+                """
+                if (window.graspableMathUtils) {
+                  window.graspableMathUtils.clearCanvas();
+                  window.graspableMathUtils.loadProblem($0, 100, 50);
+                }
+                """,
+                expression);
 
         // Store expression
         this.currentExpression = expression;
@@ -482,12 +489,14 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
 
         // Load problem into Graspable Math using the utility function
-        final String jsCode = String.format("if (window.graspableMathUtils) { %n"
-                + "  window.graspableMathUtils.clearCanvas(); %n"
-                + "  window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
-                + "}%n", problem.initialExpression);
-
-        UI.getCurrent().getPage().executeJs(jsCode);
+        UI.getCurrent().getPage().executeJs(
+                """
+                if (window.graspableMathUtils) {
+                  window.graspableMathUtils.clearCanvas();
+                  window.graspableMathUtils.loadProblem($0, 100, 50);
+                }
+                """,
+                problem.initialExpression);
 
         // Store initial expression and target
         this.currentExpression = problem.initialExpression;

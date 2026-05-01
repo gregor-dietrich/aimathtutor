@@ -45,6 +45,7 @@ import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Admin view for managing users: list, edit, create and remove user accounts.
@@ -92,6 +93,12 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
             event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 
@@ -326,13 +333,6 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                 .bind(user1 -> user1.username, (user1, value) -> user1.username = value);
 
         this.binder.forField(emailField)
-                .withValidator(email -> {
-                    if (email == null || email.isBlank()) {
-                        return true; // Empty is allowed
-                    }
-                    // Simple but effective email regex pattern
-                    return email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-                }, "Email must be valid or empty")
                 .bind(user1 -> user1.email,
                         (user1, value) -> user1.email = (value == null || value.isBlank()) ? null
                                 : value.trim());
@@ -457,11 +457,12 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
             this.binder.writeBean(this.currentUser);
 
             if (this.currentUser.id == null) {
-                // For new users, set a default password
-                this.currentUser.password = "defaultPassword123";
+                if (this.currentUser.password == null || this.currentUser.password.isBlank()) {
+                    NotificationUtil.showError("Password is required for new users");
+                    return;
+                }
                 this.userService.createUser(this.currentUser);
-                NotificationUtil
-                        .showSuccess("User created successfully. Use the Password button to set a new password.");
+                NotificationUtil.showSuccess("User created successfully.");
             } else {
                 this.userService.updateUser(this.currentUser.id, this.currentUser);
                 NotificationUtil.showSuccess("User updated successfully");
@@ -472,6 +473,18 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
+        } catch (final ConstraintViolationException e) {
+            final var messages = e.getConstraintViolations().stream()
+                    .map(v -> {
+                        String fieldName = null;
+                        for (final var node : v.getPropertyPath()) {
+                            fieldName = node.getName();
+                        }
+                        return (fieldName != null ? fieldName : "field") + ": " + v.getMessage();
+                    })
+                    .reduce((a, b) -> a + "; " + b)
+                    .orElse("Invalid input");
+            NotificationUtil.showError(messages);
         } catch (final Exception e) {
             LOG.error("Unexpected error saving user", e);
             NotificationUtil.showError("Unexpected error occurred");

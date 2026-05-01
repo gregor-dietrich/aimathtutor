@@ -18,7 +18,9 @@ import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -34,6 +36,9 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private transient UserRankService userRankService;
 
     @Inject
     private transient AnalyticsService analyticsService;
@@ -58,7 +63,13 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
-            event.forwardTo("login");
+            event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 

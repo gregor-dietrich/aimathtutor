@@ -31,8 +31,10 @@ public class AuthService {
     @Inject
     UserRankService userRankService;
 
+    @Inject
+    LoginAttemptService loginAttemptService;
+
     private static final String USERNAME_KEY = "authenticated.username";
-    private static final String PASSWORD_KEY = "authenticated.password";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
 
     /**
@@ -54,30 +56,43 @@ public class AuthService {
             return AuthResultDto.invalidInput();
         }
 
+        final String usernameKey = username.toLowerCase().trim();
+
+        // Check login attempt throttling
+        if (this.loginAttemptService.isLockedOut(usernameKey)) {
+            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
+            LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
+            return AuthResultDto.backendUnavailable("Too many failed attempts. Please try again in " + remaining + " seconds.");
+        }
+
         try {
-            // Find user by username using repository
-            final var user = this.userRepository.findByUsername(username);
+            // Find user by normalized username using repository
+            final var user = this.userRepository.findByUsername(usernameKey);
 
             if (user == null) {
-                LOG.trace("Authentication failed - user not found: {}", username);
+                LOG.trace("Authentication failed - user not found: {}", usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Check if user is banned
             if (user.banned != null && user.banned) {
-                LOG.trace("Authentication failed - user is banned: {}", username);
+                LOG.trace("Authentication failed - user is banned: {}", usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Check if user is activated
             if (user.activated == null || !user.activated) {
-                LOG.trace("Authentication failed - user is not activated: {}", username);
+                LOG.trace("Authentication failed - user is not activated: {}", usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
-                LOG.trace("Authentication failed - invalid password for user: {}", username);
+                LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -86,12 +101,12 @@ public class AuthService {
                 user.lastLogin = LocalDateTime.now();
                 this.userRepository.persist(user);
             } catch (final Exception e) {
-                LOG.warn("Failed to update lastLogin for user {}: {}", username, e.getMessage());
+                LOG.warn("Failed to update lastLogin for user {}: {}", user.username, e.getMessage());
                 // continue with login even if lastLogin couldn't be updated
             }
 
-            VaadinSession.getCurrent().setAttribute(USERNAME_KEY, username);
-            VaadinSession.getCurrent().setAttribute(PASSWORD_KEY, password);
+            this.loginAttemptService.recordSuccessfulLogin(usernameKey);
+            VaadinSession.getCurrent().setAttribute(USERNAME_KEY, user.username);
             VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, true);
 
             LOG.trace("User authenticated successfully: {}", username);
@@ -113,7 +128,6 @@ public class AuthService {
         LOG.trace("Logging out user: {}", username);
 
         VaadinSession.getCurrent().setAttribute(USERNAME_KEY, null);
-        VaadinSession.getCurrent().setAttribute(PASSWORD_KEY, null);
         VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, false);
 
         LOG.trace("User logged out");
@@ -125,8 +139,24 @@ public class AuthService {
      * @return true if the user has an active authenticated session, false otherwise
      */
     public boolean isAuthenticated() {
-        final var authenticated = (Boolean) VaadinSession.getCurrent().getAttribute(AUTHENTICATED_KEY);
-        final var result = authenticated != null && authenticated;
+        final var session = VaadinSession.getCurrent();
+        if (session == null) {
+            return false;
+        }
+
+        final var authenticated = (Boolean) session.getAttribute(AUTHENTICATED_KEY);
+        if (authenticated == null || !authenticated) {
+            return false;
+        }
+
+        // Verify the user still exists and is active to prevent stale session bypass
+        final var username = (String) session.getAttribute(USERNAME_KEY);
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+
+        final var user = this.userRepository.findByUsername(username);
+        final var result = user != null && Boolean.TRUE.equals(user.activated) && !Boolean.TRUE.equals(user.banned);
         LOG.trace("Checking authentication status: {}", result);
         return result;
     }

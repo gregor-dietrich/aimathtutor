@@ -73,19 +73,26 @@ public class AiTutorService {
     @Inject
     ManagedExecutor managedExecutor;
 
+    @Inject
+    RateLimitService rateLimitService;
+
+    @Inject
+    AuthService authService;
+
     /**
      * Analyzes a student's math action and provides AI feedback.
      * Only provides feedback for significant actions to reduce spam.
-     * 
+     *
      * Note: Not @Transactional because it calls long-running AI services.
      * DB operations are handled in separate transactional methods (logInteraction).
-     * 
+     *
      * @param event   The Graspable Math event containing the student's action
      * @param context Conversation context with recent actions, questions, and AI
      *                messages
+     * @param userIdStr the user ID (as string) for rate limiting; if null, uses event.studentId
      * @return AI-generated feedback, or null if no feedback needed
      */
-    public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
+    AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context, final String userIdStr) {
         LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}', context={}",
                 event.eventType, event.expressionBefore, event.expressionAfter, context);
 
@@ -115,6 +122,12 @@ public class AiTutorService {
 
         // Use different AI provider based on configuration
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+
+        // Apply per-user rate limiting for non-mock providers
+        if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
+            return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
+        }
+
         return switch (provider) {
             case "gemini" -> this.analyzeWithGemini(event, context);
             case "openai" -> this.analyzeWithOpenAi(event, context);
@@ -149,6 +162,24 @@ public class AiTutorService {
         final var message = congratulatoryMessages[index];
 
         return AiFeedbackDto.positive(message);
+    }
+
+    /**
+     * Checks per-user rate limiting for AI tutor calls.
+     * Atomically checks and records the call if allowed.
+     *
+     * @param userIdStr the user ID as a string
+     * @return true if the call is within the rate limit and was recorded
+     */
+    private boolean checkAiRateLimit(final String userIdStr) {
+        if (userIdStr == null) {
+            return false;
+        }
+        if (!this.rateLimitService.tryConsume(userIdStr)) {
+            LOG.warn("AI tutor rate limit exceeded for user: {}", userIdStr);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -208,20 +239,21 @@ public class AiTutorService {
     /**
      * Answers a direct question from the student.
      * Uses AI to provide contextual help based on the current problem state.
-     * 
+     *
      * Note: Not @Transactional because it calls long-running AI services.
      * DB operations are handled in separate transactional methods
      * (logQuestionInteraction).
-     * 
+     *
      * @param question          The student's question
      * @param currentExpression The current state of the problem (optional)
      * @param sessionId         The session ID (optional)
      * @param context           Conversation context with recent actions, questions,
      *                          and AI messages
+     * @param userIdStr         the user ID (as string) for rate limiting
      * @return AI-generated answer
      */
-    public ChatMessageDto answerQuestion(final String question, final String currentExpression,
-            final String sessionId, final ConversationContextDto context) {
+    ChatMessageDto answerQuestion(final String question, final String currentExpression,
+            final String sessionId, final ConversationContextDto context, final String userIdStr) {
         LOG.debug("Answering question: {} (session: {}, context: {})", question, sessionId, context);
 
         // Load dynamic configuration (null-safe)
@@ -234,6 +266,12 @@ public class AiTutorService {
         // Use different AI provider based on configuration
         final var aiProvider = this.getConfigString("ai.tutor.provider", "mock");
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+
+        // Apply per-user rate limiting for non-mock providers
+        if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
+            return ChatMessageDto.aiAnswer(
+                    "I'm receiving too many requests right now. Please wait a moment before asking again.");
+        }
 
         var answer = switch (provider) {
             case "gemini" -> this.answerWithGemini(question, currentExpression, context);
@@ -259,11 +297,12 @@ public class AiTutorService {
      * @param currentExpression The current math expression
      * @param sessionId         The session identifier
      * @param context           Conversation context
+     * @param userIdStr         the user ID (as string) captured from UI thread
      * @return CompletableFuture containing the AI's answer
      */
     public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
-            final String currentExpression, final String sessionId, final ConversationContextDto context) {
-        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId, context),
+            final String currentExpression, final String sessionId, final ConversationContextDto context, final String userIdStr) {
+        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, sessionId, context, userIdStr),
                 this.managedExecutor);
     }
 
@@ -272,14 +311,15 @@ public class AiTutorService {
      * This allows the UI to show a typing indicator while waiting for the response.
      * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      *
-     * @param event   The Graspable Math event
-     * @param context Conversation context
+     * @param event     The Graspable Math event
+     * @param context   Conversation context
+     * @param userIdStr the user ID (as string) captured from UI thread (or event.studentId)
      * @return CompletableFuture containing the AI feedback, or null if no feedback
      *         needed
      */
     public CompletableFuture<AiFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
-            final ConversationContextDto context) {
-        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event, context),
+            final ConversationContextDto context, final String userIdStr) {
+        return CompletableFuture.supplyAsync(() -> this.analyzeMathAction(event, context, userIdStr),
                 this.managedExecutor);
     }
 

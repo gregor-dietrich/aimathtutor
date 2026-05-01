@@ -155,7 +155,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.newPasswordField = new PasswordField("New Password");
         this.newPasswordField.setRequired(true);
-        this.newPasswordField.setHelperText("Minimum 4 characters");
+        this.newPasswordField.setHelperText("Minimum 8 characters with uppercase, lowercase, digit and symbol");
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
@@ -284,8 +284,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        if (newPassword.length() < 4) {
-            NotificationUtil.showError("New password must be at least 4 characters long");
+        if (newPassword.length() < 8) {
+            NotificationUtil.showError("New password must be at least 8 characters long");
             return;
         }
 

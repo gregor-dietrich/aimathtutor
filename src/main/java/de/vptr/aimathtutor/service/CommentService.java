@@ -25,6 +25,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -192,7 +193,7 @@ public class CommentService {
      * Create a new comment with rate limiting and validation
      */
     @Transactional
-    public CommentViewDto createComment(final CommentDto dto, final Long authorId) {
+    public CommentViewDto createComment(final @Valid CommentDto dto, final Long authorId) {
         LOG.info("Creating comment for exerciseId={}, authorId={}", dto.exerciseId, authorId);
 
         // 1. Validate input
@@ -403,7 +404,7 @@ public class CommentService {
      * Edit a comment with permission check
      */
     @Transactional
-    public CommentViewDto editComment(final Long commentId, final CommentDto dto, final Long editorId) {
+    public CommentViewDto editComment(final Long commentId, final @Valid CommentDto dto, final Long editorId) {
         LOG.info("Attempting to edit comment: commentId={}, editorId={}", commentId, editorId);
 
         final CommentEntity comment = this.commentRepository.findById(commentId);

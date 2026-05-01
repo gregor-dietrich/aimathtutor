@@ -1,0 +1,504 @@
+# TODO - Detailed Implementation Plans
+
+## 0. General
+
+### Implementation Priority
+
+1. **Security & Safety** (Auth unification, XSS, JS injection, rate limits, password storage, API key exposure)
+2. **Error Handling & Reliability** (Broad exception catches, NPE risks, PII in logs, user-facing error leaks)
+3. **Database & Query Optimization** (Broken named queries, missing indexes, N+1 queries, in-memory filtering)
+4. **Graspable Math Action Validation (isValidAction)** (Task 7)
+5. **Multiple Problems Per Exercise** (Task 2)
+6. **AdminConfigView: Performance Optimization** (Task 5.2 — service-level config caching)
+7. **Gamification** (Task 6)
+8. **Code Quality & Architecture** (Base admin view, split oversized services, extract constants, dead code)
+9. **AI Service Hardening** (Prompt injection defense, config validation, response handling)
+10. **Miscellaneous Fixes** (Keyboard accessibility, admin dashboard diagrams)
+11. **Pagination** (Phase 7 — lowest priority)
+
+### Testing Checklist (for each feature)
+
+- [ ] Unit tests for service methods
+- [ ] Integration tests for DB operations
+- [ ] Manual UI testing in both views
+- [ ] Edge cases (empty data, invalid input, etc.)
+- [ ] Permission/security checks
+- [ ] Performance with large datasets (admin views)
+
+---
+
+## 2. Multiple Problems Per Exercise with Sequential Unlocking
+
+**Goal:** Allow exercises to have multiple problems (like hints), unlock "Next Problem" button when current is complete.
+
+**Implementation Plan:**
+
+### 2.1 Backend Changes
+
+1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
+   - `graspableInitialExpression` -> Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
+   - `graspableTargetExpression` -> Add this field (semicolon-separated: "x=5;x=9;x=3")
+   - Parse expressions by splitting on `;` or `|`
+
+2. **GraspableMathService** - Add session tracking:
+   - `StudentSessionEntity.currentProblemIndex` (new field, default 0)
+   - Track which problem in the sequence student is working on
+   - Method: `int getCurrentProblemIndex(String sessionId)`
+   - Method: `void advanceToNextProblem(String sessionId)`
+
+3. **Database Changes:**
+   - Add `current_problem_index INT DEFAULT 0` to `student_sessions` table
+   - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
+   - Add them to the existing init script - do NOT create separate scripts
+
+### 2.2 Frontend Changes
+
+1. **ExerciseWorkspaceView** - Add UI components:
+   - Field: `int currentProblemIndex = 0`
+   - Field: `String[] problems` (parsed from `exercise.graspableInitialExpression`)
+   - Field: `String[] targetExpressions` (parsed from `exercise.graspableTargetExpression`)
+   - Button: `nextProblemButton` (initially disabled)
+
+2. **Problem Navigation:**
+   - Load problem at index `currentProblemIndex` initially
+   - When `checkCompletion()` returns true:
+     - Enable `nextProblemButton` if `currentProblemIndex < problems.length - 1`
+     - Disable canvas interactions until next problem loaded
+   - On "Next Problem" click:
+     - Increment `currentProblemIndex`
+     - Call `graspableMathService.advanceToNextProblem(sessionId)`
+     - Load next problem expression
+     - Disable button again, re-enable canvas
+   - Display progress: "Problem 2 of 3" in hints section
+
+3. **Completion State:**
+   - When last problem is completed, show final success message
+   - Mark entire session as complete in database
+   - Show "Back to Exercises" or "Review Session" options
+
+4. **Admin/Teacher View**
+   - Exercise creation form: Add help text explaining semicolon-separated format
+   - Example: "2x+5=15;3x-7=20" -> Two problems in sequence
+
+---
+
+## 4. Miscellaneous Fixes
+
+### 4.1 Admin Dashboard Enhancement
+
+The admin dashboard could use some further enhancement, such as diagrams.
+
+### 4.2 Keyboard accessibility
+
+Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
+
+> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
+
+### 4.3 Pagination
+
+Add server-side pagination for admin views to handle large datasets gracefully (Vaadin `DataProvider.fromCallbacks()` + backend paged queries + `count()` methods). **Priority: Phase 7 — lowest urgency.**
+
+> **Consistency check:** When implementing, check all admin views (Users, Exercises, Lessons, Comments, Sessions, Progress, UserGroups, UserRanks) for identical grid-loading patterns and fix them consistently.
+
+### 4.4 Unit Test Coverage
+
+Unit test coverage should be reviewed and improved across multiple packages. Specific gaps identified:
+
+- Service tests only cover null/empty input validation (no happy paths, updates, deletions, search, or edge cases).
+- No repository tests for custom queries (e.g., broken named queries in `ExerciseRepository` would not be caught).
+- No view/presenter tests; Vaadin views are completely untested.
+- No usage of Mockito/Panache Mock for true unit tests in isolation; all tests use `@QuarkusTest` with real DB.
+- `AiTutorServiceTest` has a test that catches generic `Exception` and asserts on message, making it pass regardless of actual behavior.
+
+> **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
+
+### 4.5 Security Considerations
+
+#### 4.5.1 ULIDs
+
+Use ULIDs for IDs rather than auto-incrementing integers.
+
+### 4.6 Database & Query Optimization
+
+- **Fix broken named queries in ExerciseRepository.** `search()` and `findByDateRange()` reference `@NamedQuery` names (`Exercise.searchByTerm`, `Exercise.findByDateRange`) that do not exist in `ExerciseEntity`. This will throw `IllegalArgumentException` at runtime. Add the missing named queries or implement as ad-hoc JPQL.
+- **Add database indexes on heavily queried columns.** No entity defines `@Index` or `@Table(indexes=...)`. Add indexes at least for:
+  - `StudentSessionEntity`: `(user_id, start_time)`, `(exercise_id, start_time)`, `(completed, start_time)`, `(start_time)`
+  - `ExerciseEntity`: `(lesson_id, published)`, `(published, id DESC)`, `(user_id, id DESC)`
+  - `CommentEntity`: `(exercise_id, status, created)`, `(user_id, created)`, `(parent_comment_id, status, created)`, `(status, created)`, `(session_id, created)`, `(flags_count, status)`
+  - `UserEntity`: `(rank_id)`, `(activated, banned)`
+  - `LessonEntity`: `(parent_id)`
+  - `AiInteractionEntity`: `(session_id)`, `(user_id)`, `(exercise_id)`
+  - `UserGroupMetaEntity`: `(group_id, user_id)`
+    When adding indexes, check all entities for additional filtering/sorting columns that would benefit.
+- **Fix N+1 query patterns:**
+  - `ExerciseService.enrichWithCompletionData()` calls `analyticsService.getSessionsByUserAndExercise()` once per exercise. Batch-load completion data in a single query.
+  - `UserGroupService.getUsersInGroup()` iterates lazy `userGroupMetas` triggering per-user loads. Use a fetch-join query in `UserGroupMetaRepository`.
+  - `LessonsView.buildUi()` calls `exerciseService.findByLessonId()` once per lesson. Load all published exercises once and group by `lessonId` in memory.
+  - `StudentSessionEntity` uses `FetchType.EAGER` on `user` and `exercise` without fetch joins. Change to `LAZY` and add `LEFT JOIN FETCH` variants for list queries.
+    When fixing N+1 issues, check all service methods that iterate collections and access lazy relationships for identical patterns.
+- **Replace in-memory filtering with database queries:**
+  - `AdminSessionsView.filterByDateRange()` loads all sessions then filters in Java. Push date range to repository query.
+  - `AdminProgressView.searchStudents()` and `filterByDateRange()` load all users + all sessions then filter DTOs in memory. Push filtering to DB.
+  - `CommentService.searchComments()` with blank query falls back to `getAllComments()`. Return empty list or paged default instead.
+    When fixing, check all views/services that load full datasets then filter in memory for identical patterns.
+- **Replace in-memory analytics counting with JPQL aggregates:**
+  - `AnalyticsService.getActiveStudentsCount()` loads all sessions from last 7 days to `distinct().count()` user IDs. Use `COUNT(DISTINCT s.user.id)`.
+  - `AnalyticsService.getTodaySessionsCount()` loads all today's sessions to call `.size()`. Use `COUNT(s)`.
+  - `AnalyticsService.getProblemCategoryStats()` loads all completed sessions ever. Use `GROUP BY` JPQL.
+    When fixing, check all analytics methods for identical full-table-load-then-count patterns.
+- **Use COUNT queries for emptiness checks.** `UserRankService.deleteRank()` loads full user list just to check if empty. Use `userRepository.countByRankId()` instead. When fixing, check all services that load lists only to test emptiness.
+
+### 4.7 Refactoring: Database Access
+
+Refactor services and entities so that services no longer include database queries, maintaining separation of concerns between layers. Additionally:
+
+- **Standardize repository patterns.** `LessonRepository` directly injects `EntityManager` and does NOT extend `AbstractRepository`, while `UserRepository`, `ExerciseRepository`, and `CommentRepository` do extend it. Make all repositories follow the same pattern consistently, i.e. extend `AbstractRepository`. When fixing, check all repositories for identical inconsistencies.
+- **Remove database queries from entity classes.** `CommentEntity` contains static finder methods (`findByExerciseId`, `findByUserId`, etc.) that duplicate repository functionality and are unused dead code. Remove them.
+
+### 4.8 Error Handling & Reliability
+
+- **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
+  - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
+  - `UserService.patchUser()` — swallows password hashing exceptions.
+  - `OpenAiService.generateContent()` and `OllamaService.generateContent()` — mask transport and programming errors.
+  - `AiTutorService` — multiple broad catches around AI provider calls.
+  - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
+    Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
+- **Fix null safety issues:**
+  - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
+  - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
+  - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
+  - `AiTutorService.logInteraction()` line 1043: `feedback.type.toString()` without null check.
+    **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
+- **Remove PII from logs.** `AiTutorService` logs raw student questions and AI answers at INFO level (lines ~1101, ~1135, ~1164). Log only metadata (sessionId, length, success/failure), never content. **When fixing, check all AI service and tutor service logging for identical PII exposure.**
+- **Fix user-facing error messages to avoid information leakage.**
+  - `LoginView` shows `ex.getMessage()` directly to users.
+  - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
+  - `AdminConfigView` shows `e.getMessage()` in error notifications.
+    Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
+- **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
+- **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
+- **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
+
+### 4.9 Code Quality & Architecture
+
+- **Extract base admin view to eliminate duplication.** Create `AbstractAdminView` handling:
+  - `beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).
+  - Async data loading pattern (`CompletableFuture.supplyAsync(...).orTimeout(30, ...)`).
+  - Standard grid setup (striped, size full, ID width, action column width).
+  - Standard dialog form setup (binder, form layout, responsive steps, save/cancel buttons).
+  - Standard button layout (Create + Refresh).
+  - Standard error handling.
+    **When extracting, check all admin views for identical duplicated patterns and migrate them consistently.**
+- **Extract generic utilities:**
+  - `AsyncDataLoader<T>` utility for the repeated `CompletableFuture` pattern.
+  - `BaseFormDialog<T>` for create/edit dialogs.
+  - `DateRangeFilter` component/utility for date filtering logic duplicated across views.
+    **When extracting, check all views for identical utility needs.**
+- **Split oversized services (SRP):**
+  - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, `ProblemGeneratorService`, `AiInteractionLogger`.
+  - `CommentService` (~690 lines): extract `CommentModerationService`, `CommentFlaggingService`, `CommentRateLimitService`, `CommentPermissionService`.
+  - `ExerciseService`: extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.
+    **When splitting, check all services over 400 lines for identical SRP violations.**
+- **Extract constants for magic values:**
+  - Async timeout: `30` seconds in admin views.
+  - Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.
+  - Retry config: `maxRetries = 3`, `delay = 1000`, `jitter = 200`.
+  - Difficulty levels: `"beginner"`, `"intermediate"`, `"advanced"`, `"expert"` -> use enum.
+  - Password min length: `8` (enforced by UserService.PASSWORD_MIN_LENGTH and DTO validations using `@Size(min = 8, ...)`).
+  - Auto-hide flag threshold: `5` in `CommentService`.
+  - Notification durations in `NotificationUtil`.
+  - Canvas heights: `"77vh"`, `"80vh"`.
+  - Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.
+    **When extracting constants, check the entire codebase for identical hardcoded values.**
+- **Standardize naming and patterns:**
+  - Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.
+  - Login forward targets: some views use `LoginView.class`, others use `"login"`. Standardize to `LoginView.class`.
+  - Repository pattern: standardize all repositories to extend `AbstractRepository` or remove it entirely.
+  - DTO patterns: apply `@SuppressFBWarnings` consistently across all DTOs.
+  - Error handling: standardize on generic user messages + server-side logging.
+    **When standardizing, check all files for identical inconsistencies.**
+- **Remove dead code:**
+  - Unused static finder methods in `CommentEntity` (lines 90-164).
+  - Commented-out code block in `MathWorkspaceView` (lines 341-356).
+  - Run optimize imports across the codebase.
+    **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
+
+### 4.10 AI Service Hardening
+
+- **Add prompt injection defenses.** User input (`question`, `expressionBefore`, `expressionAfter`, `eventType`) is directly concatenated into prompts without delimiters or escaping. Use XML tags or fenced code blocks to separate system instructions from user data. Add maximum length checks on questions/expressions before building prompts. **When fixing, check all prompt-building methods for identical raw-concatenation patterns.**
+- **Add server-side config validation and hard caps.**
+  - `AiConfigService.validateConfigValue` does not range-check `DOUBLE` types. Enforce temperature 0.0-2.0, maxTokens 1-8192 (or provider-specific hard cap).
+  - Enforce server-side hard caps on `maxTokens` in `GeminiService` and `OpenAiService` regardless of DB config.
+  - `AdminConfigView` uses client-side `setMax()` on NumberFields; this can be bypassed. Enforce the same limits server-side.
+    **When fixing, check all numeric config values for identical missing validation.**
+- **Validate AI base URLs to prevent SSRF.** (See 4.5 Security Considerations for related topics; add URL validation subsection if implementing.)
+- **Improve response handling.**
+  - `AiTutorService.parseFeedbackFromJson` catches generic `Exception`, masking `JsonMappingException` and `OutOfMemoryError`. Catch specific `JsonProcessingException`/`IOException` only.
+  - `GeminiResponseDto.isBlocked()` conflates null/empty response with safety blocks. Distinguish explicitly.
+  - `OpenAiResponseDto.isComplete()` only accepts `"stop"`. Handle `"length"` and `"content_filter"` explicitly.
+  - `AiFeedbackDto.confidence` has no range validation. Clamp to `[0.0, 1.0]`.
+    **When fixing, check all JSON parsing and response DTOs for identical unsafe handling.**
+- **Populate audit fields.** `AiInteractionEntity.conversationContext` exists but is never populated in `logInteraction` or `logQuestionInteraction`. Populate it with a sanitized snapshot of the prompt/context sent. **When fixing, check all entity creation methods for identical missing field population.**
+- **Remove full prompt content from DEBUG logs.** `AiTutorService` logs entire prompts including conversation context at DEBUG. Remove content from logs; log only hash/length, or use separate TRACE level. **When fixing, check all AI services for identical sensitive-data logging.**
+
+---
+
+## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
+
+**Status:** ✅ **MOSTLY COMPLETE** — Core functionality implemented; performance optimization needed.
+
+**Goal:** Create a new `AdminConfigView` (route: `admin/config`) allowing users with admin privileges to manage AI tutor configuration at runtime. This replaces static `application.properties` changes for AI settings, enabling dynamic provider switching and parameter tuning without redeployment.
+
+### 5.1 Completed Implementation
+
+#### Database Schema — ✅ DONE
+
+- **`AiConfigEntity`** created with all required fields: `id`, `configKey` (unique), `configValue`, `configType`, `category`, `description`, `lastUpdatedAt`, `lastUpdatedBy`
+- **`AiConfigRepository`** extends `PanacheRepositoryBase<AiConfigEntity, Long>` with query methods
+- **Database schema** added to `init.sql` with seed data for all config keys (general, Gemini, OpenAI, Ollama, prompts)
+
+#### Backend Service Layer — ✅ DONE
+
+- **`AiConfigService`** (@ApplicationScoped) fully implemented with:
+  - `getConfigValue(key, defaultValue)` with `@CacheResult` caching
+  - `getConfigValueAsInt()`, `getConfigValueAsDouble()`, `getConfigValueAsBoolean()` type converters
+  - `updateConfig(key, value, userId)` with `@Transactional` and `@CacheInvalidate`
+  - `getAllConfigsByCategory(category)` for UI population
+  - `validateAndSave(configUpdates, userId)` for bulk updates
+  - Cache invalidation on config updates
+- **AI Services refactored** to use `AiConfigService`:
+  - `AiTutorService`: Removed `@ConfigProperty` fields; fetches config dynamically via `AiConfigService`
+  - `GeminiService`: Uses `aiConfigService` for model, URL, temperature, max-tokens; keeps API key as `@ConfigProperty` (env var)
+  - `OpenAiService`: Same pattern as Gemini
+  - `OllamaService`: Same pattern as Gemini
+- **DTOs created:**
+  - `AiConfigDto`: Full config representation with metadata
+  - `AiConfigUpdateDto`: Lightweight update payload
+
+#### Frontend — ✅ DONE
+
+- **`AdminConfigView`** created at `/admin/config` with:
+  - Tabbed interface for categories: General, Gemini, OpenAI, Ollama, Prompts
+  - General settings: AI Tutor Enabled toggle, AI Provider selector
+  - Provider-specific tabs with Model, API URL, Temperature, Max Tokens fields (read-only API key placeholders)
+  - Prompts tab: TextAreas for question answering and math tutoring prefix/postfix
+  - "Test Connection" button per provider (tests provider connectivity with dummy prompt)
+  - "Save" button with validation feedback
+  - "Reset to Defaults" button for quick reset
+
+#### Security & Validation — ✅ DONE
+
+- **Permissions:** Route protected; only Admin (rankId=1) can access via `@Restrict(roles = "Admin")`
+- **Input validation:** URLs validated for HTTP/HTTPS format; numeric fields bounded; prompt length limits enforced
+- **Sensitive data:** API keys managed via `@ConfigProperty` env vars; not stored in database
+- **Runtime effect:** Config changes take immediate effect for new AI interactions; cache TTL configured
+
+#### Testing — ⚠️ PARTIAL
+
+- ✅ `AiConfigServiceTest`: Unit tests for CRUD, validation, type conversions
+- ❌ `AiConfigServiceIT`: Integration tests not implemented
+- ❌ `AdminConfigViewTest`: UI tests not implemented
+- ✅ Manual: Can be tested via Quarkus dev mode
+
+### 5.2 Performance Optimization Opportunity
+
+**Issue Identified:** Methods calling `aiConfigService.getConfigValue()` frequently may cause performance degradation due to repeated cache lookups or database hits on cache misses.
+
+**Affected Methods:**
+
+- `OllamaService.isAvailable()` (line 121): Calls `getConfigValue("ollama.api.url", ...)` on every invocation
+- `OllamaService` request methods (lines 42-45): Fetch multiple config values per request (model, temperature, max-tokens, timeout)
+- `GeminiService.isAvailable()` and `OpenAiService.isAvailable()` (if implemented): Similar pattern
+- `GeminiService.getModel()` and `OpenAiService.getModel()` (lines 149, 218): Called per-request
+
+**Recommended Solutions:**
+
+1. **Method-level caching:** Cache provider config values locally in each AI service with invalidation hooks tied to config updates
+   - Add `@Inject AiConfigService` listener methods that refresh service-level cache when config changes
+   - Use CDI events from `AiConfigService.updateConfig()` to trigger cache invalidation
+2. **Eager loading:** Pre-load all provider-specific config values at service startup (less flexible but faster)
+3. **Parameter passing:** For health check methods like `isAvailable()`, accept URL as parameter if called in frequent scenarios
+4. **Query optimization:** Ensure database indexes on `ai_config.configKey` and cache TTL tuning in `AiConfigService`
+
+**Action Item for Next Phase:** Implement service-level config caching with event-driven invalidation to eliminate per-request database lookups.
+
+### 5.3 Future Enhancements (Out of Scope)
+
+- **Audit Log:** Track all config changes in `ai_config_audit` table (who, when, old/new values)
+- **Multi-Tenancy:** Per-group/user config overrides
+- **API Key Encryption:** Encrypt at rest using Quarkus Vault
+- **Provider Health Monitoring:** Dashboard showing uptime, latency, error rates
+- **Cost Tracking:** Token usage and budget alerts
+- **Prompt Versioning:** Rollback support for prompts
+- **A/B Testing:** Multiple prompt variants with outcome tracking
+- **Prompt Templates:** Pre-built tutoring style library
+- **Prompt Variables:** Dynamic placeholders (e.g., `{{student_name}}`)
+
+---
+
+## 6. Gamification
+
+**Goal:** Increase student motivation and engagement by adding gamification elements such as achievements/badges, progress levels, experience points (XP), streaks, leaderboards, and rewards tied to problem solving within the Graspable Math workspace and overall course progress.
+
+This feature should be opt-in per user (privacy-friendly), configurable by admins, and designed to be low-friction so it does not interfere with learning objectives.
+
+### 6.1 High-level features
+
+- Achievements/Badges: award for specific milestones (e.g., "First Solution", "10 Problems Solved", "Perfect Session", "Fast Solver", "Hint Avoider").
+- Experience points (XP): reward XP for solved problems, streaks, and completing exercises. XP contributes to user Level.
+- Levels & Progress Bar: users level up based on XP thresholds; show a progress bar on dashboard and exercise view.
+- Daily Streaks: consecutive days with activity—rewards and streak badges.
+- Leaderboards: global and class/group leaderboards showing top XP or most problems solved. Respect privacy settings (opt-in/opt-out, show anonymized handles).
+- Challenges & Quests: time-limited or teacher-assigned challenges (e.g., "Solve 5 linear equations this week") with rewards.
+- Rewards & Unlocks: unlock cosmetic rewards (avatars, themes), extra practice problems, or hints currency that can be spent.
+- Notifications & Activity Feed: notify users when they earn badges, level up, or climb the leaderboard.
+
+### 6.2 Backend changes
+
+1. New Entities (Hibernate/Panache style):
+   - `BadgeEntity` - id, code, name, description, iconPath, criteriaJson, createdAt
+   - `UserBadgeEntity` - id, userId, badgeId, awardedAt, source (auto/manual)
+   - `UserXpEntity` - id, userId, totalXp, level, nextLevelXp, lastUpdated
+   - `UserStreakEntity` - id, userId, currentStreakDays, lastActiveDate
+   - `ChallengeEntity` - id, title, description, startDate, endDate, rewardXp, rewardBadgeId, createdBy
+   - `UserChallengeEntity` - id, userId, challengeId, progressJson, completedAt
+   - `LeaderboardSnapshotEntity` (optional) - snapshotDate, rankingJson (for caching)
+
+2. Service classes:
+   - `GamificationService` (@ApplicationScoped)
+     - awardBadge(userId, badgeCode, source)
+     - addXp(userId, amount, reason)
+     - incrementStreak(userId, date)
+     - getUserBadges(userId)
+     - getUserXpAndLevel(userId)
+     - getLeaderboards(scope, groupId, limit)
+     - evaluateAndAwardOnProblemSolved(sessionId, eventDto) — called from GraspableMathService or AITutorService when problems are solved
+   - `ChallengeService` - create/manage challenges, track user progress
+
+3. DTOs
+   - `BadgeDto`, `UserBadgeDto`, `UserXpDto`, `ChallengeDto`, `LeaderboardDto`
+
+4. DB migrations / schema updates
+   - Add tables for each new entity. As per project style, add fields to existing init scripts (do NOT add separate scripts).
+   - Add indexes on `userId` and `badgeCode` where helpful.
+
+5. Integration points
+   - Call `GamificationService.evaluateAndAwardOnProblemSolved(...)` from `GraspableMathService` whenever a problem is marked complete.
+   - Call `addXp(...)` when user actions qualify (fast solve bonus, no-hint bonus, perfect session).
+   - Update `StudentSessionEntity` to optionally record `xpEarned` for the session and `badgesAwardedJson` (or rely on `UserBadgeEntity`).
+
+### 6.3 Frontend changes (Vaadin views)
+
+1. New Views/Components
+   - `GamificationPanel` component: compact widget to show current level, XP progress bar, recent badges, and quick action to view full gamification profile.
+   - `BadgesView` (@Route "badges") - list of all badges with filters (earned/not earned), and badge details.
+   - `LeaderboardView` (@Route "leaderboard") - toggle between global, class/group, and friends.
+   - `ChallengesView` (@Route "challenges") - list active/past challenges and allow users to join (if allowed).
+   - Integrate small toast/notification UI in `ExerciseWorkspaceView` for immediate feedback when a badge is earned or XP awarded.
+
+2. UI behavior
+   - Show XP progress bar in the main user dashboard and in `ExerciseWorkspaceView` (top-right corner) so users can see immediate progress.
+   - When a badge is earned, show a celebratory modal/toast with badge icon and description; include an unobtrusive "share" option (copy link or classroom share).
+   - Leaderboard toggles to respect privacy: anonymize names if user opted out of public rankings.
+   - Provide settings in `UserProfileView` for gamification opt-in/out and visibility preferences.
+
+3. Admin Controls
+   - Extend `AdminConfigView` (or new `AdminGamificationView`) to manage badges, XP rules, level thresholds, challenge creation, and leaderboard settings.
+   - Allow admins/teachers to award badges manually.
+
+### 6.4 XP, Levels, and Rules (example policy)
+
+- Base XP per solved problem: 10 XP
+- Bonus: +5 XP for solving without hints
+- Speed bonus: up to +10 XP proportional to time under expected time
+- Streak bonus: +2 XP per consecutive day active (capped)
+- Challenge completion: rewardXp per challenge config
+- Level thresholds: exponential or pre-configured table (e.g., Level 1: 0 XP, Level 2: 100 XP, Level 3: 300 XP, Level 4: 700 XP)
+
+Keep rules configurable via `AdminGamificationView`.
+
+### 6.5 Privacy & Accessibility
+
+- Gamification must be opt-in for students; default can be enabled but provide a clear toggle in profile.
+- Allow students to hide their name from leaderboards (opt-out) and to use an alias.
+- Ensure badges and colors are accessible (contrast, screen-reader friendly alt text for icons).
+
+### 6.6 Testing
+
+- Unit tests for `GamificationService` (award logic, XP calculations, level progression).
+- Integration tests for DB writes (badge awards, XP updates, streak increments).
+- UI tests for badge modal display and leaderboard filtering.
+- Load testing/benchmarks for leaderboard queries (cache snapshots if needed).
+
+### 6.7 Metrics & Analytics
+
+- Track gamification engagement metrics: percent of users opting in, average XP earned per session, badge earn rates, churn/retention impact.
+- Add events to existing logging/analytics pipeline (e.g., `GAMIFICATION_BADGE_AWARDED`, `GAMIFICATION_XP_ADDED`).
+
+### 6.8 Phased rollout and migration
+
+- Phase 1 (MVP): XP, badges for a small default set (First Solution, 10 Problems, No Hints), user opt-in, basic UI panel, and admin config for enabling/disabling.
+- Phase 2: Add leaderboards, challenges, rewards/unlocks, and teacher tools.
+- Phase 3: Advanced features like seasonal events, classroom competitions, and integration with external LMS.
+
+### 6.9 Risks and mitigations
+
+- Reward focus over learning: design badges to align tightly with learning goals (e.g., accuracy, explanation, reflection), not just speed.
+- Privacy concerns: defaults and opt-outs must be clear and honored.
+- Cheating via repeated trivial tasks: weight XP and badges to discourage grinding (e.g., cap repeatable XP per day for the same exercise).
+
+---
+
+Update task statuses in project tracking and prepare follow-up issues for implementation.
+
+## 7. Graspable Math Action Validation (isValidAction)
+
+Goal: Implement server-side validation of student math actions coming from the Graspable Math workspace so that session metrics (correctActions, success rate) reflect true mathematical correctness rather than relying solely on the frontend or marking every action as correct.
+
+Why this is separate: The repository currently sets `event.correct = true` for all math actions in `ExerciseWorkspaceView`. The quick note in `ISSUES.md` explains that adding a robust `isValidAction(before, after)` is non-trivial and was deferred. This TODO captures a concrete plan to implement it as a discrete task.
+
+Priority: Medium — important for analytics accuracy but non-trivial and requires careful selection of a math parsing/normalization approach.
+
+Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressions reliably is tricky)
+
+Implementation plan:
+
+- Backend changes (core):
+  1.  Add a new method to `GraspableMathService`:
+      - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
+      - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
+  2.  Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
+      - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
+      - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
+  3.  If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
+  4.  Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+
+- Backend changes (data/metrics):
+  1.  Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
+  2.  Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
+
+- Tests:
+  1.  Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
+  2.  Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
+  3.  End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+
+- Migration/compatibility notes:
+  1.  If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
+  2.  Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+
+- Rollout suggestion:
+  1.  Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
+  2.  Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
+  3.  Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+
+Owner: Backend team / person familiar with symbolic math libraries
+
+Deliverables:
+
+- `GraspableMathService.isValidAction()` implementation
+- `MathExpressionComparator` (or adapter) with unit tests
+- Updated `ExerciseWorkspaceView.onMathAction(...)` usage and tests
+- Admin toggle or config for validation policy
+
+Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement MVP heuristics, and create tests. If a full CAS integration is required, add time for design and vetting (additional 1-2 weeks).

@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
+import java.util.concurrent.TimeUnit;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -26,12 +28,49 @@ public class OpenAiService {
     private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
 
     @ConfigProperty(name = "openai.api.key", defaultValue = "")
-    String apiKey; // API key is always read from environment variable, never from database
+    private String apiKey; // API key is always read from environment variable, never from database
 
     @Inject
     AiConfigService aiConfigService;
 
-    private Client client;
+    private volatile Client client;
+
+    /**
+     * Get or create the JAX-RS Client with thread-safe double-checked locking.
+     */
+    private Client getClient() {
+        Client localClient = this.client;
+        if (localClient == null) {
+            synchronized (this) {
+                localClient = this.client;
+                if (localClient == null) {
+                    this.client = localClient = ClientBuilder.newBuilder()
+                            .connectTimeout(10, TimeUnit.SECONDS)
+                            .readTimeout(60, TimeUnit.SECONDS)
+                            .build();
+                    LOG.debug("Created OpenAI JAX-RS Client");
+                }
+            }
+        }
+        return localClient;
+    }
+
+    /**
+     * Clean up JAX-RS client resources when the bean is destroyed.
+     */
+    @jakarta.annotation.PreDestroy
+    void cleanup() {
+        final Client localClient = this.client;
+        if (localClient != null) {
+            synchronized (this) {
+                if (this.client != null) {
+                    this.client.close();
+                    this.client = null;
+                    LOG.debug("Closed OpenAI JAX-RS Client");
+                }
+            }
+        }
+    }
 
     /**
      * Generate content using OpenAI Chat Completions API
@@ -77,13 +116,8 @@ public class OpenAiService {
             // Build API URL
             final String url = baseUrl + "/chat/completions";
 
-            // Get or create client
-            if (this.client == null) {
-                this.client = ClientBuilder.newClient();
-            }
-
             // Build request with headers
-            var requestBuilder = this.client.target(url)
+            var requestBuilder = this.getClient().target(url)
                     .request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);
 
@@ -167,11 +201,7 @@ public class OpenAiService {
 
             final String url = baseUrl + "/chat/completions";
 
-            if (this.client == null) {
-                this.client = ClientBuilder.newClient();
-            }
-
-            var requestBuilder = this.client.target(url)
+            var requestBuilder = this.getClient().target(url)
                     .request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);
 

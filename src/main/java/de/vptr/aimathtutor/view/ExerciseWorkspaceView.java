@@ -93,6 +93,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         try {
             this.exerciseId = Long.parseLong(exerciseIdParam.get());
+            if (this.exerciseId == null || this.exerciseId <= 0) {
+                NotificationUtil.showError("Invalid exercise ID");
+                event.rerouteTo(LessonsView.class);
+                return;
+            }
         } catch (final NumberFormatException e) {
             NotificationUtil.showError("Invalid exercise ID");
             event.rerouteTo(LessonsView.class);
@@ -226,7 +231,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             contentSection.add(instructionsHeader);
 
             final var contentDiv = new Div();
-            contentDiv.add(new Html("<div>" + this.exercise.content + "</div>"));
+            contentDiv.getStyle().set("white-space", "pre-wrap");
+            contentDiv.add(new com.vaadin.flow.component.Text(this.exercise.content));
             contentSection.add(contentDiv);
 
             header.add(contentSection);
@@ -350,25 +356,36 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
 
         // Initialize canvas and load problem once ready
-        final String initScript = String.format("setTimeout(function() { %n"
-                + "  if (window.initializeGraspableMath) { %n"
-                + "    window.initializeGraspableMath(); %n"
-                + "    var loadProblemWhenReady = function() { %n"
-                + "      if (window.graspableCanvas && window.graspableMathUtils) { %n"
-                + "        console.log('[Exercise] Canvas ready, loading problem'); %n"
-                + "        window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
-                + "      } else { %n"
-                + "        console.log('[Exercise] Waiting for canvas...'); %n"
-                + "        setTimeout(loadProblemWhenReady, 200); %n"
-                + "      } %n"
-                + "    }; %n"
-                + "    setTimeout(loadProblemWhenReady, 500); %n"
-                + "  } else { %n"
-                + "    console.error('[Exercise] Graspable Math initialization function not found'); %n"
-                + "  } %n"
-                + "}, 100);%n", this.exercise.graspableInitialExpression);
-
-        UI.getCurrent().getPage().executeJs(initScript);
+        UI.getCurrent().getPage().executeJs(
+                """
+                var initAttempts = 0;
+                var maxInitAttempts = 50;
+                var checkAndInitialize = function() {
+                  if (window.initializeGraspableMath) {
+                    window.initializeGraspableMath();
+                    var loadProblemWhenReady = function() {
+                      if (window.graspableCanvas && window.graspableMathUtils) {
+                        console.log('[Exercise] Canvas ready, loading problem');
+                        window.graspableMathUtils.loadProblem($0, 100, 50);
+                      } else {
+                        console.log('[Exercise] Waiting for canvas...');
+                        setTimeout(loadProblemWhenReady, 200);
+                      }
+                    };
+                    setTimeout(loadProblemWhenReady, 500);
+                  } else {
+                    initAttempts++;
+                    if (initAttempts < maxInitAttempts) {
+                      console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
+                      setTimeout(checkAndInitialize, 100);
+                    } else {
+                      console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
+                    }
+                  }
+                };
+                checkAndInitialize();
+                """,
+                this.exercise.graspableInitialExpression);
 
         // Register server-side connector
         this.registerServerConnector();
@@ -444,8 +461,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Don't show typing indicator for math actions - only show it when we get
         // actual feedback
         final var ui = UI.getCurrent();
+        final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext).thenAccept(feedback -> {
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
             ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
@@ -498,13 +516,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Get user ID and exercise ID before async call (to avoid context issues)
         final var userId = this.authService.getUserId();
+        final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         final var exerciseId = this.exercise != null ? this.exercise.id : null;
         final var sessionId = this.currentSessionId;
 
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext)
+                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     // Log the question and answer interaction BEFORE UI access (to ensure proper
                     // transaction context)

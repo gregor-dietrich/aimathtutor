@@ -14,6 +14,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -123,7 +124,7 @@ public class UserRankService {
      * @throws IllegalArgumentException if rank name is invalid
      */
     @Transactional
-    public UserRankViewDto createRank(final UserRankDto rankDto) {
+    public UserRankViewDto createRank(final @Valid UserRankDto rankDto) {
         final UserRankEntity rank = new UserRankEntity();
 
         // Set properties from DTO
@@ -164,7 +165,7 @@ public class UserRankService {
      * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
-    public UserRankViewDto updateRank(final Long id, final UserRankDto rankDto) {
+    public UserRankViewDto updateRank(final Long id, final @Valid UserRankDto rankDto) {
         final UserRankEntity existingRank = this.userRankRepository.findById(id);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
@@ -207,7 +208,7 @@ public class UserRankService {
      * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
-    public UserRankViewDto patchRank(final Long id, final UserRankDto rankDto) {
+    public UserRankViewDto patchRank(final Long id, final @Valid UserRankDto rankDto) {
         final UserRankEntity existingRank = this.userRankRepository.findById(id);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
