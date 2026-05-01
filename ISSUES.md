@@ -112,38 +112,11 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 > **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
 
-### 4.5 Security Considerations
-
-#### 4.5.1 ULIDs
+### 4.5 ULIDs
 
 Use ULIDs for IDs rather than auto-incrementing integers.
 
-### 4.6 Error Handling & Reliability
-
-- **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
-  - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
-  - `UserService.patchUser()` — swallows password hashing exceptions.
-  - `OpenAiService.generateContent()` and `OllamaService.generateContent()` — mask transport and programming errors.
-  - `AiTutorService` — multiple broad catches around AI provider calls.
-  - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
-    Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
-- **Fix null safety issues:**
-  - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
-  - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
-  - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
-  - `AiTutorService.logInteraction()` line 1043: `feedback.type.toString()` without null check.
-    **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
-- **Remove PII from logs.** `AiTutorService` logs raw student questions and AI answers at INFO level (lines ~1101, ~1135, ~1164). Log only metadata (sessionId, length, success/failure), never content. **When fixing, check all AI service and tutor service logging for identical PII exposure.**
-- **Fix user-facing error messages to avoid information leakage.**
-  - `LoginView` shows `ex.getMessage()` directly to users.
-  - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
-  - `AdminConfigView` shows `e.getMessage()` in error notifications.
-    Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
-- **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
-- **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
-- **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
-
-### 4.7 Code Quality & Architecture
+### 4.6 Code Quality & Architecture
 
 - **Extract base admin view to eliminate duplication.** Create `AbstractAdminView` handling:
   - `beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).
@@ -186,6 +159,31 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - Commented-out code block in `MathWorkspaceView` (lines 341-356).
   - Run optimize imports across the codebase.
     **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
+
+### 4.7 Error Handling & Reliability
+
+- **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
+  - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
+  - `UserService.patchUser()` — swallows password hashing exceptions.
+  - `OpenAiService.generateContent()` and `OllamaService.generateContent()` — mask transport and programming errors.
+  - `AiTutorService` — multiple broad catches around AI provider calls.
+  - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
+    Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
+- **Fix null safety issues:**
+  - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
+  - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
+  - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
+  - `AiTutorService.logInteraction()` line 1043: `feedback.type.toString()` without null check.
+    **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
+- **Remove PII from logs.** `AiTutorService` logs raw student questions and AI answers at INFO level (lines ~1101, ~1135, ~1164). Log only metadata (sessionId, length, success/failure), never content. **When fixing, check all AI service and tutor service logging for identical PII exposure.**
+- **Fix user-facing error messages to avoid information leakage.**
+  - `LoginView` shows `ex.getMessage()` directly to users.
+  - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
+  - `AdminConfigView` shows `e.getMessage()` in error notifications.
+    Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
+- **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
+- **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
+- **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
 
 ### 4.8 AI Service Hardening
 

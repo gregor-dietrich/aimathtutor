@@ -1,13 +1,13 @@
 package de.vptr.aimathtutor.service;
 
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
-import java.util.concurrent.TimeUnit;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -19,7 +19,7 @@ import jakarta.ws.rs.core.Response;
 
 /**
  * Service for interacting with OpenAI Chat Completions API
- * Supports GPT-4o, GPT-4o-mini, GPT-3.5-turbo, etc.
+ * Supports GPT-4o, gpt-5-nano, GPT-3.5-turbo, etc.
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
@@ -88,7 +88,7 @@ public class OpenAiService {
         }
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
+        final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
         final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
@@ -183,7 +183,7 @@ public class OpenAiService {
         }
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
+        final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
         final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
         final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
@@ -245,6 +245,6 @@ public class OpenAiService {
      * Get the current model name
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini");
+        return this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
     }
 }

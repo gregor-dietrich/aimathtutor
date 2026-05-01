@@ -235,9 +235,9 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Model field
         final var modelField = new TextField("Model");
-        modelField.setValue(this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini"));
+        modelField.setValue(this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano"));
         modelField.setWidthFull();
-        modelField.setHelperText("OpenAI model name (e.g., gpt-4o-mini)");
+        modelField.setHelperText("OpenAI model name (e.g., gpt-5-nano)");
 
         // API Base URL
         final var urlField = new TextField("API Base URL");
