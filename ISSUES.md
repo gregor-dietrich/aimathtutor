@@ -103,6 +103,7 @@ Add server-side pagination for admin views to handle large datasets gracefully (
 ### 4.4 Unit Test Coverage
 
 Unit test coverage should be reviewed and improved across multiple packages. Specific gaps identified:
+
 - Service tests only cover null/empty input validation (no happy paths, updates, deletions, search, or edge cases).
 - No repository tests for custom queries (e.g., broken named queries in `ExerciseRepository` would not be caught).
 - No view/presenter tests; Vaadin views are completely untested.
@@ -113,11 +114,12 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 ### 4.5 Security Considerations
 
-#### 4.5.6 ULIDs
+#### 4.5.1 ULIDs
 
 Use ULIDs for IDs rather than auto-incrementing integers.
 
 ### 4.6 Database & Query Optimization
+
 - **Fix broken named queries in ExerciseRepository.** `search()` and `findByDateRange()` reference `@NamedQuery` names (`Exercise.searchByTerm`, `Exercise.findByDateRange`) that do not exist in `ExerciseEntity`. This will throw `IllegalArgumentException` at runtime. Add the missing named queries or implement as ad-hoc JPQL.
 - **Add database indexes on heavily queried columns.** No entity defines `@Index` or `@Table(indexes=...)`. Add indexes at least for:
   - `StudentSessionEntity`: `(user_id, start_time)`, `(exercise_id, start_time)`, `(completed, start_time)`, `(start_time)`
@@ -127,55 +129,59 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - `LessonEntity`: `(parent_id)`
   - `AiInteractionEntity`: `(session_id)`, `(user_id)`, `(exercise_id)`
   - `UserGroupMetaEntity`: `(group_id, user_id)`
-  When adding indexes, check all entities for additional filtering/sorting columns that would benefit.
+    When adding indexes, check all entities for additional filtering/sorting columns that would benefit.
 - **Fix N+1 query patterns:**
   - `ExerciseService.enrichWithCompletionData()` calls `analyticsService.getSessionsByUserAndExercise()` once per exercise. Batch-load completion data in a single query.
   - `UserGroupService.getUsersInGroup()` iterates lazy `userGroupMetas` triggering per-user loads. Use a fetch-join query in `UserGroupMetaRepository`.
   - `LessonsView.buildUi()` calls `exerciseService.findByLessonId()` once per lesson. Load all published exercises once and group by `lessonId` in memory.
   - `StudentSessionEntity` uses `FetchType.EAGER` on `user` and `exercise` without fetch joins. Change to `LAZY` and add `LEFT JOIN FETCH` variants for list queries.
-  When fixing N+1 issues, check all service methods that iterate collections and access lazy relationships for identical patterns.
+    When fixing N+1 issues, check all service methods that iterate collections and access lazy relationships for identical patterns.
 - **Replace in-memory filtering with database queries:**
   - `AdminSessionsView.filterByDateRange()` loads all sessions then filters in Java. Push date range to repository query.
   - `AdminProgressView.searchStudents()` and `filterByDateRange()` load all users + all sessions then filter DTOs in memory. Push filtering to DB.
   - `CommentService.searchComments()` with blank query falls back to `getAllComments()`. Return empty list or paged default instead.
-  When fixing, check all views/services that load full datasets then filter in memory for identical patterns.
+    When fixing, check all views/services that load full datasets then filter in memory for identical patterns.
 - **Replace in-memory analytics counting with JPQL aggregates:**
   - `AnalyticsService.getActiveStudentsCount()` loads all sessions from last 7 days to `distinct().count()` user IDs. Use `COUNT(DISTINCT s.user.id)`.
   - `AnalyticsService.getTodaySessionsCount()` loads all today's sessions to call `.size()`. Use `COUNT(s)`.
   - `AnalyticsService.getProblemCategoryStats()` loads all completed sessions ever. Use `GROUP BY` JPQL.
-  When fixing, check all analytics methods for identical full-table-load-then-count patterns.
+    When fixing, check all analytics methods for identical full-table-load-then-count patterns.
 - **Use COUNT queries for emptiness checks.** `UserRankService.deleteRank()` loads full user list just to check if empty. Use `userRepository.countByRankId()` instead. When fixing, check all services that load lists only to test emptiness.
 
 ### 4.7 Refactoring: Database Access
+
 Refactor services and entities so that services no longer include database queries, maintaining separation of concerns between layers. Additionally:
+
 - **Standardize repository patterns.** `LessonRepository` directly injects `EntityManager` and does NOT extend `AbstractRepository`, while `UserRepository`, `ExerciseRepository`, and `CommentRepository` do extend it. Make all repositories follow the same pattern consistently. When fixing, check all repositories for identical inconsistencies.
 - **Remove database queries from entity classes.** `CommentEntity` contains static finder methods (`findByExerciseId`, `findByUserId`, etc.) that duplicate repository functionality and are unused dead code. Remove them.
 
 ### 4.8 Error Handling & Reliability
+
 - **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
   - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
   - `UserService.patchUser()` — swallows password hashing exceptions.
   - `OpenAiService.generateContent()` and `OllamaService.generateContent()` — mask transport and programming errors.
   - `AiTutorService` — multiple broad catches around AI provider calls.
   - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
-  Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
+    Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
 - **Fix null safety issues:**
   - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
   - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
   - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
   - `AiTutorService.logInteraction()` line 1043: `feedback.type.toString()` without null check.
-  **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
+    **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
 - **Remove PII from logs.** `AiTutorService` logs raw student questions and AI answers at INFO level (lines ~1101, ~1135, ~1164). Log only metadata (sessionId, length, success/failure), never content. **When fixing, check all AI service and tutor service logging for identical PII exposure.**
 - **Fix user-facing error messages to avoid information leakage.**
   - `LoginView` shows `ex.getMessage()` directly to users.
   - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
   - `AdminConfigView` shows `e.getMessage()` in error notifications.
-  Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
+    Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
 - **Add explicit timeouts to OpenAI client.** `OpenAiService` uses `ClientBuilder.newClient()` with no connect/read timeout. Set explicit timeouts (e.g., 10s connect, 60s read) to prevent thread pool exhaustion. **When fixing, check all external HTTP clients for identical missing-timeout issues.**
 - **Add retry consistency across AI providers.** Only `OllamaService` has `@Retry`. Add `@Retry` (or equivalent fault tolerance with exponential backoff) to `GeminiService` and `OpenAiService`. **When fixing, check all external service calls for inconsistent resilience patterns.**
 - **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
 
 ### 4.9 Code Quality & Architecture
+
 - **Extract base admin view to eliminate duplication.** Create `AbstractAdminView` handling:
   - `beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).
   - Async data loading pattern (`CompletableFuture.supplyAsync(...).orTimeout(30, ...)`).
@@ -183,17 +189,17 @@ Refactor services and entities so that services no longer include database queri
   - Standard dialog form setup (binder, form layout, responsive steps, save/cancel buttons).
   - Standard button layout (Create + Refresh).
   - Standard error handling.
-  **When extracting, check all admin views for identical duplicated patterns and migrate them consistently.**
+    **When extracting, check all admin views for identical duplicated patterns and migrate them consistently.**
 - **Extract generic utilities:**
   - `AsyncDataLoader<T>` utility for the repeated `CompletableFuture` pattern.
   - `BaseFormDialog<T>` for create/edit dialogs.
   - `DateRangeFilter` component/utility for date filtering logic duplicated across views.
-  **When extracting, check all views for identical utility needs.**
+    **When extracting, check all views for identical utility needs.**
 - **Split oversized services (SRP):**
   - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, `ProblemGeneratorService`, `AiInteractionLogger`.
   - `CommentService` (~690 lines): extract `CommentModerationService`, `CommentFlaggingService`, `CommentRateLimitService`, `CommentPermissionService`.
   - `ExerciseService`: extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.
-  **When splitting, check all services over 400 lines for identical SRP violations.**
+    **When splitting, check all services over 400 lines for identical SRP violations.**
 - **Extract constants for magic values:**
   - Async timeout: `30` seconds in admin views.
   - Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.
@@ -204,34 +210,35 @@ Refactor services and entities so that services no longer include database queri
   - Notification durations in `NotificationUtil`.
   - Canvas heights: `"77vh"`, `"80vh"`.
   - Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.
-  **When extracting constants, check the entire codebase for identical hardcoded values.**
+    **When extracting constants, check the entire codebase for identical hardcoded values.**
 - **Standardize naming and patterns:**
   - Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.
   - Login forward targets: some views use `LoginView.class`, others use `"login"`. Standardize to `LoginView.class`.
   - Repository pattern: standardize all repositories to extend `AbstractRepository` or remove it entirely.
   - DTO patterns: apply `@SuppressFBWarnings` consistently across all DTOs.
   - Error handling: standardize on generic user messages + server-side logging.
-  **When standardizing, check all files for identical inconsistencies.**
+    **When standardizing, check all files for identical inconsistencies.**
 - **Remove dead code:**
   - Unused static finder methods in `CommentEntity` (lines 90-164).
   - Commented-out code block in `MathWorkspaceView` (lines 341-356).
   - Run optimize imports across the codebase.
-  **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
+    **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
 
 ### 4.10 AI Service Hardening
+
 - **Add prompt injection defenses.** User input (`question`, `expressionBefore`, `expressionAfter`, `eventType`) is directly concatenated into prompts without delimiters or escaping. Use XML tags or fenced code blocks to separate system instructions from user data. Add maximum length checks on questions/expressions before building prompts. **When fixing, check all prompt-building methods for identical raw-concatenation patterns.**
 - **Add server-side config validation and hard caps.**
   - `AiConfigService.validateConfigValue` does not range-check `DOUBLE` types. Enforce temperature 0.0-2.0, maxTokens 1-8192 (or provider-specific hard cap).
   - Enforce server-side hard caps on `maxTokens` in `GeminiService` and `OpenAiService` regardless of DB config.
   - `AdminConfigView` uses client-side `setMax()` on NumberFields; this can be bypassed. Enforce the same limits server-side.
-  **When fixing, check all numeric config values for identical missing validation.**
+    **When fixing, check all numeric config values for identical missing validation.**
 - **Validate AI base URLs to prevent SSRF.** (Covered in 4.5.3; keep cross-reference here.)
 - **Improve response handling.**
   - `AiTutorService.parseFeedbackFromJson` catches generic `Exception`, masking `JsonMappingException` and `OutOfMemoryError`. Catch specific `JsonProcessingException`/`IOException` only.
   - `GeminiResponseDto.isBlocked()` conflates null/empty response with safety blocks. Distinguish explicitly.
   - `OpenAiResponseDto.isComplete()` only accepts `"stop"`. Handle `"length"` and `"content_filter"` explicitly.
   - `AiFeedbackDto.confidence` has no range validation. Clamp to `[0.0, 1.0]`.
-  **When fixing, check all JSON parsing and response DTOs for identical unsafe handling.**
+    **When fixing, check all JSON parsing and response DTOs for identical unsafe handling.**
 - **Populate audit fields.** `AiInteractionEntity.conversationContext` exists but is never populated in `logInteraction` or `logQuestionInteraction`. Populate it with a sanitized snapshot of the prompt/context sent. **When fixing, check all entity creation methods for identical missing field population.**
 - **Remove full prompt content from DEBUG logs.** `AiTutorService` logs entire prompts including conversation context at DEBUG. Remove content from logs; log only hash/length, or use separate TRACE level. **When fixing, check all AI services for identical sensitive-data logging.**
 
@@ -458,32 +465,32 @@ Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressio
 Implementation plan:
 
 - Backend changes (core):
-   1. Add a new method to `GraspableMathService`:
-       - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
-       - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
-   2. Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
-       - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
-       - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
-   3. If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
-   4. Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+  1.  Add a new method to `GraspableMathService`:
+      - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
+      - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
+  2.  Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
+      - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
+      - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
+  3.  If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
+  4.  Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
 
 - Backend changes (data/metrics):
-   1. Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
-   2. Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or roll-out mode (log only).
+  1.  Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
+  2.  Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or roll-out mode (log only).
 
 - Tests:
-   1. Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
-   2. Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
-   3. End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+  1.  Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
+  2.  Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
+  3.  End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
 
 - Migration/compatibility notes:
-   1. If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
-   2. Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+  1.  If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
+  2.  Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
 
 - Rollout suggestion:
-   1. Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
-   2. Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
-   3. Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+  1.  Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
+  2.  Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
+  3.  Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
 
 Owner: Backend team / person familiar with symbolic math libraries
 
