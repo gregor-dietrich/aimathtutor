@@ -12,7 +12,11 @@ import jakarta.validation.constraints.NotBlank;
  * Useful for analytics, improving AI responses, and debugging.
  */
 @Entity
-@Table(name = "ai_interactions")
+@Table(name = "ai_interactions", indexes = {
+        @Index(name = "idx_ai_session", columnList = "session_id"),
+        @Index(name = "idx_ai_user", columnList = "user_id"),
+        @Index(name = "idx_ai_exercise", columnList = "exercise_id")
+})
 @NamedQueries({
         @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY id DESC"),
         @NamedQuery(name = "AiInteraction.findBySessionId", query = "FROM AiInteractionEntity WHERE sessionId = :s"),

@@ -13,7 +13,11 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing math exercises in the system.
  */
 @Entity
-@Table(name = "exercises")
+@Table(name = "exercises", indexes = {
+        @Index(name = "idx_exercise_lesson_published", columnList = "lesson_id, published"),
+        @Index(name = "idx_exercise_published_id", columnList = "published, id DESC"),
+        @Index(name = "idx_exercise_user_id", columnList = "user_id, id DESC")
+})
 @NamedQueries({
         @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity ORDER BY id DESC"),
         @NamedQuery(name = "Exercise.findPublished", query = "FROM ExerciseEntity WHERE published = true ORDER BY id DESC"),
@@ -21,6 +25,8 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY id DESC"),
         @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY id DESC"),
         @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.searchByTerm", query = "FROM ExerciseEntity WHERE LOWER(title) LIKE :s OR LOWER(content) LIKE :s ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findByDateRange", query = "FROM ExerciseEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
 })
 public class ExerciseEntity extends PanacheEntityBase {
 

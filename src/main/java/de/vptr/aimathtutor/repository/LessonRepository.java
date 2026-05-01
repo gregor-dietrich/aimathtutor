@@ -5,8 +5,6 @@ import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.LessonEntity;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
@@ -16,10 +14,7 @@ import jakarta.transaction.Transactional;
  * find by ID, hierarchical navigation, and search operations.
  */
 @ApplicationScoped
-public class LessonRepository {
-
-    @Inject
-    EntityManager em;
+public class LessonRepository extends AbstractRepository {
 
     /**
      * Retrieves a lesson by its unique identifier.

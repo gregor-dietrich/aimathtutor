@@ -295,12 +295,12 @@ public class UserRankService {
             return false;
         }
 
-        // Check if rank has associated users
-        final List<UserEntity> usersWithRank = this.userRepository.findByRankId(id);
-        if (!usersWithRank.isEmpty()) {
+        // Check if rank has associated users using COUNT query
+        final long userCount = this.userRepository.countByRankId(id);
+        if (userCount > 0) {
             throw new WebApplicationException(
                     "Cannot delete rank because "
-                            + usersWithRank.size()
+                            + userCount
                             + " user(s) are assigned to this rank. Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
         }

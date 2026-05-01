@@ -121,11 +121,23 @@ public class AnalyticsService {
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
                 LOG.trace("Getting sessions for exercise: {} between {} and {}", exerciseId, startDate, endDate);
-                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByExerciseId(exerciseId)
-                                .stream()
-                                .filter(s -> s.startTime != null && !s.startTime.isBefore(startDate)
-                                                && !s.startTime.isAfter(endDate))
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .findByExerciseIdAndDateRange(exerciseId, startDate, endDate);
+                return sessions.stream()
+                                .map(StudentSessionViewDto::new)
                                 .toList();
+        }
+
+        /**
+         * Get sessions within a date range.
+         */
+        @Transactional
+        public List<StudentSessionViewDto> getSessionsByDateRange(
+                        final LocalDateTime startDate,
+                        final LocalDateTime endDate) {
+                LOG.trace("Getting sessions between {} and {}", startDate, endDate);
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .findByStartTimeBetween(startDate, endDate);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
                                 .toList();
@@ -336,14 +348,12 @@ public class AnalyticsService {
         public Map<String, Integer> getProblemCategoryStats() {
                 LOG.trace("Getting problem category statistics");
 
-                final List<StudentSessionEntity> completedSessions = this.studentSessionRepository
-                                .findByCompletedAndDateRange(Boolean.TRUE, LocalDateTime.MIN, LocalDateTime.MAX);
-
-                return completedSessions.stream()
-                                .collect(Collectors.groupingBy(
-                                                session -> session.exercise != null ? session.exercise.title
-                                                                : "Unknown",
-                                                Collectors.summingInt(session -> 1)));
+                final List<Object[]> results = this.studentSessionRepository.findProblemCategoryStats();
+                return results.stream()
+                                .collect(Collectors.toMap(
+                                                row -> row[0] != null ? (String) row[0] : "Unknown",
+                                                row -> ((Number) row[1]).intValue(),
+                                                (a, b) -> a));
         }
 
         /**
@@ -372,14 +382,7 @@ public class AnalyticsService {
         public long getActiveStudentsCount() {
                 LOG.trace("Getting active students count");
                 final LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-                final List<StudentSessionEntity> recentSessions = this.studentSessionRepository
-                                .findByStartTimeAfter(sevenDaysAgo);
-
-                return recentSessions.stream()
-                                .map(s -> s.user != null ? s.user.id : null)
-                                .filter(id -> id != null)
-                                .distinct()
-                                .count();
+                return this.studentSessionRepository.countActiveStudentsSince(sevenDaysAgo);
         }
 
         /**
@@ -390,7 +393,7 @@ public class AnalyticsService {
                 LOG.trace("Getting today's sessions count");
                 final LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
                 final LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59);
-                return this.studentSessionRepository.findByStartTimeBetween(startOfDay, endOfDay).size();
+                return this.studentSessionRepository.countByStartTimeBetween(startOfDay, endOfDay);
         }
 
         /**
@@ -407,6 +410,83 @@ public class AnalyticsService {
                                 .searchByUserOrExerciseTerm(pattern);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
+                                .toList();
+        }
+
+        /**
+         * Get all sessions for a user grouped by exercise ID.
+         * Used for batch-loading completion data to avoid N+1 queries.
+         */
+        @Transactional
+        public Map<Long, List<StudentSessionViewDto>> getSessionsByUserGroupedByExercise(final Long userId) {
+                LOG.trace("Getting sessions grouped by exercise for user: {}", userId);
+                if (userId == null) {
+                        return Map.of();
+                }
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByUserId(userId);
+                return sessions.stream()
+                                .map(StudentSessionViewDto::new)
+                                .collect(Collectors.groupingBy(
+                                                s -> s.exerciseId != null ? s.exerciseId : 0L));
+        }
+
+        /**
+         * Get progress summaries for users whose last activity falls within a date
+         * range.
+         */
+        @Transactional
+        public List<StudentProgressSummaryDto> getUsersProgressSummaryByDateRange(
+                        final LocalDateTime startDate,
+                        final LocalDateTime endDate) {
+                LOG.trace("Getting progress summaries between {} and {}", startDate, endDate);
+
+                final List<StudentSessionEntity> sessions = this.studentSessionRepository
+                                .findByStartTimeBetween(startDate, endDate);
+                if (sessions.isEmpty()) {
+                        return List.of();
+                }
+
+                final Map<Long, List<StudentSessionEntity>> sessionsByUser = sessions.stream()
+                                .filter(session -> session.user != null)
+                                .collect(Collectors.groupingBy(session -> session.user.id));
+
+                return sessionsByUser.entrySet().stream()
+                                .map(entry -> {
+                                        final UserEntity user = this.userRepository.findById(entry.getKey());
+                                        if (user == null) {
+                                                return null;
+                                        }
+                                        return this.computeProgressSummary(user, entry.getValue());
+                                })
+                                .filter(summary -> summary != null)
+                                .toList();
+        }
+
+        /**
+         * Get progress summaries for users matching a username search term.
+         */
+        @Transactional
+        public List<StudentProgressSummaryDto> getUsersProgressSummaryByUsernameSearch(final String searchTerm) {
+                LOG.trace("Getting progress summaries for username search: {}", searchTerm);
+                if (searchTerm == null || searchTerm.isBlank()) {
+                        return this.getAllUsersProgressSummary();
+                }
+
+                final String pattern = "%" + searchTerm.trim().toLowerCase() + "%";
+                final List<UserEntity> users = this.userRepository.search(pattern);
+                if (users.isEmpty()) {
+                        return List.of();
+                }
+
+                final List<StudentSessionEntity> allSessions = this.studentSessionRepository.findAll();
+                final Map<Long, List<StudentSessionEntity>> sessionsByUser = allSessions.stream()
+                                .filter(session -> session.user != null)
+                                .collect(Collectors.groupingBy(session -> session.user.id));
+
+                return users.stream()
+                                .map(user -> this.computeProgressSummary(user,
+                                                sessionsByUser.getOrDefault(user.id, List.of())))
+                                .filter(summary -> summary != null)
                                 .toList();
         }
 }

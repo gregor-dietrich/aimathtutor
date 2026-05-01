@@ -20,10 +20,14 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "User.findAllOrdered", query = "FROM UserEntity ORDER BY id DESC"),
         @NamedQuery(name = "User.findActive", query = "FROM UserEntity WHERE activated = true and banned = false ORDER BY id DESC"),
         @NamedQuery(name = "User.findByRankId", query = "FROM UserEntity WHERE rank.id = :r ORDER BY id DESC"),
-        @NamedQuery(name = "User.searchByTerm", query = "FROM UserEntity WHERE LOWER(username) LIKE :s OR LOWER(email) LIKE :s ORDER BY id DESC")
+        @NamedQuery(name = "User.searchByTerm", query = "FROM UserEntity WHERE LOWER(username) LIKE :s OR LOWER(email) LIKE :s ORDER BY id DESC"),
+        @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r")
 })
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_user_rank", columnList = "rank_id"),
+        @Index(name = "idx_user_activated_banned", columnList = "activated, banned")
+})
 public class UserEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view;
 
 import java.util.List;
+import java.util.Map;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -66,6 +67,10 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         // Get all lessons
         final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
 
+        // Batch-load all published exercises grouped by lesson to avoid N+1
+        final Map<Long, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
+                .findPublishedExercisesByLessonMap();
+
         // Also show standalone exercises (not in any lesson)
         final List<ExerciseViewDto> standaloneExercises = this.exerciseService.findPublishedExercises().stream()
                 .filter(ex -> ex.lessonId == null)
@@ -80,8 +85,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         // Display each lesson with its exercises
         for (final LessonViewDto lesson : lessons) {
-            if (lesson.exercisesCount > 0) {
-                this.add(this.createLessonCard(lesson));
+            final List<ExerciseViewDto> exercises = exercisesByLesson.getOrDefault(lesson.getId(), List.of());
+            if (!exercises.isEmpty()) {
+                this.add(this.createLessonCard(lesson, exercises));
             }
         }
 
@@ -107,7 +113,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-    private VerticalLayout createLessonCard(final LessonViewDto lesson) {
+    private VerticalLayout createLessonCard(final LessonViewDto lesson, final List<ExerciseViewDto> exercises) {
         final var lessonCard = new VerticalLayout();
         lessonCard.setSpacing(true);
         lessonCard.setPadding(true);
@@ -121,11 +127,6 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         final var lessonTitle = new H3(lesson.getName());
         lessonTitle.getStyle().set("margin", "0");
         lessonCard.add(lessonTitle);
-
-        // Get exercises for this lesson
-        final List<ExerciseViewDto> exercises = this.exerciseService.findByLessonId(lesson.getId()).stream()
-                .filter(ex -> Boolean.TRUE.equals(ex.published))
-                .toList();
 
         if (exercises.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");

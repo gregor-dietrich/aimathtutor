@@ -10,7 +10,9 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing lessons in the system.
  */
 @Entity
-@Table(name = "lessons")
+@Table(name = "lessons", indexes = {
+        @Index(name = "idx_lesson_parent", columnList = "parent_id")
+})
 @NamedQueries({
         @NamedQuery(name = "Lesson.findAllOrdered", query = "FROM LessonEntity ORDER BY id DESC"),
         @NamedQuery(name = "Lesson.findRootLessons", query = "FROM LessonEntity WHERE parent IS NULL ORDER BY id DESC"),

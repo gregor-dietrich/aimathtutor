@@ -248,26 +248,24 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
 
     /**
      * Filter sessions by the selected start and end dates.
+     * Pushes date range filtering to the database.
      */
     private void filterByDateRange() {
         try {
-            final var allSessions = this.analyticsService.getAllSessions();
             final var startDate = this.startDatePicker.getValue();
             final var endDate = this.endDatePicker.getValue();
 
-            final var filtered = allSessions.stream()
-                    .filter(session -> {
-                        if (session.startTime == null) {
-                            return false;
-                        }
-                        final var sessionDate = session.startTime.toLocalDate();
-                        final boolean passStart = startDate == null || !sessionDate.isBefore(startDate);
-                        final boolean passEnd = endDate == null || !sessionDate.isAfter(endDate);
-                        return passStart && passEnd;
-                    })
-                    .toList();
+            if (startDate == null && endDate == null) {
+                this.loadSessions();
+                return;
+            }
 
-            this.grid.setItems(filtered);
+            final var startDateTime = startDate != null ? startDate.atStartOfDay() : java.time.LocalDateTime.MIN;
+            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX)
+                    : java.time.LocalDateTime.MAX;
+
+            final var sessions = this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime);
+            this.grid.setItems(sessions);
         } catch (final Exception e) {
             LOG.error("Error filtering by date range", e);
             NotificationUtil.showError("Error filtering by date range: " + e.getMessage());

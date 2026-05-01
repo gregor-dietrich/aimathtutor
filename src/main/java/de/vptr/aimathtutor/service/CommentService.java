@@ -619,14 +619,15 @@ public class CommentService {
     /**
      * Searches comments by content using the provided query string
      * (case-insensitive).
-     * Returns all comments if query is null or empty.
+     * Returns an empty list if query is null or empty to avoid loading full
+     * datasets.
      *
      * @param query the search query string (content match)
      * @return a list of matching {@link CommentViewDto}s
      */
     public List<CommentViewDto> searchComments(final String query) {
         if (query == null || query.isBlank()) {
-            return this.getAllComments();
+            return List.of();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
         final List<CommentEntity> comments = this.commentRepository.search(searchTerm);
