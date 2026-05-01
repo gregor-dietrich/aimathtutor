@@ -73,6 +73,12 @@ public class AiTutorService {
     @Inject
     ManagedExecutor managedExecutor;
 
+    @Inject
+    RateLimitService rateLimitService;
+
+    @Inject
+    AuthService authService;
+
     /**
      * Analyzes a student's math action and provides AI feedback.
      * Only provides feedback for significant actions to reduce spam.
@@ -115,6 +121,12 @@ public class AiTutorService {
 
         // Use different AI provider based on configuration
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+
+        // Apply per-user rate limiting for non-mock providers
+        if (!"mock".equals(provider) && !this.checkAiRateLimit()) {
+            return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
+        }
+
         return switch (provider) {
             case "gemini" -> this.analyzeWithGemini(event, context);
             case "openai" -> this.analyzeWithOpenAi(event, context);
@@ -149,6 +161,26 @@ public class AiTutorService {
         final var message = congratulatoryMessages[index];
 
         return AiFeedbackDto.positive(message);
+    }
+
+    /**
+     * Checks per-user rate limiting for AI tutor calls.
+     * Records the call if allowed.
+     *
+     * @return true if the call is within the rate limit
+     */
+    private boolean checkAiRateLimit() {
+        final var userId = this.authService.getUserId();
+        if (userId == null) {
+            return false;
+        }
+        final var userIdStr = String.valueOf(userId);
+        if (!this.rateLimitService.isAllowed(userIdStr)) {
+            LOG.warn("AI tutor rate limit exceeded for user: {}", userId);
+            return false;
+        }
+        this.rateLimitService.recordCall(userIdStr);
+        return true;
     }
 
     /**
@@ -234,6 +266,12 @@ public class AiTutorService {
         // Use different AI provider based on configuration
         final var aiProvider = this.getConfigString("ai.tutor.provider", "mock");
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+
+        // Apply per-user rate limiting for non-mock providers
+        if (!"mock".equals(provider) && !this.checkAiRateLimit()) {
+            return ChatMessageDto.aiAnswer(
+                    "I'm receiving too many requests right now. Please wait a moment before asking again.");
+        }
 
         var answer = switch (provider) {
             case "gemini" -> this.answerWithGemini(question, currentExpression, context);

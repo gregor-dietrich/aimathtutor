@@ -38,6 +38,7 @@ import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
@@ -54,6 +55,9 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private transient UserRankService userRankService;
 
     private Grid<UserRankViewDto> grid;
     private TextField searchField;
@@ -79,7 +83,13 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
-            event.forwardTo("login");
+            event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 

@@ -43,6 +43,7 @@ import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -65,6 +66,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private transient UserRankService userRankService;
 
     @Inject
     private transient UserService userService;
@@ -102,6 +106,12 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
             event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 

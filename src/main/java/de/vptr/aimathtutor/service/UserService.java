@@ -21,6 +21,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -88,6 +89,25 @@ public class UserService {
         return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
     }
 
+    private static final int PASSWORD_MIN_LENGTH = 8;
+    private static final int PASSWORD_MAX_LENGTH = 100;
+
+    /**
+     * Validates password strength: minimum length, and complexity
+     * (uppercase, lowercase, digit, symbol).
+     */
+    private void validatePassword(final String password) {
+        if (password == null || password.isBlank()) {
+            throw new ValidationException("Password is required");
+        }
+        if (password.length() < PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
+            throw new ValidationException("Password must be between " + PASSWORD_MIN_LENGTH + " and " + PASSWORD_MAX_LENGTH + " characters");
+        }
+        if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).+$")) {
+            throw new ValidationException("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+        }
+    }
+
     /**
      * Normalizes email field by converting empty/blank strings to null.
      * This ensures that only null or valid email addresses are stored in the
@@ -114,14 +134,12 @@ public class UserService {
      * @throws WebApplicationException if password hashing fails
      */
     @Transactional
-    public UserViewDto createUser(final UserDto userDto) {
+    public UserViewDto createUser(final @Valid UserDto userDto) {
         // Validate required fields for POST
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for creating a user");
         }
-        if (userDto.password == null || userDto.password.isBlank()) {
-            throw new ValidationException("Password is required for creating a user");
-        }
+        this.validatePassword(userDto.password);
 
         // Check for duplicate username
         if (this.findByUsername(userDto.username).isPresent()) {
@@ -193,7 +211,7 @@ public class UserService {
      *                                 fields missing
      */
     @Transactional
-    public UserViewDto updateUser(final Long id, final UserDto userDto) {
+    public UserViewDto updateUser(final Long id, final @Valid UserDto userDto) {
         // Validate required fields for PUT
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for updating a user");
@@ -229,6 +247,7 @@ public class UserService {
 
         // Handle password update if provided
         if (userDto.password != null && !userDto.password.isBlank()) {
+            this.validatePassword(userDto.password);
             final var salt = this.passwordHashingService.generateSalt();
             try {
                 final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
@@ -269,7 +288,7 @@ public class UserService {
      * @throws ValidationException     if username/email is duplicate
      */
     @Transactional
-    public UserViewDto patchUser(final Long id, final UserDto userDto) {
+    public UserViewDto patchUser(final Long id, final @Valid UserDto userDto) {
         final UserEntity existingUser = this.userRepository.findById(id);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
@@ -312,6 +331,7 @@ public class UserService {
 
         // Handle password update if provided
         if (userDto.password != null && !userDto.password.isBlank()) {
+            this.validatePassword(userDto.password);
             final var salt = this.passwordHashingService.generateSalt();
             try {
                 final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
@@ -409,12 +429,7 @@ public class UserService {
         }
 
         // Validate new password
-        if (newPassword == null || newPassword.isBlank()) {
-            throw new ValidationException("New password cannot be empty");
-        }
-        if (newPassword.length() < 4) {
-            throw new ValidationException("New password must be at least 4 characters long");
-        }
+        this.validatePassword(newPassword);
 
         // Generate new salt and hash new password
         final var newSalt = this.passwordHashingService.generateSalt();

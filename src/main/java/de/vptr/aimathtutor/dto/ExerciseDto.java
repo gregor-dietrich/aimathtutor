@@ -17,7 +17,7 @@ public class ExerciseDto {
     @Size(min = 1, max = 255, message = "Title must be between 1 and 255 characters")
     public String title;
 
-    @Size(min = 1, message = "Content must not be empty")
+    @Size(min = 1, max = 50000, message = "Content must be between 1 and 50000 characters")
     public String content;
 
     public Long userId;
@@ -34,9 +34,17 @@ public class ExerciseDto {
 
     // Graspable Math fields
     public Boolean graspableEnabled;
+
+    @Size(max = 1000, message = "Initial expression must not exceed 1000 characters")
     public String graspableInitialExpression;
+
+    @Size(max = 1000, message = "Target expression must not exceed 1000 characters")
     public String graspableTargetExpression;
+
+    @Size(max = 50, message = "Difficulty must not exceed 50 characters")
     public String graspableDifficulty;
+
+    @Size(max = 5000, message = "Hints must not exceed 5000 characters")
     public String graspableHints;
 
     // Helper fields for compatibility with old code that used nested objects

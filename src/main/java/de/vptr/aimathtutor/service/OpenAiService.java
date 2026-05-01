@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
+import java.util.concurrent.TimeUnit;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -26,12 +28,24 @@ public class OpenAiService {
     private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
 
     @ConfigProperty(name = "openai.api.key", defaultValue = "")
-    String apiKey; // API key is always read from environment variable, never from database
+    private String apiKey; // API key is always read from environment variable, never from database
 
     @Inject
     AiConfigService aiConfigService;
 
     private Client client;
+
+    /**
+     * Clean up JAX-RS client resources when the bean is destroyed.
+     */
+    @jakarta.annotation.PreDestroy
+    void cleanup() {
+        if (this.client != null) {
+            this.client.close();
+            this.client = null;
+            LOG.debug("Closed OpenAI JAX-RS Client");
+        }
+    }
 
     /**
      * Generate content using OpenAI Chat Completions API
@@ -77,9 +91,12 @@ public class OpenAiService {
             // Build API URL
             final String url = baseUrl + "/chat/completions";
 
-            // Get or create client
+            // Get or create client with explicit timeouts
             if (this.client == null) {
-                this.client = ClientBuilder.newClient();
+                this.client = ClientBuilder.newBuilder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(60, TimeUnit.SECONDS)
+                        .build();
             }
 
             // Build request with headers
@@ -167,8 +184,12 @@ public class OpenAiService {
 
             final String url = baseUrl + "/chat/completions";
 
+            // Get or create client with explicit timeouts
             if (this.client == null) {
-                this.client = ClientBuilder.newClient();
+                this.client = ClientBuilder.newBuilder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(60, TimeUnit.SECONDS)
+                        .build();
             }
 
             var requestBuilder = this.client.target(url)

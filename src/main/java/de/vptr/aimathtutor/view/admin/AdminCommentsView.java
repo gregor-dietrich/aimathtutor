@@ -42,8 +42,10 @@ import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.CommentService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -60,6 +62,9 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private transient UserRankService userRankService;
 
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
@@ -94,7 +99,13 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
-            event.forwardTo("login");
+            event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 
@@ -105,12 +116,16 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
         if (params.containsKey("exerciseId")) {
             try {
                 final Long exerciseId = Long.valueOf(params.get("exerciseId").get(0));
-                // Load comments for that exercise only
-                CompletableFuture.runAsync(() -> {
-                    final var comments = this.commentService.findByExerciseId(exerciseId);
-                    this.getUI().ifPresent(ui -> ui.access(() -> this.grid.setItems(comments)));
-                });
-                return;
+                if (exerciseId == null || exerciseId <= 0) {
+                    LOG.warn("Invalid exerciseId parameter: not a positive number");
+                } else {
+                    // Load comments for that exercise only
+                    CompletableFuture.runAsync(() -> {
+                        final var comments = this.commentService.findByExerciseId(exerciseId);
+                        this.getUI().ifPresent(ui -> ui.access(() -> this.grid.setItems(comments)));
+                    });
+                    return;
+                }
             } catch (final Exception ex) {
                 LOG.warn("Invalid exerciseId parameter: {}", params.get("exerciseId"), ex);
             }
@@ -252,7 +267,8 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             final var content = comment.content != null ? comment.content : "";
             final var truncated = content.length() > 50 ? content.substring(0, 50) + "..." : content;
             final var span = new Span(truncated);
-            span.setTitle(content); // Show full content on hover
+            final var safeTitle = content.replaceAll("<[^>]*>", "").trim();
+            span.setTitle(safeTitle.length() > 200 ? safeTitle.substring(0, 200) + "..." : safeTitle);
             return span;
         }).setHeader("Content").setFlexGrow(2);
 

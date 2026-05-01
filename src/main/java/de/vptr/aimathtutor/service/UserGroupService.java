@@ -17,6 +17,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -116,7 +117,7 @@ public class UserGroupService {
      * @throws ValidationException if name is missing or empty
      */
     @Transactional
-    public UserGroupViewDto createGroup(final UserGroupDto groupDto) {
+    public UserGroupViewDto createGroup(final @Valid UserGroupDto groupDto) {
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
@@ -138,7 +139,7 @@ public class UserGroupService {
      * @throws ValidationException     if name is missing or empty
      */
     @Transactional
-    public UserGroupViewDto updateGroup(final Long id, final UserGroupDto groupDto) {
+    public UserGroupViewDto updateGroup(final Long id, final @Valid UserGroupDto groupDto) {
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
@@ -166,7 +167,7 @@ public class UserGroupService {
      * @throws WebApplicationException if group not found (NOT_FOUND status)
      */
     @Transactional
-    public UserGroupViewDto patchGroup(final Long id, final UserGroupDto groupDto) {
+    public UserGroupViewDto patchGroup(final Long id, final @Valid UserGroupDto groupDto) {
         final UserGroupEntity existingGroup = this.userGroupRepository.findById(id);
         if (existingGroup == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);

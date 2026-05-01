@@ -30,7 +30,7 @@ public class GeminiService {
     private static final Logger LOG = LoggerFactory.getLogger(GeminiService.class);
 
     @ConfigProperty(name = "gemini.api.key", defaultValue = "")
-    String apiKey; // API key is always read from environment variable, never from database
+    private String apiKey; // API key is always read from environment variable, never from database
 
     @Inject
     AiConfigService aiConfigService;
@@ -87,16 +87,17 @@ public class GeminiService {
             // Convert to JSON
             final String requestJson = this.objectMapper.writeValueAsString(requestDto);
 
-            // Build API URL
-            final String url = String.format("%s/v1beta/models/%s:generateContent?key=%s",
-                    baseUrl, model, this.apiKey);
+            // Build API URL (key moved to header to avoid appearing in logs/proxies)
+            final String url = String.format("%s/v1beta/models/%s:generateContent",
+                    baseUrl, model);
 
-            LOG.debug("Calling Gemini API at: {}", url.replaceAll("key=[^&]+", "key=***"));
+            LOG.debug("Calling Gemini API at: {}", url);
 
-            // Create HTTP request
+            // Create HTTP request with API key in header instead of query param
             final HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .header("Content-Type", "application/json")
+                    .header("x-goog-api-key", this.apiKey)
                     .timeout(Duration.ofSeconds(60))
                     .POST(HttpRequest.BodyPublishers.ofString(requestJson))
                     .build();

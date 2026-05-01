@@ -37,6 +37,7 @@ import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -53,6 +54,9 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private transient UserRankService userRankService;
 
     private transient TreeGrid<LessonViewDto> treeGrid;
     private transient TextField searchField;
@@ -80,6 +84,12 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.authService.isAuthenticated()) {
             event.forwardTo(LoginView.class);
+            return;
+        }
+
+        final var userRank = this.userRankService.getCurrentUserRank();
+        if (userRank == null || !userRank.canAdminView()) {
+            event.forwardTo("");
             return;
         }
 

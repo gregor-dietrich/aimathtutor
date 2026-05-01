@@ -93,6 +93,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         try {
             this.exerciseId = Long.parseLong(exerciseIdParam.get());
+            if (this.exerciseId == null || this.exerciseId <= 0) {
+                NotificationUtil.showError("Invalid exercise ID");
+                event.rerouteTo(LessonsView.class);
+                return;
+            }
         } catch (final NumberFormatException e) {
             NotificationUtil.showError("Invalid exercise ID");
             event.rerouteTo(LessonsView.class);
@@ -226,7 +231,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             contentSection.add(instructionsHeader);
 
             final var contentDiv = new Div();
-            contentDiv.add(new Html("<div>" + this.exercise.content + "</div>"));
+            contentDiv.add(new com.vaadin.flow.component.Text(this.exercise.content));
             contentSection.add(contentDiv);
 
             header.add(contentSection);
@@ -350,25 +355,27 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
 
         // Initialize canvas and load problem once ready
-        final String initScript = String.format("setTimeout(function() { %n"
-                + "  if (window.initializeGraspableMath) { %n"
-                + "    window.initializeGraspableMath(); %n"
-                + "    var loadProblemWhenReady = function() { %n"
-                + "      if (window.graspableCanvas && window.graspableMathUtils) { %n"
-                + "        console.log('[Exercise] Canvas ready, loading problem'); %n"
-                + "        window.graspableMathUtils.loadProblem('%s', 100, 50); %n"
-                + "      } else { %n"
-                + "        console.log('[Exercise] Waiting for canvas...'); %n"
-                + "        setTimeout(loadProblemWhenReady, 200); %n"
-                + "      } %n"
-                + "    }; %n"
-                + "    setTimeout(loadProblemWhenReady, 500); %n"
-                + "  } else { %n"
-                + "    console.error('[Exercise] Graspable Math initialization function not found'); %n"
-                + "  } %n"
-                + "}, 100);%n", this.exercise.graspableInitialExpression);
-
-        UI.getCurrent().getPage().executeJs(initScript);
+        UI.getCurrent().getPage().executeJs(
+                """
+                setTimeout(function() {
+                  if (window.initializeGraspableMath) {
+                    window.initializeGraspableMath();
+                    var loadProblemWhenReady = function() {
+                      if (window.graspableCanvas && window.graspableMathUtils) {
+                        console.log('[Exercise] Canvas ready, loading problem');
+                        window.graspableMathUtils.loadProblem($0, 100, 50);
+                      } else {
+                        console.log('[Exercise] Waiting for canvas...');
+                        setTimeout(loadProblemWhenReady, 200);
+                      }
+                    };
+                    setTimeout(loadProblemWhenReady, 500);
+                  } else {
+                    console.error('[Exercise] Graspable Math initialization function not found');
+                  }
+                }, 100);
+                """,
+                this.exercise.graspableInitialExpression);
 
         // Register server-side connector
         this.registerServerConnector();

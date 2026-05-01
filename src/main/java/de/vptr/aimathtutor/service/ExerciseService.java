@@ -21,6 +21,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -188,7 +189,7 @@ public class ExerciseService {
      *                             invalid
      */
     @Transactional
-    public ExerciseViewDto createExercise(final ExerciseDto exerciseDto) {
+    public ExerciseViewDto createExercise(final @Valid ExerciseDto exerciseDto) {
         if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for creating an exercise");
         }
@@ -257,7 +258,7 @@ public class ExerciseService {
      *                                 are invalid
      */
     @Transactional
-    public ExerciseViewDto updateExercise(final Long id, final ExerciseDto exerciseDto) {
+    public ExerciseViewDto updateExercise(final Long id, final @Valid ExerciseDto exerciseDto) {
         // Validate required fields for PUT
         if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for updating an exercise");
@@ -333,7 +334,7 @@ public class ExerciseService {
      * @throws ValidationException     if provided references are invalid
      */
     @Transactional
-    public ExerciseViewDto patchExercise(final Long id, final ExerciseDto exerciseDto) {
+    public ExerciseViewDto patchExercise(final Long id, final @Valid ExerciseDto exerciseDto) {
         final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);

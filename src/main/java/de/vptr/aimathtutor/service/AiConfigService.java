@@ -1,5 +1,8 @@
 package de.vptr.aimathtutor.service;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -372,6 +375,79 @@ public class AiConfigService {
             // STRING and TEXT types accept anything
             default -> {
                 // No specific validation
+            }
+        }
+
+        // URL validation for base-url configs to prevent SSRF
+        if (configKey.endsWith(".base-url") || configKey.endsWith(".url")) {
+            this.validateUrlSafe(configKey, configValue);
+        }
+    }
+
+    /**
+     * Validates that a URL is safe and does not enable SSRF attacks.
+     * Enforces HTTPS for external providers, blocks private IP ranges,
+     * and rejects localhost/loopback addresses.
+     */
+    private void validateUrlSafe(final String configKey, final String configValue) {
+        final URI uri;
+        try {
+            uri = URI.create(configValue);
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("Value must be a valid URL for key '" + configKey + "'");
+        }
+
+        if (uri.getHost() == null || uri.getHost().isBlank()) {
+            throw new IllegalArgumentException("URL must have a valid host for key '" + configKey + "'");
+        }
+
+        final String host = uri.getHost().toLowerCase();
+
+        // Enforce HTTPS for external providers (Gemini, OpenAI)
+        if (configKey.contains("gemini") || configKey.contains("openai")) {
+            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                throw new IllegalArgumentException(
+                        "External provider URLs must use HTTPS for key '" + configKey + "'");
+            }
+        }
+
+        // Block localhost and loopback
+        if ("localhost".equals(host) || host.equals("127.0.0.1") || host.startsWith("127.")
+                || host.equals("0.0.0.0") || host.equals("::1") || host.equals("0:0:0:0:0:0:0:1")) {
+            throw new IllegalArgumentException(
+                    "Loopback addresses are not allowed for key '" + configKey + "'");
+        }
+
+        // Block private IP ranges by resolving the host
+        try {
+            final InetAddress address = InetAddress.getByName(host);
+            if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
+                    || address.isMulticastAddress()) {
+                throw new IllegalArgumentException(
+                        "Private IP addresses are not allowed for key '" + configKey + "'");
+            }
+        } catch (final UnknownHostException e) {
+            // Allow unresolved hostnames (they may be internal Docker hosts)
+            // but block obvious private patterns without DNS
+        }
+
+        // Block common private IPv4 patterns without DNS resolution
+        if (host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("169.254.")) {
+            throw new IllegalArgumentException(
+                    "Private IP addresses are not allowed for key '" + configKey + "'");
+        }
+        if (host.startsWith("172.")) {
+            final String[] parts = host.split("\\.");
+            if (parts.length >= 2) {
+                try {
+                    final int secondOctet = Integer.parseInt(parts[1]);
+                    if (secondOctet >= 16 && secondOctet <= 31) {
+                        throw new IllegalArgumentException(
+                                "Private IP addresses are not allowed for key '" + configKey + "'");
+                    }
+                } catch (final NumberFormatException e) {
+                    // Not a numeric octet, allow
+                }
             }
         }
     }
