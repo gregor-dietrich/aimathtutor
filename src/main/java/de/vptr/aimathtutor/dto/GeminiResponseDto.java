@@ -88,10 +88,17 @@ public class GeminiResponseDto {
      */
     public boolean isBlocked() {
         if (this.candidates == null || this.candidates.isEmpty()) {
-            return true;
+            return false;
         }
 
         final var finishReason = this.candidates.get(0).finishReason;
         return "SAFETY".equals(finishReason) || "BLOCKED".equals(finishReason);
+    }
+
+    /**
+     * Check if the response is empty or missing candidates
+     */
+    public boolean isEmptyResponse() {
+        return this.candidates == null || this.candidates.isEmpty();
     }
 }

@@ -90,8 +90,10 @@ public class OpenAiService {
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
-        final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
+        Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
+        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
+        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
+        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         if (model == null || model.isBlank()) {
@@ -139,6 +141,15 @@ public class OpenAiService {
             // Parse response
             final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
 
+            if (openAiResponse.isContentFiltered()) {
+                LOG.warn("OpenAI response was filtered by content safety policies");
+                throw new IllegalStateException("Response filtered by content safety policies");
+            }
+
+            if (openAiResponse.isTruncated()) {
+                LOG.warn("OpenAI response was truncated due to token limit");
+            }
+
             if (!openAiResponse.isComplete()) {
                 LOG.warn("OpenAI response not complete. Finish reason: {}",
                         openAiResponse.choices != null && !openAiResponse.choices.isEmpty()
@@ -166,7 +177,7 @@ public class OpenAiService {
         } catch (final WebApplicationException e) {
             LOG.error("Error calling OpenAI API", e);
             throw e;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOG.error("Unexpected error calling OpenAI API", e);
             throw new IllegalStateException("Failed to call OpenAI API", e);
         }
@@ -185,8 +196,10 @@ public class OpenAiService {
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
-        final Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
+        Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
+        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
+        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
+        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         try {
@@ -228,7 +241,7 @@ public class OpenAiService {
             LOG.debug("Successfully generated JSON content from OpenAI");
             return content;
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOG.error("Error calling OpenAI API for JSON", e);
             throw new IllegalStateException("Failed to call OpenAI API", e);
         }

@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
-import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -192,7 +191,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             titleSection.add(badge);
         }
 
-        this.backButton = new Button("← Back to Exercises", e -> {
+        this.backButton = new Button("← Back to Exercises", _ -> {
             UI.getCurrent().navigate(LessonsView.class);
         });
         this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -252,7 +251,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("padding", "var(--lumo-space-m)");
 
-        this.requestHintButton = new Button("Request Hint", e -> this.showNextHint());
+        this.requestHintButton = new Button("Request Hint", _ -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         final var hintsSection = new VerticalLayout(hintsHeader, this.hintsPanel, this.requestHintButton);
@@ -361,33 +360,33 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Initialize canvas and load problem once ready
         UI.getCurrent().getPage().executeJs(
                 """
-                var initAttempts = 0;
-                var maxInitAttempts = 50;
-                var checkAndInitialize = function() {
-                  if (window.initializeGraspableMath) {
-                    window.initializeGraspableMath();
-                    var loadProblemWhenReady = function() {
-                      if (window.graspableCanvas && window.graspableMathUtils) {
-                        console.log('[Exercise] Canvas ready, loading problem');
-                        window.graspableMathUtils.loadProblem($0, 100, 50);
-                      } else {
-                        console.log('[Exercise] Waiting for canvas...');
-                        setTimeout(loadProblemWhenReady, 200);
-                      }
-                    };
-                    setTimeout(loadProblemWhenReady, 500);
-                  } else {
-                    initAttempts++;
-                    if (initAttempts < maxInitAttempts) {
-                      console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
-                      setTimeout(checkAndInitialize, 100);
-                    } else {
-                      console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
-                    }
-                  }
-                };
-                checkAndInitialize();
-                """,
+                        var initAttempts = 0;
+                        var maxInitAttempts = 50;
+                        var checkAndInitialize = function() {
+                          if (window.initializeGraspableMath) {
+                            window.initializeGraspableMath();
+                            var loadProblemWhenReady = function() {
+                              if (window.graspableCanvas && window.graspableMathUtils) {
+                                console.log('[Exercise] Canvas ready, loading problem');
+                                window.graspableMathUtils.loadProblem($0, 100, 50);
+                              } else {
+                                console.log('[Exercise] Waiting for canvas...');
+                                setTimeout(loadProblemWhenReady, 200);
+                              }
+                            };
+                            setTimeout(loadProblemWhenReady, 500);
+                          } else {
+                            initAttempts++;
+                            if (initAttempts < maxInitAttempts) {
+                              console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
+                              setTimeout(checkAndInitialize, 100);
+                            } else {
+                              console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
+                            }
+                          }
+                        };
+                        checkAndInitialize();
+                        """,
                 this.exercise.graspableInitialExpression);
 
         // Register server-side connector
@@ -474,40 +473,41 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final var ui = UI.getCurrent();
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
-            ui.access(() -> {
-                // Only log and display if we got feedback
-                if (feedback != null) {
-                    // Log interaction
-                    this.aiTutorService.logInteraction(event, feedback);
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
+                .thenAccept(feedback -> {
+                    ui.access(() -> {
+                        // Only log and display if we got feedback
+                        if (feedback != null) {
+                            // Log interaction
+                            this.aiTutorService.logInteraction(event, feedback);
 
-                    // Create feedback message and add to conversation context
-                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
-                    feedbackMessage.sessionId = this.currentSessionId;
-                    this.conversationContext.addAiMessage(feedbackMessage);
+                            // Create feedback message and add to conversation context
+                            final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
+                            feedbackMessage.sessionId = this.currentSessionId;
+                            this.conversationContext.addAiMessage(feedbackMessage);
 
-                    // Display feedback inline (replaces displayFeedback method)
-                    final var message = ChatMessageDto.aiFeedback(feedback.message);
-                    message.sessionId = this.currentSessionId;
+                            // Display feedback inline (replaces displayFeedback method)
+                            final var message = ChatMessageDto.aiFeedback(feedback.message);
+                            message.sessionId = this.currentSessionId;
 
-                    // Add hints as part of the message if present
-                    if (feedback.hints != null && !feedback.hints.isEmpty()) {
-                        final StringBuilder fullMessage = new StringBuilder(feedback.message);
-                        for (final String hint : feedback.hints) {
-                            fullMessage.append("\n💡 ").append(hint);
+                            // Add hints as part of the message if present
+                            if (feedback.hints != null && !feedback.hints.isEmpty()) {
+                                final StringBuilder fullMessage = new StringBuilder(feedback.message);
+                                for (final String hint : feedback.hints) {
+                                    fullMessage.append("\n💡 ").append(hint);
+                                }
+                                message.message = fullMessage.toString();
+                            }
+
+                            this.chatPanel.addMessage(message);
                         }
-                        message.message = fullMessage.toString();
-                    }
-
-                    this.chatPanel.addMessage(message);
-                }
-            });
-        }).exceptionally(ex -> {
-            ui.access(() -> {
-                LOG.error("Error getting AI feedback", ex);
-            });
-            return null;
-        });
+                    });
+                }).exceptionally(ex -> {
+                    ui.access(() -> {
+                        LOG.error("Error getting AI feedback", ex);
+                    });
+                    return null;
+                });
     }
 
     /**

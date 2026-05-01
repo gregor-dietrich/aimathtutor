@@ -165,17 +165,13 @@ Use ULIDs for IDs rather than auto-incrementing integers.
 - **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
   - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
   - `UserService.patchUser()` — swallows password hashing exceptions.
-  - `OpenAiService.generateContent()` and `OllamaService.generateContent()` — mask transport and programming errors.
-  - `AiTutorService` — multiple broad catches around AI provider calls.
   - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
     Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
 - **Fix null safety issues:**
   - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
   - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
   - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
-  - `AiTutorService.logInteraction()` line 1043: `feedback.type.toString()` without null check.
     **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
-- **Remove PII from logs.** `AiTutorService` logs raw student questions and AI answers at INFO level (lines ~1101, ~1135, ~1164). Log only metadata (sessionId, length, success/failure), never content. **When fixing, check all AI service and tutor service logging for identical PII exposure.**
 - **Fix user-facing error messages to avoid information leakage.**
   - `LoginView` shows `ex.getMessage()` directly to users.
   - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
@@ -184,24 +180,6 @@ Use ULIDs for IDs rather than auto-incrementing integers.
 - **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
 - **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
 - **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
-
-### 4.8 AI Service Hardening
-
-- **Add prompt injection defenses.** User input (`question`, `expressionBefore`, `expressionAfter`, `eventType`) is directly concatenated into prompts without delimiters or escaping. Use XML tags or fenced code blocks to separate system instructions from user data. Add maximum length checks on questions/expressions before building prompts. **When fixing, check all prompt-building methods for identical raw-concatenation patterns.**
-- **Add server-side config validation and hard caps.**
-  - `AiConfigService.validateConfigValue` does not range-check `DOUBLE` types. Enforce temperature 0.0-2.0, maxTokens 1-8192 (or provider-specific hard cap).
-  - Enforce server-side hard caps on `maxTokens` in `GeminiService` and `OpenAiService` regardless of DB config.
-  - `AdminConfigView` uses client-side `setMax()` on NumberFields; this can be bypassed. Enforce the same limits server-side.
-    **When fixing, check all numeric config values for identical missing validation.**
-- **Validate AI base URLs to prevent SSRF.** (See 4.5 Security Considerations for related topics; add URL validation subsection if implementing.)
-- **Improve response handling.**
-  - `AiTutorService.parseFeedbackFromJson` catches generic `Exception`, masking `JsonMappingException` and `OutOfMemoryError`. Catch specific `JsonProcessingException`/`IOException` only.
-  - `GeminiResponseDto.isBlocked()` conflates null/empty response with safety blocks. Distinguish explicitly.
-  - `OpenAiResponseDto.isComplete()` only accepts `"stop"`. Handle `"length"` and `"content_filter"` explicitly.
-  - `AiFeedbackDto.confidence` has no range validation. Clamp to `[0.0, 1.0]`.
-    **When fixing, check all JSON parsing and response DTOs for identical unsafe handling.**
-- **Populate audit fields.** `AiInteractionEntity.conversationContext` exists but is never populated in `logInteraction` or `logQuestionInteraction`. Populate it with a sanitized snapshot of the prompt/context sent. **When fixing, check all entity creation methods for identical missing field population.**
-- **Remove full prompt content from DEBUG logs.** `AiTutorService` logs entire prompts including conversation context at DEBUG. Remove content from logs; log only hash/length, or use separate TRACE level. **When fixing, check all AI services for identical sensitive-data logging.**
 
 ---
 

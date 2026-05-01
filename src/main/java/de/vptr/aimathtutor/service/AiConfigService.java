@@ -350,7 +350,11 @@ public class AiConfigService {
         switch (configType.toUpperCase()) {
             case "INTEGER" -> {
                 try {
-                    Integer.parseInt(configValue);
+                    final int intValue = Integer.parseInt(configValue);
+                    if (configKey.contains("max-tokens") && (intValue < 1 || intValue > 8192)) {
+                        throw new IllegalArgumentException(
+                                "Value for '" + configKey + "' must be between 1 and 8192, got: " + configValue);
+                    }
                 } catch (final NumberFormatException e) {
                     throw new IllegalArgumentException(
                             "Value must be a valid integer for key '" + configKey + "', got: " + configValue);
@@ -358,7 +362,11 @@ public class AiConfigService {
             }
             case "DOUBLE" -> {
                 try {
-                    Double.parseDouble(configValue);
+                    final double doubleValue = Double.parseDouble(configValue);
+                    if (configKey.contains("temperature") && (doubleValue < 0.0 || doubleValue > 2.0)) {
+                        throw new IllegalArgumentException(
+                                "Value for '" + configKey + "' must be between 0.0 and 2.0, got: " + configValue);
+                    }
                 } catch (final NumberFormatException e) {
                     throw new IllegalArgumentException(
                             "Value must be a valid decimal for key '" + configKey + "', got: " + configValue);
