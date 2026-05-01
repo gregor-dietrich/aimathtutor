@@ -11,7 +11,6 @@ import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
-import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -34,9 +33,6 @@ public class AuthService {
 
     @Inject
     LoginAttemptService loginAttemptService;
-
-    @Inject
-    SecurityIdentity securityIdentity;
 
     private static final String USERNAME_KEY = "authenticated.username";
     private static final String AUTHENTICATED_KEY = "authenticated.status";

@@ -282,8 +282,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Don't show typing indicator for math actions - only show it when we get
         // actual feedback
         final var ui = UI.getCurrent();
+        final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext).thenAccept(feedback -> {
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
             ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
@@ -326,8 +327,10 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
+        final var userId = this.authService.getUserId();
+        final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.sessionId, this.conversationContext)
+                .answerQuestionAsync(question, this.currentExpression, this.sessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator

@@ -92,7 +92,7 @@ public class AiTutorService {
      * @param userIdStr the user ID (as string) for rate limiting; if null, uses event.studentId
      * @return AI-generated feedback, or null if no feedback needed
      */
-    private AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context, final String userIdStr) {
+    AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context, final String userIdStr) {
         LOG.info("Analyzing math action: eventType='{}', before='{}', after='{}', context={}",
                 event.eventType, event.expressionBefore, event.expressionAfter, context);
 
@@ -252,7 +252,7 @@ public class AiTutorService {
      * @param userIdStr         the user ID (as string) for rate limiting
      * @return AI-generated answer
      */
-    private ChatMessageDto answerQuestion(final String question, final String currentExpression,
+    ChatMessageDto answerQuestion(final String question, final String currentExpression,
             final String sessionId, final ConversationContextDto context, final String userIdStr) {
         LOG.debug("Answering question: {} (session: {}, context: {})", question, sessionId, context);
 
