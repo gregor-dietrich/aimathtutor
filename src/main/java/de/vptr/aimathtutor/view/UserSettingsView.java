@@ -23,6 +23,7 @@ import com.vaadin.flow.router.Route;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
@@ -159,7 +160,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.newPasswordField = new PasswordField("New Password");
         this.newPasswordField.setRequired(true);
-        this.newPasswordField.setHelperText("Minimum 8 characters with uppercase, lowercase, digit and symbol");
+        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH + " characters with uppercase, lowercase, digit and symbol");
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
@@ -288,8 +289,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        if (newPassword.length() < 8) {
-            NotificationUtil.showError("New password must be at least 8 characters long");
+        if (newPassword.length() < AppConstants.PASSWORD_MIN_LENGTH) {
+            NotificationUtil.showError("New password must be at least " + AppConstants.PASSWORD_MIN_LENGTH + " characters long");
             return;
         }
 

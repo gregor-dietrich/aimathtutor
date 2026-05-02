@@ -2,25 +2,17 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import jakarta.inject.Inject;
 
 /**
@@ -30,15 +22,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/dashboard", layout = AdminMainLayout.class)
 @PageTitle("Admin Dashboard - AI Math Tutor")
-public class AdminDashboardView extends VerticalLayout implements BeforeEnterObserver {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AdminDashboardView.class);
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
+public class AdminDashboardView extends AbstractAdminView {
 
     @Inject
     private transient AnalyticsService analyticsService;
@@ -62,14 +46,7 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -103,27 +80,23 @@ public class AdminDashboardView extends VerticalLayout implements BeforeEnterObs
     }
 
     private void loadDashboardData() {
-        CompletableFuture.runAsync(() -> {
-            try {
-                final var totalSessions = this.analyticsService.getTotalSessionsCount();
-                final var completedSessions = this.analyticsService.getCompletedSessionsCount();
-                final var activeStudents = this.analyticsService.getActiveStudentsCount();
-                final var todaySessions = this.analyticsService.getTodaySessionsCount();
-
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    this.updateStatCard("Total Sessions", String.valueOf(totalSessions));
-                    this.updateStatCard("Completed Sessions", String.valueOf(completedSessions));
-                    this.updateStatCard("Active Students (Last 7 Days)", String.valueOf(activeStudents));
-                    this.updateStatCard("Today's Sessions", String.valueOf(todaySessions));
-                }));
-
-            } catch (final Exception e) {
-                LOG.error("Error loading dashboard data", e);
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    NotificationUtil.showError("Failed to load dashboard data");
-                }));
-            }
-        });
+        AsyncDataLoader.load(
+                () -> {
+                    final var totalSessions = this.analyticsService.getTotalSessionsCount();
+                    final var completedSessions = this.analyticsService.getCompletedSessionsCount();
+                    final var activeStudents = this.analyticsService.getActiveStudentsCount();
+                    final var todaySessions = this.analyticsService.getTodaySessionsCount();
+                    return Map.of(
+                            "Total Sessions", String.valueOf(totalSessions),
+                            "Completed Sessions", String.valueOf(completedSessions),
+                            "Active Students (Last 7 Days)", String.valueOf(activeStudents),
+                            "Today's Sessions", String.valueOf(todaySessions));
+                },
+                this,
+                stats -> {
+                    stats.forEach(this::updateStatCard);
+                },
+                "Failed to load dashboard data");
     }
 
     private VerticalLayout createStatCard(final String title, final String value) {

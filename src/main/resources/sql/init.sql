@@ -138,13 +138,13 @@ CREATE INDEX exercises_content_fts ON exercises USING gin(to_tsvector('english',
 
 INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled, graspable_initial_expression, graspable_target_expression, graspable_difficulty, graspable_hints)
 VALUES
-  (1, 'Solve for x: simple linear', 'Solve the equation for x: 2x + 3 = 11', 2, 2, TRUE, TRUE, TRUE, '2*x + 3 = 11', 'x = 4', 'beginner', '["Isolate the term with x","Subtract 3 from both sides","Divide both sides by 2"]'),
-  (2, 'Two-step linear equation', 'Solve: 3(x - 2) = 9', 2, 2, TRUE, TRUE, TRUE, '3*(x - 2) = 9', 'x = 5', 'beginner', '["Divide both sides by 3","Then add 2 to both sides"]'),
-  (3, 'Linear equation with fractions', 'Solve: (1/2)x + 1 = 4', 2, 2, TRUE, TRUE, TRUE, '(1/2)*x + 1 = 4', 'x = 6', 'intermediate', '["Eliminate fractions by multiplying both sides","Isolate x"]'),
-  (4, 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'intermediate', '["Use distributive property","Combine like terms"]'),
-  (5, 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'intermediate', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]'),
-  (6, 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'advanced', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
-  (7, 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'advanced', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]');
+  (1, 'Solve for x: simple linear', 'Solve the equation for x: 2x + 3 = 11', 2, 2, TRUE, TRUE, TRUE, '2*x + 3 = 11', 'x = 4', 'BEGINNER', '["Isolate the term with x","Subtract 3 from both sides","Divide both sides by 2"]'),
+  (2, 'Two-step linear equation', 'Solve: 3(x - 2) = 9', 2, 2, TRUE, TRUE, TRUE, '3*(x - 2) = 9', 'x = 5', 'BEGINNER', '["Divide both sides by 3","Then add 2 to both sides"]'),
+  (3, 'Linear equation with fractions', 'Solve: (1/2)x + 1 = 4', 2, 2, TRUE, TRUE, TRUE, '(1/2)*x + 1 = 4', 'x = 6', 'INTERMEDIATE', '["Eliminate fractions by multiplying both sides","Isolate x"]'),
+  (4, 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'INTERMEDIATE', '["Use distributive property","Combine like terms"]'),
+  (5, 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'INTERMEDIATE', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]'),
+  (6, 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'ADVANCED', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
+  (7, 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'ADVANCED', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]');
 
 INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled)
 VALUES
@@ -170,13 +170,19 @@ CREATE TABLE comments (
   session_id VARCHAR(255),
   edited_at TIMESTAMP,
   deleted_by BIGINT,
-  deleted_at TIMESTAMP
+  deleted_at TIMESTAMP,
+  moderation_reason VARCHAR(500),
+  moderator_id BIGINT,
+  moderation_action VARCHAR(20),
+  moderated_at TIMESTAMP
 );
 
 -- Performance indexes
 CREATE INDEX idx_comments_exercise_id ON comments(exercise_id);
 CREATE INDEX idx_comments_parent_id ON comments(parent_comment_id);
 CREATE INDEX idx_comments_user_id ON comments(user_id);
+CREATE INDEX idx_comments_deleted_by ON comments(deleted_by);
+CREATE INDEX idx_comments_moderator_id ON comments(moderator_id);
 CREATE INDEX idx_comments_session_id ON comments(session_id);
 CREATE INDEX idx_comments_created ON comments(created);
 CREATE INDEX idx_comments_status ON comments(status);
@@ -404,7 +410,8 @@ ALTER TABLE comments
   ADD CONSTRAINT fk_comments_exercise FOREIGN KEY (exercise_id) REFERENCES exercises (id) ON DELETE CASCADE,
   ADD CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
   ADD CONSTRAINT fk_comments_parent FOREIGN KEY (parent_comment_id) REFERENCES comments (id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_comments_deleted_by FOREIGN KEY (deleted_by) REFERENCES users (id) ON DELETE SET NULL;
+  ADD CONSTRAINT fk_comments_deleted_by FOREIGN KEY (deleted_by) REFERENCES users (id) ON DELETE SET NULL,
+  ADD CONSTRAINT fk_comments_moderator FOREIGN KEY (moderator_id) REFERENCES users (id) ON DELETE SET NULL;
 
 -- Constraints for table `users`
 ALTER TABLE users

@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
@@ -41,8 +42,7 @@ public class ExerciseDto {
     @Size(max = 1000, message = "Target expression must not exceed 1000 characters")
     public String graspableTargetExpression;
 
-    @Size(max = 50, message = "Difficulty must not exceed 50 characters")
-    public String graspableDifficulty;
+    public DifficultyLevel graspableDifficulty;
 
     @Size(max = 5000, message = "Hints must not exceed 5000 characters")
     public String graspableHints;

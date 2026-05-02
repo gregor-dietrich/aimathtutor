@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -57,6 +58,9 @@ public class CommentEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @Column(columnDefinition = "TEXT")
     @NotBlank
     public String content;
@@ -95,4 +99,17 @@ public class CommentEntity extends PanacheEntityBase {
 
     @Column(name = "deleted_at")
     public LocalDateTime deletedAt;
+
+    @Column(name = "moderation_reason", length = 500)
+    public String moderationReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderator_id")
+    public UserEntity moderator;
+
+    @Column(name = "moderation_action", length = 20)
+    public String moderationAction;
+
+    @Column(name = "moderated_at")
+    public LocalDateTime moderatedAt;
 }

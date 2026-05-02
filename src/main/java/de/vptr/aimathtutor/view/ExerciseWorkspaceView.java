@@ -33,6 +33,7 @@ import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -174,17 +175,17 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Add difficulty badge right under the title
         if (this.exercise.graspableDifficulty != null) {
-            final var badge = new Span("Difficulty: " + this.exercise.graspableDifficulty);
+            final var badge = new Span("Difficulty: " + this.exercise.graspableDifficulty.getValue());
             badge.getElement().getThemeList().add("badge");
-            switch (this.exercise.graspableDifficulty.toLowerCase()) {
-                case "beginner":
+            switch (this.exercise.graspableDifficulty) {
+                case BEGINNER:
                     badge.getElement().getThemeList().add("success");
                     break;
-                case "intermediate":
+                case INTERMEDIATE:
                     badge.getElement().getThemeList().add("contrast");
                     break;
-                case "advanced":
-                case "expert":
+                case ADVANCED:
+                case EXPERT:
                     badge.getElement().getThemeList().add("error");
                     break;
                 default:
@@ -269,7 +270,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.graspableCanvas.setId("graspable-canvas"); // Fixed ID expected by JavaScript
             this.graspableCanvas.getStyle()
                     .set("width", "100%")
-                    .set("height", "77vh")
+                    .set("height", AppConstants.CANVAS_HEIGHT_WORKSPACE)
                     .set("border", "1px solid var(--lumo-contrast-20pct)")
                     .set("border-radius", "var(--lumo-border-radius-m)")
                     .set("background-color", "var(--lumo-base-color)")
@@ -310,10 +311,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final var currentUserEntity = this.authService.getCurrentUserEntity();
         final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
                 ? currentUserEntity.userAvatarEmoji
-                : "🧒";
+                : AppConstants.AVATAR_DEFAULT_USER;
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
                 ? currentUserEntity.tutorAvatarEmoji
-                : "🧑‍🏫";
+                : AppConstants.AVATAR_DEFAULT_TUTOR;
         this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message

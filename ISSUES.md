@@ -116,50 +116,6 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 Use ULIDs for IDs rather than auto-incrementing integers.
 
-### 4.6 Code Quality & Architecture
-
-- **Extract base admin view to eliminate duplication.** Create `AbstractAdminView` handling:
-  - `beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).
-  - Async data loading pattern (`CompletableFuture.supplyAsync(...).orTimeout(30, ...)`).
-  - Standard grid setup (striped, size full, ID width, action column width).
-  - Standard dialog form setup (binder, form layout, responsive steps, save/cancel buttons).
-  - Standard button layout (Create + Refresh).
-  - Standard error handling.
-    **When extracting, check all admin views for identical duplicated patterns and migrate them consistently.**
-- **Extract generic utilities:**
-  - `AsyncDataLoader<T>` utility for the repeated `CompletableFuture` pattern.
-  - `BaseFormDialog<T>` for create/edit dialogs.
-  - `DateRangeFilter` component/utility for date filtering logic duplicated across views.
-    **When extracting, check all views for identical utility needs.**
-- **Split oversized services (SRP):**
-  - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, `ProblemGeneratorService`, `AiInteractionLogger`.
-  - `CommentService` (~690 lines): extract `CommentModerationService`, `CommentFlaggingService`, `CommentRateLimitService`, `CommentPermissionService`.
-  - `ExerciseService`: extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.
-    **When splitting, check all services over 400 lines for identical SRP violations.**
-- **Extract constants for magic values:**
-  - Async timeout: `30` seconds in admin views.
-  - Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.
-  - Retry config: `maxRetries = 3`, `delay = 1000`, `jitter = 200`.
-  - Difficulty levels: `"beginner"`, `"intermediate"`, `"advanced"`, `"expert"` -> use enum.
-  - Password min length: `8` (enforced by UserService.PASSWORD_MIN_LENGTH and DTO validations using `@Size(min = 8, ...)`).
-  - Auto-hide flag threshold: `5` in `CommentService`.
-  - Notification durations in `NotificationUtil`.
-  - Canvas heights: `"77vh"`, `"80vh"`.
-  - Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.
-    **When extracting constants, check the entire codebase for identical hardcoded values.**
-- **Standardize naming and patterns:**
-  - Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.
-  - Login forward targets: some views use `LoginView.class`, others use `"login"`. Standardize to `LoginView.class`.
-  - Repository pattern: standardize all repositories to extend `AbstractRepository` or remove it entirely.
-  - DTO patterns: apply `@SuppressFBWarnings` consistently across all DTOs.
-  - Error handling: standardize on generic user messages + server-side logging.
-    **When standardizing, check all files for identical inconsistencies.**
-- **Remove dead code:**
-  - Unused static finder methods in `CommentEntity` (lines 90-164).
-  - Commented-out code block in `MathWorkspaceView` (lines 341-356).
-  - Run optimize imports across the codebase.
-    **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
-
 ---
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
@@ -383,32 +339,32 @@ Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressio
 Implementation plan:
 
 - Backend changes (core):
-  1.  Add a new method to `GraspableMathService`:
-      - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
-      - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
-  2.  Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
-      - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
-      - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
-  3.  If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
-  4.  Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+  1. Add a new method to `GraspableMathService`:
+     - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
+     - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
+  2. Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
+     - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
+     - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
+  3. If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
+  4. Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
 
 - Backend changes (data/metrics):
-  1.  Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
-  2.  Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
+  1. Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
+  2. Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
 
 - Tests:
-  1.  Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
-  2.  Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
-  3.  End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+  1. Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
+  2. Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
+  3. End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
 
 - Migration/compatibility notes:
-  1.  If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
-  2.  Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+  1. If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
+  2. Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
 
 - Rollout suggestion:
-  1.  Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
-  2.  Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
-  3.  Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+  1. Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
+  2. Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
+  3. Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
 
 Owner: Backend team / person familiar with symbolic math libraries
 

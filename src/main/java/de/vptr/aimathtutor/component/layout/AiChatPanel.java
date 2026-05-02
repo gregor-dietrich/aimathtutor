@@ -17,6 +17,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 
 import de.vptr.aimathtutor.dto.ChatMessageDto;
+import de.vptr.aimathtutor.util.AppConstants;
 
 /**
  * Reusable AI chat panel component for displaying chat messages and handling
@@ -31,8 +32,8 @@ public class AiChatPanel extends VerticalLayout {
     private final TextField chatInput;
     private final Button sendButton;
     private final MessageSendListener messageSendListener;
-    private String userAvatarEmoji = "🧒";
-    private String tutorAvatarEmoji = "🧑‍🏫";
+    private String userAvatarEmoji = AppConstants.AVATAR_DEFAULT_USER;
+    private String tutorAvatarEmoji = AppConstants.AVATAR_DEFAULT_TUTOR;
     private HorizontalLayout currentTypingIndicator; // Track current typing indicator
     private final AtomicInteger pendingRequestsCount = new AtomicInteger(0); // Track number of pending AI requests
 
@@ -50,7 +51,7 @@ public class AiChatPanel extends VerticalLayout {
      * @param messageSendListener Callback to invoke when user sends a message
      */
     public AiChatPanel(final MessageSendListener messageSendListener) {
-        this(messageSendListener, "🧒", "🧑‍🏫");
+        this(messageSendListener, AppConstants.AVATAR_DEFAULT_USER, AppConstants.AVATAR_DEFAULT_TUTOR);
     }
 
     /**
@@ -64,8 +65,8 @@ public class AiChatPanel extends VerticalLayout {
             final String userAvatarEmoji,
             final String tutorAvatarEmoji) {
         this.messageSendListener = messageSendListener;
-        this.userAvatarEmoji = userAvatarEmoji != null ? userAvatarEmoji : "🧒";
-        this.tutorAvatarEmoji = tutorAvatarEmoji != null ? tutorAvatarEmoji : "🧑‍🏫";
+        this.userAvatarEmoji = userAvatarEmoji != null ? userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
+        this.tutorAvatarEmoji = tutorAvatarEmoji != null ? tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR;
 
         // Apply right panel styling
         this.setWidth("30%");

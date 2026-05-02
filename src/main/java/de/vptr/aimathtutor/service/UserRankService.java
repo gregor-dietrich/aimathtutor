@@ -7,7 +7,6 @@ import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
-import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;

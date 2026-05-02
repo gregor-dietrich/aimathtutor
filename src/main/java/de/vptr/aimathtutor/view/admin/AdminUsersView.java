@@ -1,8 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -38,12 +35,11 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
-import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 
@@ -51,17 +47,11 @@ import jakarta.validation.ConstraintViolationException;
  * Admin view for managing users: list, edit, create and remove user accounts.
  */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
-public class AdminUsersView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUsersView extends AbstractAdminView {
     private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
 
     @Inject
     private transient UserService userService;
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
 
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
@@ -91,17 +81,9 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
+        if (!this.isAuthOk(event)) {
             return;
         }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
-            return;
-        }
-
         this.buildUi();
         this.loadRanksAsync();
         this.loadUsersAsync();
@@ -109,52 +91,26 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
 
     private void loadUsersAsync() {
         LOG.info("Starting async user loading");
-
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Loading users");
-            try {
-                return this.userService.getAllUsers();
-            } catch (final Exception e) {
-                LOG.error("Error loading users", e);
-                throw new RuntimeException("Failed to load users", e);
-            }
-        }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((users, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable != null) {
-                            LOG.error("Error loading users: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load users: " + throwable.getMessage());
-                        } else {
-                            LOG.info("Successfully loaded {} users", users.size());
-                            this.grid.setItems(users);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.userService.getAllUsers(),
+                this,
+                users -> {
+                    LOG.info("Successfully loaded {} users", users.size());
+                    this.grid.setItems(users);
+                },
+                "Failed to load users. Please try again.");
     }
 
     private void loadRanksAsync() {
         LOG.info("Starting async rank loading");
-
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Loading ranks");
-            try {
-                return this.userRankService.getAllRanks();
-            } catch (final Exception e) {
-                LOG.error("Error loading ranks", e);
-                throw new RuntimeException("Failed to load ranks", e);
-            }
-        }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((ranks, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable != null) {
-                            LOG.error("Error loading ranks: {}", throwable.getMessage(), throwable);
-                            // Don't show error notification for ranks as it's not critical
-                        } else {
-                            LOG.info("Successfully loaded {} ranks", ranks.size());
-                            this.availableRanks = ranks;
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.userRankService.getAllRanks(),
+                this,
+                ranks -> {
+                    LOG.info("Successfully loaded {} ranks", ranks.size());
+                    this.availableRanks = ranks;
+                },
+                "Failed to load ranks. Please try again.");
     }
 
     private void buildUi() {
@@ -204,7 +160,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(user -> user.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(user -> user.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Make the username column clickable
         this.grid.addComponentColumn(user -> {
@@ -513,25 +469,18 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
         }
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                return this.userService.searchUsers(query.trim());
-            } catch (final Exception e) {
-                LOG.error("Unexpected error searching users", e);
-                throw new RuntimeException("Unexpected error occurred", e);
-            }
-        }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((users, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        this.searchButton.setEnabled(true);
-                        this.searchButton.setText("Search");
-                        if (throwable != null) {
-                            LOG.error("Error searching users: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("An error occurred while searching users. Please try again.");
-                        } else {
-                            this.grid.setItems(users);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.userService.searchUsers(query.trim()),
+                this,
+                users -> {
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                    this.grid.setItems(users);
+                },
+                () -> {
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                },
+                "An error occurred while searching users. Please try again.");
     }
 }

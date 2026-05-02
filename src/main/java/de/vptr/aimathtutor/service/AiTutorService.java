@@ -1,81 +1,65 @@
 package de.vptr.aimathtutor.service;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Pattern;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
-import de.vptr.aimathtutor.entity.AiInteractionEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.repository.AiInteractionRepository;
-import de.vptr.aimathtutor.repository.ExerciseRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.ai.AiInteractionLogger;
+import de.vptr.aimathtutor.service.ai.JsonRepairService;
+import de.vptr.aimathtutor.service.ai.provider.AiProvider;
+import de.vptr.aimathtutor.service.ai.provider.GeminiAiProvider;
+import de.vptr.aimathtutor.service.ai.provider.MockAiProvider;
+import de.vptr.aimathtutor.service.ai.provider.OllamaAiProvider;
+import de.vptr.aimathtutor.service.ai.provider.OpenAiProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 
 /**
  * AI Tutor Service - Analyzes student math actions and provides feedback.
- * 
+ *
  * Configuration is loaded dynamically from AiConfigService, including:
  * - Whether AI is enabled
  * - Which AI provider to use (mock, gemini, openai, ollama)
  * - Prompt templates for question answering and math tutoring
- * 
- * Can be extended to use OpenAI, Ollama, or other AI services.
+ *
+ * This service acts as an orchestrator, delegating actual AI provider calls to
+ * strategy implementations and logging to AiInteractionLogger.
  */
 @ApplicationScoped
 public class AiTutorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AiTutorService.class);
 
-    // Smart quote characters for stripping from AI responses
-    // Using constants avoids checkstyle's AvoidEscapedUnicodeCharacters warning
-    private static final String LEFT_DOUBLE_QUOTE = "\u201C"; // "
-    private static final String RIGHT_DOUBLE_QUOTE = "\u201D"; // "
-    private static final String LEFT_SINGLE_QUOTE = "\u2018"; // '
-    private static final String RIGHT_SINGLE_QUOTE = "\u2019"; // '
-
-    private static final int MAX_PROMPT_INPUT_LENGTH = 2000;
-
     @Inject
     AiConfigService aiConfigService;
 
     @Inject
-    GeminiService geminiService;
+    MockAiProvider mockAiProvider;
 
     @Inject
-    OpenAiService openAiService;
+    GeminiAiProvider geminiAiProvider;
 
     @Inject
-    OllamaService ollamaService;
+    OpenAiProvider openAiProvider;
 
     @Inject
-    ObjectMapper objectMapper;
+    OllamaAiProvider ollamaAiProvider;
 
     @Inject
-    UserRepository userRepository;
+    ProblemGeneratorService problemGeneratorService;
 
     @Inject
-    ExerciseRepository exerciseRepository;
+    JsonRepairService jsonRepairService;
 
     @Inject
-    AiInteractionRepository aiInteractionRepository;
+    AiInteractionLogger aiInteractionLogger;
 
     @Inject
     ManagedExecutor managedExecutor;
@@ -143,32 +127,32 @@ public class AiTutorService {
         }
 
         return switch (provider) {
-            case "gemini" -> this.analyzeWithGemini(event, context);
-            case "openai" -> this.analyzeWithOpenAi(event, context);
-            case "ollama" -> this.analyzeWithOllama(event, context);
-            default -> this.analyzeWithMockAi(event);
+            case "gemini" -> this.safeAnalyze(this.geminiAiProvider, event, context);
+            case "openai" -> this.safeAnalyze(this.openAiProvider, event, context);
+            case "ollama" -> this.safeAnalyzeOllama(event, context);
+            default -> this.mockAiProvider.analyzeMathAction(event, context);
         };
     }
 
     /**
      * Generates congratulatory feedback when a problem is completed.
-     * 
+     *
      * @param event The completion event
      * @return Congratulatory feedback message
      */
     private AiFeedbackDto generateCompletionFeedback(final GraspableEventDto event) {
         final String[] congratulatoryMessages = {
-                "🎉 Excellent work! You've solved it correctly!",
-                "🌟 Perfect! You reached the solution: " + event.expressionAfter,
-                "👏 Outstanding! You've successfully completed the problem!",
-                "✨ Great job! You've mastered this problem!",
-                "🎯 Fantastic! You solved it: " + event.expressionAfter,
-                "💯 Well done! You've reached the correct solution!",
-                "🏆 Amazing work! Problem solved successfully!",
-                "💪 Strong work! You crushed this problem!",
-                "👍 Awesome! You got it right!",
-                "🏅 Champion! You conquered this challenge!",
-                "🎊 Congratulations! You nailed it!"
+                "\uD83C\uDF89 Excellent work! You've solved it correctly!",
+                "\uD83C\uDF1F Perfect! You reached the solution: " + event.expressionAfter,
+                "\uD83D\uDC4F Outstanding! You've successfully completed the problem!",
+                "\u2728 Great job! You've mastered this problem!",
+                "\uD83C\uDFAF Fantastic! You solved it: " + event.expressionAfter,
+                "\uD83D\uDCAF Well done! You've reached the correct solution!",
+                "\uD83C\uDFC6 Amazing work! Problem solved successfully!",
+                "\uD83D\uDCAA Strong work! You crushed this problem!",
+                "\uD83D\uDC4D Awesome! You got it right!",
+                "\uD83C\uDFC5 Champion! You conquered this challenge!",
+                "\uD83C\uDF8A Congratulations! You nailed it!"
         };
 
         // Pick a random congratulatory message
@@ -296,16 +280,20 @@ public class AiTutorService {
 
         var answer = switch (provider) {
             case "gemini" ->
-                this.answerWithGemini(question, currentExpression, initialExpression, targetExpression, context);
+                this.safeAnswer(this.geminiAiProvider, question, currentExpression, initialExpression, targetExpression,
+                        context);
             case "openai" ->
-                this.answerWithOpenAi(question, currentExpression, initialExpression, targetExpression, context);
+                this.safeAnswer(this.openAiProvider, question, currentExpression, initialExpression, targetExpression,
+                        context);
             case "ollama" ->
-                this.answerWithOllama(question, currentExpression, initialExpression, targetExpression, context);
-            default -> this.answerWithMockAi(question, currentExpression);
+                this.safeAnswerOllama(question, currentExpression, initialExpression, targetExpression, context);
+            default ->
+                this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
+                        context);
         };
 
         // Strip leading and trailing quotation marks from AI response
-        answer = this.stripQuotationMarks(answer);
+        answer = this.jsonRepairService.stripQuotationMarks(answer);
 
         final var message = ChatMessageDto.aiAnswer(answer);
         message.sessionId = sessionId;
@@ -316,15 +304,6 @@ public class AiTutorService {
      * Async version of answerQuestion that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
      * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
-     *
-     * @param question          The student's question
-     * @param currentExpression The current math expression
-     * @param initialExpression The original problem state (optional)
-     * @param targetExpression  The target solution state (optional)
-     * @param sessionId         The session identifier
-     * @param context           Conversation context
-     * @param userIdStr         the user ID (as string) captured from UI thread
-     * @return CompletableFuture containing the AI's answer
      */
     public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
             final String currentExpression, final String initialExpression, final String targetExpression,
@@ -339,13 +318,6 @@ public class AiTutorService {
      * Async version of analyzeMathAction that returns a CompletableFuture.
      * This allows the UI to show a typing indicator while waiting for the response.
      * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
-     *
-     * @param event     The Graspable Math event
-     * @param context   Conversation context
-     * @param userIdStr the user ID (as string) captured from UI thread (or
-     *                  event.studentId)
-     * @return CompletableFuture containing the AI feedback, or null if no feedback
-     *         needed
      */
     public CompletableFuture<AiFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
             final ConversationContextDto context, final String userIdStr) {
@@ -354,321 +326,102 @@ public class AiTutorService {
     }
 
     /**
-     * Mock AI implementation using rule-based logic.
-     * Provides reasonable feedback based on action type.
+     * Generates a new math problem based on student performance.
+     *
+     * @param difficulty The difficulty level
+     * @param category   The problem category (type of math problem)
+     * @return A new Graspable Math problem
      */
-    private AiFeedbackDto analyzeWithMockAi(final GraspableEventDto event) {
-        final AiFeedbackDto feedback;
-
-        // Analyze based on event type
-        switch (event.eventType != null ? event.eventType.toLowerCase() : "") {
-            case "simplify":
-                if (event.correct != null && event.correct) {
-                    feedback = AiFeedbackDto.positive("Great job! You simplified correctly.");
-                } else if (event.correct != null && !event.correct) {
-                    feedback = AiFeedbackDto.corrective("That simplification doesn't look quite right.");
-                    feedback.hints.add("Check if you applied the operation to both sides");
-                } else {
-                    // No correctness info provided - be less spammy
-                    return null; // Don't give feedback for unclear simplification
-                }
-                break;
-
-            case "expand":
-                feedback = AiFeedbackDto.positive("Good expansion!");
-                feedback.suggestedNextSteps.add("Now try to simplify the result");
-                break;
-
-            case "factor":
-                feedback = AiFeedbackDto.positive("Nice factoring!");
-                break;
-
-            case "combine":
-                feedback = AiFeedbackDto.suggestion("Combining like terms - make sure they match!");
-                break;
-
-            // Graspable Math specific action names
-            case "addsubinvertaction":
-                feedback = AiFeedbackDto.hint("Good! You added/subtracted to both sides to maintain balance.");
-                feedback.suggestedNextSteps.add("Continue simplifying to isolate the variable");
-                break;
-
-            case "muldivinvertaction":
-                feedback = AiFeedbackDto.hint("Nice! You multiplied/divided both sides to maintain balance.");
-                feedback.suggestedNextSteps.add("Simplify the result");
-                break;
-
-            case "fractioncanceltermsaction":
-                feedback = AiFeedbackDto.positive("Great job simplifying the fraction!");
-                break;
-
-            case "move":
-                // Only give feedback if the expression actually changed
-                if (event.expressionBefore != null && event.expressionAfter != null
-                        && event.expressionBefore.equals(event.expressionAfter)) {
-                    return null; // No change, no feedback
-                }
-                feedback = AiFeedbackDto.hint("Remember to change the sign when moving across the equals sign!");
-                break;
-
-            default:
-                // Don't give feedback for unknown or minor actions
-                return null;
-        }
-
-        feedback.sessionId = event.sessionId;
-        feedback.confidence = 0.85; // Mock confidence
-
-        return feedback;
+    public GraspableProblemDto generateProblem(final de.vptr.aimathtutor.enums.DifficultyLevel difficulty,
+            final GraspableProblemDto.ProblemCategory category) {
+        return this.problemGeneratorService.generateProblem(difficulty, category);
     }
 
     /**
-     * Mock AI implementation for answering student questions.
+     * Logs an AI interaction to the database for analytics.
+     *
+     * @param event    The student's action
+     * @param feedback The AI's feedback
      */
-    private String answerWithMockAi(final String question, final String currentExpression) {
-        final var lowerQuestion = question.toLowerCase();
-
-        // Provide context-aware answers based on keywords
-        if (lowerQuestion.contains("how") && lowerQuestion.contains("solve")) {
-            return "To solve an equation, try to isolate the variable on one side. Work step by step, performing the same operation on both sides.";
-        }
-
-        if (lowerQuestion.contains("what") && (lowerQuestion.contains("next") || lowerQuestion.contains("do"))) {
-            if (currentExpression != null && currentExpression.contains("+")) {
-                return "Try combining like terms or moving terms to isolate the variable.";
-            }
-            return "Look at what you have now and think about what operation would help simplify or isolate the variable.";
-        }
-
-        if (lowerQuestion.contains("why") || lowerQuestion.contains("explain")) {
-            return "That's a great question! In algebra, we maintain balance by doing the same operation on both sides. This keeps the equation true.";
-        }
-
-        if (lowerQuestion.contains("stuck") || lowerQuestion.contains("help")) {
-            return "No worries! Try breaking it down into smaller steps. What's the first thing you can simplify or isolate?";
-        }
-
-        if (lowerQuestion.contains("hint")) {
-            return "💡 Look for terms you can combine, or operations you can undo to isolate the variable.";
-        }
-
-        return "I'm here to help! Can you be more specific about what you're stuck on?";
+    public void logInteraction(final GraspableEventDto event, final AiFeedbackDto feedback) {
+        this.aiInteractionLogger.logInteraction(event, feedback);
     }
 
     /**
-     * Answer question using Gemini with conversation context.
+     * Log a student question and AI answer as an interaction.
+     * Used for recording conversational interactions in the SessionDetailsView.
      */
-    private String answerWithGemini(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
+    public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
+            final String studentQuestion, final String aiAnswer) {
+        this.aiInteractionLogger.logQuestionInteraction(sessionId, userId, exerciseId, studentQuestion, aiAnswer);
+    }
+
+    // Provider call helpers with fallback to mock
+
+    private AiFeedbackDto safeAnalyze(final AiProvider provider, final GraspableEventDto event,
             final ConversationContextDto context) {
-        if (!this.geminiService.isConfigured()) {
-            LOG.warn("Gemini not configured, using mock AI");
-            return this.answerWithMockAi(question, currentExpression);
+        if (!provider.isAvailable()) {
+            LOG.warn("{} not configured, falling back to mock AI", provider.getClass().getSimpleName());
+            return this.mockAiProvider.analyzeMathAction(event, context);
         }
-
         try {
-            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, initialExpression,
-                    targetExpression, context);
-            return this.geminiService.generateContent(prompt);
+            return provider.analyzeMathAction(event, context);
         } catch (final RuntimeException e) {
-            LOG.error("Error using Gemini for question answering", e);
-            return this.answerWithMockAi(question, currentExpression);
+            LOG.error("Error using {}, falling back to mock", provider.getClass().getSimpleName(), e);
+            return this.mockAiProvider.analyzeMathAction(event, context);
         }
     }
 
-    /**
-     * Answer question using OpenAI with conversation context.
-     */
-    private String answerWithOpenAi(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
-        if (!this.openAiService.isConfigured()) {
-            LOG.warn("OpenAI not configured, using mock AI");
-            return this.answerWithMockAi(question, currentExpression);
+    private AiFeedbackDto safeAnalyzeOllama(final GraspableEventDto event, final ConversationContextDto context) {
+        if (!this.ollamaAiProvider.isAvailable()) {
+            LOG.warn("Ollama server not available, falling back to mock AI");
+            return this.mockAiProvider.analyzeMathAction(event, context);
         }
-
         try {
-            final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, initialExpression,
-                    targetExpression, context);
-            return this.openAiService.generateContent(prompt);
+            // CDI proxy applies @Retry automatically
+            return this.ollamaAiProvider.analyzeMathAction(event, context);
         } catch (final RuntimeException e) {
-            LOG.error("Error using OpenAI for question answering", e);
-            return this.answerWithMockAi(question, currentExpression);
+            LOG.error("Error using Ollama after retries, falling back to mock", e);
+            return this.mockAiProvider.analyzeMathAction(event, context);
         }
     }
 
-    /**
-     * Answer question using Ollama with conversation context.
-     * Uses MicroProfile Fault Tolerance @Retry for automatic retries with jitter.
-     */
-    private String answerWithOllama(final String question, final String currentExpression,
+    private String safeAnswer(final AiProvider provider, final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
-        if (!this.ollamaService.isAvailable()) {
-            LOG.warn("Ollama not available, using mock AI");
-            return this.answerWithMockAi(question, currentExpression);
-        }
-
-        try {
-            return this.callOllamaForQuestion(question, currentExpression, initialExpression, targetExpression,
+        if (!provider.isAvailable()) {
+            LOG.warn("{} not configured, falling back to mock AI", provider.getClass().getSimpleName());
+            return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                     context);
+        }
+        try {
+            return provider.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
+        } catch (final RuntimeException e) {
+            LOG.error("Error using {}, falling back to mock", provider.getClass().getSimpleName(), e);
+            return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
+                    context);
+        }
+    }
+
+    private String safeAnswerOllama(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression,
+            final ConversationContextDto context) {
+        if (!this.ollamaAiProvider.isAvailable()) {
+            LOG.warn("Ollama not available, using mock AI");
+            return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
+                    context);
+        }
+        try {
+            // CDI proxy applies @Retry automatically
+            return this.ollamaAiProvider.answerQuestion(question, currentExpression, initialExpression,
+                    targetExpression, context);
         } catch (final RuntimeException e) {
             LOG.error("Error using Ollama for question answering after retries, falling back to mock", e);
-            return this.answerWithMockAi(question, currentExpression);
+            return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
+                    context);
         }
     }
 
-    /**
-     * Internal method to call Ollama for question answering.
-     * Separated to allow @Retry annotation to work properly.
-     * <p>
-     * NOTE: This method must remain package-private (no access modifier) so that
-     * CDI proxies
-     * can intercept it and apply the @Retry annotation. Making it private would
-     * prevent
-     * MicroProfile Fault Tolerance from working correctly.
-     */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
-    String callOllamaForQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
-        final var prompt = this.buildQuestionAnsweringPrompt(question, currentExpression, initialExpression,
-                targetExpression, context);
-        return this.ollamaService.generateContent(prompt);
-    }
-
-    /**
-     * Sanitizes user input for prompt construction.
-     * Truncates to a maximum length and escapes XML-like closing tags to
-     * prevent prompt injection.
-     *
-     * @param input the raw user input
-     * @return sanitized input safe for inclusion in prompts
-     */
-    private String sanitizePromptInput(final String input) {
-        if (input == null) {
-            return null;
-        }
-        String sanitized = input;
-        if (sanitized.length() > MAX_PROMPT_INPUT_LENGTH) {
-            sanitized = sanitized.substring(0, MAX_PROMPT_INPUT_LENGTH) + "...[truncated]";
-        }
-        // Escape XML-like closing tags to prevent injection
-        sanitized = sanitized.replace("</", "<\\/");
-        return sanitized;
-    }
-
-    /**
-     * Builds a prompt for answering student questions.
-     */
-    private String buildQuestionAnsweringPrompt(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
-        final var prompt = new StringBuilder();
-
-        // Load dynamic prompt configuration
-        final var prefix = this.getConfigString("ai.prompt.question.answering.prefix",
-                "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.");
-        final var postfix = this.getConfigString("ai.prompt.question.answering.postfix",
-                "Provide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
-
-        prompt.append(prefix);
-        prompt.append("\n\n");
-
-        // Add conversation context if available
-        if (context != null) {
-            if (context.recentActions != null && !context.recentActions.isEmpty()) {
-                prompt.append("<conversation_context>\nRecent student actions:\n");
-                for (int i = 0; i < context.recentActions.size(); ++i) {
-                    final var action = context.recentActions.get(i);
-                    prompt.append(String.format("%d. %s: '%s' → '%s'%n",
-                            i + 1,
-                            this.sanitizePromptInput(action.eventType),
-                            this.sanitizePromptInput(action.expressionBefore),
-                            this.sanitizePromptInput(action.expressionAfter)));
-                }
-                prompt.append("</conversation_context>\n\n");
-            }
-
-            if (context.recentQuestions != null && !context.recentQuestions.isEmpty()) {
-                prompt.append("<recent_questions>\n");
-                for (int i = 0; i < context.recentQuestions.size(); ++i) {
-                    final var q = context.recentQuestions.get(i);
-                    prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(q.message)));
-                }
-                prompt.append("</recent_questions>\n\n");
-            }
-
-            if (context.recentAiMessages != null && !context.recentAiMessages.isEmpty()) {
-                prompt.append("<recent_responses>\n");
-                for (int i = 0; i < context.recentAiMessages.size(); ++i) {
-                    final var msg = context.recentAiMessages.get(i);
-                    prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(msg.message)));
-                }
-                prompt.append("</recent_responses>\n\n");
-            }
-        }
-
-        if (currentExpression != null && !currentExpression.isBlank()) {
-            prompt.append("<current_problem_state>\n")
-                    .append(this.sanitizePromptInput(currentExpression))
-                    .append("\n</current_problem_state>\n");
-        }
-        if (initialExpression != null && !initialExpression.isBlank()) {
-            prompt.append("<original_problem>\n")
-                    .append(this.sanitizePromptInput(initialExpression))
-                    .append("\n</original_problem>\n");
-        }
-        if (targetExpression != null && !targetExpression.isBlank()) {
-            prompt.append("<target_solution>\n")
-                    .append(this.sanitizePromptInput(targetExpression))
-                    .append("\n</target_solution>\n");
-        }
-
-        prompt.append("\n<student_question>\n")
-                .append(this.sanitizePromptInput(question))
-                .append("\n</student_question>\n\n");
-        prompt.append(postfix);
-
-        final var promptString = prompt.toString();
-        LOG.debug("Sending QuestionAnsweringPrompt, length={}", promptString.length());
-
-        return promptString;
-    }
-
-    /**
-     * Analyzes math action using Google Gemini AI with conversation context.
-     * Sends a structured prompt and parses JSON response.
-     */
-    private AiFeedbackDto analyzeWithGemini(final GraspableEventDto event, final ConversationContextDto context) {
-        LOG.info("Analyzing math action with Gemini AI");
-
-        // Check if Gemini is configured
-        if (!this.geminiService.isConfigured()) {
-            LOG.warn("Gemini not configured, falling back to mock AI");
-            return this.analyzeWithMockAi(event);
-        }
-
-        try {
-            // Build the prompt with context
-            final var prompt = this.buildMathTutoringPrompt(event, context);
-
-            // Call Gemini API
-            final var response = this.geminiService.generateContent(prompt);
-
-            // Parse response as JSON
-            return this.parseFeedbackFromJson(response);
-
-        } catch (final RuntimeException e) {
-            LOG.error("Error using Gemini AI, falling back to mock", e);
-            return this.analyzeWithMockAi(event);
-        }
-    }
-
-    /**
-     * Null-safe getter for string configuration values. Falls back to default if
-     * aiConfigService is not injected or value is missing.
-     */
     private String getConfigString(final String key, final String defaultValue) {
         if (this.aiConfigService == null) {
             LOG.debug("AiConfigService not injected, using default for key={}", key);
@@ -677,657 +430,11 @@ public class AiTutorService {
         return this.aiConfigService.getConfigValue(key, defaultValue);
     }
 
-    /**
-     * Null-safe getter for boolean configuration values. Falls back to default if
-     * aiConfigService is not injected or value is missing.
-     */
     private Boolean getConfigBoolean(final String key, final Boolean defaultValue) {
         if (this.aiConfigService == null) {
             LOG.debug("AiConfigService not injected, using default for key={}", key);
             return defaultValue;
         }
         return this.aiConfigService.getConfigValueAsBoolean(key, defaultValue);
-    }
-
-    /**
-     * Builds a structured prompt for math tutoring with conversation context.
-     */
-    private String buildMathTutoringPrompt(final GraspableEventDto event, final ConversationContextDto context) {
-        final var prompt = new StringBuilder();
-
-        // Load dynamic prompt configuration
-        final var prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
-                "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.");
-        final var postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
-                "Provide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
-
-        prompt.append(prefix);
-        prompt.append("\n\n<student_action>\n- Action Type: ");
-        prompt.append(event.eventType != null ? this.sanitizePromptInput(event.eventType) : "unknown").append("\n");
-        prompt.append("</student_action>\n");
-
-        // Add conversation context if available
-        if (context != null) {
-            if (context.recentActions != null && !context.recentActions.isEmpty()) {
-                prompt.append("\n<recent_actions>\n");
-                for (int i = 0; i < context.recentActions.size(); ++i) {
-                    final var action = context.recentActions.get(i);
-                    prompt.append(String.format("%d. %s: '%s' → '%s'%n",
-                            i + 1,
-                            this.sanitizePromptInput(action.eventType),
-                            this.sanitizePromptInput(action.expressionBefore),
-                            this.sanitizePromptInput(action.expressionAfter)));
-                }
-                prompt.append("</recent_actions>\n");
-            }
-
-            if (context.recentQuestions != null && !context.recentQuestions.isEmpty()) {
-                prompt.append("\n<recent_questions>\n");
-                for (int i = 0; i < context.recentQuestions.size(); ++i) {
-                    final var q = context.recentQuestions.get(i);
-                    prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(q.message)));
-                }
-                prompt.append("</recent_questions>\n");
-            }
-
-            if (context.recentAiMessages != null && !context.recentAiMessages.isEmpty()) {
-                prompt.append("\n<recent_feedback>\n");
-                for (int i = 0; i < context.recentAiMessages.size(); ++i) {
-                    final var msg = context.recentAiMessages.get(i);
-                    prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(msg.message)));
-                }
-                prompt.append("</recent_feedback>\n");
-            }
-        }
-
-        prompt.append("\n<current_action>\n");
-        if (event.expressionBefore != null) {
-            prompt.append("- Expression Before: ")
-                    .append(this.sanitizePromptInput(event.expressionBefore)).append("\n");
-        }
-
-        if (event.expressionAfter != null) {
-            prompt.append("- Expression After: ")
-                    .append(this.sanitizePromptInput(event.expressionAfter)).append("\n");
-        }
-
-        if (event.correct != null) {
-            prompt.append("- Is Correct: ").append(event.correct).append("\n");
-        }
-
-        prompt.append("</current_action>\n\n");
-        prompt.append(postfix);
-
-        final var promptString = prompt.toString();
-        LOG.debug("Sending MathTutoringPrompt, length={}", promptString.length());
-
-        return promptString;
-    }
-
-    /**
-     * Parses AI provider's JSON response into AIFeedbackDto.
-     * Falls back to extracting message if JSON parsing fails.
-     */
-    private AiFeedbackDto parseFeedbackFromJson(final String jsonResponse) {
-        try {
-            // Try to extract JSON from response (AI provider might wrap it in markdown)
-            var json = jsonResponse.trim();
-
-            // Remove markdown code block if present
-            if (json.startsWith("```json")) {
-                json = json.substring(7);
-            }
-            if (json.startsWith("```")) {
-                json = json.substring(3);
-            }
-            if (json.endsWith("```")) {
-                json = json.substring(0, json.length() - 3);
-            }
-            json = json.trim();
-
-            // Try to repair truncated JSON (missing closing braces/brackets)
-            json = this.repairTruncatedJson(json);
-
-            // Parse JSON to AIFeedbackDto
-            final var feedback = this.objectMapper.readValue(json, AiFeedbackDto.class);
-            feedback.clampConfidence();
-
-            // Set timestamp
-            feedback.timestamp = LocalDateTime.now();
-
-            LOG.debug("Successfully parsed AI provider response as JSON");
-            return feedback;
-
-        } catch (final IOException e) {
-            LOG.warn("Failed to parse AI provider response as JSON, creating simple feedback", e);
-
-            // Fallback: try to extract the message field from truncated JSON
-            final var feedback = this.extractFeedbackFromTruncatedResponse(jsonResponse);
-            feedback.confidence = 0.7;
-            return feedback;
-        }
-    }
-
-    /**
-     * Attempts to repair truncated JSON by adding missing closing braces and
-     * brackets.
-     * This handles cases where Ollama runs out of tokens mid-response.
-     * <p>
-     * NOTE: This method is package-private (no access modifier) rather than private
-     * to allow unit testing. See AiTutorServiceTest for test coverage.
-     */
-    String repairTruncatedJson(final String json) {
-        if (json == null || json.isEmpty()) {
-            return json;
-        }
-
-        // Count opening and closing braces/brackets
-        int openBraces = 0;
-        int openBrackets = 0;
-        boolean inString = false;
-        // Track whether the previous character is an unescaped backslash
-        // This correctly handles consecutive backslashes (e.g., \\" is escaped
-        // backslash + quote)
-        boolean prevCharIsEscape = false;
-
-        for (int i = 0; i < json.length(); ++i) {
-            final char c = json.charAt(i);
-            // Track string state (ignore escaped quotes)
-            if (c == '"' && !prevCharIsEscape) {
-                inString = !inString;
-            } else if (!inString) {
-                if (c == '{') {
-                    openBraces++;
-                } else if (c == '}') {
-                    openBraces--;
-                } else if (c == '[') {
-                    openBrackets++;
-                } else if (c == ']') {
-                    openBrackets--;
-                }
-            }
-            // A backslash is only an escape if it's not itself escaped
-            prevCharIsEscape = (c == '\\' && !prevCharIsEscape);
-        }
-
-        // If unbalanced, try to repair
-        if (openBraces > 0 || openBrackets > 0) {
-            LOG.debug("Attempting to repair truncated JSON: {} open braces, {} open brackets",
-                    openBraces, openBrackets);
-
-            final var repaired = new StringBuilder(json);
-
-            // Close any open string
-            if (inString) {
-                repaired.append('"');
-            }
-
-            // Close open brackets first (they're usually inside braces)
-            for (int i = 0; i < openBrackets; ++i) {
-                repaired.append(']');
-            }
-
-            // Then close open braces
-            for (int i = 0; i < openBraces; ++i) {
-                repaired.append('}');
-            }
-
-            return repaired.toString();
-        }
-
-        return json;
-    }
-
-    /**
-     * Extracts feedback from a truncated or malformed AI response.
-     * Tries to salvage the message field if present.
-     * <p>
-     * NOTE: This method is package-private (no access modifier) rather than private
-     * to allow unit testing. See AiTutorServiceTest for test coverage.
-     */
-    AiFeedbackDto extractFeedbackFromTruncatedResponse(final String response) {
-        if (response == null || response.isEmpty()) {
-            return AiFeedbackDto.hint("I'm having trouble analyzing that step. Try another action!");
-        }
-
-        // Try to extract the "message" field using regex
-        // Pattern handles escaped quotes within the value: matches
-        // non-quote/non-backslash chars OR escape sequences
-        final var messagePattern = Pattern.compile(
-                "\"message\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"",
-                Pattern.CASE_INSENSITIVE);
-        final var matcher = messagePattern.matcher(response);
-
-        if (matcher.find()) {
-            final String extractedMessage = matcher.group(1);
-            LOG.debug("Extracted message from truncated response: {}", extractedMessage);
-
-            // Try to determine the type
-            // Pattern handles escaped quotes within the value: matches
-            // non-quote/non-backslash chars OR escape sequences
-            final var typePattern = Pattern.compile(
-                    "\"type\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"",
-                    Pattern.CASE_INSENSITIVE);
-            final var typeMatcher = typePattern.matcher(response);
-
-            AiFeedbackDto feedback;
-            if (typeMatcher.find()) {
-                final String type = typeMatcher.group(1).toUpperCase();
-                feedback = switch (type) {
-                    case "CORRECTIVE" -> AiFeedbackDto.corrective(extractedMessage);
-                    case "HINT" -> AiFeedbackDto.hint(extractedMessage);
-                    case "SUGGESTION" -> AiFeedbackDto.suggestion(extractedMessage);
-                    default -> AiFeedbackDto.positive(extractedMessage);
-                };
-            } else {
-                feedback = AiFeedbackDto.positive(extractedMessage);
-            }
-
-            return feedback;
-        }
-
-        // If we can't extract anything useful, return a generic response
-        LOG.debug("Could not extract message from response, using generic feedback");
-        return AiFeedbackDto.hint("Keep going! Try your next step.");
-    }
-
-    /**
-     * Analyzes math action using OpenAI (GPT models) with conversation context.
-     * Uses JSON mode for guaranteed valid JSON responses.
-     */
-    private AiFeedbackDto analyzeWithOpenAi(final GraspableEventDto event, final ConversationContextDto context) {
-        LOG.info("Analyzing math action with OpenAI");
-
-        // Check if OpenAI is configured
-        if (!this.openAiService.isConfigured()) {
-            LOG.warn("OpenAI not configured, falling back to mock AI");
-            return this.analyzeWithMockAi(event);
-        }
-
-        try {
-            // Build the prompt with context
-            final var prompt = this.buildMathTutoringPrompt(event, context);
-
-            // Call OpenAI API with JSON mode
-            final var response = this.openAiService.generateJsonContent(prompt);
-
-            // Parse response as JSON
-            return this.parseFeedbackFromJson(response);
-
-        } catch (final RuntimeException e) {
-            LOG.error("Error using OpenAI, falling back to mock", e);
-            return this.analyzeWithMockAi(event);
-        }
-    }
-
-    /**
-     * Analyzes math action using Ollama (local LLM) with conversation context.
-     * Sends structured prompt and parses JSON response.
-     * Uses MicroProfile Fault Tolerance @Retry for automatic retries with jitter.
-     */
-    private AiFeedbackDto analyzeWithOllama(final GraspableEventDto event, final ConversationContextDto context) {
-        LOG.info("Analyzing math action with Ollama");
-
-        // Check if Ollama is available
-        if (!this.ollamaService.isAvailable()) {
-            LOG.warn("Ollama server not available at {}, falling back to mock AI", this.ollamaService.getApiUrl());
-            return this.analyzeWithMockAi(event);
-        }
-
-        try {
-            return this.callOllamaForAnalysis(event, context);
-        } catch (final RuntimeException e) {
-            LOG.error("Error using Ollama after retries, falling back to mock", e);
-            return this.analyzeWithMockAi(event);
-        }
-    }
-
-    /**
-     * Internal method to call Ollama for math action analysis.
-     * Separated to allow @Retry annotation to work properly.
-     * <p>
-     * NOTE: This method must remain package-private (no access modifier) so that
-     * CDI proxies
-     * can intercept it and apply the @Retry annotation. Making it private would
-     * prevent
-     * MicroProfile Fault Tolerance from working correctly.
-     */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
-    AiFeedbackDto callOllamaForAnalysis(final GraspableEventDto event, final ConversationContextDto context) {
-        // Build the prompt with context
-        final var prompt = this.buildMathTutoringPrompt(event, context);
-
-        // Call Ollama API
-        final var response = this.ollamaService.generateContent(prompt);
-
-        // Parse response as JSON (always returns non-null, with fallback on parse
-        // error)
-        return this.parseFeedbackFromJson(response);
-    }
-
-    /**
-     * Generates a new math problem based on student performance.
-     * 
-     * @param difficulty The difficulty level
-     * @param category   The problem category (type of math problem)
-     * @return A new Graspable Math problem
-     */
-    public GraspableProblemDto generateProblem(final String difficulty,
-            final GraspableProblemDto.ProblemCategory category) {
-        LOG.debug("Generating problem: difficulty={}, category={}", difficulty, category);
-
-        final var problem = new GraspableProblemDto();
-        problem.difficulty = difficulty;
-        problem.category = category != null ? category : GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
-
-        // Generate random problems based on category
-        // ThreadLocalRandom is used (not SecureRandom) because:
-        // - Problem generation does not require cryptographic security
-        // - ThreadLocalRandom is more efficient for concurrent access
-        // - Each thread has its own random instance, avoiding contention
-        // - No initialization overhead compared to SecureRandom
-        final var random = ThreadLocalRandom.current();
-
-        switch (problem.category) {
-            case LINEAR_EQUATIONS -> {
-                // Generate random linear equation: ax + b = c
-                final int a = random.nextInt(9) + 1; // 1-9
-                final int b = random.nextInt(20) - 10; // -10 to 10
-                final int x = random.nextInt(20) - 10; // -10 to 10
-                final int c = a * x + b;
-                problem.title = "Solve for x";
-                problem.initialExpression = String.format("%dx %s %d = %d",
-                        a,
-                        b >= 0 ? "+" : "-",
-                        Math.abs(b),
-                        c);
-                problem.targetExpression = "x = " + x;
-                problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
-                problem.hints.add("First, isolate the term with x");
-                problem.hints.add("Remember to do the same operation on both sides");
-            }
-            case QUADRATIC_EQUATIONS -> {
-                // Generate simple quadratic: x^2 = n (perfect square)
-                final int sqrtVal = random.nextInt(10) + 1; // 1-10
-                final int nSquared = sqrtVal * sqrtVal;
-                problem.title = "Solve for x";
-                problem.initialExpression = String.format("x^2 = %d", nSquared);
-                problem.targetExpression = String.format("x = ±%d", sqrtVal);
-                problem.allowedOperations.addAll(Arrays.asList("sqrt", "simplify"));
-                problem.hints.add("Take the square root of both sides");
-                problem.hints.add("Remember there are two solutions: positive and negative");
-            }
-            case POLYNOMIAL_SIMPLIFICATION -> {
-                // Generate random simplification
-                final int coef1 = random.nextInt(9) + 1;
-                final int coef2 = random.nextInt(9) + 1;
-                problem.title = "Simplify the expression";
-                problem.initialExpression = String.format("%dx + %dx", coef1, coef2);
-                problem.targetExpression = (coef1 + coef2) + "x";
-                problem.allowedOperations.addAll(Arrays.asList("simplify", "combine"));
-                problem.hints.add("Combine like terms");
-                problem.hints.add("Add the coefficients of x");
-            }
-            case FACTORING -> {
-                // Generate random factorable quadratic
-                final int p = random.nextInt(9) + 1;
-                final int q = random.nextInt(9) + 1;
-                final int sum = p + q;
-                final int product = p * q;
-                problem.title = "Factor the expression";
-                problem.initialExpression = String.format("x^2 + %dx + %d", sum, product);
-                problem.targetExpression = String.format("(x + %d)(x + %d)", p, q);
-                problem.allowedOperations.addAll(Arrays.asList("factor", "expand"));
-                problem.hints
-                        .add(String.format("Look for two numbers that multiply to %d and add to %d", product, sum));
-            }
-            case FRACTIONS -> {
-                // Generate fraction addition: a/b + c/d
-                final int num1 = random.nextInt(5) + 1;
-                final int den1 = random.nextInt(5) + 2;
-                final int num2 = random.nextInt(5) + 1;
-                final int den2 = random.nextInt(5) + 2;
-                problem.title = "Add the fractions";
-                problem.initialExpression = String.format("%d/%d + %d/%d", num1, den1, num2, den2);
-                problem.targetExpression = "Simplified form";
-                problem.allowedOperations.addAll(Arrays.asList("simplify", "add"));
-                problem.hints.add("Find a common denominator");
-                problem.hints.add("Add the numerators");
-            }
-            case EXPONENTS -> {
-                // Generate exponent simplification: x^a * x^b = x^(a+b)
-                final int exp1 = random.nextInt(4) + 2; // 2-5
-                final int exp2 = random.nextInt(4) + 2; // 2-5
-                problem.title = "Simplify using exponent rules";
-                problem.initialExpression = String.format("x^%d * x^%d", exp1, exp2);
-                problem.targetExpression = String.format("x^%d", exp1 + exp2);
-                problem.allowedOperations.addAll(Arrays.asList("simplify", "multiply"));
-                problem.hints.add("When multiplying powers with the same base, add the exponents");
-                problem.hints.add(String.format("x^%d * x^%d = x^(%d+%d)", exp1, exp2, exp1, exp2));
-            }
-            case SYSTEMS_OF_EQUATIONS -> {
-                // Generate simple system (substitution method)
-                final int yVal = random.nextInt(10) + 1;
-                final int xVal = random.nextInt(10) + 1;
-                final int coefX = random.nextInt(3) + 1;
-                problem.title = "Solve the system of equations";
-                problem.initialExpression = String.format("y = %d; %dx + y = %d", yVal, coefX, coefX * xVal + yVal);
-                problem.targetExpression = String.format("x = %d; y = %d", xVal, yVal);
-                problem.allowedOperations.addAll(Arrays.asList("substitute", "solve", "simplify"));
-                problem.hints.add("Substitute the value of y from the first equation into the second");
-                problem.hints.add("Solve for x, then verify with y");
-            }
-            case INEQUALITIES -> {
-                // Generate simple inequality: ax + b < c
-                final int aIneq = random.nextInt(5) + 1;
-                final int bIneq = random.nextInt(10) - 5;
-                final int cIneq = random.nextInt(20);
-                problem.title = "Solve the inequality";
-                problem.initialExpression = String.format("%dx %s %d < %d",
-                        aIneq,
-                        bIneq >= 0 ? "+" : "-",
-                        Math.abs(bIneq),
-                        cIneq);
-                final int numerator = cIneq - bIneq;
-                final int denominator = aIneq;
-                final int gcd = java.math.BigInteger.valueOf(numerator)
-                        .gcd(java.math.BigInteger.valueOf(denominator)).intValueExact();
-                final int reducedNum = numerator / gcd;
-                final int reducedDen = denominator / gcd;
-                final String targetValue;
-                if (reducedDen == 1) {
-                    targetValue = String.valueOf(reducedNum);
-                } else {
-                    targetValue = reducedNum + "/" + reducedDen;
-                }
-                problem.targetExpression = "x < " + targetValue;
-                problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
-                problem.hints.add("Solve like an equation, but keep the inequality sign");
-                problem.hints.add("Remember: if dividing by a negative number, flip the inequality");
-            }
-            default -> {
-                // Fallback to linear equations
-                return this.generateProblem(difficulty, GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS);
-            }
-        }
-
-        return problem;
-    }
-
-    /**
-     * Logs an AI interaction to the database for analytics.
-     * 
-     * @param event    The student's action
-     * @param feedback The AI's feedback
-     */
-    @Transactional
-    public void logInteraction(final GraspableEventDto event, final AiFeedbackDto feedback) {
-        try {
-            final var interaction = new AiInteractionEntity();
-            interaction.sessionId = event.sessionId;
-
-            // Look up user and exercise if IDs are provided
-            if (event.studentId != null) {
-                interaction.user = this.userRepository.findById(event.studentId);
-            }
-            if (event.exerciseId != null) {
-                interaction.exercise = this.exerciseRepository.findById(event.exerciseId);
-            }
-
-            interaction.eventType = event.eventType;
-            interaction.expressionBefore = event.expressionBefore;
-            interaction.expressionAfter = event.expressionAfter;
-            interaction.feedbackType = feedback.type != null ? feedback.type.toString() : "UNKNOWN";
-            interaction.feedbackMessage = feedback.message;
-            interaction.confidenceScore = feedback.confidence;
-            interaction.actionCorrect = event.correct;
-            try {
-                final var contextMap = new java.util.HashMap<String, Object>();
-                contextMap.put("eventType", event.eventType);
-                contextMap.put("exprBeforeLen",
-                        event.expressionBefore != null ? event.expressionBefore.length() : 0);
-                contextMap.put("exprAfterLen",
-                        event.expressionAfter != null ? event.expressionAfter.length() : 0);
-                contextMap.put("actionCorrect", event.correct);
-                interaction.conversationContext = this.objectMapper.writeValueAsString(contextMap);
-            } catch (final java.io.IOException e) {
-                LOG.error("Failed to serialize conversation context", e);
-                interaction.conversationContext = null;
-            }
-
-            this.aiInteractionRepository.persist(interaction);
-            LOG.debug("Logged AI interaction: id={}", interaction.id);
-        } catch (final RuntimeException e) {
-            LOG.error("Failed to log AI interaction", e);
-            // Don't fail the request if logging fails
-        }
-    }
-
-    /**
-     * Strips matching leading and trailing quotation marks from a string.
-     * Only removes quotes if they wrap the entire string (both start and end
-     * match).
-     * Handles both double quotes (") and smart quotes.
-     * <p>
-     * NOTE: This method is package-private (no access modifier) rather than private
-     * to allow unit testing. See AITutorServiceTest for test coverage.
-     * 
-     * @param text The text to process
-     * @return The text with quotation marks removed, or the original text if null
-     */
-    String stripQuotationMarks(String text) {
-        if (text == null || text.isEmpty()) {
-            return text;
-        }
-
-        text = text.trim();
-
-        // Remove matching quotation marks (only if both start and end match)
-        // Handles: "text", "text" (smart double), 'text' (smart single)
-        // Length check (> 1) prevents StringIndexOutOfBoundsException for single-char
-        // strings
-        while (text.length() > 1) {
-            if ((text.startsWith("\"") && text.endsWith("\""))
-                    || (text.startsWith(LEFT_DOUBLE_QUOTE) && text.endsWith(RIGHT_DOUBLE_QUOTE))
-                    || (text.startsWith(LEFT_SINGLE_QUOTE) && text.endsWith(RIGHT_SINGLE_QUOTE))) {
-                text = text.substring(1, text.length() - 1).trim();
-            } else {
-                break;
-            }
-        }
-
-        return text;
-    }
-
-    /**
-     * Log a student question and AI answer as an interaction.
-     * Used for recording conversational interactions in the SessionDetailsView.
-     * Marked as @Transactional to ensure proper persistence in async contexts.
-     */
-    @Transactional
-    public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
-            final String studentQuestion, final String aiAnswer) {
-        try {
-            LOG.info(
-                    "Logging question interaction: sessionId={}, userId={}, exerciseId={}, questionLen={}, answerLen={}",
-                    sessionId, userId, exerciseId,
-                    studentQuestion != null ? studentQuestion.length() : 0,
-                    aiAnswer != null ? aiAnswer.length() : 0);
-
-            // Create TWO separate records: one for student question, one for AI answer
-            // This ensures they appear as separate rows in the SessionDetailView grid
-
-            String contextJson = null;
-            try {
-                final var contextMap = new java.util.HashMap<String, Object>();
-                contextMap.put("questionLength", studentQuestion != null ? studentQuestion.length() : 0);
-                contextMap.put("answerLength", aiAnswer != null ? aiAnswer.length() : 0);
-                contextJson = this.objectMapper.writeValueAsString(contextMap);
-            } catch (final java.io.IOException e) {
-                LOG.error("Failed to serialize question context", e);
-                contextJson = null;
-            }
-
-            // 1. Log the student question
-            final var studentQuestionRecord = new AiInteractionEntity();
-            studentQuestionRecord.sessionId = sessionId;
-            studentQuestionRecord.eventType = "QUESTION";
-            studentQuestionRecord.feedbackType = "QUESTION";
-            studentQuestionRecord.studentMessage = studentQuestion;
-            studentQuestionRecord.conversationContext = contextJson;
-
-            UserEntity user = null;
-            if (userId != null) {
-                user = this.userRepository.findById(userId);
-                if (user == null) {
-                    LOG.warn("User not found for logging question interaction: userId={}", userId);
-                } else {
-                    studentQuestionRecord.user = user;
-                }
-            }
-
-            ExerciseEntity exercise = null;
-            if (exerciseId != null) {
-                exercise = this.exerciseRepository.findById(exerciseId);
-                if (exercise == null) {
-                    LOG.warn("Exercise not found for logging question interaction: exerciseId={}", exerciseId);
-                } else {
-                    studentQuestionRecord.exercise = exercise;
-                }
-            }
-
-            this.aiInteractionRepository.persist(studentQuestionRecord);
-            LOG.info("Successfully logged student question: id={}, msgLen={}",
-                    studentQuestionRecord.id,
-                    studentQuestionRecord.studentMessage != null ? studentQuestionRecord.studentMessage.length() : 0);
-
-            // 2. Log the AI answer as a separate record
-            final var aiAnswerRecord = new AiInteractionEntity();
-            aiAnswerRecord.sessionId = sessionId;
-            aiAnswerRecord.eventType = "QUESTION_ANSWER";
-            aiAnswerRecord.feedbackType = "ANSWER";
-            aiAnswerRecord.feedbackMessage = aiAnswer;
-            aiAnswerRecord.conversationContext = contextJson;
-
-            if (user == null) {
-                LOG.warn("User not available for logging AI answer: userId={}", userId);
-            } else {
-                aiAnswerRecord.user = user;
-            }
-
-            if (exercise == null) {
-                LOG.warn("Exercise not available for logging AI answer: exerciseId={}", exerciseId);
-            } else {
-                aiAnswerRecord.exercise = exercise;
-            }
-
-            this.aiInteractionRepository.persist(aiAnswerRecord);
-            LOG.info("Successfully logged AI answer: id={}, msgLen={}",
-                    aiAnswerRecord.id,
-                    aiAnswerRecord.feedbackMessage != null ? aiAnswerRecord.feedbackMessage.length() : 0);
-        } catch (final RuntimeException e) {
-            LOG.error("Failed to log question interaction", e);
-            // Don't fail the request if logging fails
-        }
     }
 }

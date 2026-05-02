@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -35,10 +32,10 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
@@ -46,19 +43,12 @@ import jakarta.ws.rs.WebApplicationException;
  * Admin view for creating, editing and deleting user ranks (permission sets).
  */
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
-public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUserRanksView extends AbstractAdminView {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserRanksView.class);
 
     @Inject
     private transient UserRankService rankService;
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     private Grid<UserRankViewDto> grid;
     private TextField searchField;
     private Button searchButton;
@@ -82,14 +72,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -99,27 +82,11 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
     private void loadRanksAsync() {
         LOG.info("Starting async rank loading");
-
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Making service call to load ranks");
-            try {
-                return this.rankService.getAllRanks();
-            } catch (final Exception e) {
-                LOG.error("Error loading ranks", e);
-                throw new RuntimeException("Failed to load ranks", e);
-            }
-        }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((ranks, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable != null) {
-                            LOG.error("Error loading ranks: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load ranks. Please try again.");
-                        } else {
-                            LOG.info("Successfully loaded {} ranks", ranks.size());
-                            this.grid.setItems(ranks);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.rankService.getAllRanks(),
+                this,
+                ranks -> this.grid.setItems(ranks),
+                "Failed to load ranks. Please try again.");
     }
 
     /**
@@ -181,7 +148,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(rank -> rank.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(rank -> rank.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Make the name column clickable
         this.grid.addComponentColumn(rank -> {
@@ -241,7 +208,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Exercises").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Exercises").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // Lesson permissions
         this.grid.addComponentColumn(rank -> {
@@ -275,7 +242,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Lessons").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Lessons").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // Comment permissions
         this.grid.addComponentColumn(rank -> {
@@ -308,7 +275,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Comments").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Comments").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // User permissions
         this.grid.addComponentColumn(rank -> {
@@ -339,7 +306,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Users").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Users").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // User group permissions
         this.grid.addComponentColumn(rank -> {
@@ -371,7 +338,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("User Groups").setWidth("150px").setFlexGrow(0);
+        }).setHeader("User Groups").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // User rank permissions
         this.grid.addComponentColumn(rank -> {
@@ -403,8 +370,8 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("User Ranks").setWidth("150px").setFlexGrow(0); // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("150px").setFlexGrow(0);
+        }).setHeader("User Ranks").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0); // Add action column
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
     }
 
     /**
@@ -648,27 +615,14 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         this.searchButton.setEnabled(false);
         LOG.info("Starting async rank search with query: {}", query);
 
-        // Capture the auth header in the UI thread where VaadinSession is available
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Searching ranks");
-            try {
-                return this.rankService.searchRanks(query);
-            } catch (final Exception e) {
-                LOG.error("Error searching ranks", e);
-                throw new RuntimeException("Failed to search ranks", e);
-            }
-        }).orTimeout(30, TimeUnit.SECONDS)
-                .whenComplete((ranks, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        this.searchButton.setEnabled(true);
-                        if (throwable != null) {
-                            LOG.error("Error searching ranks: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to search ranks. Please try again.");
-                        } else {
-                            LOG.info("Successfully found {} ranks", ranks.size());
-                            this.grid.setItems(ranks);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.rankService.searchRanks(query),
+                this,
+                ranks -> {
+                    this.searchButton.setEnabled(true);
+                    this.grid.setItems(ranks);
+                },
+                () -> this.searchButton.setEnabled(true),
+                "Failed to search ranks. Please try again.");
     }
 }

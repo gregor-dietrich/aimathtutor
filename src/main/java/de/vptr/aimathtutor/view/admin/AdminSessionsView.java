@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,10 +12,8 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
@@ -26,11 +22,9 @@ import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -41,16 +35,9 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/sessions", layout = AdminMainLayout.class)
 @PageTitle("Student Sessions - AI Math Tutor")
-public class AdminSessionsView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminSessionsView extends AbstractAdminView {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminSessionsView.class);
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     @Inject
     private transient AnalyticsService analyticsService;
 
@@ -78,14 +65,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -226,24 +206,13 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
      * Load all sessions asynchronously and populate the grid.
      */
     private void loadSessions() {
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                return this.analyticsService.getAllSessions();
-            } catch (final Exception e) {
-                LOG.error("Error loading sessions", e);
-                throw new RuntimeException("Failed to load sessions", e);
-            }
-        }).whenComplete((sessions, throwable) -> {
-            this.getUI().ifPresent(ui -> ui.access(() -> {
-                if (throwable != null) {
-                    LOG.error("Error loading sessions: {}", throwable.getMessage(), throwable);
-                    NotificationUtil.showError("Failed to load sessions");
-                } else {
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getAllSessions(),
+                this,
+                sessions -> {
                     this.grid.setItems(sessions);
-                    this.grid.getDataProvider().refreshAll();
-                }
-            }));
-        });
+                },
+                "Failed to load sessions");
     }
 
     /**

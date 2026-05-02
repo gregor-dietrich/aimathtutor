@@ -18,34 +18,34 @@ public final class NotificationUtil {
      * @param message The message to display
      */
     public static void showSuccess(final String message) {
-        showNotification(message, NotificationVariant.LUMO_SUCCESS, 3000);
+        showNotification(message, NotificationVariant.LUMO_SUCCESS, AppConstants.NOTIFICATION_DURATION_SUCCESS_MS);
     }
 
     /**
      * Shows an error notification
-     * 
+     *
      * @param message The message to display
      */
     public static void showError(final String message) {
-        showNotification(message, NotificationVariant.LUMO_ERROR, 5000);
+        showNotification(message, NotificationVariant.LUMO_ERROR, AppConstants.NOTIFICATION_DURATION_ERROR_MS);
     }
 
     /**
      * Shows a warning notification
-     * 
+     *
      * @param message The message to display
      */
     public static void showWarning(final String message) {
-        showNotification(message, NotificationVariant.LUMO_CONTRAST, 4000);
+        showNotification(message, NotificationVariant.LUMO_CONTRAST, AppConstants.NOTIFICATION_DURATION_WARNING_MS);
     }
 
     /**
      * Shows an info notification
-     * 
+     *
      * @param message The message to display
      */
     public static void showInfo(final String message) {
-        showNotification(message, NotificationVariant.LUMO_PRIMARY, 3000);
+        showNotification(message, NotificationVariant.LUMO_PRIMARY, AppConstants.NOTIFICATION_DURATION_INFO_MS);
     }
 
     /**

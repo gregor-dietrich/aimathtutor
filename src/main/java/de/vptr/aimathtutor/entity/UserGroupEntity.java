@@ -35,18 +35,6 @@ public class UserGroupEntity extends PanacheEntityBase {
     @OneToMany(mappedBy = "group")
     public List<UserGroupMetaEntity> userGroupMetas;
 
-    // Helper method to find group by name
-
-    /**
-     * Finds a user group by its name.
-     *
-     * @param name the name of the group to find
-     * @return the {@link UserGroupEntity} if found, null otherwise
-     */
-    public static UserGroupEntity findByName(final String name) {
-        return find("name", name).firstResult();
-    }
-
     // Helper method to get users in this group
 
     /**

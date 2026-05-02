@@ -6,8 +6,11 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -85,7 +88,8 @@ public class ExerciseEntity extends PanacheEntityBase {
     public String graspableTargetExpression;
 
     @Column(name = "graspable_difficulty")
-    public String graspableDifficulty; // "beginner", "intermediate", "advanced"
+    @Enumerated(EnumType.STRING)
+    public DifficultyLevel graspableDifficulty;
 
     @Column(name = "graspable_hints", columnDefinition = "TEXT")
     public String graspableHints; // JSON array of hint strings

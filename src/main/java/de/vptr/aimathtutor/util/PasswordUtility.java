@@ -1,5 +1,8 @@
 package de.vptr.aimathtutor.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.vptr.aimathtutor.security.PasswordHashingService;
 
 /**
@@ -9,6 +12,7 @@ import de.vptr.aimathtutor.security.PasswordHashingService;
  */
 public final class PasswordUtility {
 
+    private static final Logger LOG = LoggerFactory.getLogger(PasswordUtility.class);
     private static final PasswordHashingService hashingService = new PasswordHashingService();
 
     private PasswordUtility() {
@@ -31,7 +35,7 @@ public final class PasswordUtility {
         switch (cmd) {
             case "generate" -> handleGenerate(args);
             default -> {
-                System.err.println("Unknown command: " + cmd);
+                LOG.error("Unknown command: {}", cmd);
                 printUsage();
                 System.exit(2);
             }
@@ -51,7 +55,7 @@ public final class PasswordUtility {
             System.out.println("INSERT INTO users (username, password, salt, rank_id, activated) VALUES ('newuser', '"
                     + hash + "', '" + salt + "', 3, TRUE);");
         } catch (final Exception e) {
-            System.err.println("Failed to generate hash: " + e.getMessage());
+            LOG.error("Failed to generate hash", e);
             System.exit(3);
         }
     }

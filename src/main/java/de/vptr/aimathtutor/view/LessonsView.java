@@ -205,17 +205,17 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         // Difficulty badge
         if (exercise.graspableDifficulty != null) {
-            final var difficultyBadge = new Span(exercise.graspableDifficulty);
+            final var difficultyBadge = new Span(exercise.graspableDifficulty.getValue());
             difficultyBadge.getElement().getThemeList().add("badge");
-            switch (exercise.graspableDifficulty.toLowerCase()) {
-                case "beginner":
+            switch (exercise.graspableDifficulty) {
+                case BEGINNER:
                     difficultyBadge.getElement().getThemeList().add("success");
                     break;
-                case "intermediate":
+                case INTERMEDIATE:
                     difficultyBadge.getElement().getThemeList().add("contrast");
                     break;
-                case "advanced":
-                case "expert":
+                case ADVANCED:
+                case EXPERT:
                     difficultyBadge.getElement().getThemeList().add("error");
                     break;
                 default:

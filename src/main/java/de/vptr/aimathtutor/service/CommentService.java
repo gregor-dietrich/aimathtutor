@@ -17,10 +17,13 @@ import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
-import de.vptr.aimathtutor.repository.CommentFlagRepository;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.comment.CommentFlaggingService;
+import de.vptr.aimathtutor.service.comment.CommentModerationService;
+import de.vptr.aimathtutor.service.comment.CommentPermissionService;
+import de.vptr.aimathtutor.service.comment.CommentRateLimitService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -33,14 +36,13 @@ import jakarta.ws.rs.core.Response;
 /**
  * Service for managing comments: creation, editing, deletion, listing and
  * moderation.
+ * Delegates specialized concerns to sub-services for rate limiting,
+ * flagging, moderation, and permissions.
  */
 @ApplicationScoped
 public class CommentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentService.class);
-
-    private static final long RATE_LIMIT_WINDOW_SECONDS = 5;
-    private static final int RATE_LIMIT_DAILY = 200;
 
     @Inject
     UserService userService;
@@ -58,7 +60,16 @@ public class CommentService {
     UserRepository userRepository;
 
     @Inject
-    CommentFlagRepository commentFlagRepository;
+    CommentPermissionService commentPermissionService;
+
+    @Inject
+    CommentRateLimitService commentRateLimitService;
+
+    @Inject
+    CommentFlaggingService commentFlaggingService;
+
+    @Inject
+    CommentModerationService commentModerationService;
 
     /**
      * Retrieves all comments in the system with loaded relationships.
@@ -208,7 +219,7 @@ public class CommentService {
         }
 
         // 2. Check rate limiting
-        this.checkRateLimit(authorId);
+        this.commentRateLimitService.checkRateLimit(authorId);
 
         // 3. Validate exercise exists and allows comments
         final ExerciseEntity exercise = this.exerciseRepository.findById(dto.exerciseId);
@@ -268,10 +279,7 @@ public class CommentService {
         comment.flagsCount = 0;
         this.commentRepository.persist(comment);
 
-        // 7. (relations are loaded by persist when returned) - no manual forcing
-        // required
-
-        // 8. Fire CDI event for real-time updates
+        // 7. Fire CDI event for real-time updates
         this.commentCreatedEvent.fire(new CommentCreatedEvent(
                 comment.id, comment.exercise.id, comment.user.id, comment.user.username,
                 comment.content, comment.created));
@@ -366,15 +374,9 @@ public class CommentService {
             throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
         }
 
-        final boolean isAuthor = comment.user != null && comment.user.id.equals(requesterId);
-        final boolean isModerator = this.isModerator(requester);
+        this.commentPermissionService.verifyCanDelete(comment, requester, softDelete);
 
-        if (!isAuthor && !isModerator) {
-            LOG.warn("Delete comment unauthorized: commentId={}, requesterId={}, isAuthor={}, isModerator={}",
-                    commentId, requesterId, isAuthor, isModerator);
-            throw new WebApplicationException("Not authorized to delete this comment",
-                    Response.Status.FORBIDDEN);
-        }
+        final boolean isAuthor = comment.user != null && comment.user.id.equals(requesterId);
 
         if (softDelete) {
             // Soft delete: mark as deleted but preserve data
@@ -385,12 +387,6 @@ public class CommentService {
             LOG.info("Comment soft-deleted: commentId={}, requesterId={}, isAuthor={}", commentId, requesterId,
                     isAuthor);
         } else {
-            // Hard delete: remove from DB (only moderators/admins)
-            if (!isModerator) {
-                LOG.warn("Hard delete unauthorized: commentId={}, requesterId={}", commentId, requesterId);
-                throw new WebApplicationException("Only moderators can permanently delete",
-                        Response.Status.FORBIDDEN);
-            }
             this.commentRepository.deleteById(commentId);
             LOG.info("Comment hard-deleted: commentId={}, requesterId={}", commentId, requesterId);
         }
@@ -416,15 +412,7 @@ public class CommentService {
             throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
-        final boolean isAuthor = comment.user != null && comment.user.id.equals(editorId);
-        final boolean isModerator = this.isModerator(editor);
-
-        if (!isAuthor && !isModerator) {
-            LOG.warn("Edit comment unauthorized: commentId={}, editorId={}, isAuthor={}, isModerator={}", commentId,
-                    editorId, isAuthor, isModerator);
-            throw new WebApplicationException("Not authorized to edit this comment",
-                    Response.Status.FORBIDDEN);
-        }
+        this.commentPermissionService.verifyCanEdit(comment, editor);
 
         // Update content
         if (dto.content != null && !dto.content.isBlank()) {
@@ -432,10 +420,9 @@ public class CommentService {
             comment.editedAt = LocalDateTime.now();
             this.commentRepository.persist(comment);
             LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
-                    isAuthor);
+                    comment.user != null && comment.user.id.equals(editorId));
         }
 
-        // no-op: repository methods return entities with needed relations when used
         return new CommentViewDto(comment);
     }
 
@@ -444,36 +431,7 @@ public class CommentService {
      */
     @Transactional
     public void flagComment(final Long commentId, final Long flaggerId, final String reason) {
-        LOG.info("Flagging comment: commentId={}, flaggerId={}, reason={}", commentId, flaggerId, reason);
-
-        final CommentEntity comment = this.commentRepository.findById(commentId);
-        if (comment == null) {
-            LOG.warn("Flag comment failed: comment not found commentId={}, flaggerId={}", commentId, flaggerId);
-            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        // Prevent self-flagging
-        if (comment.user != null && comment.user.id.equals(flaggerId)) {
-            LOG.warn("Self-flag attempt: commentId={}, flaggerId={}", commentId, flaggerId);
-            throw new WebApplicationException("Cannot flag your own comment", Response.Status.BAD_REQUEST);
-        }
-
-        // Create flag record via repository (repository handles duplicate-check)
-        final var flagger = this.userRepository.findById(flaggerId);
-        this.commentFlagRepository.createFlag(comment, flagger);
-
-        // Increment flag count
-        comment.flagsCount = (comment.flagsCount != null ? comment.flagsCount : 0) + 1;
-
-        // If flagged 5+ times, auto-hide
-        if (comment.flagsCount >= 5) {
-            comment.status = "HIDDEN";
-            LOG.warn("Comment auto-hidden due to flags: commentId={}, flagCount={}", commentId, comment.flagsCount);
-        }
-
-        this.commentRepository.persist(comment);
-        LOG.info("Comment flagged: commentId={}, flaggerId={}, newFlagCount={}", commentId, flaggerId,
-                comment.flagsCount);
+        this.commentFlaggingService.flagComment(commentId, flaggerId, reason);
     }
 
     /**
@@ -518,55 +476,10 @@ public class CommentService {
     @Transactional
     public void moderateComment(
             final Long commentId,
-            final String action, // "HIDE", "SHOW", "DELETE"
+            final String action,
             final Long moderatorId,
             final String reason) {
-        LOG.info("Moderating comment: commentId={}, action={}, moderatorId={}, reason={}", commentId, action,
-                moderatorId, reason);
-
-        final CommentEntity comment = this.commentRepository.findById(commentId);
-        if (comment == null) {
-            LOG.warn("Moderate comment failed: comment not found commentId={}, moderatorId={}", commentId, moderatorId);
-            throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        final UserEntity moderator = this.userRepository.findById(moderatorId);
-        if (!this.isModerator(moderator)) {
-            LOG.warn("Moderate comment unauthorized: commentId={}, moderatorId={}", commentId, moderatorId);
-            throw new WebApplicationException("Only moderators can perform moderation",
-                    Response.Status.FORBIDDEN);
-        }
-
-        switch (action.toUpperCase()) {
-            case "HIDE":
-                comment.status = "HIDDEN";
-                LOG.info("Comment hidden by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
-                break;
-            case "SHOW":
-                comment.status = "VISIBLE";
-                comment.flagsCount = 0;
-                LOG.info("Comment shown by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
-                break;
-            case "RESTORE":
-                // Restore a deleted comment (same as SHOW)
-                comment.status = "VISIBLE";
-                comment.deletedBy = null;
-                comment.deletedAt = null;
-                LOG.info("Comment restored by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
-                break;
-            case "DELETE":
-                comment.status = "DELETED";
-                comment.deletedBy = moderator;
-                comment.deletedAt = LocalDateTime.now();
-                LOG.info("Comment deleted by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
-                break;
-            default:
-                LOG.warn("Invalid moderation action: action={}, commentId={}, moderatorId={}", action, commentId,
-                        moderatorId);
-                throw new ValidationException("Invalid moderation action: " + action);
-        }
-
-        this.commentRepository.persist(comment);
+        this.commentModerationService.moderateComment(commentId, action, moderatorId, reason);
     }
 
     /**
@@ -579,37 +492,6 @@ public class CommentService {
         return replies.stream()
                 .map(CommentViewDto::new)
                 .collect(Collectors.toList());
-    }
-
-    // HELPER METHODS
-
-    private boolean isModerator(final UserEntity user) {
-        // Check if user has teacher or admin rank
-        return user != null && user.rank != null && (Boolean.TRUE.equals(user.rank.exerciseEdit)
-                || Boolean.TRUE.equals(user.rank.adminView));
-    }
-
-    private void checkRateLimit(final Long userId) {
-        // Get user's last comment timestamp
-        final LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(RATE_LIMIT_WINDOW_SECONDS);
-        final long recentCount = this.commentRepository.countByUserSince(userId, fiveSecondsAgo);
-
-        if (recentCount > 0) {
-            LOG.debug("Rate limit exceeded (5-second window): userId={}, recentCount={}", userId, recentCount);
-            throw new WebApplicationException("Please wait before posting another comment",
-                    Response.Status.TOO_MANY_REQUESTS);
-        }
-
-        // Check daily limit
-        final LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
-        final long dailyCount = this.commentRepository.countByUserSince(userId, oneDayAgo);
-
-        if (dailyCount >= RATE_LIMIT_DAILY) {
-            LOG.warn("Daily comment limit exceeded: userId={}, dailyCount={}, limit={}", userId, dailyCount,
-                    RATE_LIMIT_DAILY);
-            throw new WebApplicationException("Daily comment limit exceeded",
-                    Response.Status.TOO_MANY_REQUESTS);
-        }
     }
 
     /**
@@ -680,9 +562,6 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> findFlaggedComments(final Integer minFlags) {
-        final List<CommentEntity> comments = this.commentRepository.findFlaggedComments(minFlags);
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return this.commentFlaggingService.findFlaggedComments(minFlags);
     }
 }

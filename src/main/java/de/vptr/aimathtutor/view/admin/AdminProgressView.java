@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,11 +10,9 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
@@ -25,11 +21,9 @@ import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.AuthService;
-import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -39,16 +33,9 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/progress", layout = AdminMainLayout.class)
 @PageTitle("Student Progress - AI Math Tutor")
-public class AdminProgressView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminProgressView extends AbstractAdminView {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminProgressView.class);
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     @Inject
     private transient AnalyticsService analyticsService;
 
@@ -76,14 +63,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -166,19 +146,19 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
                         this.loadProgressData();
                     }
                 },
-                e -> this.searchStudents(),
+                _ -> this.searchStudents(),
                 "Search by username...",
                 "Search Students");
 
         this.searchField = searchLayout.getTextfield();
 
         // Add date range filter for last activity
-        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", e -> this.resetFilters());
+        this.resetFiltersButton = new Button("Reset Filters", _ -> this.resetFilters());
         this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetFiltersButton);
@@ -194,7 +174,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(e -> this.loadProgressData());
+        final var refreshButton = new RefreshButton(_ -> this.loadProgressData());
 
         layout.add(refreshButton);
         return layout;
@@ -224,24 +204,13 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
      * Load aggregated progress data asynchronously and populate the grid.
      */
     private void loadProgressData() {
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                return this.analyticsService.getAllUsersProgressSummary();
-            } catch (final Exception e) {
-                LOG.error("Error loading progress data", e);
-                throw new RuntimeException("Failed to load progress data", e);
-            }
-        }).whenComplete((progressData, throwable) -> {
-            this.getUI().ifPresent(ui -> ui.access(() -> {
-                if (throwable != null) {
-                    LOG.error("Error loading progress data: {}", throwable.getMessage(), throwable);
-                    NotificationUtil.showError("Failed to load progress data");
-                } else {
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getAllUsersProgressSummary(),
+                this,
+                progressData -> {
                     this.grid.setItems(progressData);
-                    this.grid.getDataProvider().refreshAll();
-                }
-            }));
-        });
+                },
+                "Failed to load progress data");
     }
 
     /**
