@@ -116,51 +116,6 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 Use ULIDs for IDs rather than auto-incrementing integers.
 
-### 4.6 Code Quality & Architecture
-
-- **Extract base admin view to eliminate duplication.** ~~Create `AbstractAdminView` handling:~~ ✅ DONE
-  - ~~`beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).~~ ✅ DONE
-  - ~~Async data loading pattern (`CompletableFuture.supplyAsync(...).orTimeout(30, ...)`).~~ ✅ DONE
-  - ~~Standard grid setup (striped, size full, ID width, action column width).~~ ✅ DONE
-  - ~~Standard dialog form setup (binder, form layout, responsive steps, save/cancel buttons).~~ ✅ DONE
-  - ~~Standard button layout (Create + Refresh).~~ ✅ DONE
-  - ~~Standard error handling.~~ ✅ DONE
-    **When extracting, check all admin views for identical duplicated patterns and migrate them consistently.**
-- **Extract generic utilities:**
-  - ~~`AsyncDataLoader<T>` utility for the repeated `CompletableFuture` pattern.~~ ✅ DONE
-  - ~~`BaseFormDialog<T>` for create/edit dialogs.~~ ✅ DONE
-  - ~~`DateRangeFilter` component/utility for date filtering logic duplicated across views.~~ ✅ DONE
-    **When extracting, check all views for identical utility needs.**
-- **Split oversized services (SRP):**
-  - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, ~~`ProblemGeneratorService`~~ ✅ DONE, `AiInteractionLogger`.
-  - `CommentService` (~690 lines): extract `CommentModerationService`, `CommentFlaggingService`, `CommentRateLimitService`, `CommentPermissionService`.
-  - `ExerciseService`: ~~extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.~~ ✅ DONE
-    **When splitting, check all services over 400 lines for identical SRP violations.**
-- **Extract constants for magic values:**
-  - ~~Async timeout: `30` seconds in admin views.~~ ✅ DONE
-  - ~~Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.~~ ✅ DONE
-  - ~~Retry config: `maxRetries = 3`, `delay = 1000`, `jitter = 200`.~~ ✅ DONE
-  - ~~Difficulty levels: `"beginner"`, `"intermediate"`, `"advanced"`, `"expert"` -> use enum.~~ ✅ DONE
-  - ~~Password min length: `8` (enforced by UserService.PASSWORD_MIN_LENGTH and DTO validations using `@Size(min = 8, ...)`).~~ ✅ DONE
-  - ~~Auto-hide flag threshold: `5` in `CommentService`.~~ ✅ DONE
-  - ~~Notification durations in `NotificationUtil`.~~ ✅ DONE
-  - ~~Canvas heights: `"77vh"`, `"80vh"`.~~ ✅ DONE
-  - ~~Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.~~ ✅ DONE
-    **When extracting constants, check the entire codebase for identical hardcoded values.**
-- **Standardize naming and patterns:**
-  - ~~Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.~~ ✅ DONE
-  - ~~Login forward targets: some views use `LoginView.class`, others use `"login"`. Standardize to `LoginView.class`.~~ ✅ DONE
-  - ~~Repository pattern: standardize all repositories to extend `AbstractRepository` or remove it entirely.~~ ✅ DONE
-  - ~~DTO patterns: apply `@SuppressFBWarnings` consistently across all DTOs.~~ ✅ DONE
-  - ~~Error handling: standardize on generic user messages + server-side logging.~~ ✅ DONE
-    **When standardizing, check all files for identical inconsistencies.**
-- **Remove dead code:**
-  - ~~Unused static finder methods in `CommentEntity` (lines 90-164).~~ ✅ ALREADY RESOLVED (file is only 98 lines)
-  - ~~Commented-out code block in `MathWorkspaceView` (lines 341-356).~~ ✅ DONE
-  - ~~Unused static finder methods in `StudentSessionEntity`, `UserGroupMetaEntity`, `UserGroupEntity`, `LessonEntity`.~~ ✅ DONE
-  - ~~Run optimize imports across the codebase.~~ ✅ DONE (Checkstyle clean)
-    **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
-
 ---
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
