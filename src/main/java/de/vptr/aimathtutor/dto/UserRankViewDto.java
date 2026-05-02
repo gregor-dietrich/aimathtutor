@@ -2,8 +2,6 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * DTO representing a user rank/permission set for UI display.
  */

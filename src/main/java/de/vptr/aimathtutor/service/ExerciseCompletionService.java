@@ -2,8 +2,6 @@ package de.vptr.aimathtutor.service;
 
 import java.util.List;
 
-import jakarta.persistence.PersistenceException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,10 +57,10 @@ public class ExerciseCompletionService {
             dto.userCompleted = !completedSessions.isEmpty();
             dto.userCompletionCount = completedSessions.size();
 
-        } catch (final PersistenceException e) {
+        } catch (final RuntimeException e) {
             // Log the error but don't fail - this ensures we don't break the exercise
             // loading functionality
-            LOG.error("Error enriching exercise DTO with completion data for exercise ID: " + dto.id, e);
+            LOG.error("Error enriching exercise DTO with completion data for exercise ID: {}", dto.id, e);
         }
 
         return dto;
@@ -99,7 +97,7 @@ public class ExerciseCompletionService {
                 dto.userCompleted = !completedSessions.isEmpty();
                 dto.userCompletionCount = completedSessions.size();
             }
-        } catch (final PersistenceException e) {
+        } catch (final RuntimeException e) {
             LOG.error("Error enriching exercise DTO list with completion data", e);
         }
 

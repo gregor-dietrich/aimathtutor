@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +10,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -23,10 +21,8 @@ import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -150,19 +146,19 @@ public class AdminProgressView extends AbstractAdminView {
                         this.loadProgressData();
                     }
                 },
-                e -> this.searchStudents(),
+                _ -> this.searchStudents(),
                 "Search by username...",
                 "Search Students");
 
         this.searchField = searchLayout.getTextfield();
 
         // Add date range filter for last activity
-        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", e -> this.resetFilters());
+        this.resetFiltersButton = new Button("Reset Filters", _ -> this.resetFilters());
         this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetFiltersButton);
@@ -178,7 +174,7 @@ public class AdminProgressView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(e -> this.loadProgressData());
+        final var refreshButton = new RefreshButton(_ -> this.loadProgressData());
 
         layout.add(refreshButton);
         return layout;
@@ -213,7 +209,6 @@ public class AdminProgressView extends AbstractAdminView {
                 this,
                 progressData -> {
                     this.grid.setItems(progressData);
-                    this.grid.getDataProvider().refreshAll();
                 },
                 "Failed to load progress data");
     }

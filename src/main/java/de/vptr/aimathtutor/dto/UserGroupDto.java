@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.dto;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.NotBlank;
 
 /**

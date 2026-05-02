@@ -44,12 +44,32 @@ public class ProblemGeneratorService {
         // - No initialization overhead compared to SecureRandom
         final var random = ThreadLocalRandom.current();
 
+        // Difficulty-based parameter scaling
+        final int coefMax = switch (difficulty) {
+            case BEGINNER -> 4;
+            case INTERMEDIATE -> 9;
+            case ADVANCED -> 15;
+            case EXPERT -> 20;
+        };
+        final int constMax = switch (difficulty) {
+            case BEGINNER -> 6;
+            case INTERMEDIATE -> 10;
+            case ADVANCED -> 20;
+            case EXPERT -> 30;
+        };
+        final int varMax = switch (difficulty) {
+            case BEGINNER -> 6;
+            case INTERMEDIATE -> 10;
+            case ADVANCED -> 20;
+            case EXPERT -> 30;
+        };
+
         switch (problem.category) {
             case LINEAR_EQUATIONS -> {
                 // Generate random linear equation: ax + b = c
-                final int a = random.nextInt(9) + 1; // 1-9
-                final int b = random.nextInt(20) - 10; // -10 to 10
-                final int x = random.nextInt(20) - 10; // -10 to 10
+                final int a = random.nextInt(coefMax) + 1; // 1 to coefMax
+                final int b = random.nextInt(constMax * 2 + 1) - constMax; // -constMax to constMax
+                final int x = random.nextInt(varMax * 2 + 1) - varMax; // -varMax to varMax
                 final int c = a * x + b;
                 problem.title = "Solve for x";
                 problem.initialExpression = String.format("%dx %s %d = %d",
@@ -64,7 +84,13 @@ public class ProblemGeneratorService {
             }
             case QUADRATIC_EQUATIONS -> {
                 // Generate simple quadratic: x^2 = n (perfect square)
-                final int sqrtVal = random.nextInt(10) + 1; // 1-10
+                final int sqrtMax = switch (difficulty) {
+                    case BEGINNER -> 5;
+                    case INTERMEDIATE -> 10;
+                    case ADVANCED -> 15;
+                    case EXPERT -> 20;
+                };
+                final int sqrtVal = random.nextInt(sqrtMax) + 1; // 1 to sqrtMax
                 final int nSquared = sqrtVal * sqrtVal;
                 problem.title = "Solve for x";
                 problem.initialExpression = String.format("x^2 = %d", nSquared);
@@ -75,8 +101,8 @@ public class ProblemGeneratorService {
             }
             case POLYNOMIAL_SIMPLIFICATION -> {
                 // Generate random simplification
-                final int coef1 = random.nextInt(9) + 1;
-                final int coef2 = random.nextInt(9) + 1;
+                final int coef1 = random.nextInt(coefMax) + 1;
+                final int coef2 = random.nextInt(coefMax) + 1;
                 problem.title = "Simplify the expression";
                 problem.initialExpression = String.format("%dx + %dx", coef1, coef2);
                 problem.targetExpression = (coef1 + coef2) + "x";
@@ -86,8 +112,14 @@ public class ProblemGeneratorService {
             }
             case FACTORING -> {
                 // Generate random factorable quadratic
-                final int p = random.nextInt(9) + 1;
-                final int q = random.nextInt(9) + 1;
+                final int factorMax = switch (difficulty) {
+                    case BEGINNER -> 5;
+                    case INTERMEDIATE -> 9;
+                    case ADVANCED -> 15;
+                    case EXPERT -> 20;
+                };
+                final int p = random.nextInt(factorMax) + 1;
+                final int q = random.nextInt(factorMax) + 1;
                 final int sum = p + q;
                 final int product = p * q;
                 problem.title = "Factor the expression";
@@ -99,10 +131,16 @@ public class ProblemGeneratorService {
             }
             case FRACTIONS -> {
                 // Generate fraction addition: a/b + c/d
-                final int num1 = random.nextInt(5) + 1;
-                final int den1 = random.nextInt(5) + 2;
-                final int num2 = random.nextInt(5) + 1;
-                final int den2 = random.nextInt(5) + 2;
+                final int fracMax = switch (difficulty) {
+                    case BEGINNER -> 3;
+                    case INTERMEDIATE -> 5;
+                    case ADVANCED -> 9;
+                    case EXPERT -> 12;
+                };
+                final int num1 = random.nextInt(fracMax) + 1;
+                final int den1 = random.nextInt(fracMax) + 2;
+                final int num2 = random.nextInt(fracMax) + 1;
+                final int den2 = random.nextInt(fracMax) + 2;
                 problem.title = "Add the fractions";
                 problem.initialExpression = String.format("%d/%d + %d/%d", num1, den1, num2, den2);
                 problem.targetExpression = "Simplified form";
@@ -112,8 +150,14 @@ public class ProblemGeneratorService {
             }
             case EXPONENTS -> {
                 // Generate exponent simplification: x^a * x^b = x^(a+b)
-                final int exp1 = random.nextInt(4) + 2; // 2-5
-                final int exp2 = random.nextInt(4) + 2; // 2-5
+                final int expMax = switch (difficulty) {
+                    case BEGINNER -> 3;
+                    case INTERMEDIATE -> 5;
+                    case ADVANCED -> 8;
+                    case EXPERT -> 12;
+                };
+                final int exp1 = random.nextInt(expMax) + 2; // 2 to expMax+1
+                final int exp2 = random.nextInt(expMax) + 2; // 2 to expMax+1
                 problem.title = "Simplify using exponent rules";
                 problem.initialExpression = String.format("x^%d * x^%d", exp1, exp2);
                 problem.targetExpression = String.format("x^%d", exp1 + exp2);
@@ -123,9 +167,15 @@ public class ProblemGeneratorService {
             }
             case SYSTEMS_OF_EQUATIONS -> {
                 // Generate simple system (substitution method)
-                final int yVal = random.nextInt(10) + 1;
-                final int xVal = random.nextInt(10) + 1;
-                final int coefX = random.nextInt(3) + 1;
+                final int sysMax = switch (difficulty) {
+                    case BEGINNER -> 5;
+                    case INTERMEDIATE -> 10;
+                    case ADVANCED -> 20;
+                    case EXPERT -> 30;
+                };
+                final int yVal = random.nextInt(sysMax) + 1;
+                final int xVal = random.nextInt(sysMax) + 1;
+                final int coefX = random.nextInt(coefMax) + 1;
                 problem.title = "Solve the system of equations";
                 problem.initialExpression = String.format("y = %d; %dx + y = %d", yVal, coefX, coefX * xVal + yVal);
                 problem.targetExpression = String.format("x = %d; y = %d", xVal, yVal);
@@ -135,9 +185,9 @@ public class ProblemGeneratorService {
             }
             case INEQUALITIES -> {
                 // Generate simple inequality: ax + b < c
-                final int aIneq = random.nextInt(5) + 1;
-                final int bIneq = random.nextInt(10) - 5;
-                final int cIneq = random.nextInt(20);
+                final int aIneq = random.nextInt(coefMax) + 1;
+                final int bIneq = random.nextInt(constMax * 2 + 1) - constMax;
+                final int cIneq = random.nextInt(constMax * 4);
                 problem.title = "Solve the inequality";
                 problem.initialExpression = String.format("%dx %s %d < %d",
                         aIneq,

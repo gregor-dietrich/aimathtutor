@@ -63,27 +63,49 @@ public class CommentModerationService {
                     Response.Status.FORBIDDEN);
         }
 
+        if (action == null) {
+            LOG.warn("Null moderation action: commentId={}, moderatorId={}", commentId, moderatorId);
+            throw new ValidationException("Moderation action is required");
+        }
+
         switch (action.toUpperCase()) {
             case "HIDE":
                 comment.status = "HIDDEN";
+                comment.moderationReason = reason;
+                comment.moderator = moderator;
+                comment.moderationAction = action.toUpperCase();
+                comment.moderatedAt = LocalDateTime.now();
                 LOG.info("Comment hidden by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
             case "SHOW":
                 comment.status = "VISIBLE";
                 comment.flagsCount = 0;
+                comment.moderationReason = reason;
+                comment.moderator = moderator;
+                comment.moderationAction = action.toUpperCase();
+                comment.moderatedAt = LocalDateTime.now();
                 LOG.info("Comment shown by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
             case "RESTORE":
-                // Restore a deleted comment (same as SHOW)
+                // Restore a deleted comment (same as SHOW) and clear flags
                 comment.status = "VISIBLE";
+                comment.flagsCount = 0;
                 comment.deletedBy = null;
                 comment.deletedAt = null;
+                comment.moderationReason = reason;
+                comment.moderator = moderator;
+                comment.moderationAction = action.toUpperCase();
+                comment.moderatedAt = LocalDateTime.now();
                 LOG.info("Comment restored by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
             case "DELETE":
                 comment.status = "DELETED";
                 comment.deletedBy = moderator;
                 comment.deletedAt = LocalDateTime.now();
+                comment.moderationReason = reason;
+                comment.moderator = moderator;
+                comment.moderationAction = action.toUpperCase();
+                comment.moderatedAt = LocalDateTime.now();
                 LOG.info("Comment deleted by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
             default:

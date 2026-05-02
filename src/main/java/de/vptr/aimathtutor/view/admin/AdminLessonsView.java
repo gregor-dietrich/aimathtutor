@@ -33,7 +33,6 @@ import de.vptr.aimathtutor.dto.LessonDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.service.LessonService;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -175,7 +174,7 @@ public class AdminLessonsView extends AbstractAdminView {
                         this.updateTreeGrid();
                     }
                 },
-                e -> this.searchLessons(),
+                _ -> this.searchLessons(),
                 "Search by name...",
                 "Search Lessons");
 
@@ -189,8 +188,8 @@ public class AdminLessonsView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(e -> this.openLessonDialog(null));
-        final var refreshButton = new RefreshButton(e -> this.loadLessonsAsync());
+        final var createButton = new CreateButton(_ -> this.openLessonDialog(null));
+        final var refreshButton = new RefreshButton(_ -> this.loadLessonsAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -231,8 +230,8 @@ public class AdminLessonsView extends AbstractAdminView {
         layout.setSpacing(true);
 
         // Convert view DTO to a fresh LessonDto and pass that to the dialog
-        final var editButton = new EditButton(e -> this.openLessonDialog(lesson.toLessonDto()));
-        final var deleteButton = new DeleteButton(e -> this.deleteLesson(lesson.toLessonDto()));
+        final var editButton = new EditButton(_ -> this.openLessonDialog(lesson.toLessonDto()));
+        final var deleteButton = new DeleteButton(_ -> this.deleteLesson(lesson.toLessonDto()));
 
         layout.add(editButton, deleteButton);
         return layout;
@@ -311,10 +310,10 @@ public class AdminLessonsView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", e -> this.saveLesson());
+        final var saveButton = new Button("Save", _ -> this.saveLesson());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", e -> this.lessonDialog.close());
+        final var cancelButton = new Button("Cancel", _ -> this.lessonDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);

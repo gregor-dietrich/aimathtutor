@@ -2,9 +2,6 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -20,10 +17,9 @@ import com.vaadin.flow.router.Route;
 import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -35,7 +31,7 @@ import jakarta.inject.Inject;
 @Route(value = "admin/session/:sessionId", layout = AdminMainLayout.class)
 @PageTitle("Session Details - AI Math Tutor")
 public class AdminSessionView extends AbstractAdminView {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminSessionView.class);
+
     @Inject
     private transient AnalyticsService analyticsService;
 
@@ -85,7 +81,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.removeAll();
 
         // Back button
-        final var backButton = new Button("← Back to Sessions", e -> {
+        final var backButton = new Button("← Back to Sessions", _ -> {
             this.getUI().ifPresent(ui -> ui.navigate(AdminSessionsView.class));
         });
         backButton.getStyle().set("margin-bottom", "20px");

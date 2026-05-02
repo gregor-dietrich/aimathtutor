@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,6 @@ import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
@@ -24,10 +22,8 @@ import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -215,7 +211,6 @@ public class AdminSessionsView extends AbstractAdminView {
                 this,
                 sessions -> {
                     this.grid.setItems(sessions);
-                    this.grid.getDataProvider().refreshAll();
                 },
                 "Failed to load sessions");
     }

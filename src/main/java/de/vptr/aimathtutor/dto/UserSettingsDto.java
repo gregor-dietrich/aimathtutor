@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.util.AppConstants;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -12,6 +11,7 @@ public class UserSettingsDto {
     @Size(max = 100, message = "Current password must not exceed 100 characters")
     public String currentPassword;
 
+    // Note: message must match PASSWORD_MIN_LENGTH (currently 8)
     @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = 100, message = "New password must be between 8 and 100 characters")
     public String newPassword;
 

@@ -374,8 +374,7 @@ public class AiTutorService {
 
     private AiFeedbackDto safeAnalyzeOllama(final GraspableEventDto event, final ConversationContextDto context) {
         if (!this.ollamaAiProvider.isAvailable()) {
-            LOG.warn("Ollama server not available at {}, falling back to mock AI",
-                    this.ollamaAiProvider.getClass().getSimpleName());
+            LOG.warn("Ollama server not available, falling back to mock AI");
             return this.mockAiProvider.analyzeMathAction(event, context);
         }
         try {

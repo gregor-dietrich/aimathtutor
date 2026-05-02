@@ -27,6 +27,7 @@ import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
@@ -200,7 +201,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      */
     private void loadInitialProblem() {
         // Generate a problem using the default category
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem(de.vptr.aimathtutor.enums.DifficultyLevel.INTERMEDIATE, this.selectedCategory);
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory);
 
         // Wait for canvas to be ready, then load the problem
         UI.getCurrent().getPage().executeJs(
@@ -486,7 +487,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     private void generateNewProblem() {
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem(de.vptr.aimathtutor.enums.DifficultyLevel.INTERMEDIATE, this.selectedCategory);
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory);
 
         // Load problem into Graspable Math using the utility function
         UI.getCurrent().getPage().executeJs(

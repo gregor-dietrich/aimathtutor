@@ -38,7 +38,6 @@ import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.service.UserGroupService;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;

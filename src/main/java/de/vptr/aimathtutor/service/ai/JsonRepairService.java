@@ -169,7 +169,7 @@ public class JsonRepairService {
         final var matcher = messagePattern.matcher(response);
 
         if (matcher.find()) {
-            final String extractedMessage = matcher.group(1);
+            final String extractedMessage = this.unescapeJsonString(matcher.group(1));
             LOG.debug("Extracted message from truncated response: {}", extractedMessage);
 
             // Try to determine the type
@@ -199,6 +199,23 @@ public class JsonRepairService {
         // If we can't extract anything useful, return a generic response
         LOG.debug("Could not extract message from response, using generic feedback");
         return AiFeedbackDto.hint("Keep going! Try your next step.");
+    }
+
+    /**
+     * Unescapes common JSON string escape sequences.
+     *
+     * @param text The JSON-escaped text
+     * @return The text with escape sequences replaced by actual characters
+     */
+    private String unescapeJsonString(final String text) {
+        if (text == null) {
+            return null;
+        }
+        return text.replace("\\\"", "\"")
+                .replace("\\\\", "\\")
+                .replace("\\n", "\n")
+                .replace("\\r", "\r")
+                .replace("\\t", "\t");
     }
 
     /**

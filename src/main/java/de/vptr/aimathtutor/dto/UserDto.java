@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.util.AppConstants;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
@@ -15,6 +14,7 @@ public class UserDto {
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     public String username;
 
+    // Note: message must match PASSWORD_MIN_LENGTH (currently 8)
     @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = 100, message = "Password must be between 8 and 100 characters")
     public String password;
 

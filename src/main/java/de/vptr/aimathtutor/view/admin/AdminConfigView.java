@@ -20,7 +20,6 @@ import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.service.AiConfigService;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 

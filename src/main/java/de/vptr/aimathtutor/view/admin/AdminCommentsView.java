@@ -43,7 +43,6 @@ import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.CommentService;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
@@ -272,7 +271,8 @@ public class AdminCommentsView extends AbstractAdminView {
                 .setHeader("Flags").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(0);
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
+                .setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(0);
     }
 
     private HorizontalLayout createActionButtons(final CommentViewDto comment) {

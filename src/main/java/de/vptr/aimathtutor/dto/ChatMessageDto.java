@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Represents a message in the chat interface between student and AI tutor.
  * Can be either a user question or an AI response.

@@ -95,4 +95,17 @@ public class CommentEntity extends PanacheEntityBase {
 
     @Column(name = "deleted_at")
     public LocalDateTime deletedAt;
+
+    @Column(name = "moderation_reason", length = 500)
+    public String moderationReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderator_id")
+    public UserEntity moderator;
+
+    @Column(name = "moderation_action", length = 20)
+    public String moderationAction;
+
+    @Column(name = "moderated_at")
+    public LocalDateTime moderatedAt;
 }

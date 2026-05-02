@@ -2,8 +2,6 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * DTO for presenting a user group in listings. Contains computed user count
  * and conversion helper to the editable UserGroupDto.

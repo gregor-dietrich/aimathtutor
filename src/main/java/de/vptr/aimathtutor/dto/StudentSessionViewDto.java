@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * DTO for displaying student session information in admin views.
  * Contains computed fields and safe data for client display.

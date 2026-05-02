@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Represents a student action in the Graspable Math workspace.
  * This DTO captures events like simplify, expand, factor, move, etc.

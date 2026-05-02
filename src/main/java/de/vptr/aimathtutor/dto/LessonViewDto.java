@@ -6,8 +6,6 @@ import org.hibernate.LazyInitializationException;
 
 import de.vptr.aimathtutor.entity.LessonEntity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Response DTO for lesson operations.
  * Contains computed fields and safe data for client responses.

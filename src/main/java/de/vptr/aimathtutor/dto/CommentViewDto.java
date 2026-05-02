@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * View DTO for comments used in UI grids and panels.
  */

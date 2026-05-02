@@ -339,32 +339,32 @@ Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressio
 Implementation plan:
 
 - Backend changes (core):
-  1.  Add a new method to `GraspableMathService`:
-      - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
-      - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
-  2.  Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
-      - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
-      - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
-  3.  If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
-  4.  Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+  1. Add a new method to `GraspableMathService`:
+     - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
+     - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
+  2. Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
+     - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
+     - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
+  3. If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
+  4. Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
 
 - Backend changes (data/metrics):
-  1.  Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
-  2.  Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
+  1. Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
+  2. Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
 
 - Tests:
-  1.  Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
-  2.  Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
-  3.  End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+  1. Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
+  2. Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
+  3. End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
 
 - Migration/compatibility notes:
-  1.  If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
-  2.  Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+  1. If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
+  2. Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
 
 - Rollout suggestion:
-  1.  Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
-  2.  Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
-  3.  Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+  1. Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
+  2. Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
+  3. Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
 
 Owner: Backend team / person familiar with symbolic math libraries
 

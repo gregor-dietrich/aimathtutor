@@ -60,6 +60,9 @@ public class CommentFlaggingService {
 
         // Create flag record via repository (repository handles duplicate-check)
         final var flagger = this.userRepository.findById(flaggerId);
+        if (flagger == null) {
+            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
+        }
         this.commentFlagRepository.createFlag(comment, flagger);
 
         // Increment flag count

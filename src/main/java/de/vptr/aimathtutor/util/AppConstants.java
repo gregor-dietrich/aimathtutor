@@ -42,6 +42,9 @@ public final class AppConstants {
     /** Notification duration for info messages in milliseconds. */
     public static final int NOTIFICATION_DURATION_INFO_MS = 4000;
 
+    /** Notification duration for warning messages in milliseconds. */
+    public static final int NOTIFICATION_DURATION_WARNING_MS = 5000;
+
     /** Canvas height for the exercise workspace view. */
     public static final String CANVAS_HEIGHT_WORKSPACE = "77vh";
 

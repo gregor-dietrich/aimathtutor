@@ -1,9 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -14,10 +12,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.UserRankService;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
-import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
@@ -29,7 +24,6 @@ import jakarta.inject.Inject;
 @PageTitle("Admin Dashboard - AI Math Tutor")
 public class AdminDashboardView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminDashboardView.class);
     @Inject
     private transient AnalyticsService analyticsService;
 

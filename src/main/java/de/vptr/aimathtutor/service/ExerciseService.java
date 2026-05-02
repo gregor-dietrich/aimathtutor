@@ -7,9 +7,6 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
@@ -21,8 +18,8 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -36,8 +33,6 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class ExerciseService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ExerciseService.class);
 
     @Inject
     ExerciseCompletionService exerciseCompletionService;

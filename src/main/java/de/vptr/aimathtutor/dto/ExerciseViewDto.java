@@ -5,8 +5,6 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.enums.DifficultyLevel;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * View DTO representing an exercise with denormalized user and lesson fields
  * suitable for display in the UI.

@@ -36,7 +36,7 @@ public final class NotificationUtil {
      * @param message The message to display
      */
     public static void showWarning(final String message) {
-        showNotification(message, NotificationVariant.LUMO_CONTRAST, AppConstants.NOTIFICATION_DURATION_INFO_MS);
+        showNotification(message, NotificationVariant.LUMO_CONTRAST, AppConstants.NOTIFICATION_DURATION_WARNING_MS);
     }
 
     /**
@@ -45,7 +45,7 @@ public final class NotificationUtil {
      * @param message The message to display
      */
     public static void showInfo(final String message) {
-        showNotification(message, NotificationVariant.LUMO_PRIMARY, AppConstants.NOTIFICATION_DURATION_SUCCESS_MS);
+        showNotification(message, NotificationVariant.LUMO_PRIMARY, AppConstants.NOTIFICATION_DURATION_INFO_MS);
     }
 
     /**

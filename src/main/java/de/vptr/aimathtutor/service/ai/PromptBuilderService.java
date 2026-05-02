@@ -158,18 +158,6 @@ public class PromptBuilderService {
         return this.aiConfigService.getConfigValue(key, defaultValue);
     }
 
-    /**
-     * Null-safe getter for boolean configuration values. Falls back to default if
-     * aiConfigService is not injected or value is missing.
-     */
-    private Boolean getConfigBoolean(final String key, final Boolean defaultValue) {
-        if (this.aiConfigService == null) {
-            LOG.debug("AiConfigService not injected, using default for key={}", key);
-            return defaultValue;
-        }
-        return this.aiConfigService.getConfigValueAsBoolean(key, defaultValue);
-    }
-
     private void appendConversationContext(final StringBuilder prompt, final ConversationContextDto context) {
         if (context == null) {
             return;

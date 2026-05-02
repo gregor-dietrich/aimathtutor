@@ -59,7 +59,7 @@ public class AiInteractionLogger {
                 interaction.exercise = this.exerciseRepository.findById(event.exerciseId);
             }
 
-            interaction.eventType = event.eventType;
+            interaction.eventType = event.eventType != null ? event.eventType : "UNKNOWN";
             interaction.expressionBefore = event.expressionBefore;
             interaction.expressionAfter = event.expressionAfter;
             interaction.feedbackType = feedback.type != null ? feedback.type.toString() : "UNKNOWN";
@@ -164,17 +164,8 @@ public class AiInteractionLogger {
             aiAnswerRecord.feedbackMessage = aiAnswer;
             aiAnswerRecord.conversationContext = contextJson;
 
-            if (user == null) {
-                LOG.warn("User not available for logging AI answer: userId={}", userId);
-            } else {
-                aiAnswerRecord.user = user;
-            }
-
-            if (exercise == null) {
-                LOG.warn("Exercise not available for logging AI answer: exerciseId={}", exerciseId);
-            } else {
-                aiAnswerRecord.exercise = exercise;
-            }
+            aiAnswerRecord.user = user;
+            aiAnswerRecord.exercise = exercise;
 
             this.aiInteractionRepository.persist(aiAnswerRecord);
             LOG.info("Successfully logged AI answer: id={}, msgLen={}",

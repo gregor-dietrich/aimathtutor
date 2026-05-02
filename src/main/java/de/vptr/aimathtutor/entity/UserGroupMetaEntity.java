@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Entity;
@@ -22,45 +21,44 @@ import jakarta.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name = "user_groups_meta", indexes = {
-        @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id")
+                @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id")
 }, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_ugm_group_user", columnNames = { "group_id", "user_id" })
+                @UniqueConstraint(name = "uk_ugm_group_user", columnNames = { "group_id", "user_id" })
 })
 @NamedQueries({
-        @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
-        @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.countByUserAndGroup", query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.findByGroupIdWithUsers", query = "SELECT m FROM UserGroupMetaEntity m LEFT JOIN FETCH m.user WHERE m.group.id = :g")
+                @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
+                @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
+                @NamedQuery(name = "UserGroupMeta.countByUserAndGroup", query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
+                @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g"),
+                @NamedQuery(name = "UserGroupMeta.findByGroupIdWithUsers", query = "SELECT m FROM UserGroupMetaEntity m LEFT JOIN FETCH m.user WHERE m.group.id = :g")
 })
 public class UserGroupMetaEntity extends PanacheEntityBase {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        public Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    public UserEntity user;
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "user_id", nullable = false)
+        public UserEntity user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    public UserGroupEntity group;
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "group_id", nullable = false)
+        public UserGroupEntity group;
 
-    public LocalDateTime timestamp;
+        public LocalDateTime timestamp;
 
-    // Helper method to check if user is in group
+        // Helper method to check if user is in group
 
-    /**
-     * Checks if a user is a member of a specific group.
-     *
-     * @param userId  the ID of the user to check
-     * @param groupId the ID of the group to check
-     * @return true if the user is a member of the group, false otherwise
-     */
-    public static boolean isUserInGroup(final Long userId, final Long groupId) {
-        return count("user.id = ?1 AND group.id = ?2", userId, groupId) > 0;
-    }
-
+        /**
+         * Checks if a user is a member of a specific group.
+         *
+         * @param userId  the ID of the user to check
+         * @param groupId the ID of the group to check
+         * @return true if the user is a member of the group, false otherwise
+         */
+        public static boolean isUserInGroup(final Long userId, final Long groupId) {
+                return count("user.id = ?1 AND group.id = ?2", userId, groupId) > 0;
+        }
 
 }

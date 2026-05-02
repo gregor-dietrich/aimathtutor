@@ -45,10 +45,9 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
-import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -218,7 +217,8 @@ public class AdminExercisesView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(exercise -> exercise.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(exercise -> exercise.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH)
+                .setFlexGrow(0);
 
         // Make the title column clickable
         this.grid.addComponentColumn(exercise -> {
@@ -265,7 +265,8 @@ public class AdminExercisesView extends AbstractAdminView {
                 .setWidth("180px").setFlexGrow(0);
 
         // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(0);
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
+                .setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(0);
     }
 
     /**

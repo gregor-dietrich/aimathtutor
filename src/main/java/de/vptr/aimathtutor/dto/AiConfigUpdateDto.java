@@ -2,8 +2,6 @@ package de.vptr.aimathtutor.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Data Transfer Object for updating AI configuration.
  * Minimal DTO used when submitting configuration updates from the frontend.

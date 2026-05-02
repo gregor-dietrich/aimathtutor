@@ -246,7 +246,7 @@ class JsonRepairServiceTest {
         final String json = "{\"type\": \"POSITIVE\", \"message\": \"He said \\\"hello\\\"\"}";
         final AiFeedbackDto feedback = this.jsonRepairService.extractFeedbackFromTruncatedResponse(json);
         assertNotNull(feedback);
-        assertEquals("He said \\\"hello\\\"", feedback.message);
+        assertEquals("He said \"hello\"", feedback.message);
         assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, feedback.type);
     }
 

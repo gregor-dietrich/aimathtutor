@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.UserEntity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * DTO used to present a user in list and detail views. Contains non-sensitive
  * fields intended for UI consumption.

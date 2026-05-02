@@ -90,7 +90,6 @@ public class UserService {
         return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
     }
 
-    private static final int PASSWORD_MIN_LENGTH = AppConstants.PASSWORD_MIN_LENGTH;
     private static final int PASSWORD_MAX_LENGTH = 100;
 
     /**
@@ -101,8 +100,8 @@ public class UserService {
         if (password == null || password.isBlank()) {
             throw new ValidationException("Password is required");
         }
-        if (password.length() < PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
-            throw new ValidationException("Password must be between " + PASSWORD_MIN_LENGTH + " and " + PASSWORD_MAX_LENGTH + " characters");
+        if (password.length() < AppConstants.PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
+            throw new ValidationException("Password must be between " + AppConstants.PASSWORD_MIN_LENGTH + " and " + PASSWORD_MAX_LENGTH + " characters");
         }
         if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).+$")) {
             throw new ValidationException("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
@@ -190,7 +189,7 @@ public class UserService {
             user.userAvatarEmoji = AppConstants.AVATAR_DEFAULT_USER;
         }
         if (user.tutorAvatarEmoji == null) {
-            user.tutorAvatarEmoji = AppConstants.AVATAR_DEFAULT_AI;
+            user.tutorAvatarEmoji = AppConstants.AVATAR_DEFAULT_TUTOR;
         }
 
         this.userRepository.persist(user);

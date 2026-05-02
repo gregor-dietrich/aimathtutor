@@ -31,6 +31,10 @@ public class CommentPermissionService {
      * @throws jakarta.ws.rs.WebApplicationException if not authorized
      */
     public void verifyCanDelete(final CommentEntity comment, final UserEntity requester, final boolean softDelete) {
+        if (requester == null) {
+            throw new jakarta.ws.rs.WebApplicationException("Not authorized to delete this comment",
+                    jakarta.ws.rs.core.Response.Status.FORBIDDEN);
+        }
         final boolean isAuthor = comment.user != null && comment.user.id.equals(requester.id);
         final boolean isModerator = this.isModerator(requester);
 
@@ -53,6 +57,10 @@ public class CommentPermissionService {
      * @throws jakarta.ws.rs.WebApplicationException if not authorized
      */
     public void verifyCanEdit(final CommentEntity comment, final UserEntity editor) {
+        if (editor == null) {
+            throw new jakarta.ws.rs.WebApplicationException("Not authorized to edit this comment",
+                    jakarta.ws.rs.core.Response.Status.FORBIDDEN);
+        }
         final boolean isAuthor = comment.user != null && comment.user.id.equals(editor.id);
         final boolean isModerator = this.isModerator(editor);
 
