@@ -160,7 +160,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.newPasswordField = new PasswordField("New Password");
         this.newPasswordField.setRequired(true);
-        this.newPasswordField.setHelperText("Minimum 8 characters with uppercase, lowercase, digit and symbol");
+        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH + " characters with uppercase, lowercase, digit and symbol");
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
