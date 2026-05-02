@@ -6,7 +6,11 @@ import java.util.Map;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -161,12 +165,12 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 .set("gap", "0.5rem");
 
         // Hover effect
-        card.getElement().addEventListener("mouseenter", e -> {
+        card.getElement().addEventListener("mouseenter", _ -> {
             card.getStyle()
                     .set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
                     .set("transform", "translateY(-2px)");
         });
-        card.getElement().addEventListener("mouseleave", e -> {
+        card.getElement().addEventListener("mouseleave", _ -> {
             card.getStyle()
                     .set("box-shadow", "none")
                     .set("transform", "translateY(0)");
@@ -225,7 +229,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         final var startButton = new Button("Start Exercise");
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         startButton.setWidthFull();
-        startButton.addClickListener(e -> {
+        startButton.addClickListener(_ -> {
             // Navigate to ExerciseWorkspaceView for Graspable exercises
             // or to a generic ExerciseView for non-Graspable exercises
             UI.getCurrent().navigate(ExerciseWorkspaceView.class,
