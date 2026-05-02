@@ -1,8 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +21,6 @@ import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -35,30 +32,22 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.LessonDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
  * Admin view for managing lessons and their hierarchy.
  */
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
-public class AdminLessonsView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminLessonsView extends AbstractAdminView {
     private static final Logger LOG = LoggerFactory.getLogger(AdminLessonsView.class);
 
     @Inject
     private transient LessonService lessonService;
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     private transient TreeGrid<LessonViewDto> treeGrid;
     private transient TextField searchField;
     private transient Button searchButton;
@@ -83,14 +72,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -100,28 +82,14 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
 
     private void loadLessonsAsync() {
         LOG.info("Loading lessons");
-
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Loading lessons from service");
-            try {
-                return this.lessonService.getAllLessons();
-            } catch (final Exception e) {
-                LOG.error("Error loading lessons", e);
-                throw new RuntimeException("Failed to load lessons", e);
-            }
-        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((lessons, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable != null) {
-                            LOG.error("Error loading lessons: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load lessons. Please try again.");
-                        } else {
-                            LOG.info("Successfully loaded {} lessons", lessons.size());
-                            this.allLessons = lessons;
-                            this.updateTreeGrid();
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.lessonService.getAllLessons(),
+                this,
+                lessons -> {
+                    this.allLessons = lessons;
+                    this.updateTreeGrid();
+                },
+                "Failed to load lessons. Please try again.");
     }
 
     /**
@@ -458,26 +426,14 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
 
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                return this.lessonService.searchLessons(query.trim());
-            } catch (final Exception e) {
-                LOG.error("Unexpected error searching lessons", e);
-                throw new RuntimeException("Unexpected error occurred", e);
-            }
-        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((lessons, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        this.searchButton.setEnabled(true);
-                        this.searchButton.setText("Search");
-                        if (throwable != null) {
-                            LOG.error("Error searching lessons: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("An error occurred while searching lessons. Please try again.");
-                        } else {
-                            // Store search results and update the tree grid
-                            this.updateSearchTreeGrid(lessons);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.lessonService.searchLessons(query.trim()),
+                this,
+                lessons -> {
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                    this.updateSearchTreeGrid(lessons);
+                },
+                "An error occurred while searching lessons. Please try again.");
     }
 }

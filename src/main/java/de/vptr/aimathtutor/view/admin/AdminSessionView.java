@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,19 +14,17 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -37,15 +34,8 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/session/:sessionId", layout = AdminMainLayout.class)
 @PageTitle("Session Details - AI Math Tutor")
-public class AdminSessionView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminSessionView extends AbstractAdminView {
     private static final Logger LOG = LoggerFactory.getLogger(AdminSessionView.class);
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     @Inject
     private transient AnalyticsService analyticsService;
 
@@ -72,14 +62,7 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -172,32 +155,24 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
      * Load details for the session and its AI interactions asynchronously.
      */
     private void loadSessionDetails() {
-        CompletableFuture.runAsync(() -> {
-            try {
-                this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
-                if (this.session == null) {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        NotificationUtil.showError("Session not found");
-                        ui.navigate(AdminSessionsView.class);
-                    }));
-                    return;
-                }
-
-                final List<AiInteractionViewDto> interactions = this.analyticsService
-                        .getAiInteractionsBySession(this.sessionId);
-
-                this.getUI().ifPresent(ui -> ui.access(() -> {
+        AsyncDataLoader.load(
+                () -> {
+                    this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
+                    if (this.session == null) {
+                        this.getUI().ifPresent(ui -> ui.access(() -> {
+                            NotificationUtil.showError("Session not found");
+                            ui.navigate(AdminSessionsView.class);
+                        }));
+                        return null;
+                    }
+                    return this.analyticsService.getAiInteractionsBySession(this.sessionId);
+                },
+                this,
+                interactions -> {
                     this.updateSessionInfo();
                     this.updateInteractionsGrid(interactions);
-                }));
-
-            } catch (final Exception e) {
-                LOG.error("Error loading session details", e);
-                this.getUI().ifPresent(ui -> ui.access(() -> {
-                    NotificationUtil.showError("Failed to load session details");
-                }));
-            }
-        });
+                },
+                "Failed to load session details");
     }
 
     /**

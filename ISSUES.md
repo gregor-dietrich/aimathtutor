@@ -118,18 +118,18 @@ Use ULIDs for IDs rather than auto-incrementing integers.
 
 ### 4.6 Code Quality & Architecture
 
-- **Extract base admin view to eliminate duplication.** Create `AbstractAdminView` handling:
-  - `beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).
-  - Async data loading pattern (`CompletableFuture.supplyAsync(...).orTimeout(30, ...)`).
-  - Standard grid setup (striped, size full, ID width, action column width).
-  - Standard dialog form setup (binder, form layout, responsive steps, save/cancel buttons).
-  - Standard button layout (Create + Refresh).
-  - Standard error handling.
+- **Extract base admin view to eliminate duplication.** ~~Create `AbstractAdminView` handling:~~ ✅ DONE
+  - ~~`beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).~~ ✅ DONE
+  - ~~Async data loading pattern (`CompletableFuture.supplyAsync(...).orTimeout(30, ...)`).~~ ✅ DONE
+  - ~~Standard grid setup (striped, size full, ID width, action column width).~~ ✅ DONE
+  - ~~Standard dialog form setup (binder, form layout, responsive steps, save/cancel buttons).~~ ✅ DONE
+  - ~~Standard button layout (Create + Refresh).~~ ✅ DONE
+  - ~~Standard error handling.~~ ✅ DONE
     **When extracting, check all admin views for identical duplicated patterns and migrate them consistently.**
 - **Extract generic utilities:**
-  - `AsyncDataLoader<T>` utility for the repeated `CompletableFuture` pattern.
-  - `BaseFormDialog<T>` for create/edit dialogs.
-  - `DateRangeFilter` component/utility for date filtering logic duplicated across views.
+  - ~~`AsyncDataLoader<T>` utility for the repeated `CompletableFuture` pattern.~~ ✅ DONE
+  - ~~`BaseFormDialog<T>` for create/edit dialogs.~~ ✅ DONE
+  - ~~`DateRangeFilter` component/utility for date filtering logic duplicated across views.~~ ✅ DONE
     **When extracting, check all views for identical utility needs.**
 - **Split oversized services (SRP):**
   - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, `ProblemGeneratorService`, `AiInteractionLogger`.

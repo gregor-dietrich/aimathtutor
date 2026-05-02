@@ -1,8 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.time.LocalDate;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -27,7 +25,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
@@ -45,13 +42,12 @@ import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -59,19 +55,12 @@ import jakarta.inject.Inject;
  * editing and moderation tools for administrators.
  */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
-public class AdminCommentsView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminCommentsView extends AbstractAdminView {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminCommentsView.class);
 
     @Inject
     private transient CommentService commentService;
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
 
@@ -104,14 +93,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -126,10 +108,11 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                     LOG.warn("Invalid exerciseId parameter: not a positive number");
                 } else {
                     // Load comments for that exercise only
-                    CompletableFuture.runAsync(() -> {
-                        final var comments = this.commentService.findByExerciseId(exerciseId);
-                        this.getUI().ifPresent(ui -> ui.access(() -> this.grid.setItems(comments)));
-                    });
+                    AsyncDataLoader.load(
+                            () -> this.commentService.findByExerciseId(exerciseId),
+                            this,
+                            comments -> this.grid.setItems(comments),
+                            "Failed to load comments. Please try again.");
                     return;
                 }
             } catch (final Exception ex) {
@@ -143,26 +126,11 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
     private void loadCommentsAsync() {
         LOG.info("Loading comments");
 
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Loading comments from service");
-            try {
-                return this.commentService.getAllComments();
-            } catch (final Exception e) {
-                LOG.error("Error loading comments", e);
-                throw new RuntimeException("Failed to load comments", e);
-            }
-        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((comments, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable != null) {
-                            LOG.error("Error loading comments: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load comments. Please try again.");
-                        } else {
-                            LOG.info("Successfully loaded {} comments", comments.size());
-                            this.grid.setItems(comments);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.commentService.getAllComments(),
+                this,
+                data -> this.grid.setItems(data),
+                "Failed to load comments. Please try again.");
     }
 
     private void buildUi() {

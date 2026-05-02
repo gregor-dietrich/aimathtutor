@@ -15,16 +15,13 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.service.AiConfigService;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
@@ -35,18 +32,19 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/config", layout = AdminMainLayout.class)
 @PageTitle("AI Configuration - AI Math Tutor")
-public class AdminConfigView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminConfigView extends AbstractAdminView {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminConfigView.class);
-
-    @Inject
-    private transient AuthService authService;
-
     @Inject
     private transient AiConfigService aiConfigService;
 
-    @Inject
-    private transient UserRankService userRankService;
+    @Override
+    protected boolean isAuthorized() {
+        final var userRank = this.userRankService.getCurrentUserRank();
+        return userRank != null && (userRank.canAdminView()
+                || userRank.hasAnyExercisePermission()
+                || userRank.hasAnyLessonPermission());
+    }
 
     /**
      * Create a new admin config view with default layout initialization.
@@ -65,16 +63,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !(userRank.canAdminView() || userRank.hasAnyExercisePermission()
-                || userRank.hasAnyLessonPermission())) {
-            NotificationUtil.showError("You do not have permission to access this page");
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 

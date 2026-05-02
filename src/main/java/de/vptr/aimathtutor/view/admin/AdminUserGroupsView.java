@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -25,7 +23,6 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -40,31 +37,23 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
  * Admin view for managing user groups and their memberships.
  */
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
-public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminUserGroupsView extends AbstractAdminView {
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupsView.class);
 
     @Inject
     private transient UserGroupService groupService;
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     @Inject
     private transient UserService userService;
 
@@ -97,14 +86,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
@@ -115,26 +97,11 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
     private void loadGroupsAsync() {
         LOG.info("Starting async group loading");
 
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Loading groups");
-            try {
-                return this.groupService.getAllGroups();
-            } catch (final Exception e) {
-                LOG.error("Error loading groups", e);
-                throw new RuntimeException("Failed to load groups", e);
-            }
-        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((groups, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable != null) {
-                            LOG.error("Error loading groups: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load groups. Please try again.");
-                        } else {
-                            LOG.info("Successfully loaded {} groups", groups.size());
-                            this.grid.setItems(groups);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.groupService.getAllGroups(),
+                this,
+                data -> this.grid.setItems(data),
+                "Failed to load groups. Please try again.");
     }
 
     private void buildUi() {
@@ -325,27 +292,14 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         this.searchButton.setEnabled(false);
         LOG.info("Starting async group search with query: {}", query);
 
-        CompletableFuture.supplyAsync(() -> {
-            LOG.info("Searching groups");
-            try {
-                return this.groupService.searchGroups(query);
-            } catch (final Exception e) {
-                LOG.error("Error searching groups", e);
-                throw new RuntimeException("Failed to search groups", e);
-            }
-        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((groups, throwable) -> {
-                    this.getUI().ifPresent(ui -> ui.access(() -> {
-                        this.searchButton.setEnabled(true);
-                        if (throwable != null) {
-                            LOG.error("Error searching groups: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to search groups. Please try again.");
-                        } else {
-                            LOG.info("Successfully found {} groups", groups.size());
-                            this.grid.setItems(groups);
-                        }
-                    }));
-                });
+        AsyncDataLoader.load(
+                () -> this.groupService.searchGroups(query),
+                this,
+                groups -> {
+                    this.searchButton.setEnabled(true);
+                    this.grid.setItems(groups);
+                },
+                "Failed to search groups. Please try again.");
     }
 
     private void openUserManagementDialog(final UserGroupViewDto group) {

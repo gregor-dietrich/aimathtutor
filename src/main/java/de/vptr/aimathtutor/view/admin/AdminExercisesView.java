@@ -28,7 +28,6 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 
@@ -44,7 +43,6 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserRankService;
@@ -52,14 +50,13 @@ import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
  * Admin view for managing exercises: listing, editing, and publishing.
  */
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
-public class AdminExercisesView extends VerticalLayout implements BeforeEnterObserver {
+public class AdminExercisesView extends AbstractAdminView {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
 
@@ -68,13 +65,6 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
 
     @Inject
     private transient LessonService lessonService;
-
-    @Inject
-    private transient AuthService authService;
-
-    @Inject
-    private transient UserRankService userRankService;
-
     @Inject
     private transient UserService userService;
 
@@ -109,14 +99,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.authService.isAuthenticated()) {
-            event.forwardTo(LoginView.class);
-            return;
-        }
-
-        final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
-            event.forwardTo("");
+        if (!this.isAuthOk(event)) {
             return;
         }
 
