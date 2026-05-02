@@ -96,7 +96,7 @@ public class RateLimitService {
 
         final boolean[] allowed = { false };
 
-        this.userCallTimestamps.compute(userId, (_, timestamps) -> {
+        this.userCallTimestamps.compute(userId, (ignored, timestamps) -> {
             CopyOnWriteArrayList<Instant> list = timestamps;
             if (list == null) {
                 list = new CopyOnWriteArrayList<>();
@@ -133,7 +133,7 @@ public class RateLimitService {
 
         final long[] cooldown = { 0 };
 
-        this.userCallTimestamps.computeIfPresent(userId, (_, timestamps) -> {
+        this.userCallTimestamps.computeIfPresent(userId, (ignored, timestamps) -> {
             final Instant now = Instant.now();
             final Instant windowStart = now.minusSeconds(WINDOW_SECONDS);
 

@@ -165,12 +165,12 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 .set("gap", "0.5rem");
 
         // Hover effect
-        card.getElement().addEventListener("mouseenter", _ -> {
+        card.getElement().addEventListener("mouseenter", ignored -> {
             card.getStyle()
                     .set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
                     .set("transform", "translateY(-2px)");
         });
-        card.getElement().addEventListener("mouseleave", _ -> {
+        card.getElement().addEventListener("mouseleave", ignored -> {
             card.getStyle()
                     .set("box-shadow", "none")
                     .set("transform", "translateY(0)");
@@ -229,7 +229,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         final var startButton = new Button("Start Exercise");
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         startButton.setWidthFull();
-        startButton.addClickListener(_ -> {
+        startButton.addClickListener(ignored -> {
             // Navigate to ExerciseWorkspaceView for Graspable exercises
             // or to a generic ExerciseView for non-Graspable exercises
             UI.getCurrent().navigate(ExerciseWorkspaceView.class,

@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,7 +47,7 @@ class AiConfigServiceIntegrationTest {
     void setUp() {
         // Ensure admin user exists (seeded in import.sql)
         final UserEntity admin = this.userRepository.findById(ADMIN_USER_ID);
-        assertTrue(admin != null, "Admin user should exist in test database");
+        assertNotNull(admin, "Admin user should exist in test database");
 
         // Save original value so we can restore it after tests
         this.originalTemperature = this.aiConfigService.getConfigValue("gemini.temperature", "0.7");
@@ -189,7 +190,7 @@ class AiConfigServiceIntegrationTest {
         // student1 has id=3 and rank=Student (no exercise/lesson permissions)
         final Long studentId = 3L;
         final var student = this.userRepository.findById(studentId);
-        assertTrue(student != null, "Student user should exist");
+        assertNotNull(student, "Student user should exist");
 
         assertThrows(IllegalStateException.class,
                 () -> this.aiConfigService.updateConfig("gemini.temperature", "0.5", studentId));

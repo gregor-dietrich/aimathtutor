@@ -151,7 +151,7 @@ public class AdminCommentsView extends AbstractAdminView {
                         this.loadCommentsAsync();
                     }
                 },
-                _ -> this.searchComments(),
+                ignored -> this.searchComments(),
                 "Search by author or content...",
                 "Search Comments");
 
@@ -159,20 +159,20 @@ public class AdminCommentsView extends AbstractAdminView {
         this.searchField = searchLayout.getTextfield();
 
         // Date range filter
-        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(ignored -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // User ID filter
         final var userFilterLayout = new IntegerFilterLayout(
-                _ -> this.filterByUser(),
+                ignored -> this.filterByUser(),
                 "Enter User ID...",
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
 
         // Exercise ID filter
         final var exerciseFilterLayout = new IntegerFilterLayout(
-                _ -> this.filterByExerciseId(),
+                ignored -> this.filterByExerciseId(),
                 "Enter Exercise ID...",
                 "Filter by Exercise");
         this.exerciseIdField = exerciseFilterLayout.getIntegerField();
@@ -182,7 +182,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.statusFilterSelect.setLabel("Filter by Status");
         this.statusFilterSelect.setItems("ALL", "VISIBLE", "HIDDEN", "DELETED");
         this.statusFilterSelect.setValue("ALL");
-        this.statusFilterSelect.addValueChangeListener(_ -> this.filterByStatus());
+        this.statusFilterSelect.addValueChangeListener(ignored -> this.filterByStatus());
 
         // Flags filter (show comments with N+ flags)
         this.flagsFilterField = new IntegerField();
@@ -191,7 +191,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.flagsFilterField.setMax(1000);
         this.flagsFilterField.setValue(0);
         this.flagsFilterField.setWidthFull();
-        this.flagsFilterField.addValueChangeListener(_ -> this.filterByFlags());
+        this.flagsFilterField.addValueChangeListener(ignored -> this.filterByFlags());
 
         final var flagsFilterLayout = new HorizontalLayout(this.flagsFilterField);
         flagsFilterLayout.setWidthFull();
@@ -208,7 +208,7 @@ public class AdminCommentsView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(_ -> this.loadCommentsAsync());
+        final var refreshButton = new RefreshButton(ignored -> this.loadCommentsAsync());
 
         layout.add(refreshButton);
         return layout;
@@ -280,21 +280,21 @@ public class AdminCommentsView extends AbstractAdminView {
         layout.setSpacing(true);
 
         // Edit button
-        final var editButton = new EditButton(_ -> this.openCommentDialog(comment.toCommentDto()));
+        final var editButton = new EditButton(ignored -> this.openCommentDialog(comment.toCommentDto()));
 
         // Hide/Show button (toggle moderation)
         Button moderateButton;
         if ("VISIBLE".equals(comment.status)) {
-            moderateButton = new HideButton(_ -> this.hideComment(comment));
+            moderateButton = new HideButton(ignored -> this.hideComment(comment));
         } else if ("HIDDEN".equals(comment.status)) {
-            moderateButton = new ShowButton(_ -> this.showComment(comment));
+            moderateButton = new ShowButton(ignored -> this.showComment(comment));
         } else {
             // DELETED - offer restore option
-            moderateButton = new RestoreButton(_ -> this.restoreComment(comment));
+            moderateButton = new RestoreButton(ignored -> this.restoreComment(comment));
         }
 
         // Delete button
-        final var deleteButton = new DeleteButton(_ -> this.deleteComment(comment.toCommentDto()));
+        final var deleteButton = new DeleteButton(ignored -> this.deleteComment(comment.toCommentDto()));
 
         layout.add(editButton, moderateButton, deleteButton);
         return layout;
@@ -327,10 +327,10 @@ public class AdminCommentsView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", _ -> this.saveComment());
+        final var saveButton = new Button("Save", ignored -> this.saveComment());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", _ -> this.commentDialog.close());
+        final var cancelButton = new Button("Cancel", ignored -> this.commentDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
@@ -567,13 +567,13 @@ public class AdminCommentsView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var confirmButton = new Button("Confirm", _ -> {
+        final var confirmButton = new Button("Confirm", ignored -> {
             onConfirm.accept(reasonField.getValue());
             dialog.close();
         });
         confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", _ -> dialog.close());
+        final var cancelButton = new Button("Cancel", ignored -> dialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(confirmButton, cancelButton);

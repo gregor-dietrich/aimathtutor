@@ -101,7 +101,7 @@ public class AdminSessionsView extends AbstractAdminView {
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
-            usernameSpan.addClickListener(_ -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
+            usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
         }).setHeader("Student")
                 .setFlexGrow(1);
@@ -149,19 +149,19 @@ public class AdminSessionsView extends AbstractAdminView {
                         this.loadSessions();
                     }
                 },
-                _ -> this.searchSessions(),
+                ignored -> this.searchSessions(),
                 "Search by student or exercise...",
                 "Search Sessions");
 
         this.searchField = searchLayout.getTextfield();
 
         // Date range filter for session start time
-        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(ignored -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", _ -> this.resetFilters());
+        this.resetFiltersButton = new Button("Reset Filters", ignored -> this.resetFilters());
         this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetFiltersButton);
@@ -177,7 +177,7 @@ public class AdminSessionsView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(_ -> this.loadSessions());
+        final var refreshButton = new RefreshButton(ignored -> this.loadSessions());
 
         layout.add(refreshButton);
         return layout;

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,10 +154,10 @@ public class AdminConfigView extends AbstractAdminView {
         providerCombo.setWidthFull();
 
         // Save button
-        final var saveBtn = new Button("Save", _ -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
+        final var saveBtn = new Button("Save", ignored -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
 
         // Reset to defaults button
-        final var resetBtn = new Button("Reset to Defaults", _ -> this.resetAllToDefaults());
+        final var resetBtn = new Button("Reset to Defaults", ignored -> this.resetAllToDefaults());
         resetBtn.getStyle().set("margin-left", "auto");
 
         final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, resetBtn);
@@ -208,11 +209,11 @@ public class AdminConfigView extends AbstractAdminView {
         maxTokensField.setHelperText("Maximum tokens in response (1-8192)");
 
         // Test connection button
-        final var testBtn = new Button("Test Connection", _ -> this.testGeminiConnection());
+        final var testBtn = new Button("Test Connection", ignored -> this.testGeminiConnection());
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+                ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
 
         final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, testBtn);
         buttonRow.setWidthFull();
@@ -267,11 +268,11 @@ public class AdminConfigView extends AbstractAdminView {
         maxTokensField.setHelperText("Maximum tokens in response (1-8192)");
 
         // Test connection button
-        final var testBtn = new Button("Test Connection", _ -> this.testOpenAiConnection());
+        final var testBtn = new Button("Test Connection", ignored -> this.testOpenAiConnection());
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
+                ignored -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
 
         final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, testBtn);
         buttonRow.setWidthFull();
@@ -323,11 +324,11 @@ public class AdminConfigView extends AbstractAdminView {
         timeoutField.setHelperText("API timeout in seconds (1-300)");
 
         // Test connection button
-        final var testBtn = new Button("Test Connection", _ -> this.testOllamaConnection());
+        final var testBtn = new Button("Test Connection", ignored -> this.testOllamaConnection());
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
+                ignored -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
 
         final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, testBtn);
         buttonRow.setWidthFull();
@@ -372,40 +373,33 @@ public class AdminConfigView extends AbstractAdminView {
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+                ignored -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
         return panel;
     }
 
-    private void testGeminiConnection() {
-        final var result = this.aiProviderTestService.testGemini();
+    private void testConnection(final Supplier<de.vptr.aimathtutor.dto.AiProviderTestResultDto> testCall,
+            final String providerName) {
+        final var result = testCall.get();
         if (result.success) {
             NotificationUtil.showSuccess(result.message);
         } else {
             NotificationUtil.showError(result.message);
         }
-        LOG.info("Gemini connection test: {}", result.message);
+        LOG.info("{} connection test: {}", providerName, result.message);
+    }
+
+    private void testGeminiConnection() {
+        this.testConnection(this.aiProviderTestService::testGemini, "Gemini");
     }
 
     private void testOpenAiConnection() {
-        final var result = this.aiProviderTestService.testOpenAi();
-        if (result.success) {
-            NotificationUtil.showSuccess(result.message);
-        } else {
-            NotificationUtil.showError(result.message);
-        }
-        LOG.info("OpenAI connection test: {}", result.message);
+        this.testConnection(this.aiProviderTestService::testOpenAi, "OpenAI");
     }
 
     private void testOllamaConnection() {
-        final var result = this.aiProviderTestService.testOllama();
-        if (result.success) {
-            NotificationUtil.showSuccess(result.message);
-        } else {
-            NotificationUtil.showError(result.message);
-        }
-        LOG.info("Ollama connection test: {}", result.message);
+        this.testConnection(this.aiProviderTestService::testOllama, "Ollama");
     }
 
     private void resetAllToDefaults() {

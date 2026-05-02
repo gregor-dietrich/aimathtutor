@@ -196,7 +196,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             titleSection.add(badge);
         }
 
-        this.backButton = new Button("← Back to Exercises", _ -> {
+        this.backButton = new Button("← Back to Exercises", ignored -> {
             UI.getCurrent().navigate(LessonsView.class);
         });
         this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -256,7 +256,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("padding", "var(--lumo-space-m)");
 
-        this.requestHintButton = new Button("Request Hint", _ -> this.showNextHint());
+        this.requestHintButton = new Button("Request Hint", ignored -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         final var hintsSection = new VerticalLayout(hintsHeader, this.hintsPanel, this.requestHintButton);

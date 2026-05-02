@@ -123,7 +123,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
                         this.loadGroupsAsync();
                     }
                 },
-                _ -> this.searchGroups(),
+                ignored -> this.searchGroups(),
                 "Search by name...",
                 "Search Groups");
 
@@ -132,7 +132,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
         // User ID filter
         final var userFilterLayout = new IntegerFilterLayout(
-                _ -> this.filterByUser(),
+                ignored -> this.filterByUser(),
                 "Enter User ID...",
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
@@ -145,8 +145,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(_ -> this.openGroupDialog(null));
-        final var refreshButton = new RefreshButton(_ -> this.loadGroupsAsync());
+        final var createButton = new CreateButton(ignored -> this.openGroupDialog(null));
+        final var refreshButton = new RefreshButton(ignored -> this.loadGroupsAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -167,7 +167,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
             nameSpan.getStyle().set("display", "block");
-            nameSpan.addClickListener(_ -> this.openGroupDialog(group));
+            nameSpan.addClickListener(ignored -> this.openGroupDialog(group));
             return nameSpan;
         }).setHeader("Name").setFlexGrow(2);
 
@@ -182,9 +182,9 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(_ -> this.openGroupDialog(group));
-        final var deleteButton = new DeleteButton(_ -> this.deleteGroup(group));
-        final var manageUsersButton = new ManageUsersButton(_ -> this.openUserManagementDialog(group));
+        final var editButton = new EditButton(ignored -> this.openGroupDialog(group));
+        final var deleteButton = new DeleteButton(ignored -> this.deleteGroup(group));
+        final var manageUsersButton = new ManageUsersButton(ignored -> this.openUserManagementDialog(group));
 
         layout.add(editButton, deleteButton, manageUsersButton);
         return layout;
@@ -217,10 +217,10 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", _ -> this.saveGroup());
+        final var saveButton = new Button("Save", ignored -> this.saveGroup());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", _ -> this.groupDialog.close());
+        final var cancelButton = new Button("Cancel", ignored -> this.groupDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
@@ -319,7 +319,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
         // Add remove button column
         this.userGrid.addComponentColumn(user -> {
-            final var removeButton = new RemoveUserButton(_ -> this.removeUserFromGroup(user));
+            final var removeButton = new RemoveUserButton(ignored -> this.removeUserFromGroup(user));
             return removeButton;
         }).setHeader("Actions").setWidth("120px").setFlexGrow(0);
 
@@ -334,7 +334,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.availableUsersCombo.setWidth("300px");
         this.availableUsersCombo.setPlaceholder("Select a user to add...");
 
-        final var addButton = new Button("Add User", _ -> this.addUserToGroup());
+        final var addButton = new Button("Add User", ignored -> this.addUserToGroup());
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         addUserLayout.add(this.availableUsersCombo, addButton);
@@ -343,8 +343,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(_ -> this.loadGroupUsers());
-        final var closeButton = new Button("Close", _ -> this.userManagementDialog.close());
+        final var refreshButton = new RefreshButton(ignored -> this.loadGroupUsers());
+        final var closeButton = new Button("Close", ignored -> this.userManagementDialog.close());
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(refreshButton, closeButton);

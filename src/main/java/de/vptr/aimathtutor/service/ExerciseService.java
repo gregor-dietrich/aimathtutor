@@ -123,7 +123,7 @@ public class ExerciseService {
                 .toList();
         final List<ExerciseViewDto> enriched = this.exerciseCompletionService.enrichListWithCompletionData(dtos);
         return enriched.stream().collect(HashMap::new,
-                (map, dto) -> map.computeIfAbsent(dto.lessonId, _ -> new ArrayList<>()).add(dto), Map::putAll);
+                (map, dto) -> map.computeIfAbsent(dto.lessonId, ignored -> new ArrayList<>()).add(dto), Map::putAll);
     }
 
     /**
