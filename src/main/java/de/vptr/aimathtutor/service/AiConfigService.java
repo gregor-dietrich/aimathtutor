@@ -38,6 +38,54 @@ public class AiConfigService {
     // Internal cache for configuration values to reduce database hits.
     private final Map<String, String> configCache = new ConcurrentHashMap<>();
 
+    // Default values for runtime reset to factory defaults.
+    private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
+            Map.entry("ai.tutor.enabled", "true"),
+            Map.entry("ai.tutor.provider", "mock"),
+            Map.entry("gemini.model", "gemma-3-27b-it"),
+            Map.entry("gemini.api.base-url", "https://generativelanguage.googleapis.com"),
+            Map.entry("gemini.temperature", "0.7"),
+            Map.entry("gemini.max-tokens", "2000"),
+            Map.entry("openai.model", "gpt-5-nano"),
+            Map.entry("openai.organization-id", ""),
+            Map.entry("openai.api.base-url", "https://api.openai.com/v1"),
+            Map.entry("openai.temperature", "0.7"),
+            Map.entry("openai.max-tokens", "2000"),
+            Map.entry("ollama.api.url", "http://ollama:11434"),
+            Map.entry("ollama.model", "llama3.2:3b"),
+            Map.entry("ollama.temperature", "0.7"),
+            Map.entry("ollama.max-tokens", "2000"),
+            Map.entry("ollama.timeout-seconds", "30"),
+            Map.entry("ai.prompt.question.answering.prefix",
+                    "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question."),
+            Map.entry("ai.prompt.question.answering.postfix",
+                    "Provide a helpful, encouraging answer that:\n"
+                            + "- Guides the student's thinking without solving it for them\n"
+                            + "- Is concise (2-3 sentences max)\n"
+                            + "- Relates to their current problem if possible\n"
+                            + "- Uses clear, simple language\n"
+                            + "- Encourages them to try the next step\n\nYour answer:"),
+            Map.entry("ai.prompt.math.tutoring.prefix",
+                    "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback."),
+            Map.entry("ai.prompt.math.tutoring.postfix",
+                    "Provide feedback in the following JSON format:\n"
+                            + "{\n"
+                            + "  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n"
+                            + "  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n"
+                            + "  \"hints\": [],\n"
+                            + "  \"suggestedNextSteps\": [],\n"
+                            + "  \"confidence\": 0.0 to 1.0\n"
+                            + "}\n\n"
+                            + "IMPORTANT Guidelines:\n"
+                            + "- Keep message to ONE SHORT sentence (max 15 words)\n"
+                            + "- Be encouraging but not overly enthusiastic\n"
+                            + "- If the action is correct, give brief praise\n"
+                            + "- If incorrect, point out the error gently\n"
+                            + "- Only provide hints array if student made a mistake (max 1-2 hints)\n"
+                            + "- Do NOT provide hints for correct actions\n"
+                            + "- Leave suggestedNextSteps empty unless specifically needed\n"
+                            + "- Be specific about what they did, not generic"));
+
     @Inject
     private AiConfigRepository aiConfigRepository;
 
@@ -467,6 +515,20 @@ public class AiConfigService {
     public void clearCache() {
         this.configCache.clear();
         LOG.info("Configuration cache cleared");
+    }
+
+    /**
+     * Resets all known AI configuration values to their factory defaults.
+     *
+     * @param userId the ID of the user performing the reset
+     */
+    @Transactional
+    public void resetToDefaults(final Long userId) {
+        final var updates = DEFAULT_VALUES.entrySet().stream()
+                .map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue()))
+                .toList();
+        this.updateMultipleConfigs(updates, userId);
+        LOG.info("All AI configurations reset to defaults by userId='{}'", userId);
     }
 
     /**

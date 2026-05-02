@@ -174,7 +174,7 @@ public class AdminLessonsView extends AbstractAdminView {
                         this.updateTreeGrid();
                     }
                 },
-                _ -> this.searchLessons(),
+                ignored -> this.searchLessons(),
                 "Search by name...",
                 "Search Lessons");
 
@@ -188,8 +188,8 @@ public class AdminLessonsView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(_ -> this.openLessonDialog(null));
-        final var refreshButton = new RefreshButton(_ -> this.loadLessonsAsync());
+        final var createButton = new CreateButton(ignored -> this.openLessonDialog(null));
+        final var refreshButton = new RefreshButton(ignored -> this.loadLessonsAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -230,8 +230,8 @@ public class AdminLessonsView extends AbstractAdminView {
         layout.setSpacing(true);
 
         // Convert view DTO to a fresh LessonDto and pass that to the dialog
-        final var editButton = new EditButton(_ -> this.openLessonDialog(lesson.toLessonDto()));
-        final var deleteButton = new DeleteButton(_ -> this.deleteLesson(lesson.toLessonDto()));
+        final var editButton = new EditButton(ignored -> this.openLessonDialog(lesson.toLessonDto()));
+        final var deleteButton = new DeleteButton(ignored -> this.deleteLesson(lesson.toLessonDto()));
 
         layout.add(editButton, deleteButton);
         return layout;
@@ -310,10 +310,10 @@ public class AdminLessonsView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", _ -> this.saveLesson());
+        final var saveButton = new Button("Save", ignored -> this.saveLesson());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", _ -> this.lessonDialog.close());
+        final var cancelButton = new Button("Cancel", ignored -> this.lessonDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);

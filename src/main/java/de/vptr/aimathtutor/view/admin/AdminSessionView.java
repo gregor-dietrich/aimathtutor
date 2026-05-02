@@ -81,7 +81,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.removeAll();
 
         // Back button
-        final var backButton = new Button("← Back to Sessions", _ -> {
+        final var backButton = new Button("← Back to Sessions", ignored -> {
             this.getUI().ifPresent(ui -> ui.navigate(AdminSessionsView.class));
         });
         backButton.getStyle().set("margin-bottom", "20px");

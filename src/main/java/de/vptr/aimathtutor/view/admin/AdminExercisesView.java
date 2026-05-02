@@ -169,24 +169,24 @@ public class AdminExercisesView extends AbstractAdminView {
                         this.loadExercisesAsync();
                     }
                 },
-                _ -> this.searchExercise(),
+                ignored -> this.searchExercise(),
                 "Search by title or content...",
                 "Search Exercises");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
 
-        this.showPublishedButton = new Button("Show Published Only", _ -> this.loadPublishedExercisesAsync());
+        this.showPublishedButton = new Button("Show Published Only", ignored -> this.loadPublishedExercisesAsync());
         this.showPublishedButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         // Date range filter
-        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(ignored -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // User ID filter
         final var userFilterLayout = new IntegerFilterLayout(
-                _ -> this.filterByUser(),
+                ignored -> this.filterByUser(),
                 "Enter User ID...",
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
@@ -204,8 +204,8 @@ public class AdminExercisesView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(_ -> this.openExerciseDialog(null));
-        final var refreshButton = new RefreshButton(_ -> this.loadExercisesAsync());
+        final var createButton = new CreateButton(ignored -> this.openExerciseDialog(null));
+        final var refreshButton = new RefreshButton(ignored -> this.loadExercisesAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -227,7 +227,7 @@ public class AdminExercisesView extends AbstractAdminView {
             titleSpan.getStyle().set("cursor", "pointer");
             titleSpan.getStyle().set("width", "100%");
             titleSpan.getStyle().set("display", "block");
-            titleSpan.addClickListener(_ -> this.openExerciseDialog(exercise));
+            titleSpan.addClickListener(ignored -> this.openExerciseDialog(exercise));
             return titleSpan;
         }).setHeader("Title").setFlexGrow(2);
 
@@ -279,9 +279,9 @@ public class AdminExercisesView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(_ -> this.openExerciseDialog(exercise));
-        final var deleteButton = new DeleteButton(_ -> this.deleteExercise(exercise));
-        final var commentButton = new CommentButton(_ -> UI.getCurrent().navigate(AdminCommentsView.class,
+        final var editButton = new EditButton(ignored -> this.openExerciseDialog(exercise));
+        final var deleteButton = new DeleteButton(ignored -> this.deleteExercise(exercise));
+        final var commentButton = new CommentButton(ignored -> UI.getCurrent().navigate(AdminCommentsView.class,
                 new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
 
         layout.add(editButton, deleteButton, commentButton);
@@ -413,7 +413,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
                 (exercise1, value) -> exercise1.graspableEnabled = value);
         this.binder.forField(graspableInitialExpressionField)
-                .withValidator((value, _) -> {
+                .withValidator((value, ignored) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult.error("Initial Expression is required when Graspable Math is enabled");
@@ -423,7 +423,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 .bind(exercise1 -> exercise1.graspableInitialExpression,
                         (exercise1, value) -> exercise1.graspableInitialExpression = value);
         this.binder.forField(graspableTargetExpressionField)
-                .withValidator((value, _) -> {
+                .withValidator((value, ignored) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult.error("Target Expression is required when Graspable Math is enabled");
@@ -433,7 +433,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 .bind(exercise1 -> exercise1.graspableTargetExpression,
                         (exercise1, value) -> exercise1.graspableTargetExpression = value);
         this.binder.forField(graspableDifficultyField)
-                .withValidator((value, _) -> {
+                .withValidator((value, ignored) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && value == null) {
                         return ValidationResult
@@ -472,10 +472,10 @@ public class AdminExercisesView extends AbstractAdminView {
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", _ -> this.saveExercise());
+        final var saveButton = new Button("Save", ignored -> this.saveExercise());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", _ -> this.exerciseDialog.close());
+        final var cancelButton = new Button("Cancel", ignored -> this.exerciseDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);

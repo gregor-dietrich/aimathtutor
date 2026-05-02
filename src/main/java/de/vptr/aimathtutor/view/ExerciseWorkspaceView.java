@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -196,7 +197,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             titleSection.add(badge);
         }
 
-        this.backButton = new Button("← Back to Exercises", _ -> {
+        this.backButton = new Button("← Back to Exercises", ignored -> {
             UI.getCurrent().navigate(LessonsView.class);
         });
         this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -239,7 +240,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             final var contentDiv = new Div();
             contentDiv.getStyle().set("white-space", "pre-wrap");
-            contentDiv.add(new com.vaadin.flow.component.Text(this.exercise.content));
+            contentDiv.add(new Text(this.exercise.content));
             contentSection.add(contentDiv);
 
             header.add(contentSection);
@@ -256,7 +257,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("padding", "var(--lumo-space-m)");
 
-        this.requestHintButton = new Button("Request Hint", _ -> this.showNextHint());
+        this.requestHintButton = new Button("Request Hint", ignored -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         final var hintsSection = new VerticalLayout(hintsHeader, this.hintsPanel, this.requestHintButton);

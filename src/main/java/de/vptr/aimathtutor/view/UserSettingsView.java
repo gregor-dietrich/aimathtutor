@@ -171,7 +171,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var changePasswordButton = new Button("Change Password");
         changePasswordButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        changePasswordButton.addClickListener(_ -> this.handlePasswordChange());
+        changePasswordButton.addClickListener(ignored -> this.handlePasswordChange());
 
         section.add(header, form, changePasswordButton);
         return section;
@@ -196,11 +196,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.userAvatarSelect = new ComboBox<>("Your Avatar");
         this.userAvatarSelect.setItems("🧒", "👦", "👧", "🧑‍🎓", "👨‍🎓", "👩‍🎓", "🐱", "🐶", "🐭", "👽");
-        this.userAvatarSelect.addValueChangeListener(_ -> this.updatePreview());
+        this.userAvatarSelect.addValueChangeListener(ignored -> this.updatePreview());
 
         this.tutorAvatarSelect = new ComboBox<>("AI Tutor Avatar");
         this.tutorAvatarSelect.setItems("🤖", "🦉", "🖥️", "💻", "🧑‍🏫", "👨‍🏫", "👩‍🏫", "🧑‍💻", "👨‍💻", "👩‍💻");
-        this.tutorAvatarSelect.addValueChangeListener(_ -> this.updatePreview());
+        this.tutorAvatarSelect.addValueChangeListener(ignored -> this.updatePreview());
 
         form.add(this.userAvatarSelect, this.tutorAvatarSelect);
 
@@ -217,7 +217,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var saveAvatarsButton = new Button("Save Avatars");
         saveAvatarsButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        saveAvatarsButton.addClickListener(_ -> this.handleAvatarChange());
+        saveAvatarsButton.addClickListener(ignored -> this.handleAvatarChange());
 
         section.add(header, description, form, previewLabel, this.previewBox, saveAvatarsButton);
         return section;

@@ -160,6 +160,7 @@ SELECT setval('exercises_id_seq', 8, true);
 
 CREATE TABLE comments (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   content TEXT NOT NULL,
   exercise_id BIGINT NOT NULL,
   user_id BIGINT,

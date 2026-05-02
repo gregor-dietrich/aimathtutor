@@ -1,12 +1,18 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -19,7 +25,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
+import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.AiConfigService;
+import de.vptr.aimathtutor.service.AiProviderTestService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -36,6 +44,9 @@ public class AdminConfigView extends AbstractAdminView {
     private static final Logger LOG = LoggerFactory.getLogger(AdminConfigView.class);
     @Inject
     private transient AiConfigService aiConfigService;
+
+    @Inject
+    private transient AiProviderTestService aiProviderTestService;
 
     @Override
     protected boolean isAuthorized() {
@@ -137,22 +148,29 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setPadding(true);
 
         // AI Enabled
-        final var enabledCheckbox = new com.vaadin.flow.component.checkbox.Checkbox("Enable AI Tutor");
+        final var enabledCheckbox = new Checkbox("Enable AI Tutor");
         final String enabledValue = this.aiConfigService.getConfigValue("ai.tutor.enabled", "true");
         enabledCheckbox.setValue("true".equalsIgnoreCase(enabledValue));
         enabledCheckbox.setLabel("Enable AI Tutor");
 
         // AI Provider selection
-        final var providerCombo = new com.vaadin.flow.component.combobox.ComboBox<String>("AI Provider");
+        final var providerCombo = new ComboBox<String>("AI Provider");
         providerCombo.setItems("mock", "gemini", "ollama", "openai");
         providerCombo.setValue(this.aiConfigService.getConfigValue("ai.tutor.provider", "mock"));
         providerCombo.setWidthFull();
 
         // Save button
-        final var saveBtn = new Button("Save", _ -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
-        saveBtn.addClickListener(_ -> LOG.info("General config save clicked"));
+        final var saveBtn = new Button("Save", ignored -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
 
-        panel.add(enabledCheckbox, providerCombo, saveBtn);
+        // Reset to defaults button
+        final var resetBtn = new Button("Reset to Defaults", ignored -> this.resetAllToDefaults());
+        resetBtn.getStyle().set("margin-left", "auto");
+
+        final var buttonRow = new HorizontalLayout(saveBtn, resetBtn);
+        buttonRow.setWidthFull();
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        panel.add(enabledCheckbox, providerCombo, buttonRow);
         return panel;
     }
 
@@ -196,11 +214,18 @@ public class AdminConfigView extends AbstractAdminView {
         maxTokensField.setStep(1);
         maxTokensField.setHelperText("Maximum tokens in response (1-8192)");
 
+        // Test connection button
+        final var testBtn = new Button("Test Connection", ignored -> this.testGeminiConnection());
+
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+                ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
 
-        panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, saveBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, testBtn);
+        buttonRow.setWidthFull();
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, buttonRow);
         return panel;
     }
 
@@ -248,11 +273,18 @@ public class AdminConfigView extends AbstractAdminView {
         maxTokensField.setStep(1);
         maxTokensField.setHelperText("Maximum tokens in response (1-8192)");
 
+        // Test connection button
+        final var testBtn = new Button("Test Connection", ignored -> this.testOpenAiConnection());
+
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
+                ignored -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
 
-        panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField, saveBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, testBtn);
+        buttonRow.setWidthFull();
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField, buttonRow);
         return panel;
     }
 
@@ -297,11 +329,18 @@ public class AdminConfigView extends AbstractAdminView {
         timeoutField.setStep(1);
         timeoutField.setHelperText("API timeout in seconds (1-300)");
 
+        // Test connection button
+        final var testBtn = new Button("Test Connection", ignored -> this.testOllamaConnection());
+
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
+                ignored -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
 
-        panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField, saveBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, testBtn);
+        buttonRow.setWidthFull();
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField, buttonRow);
         return panel;
     }
 
@@ -340,14 +379,67 @@ public class AdminConfigView extends AbstractAdminView {
 
         // Save button
         final var saveBtn = new Button("Save",
-                _ -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+                ignored -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
         return panel;
     }
 
-    private void saveGeneralConfig(final com.vaadin.flow.component.checkbox.Checkbox enabledCheckbox,
-            final com.vaadin.flow.component.combobox.ComboBox<String> providerCombo) {
+    private void testConnection(final Supplier<AiProviderTestResultDto> testCall,
+            final String providerName) {
+        final var ui = getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
+        CompletableFuture.supplyAsync(testCall::get).thenAccept(result -> {
+            ui.access(() -> {
+                if (result.success) {
+                    NotificationUtil.showSuccess(result.message);
+                } else {
+                    NotificationUtil.showError(result.message);
+                }
+                LOG.info("{} connection test: {}", providerName, result.message);
+            });
+        }).exceptionally(ex -> {
+            ui.access(() -> {
+                NotificationUtil.showError("Connection test failed: " + ex.getMessage());
+                LOG.error("{} connection test failed", providerName, ex);
+            });
+            return null;
+        });
+    }
+
+    private void testGeminiConnection() {
+        this.testConnection(this.aiProviderTestService::testGemini, "Gemini");
+    }
+
+    private void testOpenAiConnection() {
+        this.testConnection(this.aiProviderTestService::testOpenAi, "OpenAI");
+    }
+
+    private void testOllamaConnection() {
+        this.testConnection(this.aiProviderTestService::testOllama, "Ollama");
+    }
+
+    private void resetAllToDefaults() {
+        try {
+            final Long userId = this.authService.getUserId();
+            this.aiConfigService.resetToDefaults(userId);
+            NotificationUtil.showSuccess("All settings reset to defaults");
+            LOG.info("Reset all AI configs to defaults");
+            // Refresh UI so fields display the restored default values
+            this.buildUi();
+        } catch (final IllegalArgumentException e) {
+            NotificationUtil.showError("Validation error: " + e.getMessage());
+            LOG.error("Validation error resetting defaults", e);
+        } catch (final Exception e) {
+            NotificationUtil.showError("Error resetting defaults. Please try again later.");
+            LOG.error("Error resetting defaults", e);
+        }
+    }
+
+    private void saveGeneralConfig(final Checkbox enabledCheckbox,
+            final ComboBox<String> providerCombo) {
         try {
             final var updates = List.of(
                     new AiConfigUpdateDto("ai.tutor.enabled", enabledCheckbox.getValue() ? "true" : "false"),

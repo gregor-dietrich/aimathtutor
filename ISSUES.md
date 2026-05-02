@@ -27,6 +27,65 @@
 
 ---
 
+## 1. Graspable Math Action Validation (isValidAction)
+
+Goal: Implement server-side validation of student math actions coming from the Graspable Math workspace so that session metrics (correctActions, success rate) reflect true mathematical correctness rather than relying solely on the frontend or marking every action as correct.
+
+Why this is separate: The repository currently sets `event.correct = true` for all math actions in `ExerciseWorkspaceView`. The quick note in `ISSUES.md` explains that adding a robust `isValidAction(before, after)` is non-trivial and was deferred. This TODO captures a concrete plan to implement it as a discrete task.
+
+Priority: Medium — important for analytics accuracy but non-trivial and requires careful selection of a math parsing/normalization approach.
+
+Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressions reliably is tricky)
+
+Implementation plan:
+
+- Backend changes (core):
+  1. Add a new method to `GraspableMathService`:
+     - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
+     - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
+  2. Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
+     - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
+     - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
+  3. If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
+  4. Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+  5. **Performance, rate-limiting, and observability:**
+     - Enforce a bounded validation budget in `GraspableMathService.isValidAction()` (and any `MathExpressionComparator` adapter): cancel or return `null` if parsing/comparison exceeds ~50 ms so that slow expressions do not block the UI.
+     - Add a simple LRU cache keyed by `(expressionBefore, expressionAfter)` to short-circuit repeated checks and reduce redundant computation.
+     - Make validation asynchronous/non-blocking where possible so UI threads are not held; consider returning a `CompletableFuture<Boolean>` or offloading to a worker thread if the framework permits.
+     - Add per-user rate limiting/throttling on the validation entrypoint to prevent abuse or accidental denial-of-service from rapid actions.
+     - Emit metrics (P50/P95/P99 latency, cache hit rate, timeout count) and structured logs for timeouts. Use these metrics to enable a log-only rollout before changing `correctActions` behavior in production.
+
+- Backend changes (data/metrics):
+  1. Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
+  2. Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
+
+- Tests:
+  1. Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
+  2. Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
+  3. End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+
+- Migration/compatibility notes:
+  1. If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
+  2. Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+
+- Rollout suggestion:
+  1. Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
+  2. Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
+  3. Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+
+Owner: Backend team / person familiar with symbolic math libraries
+
+Deliverables:
+
+- `GraspableMathService.isValidAction()` implementation
+- `MathExpressionComparator` (or adapter) with unit tests
+- Updated `ExerciseWorkspaceView.onMathAction(...)` usage and tests
+- Admin toggle or config for validation policy
+
+Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement MVP heuristics, and create tests. If a full CAS integration is required, add time for design and vetting (additional 1-2 weeks).
+
+---
+
 ## 2. Multiple Problems Per Exercise with Sequential Unlocking
 
 **Goal:** Allow exercises to have multiple problems (like hints), unlock "Next Problem" button when current is complete.
@@ -82,142 +141,13 @@
 
 ---
 
-## 4. Miscellaneous Fixes
-
-### 4.1 Admin Dashboard Enhancement
-
-The admin dashboard could use some further enhancement, such as diagrams.
-
-### 4.2 Keyboard accessibility
-
-Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
-
-> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
-
-### 4.3 Pagination
-
-Add server-side pagination for admin views to handle large datasets gracefully (Vaadin `DataProvider.fromCallbacks()` + backend paged queries + `count()` methods). **Priority: Phase 7 — lowest urgency.**
-
-> **Consistency check:** When implementing, check all admin views (Users, Exercises, Lessons, Comments, Sessions, Progress, UserGroups, UserRanks) for identical grid-loading patterns and fix them consistently.
-
-### 4.4 Unit Test Coverage
-
-Unit test coverage should be reviewed and improved across multiple packages. Specific gaps identified:
-
-- Service tests only cover null/empty input validation (no happy paths, updates, deletions, search, or edge cases).
-- No repository tests for custom queries (e.g., broken named queries in `ExerciseRepository` would not be caught).
-- No view/presenter tests; Vaadin views are completely untested.
-- No usage of Mockito/Panache Mock for true unit tests in isolation; all tests use `@QuarkusTest` with real DB.
-- `AiTutorServiceTest` has a test that catches generic `Exception` and asserts on message, making it pass regardless of actual behavior.
-
-> **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
-
-### 4.5 ULIDs
-
-Use ULIDs for IDs rather than auto-incrementing integers.
-
----
-
-## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management
-
-**Status:** ✅ **MOSTLY COMPLETE** — Core functionality implemented; performance optimization needed.
-
-**Goal:** Create a new `AdminConfigView` (route: `admin/config`) allowing users with admin privileges to manage AI tutor configuration at runtime. This replaces static `application.properties` changes for AI settings, enabling dynamic provider switching and parameter tuning without redeployment.
-
-### 5.1 Completed Implementation
-
-#### Database Schema — ✅ DONE
-
-- **`AiConfigEntity`** created with all required fields: `id`, `configKey` (unique), `configValue`, `configType`, `category`, `description`, `lastUpdatedAt`, `lastUpdatedBy`
-- **`AiConfigRepository`** extends `PanacheRepositoryBase<AiConfigEntity, Long>` with query methods
-- **Database schema** added to `init.sql` with seed data for all config keys (general, Gemini, OpenAI, Ollama, prompts)
-
-#### Backend Service Layer — ✅ DONE
-
-- **`AiConfigService`** (@ApplicationScoped) fully implemented with:
-  - `getConfigValue(key, defaultValue)` with `@CacheResult` caching
-  - `getConfigValueAsInt()`, `getConfigValueAsDouble()`, `getConfigValueAsBoolean()` type converters
-  - `updateConfig(key, value, userId)` with `@Transactional` and `@CacheInvalidate`
-  - `getAllConfigsByCategory(category)` for UI population
-  - `validateAndSave(configUpdates, userId)` for bulk updates
-  - Cache invalidation on config updates
-- **AI Services refactored** to use `AiConfigService`:
-  - `AiTutorService`: Removed `@ConfigProperty` fields; fetches config dynamically via `AiConfigService`
-  - `GeminiService`: Uses `aiConfigService` for model, URL, temperature, max-tokens; keeps API key as `@ConfigProperty` (env var)
-  - `OpenAiService`: Same pattern as Gemini
-  - `OllamaService`: Same pattern as Gemini
-- **DTOs created:**
-  - `AiConfigDto`: Full config representation with metadata
-  - `AiConfigUpdateDto`: Lightweight update payload
-
-#### Frontend — ✅ DONE
-
-- **`AdminConfigView`** created at `/admin/config` with:
-  - Tabbed interface for categories: General, Gemini, OpenAI, Ollama, Prompts
-  - General settings: AI Tutor Enabled toggle, AI Provider selector
-  - Provider-specific tabs with Model, API URL, Temperature, Max Tokens fields (read-only API key placeholders)
-  - Prompts tab: TextAreas for question answering and math tutoring prefix/postfix
-  - "Test Connection" button per provider (tests provider connectivity with dummy prompt)
-  - "Save" button with validation feedback
-  - "Reset to Defaults" button for quick reset
-
-#### Security & Validation — ✅ DONE
-
-- **Permissions:** Route protected; only Admin (rankId=1) can access via `@Restrict(roles = "Admin")`
-- **Input validation:** URLs validated for HTTP/HTTPS format; numeric fields bounded; prompt length limits enforced
-- **Sensitive data:** API keys managed via `@ConfigProperty` env vars; not stored in database
-- **Runtime effect:** Config changes take immediate effect for new AI interactions; cache TTL configured
-
-#### Testing — ⚠️ PARTIAL
-
-- ✅ `AiConfigServiceTest`: Unit tests for CRUD, validation, type conversions
-- ❌ `AiConfigServiceIT`: Integration tests not implemented
-- ❌ `AdminConfigViewTest`: UI tests not implemented
-- ✅ Manual: Can be tested via Quarkus dev mode
-
-### 5.2 Performance Optimization Opportunity
-
-**Issue Identified:** Methods calling `aiConfigService.getConfigValue()` frequently may cause performance degradation due to repeated cache lookups or database hits on cache misses.
-
-**Affected Methods:**
-
-- `OllamaService.isAvailable()` (line 121): Calls `getConfigValue("ollama.api.url", ...)` on every invocation
-- `OllamaService` request methods (lines 42-45): Fetch multiple config values per request (model, temperature, max-tokens, timeout)
-- `GeminiService.isAvailable()` and `OpenAiService.isAvailable()` (if implemented): Similar pattern
-- `GeminiService.getModel()` and `OpenAiService.getModel()` (lines 149, 218): Called per-request
-
-**Recommended Solutions:**
-
-1. **Method-level caching:** Cache provider config values locally in each AI service with invalidation hooks tied to config updates
-   - Add `@Inject AiConfigService` listener methods that refresh service-level cache when config changes
-   - Use CDI events from `AiConfigService.updateConfig()` to trigger cache invalidation
-2. **Eager loading:** Pre-load all provider-specific config values at service startup (less flexible but faster)
-3. **Parameter passing:** For health check methods like `isAvailable()`, accept URL as parameter if called in frequent scenarios
-4. **Query optimization:** Ensure database indexes on `ai_config.configKey` and cache TTL tuning in `AiConfigService`
-
-**Action Item for Next Phase:** Implement service-level config caching with event-driven invalidation to eliminate per-request database lookups.
-
-### 5.3 Future Enhancements (Out of Scope)
-
-- **Audit Log:** Track all config changes in `ai_config_audit` table (who, when, old/new values)
-- **Multi-Tenancy:** Per-group/user config overrides
-- **API Key Encryption:** Encrypt at rest using Quarkus Vault
-- **Provider Health Monitoring:** Dashboard showing uptime, latency, error rates
-- **Cost Tracking:** Token usage and budget alerts
-- **Prompt Versioning:** Rollback support for prompts
-- **A/B Testing:** Multiple prompt variants with outcome tracking
-- **Prompt Templates:** Pre-built tutoring style library
-- **Prompt Variables:** Dynamic placeholders (e.g., `{{student_name}}`)
-
----
-
-## 6. Gamification
+## 3. Gamification
 
 **Goal:** Increase student motivation and engagement by adding gamification elements such as achievements/badges, progress levels, experience points (XP), streaks, leaderboards, and rewards tied to problem solving within the Graspable Math workspace and overall course progress.
 
 This feature should be opt-in per user (privacy-friendly), configurable by admins, and designed to be low-friction so it does not interfere with learning objectives.
 
-### 6.1 High-level features
+### 3.1 High-level features
 
 - Achievements/Badges: award for specific milestones (e.g., "First Solution", "10 Problems Solved", "Perfect Session", "Fast Solver", "Hint Avoider").
 - Experience points (XP): reward XP for solved problems, streaks, and completing exercises. XP contributes to user Level.
@@ -228,7 +158,7 @@ This feature should be opt-in per user (privacy-friendly), configurable by admin
 - Rewards & Unlocks: unlock cosmetic rewards (avatars, themes), extra practice problems, or hints currency that can be spent.
 - Notifications & Activity Feed: notify users when they earn badges, level up, or climb the leaderboard.
 
-### 6.2 Backend changes
+### 3.2 Backend changes
 
 1. New Entities (Hibernate/Panache style):
    - `BadgeEntity` - id, code, name, description, iconPath, criteriaJson, createdAt
@@ -262,7 +192,7 @@ This feature should be opt-in per user (privacy-friendly), configurable by admin
    - Call `addXp(...)` when user actions qualify (fast solve bonus, no-hint bonus, perfect session).
    - Update `StudentSessionEntity` to optionally record `xpEarned` for the session and `badgesAwardedJson` (or rely on `UserBadgeEntity`).
 
-### 6.3 Frontend changes (Vaadin views)
+### 3.3 Frontend changes (Vaadin views)
 
 1. New Views/Components
    - `GamificationPanel` component: compact widget to show current level, XP progress bar, recent badges, and quick action to view full gamification profile.
@@ -281,7 +211,7 @@ This feature should be opt-in per user (privacy-friendly), configurable by admin
    - Extend `AdminConfigView` (or new `AdminGamificationView`) to manage badges, XP rules, level thresholds, challenge creation, and leaderboard settings.
    - Allow admins/teachers to award badges manually.
 
-### 6.4 XP, Levels, and Rules (example policy)
+### 3.4 XP, Levels, and Rules (example policy)
 
 - Base XP per solved problem: 10 XP
 - Bonus: +5 XP for solving without hints
@@ -292,31 +222,39 @@ This feature should be opt-in per user (privacy-friendly), configurable by admin
 
 Keep rules configurable via `AdminGamificationView`.
 
-### 6.5 Privacy & Accessibility
+### 3.5 Privacy & Accessibility
 
 - Gamification must be opt-in for students; default can be enabled but provide a clear toggle in profile.
 - Allow students to hide their name from leaderboards (opt-out) and to use an alias.
 - Ensure badges and colors are accessible (contrast, screen-reader friendly alt text for icons).
+- **Data deletion and retention policies:**
+  - **Right to Deletion:** When a student opts out of gamification or their account is deleted, all personally identifiable gamification data must be removed or anonymized. Specifically:
+    - `UserBadgeEntity`, `UserXpEntity`, `UserStreakEntity`, `UserChallengeEntity` — implement cascade delete or soft-delete/anonymization (replace user reference with a synthetic anonymized ID) so that aggregate statistics remain valid while individual identity is removed.
+  - **Retention periods:**
+    - Leaderboard snapshots: retain current + 12 months, then archive or fully anonymize (strip names/aliases, keep only rank and score distributions).
+    - Challenge participation history: retain for the lifetime of the challenge + 6 months, then anonymize or purge.
+    - Badge-award audit trails: retain for 24 months for abuse investigation, then purge.
+  - **Implementation note:** Add soft-deletion/anonymization support in the relevant entities and services. Provide admin tools or API endpoints to process deletion requests and to export/delete user data on demand.
 
-### 6.6 Testing
+### 3.6 Testing
 
 - Unit tests for `GamificationService` (award logic, XP calculations, level progression).
 - Integration tests for DB writes (badge awards, XP updates, streak increments).
 - UI tests for badge modal display and leaderboard filtering.
 - Load testing/benchmarks for leaderboard queries (cache snapshots if needed).
 
-### 6.7 Metrics & Analytics
+### 3.7 Metrics & Analytics
 
 - Track gamification engagement metrics: percent of users opting in, average XP earned per session, badge earn rates, churn/retention impact.
 - Add events to existing logging/analytics pipeline (e.g., `GAMIFICATION_BADGE_AWARDED`, `GAMIFICATION_XP_ADDED`).
 
-### 6.8 Phased rollout and migration
+### 3.8 Phased rollout and migration
 
 - Phase 1 (MVP): XP, badges for a small default set (First Solution, 10 Problems, No Hints), user opt-in, basic UI panel, and admin config for enabling/disabling.
 - Phase 2: Add leaderboards, challenges, rewards/unlocks, and teacher tools.
 - Phase 3: Advanced features like seasonal events, classroom competitions, and integration with external LMS.
 
-### 6.9 Risks and mitigations
+### 3.9 Risks and mitigations
 
 - Reward focus over learning: design badges to align tightly with learning goals (e.g., accuracy, explanation, reflection), not just speed.
 - Privacy concerns: defaults and opt-outs must be clear and honored.
@@ -324,55 +262,86 @@ Keep rules configurable via `AdminGamificationView`.
 
 ---
 
-Update task statuses in project tracking and prepare follow-up issues for implementation.
+## 4. Miscellaneous Fixes
 
-## 7. Graspable Math Action Validation (isValidAction)
+### 4.1 Admin Dashboard Enhancement
 
-Goal: Implement server-side validation of student math actions coming from the Graspable Math workspace so that session metrics (correctActions, success rate) reflect true mathematical correctness rather than relying solely on the frontend or marking every action as correct.
+The admin dashboard could use some further enhancement, such as diagrams.
 
-Why this is separate: The repository currently sets `event.correct = true` for all math actions in `ExerciseWorkspaceView`. The quick note in `ISSUES.md` explains that adding a robust `isValidAction(before, after)` is non-trivial and was deferred. This TODO captures a concrete plan to implement it as a discrete task.
+### 4.2 Keyboard accessibility
 
-Priority: Medium — important for analytics accuracy but non-trivial and requires careful selection of a math parsing/normalization approach.
+Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
 
-Estimated difficulty: ★★★★☆ (parsing and canonicalizing math expressions reliably is tricky)
+> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
 
-Implementation plan:
+### 4.3 Pagination
 
-- Backend changes (core):
-  1. Add a new method to `GraspableMathService`:
-     - `public Boolean isValidAction(String expressionBefore, String expressionAfter)`
-     - Returns `null` if action significance is undetermined, `true` if the transformation is mathematically valid, `false` if invalid.
-  2. Implement a normalization/parsing strategy used by both `isValidAction()` and existing `checkCompletion()`:
-     - Option A (preferred): integrate a lightweight symbolic math library that can parse and compare expressions (examples: Symja, exp4j with extensions, or a small custom CAS). Evaluate licensing and size impact.
-     - Option B: Implement deterministic normalization heuristics (whitespace removal, canonical ordering of commutative terms, simple algebraic normalization like expand/sort/factor for common patterns). This is lower-cost but brittle and should be documented as such.
-  3. If using a library, add the dependency to `pom.xml` and write an adapter class (e.g., `MathExpressionComparator`) to centralize parsing/normalization logic.
-  4. Update `ExerciseWorkspaceView.onMathAction(...)` to call `event.correct = this.graspableMathService.isValidAction(expressionBefore, expressionAfter);` and handle `null` (unknown) by leaving prior behavior or marking as false depending on a configurable policy.
+Add server-side pagination for admin views to handle large datasets gracefully (Vaadin `DataProvider.fromCallbacks()` + backend paged queries + `count()` methods). **Priority: Phase 7 — lowest urgency.**
 
-- Backend changes (data/metrics):
-  1. Ensure `StudentSessionEntity` handling in `GraspableMathService.processEvent()` handles `null`/`false` properly (do not increment correctActions for `false` or `null` if policy dictates).
-  2. Add config toggles or feature flags (admin-settable) to control strictness: strict (treat unknown as incorrect), lenient (treat unknown as correct), or rollout mode (log only).
+> **Consistency check:** When implementing, check all admin views (Users, Exercises, Lessons, Comments, Sessions, Progress, UserGroups, UserRanks) for identical grid-loading patterns and fix them consistently.
 
-- Tests:
-  1. Unit tests for `MathExpressionComparator` / normalization adapter: pairs of expressions that should be equal/unequal (e.g., `2x+3` vs `3+2x`, `x=5` vs `5=x`, `(x+1)(x+2)` vs `x^2+3x+2`, basic fraction reductions, basic simplifications).
-  2. Integration tests for `GraspableMathService.isValidAction()` using typical event samples from frontend fixtures.
-  3. End-to-end test: simulate `onMathAction()` calls and assert session `correctActions` increments according to expectations.
+### 4.4 Unit Test Coverage
 
-- Migration/compatibility notes:
-  1. If a third-party CAS is added, verify Quarkus runtime compatibility and packaging size. Consider making the dependency optional behind a feature profile.
-  2. Document limitations (supported operations, edge cases) in developer docs and in `ISSUES.md` so maintainers and teachers understand where validation may be conservative.
+Unit test coverage should be reviewed and improved across multiple packages. Specific gaps identified:
 
-- Rollout suggestion:
-  1. Phase 1 (Log-only): Implement `isValidAction()` and log results, but do not change `correctActions` counting. Use logs to tune heuristics/cases.
-  2. Phase 2 (Opt-in strictness): Add admin toggle; enable strict mode for a subset of exercises or pilot classrooms.
-  3. Phase 3 (Default enforcement): Once stable, make stricter behavior the default.
+- Service tests only cover null/empty input validation (no happy paths, updates, deletions, search, or edge cases).
+- No repository tests for custom queries (e.g., broken named queries in `ExerciseRepository` would not be caught).
+- No view/presenter tests; Vaadin views are completely untested.
+- No usage of Mockito/Panache Mock for true unit tests in isolation; all tests use `@QuarkusTest` with real DB.
+- `AiTutorServiceTest` has a test that catches generic `Exception` and asserts on message, making it pass regardless of actual behavior.
 
-Owner: Backend team / person familiar with symbolic math libraries
+> **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
 
-Deliverables:
+### 4.5 ULIDs as Primary/Foreign Keys (API)
 
-- `GraspableMathService.isValidAction()` implementation
-- `MathExpressionComparator` (or adapter) with unit tests
-- Updated `ExerciseWorkspaceView.onMathAction(...)` usage and tests
-- Admin toggle or config for validation policy
+**Goal:** remove sequential IDs from external surfaces; use ULIDs to reduce enumeration risk.
 
-Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement MVP heuristics, and create tests. If a full CAS integration is required, add time for design and vetting (additional 1-2 weeks).
+**Plan:**
+
+1. Inventory every entity/resource exposing numeric IDs in API routes, DTOs, and GUI URLs.
+2. Add immutable `publicId` ULID column per entity (unique + indexed). Keep current numeric PK/FK internal during migration.
+3. Create DB migration to add columns and indexes, backfill ULIDs for existing rows, then enforce `NOT NULL`.
+4. Update API contracts to accept/return ULIDs only (path params, request/response DTOs, service lookups by `publicId`).
+5. Update GUI routing and REST clients to use ULIDs end-to-end.
+6. Add ULID validation + tests for CRUD and authorization flows using ULID identifiers.
+7. Roll out in two steps: compatibility window (dual-read), then remove numeric-ID access from controllers/DTOs.
+
+**Done when:**
+
+- No external endpoint exposes numeric IDs.
+- All existing records have unique non-null ULIDs.
+- Clients and docs fully switched to ULIDs.
+- SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
+
+### 4.6 Encrypt-at-Rest (API)
+
+**Goal:** encrypt PII at rest with file-backed key management.
+
+**Plan:**
+
+1. Classify sensitive fields across entities (starting with `UserEntity.email`, `UserEntity.lastIp`) and record lookup requirements (display-only vs searchable).
+2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
+3. Add blind-index/hash companion columns for fields requiring equality search.
+4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
+   - load key from file on startup
+   - generate and persist key if missing
+   - enforce restrictive file permissions
+5. Add shared crypto service + entity converters/mappers so encryption/decryption is centralized and plaintext is never logged.
+6. Add migrations to create encrypted/blind-index columns, backfill legacy plaintext, and remove plaintext columns after cutover.
+7. Update `application.properties` with sensible local default key path and `docker-compose.yml` with env var + persistent volume mount.
+8. Add unit/integration tests for crypto behavior, startup key generation, CRUD, and searchable encrypted fields.
+
+**Done when:**
+
+- Target PII fields are stored encrypted at rest.
+- App starts with existing key or generates one when absent.
+- Compose/dev setup persists key material via mounted volume.
+- SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
+
+### 4.7 Vaadin 25 theme migration fixes (GUI)
+
+- Replace deprecated `lumoImports` usage in `src/main/frontend/themes/starter-theme/theme.json`.
+- If utility classes required, add `@StyleSheet(Lumo.UTILITY_STYLESHEET)` in `src/main/java/de/vptr/aimathtutor/gui/AppConfig.java`.
+- Fix component-style loading warning (`vaadin-text-field.css`) by enabling `themeComponentStyles` or moving styles to supported setup.
+
+---

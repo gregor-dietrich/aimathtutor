@@ -142,17 +142,17 @@ public class AiTutorService {
      */
     private AiFeedbackDto generateCompletionFeedback(final GraspableEventDto event) {
         final String[] congratulatoryMessages = {
-                "\uD83C\uDF89 Excellent work! You've solved it correctly!",
-                "\uD83C\uDF1F Perfect! You reached the solution: " + event.expressionAfter,
-                "\uD83D\uDC4F Outstanding! You've successfully completed the problem!",
-                "\u2728 Great job! You've mastered this problem!",
-                "\uD83C\uDFAF Fantastic! You solved it: " + event.expressionAfter,
-                "\uD83D\uDCAF Well done! You've reached the correct solution!",
-                "\uD83C\uDFC6 Amazing work! Problem solved successfully!",
-                "\uD83D\uDCAA Strong work! You crushed this problem!",
-                "\uD83D\uDC4D Awesome! You got it right!",
-                "\uD83C\uDFC5 Champion! You conquered this challenge!",
-                "\uD83C\uDF8A Congratulations! You nailed it!"
+                "🎉 Excellent work! You've solved it correctly!",
+                "🌟 Perfect! You reached the solution: " + event.expressionAfter,
+                "👏 Outstanding! You've successfully completed the problem!",
+                "✨ Great job! You've mastered this problem!",
+                "🎯 Fantastic! You solved it: " + event.expressionAfter,
+                "💯 Well done! You've reached the correct solution!",
+                "🏆 Amazing work! Problem solved successfully!",
+                "💪 Strong work! You crushed this problem!",
+                "👍 Awesome! You got it right!",
+                "🏅 Champion! You conquered this challenge!",
+                "🎊 Congratulations! You nailed it!"
         };
 
         // Pick a random congratulatory message

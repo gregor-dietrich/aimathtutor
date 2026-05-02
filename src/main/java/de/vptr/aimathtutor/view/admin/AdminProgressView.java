@@ -146,19 +146,19 @@ public class AdminProgressView extends AbstractAdminView {
                         this.loadProgressData();
                     }
                 },
-                _ -> this.searchStudents(),
+                ignored -> this.searchStudents(),
                 "Search by username...",
                 "Search Students");
 
         this.searchField = searchLayout.getTextfield();
 
         // Add date range filter for last activity
-        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(ignored -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", _ -> this.resetFilters());
+        this.resetFiltersButton = new Button("Reset Filters", ignored -> this.resetFilters());
         this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetFiltersButton);
@@ -174,7 +174,7 @@ public class AdminProgressView extends AbstractAdminView {
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(_ -> this.loadProgressData());
+        final var refreshButton = new RefreshButton(ignored -> this.loadProgressData());
 
         layout.add(refreshButton);
         return layout;

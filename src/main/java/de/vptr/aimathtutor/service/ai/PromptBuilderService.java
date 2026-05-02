@@ -166,7 +166,7 @@ public class PromptBuilderService {
             prompt.append("<conversation_context>\nRecent student actions:\n");
             for (int i = 0; i < context.recentActions.size(); ++i) {
                 final var action = context.recentActions.get(i);
-                prompt.append(String.format("%d. %s: '%s' \u2192 '%s'%n",
+                prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                         i + 1,
                         this.sanitizePromptInput(action.eventType),
                         this.sanitizePromptInput(action.expressionBefore),
@@ -202,7 +202,7 @@ public class PromptBuilderService {
             prompt.append("\n<recent_actions>\n");
             for (int i = 0; i < context.recentActions.size(); ++i) {
                 final var action = context.recentActions.get(i);
-                prompt.append(String.format("%d. %s: '%s' \u2192 '%s'%n",
+                prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                         i + 1,
                         this.sanitizePromptInput(action.eventType),
                         this.sanitizePromptInput(action.expressionBefore),

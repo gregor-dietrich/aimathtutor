@@ -22,7 +22,6 @@
     "organizeImports", // Organizes imports to remove unused ones and sort them according to the project's import order.
     "qualifyMembers", // Qualifies field and method accesses with 'this' or the class name when necessary.
     "renameFileToType", // Renames the file to match the class name, ensuring consistency between file and class names.
-    "renameUnusedLocalVariables", // Renames unused local variables to improve readability and reduce confusion.
     "switchExpression", // Converts traditional switch statements to modern switch expressions where applicable.
     "tryWithResource", // Converts try-finally blocks into try-with-resources statements where applicable.
     "useSwitchForInstanceofPattern" // Uses switch expressions for instanceof pattern matching to enhance readability.
