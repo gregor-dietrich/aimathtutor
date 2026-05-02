@@ -6,10 +6,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Represents AI-generated feedback for a student's math action.
  * Contains hints, encouragement, corrections, and next steps.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Public fields used for Jackson JSON mapping and Panache-style DTOs")
 public class AiFeedbackDto {
 
     /**
@@ -126,6 +129,15 @@ public class AiFeedbackDto {
      */
     public static AiFeedbackDto error(final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
+    }
+
+    /**
+     * Clamps the confidence score to the valid range [0.0, 1.0].
+     */
+    public void clampConfidence() {
+        if (this.confidence != null) {
+            this.confidence = Math.max(0.0, Math.min(1.0, this.confidence));
+        }
     }
 
     /**

@@ -8,11 +8,14 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
-import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -59,6 +62,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient ExerciseViewDto exercise;
     private transient String currentSessionId;
     private transient int hintCount = 0;
+    private transient boolean problemSolved = false;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
@@ -140,6 +144,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.currentSessionId = "session-" + System.currentTimeMillis();
         }
 
+        this.problemSolved = false;
+
         // Left side: Exercise content and Graspable Math canvas (70%)
         final var leftPanel = new VerticalLayout();
         leftPanel.setWidthFull(); // Only set width, let height be natural
@@ -189,7 +195,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             titleSection.add(badge);
         }
 
-        this.backButton = new Button("← Back to Exercises", e -> {
+        this.backButton = new Button("← Back to Exercises", _ -> {
             UI.getCurrent().navigate(LessonsView.class);
         });
         this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
@@ -249,7 +255,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("padding", "var(--lumo-space-m)");
 
-        this.requestHintButton = new Button("Request Hint", e -> this.showNextHint());
+        this.requestHintButton = new Button("Request Hint", _ -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         final var hintsSection = new VerticalLayout(hintsHeader, this.hintsPanel, this.requestHintButton);
@@ -358,33 +364,33 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Initialize canvas and load problem once ready
         UI.getCurrent().getPage().executeJs(
                 """
-                var initAttempts = 0;
-                var maxInitAttempts = 50;
-                var checkAndInitialize = function() {
-                  if (window.initializeGraspableMath) {
-                    window.initializeGraspableMath();
-                    var loadProblemWhenReady = function() {
-                      if (window.graspableCanvas && window.graspableMathUtils) {
-                        console.log('[Exercise] Canvas ready, loading problem');
-                        window.graspableMathUtils.loadProblem($0, 100, 50);
-                      } else {
-                        console.log('[Exercise] Waiting for canvas...');
-                        setTimeout(loadProblemWhenReady, 200);
-                      }
-                    };
-                    setTimeout(loadProblemWhenReady, 500);
-                  } else {
-                    initAttempts++;
-                    if (initAttempts < maxInitAttempts) {
-                      console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
-                      setTimeout(checkAndInitialize, 100);
-                    } else {
-                      console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
-                    }
-                  }
-                };
-                checkAndInitialize();
-                """,
+                        var initAttempts = 0;
+                        var maxInitAttempts = 50;
+                        var checkAndInitialize = function() {
+                          if (window.initializeGraspableMath) {
+                            window.initializeGraspableMath();
+                            var loadProblemWhenReady = function() {
+                              if (window.graspableCanvas && window.graspableMathUtils) {
+                                console.log('[Exercise] Canvas ready, loading problem');
+                                window.graspableMathUtils.loadProblem($0, 100, 50);
+                              } else {
+                                console.log('[Exercise] Waiting for canvas...');
+                                setTimeout(loadProblemWhenReady, 200);
+                              }
+                            };
+                            setTimeout(loadProblemWhenReady, 500);
+                          } else {
+                            initAttempts++;
+                            if (initAttempts < maxInitAttempts) {
+                              console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
+                              setTimeout(checkAndInitialize, 100);
+                            } else {
+                              console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
+                            }
+                          }
+                        };
+                        checkAndInitialize();
+                        """,
                 this.exercise.graspableInitialExpression);
 
         // Register server-side connector
@@ -435,8 +441,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Add event to conversation context
         this.conversationContext.addAction(event);
 
+        final boolean wasAlreadySolved = this.problemSolved;
+
         // Check if problem is completed (only if target expression is defined)
-        if (this.exercise.graspableTargetExpression != null
+        if (!wasAlreadySolved && this.exercise.graspableTargetExpression != null
                 && !this.exercise.graspableTargetExpression.isBlank()) {
             final boolean isComplete = this.graspableMathService.checkCompletion(
                     expressionAfter,
@@ -444,6 +452,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             if (isComplete) {
                 event.isComplete = true;
+                this.problemSolved = true;
                 // Mark session as completed
                 this.graspableMathService.markSessionComplete(this.currentSessionId);
 
@@ -457,46 +466,52 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Process event through GraspableMathService (for session tracking)
         this.graspableMathService.processEvent(event);
 
+        // Skip action analysis if problem was already solved before this action
+        if (wasAlreadySolved) {
+            return;
+        }
+
         // Get AI feedback asynchronously (may return null if action is insignificant)
         // Don't show typing indicator for math actions - only show it when we get
         // actual feedback
         final var ui = UI.getCurrent();
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
-            ui.access(() -> {
-                // Only log and display if we got feedback
-                if (feedback != null) {
-                    // Log interaction
-                    this.aiTutorService.logInteraction(event, feedback);
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
+                .thenAccept(feedback -> {
+                    ui.access(() -> {
+                        // Only log and display if we got feedback
+                        if (feedback != null) {
+                            // Log interaction
+                            this.aiTutorService.logInteraction(event, feedback);
 
-                    // Create feedback message and add to conversation context
-                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
-                    feedbackMessage.sessionId = this.currentSessionId;
-                    this.conversationContext.addAiMessage(feedbackMessage);
+                            // Create feedback message and add to conversation context
+                            final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
+                            feedbackMessage.sessionId = this.currentSessionId;
+                            this.conversationContext.addAiMessage(feedbackMessage);
 
-                    // Display feedback inline (replaces displayFeedback method)
-                    final var message = ChatMessageDto.aiFeedback(feedback.message);
-                    message.sessionId = this.currentSessionId;
+                            // Display feedback inline (replaces displayFeedback method)
+                            final var message = ChatMessageDto.aiFeedback(feedback.message);
+                            message.sessionId = this.currentSessionId;
 
-                    // Add hints as part of the message if present
-                    if (feedback.hints != null && !feedback.hints.isEmpty()) {
-                        final StringBuilder fullMessage = new StringBuilder(feedback.message);
-                        for (final String hint : feedback.hints) {
-                            fullMessage.append("\n💡 ").append(hint);
+                            // Add hints as part of the message if present
+                            if (feedback.hints != null && !feedback.hints.isEmpty()) {
+                                final StringBuilder fullMessage = new StringBuilder(feedback.message);
+                                for (final String hint : feedback.hints) {
+                                    fullMessage.append("\n💡 ").append(hint);
+                                }
+                                message.message = fullMessage.toString();
+                            }
+
+                            this.chatPanel.addMessage(message);
                         }
-                        message.message = fullMessage.toString();
-                    }
-
-                    this.chatPanel.addMessage(message);
-                }
-            });
-        }).exceptionally(ex -> {
-            ui.access(() -> {
-                LOG.error("Error getting AI feedback", ex);
-            });
-            return null;
-        });
+                    });
+                }).exceptionally(ex -> {
+                    ui.access(() -> {
+                        LOG.error("Error getting AI feedback", ex);
+                    });
+                    return null;
+                });
     }
 
     /**
@@ -523,7 +538,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Get AI answer asynchronously
         final var ui = UI.getCurrent();
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.currentSessionId, this.conversationContext, userIdStr)
+                .answerQuestionAsync(question, this.currentExpression,
+                        this.exercise != null ? this.exercise.graspableInitialExpression : null,
+                        this.exercise != null ? this.exercise.graspableTargetExpression : null,
+                        this.currentSessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     // Log the question and answer interaction BEFORE UI access (to ensure proper
                     // transaction context)

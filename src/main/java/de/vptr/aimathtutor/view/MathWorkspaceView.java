@@ -54,9 +54,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private Div graspableCanvas;
     private AiChatPanel chatPanel;
     private String currentExpression;
+    private String initialExpression;
     private String targetExpression;
     private String sessionId;
     private boolean initialized = false;
+    private boolean problemSolved = false;
     private GraspableProblemDto.ProblemCategory selectedCategory = GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
@@ -219,7 +221,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Store initial expression and target for completion checking
         this.currentExpression = problem.initialExpression;
+        this.initialExpression = problem.initialExpression;
         this.targetExpression = problem.targetExpression;
+        this.problemSolved = false;
 
         // Add message about the loaded problem
         this.chatPanel.addMessage(ChatMessageDto.system("Problem loaded: " + problem.title));
@@ -259,14 +263,17 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Add action to conversation context
         this.conversationContext.addAction(event);
 
+        final boolean wasAlreadySolved = this.problemSolved;
+
         // Check if problem is completed (if target is set)
-        if (this.targetExpression != null && !this.targetExpression.isBlank()) {
+        if (!wasAlreadySolved && this.targetExpression != null && !this.targetExpression.isBlank()) {
             final boolean isComplete = this.graspableMathService.checkCompletion(
                     expressionAfter,
                     this.targetExpression);
 
             if (isComplete) {
                 event.isComplete = true;
+                this.problemSolved = true;
 
                 // Show success notification
                 UI.getCurrent().access(() -> {
@@ -276,6 +283,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 // Clear target so we don't keep checking
                 this.targetExpression = null;
             }
+        }
+
+        // Skip action analysis if problem was already solved before this action
+        if (wasAlreadySolved) {
+            return;
         }
 
         // Get AI feedback asynchronously (may return null if action is insignificant)
@@ -330,7 +342,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final var userId = this.authService.getUserId();
         final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.sessionId, this.conversationContext, userIdStr)
+                .answerQuestionAsync(question, this.currentExpression, this.initialExpression, this.targetExpression, this.sessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator
@@ -481,6 +493,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Store expression
         this.currentExpression = expression;
+        this.initialExpression = expression;
+        this.targetExpression = null;
+        this.problemSolved = false;
 
         this.chatPanel.addMessage(ChatMessageDto.system("Custom problem loaded: " + expression));
     }
@@ -500,7 +515,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Store initial expression and target
         this.currentExpression = problem.initialExpression;
+        this.initialExpression = problem.initialExpression;
         this.targetExpression = problem.targetExpression; // Store target for completion checking
+        this.problemSolved = false;
 
         this.chatPanel.addMessage(ChatMessageDto.system("New problem loaded: " + problem.title));
     }
@@ -513,7 +530,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 """);
 
         this.currentExpression = null;
+        this.initialExpression = null;
         this.targetExpression = null; // Clear target too
+        this.problemSolved = false;
         this.chatPanel.clearMessages();
         this.chatPanel.addMessage(ChatMessageDto.system("Canvas reset. Click 'Generate New Problem' to start!"));
     }

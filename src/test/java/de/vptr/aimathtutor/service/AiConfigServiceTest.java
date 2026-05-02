@@ -1,6 +1,9 @@
 package de.vptr.aimathtutor.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -49,7 +52,8 @@ class AiConfigServiceTest {
                 "test.bool.true", "test.bool.false", "test.bool.one", "test.bool.zero",
                 "test.config1", "test.config2", "test.config3", "update.test",
                 "batch.config1", "batch.config2", "batch.config3",
-                "cache.test", "cache.clear.test", "test.integer", "test.boolean", "test.string");
+                "cache.test", "cache.clear.test", "test.integer", "test.boolean", "test.string",
+                "test.temperature", "test.max-tokens");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
@@ -384,5 +388,45 @@ class AiConfigServiceTest {
         // Null key must throw exception
         assertThrows(IllegalArgumentException.class,
                 () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("Range validation - temperature out of bounds")
+    @Transactional
+    void testValidateTemperatureRange() {
+        final var entity = new AiConfigEntity("test.temperature", "0.5", "DOUBLE", "TEST", null, true);
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
+
+        // Valid temperature
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.temperature", "1.5", this.adminUser.id));
+
+        // Too high
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig("test.temperature", "3.0", this.adminUser.id));
+
+        // Too low
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("Range validation - max-tokens out of bounds")
+    @Transactional
+    void testValidateMaxTokensRange() {
+        final var entity = new AiConfigEntity("test.max-tokens", "1000", "INTEGER", "TEST", null, true);
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
+
+        // Valid max-tokens
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.max-tokens", "4096", this.adminUser.id));
+
+        // Too high
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig("test.max-tokens", "10000", this.adminUser.id));
+
+        // Too low
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig("test.max-tokens", "0", this.adminUser.id));
     }
 }

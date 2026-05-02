@@ -71,7 +71,8 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         }
 
         final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !(userRank.canAdminView() || userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission())) {
+        if (userRank == null || !(userRank.canAdminView() || userRank.hasAnyExercisePermission()
+                || userRank.hasAnyLessonPermission())) {
             NotificationUtil.showError("You do not have permission to access this page");
             event.forwardTo("/");
             return;
@@ -160,8 +161,8 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         providerCombo.setWidthFull();
 
         // Save button
-        final var saveBtn = new Button("Save", e -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
-        saveBtn.addClickListener(e -> LOG.info("General config save clicked"));
+        final var saveBtn = new Button("Save", _ -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
+        saveBtn.addClickListener(_ -> LOG.info("General config save clicked"));
 
         panel.add(enabledCheckbox, providerCombo, saveBtn);
         return panel;
@@ -181,9 +182,9 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Model field
         final var modelField = new TextField("Model");
-        modelField.setValue(this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite"));
+        modelField.setValue(this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it"));
         modelField.setWidthFull();
-        modelField.setHelperText("Gemini model name (e.g., gemini-2.5-flash-lite)");
+        modelField.setHelperText("Gemini model name (e.g., gemma-3-27b-it)");
 
         // API Base URL
         final var urlField = new TextField("API Base URL");
@@ -209,7 +210,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                e -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+                _ -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
 
         panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, saveBtn);
         return panel;
@@ -234,9 +235,9 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Model field
         final var modelField = new TextField("Model");
-        modelField.setValue(this.aiConfigService.getConfigValue("openai.model", "gpt-4o-mini"));
+        modelField.setValue(this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano"));
         modelField.setWidthFull();
-        modelField.setHelperText("OpenAI model name (e.g., gpt-4o-mini)");
+        modelField.setHelperText("OpenAI model name (e.g., gpt-5-nano)");
 
         // API Base URL
         final var urlField = new TextField("API Base URL");
@@ -261,7 +262,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                e -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
+                _ -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
 
         panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField, saveBtn);
         return panel;
@@ -310,7 +311,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                e -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
+                _ -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
 
         panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField, saveBtn);
         return panel;
@@ -351,7 +352,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
 
         // Save button
         final var saveBtn = new Button("Save",
-                e -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+                _ -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
         return panel;
@@ -373,7 +374,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving general config", e);
         }
     }
@@ -400,7 +401,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving Gemini config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving Gemini config", e);
         }
     }
@@ -428,7 +429,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving OpenAI config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving OpenAI config", e);
         }
     }
@@ -458,7 +459,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving Ollama config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving Ollama config", e);
         }
     }
@@ -483,7 +484,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving prompts", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving prompts", e);
         }
     }

@@ -202,6 +202,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
 
     /**
      * Search for students by username and update the grid with results.
+     * Pushes username filtering to the database.
      */
     private void searchStudents() {
         final String searchTerm = this.searchField.getValue();
@@ -211,14 +212,11 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
         }
 
         try {
-            final var allProgress = this.analyticsService.getAllUsersProgressSummary();
-            final var filtered = allProgress.stream()
-                    .filter(p -> p.username != null && p.username.toLowerCase().contains(searchTerm.toLowerCase()))
-                    .toList();
-            this.grid.setItems(filtered);
+            final var progress = this.analyticsService.getUsersProgressSummaryByUsernameSearch(searchTerm);
+            this.grid.setItems(progress);
         } catch (final Exception e) {
             LOG.error("Error searching students", e);
-            NotificationUtil.showError("Error searching students: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching students. Please try again.");
         }
     }
 
@@ -248,29 +246,28 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
 
     /**
      * Filter the progress data by the selected start and end date.
+     * Pushes date range filtering to the database.
      */
     private void filterByDateRange() {
         try {
-            final var allProgress = this.analyticsService.getAllUsersProgressSummary();
             final var startDate = this.startDatePicker.getValue();
             final var endDate = this.endDatePicker.getValue();
 
-            final var filtered = allProgress.stream()
-                    .filter(p -> {
-                        if (p.lastActivity == null) {
-                            return false;
-                        }
-                        final var activityDate = p.lastActivity.toLocalDate();
-                        final boolean passStart = startDate == null || !activityDate.isBefore(startDate);
-                        final boolean passEnd = endDate == null || !activityDate.isAfter(endDate);
-                        return passStart && passEnd;
-                    })
-                    .toList();
+            if (startDate == null && endDate == null) {
+                this.loadProgressData();
+                return;
+            }
 
-            this.grid.setItems(filtered);
+            final var startDateTime = startDate != null ? startDate.atStartOfDay()
+                    : java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
+            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX)
+                    : java.time.LocalDateTime.of(2099, 12, 31, 23, 59, 59);
+
+            final var progress = this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime);
+            this.grid.setItems(progress);
         } catch (final Exception e) {
             LOG.error("Error filtering by date range", e);
-            NotificationUtil.showError("Error filtering by date range: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering by date range. Please try again.");
         }
     }
 

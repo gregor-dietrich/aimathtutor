@@ -112,75 +112,11 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 > **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
 
-### 4.5 Security Considerations
-
-#### 4.5.1 ULIDs
+### 4.5 ULIDs
 
 Use ULIDs for IDs rather than auto-incrementing integers.
 
-### 4.6 Database & Query Optimization
-
-- **Fix broken named queries in ExerciseRepository.** `search()` and `findByDateRange()` reference `@NamedQuery` names (`Exercise.searchByTerm`, `Exercise.findByDateRange`) that do not exist in `ExerciseEntity`. This will throw `IllegalArgumentException` at runtime. Add the missing named queries or implement as ad-hoc JPQL.
-- **Add database indexes on heavily queried columns.** No entity defines `@Index` or `@Table(indexes=...)`. Add indexes at least for:
-  - `StudentSessionEntity`: `(user_id, start_time)`, `(exercise_id, start_time)`, `(completed, start_time)`, `(start_time)`
-  - `ExerciseEntity`: `(lesson_id, published)`, `(published, id DESC)`, `(user_id, id DESC)`
-  - `CommentEntity`: `(exercise_id, status, created)`, `(user_id, created)`, `(parent_comment_id, status, created)`, `(status, created)`, `(session_id, created)`, `(flags_count, status)`
-  - `UserEntity`: `(rank_id)`, `(activated, banned)`
-  - `LessonEntity`: `(parent_id)`
-  - `AiInteractionEntity`: `(session_id)`, `(user_id)`, `(exercise_id)`
-  - `UserGroupMetaEntity`: `(group_id, user_id)`
-    When adding indexes, check all entities for additional filtering/sorting columns that would benefit.
-- **Fix N+1 query patterns:**
-  - `ExerciseService.enrichWithCompletionData()` calls `analyticsService.getSessionsByUserAndExercise()` once per exercise. Batch-load completion data in a single query.
-  - `UserGroupService.getUsersInGroup()` iterates lazy `userGroupMetas` triggering per-user loads. Use a fetch-join query in `UserGroupMetaRepository`.
-  - `LessonsView.buildUi()` calls `exerciseService.findByLessonId()` once per lesson. Load all published exercises once and group by `lessonId` in memory.
-  - `StudentSessionEntity` uses `FetchType.EAGER` on `user` and `exercise` without fetch joins. Change to `LAZY` and add `LEFT JOIN FETCH` variants for list queries.
-    When fixing N+1 issues, check all service methods that iterate collections and access lazy relationships for identical patterns.
-- **Replace in-memory filtering with database queries:**
-  - `AdminSessionsView.filterByDateRange()` loads all sessions then filters in Java. Push date range to repository query.
-  - `AdminProgressView.searchStudents()` and `filterByDateRange()` load all users + all sessions then filter DTOs in memory. Push filtering to DB.
-  - `CommentService.searchComments()` with blank query falls back to `getAllComments()`. Return empty list or paged default instead.
-    When fixing, check all views/services that load full datasets then filter in memory for identical patterns.
-- **Replace in-memory analytics counting with JPQL aggregates:**
-  - `AnalyticsService.getActiveStudentsCount()` loads all sessions from last 7 days to `distinct().count()` user IDs. Use `COUNT(DISTINCT s.user.id)`.
-  - `AnalyticsService.getTodaySessionsCount()` loads all today's sessions to call `.size()`. Use `COUNT(s)`.
-  - `AnalyticsService.getProblemCategoryStats()` loads all completed sessions ever. Use `GROUP BY` JPQL.
-    When fixing, check all analytics methods for identical full-table-load-then-count patterns.
-- **Use COUNT queries for emptiness checks.** `UserRankService.deleteRank()` loads full user list just to check if empty. Use `userRepository.countByRankId()` instead. When fixing, check all services that load lists only to test emptiness.
-
-### 4.7 Refactoring: Database Access
-
-Refactor services and entities so that services no longer include database queries, maintaining separation of concerns between layers. Additionally:
-
-- **Standardize repository patterns.** `LessonRepository` directly injects `EntityManager` and does NOT extend `AbstractRepository`, while `UserRepository`, `ExerciseRepository`, and `CommentRepository` do extend it. Make all repositories follow the same pattern consistently, i.e. extend `AbstractRepository`. When fixing, check all repositories for identical inconsistencies.
-- **Remove database queries from entity classes.** `CommentEntity` contains static finder methods (`findByExerciseId`, `findByUserId`, etc.) that duplicate repository functionality and are unused dead code. Remove them.
-
-### 4.8 Error Handling & Reliability
-
-- **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
-  - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
-  - `UserService.patchUser()` — swallows password hashing exceptions.
-  - `OpenAiService.generateContent()` and `OllamaService.generateContent()` — mask transport and programming errors.
-  - `AiTutorService` — multiple broad catches around AI provider calls.
-  - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
-    Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
-- **Fix null safety issues:**
-  - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
-  - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
-  - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
-  - `AiTutorService.logInteraction()` line 1043: `feedback.type.toString()` without null check.
-    **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
-- **Remove PII from logs.** `AiTutorService` logs raw student questions and AI answers at INFO level (lines ~1101, ~1135, ~1164). Log only metadata (sessionId, length, success/failure), never content. **When fixing, check all AI service and tutor service logging for identical PII exposure.**
-- **Fix user-facing error messages to avoid information leakage.**
-  - `LoginView` shows `ex.getMessage()` directly to users.
-  - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
-  - `AdminConfigView` shows `e.getMessage()` in error notifications.
-    Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
-- **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
-- **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
-- **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
-
-### 4.9 Code Quality & Architecture
+### 4.6 Code Quality & Architecture
 
 - **Extract base admin view to eliminate duplication.** Create `AbstractAdminView` handling:
   - `beforeEnter()` auth checks (unify `LoginView.class` vs `"login"` string inconsistencies).
@@ -223,24 +159,6 @@ Refactor services and entities so that services no longer include database queri
   - Commented-out code block in `MathWorkspaceView` (lines 341-356).
   - Run optimize imports across the codebase.
     **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
-
-### 4.10 AI Service Hardening
-
-- **Add prompt injection defenses.** User input (`question`, `expressionBefore`, `expressionAfter`, `eventType`) is directly concatenated into prompts without delimiters or escaping. Use XML tags or fenced code blocks to separate system instructions from user data. Add maximum length checks on questions/expressions before building prompts. **When fixing, check all prompt-building methods for identical raw-concatenation patterns.**
-- **Add server-side config validation and hard caps.**
-  - `AiConfigService.validateConfigValue` does not range-check `DOUBLE` types. Enforce temperature 0.0-2.0, maxTokens 1-8192 (or provider-specific hard cap).
-  - Enforce server-side hard caps on `maxTokens` in `GeminiService` and `OpenAiService` regardless of DB config.
-  - `AdminConfigView` uses client-side `setMax()` on NumberFields; this can be bypassed. Enforce the same limits server-side.
-    **When fixing, check all numeric config values for identical missing validation.**
-- **Validate AI base URLs to prevent SSRF.** (See 4.5 Security Considerations for related topics; add URL validation subsection if implementing.)
-- **Improve response handling.**
-  - `AiTutorService.parseFeedbackFromJson` catches generic `Exception`, masking `JsonMappingException` and `OutOfMemoryError`. Catch specific `JsonProcessingException`/`IOException` only.
-  - `GeminiResponseDto.isBlocked()` conflates null/empty response with safety blocks. Distinguish explicitly.
-  - `OpenAiResponseDto.isComplete()` only accepts `"stop"`. Handle `"length"` and `"content_filter"` explicitly.
-  - `AiFeedbackDto.confidence` has no range validation. Clamp to `[0.0, 1.0]`.
-    **When fixing, check all JSON parsing and response DTOs for identical unsafe handling.**
-- **Populate audit fields.** `AiInteractionEntity.conversationContext` exists but is never populated in `logInteraction` or `logQuestionInteraction`. Populate it with a sanitized snapshot of the prompt/context sent. **When fixing, check all entity creation methods for identical missing field population.**
-- **Remove full prompt content from DEBUG logs.** `AiTutorService` logs entire prompts including conversation context at DEBUG. Remove content from logs; log only hash/length, or use separate TRACE level. **When fixing, check all AI services for identical sensitive-data logging.**
 
 ---
 

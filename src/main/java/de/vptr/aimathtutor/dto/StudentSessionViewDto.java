@@ -67,7 +67,7 @@ public class StudentSessionViewDto {
             }
 
             // Compute success rate
-            if (entity.actionsCount > 0) {
+            if (entity.actionsCount != null && entity.actionsCount > 0) {
                 this.successRate = (double) entity.correctActions / entity.actionsCount;
             } else {
                 this.successRate = 0.0;

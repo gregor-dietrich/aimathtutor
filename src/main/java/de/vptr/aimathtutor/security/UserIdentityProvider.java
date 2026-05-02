@@ -18,6 +18,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
 /**
@@ -67,11 +68,11 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
             throw new AuthenticationFailedException("Invalid credentials");
         }
 
-        if (user.banned) {
+        if (Boolean.TRUE.equals(user.banned)) {
             throw new AuthenticationFailedException("User is banned");
         }
 
-        if (!user.activated) {
+        if (!Boolean.TRUE.equals(user.activated)) {
             throw new AuthenticationFailedException("User is not activated");
         }
 
@@ -82,7 +83,7 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
                     .setParameter("now", LocalDateTime.now())
                     .setParameter("id", user.id)
                     .executeUpdate();
-        } catch (final Exception e) {
+        } catch (final PersistenceException e) {
             // Log but don't fail authentication for last_login update issues
             // (OptimisticLockException, etc.)
             LOG.debug("Failed to update last_login for user {} (this is expected during concurrent logins): {}",

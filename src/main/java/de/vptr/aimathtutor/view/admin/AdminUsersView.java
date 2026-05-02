@@ -527,8 +527,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                         this.searchButton.setText("Search");
                         if (throwable != null) {
                             LOG.error("Error searching users: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError(throwable.getCause() != null ? throwable.getCause().getMessage()
-                                    : throwable.getMessage());
+                            NotificationUtil.showError("An error occurred while searching users. Please try again.");
                         } else {
                             this.grid.setItems(users);
                         }

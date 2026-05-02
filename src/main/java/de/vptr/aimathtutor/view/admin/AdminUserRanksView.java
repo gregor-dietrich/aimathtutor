@@ -113,7 +113,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
                             LOG.error("Error loading ranks: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load ranks: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to load ranks. Please try again.");
                         } else {
                             LOG.info("Successfully loaded {} ranks", ranks.size());
                             this.grid.setItems(ranks);
@@ -631,10 +631,10 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
             }
         } catch (final WebApplicationException e) {
             LOG.error("Error deleting rank", e);
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError("Failed to delete rank. Please try again.");
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting rank", e);
-            NotificationUtil.showError("Unexpected error occurred: " + e.getMessage());
+            NotificationUtil.showError("Unexpected error occurred");
         }
     }
 
@@ -663,7 +663,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
                         this.searchButton.setEnabled(true);
                         if (throwable != null) {
                             LOG.error("Error searching ranks: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to search ranks: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to search ranks. Please try again.");
                         } else {
                             LOG.info("Successfully found {} ranks", ranks.size());
                             this.grid.setItems(ranks);

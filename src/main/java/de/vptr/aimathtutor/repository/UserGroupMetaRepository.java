@@ -15,6 +15,20 @@ import jakarta.transaction.Transactional;
 public class UserGroupMetaRepository extends AbstractRepository {
 
     /**
+     * Retrieves all group memberships for a specific user with users eagerly
+     * loaded.
+     *
+     * @param groupId the group ID to filter by
+     * @return a list of {@link UserGroupMetaEntity} objects representing group
+     *         members with loaded user data
+     */
+    public List<UserGroupMetaEntity> findByGroupIdWithUsers(final Long groupId) {
+        final var q = this.em.createNamedQuery("UserGroupMeta.findByGroupIdWithUsers", UserGroupMetaEntity.class);
+        q.setParameter("g", groupId);
+        return q.getResultList();
+    }
+
+    /**
      * Retrieves all group memberships for a specific user.
      *
      * @param userId the user ID to filter by

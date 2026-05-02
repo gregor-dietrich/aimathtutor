@@ -90,8 +90,9 @@ public class UserGroupService {
         if (group == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
         }
-        return group.getUsers().stream()
-                .map(UserViewDto::new)
+        final var metas = this.userGroupMetaRepository.findByGroupIdWithUsers(groupId);
+        return metas.stream()
+                .map(meta -> new UserViewDto(meta.user))
                 .toList();
     }
 

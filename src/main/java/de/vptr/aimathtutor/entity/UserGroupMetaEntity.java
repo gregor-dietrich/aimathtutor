@@ -4,18 +4,34 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 /**
  * Entity representing metadata for user group memberships.
  */
 @Entity
-@Table(name = "user_groups_meta")
+@Table(name = "user_groups_meta", indexes = {
+        @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uk_ugm_group_user", columnNames = { "group_id", "user_id" })
+})
 @NamedQueries({
         @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
         @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
         @NamedQuery(name = "UserGroupMeta.countByUserAndGroup", query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g")
+        @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g"),
+        @NamedQuery(name = "UserGroupMeta.findByGroupIdWithUsers", query = "SELECT m FROM UserGroupMetaEntity m LEFT JOIN FETCH m.user WHERE m.group.id = :g")
 })
 public class UserGroupMetaEntity extends PanacheEntityBase {
 

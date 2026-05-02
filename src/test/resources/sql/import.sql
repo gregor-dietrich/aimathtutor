@@ -102,13 +102,13 @@ INSERT INTO ai_config (config_key, config_value, config_type, category, descript
 ('ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, gemini, openai, or ollama', false, 1),
 
 -- Gemini settings
-('gemini.model', 'gemini-2.5-flash-lite', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
+('gemini.model', 'gemma-3-27b-it', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
 ('gemini.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GEMINI', 'Gemini API base URL', false, 1),
 ('gemini.temperature', '0.7', 'DOUBLE', 'GEMINI', 'Gemini temperature setting (0.0-2.0)', false, 1),
 ('gemini.max-tokens', '2000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', false, 1),
 
 -- OpenAI settings
-('openai.model', 'gpt-4o-mini', 'STRING', 'OPENAI', 'OpenAI model name', false, 1),
+('openai.model', 'gpt-5-nano', 'STRING', 'OPENAI', 'OpenAI model name', false, 1),
 ('openai.organization-id', '', 'STRING', 'OPENAI', 'OpenAI organization ID (optional)', true, 1),
 ('openai.api.base-url', 'https://api.openai.com/v1', 'STRING', 'OPENAI', 'OpenAI API base URL', false, 1),
 ('openai.temperature', '0.7', 'DOUBLE', 'OPENAI', 'OpenAI temperature setting (0.0-2.0)', false, 1),

@@ -121,7 +121,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
-            usernameSpan.addClickListener(e -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
+            usernameSpan.addClickListener(_ -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
         }).setHeader("Student")
                 .setFlexGrow(1);
@@ -169,19 +169,19 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
                         this.loadSessions();
                     }
                 },
-                e -> this.searchSessions(),
+                _ -> this.searchSessions(),
                 "Search by student or exercise...",
                 "Search Sessions");
 
         this.searchField = searchLayout.getTextfield();
 
         // Date range filter for session start time
-        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", e -> this.resetFilters());
+        this.resetFiltersButton = new Button("Reset Filters", _ -> this.resetFilters());
         this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetFiltersButton);
@@ -197,7 +197,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(e -> this.loadSessions());
+        final var refreshButton = new RefreshButton(_ -> this.loadSessions());
 
         layout.add(refreshButton);
         return layout;
@@ -218,7 +218,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(sessions);
         } catch (final Exception e) {
             LOG.error("Error searching sessions", e);
-            NotificationUtil.showError("Error searching sessions: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching sessions. Please try again.");
         }
     }
 
@@ -248,29 +248,31 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
 
     /**
      * Filter sessions by the selected start and end dates.
+     * Pushes date range filtering to the database.
      */
     private void filterByDateRange() {
         try {
-            final var allSessions = this.analyticsService.getAllSessions();
             final var startDate = this.startDatePicker.getValue();
             final var endDate = this.endDatePicker.getValue();
 
-            final var filtered = allSessions.stream()
-                    .filter(session -> {
-                        if (session.startTime == null) {
-                            return false;
-                        }
-                        final var sessionDate = session.startTime.toLocalDate();
-                        final boolean passStart = startDate == null || !sessionDate.isBefore(startDate);
-                        final boolean passEnd = endDate == null || !sessionDate.isAfter(endDate);
-                        return passStart && passEnd;
-                    })
-                    .toList();
+            if (startDate == null && endDate == null) {
+                this.loadSessions();
+                return;
+            }
 
-            this.grid.setItems(filtered);
+            final var startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : null;
+
+            if (startDateTime != null && endDateTime != null && startDateTime.isAfter(endDateTime)) {
+                NotificationUtil.showError("Start date must be before or equal to end date.");
+                return;
+            }
+
+            final var sessions = this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime);
+            this.grid.setItems(sessions);
         } catch (final Exception e) {
             LOG.error("Error filtering by date range", e);
-            NotificationUtil.showError("Error filtering by date range: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering by date range. Please try again.");
         }
     }
 

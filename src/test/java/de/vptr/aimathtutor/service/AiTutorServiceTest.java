@@ -1,11 +1,19 @@
 package de.vptr.aimathtutor.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.*;
+import de.vptr.aimathtutor.dto.AiFeedbackDto;
+import de.vptr.aimathtutor.dto.ChatMessageDto;
+import de.vptr.aimathtutor.dto.ConversationContextDto;
+import de.vptr.aimathtutor.dto.GraspableEventDto;
+import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -29,7 +37,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-123";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -52,7 +61,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-456";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -73,7 +83,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-789";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -93,7 +104,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-101";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -113,7 +125,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-202";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -133,7 +146,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-303";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -151,7 +165,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-404";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then - now expects null for insignificant actions
         assertNull(feedback);
@@ -167,7 +182,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-505";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then - now expects null for insignificant actions
         assertNull(feedback);
@@ -236,7 +252,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-606";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -256,7 +273,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-707";
 
         // When
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then
         assertNotNull(feedback);
@@ -273,7 +291,7 @@ class AiTutorServiceTest {
         final String sessionId = "session-808";
 
         // When
-        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, sessionId,
+        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, null, null, sessionId,
                 new ConversationContextDto(), "test-user");
 
         // Then
@@ -295,7 +313,7 @@ class AiTutorServiceTest {
         final String sessionId = "session-909";
 
         // When
-        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, sessionId,
+        final var answer = this.aiTutorService.answerQuestion(question, currentExpression, null, null, sessionId,
                 new ConversationContextDto(), "test-user");
 
         // Then
@@ -313,7 +331,8 @@ class AiTutorServiceTest {
         final String sessionId = "session-010";
 
         // When
-        final var answer = this.aiTutorService.answerQuestion(question, null, sessionId, new ConversationContextDto(), "test-user");
+        final var answer = this.aiTutorService.answerQuestion(question, null, null, null, sessionId,
+                new ConversationContextDto(), "test-user");
 
         // Then
         assertNotNull(answer);
@@ -436,7 +455,8 @@ class AiTutorServiceTest {
         // When - calling directly tests the method (retry logic tested in integration)
         // If Ollama is not available, this will fail which is expected behavior
         try {
-            final String answer = this.aiTutorService.callOllamaForQuestion(question, currentExpression, context);
+            final String answer = this.aiTutorService.callOllamaForQuestion(question, currentExpression, null, null,
+                    context);
             // Then - if Ollama is available, we should get a non-null response
             assertNotNull(answer);
         } catch (final Exception e) {
@@ -479,7 +499,8 @@ class AiTutorServiceTest {
         // Verify the method exists and is accessible (package-private)
         // This test documents the requirement that the method must not be private
         final var method = AiTutorService.class.getDeclaredMethod(
-                "callOllamaForQuestion", String.class, String.class, ConversationContextDto.class);
+                "callOllamaForQuestion", String.class, String.class, String.class, String.class,
+                ConversationContextDto.class);
         assertNotNull(method);
         // Package-private methods are accessible within the same package
         assertTrue(method.canAccess(this.aiTutorService),
@@ -676,7 +697,8 @@ class AiTutorServiceTest {
         event.sessionId = "session-truncated-test";
 
         // When - analyze (this will use mock AI which returns valid JSON)
-        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+        final AiFeedbackDto feedback = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(),
+                "test-user");
 
         // Then - should get valid feedback regardless of implementation
         assertNotNull(feedback);

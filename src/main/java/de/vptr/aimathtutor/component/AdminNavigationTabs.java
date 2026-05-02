@@ -5,7 +5,16 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.RouterLink;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
-import de.vptr.aimathtutor.view.admin.*;
+import de.vptr.aimathtutor.view.admin.AdminCommentsView;
+import de.vptr.aimathtutor.view.admin.AdminConfigView;
+import de.vptr.aimathtutor.view.admin.AdminDashboardView;
+import de.vptr.aimathtutor.view.admin.AdminExercisesView;
+import de.vptr.aimathtutor.view.admin.AdminLessonsView;
+import de.vptr.aimathtutor.view.admin.AdminProgressView;
+import de.vptr.aimathtutor.view.admin.AdminSessionsView;
+import de.vptr.aimathtutor.view.admin.AdminUserGroupsView;
+import de.vptr.aimathtutor.view.admin.AdminUserRanksView;
+import de.vptr.aimathtutor.view.admin.AdminUsersView;
 
 /**
  * Vertical navigation tabs used in the admin area. Tabs are created based on

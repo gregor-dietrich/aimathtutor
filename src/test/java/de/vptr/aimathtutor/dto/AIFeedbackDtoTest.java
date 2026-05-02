@@ -1,6 +1,9 @@
 package de.vptr.aimathtutor.dto;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -174,5 +177,57 @@ class AIFeedbackDtoTest {
         assertNotNull(AiFeedbackDto.FeedbackType.HINT);
         assertNotNull(AiFeedbackDto.FeedbackType.SUGGESTION);
         assertNotNull(AiFeedbackDto.FeedbackType.NEUTRAL);
+    }
+
+    @Test
+    @DisplayName("Should clamp confidence above 1.0 down to 1.0")
+    void shouldClampConfidenceAboveOne() {
+        // Given
+        this.feedbackDto.confidence = 1.5;
+
+        // When
+        this.feedbackDto.clampConfidence();
+
+        // Then
+        assertEquals(1.0, this.feedbackDto.confidence);
+    }
+
+    @Test
+    @DisplayName("Should clamp confidence below 0.0 up to 0.0")
+    void shouldClampConfidenceBelowZero() {
+        // Given
+        this.feedbackDto.confidence = -0.5;
+
+        // When
+        this.feedbackDto.clampConfidence();
+
+        // Then
+        assertEquals(0.0, this.feedbackDto.confidence);
+    }
+
+    @Test
+    @DisplayName("Should leave valid confidence unchanged")
+    void shouldLeaveValidConfidenceUnchanged() {
+        // Given
+        this.feedbackDto.confidence = 0.75;
+
+        // When
+        this.feedbackDto.clampConfidence();
+
+        // Then
+        assertEquals(0.75, this.feedbackDto.confidence);
+    }
+
+    @Test
+    @DisplayName("Should handle null confidence when clamping")
+    void shouldHandleNullConfidenceWhenClamping() {
+        // Given
+        this.feedbackDto.confidence = null;
+
+        // When
+        this.feedbackDto.clampConfidence();
+
+        // Then
+        assertNull(this.feedbackDto.confidence);
     }
 }

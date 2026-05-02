@@ -84,9 +84,11 @@ public class OllamaService {
         // Load dynamic configuration
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
-        final Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
+        Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
+        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
         // Default to 2000 tokens to prevent truncated JSON responses
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 2000);
+        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 2000);
+        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
 
         if (apiUrl == null || apiUrl.isBlank()) {
             throw new IllegalStateException("Ollama API URL not configured. Please configure via admin settings.");
@@ -147,7 +149,7 @@ public class OllamaService {
         } catch (final WebApplicationException e) {
             LOG.error("Error calling Ollama API", e);
             throw e;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOG.error("Unexpected error calling Ollama API", e);
             throw new IllegalStateException("Failed to call Ollama API: " + e.getMessage(), e);
         }
@@ -174,7 +176,7 @@ public class OllamaService {
 
             return available;
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOG.debug("Ollama server not available at {}: {}", apiUrl, e.getMessage());
             return false;
         }
@@ -198,7 +200,7 @@ public class OllamaService {
             // Simple check if model name appears in response
             return body.contains(modelName);
 
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOG.debug("Error checking if model {} is installed: {}", modelName, e.getMessage());
             return false;
         }

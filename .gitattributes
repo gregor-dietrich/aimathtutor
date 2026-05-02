@@ -1,3 +1,6 @@
 *.ts linguist-vendored
-scripts/** linguist-vendored
 Makefile linguist-vendored
+.mvn/** linguist-vendored
+mvnw linguist-vendored
+mvnw.cmd linguist-vendored
+scripts/** linguist-vendored

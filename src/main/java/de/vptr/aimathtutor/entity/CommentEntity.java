@@ -1,10 +1,20 @@
 package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -33,7 +43,14 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findFlaggedComments", query = "FROM CommentEntity WHERE flagsCount >= :m AND status = 'VISIBLE' ORDER BY flagsCount DESC"),
 })
 @Entity
-@Table(name = "comments")
+@Table(name = "comments", indexes = {
+        @Index(name = "idx_comment_exercise_status_created", columnList = "exercise_id, status, created"),
+        @Index(name = "idx_comment_user_created", columnList = "user_id, created"),
+        @Index(name = "idx_comment_parent_status_created", columnList = "parent_comment_id, status, created"),
+        @Index(name = "idx_comment_status_created", columnList = "status, created"),
+        @Index(name = "idx_comment_session_created", columnList = "session_id, created"),
+        @Index(name = "idx_comment_flags_status", columnList = "flags_count, status")
+})
 public class CommentEntity extends PanacheEntityBase {
 
     @Id
@@ -78,88 +95,4 @@ public class CommentEntity extends PanacheEntityBase {
 
     @Column(name = "deleted_at")
     public LocalDateTime deletedAt;
-
-    // Helper method to find comments by exercise
-
-    /**
-     * Find non-deleted comments for a given exercise id ordered by id desc.
-     *
-     * @param exerciseId exercise primary key
-     * @return list of comments
-     */
-    public static List<CommentEntity> findByExerciseId(final Long exerciseId) {
-        return find("exercise.id = ?1 AND status != 'DELETED' ORDER BY id DESC", exerciseId).list();
-    }
-
-    // Helper method to find comments by user
-
-    /**
-     * Find non-deleted comments authored by a user.
-     *
-     * @param userId user primary key
-     * @return list of comments
-     */
-    public static List<CommentEntity> findByUserId(final Long userId) {
-        return find("user.id = ?1 AND status != 'DELETED' ORDER BY id DESC", userId).list();
-    }
-
-    // Helper method to find recent comments
-
-    /**
-     * Retrieve recent non-deleted comments limited by the provided value.
-     *
-     * @param limit maximum number of comments to return
-     * @return list of recent comments
-     */
-    public static List<CommentEntity> findRecentComments(final int limit) {
-        return find("status != 'DELETED' ORDER BY id DESC").page(0, limit).list();
-    }
-
-    // NEW: Find replies to a comment
-
-    /**
-     * Find visible replies for a parent comment.
-     *
-     * @param parentCommentId id of parent comment
-     * @return list of reply comments
-     */
-    public static List<CommentEntity> findReplies(final Long parentCommentId) {
-        return find("parentComment.id = ?1 AND status != 'DELETED' ORDER BY created ASC", parentCommentId).list();
-    }
-
-    // NEW: Find top-level comments for an exercise
-
-    /**
-     * Find top-level (non-reply) comments for an exercise.
-     *
-     * @param exerciseId exercise primary key
-     * @return list of top-level comments
-     */
-    public static List<CommentEntity> findTopLevelByExercise(final Long exerciseId) {
-        return find("exercise.id = ?1 AND parentComment IS NULL AND status != 'DELETED' ORDER BY id DESC",
-                exerciseId).list();
-    }
-
-    // NEW: Find comments by session
-
-    /**
-     * Find comments associated with a particular session id.
-     *
-     * @param sessionId external session identifier
-     * @return list of comments for the session
-     */
-    public static List<CommentEntity> findBySessionId(final String sessionId) {
-        return find("sessionId = ?1 AND status != 'DELETED' ORDER BY id DESC", sessionId).list();
-    }
-
-    // NEW: Count flagged comments
-
-    /**
-     * Count visible comments that have been flagged at least once.
-     *
-     * @return number of flagged comments
-     */
-    public static int findFlaggedCommentCount() {
-        return (int) find("flagsCount > 0 AND status = 'VISIBLE'").count();
-    }
 }

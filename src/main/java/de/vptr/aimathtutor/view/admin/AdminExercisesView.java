@@ -32,7 +32,11 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.component.button.*;
+import de.vptr.aimathtutor.component.button.CommentButton;
+import de.vptr.aimathtutor.component.button.CreateButton;
+import de.vptr.aimathtutor.component.button.DeleteButton;
+import de.vptr.aimathtutor.component.button.EditButton;
+import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
@@ -128,7 +132,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error loading exercises", e);
-            NotificationUtil.showError("Failed to load exercises: " + e.getMessage());
+            NotificationUtil.showError("Failed to load exercises. Please try again.");
         }
     }
 
@@ -140,7 +144,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error loading published exercises", e);
-            NotificationUtil.showError("Failed to load published exercises: " + e.getMessage());
+            NotificationUtil.showError("Failed to load published exercises. Please try again.");
         }
     }
 
@@ -182,24 +186,24 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                         this.loadExercisesAsync();
                     }
                 },
-                e -> this.searchExercise(),
+                _ -> this.searchExercise(),
                 "Search by title or content...",
                 "Search Exercises");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
 
-        this.showPublishedButton = new Button("Show Published Only", e -> this.loadPublishedExercisesAsync());
+        this.showPublishedButton = new Button("Show Published Only", _ -> this.loadPublishedExercisesAsync());
         this.showPublishedButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         // Date range filter
-        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // User ID filter
         final var userFilterLayout = new IntegerFilterLayout(
-                e -> this.filterByUser(),
+                _ -> this.filterByUser(),
                 "Enter User ID...",
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
@@ -217,8 +221,8 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(e -> this.openExerciseDialog(null));
-        final var refreshButton = new RefreshButton(e -> this.loadExercisesAsync());
+        final var createButton = new CreateButton(_ -> this.openExerciseDialog(null));
+        final var refreshButton = new RefreshButton(_ -> this.loadExercisesAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -239,7 +243,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             titleSpan.getStyle().set("cursor", "pointer");
             titleSpan.getStyle().set("width", "100%");
             titleSpan.getStyle().set("display", "block");
-            titleSpan.addClickListener(e -> this.openExerciseDialog(exercise));
+            titleSpan.addClickListener(_ -> this.openExerciseDialog(exercise));
             return titleSpan;
         }).setHeader("Title").setFlexGrow(2);
 
@@ -290,9 +294,9 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(e -> this.openExerciseDialog(exercise));
-        final var deleteButton = new DeleteButton(e -> this.deleteExercise(exercise));
-        final var commentButton = new CommentButton(e -> UI.getCurrent().navigate(AdminCommentsView.class,
+        final var editButton = new EditButton(_ -> this.openExerciseDialog(exercise));
+        final var deleteButton = new DeleteButton(_ -> this.deleteExercise(exercise));
+        final var commentButton = new CommentButton(_ -> UI.getCurrent().navigate(AdminCommentsView.class,
                 new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
 
         layout.add(editButton, deleteButton, commentButton);
@@ -424,7 +428,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
                 (exercise1, value) -> exercise1.graspableEnabled = value);
         this.binder.forField(graspableInitialExpressionField)
-                .withValidator((value, ctx) -> {
+                .withValidator((value, _) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult.error("Initial Expression is required when Graspable Math is enabled");
@@ -434,7 +438,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 .bind(exercise1 -> exercise1.graspableInitialExpression,
                         (exercise1, value) -> exercise1.graspableInitialExpression = value);
         this.binder.forField(graspableTargetExpressionField)
-                .withValidator((value, ctx) -> {
+                .withValidator((value, _) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult.error("Target Expression is required when Graspable Math is enabled");
@@ -444,7 +448,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 .bind(exercise1 -> exercise1.graspableTargetExpression,
                         (exercise1, value) -> exercise1.graspableTargetExpression = value);
         this.binder.forField(graspableDifficultyField)
-                .withValidator((value, ctx) -> {
+                .withValidator((value, _) -> {
                     // Only validate if Graspable Math is enabled
                     if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
                         return ValidationResult
@@ -483,10 +487,10 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", e -> this.saveExercise());
+        final var saveButton = new Button("Save", _ -> this.saveExercise());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", e -> this.exerciseDialog.close());
+        final var cancelButton = new Button("Cancel", _ -> this.exerciseDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
@@ -579,7 +583,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error searching exercises", e);
-            NotificationUtil.showError("Error searching exercises: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching exercises. Please try again.");
         } finally {
             this.searchButton.setEnabled(true);
             this.searchButton.setText("Search");
@@ -608,7 +612,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error filtering exercises by date range", e);
-            NotificationUtil.showError("Error filtering exercises: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering exercises. Please try again.");
         }
     }
 
@@ -624,7 +628,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error filtering exercises by user", e);
-            NotificationUtil.showError("Error filtering exercises: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering exercises. Please try again.");
         }
     }
 }

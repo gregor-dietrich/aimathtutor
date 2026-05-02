@@ -28,17 +28,16 @@ public class RateLimitService {
 
     public RateLimitService() {
         this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "rate-limit-cleanup");
+            final Thread t = new Thread(r, "rate-limit-cleanup");
             t.setDaemon(true);
             return t;
         });
         // Schedule periodic cleanup of stale user entries
         this.cleanupExecutor.scheduleAtFixedRate(
-            this::cleanupStaleEntries,
-            CLEANUP_INTERVAL_SECONDS,
-            CLEANUP_INTERVAL_SECONDS,
-            TimeUnit.SECONDS
-        );
+                this::cleanupStaleEntries,
+                CLEANUP_INTERVAL_SECONDS,
+                CLEANUP_INTERVAL_SECONDS,
+                TimeUnit.SECONDS);
     }
 
     /**
@@ -68,7 +67,7 @@ public class RateLimitService {
                 if (!this.cleanupExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
                     this.cleanupExecutor.shutdownNow();
                 }
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 this.cleanupExecutor.shutdownNow();
                 Thread.currentThread().interrupt();
             }
@@ -77,7 +76,8 @@ public class RateLimitService {
 
     /**
      * Atomically checks if the user is allowed to make another AI tutor call,
-     * and if so, records it. This prevents race conditions between check and record.
+     * and if so, records it. This prevents race conditions between check and
+     * record.
      * Uses map.compute to ensure no orphaned list writes can occur.
      *
      * @param userId the user identifier
@@ -93,7 +93,7 @@ public class RateLimitService {
 
         final boolean[] allowed = { false };
 
-        this.userCallTimestamps.compute(userId, (k, timestamps) -> {
+        this.userCallTimestamps.compute(userId, (_, timestamps) -> {
             CopyOnWriteArrayList<Instant> list = timestamps;
             if (list == null) {
                 list = new CopyOnWriteArrayList<>();
@@ -116,58 +116,6 @@ public class RateLimitService {
     }
 
     /**
-     * Checks if the user is allowed to make another AI tutor call.
-     * Evicts expired entries automatically.
-     *
-     * @deprecated Use {@link #tryConsume(String)} instead to avoid race conditions
-     * @param userId the user identifier
-     * @return true if the call is allowed
-     */
-    @Deprecated
-    public boolean isAllowed(final String userId) {
-        if (userId == null || userId.isBlank()) {
-            return false;
-        }
-
-        final Instant now = Instant.now();
-        final Instant windowStart = now.minusSeconds(WINDOW_SECONDS);
-
-        final boolean[] allowed = { false };
-
-        this.userCallTimestamps.computeIfPresent(userId, (k, timestamps) -> {
-            // Prune expired timestamps
-            timestamps.removeIf(ts -> ts.isBefore(windowStart));
-
-            // Check if allowed
-            allowed[0] = timestamps.size() < AI_CALLS_PER_MINUTE;
-
-            // Return null to remove empty lists
-            return timestamps.isEmpty() ? null : timestamps;
-        });
-
-        // If user not in map, they are allowed
-        if (this.userCallTimestamps.get(userId) == null) {
-            allowed[0] = true;
-        }
-
-        return allowed[0];
-    }
-
-    /**
-     * Records a successful AI tutor call for the user.
-     *
-     * @deprecated Use {@link #tryConsume(String)} instead to avoid race conditions
-     * @param userId the user identifier
-     */
-    @Deprecated
-    public void recordCall(final String userId) {
-        if (userId == null || userId.isBlank()) {
-            return;
-        }
-        this.userCallTimestamps.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(Instant.now());
-    }
-
-    /**
      * Returns the number of seconds until the next call is allowed,
      * or 0 if calls are currently allowed.
      * Uses map.compute to avoid race conditions with list modifications.
@@ -182,7 +130,7 @@ public class RateLimitService {
 
         final long[] cooldown = { 0 };
 
-        this.userCallTimestamps.computeIfPresent(userId, (k, timestamps) -> {
+        this.userCallTimestamps.computeIfPresent(userId, (_, timestamps) -> {
             final Instant now = Instant.now();
             final Instant windowStart = now.minusSeconds(WINDOW_SECONDS);
 

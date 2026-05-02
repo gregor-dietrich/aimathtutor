@@ -28,7 +28,12 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 
-import de.vptr.aimathtutor.component.button.*;
+import de.vptr.aimathtutor.component.button.CreateButton;
+import de.vptr.aimathtutor.component.button.DeleteButton;
+import de.vptr.aimathtutor.component.button.EditButton;
+import de.vptr.aimathtutor.component.button.ManageUsersButton;
+import de.vptr.aimathtutor.component.button.RefreshButton;
+import de.vptr.aimathtutor.component.button.RemoveUserButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
@@ -122,7 +127,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
                             LOG.error("Error loading groups: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load groups: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to load groups. Please try again.");
                         } else {
                             LOG.info("Successfully loaded {} groups", groups.size());
                             this.grid.setItems(groups);
@@ -151,7 +156,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                         this.loadGroupsAsync();
                     }
                 },
-                e -> this.searchGroups(),
+                _ -> this.searchGroups(),
                 "Search by name...",
                 "Search Groups");
 
@@ -160,7 +165,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
 
         // User ID filter
         final var userFilterLayout = new IntegerFilterLayout(
-                e -> this.filterByUser(),
+                _ -> this.filterByUser(),
                 "Enter User ID...",
                 "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
@@ -173,8 +178,8 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var createButton = new CreateButton(e -> this.openGroupDialog(null));
-        final var refreshButton = new RefreshButton(e -> this.loadGroupsAsync());
+        final var createButton = new CreateButton(_ -> this.openGroupDialog(null));
+        final var refreshButton = new RefreshButton(_ -> this.loadGroupsAsync());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -195,7 +200,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
             nameSpan.getStyle().set("display", "block");
-            nameSpan.addClickListener(e -> this.openGroupDialog(group));
+            nameSpan.addClickListener(_ -> this.openGroupDialog(group));
             return nameSpan;
         }).setHeader("Name").setFlexGrow(2);
 
@@ -210,9 +215,9 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var editButton = new EditButton(e -> this.openGroupDialog(group));
-        final var deleteButton = new DeleteButton(e -> this.deleteGroup(group));
-        final var manageUsersButton = new ManageUsersButton(e -> this.openUserManagementDialog(group));
+        final var editButton = new EditButton(_ -> this.openGroupDialog(group));
+        final var deleteButton = new DeleteButton(_ -> this.deleteGroup(group));
+        final var manageUsersButton = new ManageUsersButton(_ -> this.openUserManagementDialog(group));
 
         layout.add(editButton, deleteButton, manageUsersButton);
         return layout;
@@ -245,10 +250,10 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var saveButton = new Button("Save", e -> this.saveGroup());
+        final var saveButton = new Button("Save", _ -> this.saveGroup());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        final var cancelButton = new Button("Cancel", e -> this.groupDialog.close());
+        final var cancelButton = new Button("Cancel", _ -> this.groupDialog.close());
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
@@ -333,7 +338,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                         this.searchButton.setEnabled(true);
                         if (throwable != null) {
                             LOG.error("Error searching groups: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to search groups: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to search groups. Please try again.");
                         } else {
                             LOG.info("Successfully found {} groups", groups.size());
                             this.grid.setItems(groups);
@@ -359,7 +364,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
 
         // Add remove button column
         this.userGrid.addComponentColumn(user -> {
-            final var removeButton = new RemoveUserButton(e -> this.removeUserFromGroup(user));
+            final var removeButton = new RemoveUserButton(_ -> this.removeUserFromGroup(user));
             return removeButton;
         }).setHeader("Actions").setWidth("120px").setFlexGrow(0);
 
@@ -374,7 +379,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         this.availableUsersCombo.setWidth("300px");
         this.availableUsersCombo.setPlaceholder("Select a user to add...");
 
-        final var addButton = new Button("Add User", e -> this.addUserToGroup());
+        final var addButton = new Button("Add User", _ -> this.addUserToGroup());
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         addUserLayout.add(this.availableUsersCombo, addButton);
@@ -383,8 +388,8 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         final var buttonLayout = new HorizontalLayout();
         buttonLayout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(e -> this.loadGroupUsers());
-        final var closeButton = new Button("Close", e -> this.userManagementDialog.close());
+        final var refreshButton = new RefreshButton(_ -> this.loadGroupUsers());
+        final var closeButton = new Button("Close", _ -> this.userManagementDialog.close());
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         buttonLayout.add(refreshButton, closeButton);

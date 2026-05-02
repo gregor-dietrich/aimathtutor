@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -207,12 +208,7 @@ public class CommentService {
         }
 
         // 2. Check rate limiting
-        try {
-            this.checkRateLimit(authorId);
-        } catch (final Exception e) {
-            LOG.warn("Rate limit exceeded for authorId={}", authorId);
-            throw e;
-        }
+        this.checkRateLimit(authorId);
 
         // 3. Validate exercise exists and allows comments
         final ExerciseEntity exercise = this.exerciseRepository.findById(dto.exerciseId);
@@ -370,7 +366,7 @@ public class CommentService {
             throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
         }
 
-        final boolean isAuthor = comment.user.id.equals(requesterId);
+        final boolean isAuthor = comment.user != null && comment.user.id.equals(requesterId);
         final boolean isModerator = this.isModerator(requester);
 
         if (!isAuthor && !isModerator) {
@@ -420,7 +416,7 @@ public class CommentService {
             throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
-        final boolean isAuthor = comment.user.id.equals(editorId);
+        final boolean isAuthor = comment.user != null && comment.user.id.equals(editorId);
         final boolean isModerator = this.isModerator(editor);
 
         if (!isAuthor && !isModerator) {
@@ -457,7 +453,7 @@ public class CommentService {
         }
 
         // Prevent self-flagging
-        if (comment.user.id.equals(flaggerId)) {
+        if (comment.user != null && comment.user.id.equals(flaggerId)) {
             LOG.warn("Self-flag attempt: commentId={}, flaggerId={}", commentId, flaggerId);
             throw new WebApplicationException("Cannot flag your own comment", Response.Status.BAD_REQUEST);
         }
@@ -619,14 +615,15 @@ public class CommentService {
     /**
      * Searches comments by content using the provided query string
      * (case-insensitive).
-     * Returns all comments if query is null or empty.
+     * Returns an empty list if query is null or empty to avoid loading full
+     * datasets.
      *
      * @param query the search query string (content match)
      * @return a list of matching {@link CommentViewDto}s
      */
     public List<CommentViewDto> searchComments(final String query) {
         if (query == null || query.isBlank()) {
-            return this.getAllComments();
+            return List.of();
         }
         final var searchTerm = "%" + query.trim().toLowerCase() + "%";
         final List<CommentEntity> comments = this.commentRepository.search(searchTerm);
@@ -661,7 +658,7 @@ public class CommentService {
             return comments.stream()
                     .map(CommentViewDto::new)
                     .collect(Collectors.toList());
-        } catch (final Exception e) {
+        } catch (final DateTimeParseException e) {
             // If date parsing fails, return all comments
             return this.getAllComments();
         }

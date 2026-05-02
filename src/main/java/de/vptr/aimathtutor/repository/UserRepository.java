@@ -126,6 +126,21 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
+     * Counts users with a specific rank.
+     *
+     * @param rankId the rank ID to filter by
+     * @return the count of users with the specified rank
+     */
+    public long countByRankId(final Long rankId) {
+        if (rankId == null) {
+            return 0L;
+        }
+        final var q = this.em.createNamedQuery("User.countByRankId", Long.class);
+        q.setParameter("r", rankId);
+        return q.getSingleResult();
+    }
+
+    /**
      * Searches for users matching the given search term.
      *
      * @param searchTerm the search term to match against user properties;

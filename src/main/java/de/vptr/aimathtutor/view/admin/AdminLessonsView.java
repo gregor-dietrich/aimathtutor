@@ -113,7 +113,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
                             LOG.error("Error loading lessons: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load lessons: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to load lessons. Please try again.");
                         } else {
                             LOG.info("Successfully loaded {} lessons", lessons.size());
                             this.allLessons = lessons;
@@ -471,8 +471,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
                         this.searchButton.setText("Search");
                         if (throwable != null) {
                             LOG.error("Error searching lessons: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError(throwable.getCause() != null ? throwable.getCause().getMessage()
-                                    : throwable.getMessage());
+                            NotificationUtil.showError("An error occurred while searching lessons. Please try again.");
                         } else {
                             // Store search results and update the tree grid
                             this.updateSearchTreeGrid(lessons);

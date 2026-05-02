@@ -18,9 +18,9 @@
     "instanceofPatternMatch", // Uses 'instanceof' pattern matching to simplify type checks.
     "invertEquals", // Inverts equals() comparisons to check for null safety first (e.g., "constant.equals(variable)").
     "lambdaExpression", // General cleanup that converts eligible methods into lambda expressions.
-    "lambdaExpressionFromAnonymousClass", // Converts anonymous classes implementing functional interfaces into lambda expressions.    
+    "lambdaExpressionFromAnonymousClass", // Converts anonymous classes implementing functional interfaces into lambda expressions.
     "organizeImports", // Organizes imports to remove unused ones and sort them according to the project's import order.
-    "qualifyMembers", // Qualifies field and method accesses with 'this' or the class name when necessary.    
+    "qualifyMembers", // Qualifies field and method accesses with 'this' or the class name when necessary.
     "renameFileToType", // Renames the file to match the class name, ensuring consistency between file and class names.
     "renameUnusedLocalVariables", // Renames unused local variables to improve readability and reduce confusion.
     "switchExpression", // Converts traditional switch statements to modern switch expressions where applicable.
@@ -34,8 +34,8 @@
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.edit.validateAllOpenBuffersOnChanges": true, // Validates all open Java files when changes occur, ensuring real-time error detection.
   "java.saveActions.organizeImports": true,
-  "java.sources.organizeImports.starThreshold": 5,
-  "java.sources.organizeImports.staticStarThreshold": 3,
+  "java.sources.organizeImports.starThreshold": 9999,
+  "java.sources.organizeImports.staticStarThreshold": 9999,
   "microprofile.tools.validation.unknown.excluded": [
     "quarkus.log.*",
     "quarkus.datasource.*",

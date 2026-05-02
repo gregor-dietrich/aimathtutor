@@ -8,6 +8,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class GeminiService {
         // Initialize HttpClient with appropriate settings
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
-                .connectTimeout(Duration.ofSeconds(30))
+                .connectTimeout(Duration.ofSeconds(10))
                 .build();
 
         LOG.debug("Initialized Gemini HttpClient");
@@ -57,6 +58,7 @@ public class GeminiService {
      * @param prompt The input prompt
      * @return The generated text response
      */
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200, abortOn = IllegalStateException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 
@@ -67,11 +69,13 @@ public class GeminiService {
         }
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite");
+        final String model = this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
         final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url",
                 "https://generativelanguage.googleapis.com");
-        final Double temperature = this.aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.7);
-        final Integer maxTokens = this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 2000);
+        Double temperature = this.aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.7);
+        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
+        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 2000);
+        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
 
         if (model == null || model.isBlank()) {
             throw new IllegalStateException("Gemini model not configured. Please configure via admin settings.");
@@ -130,7 +134,11 @@ public class GeminiService {
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
 
-        } catch (final IOException | InterruptedException e) {
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.error("Error calling Gemini API", e);
+            throw new IllegalStateException("Failed to call Gemini API", e);
+        } catch (final IOException e) {
             LOG.error("Error calling Gemini API", e);
             throw new IllegalStateException("Failed to call Gemini API", e);
         }
@@ -147,6 +155,6 @@ public class GeminiService {
      * Get the current model name
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue("gemini.model", "gemini-2.5-flash-lite");
+        return this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
     }
 }

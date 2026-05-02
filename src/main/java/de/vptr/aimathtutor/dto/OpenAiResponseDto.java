@@ -90,4 +90,16 @@ public class OpenAiResponseDto {
         final var finishReason = this.choices.get(0).finishReason;
         return "length".equals(finishReason);
     }
+
+    /**
+     * Check if response was filtered due to content policy
+     */
+    public boolean isContentFiltered() {
+        if (this.choices == null || this.choices.isEmpty()) {
+            return false;
+        }
+
+        final var finishReason = this.choices.get(0).finishReason;
+        return "content_filter".equals(finishReason);
+    }
 }
