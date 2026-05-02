@@ -26,6 +26,9 @@ public class RateLimitService {
     private final Map<String, CopyOnWriteArrayList<Instant>> userCallTimestamps = new ConcurrentHashMap<>();
     private final ScheduledExecutorService cleanupExecutor;
 
+    /**
+     * Creates a new RateLimitService and starts the cleanup executor.
+     */
     public RateLimitService() {
         this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
             final Thread t = new Thread(r, "rate-limit-cleanup");

@@ -111,7 +111,7 @@ public class MockAiProvider implements AiProvider {
         }
 
         if (lowerQuestion.contains("hint")) {
-            return "\uD83D\uDCA1 Look for terms you can combine, or operations you can undo to isolate the variable.";
+            return "💡 Look for terms you can combine, or operations you can undo to isolate the variable.";
         }
 
         return "I'm here to help! Can you be more specific about what you're stuck on?";

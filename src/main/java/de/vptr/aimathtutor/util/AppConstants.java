@@ -52,13 +52,13 @@ public final class AppConstants {
     public static final String CANVAS_HEIGHT_MATH = "80vh";
 
     /** Default user avatar emoji. */
-    public static final String AVATAR_DEFAULT_USER = "\uD83E\uDDD2";
+    public static final String AVATAR_DEFAULT_USER = "🧒";
 
     /** Default tutor avatar emoji. */
-    public static final String AVATAR_DEFAULT_TUTOR = "\uD83E\uDDD1\u200D\uD83C\uDFEB";
+    public static final String AVATAR_DEFAULT_TUTOR = "🧑‍🏫";
 
     /** Default AI avatar emoji. */
-    public static final String AVATAR_DEFAULT_AI = "\uD83E\uDD16";
+    public static final String AVATAR_DEFAULT_AI = "🤖";
 
     /** Minimum password length. */
     public static final int PASSWORD_MIN_LENGTH = 8;
