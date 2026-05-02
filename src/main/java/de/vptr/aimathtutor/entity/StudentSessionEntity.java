@@ -4,7 +4,19 @@ import java.time.LocalDateTime;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -41,10 +53,13 @@ import jakarta.validation.constraints.NotNull;
         @NamedQuery(name = "StudentSession.findByExerciseAndDateRangeWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.exercise.id = :e and s.startTime >= :s and s.startTime <= :en ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByCompletedAndDateRangeWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.completed = :c and s.startTime >= :s and s.startTime <= :e ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByStartTimeAfterWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.startTime >= :t ORDER BY s.startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByStartTimeBeforeWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.startTime <= :e ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByStartTimeBetweenWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.startTime >= :s and s.startTime <= :e ORDER BY s.startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByUserIdInWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.user.id IN :ids ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.searchByUserOrExerciseWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE lower(s.user.username) like :p or lower(s.exercise.title) like :p ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.countActiveStudents", query = "SELECT COUNT(DISTINCT s.user.id) FROM StudentSessionEntity s WHERE s.startTime >= :t"),
         @NamedQuery(name = "StudentSession.countByStartTimeBetween", query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime <= :e"),
+        @NamedQuery(name = "StudentSession.countByStartTimeRangeHalfOpen", query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime < :e"),
         @NamedQuery(name = "StudentSession.findProblemCategoryStats", query = "SELECT s.exercise.title, COUNT(s) FROM StudentSessionEntity s WHERE s.completed = true GROUP BY s.exercise.title")
 })
 public class StudentSessionEntity extends PanacheEntityBase {

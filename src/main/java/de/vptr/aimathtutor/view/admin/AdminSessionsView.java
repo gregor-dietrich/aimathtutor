@@ -121,7 +121,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
-            usernameSpan.addClickListener(e -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
+            usernameSpan.addClickListener(_ -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
         }).setHeader("Student")
                 .setFlexGrow(1);
@@ -169,19 +169,19 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
                         this.loadSessions();
                     }
                 },
-                e -> this.searchSessions(),
+                _ -> this.searchSessions(),
                 "Search by student or exercise...",
                 "Search Sessions");
 
         this.searchField = searchLayout.getTextfield();
 
         // Date range filter for session start time
-        final var dateFilterLayout = new DateFilterLayout(e -> this.filterByDateRange());
+        final var dateFilterLayout = new DateFilterLayout(_ -> this.filterByDateRange());
         this.startDatePicker = dateFilterLayout.getStartDatePicker();
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", e -> this.resetFilters());
+        this.resetFiltersButton = new Button("Reset Filters", _ -> this.resetFilters());
         this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetFiltersButton);
@@ -197,7 +197,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
         final var layout = new HorizontalLayout();
         layout.setSpacing(true);
 
-        final var refreshButton = new RefreshButton(e -> this.loadSessions());
+        final var refreshButton = new RefreshButton(_ -> this.loadSessions());
 
         layout.add(refreshButton);
         return layout;
@@ -260,10 +260,8 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
                 return;
             }
 
-            final var startDateTime = startDate != null ? startDate.atStartOfDay()
-                    : java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
-            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX)
-                    : java.time.LocalDateTime.of(2099, 12, 31, 23, 59, 59);
+            final var startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : null;
 
             final var sessions = this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime);
             this.grid.setItems(sessions);

@@ -84,7 +84,7 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * List all student sessions ordered by start time with relations eagerly
+     * List all student sessions ordered by id descending with relations eagerly
      * loaded.
      *
      * @return list of all student sessions
@@ -178,11 +178,13 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find sessions that started after the provided time with relations eagerly
+     * Find sessions that started at or after the provided time with relations
+     * eagerly
      * loaded.
      *
-     * @param time lower bound start time (exclusive)
-     * @return list of sessions starting after time, or empty list on null input
+     * @param time lower bound start time (inclusive)
+     * @return list of sessions starting at or after time, or empty list on null
+     *         input
      */
     public List<StudentSessionEntity> findByStartTimeAfter(final LocalDateTime time) {
         if (time == null) {
@@ -191,6 +193,40 @@ public class StudentSessionRepository extends AbstractRepository {
         final var q = this.em.createNamedQuery("StudentSession.findByStartTimeAfterWithRelations",
                 StudentSessionEntity.class);
         q.setParameter("t", time);
+        return q.getResultList();
+    }
+
+    /**
+     * Find sessions that started before or at the provided time with relations
+     * eagerly loaded.
+     *
+     * @param time upper bound start time (inclusive)
+     * @return list of sessions starting before or at time, or empty list on null
+     *         input
+     */
+    public List<StudentSessionEntity> findByStartTimeBefore(final LocalDateTime time) {
+        if (time == null) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findByStartTimeBeforeWithRelations",
+                StudentSessionEntity.class);
+        q.setParameter("e", time);
+        return q.getResultList();
+    }
+
+    /**
+     * Find sessions for a collection of user IDs with relations eagerly loaded.
+     *
+     * @param userIds list of user database ids
+     * @return list of sessions, empty list if userIds is null or empty
+     */
+    public List<StudentSessionEntity> findByUserIdIn(final List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findByUserIdInWithRelations",
+                StudentSessionEntity.class);
+        q.setParameter("ids", userIds);
         return q.getResultList();
     }
 
@@ -259,8 +295,8 @@ public class StudentSessionRepository extends AbstractRepository {
      * Count distinct active students (users with sessions) since the provided
      * time.
      *
-     * @param time lower bound start time
-     * @return count of distinct users with sessions starting after time
+     * @param time lower bound start time (inclusive)
+     * @return count of distinct users with sessions starting at or after time
      */
     public long countActiveStudentsSince(final LocalDateTime time) {
         if (time == null) {
@@ -283,6 +319,24 @@ public class StudentSessionRepository extends AbstractRepository {
             return 0L;
         }
         final var q = this.em.createNamedQuery("StudentSession.countByStartTimeBetween", Long.class);
+        q.setParameter("s", start);
+        q.setParameter("e", end);
+        return q.getSingleResult();
+    }
+
+    /**
+     * Count sessions with start times in a half-open range [start, end).
+     *
+     * @param start inclusive range start
+     * @param end   exclusive range end
+     * @return count of sessions in range
+     */
+    public long countByStartTimeGreaterThanEqualAndStartTimeLessThan(final LocalDateTime start,
+            final LocalDateTime end) {
+        if (start == null || end == null) {
+            return 0L;
+        }
+        final var q = this.em.createNamedQuery("StudentSession.countByStartTimeRangeHalfOpen", Long.class);
         q.setParameter("s", start);
         q.setParameter("e", end);
         return q.getSingleResult();
