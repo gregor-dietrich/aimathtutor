@@ -3,4 +3,5 @@ Makefile linguist-vendored
 .mvn/** linguist-vendored
 mvnw linguist-vendored
 mvnw.cmd linguist-vendored
+ollama/** linguist-vendored
 scripts/** linguist-vendored
