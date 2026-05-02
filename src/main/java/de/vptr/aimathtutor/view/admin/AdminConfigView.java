@@ -74,7 +74,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
         if (userRank == null || !(userRank.canAdminView() || userRank.hasAnyExercisePermission()
                 || userRank.hasAnyLessonPermission())) {
             NotificationUtil.showError("You do not have permission to access this page");
-            event.forwardTo("/");
+            event.forwardTo("");
             return;
         }
 
@@ -371,7 +371,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showSuccess("AI configuration updated successfully");
             LOG.info("General config saved");
         } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
+            NotificationUtil.showError("Validation error. Please check your input.");
             LOG.error("Validation error saving config", e);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
@@ -398,7 +398,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showSuccess("Gemini configuration updated successfully");
             LOG.info("Gemini config saved");
         } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
+            NotificationUtil.showError("Validation error. Please check your input.");
             LOG.error("Validation error saving Gemini config", e);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
@@ -426,7 +426,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showSuccess("OpenAI configuration updated successfully");
             LOG.info("OpenAI config saved");
         } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
+            NotificationUtil.showError("Validation error. Please check your input.");
             LOG.error("Validation error saving OpenAI config", e);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
@@ -456,7 +456,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showSuccess("Ollama configuration updated successfully");
             LOG.info("Ollama config saved");
         } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
+            NotificationUtil.showError("Validation error. Please check your input.");
             LOG.error("Validation error saving Ollama config", e);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
@@ -481,7 +481,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showSuccess("Prompts updated successfully");
             LOG.info("Prompts saved");
         } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
+            NotificationUtil.showError("Validation error. Please check your input.");
             LOG.error("Validation error saving prompts", e);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");

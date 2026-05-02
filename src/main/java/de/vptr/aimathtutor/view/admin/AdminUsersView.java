@@ -123,7 +123,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
                             LOG.error("Error loading users: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load users: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to load users. Please try again.");
                         } else {
                             LOG.info("Successfully loaded {} users", users.size());
                             this.grid.setItems(users);

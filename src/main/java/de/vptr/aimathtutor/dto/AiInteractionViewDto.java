@@ -4,10 +4,13 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * DTO for displaying AI interaction information in admin views.
  * Used for analyzing AI feedback and student interactions.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class AiInteractionViewDto {
 
     public Long id;

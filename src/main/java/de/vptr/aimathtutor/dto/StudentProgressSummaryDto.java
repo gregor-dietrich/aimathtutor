@@ -2,10 +2,13 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * DTO for displaying a student's overall progress summary.
  * Used in admin views to show aggregate statistics per student.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class StudentProgressSummaryDto {
 
     public Long userId;

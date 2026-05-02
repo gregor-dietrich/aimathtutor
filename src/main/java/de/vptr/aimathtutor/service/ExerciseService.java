@@ -39,7 +39,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class ExerciseService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExerciseService.class);
 
     @Inject
     AuthService authService;
@@ -89,7 +89,7 @@ public class ExerciseService {
         } catch (final PersistenceException e) {
             // Log the error but don't fail - this ensures we don't break the exercise
             // loading functionality
-            log.error("Error enriching exercise DTO with completion data for exercise ID: " + dto.id, e);
+            LOG.error("Error enriching exercise DTO with completion data for exercise ID: " + dto.id, e);
         }
 
         return dto;
@@ -127,7 +127,7 @@ public class ExerciseService {
                 dto.userCompletionCount = completedSessions.size();
             }
         } catch (final PersistenceException e) {
-            log.error("Error enriching exercise DTO list with completion data", e);
+            LOG.error("Error enriching exercise DTO list with completion data", e);
         }
 
         return dtos;

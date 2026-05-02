@@ -5,10 +5,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Holds the conversation context for AI requests.
  * Includes recent actions, user questions, and AI messages.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class ConversationContextDto {
 
     @JsonProperty("recent_actions")

@@ -4,10 +4,13 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Represents a student action in the Graspable Math workspace.
  * This DTO captures events like simplify, expand, factor, move, etc.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class GraspableEventDto {
 
     @JsonProperty("event_type")

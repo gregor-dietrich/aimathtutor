@@ -2,9 +2,12 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * DTO representing a user rank/permission set for UI display.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class UserRankViewDto {
 
     public Long id;

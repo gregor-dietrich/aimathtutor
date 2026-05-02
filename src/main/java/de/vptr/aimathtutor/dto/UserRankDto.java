@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Size;
  * Contains role information and permission flags for different operations
  * on exercises, lessons, comments, and administrative functions.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class UserRankDto {
 
     public Long id;

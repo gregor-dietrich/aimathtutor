@@ -312,7 +312,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             this.newPasswordField.clear();
             this.confirmPasswordField.clear();
         } catch (final ValidationException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError("An error occurred. Please try again.");
         } catch (final Exception e) {
             LOG.error("Failed to change password", e);
             NotificationUtil.showError("Failed to change password");
@@ -337,7 +337,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             this.userService.updateAvatars(this.currentUserId, userEmoji, tutorEmoji);
             NotificationUtil.showSuccess("Avatars updated successfully");
         } catch (final ValidationException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError("An error occurred. Please try again.");
         } catch (final Exception e) {
             LOG.error("Failed to update avatars", e);
             NotificationUtil.showError("Failed to update avatars");

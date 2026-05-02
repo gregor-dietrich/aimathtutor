@@ -7,8 +7,6 @@ import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.CommentFlagEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -19,10 +17,7 @@ import jakarta.ws.rs.core.Response;
  * flag creation, lookup, and user flag tracking operations.
  */
 @ApplicationScoped
-public class CommentFlagRepository {
-
-    @Inject
-    EntityManager em;
+public class CommentFlagRepository extends AbstractRepository {
 
     /**
      * Checks if a specific user has already flagged a given comment.
@@ -36,7 +31,7 @@ public class CommentFlagRepository {
         if (commentId == null || userId == null) {
             return false;
         }
-        final var q = this.em.createNamedQuery("CommentFlag.countByCommentAndFlagger", Long.class);
+        final var q = super.em.createNamedQuery("CommentFlag.countByCommentAndFlagger", Long.class);
         q.setParameter("c", commentId);
         q.setParameter("u", userId);
         return q.getSingleResult() > 0;
@@ -52,7 +47,7 @@ public class CommentFlagRepository {
         if (flag == null) {
             return;
         }
-        this.em.persist(flag);
+        super.em.persist(flag);
     }
 
     /**
@@ -74,7 +69,7 @@ public class CommentFlagRepository {
         flag.comment = comment;
         flag.flagger = flagger;
         flag.created = LocalDateTime.now();
-        this.em.persist(flag);
+        super.em.persist(flag);
         return flag;
     }
 
@@ -89,6 +84,6 @@ public class CommentFlagRepository {
         if (id == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(this.em.find(CommentFlagEntity.class, id));
+        return Optional.ofNullable(super.em.find(CommentFlagEntity.class, id));
     }
 }

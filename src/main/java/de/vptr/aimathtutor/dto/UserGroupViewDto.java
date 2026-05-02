@@ -2,10 +2,13 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * DTO for presenting a user group in listings. Contains computed user count
  * and conversion helper to the editable UserGroupDto.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class UserGroupViewDto {
     public Long id;
     public String name;

@@ -148,15 +148,16 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.
     **When extracting constants, check the entire codebase for identical hardcoded values.**
 - **Standardize naming and patterns:**
-  - Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.
-  - Login forward targets: some views use `LoginView.class`, others use `"login"`. Standardize to `LoginView.class`.
-  - Repository pattern: standardize all repositories to extend `AbstractRepository` or remove it entirely.
-  - DTO patterns: apply `@SuppressFBWarnings` consistently across all DTOs.
-  - Error handling: standardize on generic user messages + server-side logging.
+  - ~~Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.~~ ✅ DONE
+  - ~~Login forward targets: some views use `LoginView.class`, others use `"login"`. Standardize to `LoginView.class`.~~ ✅ DONE
+  - ~~Repository pattern: standardize all repositories to extend `AbstractRepository` or remove it entirely.~~ ✅ DONE
+  - ~~DTO patterns: apply `@SuppressFBWarnings` consistently across all DTOs.~~ ✅ DONE
+  - ~~Error handling: standardize on generic user messages + server-side logging.~~ ✅ DONE
     **When standardizing, check all files for identical inconsistencies.**
 - **Remove dead code:**
-  - Unused static finder methods in `CommentEntity` (lines 90-164).
-  - Commented-out code block in `MathWorkspaceView` (lines 341-356).
+  - ~~Unused static finder methods in `CommentEntity` (lines 90-164).~~ ✅ ALREADY RESOLVED (file is only 98 lines)
+  - ~~Commented-out code block in `MathWorkspaceView` (lines 341-356).~~ ✅ DONE
+  - ~~Unused static finder methods in `StudentSessionEntity`, `UserGroupMetaEntity`, `UserGroupEntity`, `LessonEntity`.~~ ✅ DONE
   - Run optimize imports across the codebase.
     **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
 

@@ -4,10 +4,13 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * View DTO representing an exercise with denormalized user and lesson fields
  * suitable for display in the UI.
  */
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class ExerciseViewDto {
 
     public Long id;
