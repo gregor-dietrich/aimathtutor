@@ -4,7 +4,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.dto.ExerciseDto;
@@ -114,13 +117,13 @@ public class ExerciseService {
      *
      * @return a map of lesson ID to list of published {@link ExerciseViewDto}s
      */
-    public java.util.Map<Long, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
+    public Map<Long, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
         final List<ExerciseViewDto> dtos = this.exerciseRepository.findPublished().stream()
                 .map(ExerciseViewDto::new)
                 .toList();
         final List<ExerciseViewDto> enriched = this.exerciseCompletionService.enrichListWithCompletionData(dtos);
-        return enriched.stream()
-                .collect(java.util.stream.Collectors.groupingBy(dto -> dto.lessonId));
+        return enriched.stream().collect(HashMap::new,
+                (map, dto) -> map.computeIfAbsent(dto.lessonId, _ -> new ArrayList<>()).add(dto), Map::putAll);
     }
 
     /**
