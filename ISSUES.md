@@ -132,9 +132,9 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - ~~`DateRangeFilter` component/utility for date filtering logic duplicated across views.~~ ✅ DONE
     **When extracting, check all views for identical utility needs.**
 - **Split oversized services (SRP):**
-  - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, `ProblemGeneratorService`, `AiInteractionLogger`.
+  - `AiTutorService` (~1170 lines): extract provider strategy classes (`MockAiProvider`, `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`), `PromptBuilderService`, `JsonRepairService`, ~~`ProblemGeneratorService`~~ ✅ DONE, `AiInteractionLogger`.
   - `CommentService` (~690 lines): extract `CommentModerationService`, `CommentFlaggingService`, `CommentRateLimitService`, `CommentPermissionService`.
-  - `ExerciseService`: extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.
+  - `ExerciseService`: ~~extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.~~ ✅ DONE
     **When splitting, check all services over 400 lines for identical SRP violations.**
 - **Extract constants for magic values:**
   - ~~Async timeout: `30` seconds in admin views.~~ ✅ DONE
