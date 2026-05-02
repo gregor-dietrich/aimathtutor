@@ -378,8 +378,8 @@ public class AiTutorService {
             return this.mockAiProvider.analyzeMathAction(event, context);
         }
         try {
-            // Call through the CDI proxy so @Retry is applied
-            return this.ollamaAiProvider.callOllamaForAnalysis(event, context);
+            // CDI proxy applies @Retry automatically
+            return this.ollamaAiProvider.analyzeMathAction(event, context);
         } catch (final RuntimeException e) {
             LOG.error("Error using Ollama after retries, falling back to mock", e);
             return this.mockAiProvider.analyzeMathAction(event, context);
@@ -412,8 +412,8 @@ public class AiTutorService {
                     context);
         }
         try {
-            // Call through the CDI proxy so @Retry is applied
-            return this.ollamaAiProvider.callOllamaForQuestion(question, currentExpression, initialExpression,
+            // CDI proxy applies @Retry automatically
+            return this.ollamaAiProvider.answerQuestion(question, currentExpression, initialExpression,
                     targetExpression, context);
         } catch (final RuntimeException e) {
             LOG.error("Error using Ollama for question answering after retries, falling back to mock", e);

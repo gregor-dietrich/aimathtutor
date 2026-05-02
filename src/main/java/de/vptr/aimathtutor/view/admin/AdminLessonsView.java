@@ -433,6 +433,10 @@ public class AdminLessonsView extends AbstractAdminView {
                     this.searchButton.setText("Search");
                     this.updateSearchTreeGrid(lessons);
                 },
+                () -> {
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                },
                 "An error occurred while searching lessons. Please try again.");
     }
 }

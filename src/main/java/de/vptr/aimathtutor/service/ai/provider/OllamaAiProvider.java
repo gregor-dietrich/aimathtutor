@@ -39,6 +39,7 @@ public class OllamaAiProvider implements AiProvider {
     }
 
     @Override
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
     public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Ollama");
         final var prompt = this.promptBuilderService.buildMathTutoringPrompt(event, context);
@@ -47,37 +48,12 @@ public class OllamaAiProvider implements AiProvider {
     }
 
     @Override
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
     public String answerQuestion(final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
         final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
                 initialExpression, targetExpression, context);
         return this.ollamaService.generateContent(prompt);
-    }
-
-    /**
-     * Internal method to call Ollama for math action analysis with retry support.
-     * <p>
-     * NOTE: This method is public so that CDI proxies can intercept it and apply
-     * the {@code @Retry} annotation. When called through the injected proxy,
-     * MicroProfile Fault Tolerance will work correctly.
-     */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
-    public AiFeedbackDto callOllamaForAnalysis(final GraspableEventDto event, final ConversationContextDto context) {
-        return this.analyzeMathAction(event, context);
-    }
-
-    /**
-     * Internal method to call Ollama for question answering with retry support.
-     * <p>
-     * NOTE: This method is public so that CDI proxies can intercept it and apply
-     * the {@code @Retry} annotation. When called through the injected proxy,
-     * MicroProfile Fault Tolerance will work correctly.
-     */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
-    public String callOllamaForQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
-        return this.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
     }
 }

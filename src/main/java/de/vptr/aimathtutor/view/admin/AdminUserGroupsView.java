@@ -298,6 +298,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
                     this.searchButton.setEnabled(true);
                     this.grid.setItems(groups);
                 },
+                () -> this.searchButton.setEnabled(true),
                 "Failed to search groups. Please try again.");
     }
 

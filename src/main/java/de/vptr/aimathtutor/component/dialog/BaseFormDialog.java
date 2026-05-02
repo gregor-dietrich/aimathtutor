@@ -67,9 +67,7 @@ public abstract class BaseFormDialog<T> extends Dialog {
      * @param bean the bean to edit, or null for a new instance
      */
     public void open(final T bean) {
-        if (bean != null) {
-            this.binder.readBean(bean);
-        }
+        this.binder.readBean(bean);
         super.open();
     }
 }

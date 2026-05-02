@@ -35,6 +35,24 @@ public final class AsyncDataLoader {
             final Component component,
             final Consumer<T> onSuccess,
             final String errorMessage) {
+        load(dataSupplier, component, onSuccess, null, errorMessage);
+    }
+
+    /**
+     * Loads data asynchronously and updates the UI on completion.
+     *
+     * @param <T>          the type of data being loaded
+     * @param dataSupplier supplier that fetches the data
+     * @param component    Vaadin component used to access the UI thread
+     * @param onSuccess    callback invoked with the loaded data on success
+     * @param onError      callback invoked on error (before the notification is shown)
+     * @param errorMessage user-facing message shown if loading fails
+     */
+    public static <T> void load(final Supplier<T> dataSupplier,
+            final Component component,
+            final Consumer<T> onSuccess,
+            final Runnable onError,
+            final String errorMessage) {
         CompletableFuture.supplyAsync(() -> {
             try {
                 return dataSupplier.get();
@@ -48,6 +66,9 @@ public final class AsyncDataLoader {
                         if (throwable != null) {
                             LOG.error("Async load failed: {}", throwable.getMessage(), throwable);
                             NotificationUtil.showError(errorMessage);
+                            if (onError != null) {
+                                onError.run();
+                            }
                         } else {
                             onSuccess.accept(data);
                         }

@@ -47,8 +47,11 @@ public class CommentModerationService {
             final String action,
             final Long moderatorId,
             final String reason) {
-        LOG.info("Moderating comment: commentId={}, action={}, moderatorId={}, reason={}", commentId, action,
-                moderatorId, reason);
+        if (reason != null && reason.length() > 500) {
+            throw new ValidationException("Moderation reason must be <= 500 characters");
+        }
+        LOG.info("Moderating comment: commentId={}, action={}, moderatorId={}, reasonLength={}", commentId, action,
+                moderatorId, reason != null ? reason.length() : 0);
 
         final CommentEntity comment = this.commentRepository.findById(commentId);
         if (comment == null) {
@@ -80,6 +83,8 @@ public class CommentModerationService {
             case "SHOW":
                 comment.status = "VISIBLE";
                 comment.flagsCount = 0;
+                comment.deletedBy = null;
+                comment.deletedAt = null;
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
                 comment.moderationAction = action.toUpperCase();

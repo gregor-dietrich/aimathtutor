@@ -622,6 +622,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                     this.searchButton.setEnabled(true);
                     this.grid.setItems(ranks);
                 },
+                () -> this.searchButton.setEnabled(true),
                 "Failed to search ranks. Please try again.");
     }
 }

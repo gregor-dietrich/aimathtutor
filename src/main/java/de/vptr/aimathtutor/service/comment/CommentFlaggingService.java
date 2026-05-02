@@ -44,7 +44,8 @@ public class CommentFlaggingService {
      */
     @Transactional
     public void flagComment(final Long commentId, final Long flaggerId, final String reason) {
-        LOG.info("Flagging comment: commentId={}, flaggerId={}, reason={}", commentId, flaggerId, reason);
+        LOG.info("Flagging comment: commentId={}, flaggerId={}, reasonProvided={}", commentId, flaggerId,
+                reason != null && !reason.isBlank());
 
         final CommentEntity comment = this.commentRepository.findById(commentId);
         if (comment == null) {

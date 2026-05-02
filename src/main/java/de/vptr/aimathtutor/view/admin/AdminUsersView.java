@@ -477,6 +477,10 @@ public class AdminUsersView extends AbstractAdminView {
                     this.searchButton.setText("Search");
                     this.grid.setItems(users);
                 },
+                () -> {
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                },
                 "An error occurred while searching users. Please try again.");
     }
 }

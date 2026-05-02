@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.vptr.aimathtutor.enums.DifficultyLevel;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Represents a Graspable Math problem definition.
@@ -77,6 +78,7 @@ public class GraspableProblemDto {
     @JsonProperty("allowed_operations")
     public List<String> allowedOperations; // e.g., ["simplify", "expand", "factor"]
 
+    @NotNull(message = "Difficulty is required")
     public DifficultyLevel difficulty;
 
     public ProblemCategory category; // The problem category/type

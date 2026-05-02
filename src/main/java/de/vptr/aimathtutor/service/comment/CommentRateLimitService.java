@@ -33,6 +33,9 @@ public class CommentRateLimitService {
      * @throws WebApplicationException if rate limit is exceeded
      */
     public void checkRateLimit(final Long userId) {
+        if (userId == null) {
+            throw new WebApplicationException("User ID is required", Response.Status.BAD_REQUEST);
+        }
         // Get user's last comment timestamp
         final LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(RATE_LIMIT_WINDOW_SECONDS);
         final long recentCount = this.commentRepository.countByUserSince(userId, fiveSecondsAgo);

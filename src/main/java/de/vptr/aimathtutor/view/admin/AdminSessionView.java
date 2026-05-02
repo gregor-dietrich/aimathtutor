@@ -155,16 +155,17 @@ public class AdminSessionView extends AbstractAdminView {
                 () -> {
                     this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
                     if (this.session == null) {
-                        this.getUI().ifPresent(ui -> ui.access(() -> {
-                            NotificationUtil.showError("Session not found");
-                            ui.navigate(AdminSessionsView.class);
-                        }));
                         return null;
                     }
                     return this.analyticsService.getAiInteractionsBySession(this.sessionId);
                 },
                 this,
                 interactions -> {
+                    if (interactions == null) {
+                        NotificationUtil.showError("Session not found");
+                        this.getUI().ifPresent(ui -> ui.navigate(AdminSessionsView.class));
+                        return;
+                    }
                     this.updateSessionInfo();
                     this.updateInteractionsGrid(interactions);
                 },
