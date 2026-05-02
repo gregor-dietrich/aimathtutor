@@ -1,13 +1,18 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -20,6 +25,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
+import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.AiConfigService;
 import de.vptr.aimathtutor.service.AiProviderTestService;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -142,13 +148,13 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setPadding(true);
 
         // AI Enabled
-        final var enabledCheckbox = new com.vaadin.flow.component.checkbox.Checkbox("Enable AI Tutor");
+        final var enabledCheckbox = new Checkbox("Enable AI Tutor");
         final String enabledValue = this.aiConfigService.getConfigValue("ai.tutor.enabled", "true");
         enabledCheckbox.setValue("true".equalsIgnoreCase(enabledValue));
         enabledCheckbox.setLabel("Enable AI Tutor");
 
         // AI Provider selection
-        final var providerCombo = new com.vaadin.flow.component.combobox.ComboBox<String>("AI Provider");
+        final var providerCombo = new ComboBox<String>("AI Provider");
         providerCombo.setItems("mock", "gemini", "ollama", "openai");
         providerCombo.setValue(this.aiConfigService.getConfigValue("ai.tutor.provider", "mock"));
         providerCombo.setWidthFull();
@@ -160,9 +166,9 @@ public class AdminConfigView extends AbstractAdminView {
         final var resetBtn = new Button("Reset to Defaults", ignored -> this.resetAllToDefaults());
         resetBtn.getStyle().set("margin-left", "auto");
 
-        final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, resetBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, resetBtn);
         buttonRow.setWidthFull();
-        buttonRow.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         panel.add(enabledCheckbox, providerCombo, buttonRow);
         return panel;
@@ -215,9 +221,9 @@ public class AdminConfigView extends AbstractAdminView {
         final var saveBtn = new Button("Save",
                 ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
 
-        final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, testBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, testBtn);
         buttonRow.setWidthFull();
-        buttonRow.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, buttonRow);
         return panel;
@@ -274,9 +280,9 @@ public class AdminConfigView extends AbstractAdminView {
         final var saveBtn = new Button("Save",
                 ignored -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
 
-        final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, testBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, testBtn);
         buttonRow.setWidthFull();
-        buttonRow.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField, buttonRow);
         return panel;
@@ -330,9 +336,9 @@ public class AdminConfigView extends AbstractAdminView {
         final var saveBtn = new Button("Save",
                 ignored -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
 
-        final var buttonRow = new com.vaadin.flow.component.orderedlayout.HorizontalLayout(saveBtn, testBtn);
+        final var buttonRow = new HorizontalLayout(saveBtn, testBtn);
         buttonRow.setWidthFull();
-        buttonRow.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.BETWEEN);
+        buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField, buttonRow);
         return panel;
@@ -379,15 +385,28 @@ public class AdminConfigView extends AbstractAdminView {
         return panel;
     }
 
-    private void testConnection(final Supplier<de.vptr.aimathtutor.dto.AiProviderTestResultDto> testCall,
+    private void testConnection(final Supplier<AiProviderTestResultDto> testCall,
             final String providerName) {
-        final var result = testCall.get();
-        if (result.success) {
-            NotificationUtil.showSuccess(result.message);
-        } else {
-            NotificationUtil.showError(result.message);
+        final var ui = getUI().orElse(null);
+        if (ui == null) {
+            return;
         }
-        LOG.info("{} connection test: {}", providerName, result.message);
+        CompletableFuture.supplyAsync(testCall::get).thenAccept(result -> {
+            ui.access(() -> {
+                if (result.success) {
+                    NotificationUtil.showSuccess(result.message);
+                } else {
+                    NotificationUtil.showError(result.message);
+                }
+                LOG.info("{} connection test: {}", providerName, result.message);
+            });
+        }).exceptionally(ex -> {
+            ui.access(() -> {
+                NotificationUtil.showError("Connection test failed: " + ex.getMessage());
+                LOG.error("{} connection test failed", providerName, ex);
+            });
+            return null;
+        });
     }
 
     private void testGeminiConnection() {
@@ -419,8 +438,8 @@ public class AdminConfigView extends AbstractAdminView {
         }
     }
 
-    private void saveGeneralConfig(final com.vaadin.flow.component.checkbox.Checkbox enabledCheckbox,
-            final com.vaadin.flow.component.combobox.ComboBox<String> providerCombo) {
+    private void saveGeneralConfig(final Checkbox enabledCheckbox,
+            final ComboBox<String> providerCombo) {
         try {
             final var updates = List.of(
                     new AiConfigUpdateDto("ai.tutor.enabled", enabledCheckbox.getValue() ? "true" : "false"),

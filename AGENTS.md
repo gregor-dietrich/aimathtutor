@@ -22,6 +22,31 @@ applyTo: '**'
 - **Vaadin views inject services via CDI (`@Inject`).** REST clients are **only** for external AI APIs.
 - **Main packages:** `entity/` (Panache), `repository/` (Panache), `service/` (`@ApplicationScoped`), `view/` (Vaadin), `dto/`, `security/`.
 
+## Coding Conventions
+
+- **Indentation:** All `*.java` files must use **4 spaces** for indentation. No tabs allowed.
+- **Imports:** Never use fully qualified class names in code. Always add an `import` statement and use the short class name. This applies to all Vaadin components (e.g., `HorizontalLayout`, `FlexComponent`, `Checkbox`, `ComboBox`, `Text`) and any other external classes.
+- **Vaadin UI threading:** Never block the UI thread with long-running or network operations. Use `CompletableFuture.supplyAsync()` to run blocking calls off the UI thread, then update UI inside `ui.access()`. Always handle exceptions with `.exceptionally()` to show error notifications. Pattern:
+
+```java
+final var ui = getUI().orElse(null);
+if (ui == null) {
+    return;
+}
+CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
+    ui.access(() -> {
+        // update UI here
+    });
+}).exceptionally(ex -> {
+    ui.access(() -> {
+        // show error notification
+    });
+    return null;
+});
+```
+
+- **@Push:** Server push is enabled globally via `@Push` on `AppConfig`. Individual views do not need their own `@Push` annotation.
+
 ## Code Quality Gates
 
 All are enforced in CI (`build` job); run locally before pushing:

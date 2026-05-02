@@ -364,7 +364,7 @@ public class AnalyticsService {
                 .collect(Collectors.toMap(
                         row -> row[0] != null ? (String) row[0] : "Unknown",
                         row -> ((Number) row[1]).intValue(),
-                        (a, _) -> a));
+                        (a, ignored) -> a));
     }
 
     /**

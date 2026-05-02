@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -239,7 +240,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             final var contentDiv = new Div();
             contentDiv.getStyle().set("white-space", "pre-wrap");
-            contentDiv.add(new com.vaadin.flow.component.Text(this.exercise.content));
+            contentDiv.add(new Text(this.exercise.content));
             contentSection.add(contentDiv);
 
             header.add(contentSection);
