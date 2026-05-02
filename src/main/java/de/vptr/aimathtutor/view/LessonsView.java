@@ -72,9 +72,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 .findPublishedExercisesByLessonMap();
 
         // Also show standalone exercises (not in any lesson)
-        final List<ExerciseViewDto> standaloneExercises = this.exerciseService.findPublishedExercises().stream()
-                .filter(ex -> ex.lessonId == null)
-                .toList();
+        final List<ExerciseViewDto> standaloneExercises = exercisesByLesson.getOrDefault(null, List.of());
 
         if (lessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
@@ -86,9 +84,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         // Display each lesson with its exercises
         for (final LessonViewDto lesson : lessons) {
             final List<ExerciseViewDto> exercises = exercisesByLesson.getOrDefault(lesson.getId(), List.of());
-            if (!exercises.isEmpty()) {
-                this.add(this.createLessonCard(lesson, exercises));
-            }
+            this.add(this.createLessonCard(lesson, exercises));
         }
 
         if (!standaloneExercises.isEmpty()) {

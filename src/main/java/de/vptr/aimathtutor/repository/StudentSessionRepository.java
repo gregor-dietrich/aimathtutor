@@ -103,7 +103,12 @@ public class StudentSessionRepository extends AbstractRepository {
         if (id == null) {
             return null;
         }
-        return this.em.find(StudentSessionEntity.class, id);
+        final var q = this.em.createQuery(
+                "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.id = :id",
+                StudentSessionEntity.class);
+        q.setParameter("id", id);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst().orElse(null);
     }
 
     /**

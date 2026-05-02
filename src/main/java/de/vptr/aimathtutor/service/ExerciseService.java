@@ -207,7 +207,6 @@ public class ExerciseService {
                 .toList();
         final List<ExerciseViewDto> enriched = this.enrichListWithCompletionData(dtos);
         return enriched.stream()
-                .filter(dto -> dto.lessonId != null)
                 .collect(java.util.stream.Collectors.groupingBy(dto -> dto.lessonId));
     }
 

@@ -1109,9 +1109,19 @@ public class AiTutorService {
                         bIneq >= 0 ? "+" : "-",
                         Math.abs(bIneq),
                         cIneq);
-                problem.targetExpression = String.format("x < %s",
-                        java.math.BigDecimal.valueOf((double) (cIneq - bIneq) / aIneq)
-                                .stripTrailingZeros().toPlainString());
+                final int numerator = cIneq - bIneq;
+                final int denominator = aIneq;
+                final int gcd = java.math.BigInteger.valueOf(numerator)
+                        .gcd(java.math.BigInteger.valueOf(denominator)).intValueExact();
+                final int reducedNum = numerator / gcd;
+                final int reducedDen = denominator / gcd;
+                final String targetValue;
+                if (reducedDen == 1) {
+                    targetValue = String.valueOf(reducedNum);
+                } else {
+                    targetValue = reducedNum + "/" + reducedDen;
+                }
+                problem.targetExpression = "x < " + targetValue;
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
                 problem.hints.add("Solve like an equation, but keep the inequality sign");
                 problem.hints.add("Remember: if dividing by a negative number, flip the inequality");
@@ -1152,12 +1162,19 @@ public class AiTutorService {
             interaction.feedbackMessage = feedback.message;
             interaction.confidenceScore = feedback.confidence;
             interaction.actionCorrect = event.correct;
-            interaction.conversationContext = String.format(
-                    "{\"eventType\":\"%s\",\"exprBeforeLen\":%d,\"exprAfterLen\":%d,\"actionCorrect\":%s}",
-                    event.eventType != null ? event.eventType : "null",
-                    event.expressionBefore != null ? event.expressionBefore.length() : 0,
-                    event.expressionAfter != null ? event.expressionAfter.length() : 0,
-                    event.correct);
+            try {
+                final var contextMap = new java.util.HashMap<String, Object>();
+                contextMap.put("eventType", event.eventType);
+                contextMap.put("exprBeforeLen",
+                        event.expressionBefore != null ? event.expressionBefore.length() : 0);
+                contextMap.put("exprAfterLen",
+                        event.expressionAfter != null ? event.expressionAfter.length() : 0);
+                contextMap.put("actionCorrect", event.correct);
+                interaction.conversationContext = this.objectMapper.writeValueAsString(contextMap);
+            } catch (final java.io.IOException e) {
+                LOG.error("Failed to serialize conversation context", e);
+                interaction.conversationContext = null;
+            }
 
             this.aiInteractionRepository.persist(interaction);
             LOG.debug("Logged AI interaction: id={}", interaction.id);

@@ -12,6 +12,8 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "user_groups_meta", indexes = {
         @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uk_ugm_group_user", columnNames = {"group_id", "user_id"})
 })
 @NamedQueries({
         @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),

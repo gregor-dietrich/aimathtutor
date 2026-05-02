@@ -188,6 +188,7 @@ public class OpenAiService {
     /**
      * Generate content with JSON mode (guarantees valid JSON)
      */
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
     public String generateJsonContent(final String prompt) {
         LOG.debug("Generating JSON content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 

@@ -494,6 +494,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Store expression
         this.currentExpression = expression;
         this.initialExpression = expression;
+        this.targetExpression = null;
         this.problemSolved = false;
 
         this.chatPanel.addMessage(ChatMessageDto.system("Custom problem loaded: " + expression));

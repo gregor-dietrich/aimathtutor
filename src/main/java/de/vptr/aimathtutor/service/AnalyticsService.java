@@ -176,7 +176,7 @@ public class AnalyticsService {
         @Transactional
         public StudentSessionViewDto getSessionBySessionId(final String sessionId) {
                 LOG.trace("Getting session by session ID: {}", sessionId);
-                final StudentSessionEntity session = this.studentSessionRepository.findBySessionId(sessionId);
+                final StudentSessionEntity session = this.studentSessionRepository.findBySessionIdWithRelations(sessionId);
                 return session != null ? new StudentSessionViewDto(session) : null;
         }
 
@@ -452,7 +452,11 @@ public class AnalyticsService {
 
                 return sessionsByUser.entrySet().stream()
                                 .map(entry -> {
-                                        final UserEntity user = this.userRepository.findById(entry.getKey());
+                                        final UserEntity user = entry.getValue().stream()
+                                                        .map(s -> s.user)
+                                                        .filter(u -> u != null)
+                                                        .findFirst()
+                                                        .orElse(null);
                                         if (user == null) {
                                                 return null;
                                         }

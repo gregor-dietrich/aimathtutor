@@ -105,9 +105,14 @@ public class AuthService {
                 // continue with login even if lastLogin couldn't be updated
             }
 
-            this.loginAttemptService.recordSuccessfulLogin(usernameKey);
-            VaadinSession.getCurrent().setAttribute(USERNAME_KEY, user.username);
-            VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, true);
+            try {
+                this.loginAttemptService.recordSuccessfulLogin(usernameKey);
+                VaadinSession.getCurrent().setAttribute(USERNAME_KEY, user.username);
+                VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, true);
+            } catch (final RuntimeException e) {
+                LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
+                return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
+            }
 
             LOG.trace("User authenticated successfully: {}", username);
             return AuthResultDto.success();

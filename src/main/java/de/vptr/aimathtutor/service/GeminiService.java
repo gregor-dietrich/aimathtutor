@@ -58,7 +58,7 @@ public class GeminiService {
      * @param prompt The input prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200, abortOn = IllegalStateException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 
@@ -134,7 +134,11 @@ public class GeminiService {
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
 
-        } catch (final IOException | InterruptedException e) {
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.error("Error calling Gemini API", e);
+            throw new IllegalStateException("Failed to call Gemini API", e);
+        } catch (final IOException e) {
             LOG.error("Error calling Gemini API", e);
             throw new IllegalStateException("Failed to call Gemini API", e);
         }

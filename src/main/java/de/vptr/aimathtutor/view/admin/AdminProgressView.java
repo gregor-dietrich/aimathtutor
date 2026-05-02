@@ -258,9 +258,10 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
                 return;
             }
 
-            final var startDateTime = startDate != null ? startDate.atStartOfDay() : java.time.LocalDateTime.MIN;
+            final var startDateTime = startDate != null ? startDate.atStartOfDay()
+                    : java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
             final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX)
-                    : java.time.LocalDateTime.MAX;
+                    : java.time.LocalDateTime.of(2099, 12, 31, 23, 59, 59);
 
             final var progress = this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime);
             this.grid.setItems(progress);
