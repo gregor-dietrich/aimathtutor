@@ -13,6 +13,7 @@ import com.vaadin.flow.server.VaadinSession;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -89,7 +90,7 @@ public class UserService {
         return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
     }
 
-    private static final int PASSWORD_MIN_LENGTH = 8;
+    private static final int PASSWORD_MIN_LENGTH = AppConstants.PASSWORD_MIN_LENGTH;
     private static final int PASSWORD_MAX_LENGTH = 100;
 
     /**
@@ -186,10 +187,10 @@ public class UserService {
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
-            user.userAvatarEmoji = "🧒";
+            user.userAvatarEmoji = AppConstants.AVATAR_DEFAULT_USER;
         }
         if (user.tutorAvatarEmoji == null) {
-            user.tutorAvatarEmoji = "🤖";
+            user.tutorAvatarEmoji = AppConstants.AVATAR_DEFAULT_AI;
         }
 
         this.userRepository.persist(user);
@@ -490,7 +491,7 @@ public class UserService {
         }
 
         return new UserSettingsDto(
-                user.userAvatarEmoji != null ? user.userAvatarEmoji : "🧒",
-                user.tutorAvatarEmoji != null ? user.tutorAvatarEmoji : "🧑‍🏫");
+                user.userAvatarEmoji != null ? user.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER,
+                user.tutorAvatarEmoji != null ? user.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR);
     }
 }

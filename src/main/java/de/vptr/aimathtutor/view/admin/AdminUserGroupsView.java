@@ -44,6 +44,7 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -122,7 +123,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                 LOG.error("Error loading groups", e);
                 throw new RuntimeException("Failed to load groups", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((groups, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
@@ -191,7 +192,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(group -> group.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(group -> group.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Make the name column clickable
         this.grid.addComponentColumn(group -> {
@@ -332,7 +333,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                 LOG.error("Error searching groups", e);
                 throw new RuntimeException("Failed to search groups", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((groups, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         this.searchButton.setEnabled(true);
@@ -358,7 +359,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
         this.userGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.userGrid.setHeight("300px");
 
-        this.userGrid.addColumn(user -> user.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.userGrid.addColumn(user -> user.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
         this.userGrid.addColumn(user -> user.username).setHeader("Username").setFlexGrow(1);
         this.userGrid.addColumn(user -> user.email != null ? user.email : "no email").setHeader("Email").setFlexGrow(1);
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -76,7 +77,7 @@ public class GraspableProblemDto {
     @JsonProperty("allowed_operations")
     public List<String> allowedOperations; // e.g., ["simplify", "expand", "factor"]
 
-    public String difficulty; // e.g., "beginner", "intermediate", "advanced"
+    public DifficultyLevel difficulty;
 
     public ProblemCategory category; // The problem category/type
 

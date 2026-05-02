@@ -30,6 +30,7 @@ import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -114,7 +115,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.graspableCanvas.setId("graspable-canvas");
         this.graspableCanvas.getStyle()
                 .set("width", "100%")
-                .set("height", "80vh")
+                    .set("height", AppConstants.CANVAS_HEIGHT_MATH)
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("background-color", "var(--lumo-base-color)")
@@ -140,10 +141,10 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final var currentUserEntity = this.authService.getCurrentUserEntity();
         final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
                 ? currentUserEntity.userAvatarEmoji
-                : "🧒";
+                : AppConstants.AVATAR_DEFAULT_USER;
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
                 ? currentUserEntity.tutorAvatarEmoji
-                : "🧑‍🏫";
+                : AppConstants.AVATAR_DEFAULT_TUTOR;
         this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
@@ -199,7 +200,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      */
     private void loadInitialProblem() {
         // Generate a problem using the default category
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(de.vptr.aimathtutor.enums.DifficultyLevel.INTERMEDIATE, this.selectedCategory);
 
         // Wait for canvas to be ready, then load the problem
         UI.getCurrent().getPage().executeJs(
@@ -485,7 +486,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     private void generateNewProblem() {
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate", this.selectedCategory);
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(de.vptr.aimathtutor.enums.DifficultyLevel.INTERMEDIATE, this.selectedCategory);
 
         // Load problem into Graspable Math using the utility function
         UI.getCurrent().getPage().executeJs(

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -79,7 +80,7 @@ public class OpenAiService {
      * @param prompt The user prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 
@@ -188,7 +189,7 @@ public class OpenAiService {
     /**
      * Generate content with JSON mode (guarantees valid JSON)
      */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
     public String generateJsonContent(final String prompt) {
         LOG.debug("Generating JSON content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 

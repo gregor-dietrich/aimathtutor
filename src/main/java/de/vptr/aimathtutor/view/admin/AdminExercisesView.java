@@ -50,6 +50,7 @@ import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -234,7 +235,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(exercise -> exercise.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> exercise.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Make the title column clickable
         this.grid.addComponentColumn(exercise -> {
@@ -281,7 +282,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
                 .setWidth("180px").setFlexGrow(0);
 
         // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(0);
     }
 
     /**
@@ -411,8 +412,8 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         graspableTargetExpressionField.setHeight("80px");
         graspableTargetExpressionField.setTooltipText("Expected solution to validate against");
 
-        final var graspableDifficultyField = new ComboBox<String>("Difficulty");
-        graspableDifficultyField.setItems("beginner", "intermediate", "advanced", "expert");
+        final var graspableDifficultyField = new ComboBox<de.vptr.aimathtutor.enums.DifficultyLevel>("Difficulty");
+        graspableDifficultyField.setItems(de.vptr.aimathtutor.enums.DifficultyLevel.values());
         graspableDifficultyField.setPlaceholder("Select difficulty");
         graspableDifficultyField.setClearButtonVisible(true);
         graspableDifficultyField.setTooltipText("Problem difficulty level for AI adaptation");
@@ -450,7 +451,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
         this.binder.forField(graspableDifficultyField)
                 .withValidator((value, _) -> {
                     // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
+                    if (graspableEnabledField.getValue() && value == null) {
                         return ValidationResult
                                 .error("Difficulty is required when Graspable Math is enabled");
                     }

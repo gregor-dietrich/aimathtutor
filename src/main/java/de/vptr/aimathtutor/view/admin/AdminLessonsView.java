@@ -38,6 +38,7 @@ import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -108,7 +109,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
                 LOG.error("Error loading lessons", e);
                 throw new RuntimeException("Failed to load lessons", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((lessons, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
@@ -253,7 +254,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
         // Add action column
         this.treeGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Actions")
-                .setWidth("150px")
+                .setWidth(AppConstants.GRID_ACTION_WIDTH)
                 .setFlexGrow(0);
     }
 
@@ -464,7 +465,7 @@ public class AdminLessonsView extends VerticalLayout implements BeforeEnterObser
                 LOG.error("Unexpected error searching lessons", e);
                 throw new RuntimeException("Unexpected error occurred", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((lessons, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         this.searchButton.setEnabled(true);

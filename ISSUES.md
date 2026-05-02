@@ -137,15 +137,15 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - `ExerciseService`: extract `ExerciseCompletionService` for the `enrichWithCompletionData` logic.
     **When splitting, check all services over 400 lines for identical SRP violations.**
 - **Extract constants for magic values:**
-  - Async timeout: `30` seconds in admin views.
-  - Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.
-  - Retry config: `maxRetries = 3`, `delay = 1000`, `jitter = 200`.
-  - Difficulty levels: `"beginner"`, `"intermediate"`, `"advanced"`, `"expert"` -> use enum.
-  - Password min length: `8` (enforced by UserService.PASSWORD_MIN_LENGTH and DTO validations using `@Size(min = 8, ...)`).
-  - Auto-hide flag threshold: `5` in `CommentService`.
-  - Notification durations in `NotificationUtil`.
-  - Canvas heights: `"77vh"`, `"80vh"`.
-  - Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.
+  - ~~Async timeout: `30` seconds in admin views.~~ ✅ DONE
+  - ~~Grid column widths: `"80px"`, `"150px"`, `"200px"`, etc.~~ ✅ DONE
+  - ~~Retry config: `maxRetries = 3`, `delay = 1000`, `jitter = 200`.~~ ✅ DONE
+  - ~~Difficulty levels: `"beginner"`, `"intermediate"`, `"advanced"`, `"expert"` -> use enum.~~ ✅ DONE
+  - ~~Password min length: `8` (enforced by UserService.PASSWORD_MIN_LENGTH and DTO validations using `@Size(min = 8, ...)`).~~ ✅ DONE
+  - ~~Auto-hide flag threshold: `5` in `CommentService`.~~ ✅ DONE
+  - ~~Notification durations in `NotificationUtil`.~~ ✅ DONE
+  - ~~Canvas heights: `"77vh"`, `"80vh"`.~~ ✅ DONE
+  - ~~Default avatar emojis: `"🧒"`, `"🤖"`, `"🧑‍🏫"`.~~ ✅ DONE
     **When extracting constants, check the entire codebase for identical hardcoded values.**
 - **Standardize naming and patterns:**
   - ~~Logger naming: `ExerciseService` uses `log` (lowercase), others use `LOG`. Standardize to `LOG`.~~ ✅ DONE

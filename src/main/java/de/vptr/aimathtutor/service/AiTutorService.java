@@ -18,6 +18,7 @@ import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
@@ -528,7 +529,7 @@ public class AiTutorService {
      * prevent
      * MicroProfile Fault Tolerance from working correctly.
      */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
     String callOllamaForQuestion(final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
@@ -992,7 +993,7 @@ public class AiTutorService {
      * prevent
      * MicroProfile Fault Tolerance from working correctly.
      */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
     AiFeedbackDto callOllamaForAnalysis(final GraspableEventDto event, final ConversationContextDto context) {
         // Build the prompt with context
         final var prompt = this.buildMathTutoringPrompt(event, context);
@@ -1012,7 +1013,7 @@ public class AiTutorService {
      * @param category   The problem category (type of math problem)
      * @return A new Graspable Math problem
      */
-    public GraspableProblemDto generateProblem(final String difficulty,
+    public GraspableProblemDto generateProblem(final de.vptr.aimathtutor.enums.DifficultyLevel difficulty,
             final GraspableProblemDto.ProblemCategory category) {
         LOG.debug("Generating problem: difficulty={}, category={}", difficulty, category);
 

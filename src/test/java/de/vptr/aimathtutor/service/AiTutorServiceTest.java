@@ -14,6 +14,7 @@ import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -194,12 +195,12 @@ class AiTutorServiceTest {
     @Transactional
     void shouldGenerateAlgebraProblem() {
         // When
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("intermediate",
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE,
                 GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS);
 
         // Then
         assertNotNull(problem);
-        assertEquals("intermediate", problem.difficulty);
+        assertEquals(DifficultyLevel.INTERMEDIATE, problem.difficulty);
         assertEquals(GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS, problem.category);
         assertNotNull(problem.title);
         assertNotNull(problem.initialExpression);
@@ -212,12 +213,12 @@ class AiTutorServiceTest {
     @Transactional
     void shouldGenerateFactoringProblem() {
         // When
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("advanced",
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(DifficultyLevel.ADVANCED,
                 GraspableProblemDto.ProblemCategory.FACTORING);
 
         // Then
         assertNotNull(problem);
-        assertEquals("advanced", problem.difficulty);
+        assertEquals(DifficultyLevel.ADVANCED, problem.difficulty);
         assertEquals(GraspableProblemDto.ProblemCategory.FACTORING, problem.category);
         assertNotNull(problem.initialExpression);
         assertTrue(problem.allowedOperations.contains("factor"));
@@ -229,7 +230,7 @@ class AiTutorServiceTest {
     @Transactional
     void shouldGeneratePolynomialSimplificationProblem() {
         // When
-        final GraspableProblemDto problem = this.aiTutorService.generateProblem("beginner",
+        final GraspableProblemDto problem = this.aiTutorService.generateProblem(DifficultyLevel.BEGINNER,
                 GraspableProblemDto.ProblemCategory.POLYNOMIAL_SIMPLIFICATION);
 
         // Then

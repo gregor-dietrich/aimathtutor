@@ -19,6 +19,7 @@ import com.vaadin.flow.router.Route;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;

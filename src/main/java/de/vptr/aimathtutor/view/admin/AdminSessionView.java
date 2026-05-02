@@ -25,6 +25,7 @@ import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -131,7 +132,7 @@ public class AdminSessionView extends VerticalLayout implements BeforeEnterObser
         this.interactionsGrid.addColumn(interaction -> this.dateTimeFormatter.formatDateTime(interaction.timestamp))
                 .setHeader("Time")
                 .setFlexGrow(0)
-                .setWidth("150px");
+                .setWidth(AppConstants.GRID_ACTION_WIDTH);
 
         this.interactionsGrid.addColumn(interaction -> {
             // Identify if this is a student message or AI response

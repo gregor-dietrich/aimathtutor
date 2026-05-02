@@ -41,6 +41,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
@@ -118,7 +119,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                 LOG.error("Error loading users", e);
                 throw new RuntimeException("Failed to load users", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((users, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
@@ -143,7 +144,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                 LOG.error("Error loading ranks", e);
                 throw new RuntimeException("Failed to load ranks", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((ranks, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
@@ -204,7 +205,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(user -> user.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(user -> user.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Make the username column clickable
         this.grid.addComponentColumn(user -> {
@@ -520,7 +521,7 @@ public class AdminUsersView extends VerticalLayout implements BeforeEnterObserve
                 LOG.error("Unexpected error searching users", e);
                 throw new RuntimeException("Unexpected error occurred", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((users, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         this.searchButton.setEnabled(true);

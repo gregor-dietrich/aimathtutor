@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
@@ -465,8 +466,8 @@ public class CommentService {
         // Increment flag count
         comment.flagsCount = (comment.flagsCount != null ? comment.flagsCount : 0) + 1;
 
-        // If flagged 5+ times, auto-hide
-        if (comment.flagsCount >= 5) {
+        // If flagged enough times, auto-hide
+        if (comment.flagsCount >= AppConstants.COMMENT_AUTO_HIDE_THRESHOLD) {
             comment.status = "HIDDEN";
             LOG.warn("Comment auto-hidden due to flags: commentId={}, flagCount={}", commentId, comment.flagsCount);
         }

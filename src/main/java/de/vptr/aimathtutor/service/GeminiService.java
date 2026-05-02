@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -58,7 +59,7 @@ public class GeminiService {
      * @param prompt The input prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = 3, delay = 1000, jitter = 200, abortOn = IllegalStateException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = IllegalStateException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 

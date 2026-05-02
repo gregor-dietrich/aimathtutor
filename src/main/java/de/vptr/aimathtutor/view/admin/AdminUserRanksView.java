@@ -37,6 +37,7 @@ import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
@@ -108,7 +109,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
                 LOG.error("Error loading ranks", e);
                 throw new RuntimeException("Failed to load ranks", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((ranks, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
@@ -181,7 +182,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(rank -> rank.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(rank -> rank.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Make the name column clickable
         this.grid.addComponentColumn(rank -> {
@@ -241,7 +242,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Exercises").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Exercises").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // Lesson permissions
         this.grid.addComponentColumn(rank -> {
@@ -275,7 +276,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Lessons").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Lessons").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // Comment permissions
         this.grid.addComponentColumn(rank -> {
@@ -308,7 +309,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Comments").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Comments").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // User permissions
         this.grid.addComponentColumn(rank -> {
@@ -339,7 +340,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("Users").setWidth("150px").setFlexGrow(0);
+        }).setHeader("Users").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // User group permissions
         this.grid.addComponentColumn(rank -> {
@@ -371,7 +372,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("User Groups").setWidth("150px").setFlexGrow(0);
+        }).setHeader("User Groups").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
 
         // User rank permissions
         this.grid.addComponentColumn(rank -> {
@@ -403,8 +404,8 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
 
             layout.add(addIcon, editIcon, deleteIcon);
             return layout;
-        }).setHeader("User Ranks").setWidth("150px").setFlexGrow(0); // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("150px").setFlexGrow(0);
+        }).setHeader("User Ranks").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0); // Add action column
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
     }
 
     /**
@@ -657,7 +658,7 @@ public class AdminUserRanksView extends VerticalLayout implements BeforeEnterObs
                 LOG.error("Error searching ranks", e);
                 throw new RuntimeException("Failed to search ranks", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((ranks, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         this.searchButton.setEnabled(true);

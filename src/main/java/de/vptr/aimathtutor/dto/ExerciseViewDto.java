@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.dto;
 import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -34,7 +35,7 @@ public class ExerciseViewDto {
     public Boolean graspableEnabled;
     public String graspableInitialExpression;
     public String graspableTargetExpression;
-    public String graspableDifficulty;
+    public DifficultyLevel graspableDifficulty;
     public String graspableHints;
 
     public ExerciseViewDto() {

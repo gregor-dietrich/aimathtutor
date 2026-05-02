@@ -48,6 +48,7 @@ import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.view.LoginView;
@@ -150,7 +151,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                 LOG.error("Error loading comments", e);
                 throw new RuntimeException("Failed to load comments", e);
             }
-        }).orTimeout(30, TimeUnit.SECONDS)
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((comments, throwable) -> {
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
@@ -252,7 +253,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(comment -> comment.id).setHeader("ID").setWidth("80px").setFlexGrow(0);
+        this.grid.addColumn(comment -> comment.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Exercise title column
         this.grid.addComponentColumn(comment -> {
@@ -261,7 +262,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             titleSpan.getStyle().set("color", "var(--lumo-contrast-70pct)");
             titleSpan.getStyle().set("font-weight", "500");
             return titleSpan;
-        }).setHeader("Exercise").setWidth("200px").setFlexGrow(1);
+        }).setHeader("Exercise").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(1);
 
         // Author column
         this.grid.addColumn(comment -> comment.username != null ? comment.username : "(Unknown)")
@@ -300,10 +301,10 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
 
         // Flags column
         this.grid.addColumn(comment -> comment.flagsCount != null ? comment.flagsCount.toString() : "0")
-                .setHeader("Flags").setWidth("80px").setFlexGrow(0);
+                .setHeader("Flags").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("200px").setFlexGrow(0);
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(0);
     }
 
     private HorizontalLayout createActionButtons(final CommentViewDto comment) {
