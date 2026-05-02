@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,7 @@ public class OpenAiService {
      * @param prompt The user prompt
      * @return The generated text response
      */
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 

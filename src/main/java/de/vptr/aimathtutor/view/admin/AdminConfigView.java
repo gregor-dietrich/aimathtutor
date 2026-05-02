@@ -374,7 +374,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving general config", e);
         }
     }
@@ -401,7 +401,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving Gemini config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving Gemini config", e);
         }
     }
@@ -429,7 +429,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving OpenAI config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving OpenAI config", e);
         }
     }
@@ -459,7 +459,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving Ollama config", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving Ollama config", e);
         }
     }
@@ -484,7 +484,7 @@ public class AdminConfigView extends VerticalLayout implements BeforeEnterObserv
             NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving prompts", e);
         } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration: " + e.getMessage());
+            NotificationUtil.showError("Error saving configuration. Please try again later.");
             LOG.error("Error saving prompts", e);
         }
     }

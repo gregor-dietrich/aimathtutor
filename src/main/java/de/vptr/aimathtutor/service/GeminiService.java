@@ -8,6 +8,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class GeminiService {
         // Initialize HttpClient with appropriate settings
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
-                .connectTimeout(Duration.ofSeconds(30))
+                .connectTimeout(Duration.ofSeconds(10))
                 .build();
 
         LOG.debug("Initialized Gemini HttpClient");
@@ -57,6 +58,7 @@ public class GeminiService {
      * @param prompt The input prompt
      * @return The generated text response
      */
+    @Retry(maxRetries = 3, delay = 1000, jitter = 200)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 

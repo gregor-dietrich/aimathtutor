@@ -287,7 +287,7 @@ public class CommentsPanel extends VerticalLayout {
             NotificationUtil.showSuccess("Comment posted!");
         } catch (final Exception e) {
             LOG.error("Failed to create comment", e);
-            NotificationUtil.showError("Failed to post comment: " + e.getMessage());
+            NotificationUtil.showError("Failed to post comment. Please try again.");
         }
     }
 
@@ -320,7 +320,7 @@ public class CommentsPanel extends VerticalLayout {
                 NotificationUtil.showSuccess("Comment updated!");
             } catch (final Exception ex) {
                 LOG.error("Failed to edit comment", ex);
-                NotificationUtil.showError("Failed to edit: " + ex.getMessage());
+                NotificationUtil.showError("Failed to edit comment. Please try again.");
             }
         });
 
@@ -338,7 +338,7 @@ public class CommentsPanel extends VerticalLayout {
             NotificationUtil.showSuccess("Comment deleted!");
         } catch (final Exception ex) {
             LOG.error("Failed to delete comment", ex);
-            NotificationUtil.showError("Failed to delete: " + ex.getMessage());
+            NotificationUtil.showError("Failed to delete comment. Please try again.");
         }
     }
 
@@ -348,7 +348,7 @@ public class CommentsPanel extends VerticalLayout {
             NotificationUtil.showSuccess("Comment flagged for review");
         } catch (final Exception ex) {
             LOG.error("Failed to flag comment", ex);
-            NotificationUtil.showError("Failed to flag: " + ex.getMessage());
+            NotificationUtil.showError("Failed to flag comment. Please try again.");
         }
     }
 

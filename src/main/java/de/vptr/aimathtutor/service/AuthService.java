@@ -100,7 +100,7 @@ public class AuthService {
             try {
                 user.lastLogin = LocalDateTime.now();
                 this.userRepository.persist(user);
-            } catch (final Exception e) {
+            } catch (final jakarta.persistence.PersistenceException e) {
                 LOG.warn("Failed to update lastLogin for user {}: {}", user.username, e.getMessage());
                 // continue with login even if lastLogin couldn't be updated
             }
@@ -112,9 +112,9 @@ public class AuthService {
             LOG.trace("User authenticated successfully: {}", username);
             return AuthResultDto.success();
 
-        } catch (final Exception e) {
-            LOG.error("Unexpected error during authentication for user: {} - Error: {}", username, e.getMessage(), e);
-            return AuthResultDto.backendUnavailable("Unexpected error: " + e.getMessage());
+        } catch (final jakarta.persistence.PersistenceException e) {
+            LOG.error("Database error during authentication for user: {}", username, e);
+            return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
     }
 

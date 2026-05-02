@@ -150,7 +150,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
                             LOG.error("Error loading comments: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load comments: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to load comments. Please try again.");
                         } else {
                             LOG.info("Successfully loaded {} comments", comments.size());
                             this.grid.setItems(comments);
@@ -412,7 +412,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             NotificationUtil.showError("Please check the form for errors");
         } catch (final Exception e) {
             LOG.error("Error saving comment", e);
-            NotificationUtil.showError("Error saving comment: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while saving the comment. Please try again.");
         }
     }
 
@@ -426,7 +426,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             }
         } catch (final Exception e) {
             LOG.error("Error deleting comment", e);
-            NotificationUtil.showError("Error deleting comment: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while deleting the comment. Please try again.");
         }
     }
 
@@ -445,7 +445,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error searching comments", e);
-            NotificationUtil.showError("Error searching comments: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching comments. Please try again.");
         } finally {
             this.searchButton.setEnabled(true);
         }
@@ -470,7 +470,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by date range", e);
-            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
         }
     }
 
@@ -486,7 +486,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by user", e);
-            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
         }
     }
 
@@ -502,7 +502,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by exercise", e);
-            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
         }
     }
 
@@ -518,7 +518,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by status", e);
-            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
         }
     }
 
@@ -534,7 +534,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(comments);
         } catch (final Exception e) {
             LOG.error("Error filtering comments by flags", e);
-            NotificationUtil.showError("Error filtering comments: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
         }
     }
 
@@ -547,7 +547,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                 this.loadCommentsAsync();
             } catch (final Exception e) {
                 LOG.error("Error hiding comment", e);
-                NotificationUtil.showError("Error hiding comment: " + e.getMessage());
+                NotificationUtil.showError("An error occurred while hiding the comment. Please try again.");
             }
         });
     }
@@ -561,7 +561,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                 this.loadCommentsAsync();
             } catch (final Exception e) {
                 LOG.error("Error showing comment", e);
-                NotificationUtil.showError("Error showing comment: " + e.getMessage());
+                NotificationUtil.showError("An error occurred while showing the comment. Please try again.");
             }
         });
     }
@@ -575,7 +575,7 @@ public class AdminCommentsView extends VerticalLayout implements BeforeEnterObse
                 this.loadCommentsAsync();
             } catch (final Exception e) {
                 LOG.error("Error restoring comment", e);
-                NotificationUtil.showError("Error restoring comment: " + e.getMessage());
+                NotificationUtil.showError("An error occurred while restoring the comment. Please try again.");
             }
         });
     }

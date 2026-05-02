@@ -3,8 +3,11 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.persistence.PersistenceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +86,7 @@ public class ExerciseService {
             dto.userCompleted = !completedSessions.isEmpty();
             dto.userCompletionCount = completedSessions.size();
 
-        } catch (final Exception e) {
+        } catch (final PersistenceException e) {
             // Log the error but don't fail - this ensures we don't break the exercise
             // loading functionality
             log.error("Error enriching exercise DTO with completion data for exercise ID: " + dto.id, e);
@@ -123,7 +126,7 @@ public class ExerciseService {
                 dto.userCompleted = !completedSessions.isEmpty();
                 dto.userCompletionCount = completedSessions.size();
             }
-        } catch (final Exception e) {
+        } catch (final PersistenceException e) {
             log.error("Error enriching exercise DTO list with completion data", e);
         }
 
@@ -504,7 +507,7 @@ public class ExerciseService {
             return exercises.stream()
                     .map(ExerciseViewDto::new)
                     .toList();
-        } catch (final Exception e) {
+        } catch (final DateTimeParseException e) {
             // If date parsing fails, return all exercises
             return this.getAllExercises();
         }

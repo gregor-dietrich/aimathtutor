@@ -128,7 +128,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error loading exercises", e);
-            NotificationUtil.showError("Failed to load exercises: " + e.getMessage());
+            NotificationUtil.showError("Failed to load exercises. Please try again.");
         }
     }
 
@@ -140,7 +140,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error loading published exercises", e);
-            NotificationUtil.showError("Failed to load published exercises: " + e.getMessage());
+            NotificationUtil.showError("Failed to load published exercises. Please try again.");
         }
     }
 
@@ -579,7 +579,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error searching exercises", e);
-            NotificationUtil.showError("Error searching exercises: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching exercises. Please try again.");
         } finally {
             this.searchButton.setEnabled(true);
             this.searchButton.setText("Search");
@@ -608,7 +608,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error filtering exercises by date range", e);
-            NotificationUtil.showError("Error filtering exercises: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering exercises. Please try again.");
         }
     }
 
@@ -624,7 +624,7 @@ public class AdminExercisesView extends VerticalLayout implements BeforeEnterObs
             this.grid.setItems(exercises);
         } catch (final Exception e) {
             LOG.error("Error filtering exercises by user", e);
-            NotificationUtil.showError("Error filtering exercises: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering exercises. Please try again.");
         }
     }
 }

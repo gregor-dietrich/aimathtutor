@@ -89,7 +89,7 @@ public class PasswordHashingService {
         try {
             final var hashedProvidedPassword = this.hashPassword(providedPassword, salt);
             return hashedProvidedPassword.equals(storedHash);
-        } catch (final Exception e) {
+        } catch (final NoSuchAlgorithmException | InvalidKeySpecException | IllegalArgumentException e) {
             return false;
         }
     }

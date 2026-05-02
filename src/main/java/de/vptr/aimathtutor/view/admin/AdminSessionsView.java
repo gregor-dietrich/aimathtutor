@@ -218,7 +218,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(sessions);
         } catch (final Exception e) {
             LOG.error("Error searching sessions", e);
-            NotificationUtil.showError("Error searching sessions: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching sessions. Please try again.");
         }
     }
 
@@ -268,7 +268,7 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(sessions);
         } catch (final Exception e) {
             LOG.error("Error filtering by date range", e);
-            NotificationUtil.showError("Error filtering by date range: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering by date range. Please try again.");
         }
     }
 

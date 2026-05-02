@@ -122,7 +122,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                     this.getUI().ifPresent(ui -> ui.access(() -> {
                         if (throwable != null) {
                             LOG.error("Error loading groups: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to load groups: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to load groups. Please try again.");
                         } else {
                             LOG.info("Successfully loaded {} groups", groups.size());
                             this.grid.setItems(groups);
@@ -333,7 +333,7 @@ public class AdminUserGroupsView extends VerticalLayout implements BeforeEnterOb
                         this.searchButton.setEnabled(true);
                         if (throwable != null) {
                             LOG.error("Error searching groups: {}", throwable.getMessage(), throwable);
-                            NotificationUtil.showError("Failed to search groups: " + throwable.getMessage());
+                            NotificationUtil.showError("Failed to search groups. Please try again.");
                         } else {
                             LOG.info("Successfully found {} groups", groups.size());
                             this.grid.setItems(groups);

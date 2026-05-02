@@ -99,7 +99,7 @@ public class LoginView extends VerticalLayout {
 
             } catch (final Exception ex) {
                 LOG.error("Exception during authentication", ex);
-                NotificationUtil.showError("Unexpected error: " + ex.getMessage());
+                NotificationUtil.showError("An unexpected error occurred. Please try again.");
             } finally {
                 // Re-enable button
                 loginButton.setEnabled(true);

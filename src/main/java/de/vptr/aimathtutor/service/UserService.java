@@ -337,7 +337,7 @@ public class UserService {
                 final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
                 existingUser.salt = salt;
                 existingUser.password = hashedPassword;
-            } catch (final Exception e) {
+            } catch (final java.security.NoSuchAlgorithmException | java.security.spec.InvalidKeySpecException e) {
                 throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
             }
         }

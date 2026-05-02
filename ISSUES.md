@@ -160,27 +160,6 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - Run optimize imports across the codebase.
     **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
 
-### 4.7 Error Handling & Reliability
-
-- **Narrow broad `catch (Exception e)` blocks.** The following locations swallow all exceptions including programming bugs:
-  - `AuthService.authenticate()` — wraps entire auth flow; database errors masked as `backendUnavailable`.
-  - `UserService.patchUser()` — swallows password hashing exceptions.
-  - `ExerciseService.findByDateRange()` and `CommentService.findByDateRange()` — silently return ALL data on any exception.
-    Fix: catch only expected specific exceptions (e.g., `PersistenceException`, `ProcessingException`, `DateTimeParseException`) and let unexpected runtime exceptions propagate. **When fixing, search the entire codebase for `catch (final Exception` and `catch (Exception` to find identical patterns.**
-- **Fix null safety issues:**
-  - `CommentService` lines 372, 422, 459: `comment.user.id.equals(...)` without null check. `comment.user` can be null (deleted account). Add null guards.
-  - `UserIdentityProvider` lines 66, 74: direct boolean unboxing of `user.banned` and `user.activated`. Use `Boolean.TRUE.equals()`.
-  - `StudentSessionViewDto` line 70: `entity.actionsCount > 0` where `actionsCount` is `Integer`. Add null check.
-    **When fixing, check all entity/DTO boolean/Integer unboxing and nested property access for identical NPE risks.**
-- **Fix user-facing error messages to avoid information leakage.**
-  - `LoginView` shows `ex.getMessage()` directly to users.
-  - `AdminUsersView` search failure shows `throwable.getCause().getMessage()`.
-  - `AdminConfigView` shows `e.getMessage()` in error notifications.
-    Fix: show generic user-friendly messages and log technical details server-side. **When fixing, check all view catch blocks for identical raw-error-message exposure.**
-- **Add resilience to AI services.** Add `@Retry` or exponential-backoff to `GeminiService` and `OpenAiService` to match `OllamaService`. **When fixing, check all AI provider service methods for inconsistent fault-tolerance patterns.**
-- **Add timeout enforcement sweep.** Scan all external HTTP clients (`OpenAiService`, `GeminiService`, `OllamaService`, `UserService`, and any other external-client classes) for missing connect/read timeouts and ensure consistent timeout policies across all external calls.
-- **Fix integer division bug.** `AiTutorService` line ~1006 uses `(cIneq - bIneq) / aIneq` with integers, losing fractional results. Use double arithmetic.
-
 ---
 
 ## 5. AdminConfigView: Runtime AI Provider/Model/Settings Management

@@ -216,7 +216,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(progress);
         } catch (final Exception e) {
             LOG.error("Error searching students", e);
-            NotificationUtil.showError("Error searching students: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while searching students. Please try again.");
         }
     }
 
@@ -266,7 +266,7 @@ public class AdminProgressView extends VerticalLayout implements BeforeEnterObse
             this.grid.setItems(progress);
         } catch (final Exception e) {
             LOG.error("Error filtering by date range", e);
-            NotificationUtil.showError("Error filtering by date range: " + e.getMessage());
+            NotificationUtil.showError("An error occurred while filtering by date range. Please try again.");
         }
     }
 

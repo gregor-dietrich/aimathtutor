@@ -1109,7 +1109,9 @@ public class AiTutorService {
                         bIneq >= 0 ? "+" : "-",
                         Math.abs(bIneq),
                         cIneq);
-                problem.targetExpression = String.format("x < %d", (cIneq - bIneq) / aIneq);
+                problem.targetExpression = String.format("x < %s",
+                        java.math.BigDecimal.valueOf((double) (cIneq - bIneq) / aIneq)
+                                .stripTrailingZeros().toPlainString());
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
                 problem.hints.add("Solve like an equation, but keep the inequality sign");
                 problem.hints.add("Remember: if dividing by a negative number, flip the inequality");
