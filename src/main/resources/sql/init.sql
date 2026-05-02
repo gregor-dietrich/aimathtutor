@@ -181,6 +181,8 @@ CREATE TABLE comments (
 CREATE INDEX idx_comments_exercise_id ON comments(exercise_id);
 CREATE INDEX idx_comments_parent_id ON comments(parent_comment_id);
 CREATE INDEX idx_comments_user_id ON comments(user_id);
+CREATE INDEX idx_comments_deleted_by ON comments(deleted_by);
+CREATE INDEX idx_comments_moderator_id ON comments(moderator_id);
 CREATE INDEX idx_comments_session_id ON comments(session_id);
 CREATE INDEX idx_comments_created ON comments(created);
 CREATE INDEX idx_comments_status ON comments(status);
