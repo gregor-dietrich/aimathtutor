@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Size;
 /**
  * DTO for user settings including password change and avatar customization.
  */
-@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class UserSettingsDto {
 
     @Size(max = 100, message = "Current password must not exceed 100 characters")

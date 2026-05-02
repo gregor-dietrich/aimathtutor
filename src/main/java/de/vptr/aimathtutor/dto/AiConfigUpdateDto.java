@@ -8,7 +8,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Data Transfer Object for updating AI configuration.
  * Minimal DTO used when submitting configuration updates from the frontend.
  */
-@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class AiConfigUpdateDto {
 
     @JsonProperty("config_key")

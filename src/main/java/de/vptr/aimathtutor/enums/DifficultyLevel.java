@@ -24,6 +24,11 @@ public enum DifficultyLevel {
         return this.value;
     }
 
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
     /**
      * Converts a string value to the corresponding DifficultyLevel enum.
      *

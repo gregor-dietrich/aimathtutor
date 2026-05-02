@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Size;
 /**
  * DTO representing a user used for API and UI binding.
  */
-@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class UserDto {
 
     public Long id;

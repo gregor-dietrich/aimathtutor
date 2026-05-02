@@ -158,7 +158,7 @@ Use ULIDs for IDs rather than auto-incrementing integers.
   - ~~Unused static finder methods in `CommentEntity` (lines 90-164).~~ ✅ ALREADY RESOLVED (file is only 98 lines)
   - ~~Commented-out code block in `MathWorkspaceView` (lines 341-356).~~ ✅ DONE
   - ~~Unused static finder methods in `StudentSessionEntity`, `UserGroupMetaEntity`, `UserGroupEntity`, `LessonEntity`.~~ ✅ DONE
-  - Run optimize imports across the codebase.
+  - ~~Run optimize imports across the codebase.~~ ✅ DONE (Checkstyle clean)
     **When removing dead code, check all entities and views for identical unused methods or commented blocks.**
 
 ---

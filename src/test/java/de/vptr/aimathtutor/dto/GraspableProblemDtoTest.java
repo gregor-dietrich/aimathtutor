@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import de.vptr.aimathtutor.enums.DifficultyLevel;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,7 +56,7 @@ class GraspableProblemDtoTest {
         this.problemDto.description = "Find the factors";
         this.problemDto.initialExpression = "x^2 + 5x + 6";
         this.problemDto.targetExpression = "(x + 2)(x + 3)";
-        this.problemDto.difficulty = "intermediate";
+        this.problemDto.difficulty = DifficultyLevel.INTERMEDIATE;
         this.problemDto.graspableConfig = "{\"mode\": \"algebra\"}";
 
         // Then
@@ -62,7 +64,7 @@ class GraspableProblemDtoTest {
         assertEquals("Find the factors", this.problemDto.description);
         assertEquals("x^2 + 5x + 6", this.problemDto.initialExpression);
         assertEquals("(x + 2)(x + 3)", this.problemDto.targetExpression);
-        assertEquals("intermediate", this.problemDto.difficulty);
+        assertEquals(DifficultyLevel.INTERMEDIATE, this.problemDto.difficulty);
         assertEquals("{\"mode\": \"algebra\"}", this.problemDto.graspableConfig);
     }
 
@@ -101,7 +103,7 @@ class GraspableProblemDtoTest {
         this.problemDto.title = "Simplify";
         this.problemDto.initialExpression = "3x + 2x";
         this.problemDto.targetExpression = "5x";
-        this.problemDto.difficulty = "beginner";
+        this.problemDto.difficulty = DifficultyLevel.BEGINNER;
 
         // When
         final String result = this.problemDto.toString();
@@ -133,13 +135,13 @@ class GraspableProblemDtoTest {
     @DisplayName("Should support different difficulty levels")
     void shouldSupportDifferentDifficultyLevels() {
         // Test different difficulty settings
-        this.problemDto.difficulty = "beginner";
-        assertEquals("beginner", this.problemDto.difficulty);
+        this.problemDto.difficulty = DifficultyLevel.BEGINNER;
+        assertEquals(DifficultyLevel.BEGINNER, this.problemDto.difficulty);
 
-        this.problemDto.difficulty = "intermediate";
-        assertEquals("intermediate", this.problemDto.difficulty);
+        this.problemDto.difficulty = DifficultyLevel.INTERMEDIATE;
+        assertEquals(DifficultyLevel.INTERMEDIATE, this.problemDto.difficulty);
 
-        this.problemDto.difficulty = "advanced";
-        assertEquals("advanced", this.problemDto.difficulty);
+        this.problemDto.difficulty = DifficultyLevel.ADVANCED;
+        assertEquals(DifficultyLevel.ADVANCED, this.problemDto.difficulty);
     }
 }
