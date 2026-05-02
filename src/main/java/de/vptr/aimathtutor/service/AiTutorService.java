@@ -136,7 +136,9 @@ public class AiTutorService {
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
 
         // Apply per-user rate limiting for non-mock providers
-        if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
+        final var effectiveUserId = userIdStr != null ? userIdStr
+                : (event.studentId != null ? String.valueOf(event.studentId) : null);
+        if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
             return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
         }
 
@@ -286,7 +288,8 @@ public class AiTutorService {
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
 
         // Apply per-user rate limiting for non-mock providers
-        if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
+        final var effectiveUserId = userIdStr != null ? userIdStr : "ANONYMOUS";
+        if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
             return ChatMessageDto.aiAnswer(
                     "I'm receiving too many requests right now. Please wait a moment before asking again.");
         }
@@ -701,6 +704,7 @@ public class AiTutorService {
         prompt.append(prefix);
         prompt.append("\n\n<student_action>\n- Action Type: ");
         prompt.append(event.eventType != null ? this.sanitizePromptInput(event.eventType) : "unknown").append("\n");
+        prompt.append("</student_action>\n");
 
         // Add conversation context if available
         if (context != null) {

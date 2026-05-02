@@ -263,6 +263,11 @@ public class AdminSessionsView extends VerticalLayout implements BeforeEnterObse
             final var startDateTime = startDate != null ? startDate.atStartOfDay() : null;
             final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : null;
 
+            if (startDateTime != null && endDateTime != null && startDateTime.isAfter(endDateTime)) {
+                NotificationUtil.showError("Start date must be before or equal to end date.");
+                return;
+            }
+
             final var sessions = this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime);
             this.grid.setItems(sessions);
         } catch (final Exception e) {
