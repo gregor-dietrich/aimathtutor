@@ -79,6 +79,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         final var user = this.userService.getCurrentUser();
+        if (user == null) {
+            NotificationUtil.showError("Could not load user information");
+            event.rerouteTo(LessonsView.class);
+            return;
+        }
         this.currentUsername = user.username;
         this.currentEmail = user.email;
 
@@ -264,6 +269,10 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private void loadCurrentSettings() {
         try {
             final UserSettingsDto settings = this.userService.getSettings(this.currentUserId);
+            if (settings == null) {
+                NotificationUtil.showError("Could not load settings");
+                return;
+            }
             this.userAvatarSelect.setValue(settings.userAvatarEmoji);
             this.tutorAvatarSelect.setValue(settings.tutorAvatarEmoji);
             this.updatePreview();

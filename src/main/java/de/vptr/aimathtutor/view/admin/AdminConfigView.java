@@ -428,6 +428,10 @@ public class AdminConfigView extends AbstractAdminView {
     private void resetAllToDefaults() {
         try {
             final Long userId = this.authService.getUserId();
+            if (userId == null) {
+                NotificationUtil.showError("You must be logged in to reset settings");
+                return;
+            }
             this.aiConfigService.resetToDefaults(userId);
             NotificationUtil.showSuccess("All settings reset to defaults");
             LOG.info("Reset all AI configs to defaults");

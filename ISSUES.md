@@ -513,17 +513,17 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 ### Phase 4: Error Handling & Null Safety (High / Medium)
 
-#### 4.1 Fix CommentService.findByDateRange data exposure
+#### ~~4.1 Fix CommentService.findByDateRange data exposure~~ ✅
 - **Problem:** On `DateTimeParseException`, the method returns **all comments** instead of failing or returning an empty list. This can expose massive amounts of data and degrade performance.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/CommentService.java:527-546`
-- **Fix:** Remove the catch-all fallback. Let the exception propagate, or catch it and return `List.of()` after logging the error. Never return the full dataset on invalid input.
+- **Fix:** Changed catch block to return `List.of()` and log a warning. Also returns `List.of()` when either date is null.
 
-#### 4.2 Fix ExerciseService.findByDateRange data exposure
+#### ~~4.2 Fix ExerciseService.findByDateRange data exposure~~ ✅
 - **Problem:** Same anti-pattern as 4.1: on parse failure it returns **all exercises**.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/ExerciseService.java:409-429`
-- **Fix:** Same as 4.1 — return an empty list or propagate the exception. Do not return all exercises.
+- **Fix:** Changed catch block to return `List.of()`. Also returns `List.of()` when either date is null.
 
-#### 4.3 Fix NPE risks in views
+#### ~~4.3 Fix NPE risks in views~~ ✅
 - **Problem:** Multiple views dereference potentially null values without guards.
 - **Where:**
   - `src/main/java/de/vptr/aimathtutor/view/LessonsView.java:235` — `exercise.id.toString()` without null check.
@@ -535,16 +535,16 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
   - `src/main/java/de/vptr/aimathtutor/view/admin/AdminUserGroupsView.java:380` — `getAllUsers()` may return null.
   - `src/main/java/de/vptr/aimathtutor/component/layout/CommentsPanel.java:210` — `new Span(null)` throws NPE.
   - `src/main/java/de/vptr/aimathtutor/component/layout/CommentsPanel.java:399` — `event.getExerciseId().equals(this.exerciseId)` NPE if event ID is null.
-- **Fix:** Add null checks before dereferencing. Use `Objects.requireNonNull()` with meaningful messages, or add early returns/guards.
+- **Fix:** Added null checks, early returns, and guards in all affected view methods.
 
-#### 4.4 Fix missing null checks in AI service entry points
+#### ~~4.4 Fix missing null checks in AI service entry points~~ ✅
 - **Problem:** `JsonRepairService`, `PromptBuilderService`, `MockAiProvider`, and `AiTutorService` do not validate null arguments, leading to `NullPointerException` instead of graceful degradation.
 - **Where:**
   - `src/main/java/de/vptr/aimathtutor/service/ai/JsonRepairService.java:44`
   - `src/main/java/de/vptr/aimathtutor/service/ai/PromptBuilderService.java:98`
   - `src/main/java/de/vptr/aimathtutor/service/ai/provider/MockAiProvider.java:26`
   - `src/main/java/de/vptr/aimathtutor/service/AiTutorService.java:89,258`
-- **Fix:** Add explicit null checks at the beginning of public methods and throw `IllegalArgumentException` with a descriptive message.
+- **Fix:** Added explicit `IllegalArgumentException` throws at the beginning of each public method when required arguments are null.
 
 ---
 

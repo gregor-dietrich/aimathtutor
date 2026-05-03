@@ -207,7 +207,7 @@ public class CommentsPanel extends VerticalLayout {
 
         // Content with line break from header
         final String displayContent = "DELETED".equals(comment.status) ? "[deleted]" : comment.content;
-        final Span content = new Span(displayContent);
+        final Span content = new Span(displayContent != null ? displayContent : "");
         content.addClassName("comment-content");
         content.getStyle()
                 .set("display", "block")
@@ -396,7 +396,7 @@ public class CommentsPanel extends VerticalLayout {
      */
     public void onCommentCreated(@Observes final CommentCreatedEvent event) {
         // Only refresh if the event is for our exercise
-        if (event.getExerciseId().equals(this.exerciseId)) {
+        if (event.getExerciseId() != null && event.getExerciseId().equals(this.exerciseId)) {
             LOG.debug("Comment created event received for exercise {}, refreshing comments", this.exerciseId);
 
             // Must use UI.getCurrent().access() to update the UI from another thread

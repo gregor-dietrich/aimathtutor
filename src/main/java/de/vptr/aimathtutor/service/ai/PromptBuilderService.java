@@ -85,6 +85,9 @@ public class PromptBuilderService {
      * @return the constructed prompt string
      */
     public String buildMathTutoringPrompt(final GraspableEventDto event, final ConversationContextDto context) {
+        if (event == null) {
+            throw new IllegalArgumentException("event cannot be null");
+        }
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration

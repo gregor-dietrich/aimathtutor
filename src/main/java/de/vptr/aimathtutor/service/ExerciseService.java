@@ -399,7 +399,7 @@ public class ExerciseService {
 
     /**
      * Finds exercises created within a date range (inclusive).
-     * Date strings are parsed as ISO-8601 dates. Returns all exercises if parsing
+     * Date strings are parsed as ISO-8601 dates. Returns an empty list if parsing
      * fails or dates are null.
      *
      * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
@@ -408,7 +408,7 @@ public class ExerciseService {
      */
     public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
-            return this.getAllExercises();
+            return List.of();
         }
 
         try {
@@ -423,8 +423,7 @@ public class ExerciseService {
                     .map(ExerciseViewDto::new)
                     .toList();
         } catch (final DateTimeParseException e) {
-            // If date parsing fails, return all exercises
-            return this.getAllExercises();
+            return List.of();
         }
     }
 }

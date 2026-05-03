@@ -86,6 +86,9 @@ public class AiTutorService {
      */
     AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context,
             final String userIdStr) {
+        if (event == null) {
+            throw new IllegalArgumentException("event cannot be null");
+        }
         LOG.info("Analyzing math action: eventType='{}', beforeLen={}, afterLen={}, contextActions={}",
                 event.eventType,
                 event.expressionBefore != null ? event.expressionBefore.length() : 0,
@@ -255,9 +258,15 @@ public class AiTutorService {
     ChatMessageDto answerQuestion(final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final String sessionId, final ConversationContextDto context, final String userIdStr) {
+        if (question == null) {
+            throw new IllegalArgumentException("question cannot be null");
+        }
+        if (sessionId == null) {
+            throw new IllegalArgumentException("sessionId cannot be null");
+        }
         LOG.debug("Answering question (session: {}, questionLen: {}, contextActions: {})",
                 sessionId,
-                question != null ? question.length() : 0,
+                question.length(),
                 context != null && context.recentActions != null ? context.recentActions.size() : 0);
 
         // Load dynamic configuration (null-safe)

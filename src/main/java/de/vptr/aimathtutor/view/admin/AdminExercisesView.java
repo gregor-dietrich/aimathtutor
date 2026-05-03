@@ -303,6 +303,10 @@ public class AdminExercisesView extends AbstractAdminView {
         if (exercise == null) {
             try {
                 final var currentUser = this.userService.getCurrentUser();
+                if (currentUser == null || currentUser.id == null) {
+                    NotificationUtil.showError("Error retrieving user information. Please try again.");
+                    return;
+                }
                 this.currentExercise.userId = currentUser.id;
                 this.currentExercise.user = new ExerciseDto.UserField();
                 this.currentExercise.user.setId(currentUser.id);

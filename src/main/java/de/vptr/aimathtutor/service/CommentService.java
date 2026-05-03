@@ -533,7 +533,7 @@ public class CommentService {
 
     /**
      * Finds comments created within a date range (inclusive).
-     * Date strings are parsed as ISO-8601 dates. Returns all comments if parsing
+     * Date strings are parsed as ISO-8601 dates. Returns an empty list if parsing
      * fails or dates are null.
      *
      * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
@@ -543,7 +543,7 @@ public class CommentService {
     @Transactional
     public List<CommentViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
-            return this.getAllComments();
+            return List.of();
         }
 
         try {
@@ -558,8 +558,8 @@ public class CommentService {
                     .map(CommentViewDto::new)
                     .collect(Collectors.toList());
         } catch (final DateTimeParseException e) {
-            // If date parsing fails, return all comments
-            return this.getAllComments();
+            LOG.warn("Invalid date range provided: startDate='{}', endDate='{}'", startDate, endDate);
+            return List.of();
         }
     }
 

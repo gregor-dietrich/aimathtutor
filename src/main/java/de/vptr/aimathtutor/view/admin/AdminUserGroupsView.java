@@ -376,6 +376,10 @@ public class AdminUserGroupsView extends AbstractAdminView {
     private void loadAvailableUsers() {
         try {
             final var allUsers = this.userService.getAllUsers();
+            if (allUsers == null) {
+                this.availableUsersCombo.setItems(java.util.List.of());
+                return;
+            }
 
             // Filter out users already in this group
             final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
