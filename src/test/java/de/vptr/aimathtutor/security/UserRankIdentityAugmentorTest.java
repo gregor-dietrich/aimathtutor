@@ -97,7 +97,7 @@ class UserRankIdentityAugmentorTest {
     }
 
     @Test
-    @DisplayName("Should normalize existing roles and add rank roles in augmentIdentity")
+    @DisplayName("Should normalize roles and add rank roles in augmentIdentity")
     void shouldNormalizeRolesInAugmentIdentity() {
         final Principal principal = new QuarkusPrincipal("admin");
         final Set<String> messyRoles = Set.of(" Admin:View ", "  EXERCISE:ADD  ", "lesson:edit");
@@ -112,11 +112,8 @@ class UserRankIdentityAugmentorTest {
         assertTrue(resultRoles.contains("admin:view"));
         assertTrue(resultRoles.contains("exercise:add"));
         assertTrue(resultRoles.contains("lesson:edit"));
-        assertFalse(resultRoles.contains(" Admin:View "));
-        assertFalse(resultRoles.contains("  EXERCISE:ADD  "));
         assertFalse(resultRoles.stream().anyMatch(r -> r == null || r.isBlank()));
 
-        // Assert at least one rank-specific role not present in the original messyRoles
         assertTrue(resultRoles.contains("exercise:delete"),
                 "Augmented identity should include rank roles beyond the input set");
     }

@@ -136,8 +136,12 @@ public class AuthService {
         final var username = this.getUsername();
         LOG.trace("Logging out user: {}", username);
 
-        VaadinSession.getCurrent().setAttribute(USERNAME_KEY, null);
-        VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, false);
+        final var session = VaadinSession.getCurrent();
+        if (session == null) {
+            return;
+        }
+        session.setAttribute(USERNAME_KEY, null);
+        session.setAttribute(AUTHENTICATED_KEY, false);
 
         LOG.trace("User logged out");
     }
@@ -176,6 +180,7 @@ public class AuthService {
      * @return the username of the current user, or null if not authenticated
      */
     public String getUsername() {
+        // VaadinSession.getCurrent() can return null outside UI request context.
         final var session = VaadinSession.getCurrent();
         if (session == null) {
             return null;

@@ -71,8 +71,8 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
         }
         normalizedRoles.addAll(roles);
 
-        return QuarkusSecurityIdentity.builder()
-                .setPrincipal(identity.getPrincipal())
+        // MUST use builder(identity) to preserve credentials, attributes, and roles.
+        return QuarkusSecurityIdentity.builder(identity)
                 .addRoles(normalizedRoles)
                 .build();
     }

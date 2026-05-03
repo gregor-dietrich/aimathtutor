@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +27,9 @@ class RateLimitServiceTest {
     @Test
     @DisplayName("Should allow calls under the limit")
     void shouldAllowCallsUnderLimit() {
-        final String userId = "gooduser";
+        // Must use UUID — RateLimitService is @ApplicationScoped; hardcoded IDs
+        // cause state leakage between tests.
+        final String userId = UUID.randomUUID().toString();
 
         for (int i = 0; i < 10; i++) {
             assertTrue(this.rateLimitService.tryConsume(userId), "Call " + i + " should be allowed");

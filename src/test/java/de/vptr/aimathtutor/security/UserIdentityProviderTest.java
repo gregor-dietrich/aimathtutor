@@ -31,12 +31,10 @@ class UserIdentityProviderTest {
 
     @BeforeEach
     void setUp() {
-        // Clear lockout state before each test
         this.loginAttemptService.recordSuccessfulLogin("admin");
         this.loginAttemptService.recordSuccessfulLogin("student1");
         this.loginAttemptService.recordSuccessfulLogin("student2");
         this.loginAttemptService.recordSuccessfulLogin("nonexistent");
-        this.loginAttemptService.recordSuccessfulLogin("locked");
     }
 
     @Test
@@ -76,12 +74,14 @@ class UserIdentityProviderTest {
     @TestTransaction
     void shouldRejectLockedOutUser() {
         for (int i = 0; i < 5; i++) {
-            this.loginAttemptService.recordFailedAttempt("locked");
+            this.loginAttemptService.recordFailedAttempt("student1");
         }
-        assertTrue(this.loginAttemptService.isLockedOut("locked"));
+        assertTrue(this.loginAttemptService.isLockedOut("student1"));
 
-        assertThrows(AuthenticationFailedException.class,
-                () -> this.identityProvider.authenticateUser("locked", "password"));
+        final var ex = assertThrows(AuthenticationFailedException.class,
+                () -> this.identityProvider.authenticateUser("student1", "student1"));
+        assertTrue(ex.getMessage().contains("Too many failed attempts"),
+                "Expected lockout message but got: " + ex.getMessage());
     }
 
     @Test

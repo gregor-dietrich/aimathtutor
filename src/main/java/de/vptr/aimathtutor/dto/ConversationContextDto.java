@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ConversationContextDto {
 
+    // Private final + unmodifiable getters — intentional encapsulation.
+    // Do NOT revert to public fields.
     @JsonProperty("recent_actions")
     private final List<GraspableEventDto> recentActions = new CopyOnWriteArrayList<>();
 

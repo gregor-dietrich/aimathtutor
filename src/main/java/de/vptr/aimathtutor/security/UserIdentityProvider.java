@@ -97,6 +97,8 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
             throw new AuthenticationFailedException("User is not activated");
         }
 
+        this.loginAttemptService.recordSuccessfulLogin(username);
+
         return QuarkusSecurityIdentity.builder()
                 .setPrincipal(new QuarkusPrincipal(username))
                 .build();

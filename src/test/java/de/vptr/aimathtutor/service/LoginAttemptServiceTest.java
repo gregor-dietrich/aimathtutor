@@ -80,7 +80,11 @@ class LoginAttemptServiceTest {
         }
 
         // Verify cap at 1 hour (3600 seconds)
-        final long cappedLockout = this.loginAttemptService.recordFailedAttempt(key);
-        assertTrue(cappedLockout <= 3600, "Lockout should be capped at 3600 seconds");
+        // Must verify exact cap value of 3600, not just <= 3600.
+        long cappedLockout;
+        do {
+            cappedLockout = this.loginAttemptService.recordFailedAttempt(key);
+        } while (cappedLockout < 3600);
+        assertEquals(3600, cappedLockout, "Lockout should be capped at exactly 3600 seconds");
     }
 }

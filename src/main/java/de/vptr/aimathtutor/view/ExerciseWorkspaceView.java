@@ -358,7 +358,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
     @Override
     protected void onDetach(final DetachEvent detachEvent) {
-        // Cancel any pending async operations
+        // Use detachEvent.getUI(), NOT getUI() — may return empty during detach.
         this.pendingAsyncFutures.values().forEach(future -> {
             if (future != null && !future.isDone()) {
                 future.cancel(true);

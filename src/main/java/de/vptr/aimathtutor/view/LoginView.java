@@ -54,16 +54,16 @@ public class LoginView extends VerticalLayout {
         passwordField.setWidth("300px");
 
         final var loginButton = new Button("Login");
+        // INTENTIONALLY SYNCHRONOUS: Wrapping authService.authenticate() in
+        // CompletableFuture causes ContextNotActiveException during navigation.
         loginButton.addClickListener(e -> {
             final var username = usernameField.getValue();
             final var password = passwordField.getValue();
 
             try {
-                // Disable button during authentication
                 loginButton.setEnabled(false);
                 loginButton.setText("Authenticating...");
 
-                // Perform authentication
                 final var result = this.authService.authenticate(username, password);
 
                 LOG.trace("Authentication result - Status: {}, Message: {}", result.getStatus(), result.getMessage());
@@ -97,7 +97,6 @@ public class LoginView extends VerticalLayout {
                 LOG.error("Exception during authentication", ex);
                 NotificationUtil.showError("An unexpected error occurred. Please try again.");
             } finally {
-                // Re-enable button
                 loginButton.setEnabled(true);
                 loginButton.setText("Login");
             }

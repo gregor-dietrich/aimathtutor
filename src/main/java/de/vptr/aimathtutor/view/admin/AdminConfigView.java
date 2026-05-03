@@ -425,17 +425,26 @@ public class AdminConfigView extends AbstractAdminView {
         this.testConnection(this.aiProviderTestService::testOllama, "Ollama");
     }
 
+    // requireUserId helper: every save method must null-check getUserId()
+    // before proceeding. Do NOT move getUserId() below first use.
+    private Long requireUserId(final String action) {
+        final Long userId = this.authService.getUserId();
+        if (userId == null) {
+            NotificationUtil.showError("You must be logged in to " + action);
+            return null;
+        }
+        return userId;
+    }
+
     private void resetAllToDefaults() {
         try {
-            final Long userId = this.authService.getUserId();
+            final Long userId = this.requireUserId("reset settings");
             if (userId == null) {
-                NotificationUtil.showError("You must be logged in to reset settings");
                 return;
             }
             this.aiConfigService.resetToDefaults(userId);
             NotificationUtil.showSuccess("All settings reset to defaults");
             LOG.info("Reset all AI configs to defaults");
-            // Refresh UI so fields display the restored default values
             this.buildUi();
         } catch (final IllegalArgumentException e) {
             NotificationUtil.showError("Validation error: " + e.getMessage());
@@ -449,9 +458,8 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveGeneralConfig(final Checkbox enabledCheckbox,
             final ComboBox<String> providerCombo) {
         try {
-            final Long userId = this.authService.getUserId();
+            final Long userId = this.requireUserId("save settings");
             if (userId == null) {
-                NotificationUtil.showError("You must be logged in to save settings");
                 return;
             }
 
@@ -475,9 +483,8 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveGeminiConfig(final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         try {
-            final Long userId = this.authService.getUserId();
+            final Long userId = this.requireUserId("save settings");
             if (userId == null) {
-                NotificationUtil.showError("You must be logged in to save settings");
                 return;
             }
 
@@ -507,9 +514,8 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         try {
-            final Long userId = this.authService.getUserId();
+            final Long userId = this.requireUserId("save settings");
             if (userId == null) {
-                NotificationUtil.showError("You must be logged in to save settings");
                 return;
             }
 
@@ -540,9 +546,8 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField,
             final NumberField tempField, final NumberField maxTokensField, final NumberField timeoutField) {
         try {
-            final Long userId = this.authService.getUserId();
+            final Long userId = this.requireUserId("save settings");
             if (userId == null) {
-                NotificationUtil.showError("You must be logged in to save settings");
                 return;
             }
 
@@ -575,9 +580,8 @@ public class AdminConfigView extends AbstractAdminView {
     private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
             final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
         try {
-            final Long userId = this.authService.getUserId();
+            final Long userId = this.requireUserId("save settings");
             if (userId == null) {
-                NotificationUtil.showError("You must be logged in to save settings");
                 return;
             }
 

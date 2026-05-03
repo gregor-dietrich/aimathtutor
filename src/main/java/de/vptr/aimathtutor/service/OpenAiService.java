@@ -244,6 +244,9 @@ public class OpenAiService {
                 return content;
             }
 
+        } catch (final WebApplicationException e) {
+            LOG.error("Error calling OpenAI API for JSON", e);
+            throw e;
         } catch (final RuntimeException e) {
             LOG.error("Error calling OpenAI API for JSON", e);
             throw new IllegalStateException("Failed to call OpenAI API", e);

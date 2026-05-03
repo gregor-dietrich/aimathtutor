@@ -43,7 +43,7 @@ class CommentFlaggingServiceTest {
     @DisplayName("Should throw NOT_FOUND for non-existent comment")
     @TestTransaction
     void shouldThrowNotFoundForNonExistentComment() {
-        final UserEntity user = this.userRepository.findById(1L);
+        final UserEntity user = this.userRepository.findByUsername("admin");
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.flaggingService.flagComment(99999L, user.id, "spam"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
@@ -54,7 +54,7 @@ class CommentFlaggingServiceTest {
     @TestTransaction
     void shouldThrowNotFoundForNonExistentFlagger() {
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, this.userRepository.findById(1L));
+        final var comment = this.createComment(exercise, this.userRepository.findByUsername("admin"));
 
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.flaggingService.flagComment(comment.id, 99999L, "spam"));
@@ -65,7 +65,7 @@ class CommentFlaggingServiceTest {
     @DisplayName("Should prevent self-flagging")
     @TestTransaction
     void shouldPreventSelfFlagging() {
-        final UserEntity author = this.userRepository.findById(1L);
+        final UserEntity author = this.userRepository.findByUsername("admin");
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
@@ -78,8 +78,8 @@ class CommentFlaggingServiceTest {
     @DisplayName("Should increment flags count on successful flag")
     @TestTransaction
     void shouldIncrementFlagsCount() {
-        final UserEntity author = this.userRepository.findById(1L);
-        final UserEntity flagger = this.userRepository.findById(2L);
+        final UserEntity author = this.userRepository.findByUsername("admin");
+        final UserEntity flagger = this.userRepository.findByUsername("teacher");
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
@@ -91,12 +91,15 @@ class CommentFlaggingServiceTest {
     @DisplayName("Should auto-hide comment when flags reach threshold")
     @TestTransaction
     void shouldAutoHideWhenFlagsReachThreshold() {
-        final UserEntity author = this.userRepository.findById(1L);
+        final UserEntity author = this.userRepository.findByUsername("admin");
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
-        // Use 3 seeded users plus create 2 more to reach threshold of 5
-        final Long[] flaggerIds = {2L, 3L, 4L};
+        final Long[] flaggerIds = {
+                this.userRepository.findByUsername("teacher").id,
+                this.userRepository.findByUsername("student1").id,
+                this.userRepository.findByUsername("student2").id
+        };
         for (final Long flaggerId : flaggerIds) {
             this.flaggingService.flagComment(comment.id, flaggerId, "spam");
         }

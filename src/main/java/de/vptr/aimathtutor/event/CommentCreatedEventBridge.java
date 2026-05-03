@@ -4,6 +4,9 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
@@ -14,6 +17,8 @@ import jakarta.enterprise.event.Observes;
  */
 @ApplicationScoped
 public class CommentCreatedEventBridge {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommentCreatedEventBridge.class);
 
     private final Set<Consumer<CommentCreatedEvent>> listeners = new CopyOnWriteArraySet<>();
 
@@ -37,7 +42,11 @@ public class CommentCreatedEventBridge {
 
     void onCommentCreated(@Observes final CommentCreatedEvent event) {
         for (final Consumer<CommentCreatedEvent> listener : this.listeners) {
-            listener.accept(event);
+            try {
+                listener.accept(event);
+            } catch (final Throwable t) {
+                LOG.error("Listener {} failed handling event {}", listener.getClass().getName(), event, t);
+            }
         }
     }
 }

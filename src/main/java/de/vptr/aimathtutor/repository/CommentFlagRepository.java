@@ -75,8 +75,12 @@ public class CommentFlagRepository extends AbstractRepository {
             super.em.persist(flag);
             super.em.flush();
         } catch (final PersistenceException e) {
-            if (e.getCause() instanceof ConstraintViolationException) {
-                throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof ConstraintViolationException) {
+                    throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
+                }
+                cause = cause.getCause();
             }
             throw e;
         }

@@ -206,6 +206,7 @@ CREATE INDEX idx_comments_moderator_id ON comments(moderator_id);
 CREATE INDEX idx_comments_session_id ON comments(session_id);
 CREATE INDEX idx_comments_created ON comments(created);
 CREATE INDEX idx_comments_status ON comments(status);
+CREATE INDEX idx_comments_user_created ON comments(user_id, created);
 
 -- Full-text search index for content
 CREATE INDEX comments_content_fts ON comments USING gin(to_tsvector('english', content));
@@ -475,8 +476,6 @@ ALTER TABLE ai_interactions
 CREATE INDEX exercises_user_id_idx ON exercises (user_id);
 CREATE INDEX exercises_lesson_id_idx ON exercises (lesson_id);
 CREATE INDEX lessons_parent_id_idx ON lessons (parent_id);
-CREATE INDEX comments_user_id_idx ON comments (user_id);
-CREATE INDEX comments_exercise_id_idx ON comments (exercise_id);
 CREATE INDEX users_rank_id_idx ON users (rank_id);
 CREATE INDEX ai_config_user_id_idx ON ai_config (last_updated_by);
 

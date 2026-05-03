@@ -36,6 +36,10 @@ import jakarta.enterprise.inject.spi.CDI;
  * comments on exercises. Supports threading, permission-based UI, and
  * pagination. This component is not a CDI bean and performs a programmatic
  * lookup of {@link CommentService} when needed.
+ *
+ * NOTE: This class must NOT be @Vetoed and must NOT contain @Observes
+ * methods. @Vetoed classes cannot have CDI observers. Real-time refresh
+ * uses CommentCreatedEventBridge with a programmatic listener.
  */
 public class CommentsPanel extends VerticalLayout {
 

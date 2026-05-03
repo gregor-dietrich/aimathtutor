@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,5 +19,6 @@ public class PasswordUtilityTest {
         assertNotNull(hash);
 
         assertTrue(service.verifyPassword(password, hash));
+        assertFalse(service.verifyPassword("wrongPassword", hash));
     }
 }

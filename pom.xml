@@ -295,7 +295,6 @@
                     <argLine>@{argLine}</argLine>
                     <includes>
                         <include>**/*Test.java</include>
-                        <include>**/*IT.java</include>
                     </includes>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>

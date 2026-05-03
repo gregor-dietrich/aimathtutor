@@ -263,6 +263,9 @@ public class GraspableMathService {
         if (session == null) {
             return false;
         }
+        if (session.completed) {
+            return false;
+        }
         session.completed = true;
         session.endTime = LocalDateTime.now();
         this.studentSessionRepository.persist(session);

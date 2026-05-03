@@ -135,18 +135,11 @@ class PasswordHashingServiceTest {
     }
 
     @Test
-    @DisplayName("Should handle very long passwords")
-    void shouldHandleVeryLongPasswords() {
-        // Given
+    @DisplayName("Should reject passwords exceeding 72 bytes")
+    void shouldRejectVeryLongPasswords() {
         final String longPassword = "a".repeat(1000);
-
-        // When
-        final String hash = this.passwordHashingService.hashPassword(longPassword);
-        final boolean isValid = this.passwordHashingService.verifyPassword(longPassword, hash);
-
-        // Then
-        assertNotNull(hash);
-        assertTrue(isValid);
+        assertThrows(IllegalArgumentException.class,
+                () -> this.passwordHashingService.hashPassword(longPassword));
     }
 
     @Test

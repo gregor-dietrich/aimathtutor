@@ -69,6 +69,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private boolean problemSolved = false;
     private GraspableProblemDto.ProblemCategory selectedCategory = GraspableProblemDto.ProblemCategory.LINEAR_EQUATIONS;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
+    // Request ID staleness guard: prevents async results from overwriting
+    // newer state when users rapidly generate problems. Do NOT remove
+    // requestId checks or pendingProblemFuture.cancel() calls.
     private transient CompletableFuture<?> pendingProblemFuture;
     private transient long problemRequestId = 0;
 
@@ -180,7 +183,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
     @Override
     protected void onDetach(final DetachEvent detachEvent) {
-        // Cancel any pending async problem generation
+        // Use detachEvent.getUI(), NOT getUI() — may return empty during detach.
         if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
             this.pendingProblemFuture.cancel(true);
         }

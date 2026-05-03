@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.security;
 
+import java.nio.charset.StandardCharsets;
+
 import io.quarkus.elytron.security.common.BcryptUtil;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,8 +22,12 @@ public class PasswordHashingService {
      * @throws IllegalArgumentException if password is null or empty
      */
     public String hashPassword(final String password) {
-        if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("Password must not be null or empty");
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password must not be null or blank");
+        }
+        final int byteLength = password.getBytes(StandardCharsets.UTF_8).length;
+        if (byteLength > 72) {
+            throw new IllegalArgumentException("Password must not exceed 72 bytes when encoded as UTF-8");
         }
         return BcryptUtil.bcryptHash(password);
     }

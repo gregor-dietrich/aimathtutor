@@ -1,5 +1,5 @@
 ---
-applyTo: '**'
+applyTo: "**"
 ---
 
 # AIMathTutor — Agent Guide
@@ -47,17 +47,32 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 - **@Push:** Server push is enabled globally via `@Push` on `AppConfig`. Individual views do not need their own `@Push` annotation.
 
+### Critical Anti-Patterns (Do Not Propose)
+
+- **Do NOT make LoginView async.** Wrapping `authService.authenticate()` in `CompletableFuture.supplyAsync()` causes `ContextNotActiveException` on navigation because `ui.access()` has no CDI request context. `MainLayout.beforeEnter()` calls `isAuthenticated()` which needs the EntityManager. Keep login synchronous. Tried and reverted multiple times.
+- **Use `QuarkusSecurityIdentity.builder(identity)` when augmenting** — it preserves credentials, attributes, and permission checkers. Using `builder()` loses original roles.
+- **CommentsPanel must NOT have `@Observes` methods.** It is instantiated with `new`, not CDI. Real-time refresh uses `CommentCreatedEventBridge` with programmatic listeners.
+- **ConversationContextDto fields must stay `private final` with unmodifiable getters.** Do not revert to public fields.
+- **`VaadinSession.getCurrent()` can be null.** Always null-check before use. Applied to `AuthService.getUsername()`, `logout()`, `isAuthenticated()`.
+- **MathWorkspaceView request ID staleness checks must stay.** The `problemRequestId` counter, `pendingProblemFuture.cancel()` calls, and JS-side `window.currentProblemRequestId` check prevent race conditions on rapid problem generation.
+- **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin serializes views for UI state.
+- **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.** The latter may return empty during detach.
+- **LoginAttemptServiceTest must verify exact cap value of 3600.** Do not revert to weak `<= 3600` assertion.
+- **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded strings cause state leakage between tests since the service is `@ApplicationScoped`.
+- **AdminConfigView save methods must null-check `authService.getUserId()` before use.** The `requireUserId()` helper enforces this; do not bypass it.
+- **Do NOT use FQCNs.** Always use proper imports instead of fully qualified class names.
+
 ## Code Quality Gates
 
 All are enforced in CI (`build` job); run locally before pushing:
 
-| Gate | Command | Notes |
-|------|---------|-------|
-| Tests | `make test` | |
-| SpotBugs | `./mvnw spotbugs:check` | Fails build; exclusions in `spotbugs-exclude.xml` |
-| Checkstyle | `./mvnw checkstyle:check` | Google Java Style; config in `checkstyle.xml` |
+| Gate            | Command                                         | Notes                                               |
+| --------------- | ----------------------------------------------- | --------------------------------------------------- |
+| Tests           | `make test`                                     |                                                     |
+| SpotBugs        | `./mvnw spotbugs:check`                         | Fails build; exclusions in `spotbugs-exclude.xml`   |
+| Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml`       |
 | OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Requires `NVD_API_KEY` env var; `failBuildOnCVSS=7` |
-| License report | `./mvnw license:add-third-party` | Runs at `verify` phase |
+| License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                              |
 
 - **CI order:** `test` → `security` (CodeQL) → `build` (package + SpotBugs + Checkstyle).
 
