@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.exception.ConstraintViolationException;
+
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -15,9 +17,10 @@ import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -224,8 +227,8 @@ public class UserGroupService {
         try {
             this.userGroupMetaRepository.persist(meta);
             UserGroupMetaEntity.flush();
-        } catch (final jakarta.persistence.PersistenceException e) {
-            if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+        } catch (final PersistenceException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
                 throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);
             }
             throw e;

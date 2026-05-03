@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -377,7 +378,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         try {
             final var allUsers = this.userService.getAllUsers();
             if (allUsers == null) {
-                this.availableUsersCombo.setItems(java.util.List.of());
+                this.availableUsersCombo.setItems(List.of());
                 return;
             }
 

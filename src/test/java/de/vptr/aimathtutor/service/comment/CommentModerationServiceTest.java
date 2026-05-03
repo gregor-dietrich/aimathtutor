@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -87,7 +89,7 @@ class CommentModerationServiceTest {
         final var comment = this.createComment(exercise, author);
         comment.flagsCount = 3;
         comment.deletedBy = moderator;
-        comment.deletedAt = java.time.LocalDateTime.now();
+        comment.deletedAt = LocalDateTime.now();
 
         this.moderationService.moderateComment(comment.id, "SHOW", moderator.id, "Approved");
 

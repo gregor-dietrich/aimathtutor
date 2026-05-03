@@ -11,6 +11,7 @@ import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.enums.DifficultyLevel;
 import de.vptr.aimathtutor.service.ai.AiInteractionLogger;
 import de.vptr.aimathtutor.service.ai.JsonRepairService;
 import de.vptr.aimathtutor.service.ai.provider.AiProvider;
@@ -342,7 +343,7 @@ public class AiTutorService {
      * @param category   The problem category (type of math problem)
      * @return A new Graspable Math problem
      */
-    public GraspableProblemDto generateProblem(final de.vptr.aimathtutor.enums.DifficultyLevel difficulty,
+    public GraspableProblemDto generateProblem(final DifficultyLevel difficulty,
             final GraspableProblemDto.ProblemCategory category) {
         return this.problemGeneratorService.generateProblem(difficulty, category);
     }

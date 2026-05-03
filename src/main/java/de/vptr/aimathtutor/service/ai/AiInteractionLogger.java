@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.slf4j.Logger;
@@ -75,7 +76,7 @@ public class AiInteractionLogger {
                         event.expressionAfter != null ? event.expressionAfter.length() : 0);
                 contextMap.put("actionCorrect", event.correct);
                 interaction.conversationContext = this.objectMapper.writeValueAsString(contextMap);
-            } catch (final java.io.IOException e) {
+            } catch (final IOException e) {
                 LOG.error("Failed to serialize conversation context", e);
                 interaction.conversationContext = null;
             }
@@ -93,11 +94,11 @@ public class AiInteractionLogger {
      * Used for recording conversational interactions in the SessionDetailsView.
      * Marked as @Transactional to ensure proper persistence in async contexts.
      *
-     * @param sessionId        the session identifier
-     * @param userId           the user ID
-     * @param exerciseId       the exercise ID
-     * @param studentQuestion  the student's question
-     * @param aiAnswer         the AI's answer
+     * @param sessionId       the session identifier
+     * @param userId          the user ID
+     * @param exerciseId      the exercise ID
+     * @param studentQuestion the student's question
+     * @param aiAnswer        the AI's answer
      */
     @Transactional
     public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
@@ -118,7 +119,7 @@ public class AiInteractionLogger {
                 contextMap.put("questionLength", studentQuestion != null ? studentQuestion.length() : 0);
                 contextMap.put("answerLength", aiAnswer != null ? aiAnswer.length() : 0);
                 contextJson = this.objectMapper.writeValueAsString(contextMap);
-            } catch (final java.io.IOException e) {
+            } catch (final IOException e) {
                 LOG.error("Failed to serialize question context", e);
                 contextJson = null;
             }

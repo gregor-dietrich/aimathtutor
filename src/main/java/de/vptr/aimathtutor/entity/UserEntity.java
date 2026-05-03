@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -96,11 +97,11 @@ public class UserEntity extends PanacheEntityBase {
     @JsonIgnore
     public List<CommentEntity> comments;
 
-    @OneToMany(mappedBy = "flagger", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "flagger", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     public List<CommentFlagEntity> commentFlags;
 
-    @OneToMany(mappedBy = "user", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     public List<UserGroupMetaEntity> userGroupMetas;
 }

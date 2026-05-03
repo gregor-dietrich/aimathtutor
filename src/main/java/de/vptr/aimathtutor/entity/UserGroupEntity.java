@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.entity;
 import java.util.List;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -38,7 +39,7 @@ public class UserGroupEntity extends PanacheEntityBase {
     @Column(nullable = false)
     public String name;
 
-    @OneToMany(mappedBy = "group", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, orphanRemoval = true)
     public List<UserGroupMetaEntity> userGroupMetas;
 
     // Helper method to get users in this group

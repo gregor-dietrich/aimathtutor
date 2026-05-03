@@ -13,6 +13,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
 /**
@@ -100,7 +101,7 @@ public class AuthService {
             try {
                 user.lastLogin = LocalDateTime.now();
                 this.userRepository.persist(user);
-            } catch (final jakarta.persistence.PersistenceException e) {
+            } catch (final PersistenceException e) {
                 LOG.warn("Failed to update lastLogin for user {}: {}", user.username, e.getMessage());
                 // continue with login even if lastLogin couldn't be updated
             }
@@ -120,7 +121,7 @@ public class AuthService {
             LOG.trace("User authenticated successfully: {}", username);
             return AuthResultDto.success();
 
-        } catch (final jakarta.persistence.PersistenceException e) {
+        } catch (final PersistenceException e) {
             LOG.error("Database error during authentication for user: {}", username, e);
             return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
@@ -135,16 +136,8 @@ public class AuthService {
         final var username = this.getUsername();
         LOG.trace("Logging out user: {}", username);
 
-        final var vaadinSession = VaadinSession.getCurrent();
-        if (vaadinSession != null) {
-            vaadinSession.setAttribute(USERNAME_KEY, null);
-            vaadinSession.setAttribute(AUTHENTICATED_KEY, false);
-
-            final var httpSession = vaadinSession.getSession();
-            if (httpSession != null) {
-                httpSession.invalidate();
-            }
-        }
+        VaadinSession.getCurrent().setAttribute(USERNAME_KEY, null);
+        VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, false);
 
         LOG.trace("User logged out");
     }

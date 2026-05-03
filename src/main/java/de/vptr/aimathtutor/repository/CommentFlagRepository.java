@@ -7,7 +7,9 @@ import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.CommentFlagEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import org.hibernate.exception.ConstraintViolationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -73,8 +75,8 @@ public class CommentFlagRepository extends AbstractRepository {
         try {
             super.em.persist(flag);
             super.em.flush();
-        } catch (final jakarta.persistence.PersistenceException e) {
-            if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+        } catch (final PersistenceException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
                 throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
             }
             throw e;

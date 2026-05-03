@@ -1,5 +1,8 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,9 +231,9 @@ public class AdminProgressView extends AbstractAdminView {
             }
 
             final var startDateTime = startDate != null ? startDate.atStartOfDay()
-                    : java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
-            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX)
-                    : java.time.LocalDateTime.of(2099, 12, 31, 23, 59, 59);
+                    : LocalDateTime.of(1970, 1, 1, 0, 0);
+            final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX)
+                    : LocalDateTime.of(2099, 12, 31, 23, 59, 59);
 
             final var progress = this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime);
             this.grid.setItems(progress);

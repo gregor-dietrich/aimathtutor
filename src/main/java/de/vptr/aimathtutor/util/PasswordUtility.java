@@ -61,9 +61,8 @@ public final class PasswordUtility {
     private static void printUsage() {
         System.out.println("PasswordUtility - small helper to generate bcrypt hash for local dev");
         System.out.println("Usage:");
-        System.out.println("  java -cp target/classes de.vptr.aimathtutor.util.PasswordUtility generate <password>");
+        System.out.println("  java -cp target/classes PasswordUtility generate <password>");
         System.out.println("Example:");
-        System.out.println(
-                "  mvn -q -Dexec.mainClass=\"de.vptr.aimathtutor.util.PasswordUtility\" -Dexec.args=\"generate admin\" exec:java");
+        System.out.println("  mvn -q -Dexec.mainClass=\"PasswordUtility\" -Dexec.args=\"generate admin\" exec:java");
     }
 }
