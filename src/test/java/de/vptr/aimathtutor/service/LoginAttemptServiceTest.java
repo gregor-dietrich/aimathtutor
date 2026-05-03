@@ -72,17 +72,15 @@ class LoginAttemptServiceTest {
     void shouldIncreaseLockoutDurationExponentially() {
         final String key = "escalating";
 
-        long previousLockout = 0;
-        for (int i = 0; i < 10; i++) {
+        final long[] expectedLockouts = { 0, 0, 0, 0, 30, 60, 120, 240, 480, 960 };
+        for (int i = 0; i < expectedLockouts.length; i++) {
             final long lockout = this.loginAttemptService.recordFailedAttempt(key);
-            if (i >= 4) {
-                assertTrue(lockout > previousLockout || lockout >= 3600,
-                        "Lockout should increase or be capped at max");
-            }
-            previousLockout = lockout;
+            assertEquals(expectedLockouts[i], lockout,
+                    "Lockout at attempt " + (i + 1) + " should match expected value");
         }
 
-        // Should be capped at 1 hour (3600 seconds)
-        assertTrue(previousLockout <= 3600);
+        // Verify cap at 1 hour (3600 seconds)
+        final long cappedLockout = this.loginAttemptService.recordFailedAttempt(key);
+        assertTrue(cappedLockout <= 3600, "Lockout should be capped at 3600 seconds");
     }
 }

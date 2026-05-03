@@ -30,6 +30,11 @@ class RateLimitServiceTest {
         for (int i = 0; i < 10; i++) {
             assertTrue(this.rateLimitService.tryConsume(userId), "Call " + i + " should be allowed");
         }
+
+        // 11th call should be rejected
+        assertFalse(this.rateLimitService.tryConsume(userId), "Call 10 should be rejected");
+        assertTrue(this.rateLimitService.getRemainingCooldownSeconds(userId) > 0,
+                "Cooldown should be positive after limit exceeded");
     }
 
     @Test

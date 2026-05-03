@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.security;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -43,7 +44,7 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
         }
 
         final var rawUsername = identity.getPrincipal().getName();
-        final String username = rawUsername != null ? rawUsername.toLowerCase().trim() : null;
+        final String username = rawUsername != null ? rawUsername.toLowerCase(Locale.ROOT).trim() : null;
 
         return Uni.createFrom().item(() -> this.augmentIdentity(identity, username)).runSubscriptionOn(this.executor);
     }
@@ -62,8 +63,17 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
 
         final Set<String> roles = this.buildRolesFromUserRank(user.rank);
 
-        return QuarkusSecurityIdentity.builder(identity)
-                .addRoles(roles)
+        final Set<String> normalizedRoles = new HashSet<>();
+        for (final String role : identity.getRoles()) {
+            if (role != null && !role.isBlank()) {
+                normalizedRoles.add(role.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        normalizedRoles.addAll(roles);
+
+        return QuarkusSecurityIdentity.builder()
+                .setPrincipal(identity.getPrincipal())
+                .addRoles(normalizedRoles)
                 .build();
     }
 

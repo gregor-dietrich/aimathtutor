@@ -94,7 +94,7 @@ public class AiTutorService {
                 event.eventType,
                 event.expressionBefore != null ? event.expressionBefore.length() : 0,
                 event.expressionAfter != null ? event.expressionAfter.length() : 0,
-                context != null && context.recentActions != null ? context.recentActions.size() : 0);
+                context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
@@ -268,7 +268,7 @@ public class AiTutorService {
         LOG.debug("Answering question (session: {}, questionLen: {}, contextActions: {})",
                 sessionId,
                 question.length(),
-                context != null && context.recentActions != null ? context.recentActions.size() : 0);
+                context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);

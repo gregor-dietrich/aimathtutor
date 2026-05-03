@@ -1,14 +1,19 @@
 package de.vptr.aimathtutor.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.security.Principal;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import io.quarkus.security.identity.SecurityIdentity;
+import io.quarkus.security.runtime.QuarkusPrincipal;
+import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
@@ -89,5 +94,26 @@ class UserRankIdentityAugmentorTest {
         assertEquals(2, roles.size());
         assertTrue(roles.contains("admin:view"));
         assertTrue(roles.contains("exercise:edit"));
+    }
+
+    @Test
+    @DisplayName("Should normalize existing roles and add rank roles in augmentIdentity")
+    void shouldNormalizeRolesInAugmentIdentity() {
+        final Principal principal = new QuarkusPrincipal("admin");
+        final Set<String> messyRoles = Set.of(" Admin:View ", "  EXERCISE:ADD  ", "lesson:edit");
+        final SecurityIdentity identity = QuarkusSecurityIdentity.builder()
+                .setPrincipal(principal)
+                .addRoles(messyRoles)
+                .build();
+
+        final SecurityIdentity result = this.augmentor.augmentIdentity(identity, "admin");
+
+        final Set<String> resultRoles = result.getRoles();
+        assertTrue(resultRoles.contains("admin:view"));
+        assertTrue(resultRoles.contains("exercise:add"));
+        assertTrue(resultRoles.contains("lesson:edit"));
+        assertFalse(resultRoles.contains(" Admin:View "));
+        assertFalse(resultRoles.contains("  EXERCISE:ADD  "));
+        assertFalse(resultRoles.stream().anyMatch(r -> r == null || r.isBlank()));
     }
 }

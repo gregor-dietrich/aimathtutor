@@ -176,7 +176,11 @@ public class AuthService {
      * @return the username of the current user, or null if not authenticated
      */
     public String getUsername() {
-        return (String) VaadinSession.getCurrent().getAttribute(USERNAME_KEY);
+        final var session = VaadinSession.getCurrent();
+        if (session == null) {
+            return null;
+        }
+        return (String) session.getAttribute(USERNAME_KEY);
     }
 
     /**

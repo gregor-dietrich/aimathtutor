@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -24,11 +23,8 @@ import de.vptr.aimathtutor.component.button.ReplyButton;
 import de.vptr.aimathtutor.component.button.ReportButton;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
-import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
@@ -37,7 +33,6 @@ import jakarta.enterprise.inject.spi.CDI;
  * pagination. This component is not a CDI bean and performs a programmatic
  * lookup of {@link CommentService} when needed.
  */
-@Vetoed
 public class CommentsPanel extends VerticalLayout {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentsPanel.class);
@@ -389,21 +384,4 @@ public class CommentsPanel extends VerticalLayout {
         this.loadComments();
     }
 
-    /**
-     * CDI Event observer: Listen for new comments on this exercise.
-     * When a new comment is created elsewhere (by another user), this method
-     * fires and refreshes the comments panel automatically.
-     */
-    public void onCommentCreated(@Observes final CommentCreatedEvent event) {
-        // Only refresh if the event is for our exercise
-        if (event.getExerciseId() != null && event.getExerciseId().equals(this.exerciseId)) {
-            LOG.debug("Comment created event received for exercise {}, refreshing comments", this.exerciseId);
-
-            // Must use UI.getCurrent().access() to update the UI from another thread
-            UI.getCurrent().access(() -> {
-                this.refresh();
-                NotificationUtil.showInfo("New comment added");
-            });
-        }
-    }
 }

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.comment;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +14,7 @@ import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
 class CommentPermissionServiceTest {
@@ -102,8 +104,9 @@ class CommentPermissionServiceTest {
         final CommentEntity comment = new CommentEntity();
         comment.user = author;
 
-        assertThrows(WebApplicationException.class,
+        final var ex = assertThrows(WebApplicationException.class,
                 () -> this.permissionService.verifyCanEdit(comment, stranger));
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test
@@ -115,8 +118,9 @@ class CommentPermissionServiceTest {
         final CommentEntity comment = new CommentEntity();
         comment.user = author;
 
-        assertThrows(WebApplicationException.class,
+        final var ex = assertThrows(WebApplicationException.class,
                 () -> this.permissionService.verifyCanDelete(comment, author, false));
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test

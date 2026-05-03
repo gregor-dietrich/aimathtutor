@@ -449,11 +449,16 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveGeneralConfig(final Checkbox enabledCheckbox,
             final ComboBox<String> providerCombo) {
         try {
+            final Long userId = this.authService.getUserId();
+            if (userId == null) {
+                NotificationUtil.showError("You must be logged in to save settings");
+                return;
+            }
+
             final var updates = List.of(
                     new AiConfigUpdateDto("ai.tutor.enabled", enabledCheckbox.getValue() ? "true" : "false"),
                     new AiConfigUpdateDto("ai.tutor.provider", providerCombo.getValue()));
 
-            final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess("AI configuration updated successfully");
@@ -470,6 +475,12 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveGeminiConfig(final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         try {
+            final Long userId = this.authService.getUserId();
+            if (userId == null) {
+                NotificationUtil.showError("You must be logged in to save settings");
+                return;
+            }
+
             final var tempValue = tempField.getValue();
             final var maxTokensValue = maxTokensField.getValue();
 
@@ -480,7 +491,6 @@ public class AdminConfigView extends AbstractAdminView {
                     new AiConfigUpdateDto("gemini.max-tokens",
                             maxTokensValue != null ? maxTokensValue.intValue() + "" : "2000"));
 
-            final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess("Gemini configuration updated successfully");
@@ -497,6 +507,12 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         try {
+            final Long userId = this.authService.getUserId();
+            if (userId == null) {
+                NotificationUtil.showError("You must be logged in to save settings");
+                return;
+            }
+
             final var tempValue = tempField.getValue();
             final var maxTokensValue = maxTokensField.getValue();
 
@@ -508,7 +524,6 @@ public class AdminConfigView extends AbstractAdminView {
                     new AiConfigUpdateDto("openai.max-tokens",
                             maxTokensValue != null ? maxTokensValue.intValue() + "" : "2000"));
 
-            final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess("OpenAI configuration updated successfully");
@@ -525,6 +540,12 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField,
             final NumberField tempField, final NumberField maxTokensField, final NumberField timeoutField) {
         try {
+            final Long userId = this.authService.getUserId();
+            if (userId == null) {
+                NotificationUtil.showError("You must be logged in to save settings");
+                return;
+            }
+
             final var tempValue = tempField.getValue();
             final var maxTokensValue = maxTokensField.getValue();
             final var timeoutValue = timeoutField.getValue();
@@ -538,7 +559,6 @@ public class AdminConfigView extends AbstractAdminView {
                     new AiConfigUpdateDto("ollama.timeout-seconds",
                             timeoutValue != null ? timeoutValue.intValue() + "" : "30"));
 
-            final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess("Ollama configuration updated successfully");
@@ -555,6 +575,12 @@ public class AdminConfigView extends AbstractAdminView {
     private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
             final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
         try {
+            final Long userId = this.authService.getUserId();
+            if (userId == null) {
+                NotificationUtil.showError("You must be logged in to save settings");
+                return;
+            }
+
             final var updates = List.of(
                     new AiConfigUpdateDto("ai.prompt.question.answering.prefix",
                             questionPrefixArea.getValue()),
@@ -563,7 +589,6 @@ public class AdminConfigView extends AbstractAdminView {
                     new AiConfigUpdateDto("ai.prompt.math.tutoring.prefix", tutoringPrefixArea.getValue()),
                     new AiConfigUpdateDto("ai.prompt.math.tutoring.postfix", tutoringPostfixArea.getValue()));
 
-            final Long userId = this.authService.getUserId();
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess("Prompts updated successfully");

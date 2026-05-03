@@ -433,7 +433,7 @@ public class CommentService {
 
         // Update content
         if (dto.content != null && !dto.content.isBlank()) {
-            comment.content = dto.content.trim();
+            comment.content = this.sanitizeCommentContent(dto.content);
             comment.editedAt = LocalDateTime.now();
             this.commentRepository.persist(comment);
             LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,

@@ -425,16 +425,16 @@ public class AdminCommentsView extends AbstractAdminView {
 
         this.searchButton.setEnabled(false);
         LOG.info("Searching comments with query: {}", query);
-        try {
-            final var comments = this.commentService.searchComments(query.trim());
-            LOG.info("Successfully found {} comments", comments.size());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error searching comments", e);
-            NotificationUtil.showError("An error occurred while searching comments. Please try again.");
-        } finally {
-            this.searchButton.setEnabled(true);
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.searchComments(query.trim()),
+                this,
+                comments -> {
+                    LOG.info("Successfully found {} comments", comments.size());
+                    this.grid.setItems(comments);
+                    this.searchButton.setEnabled(true);
+                },
+                () -> this.searchButton.setEnabled(true),
+                "An error occurred while searching comments. Please try again.");
     }
 
     private void filterByDateRange() {
@@ -451,13 +451,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByDateRange(startDate.toString(), endDate.toString());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by date range", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByDateRange(startDate.toString(), endDate.toString()),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByUser() {
@@ -467,13 +465,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByUserId(userId.longValue());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by user", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByUserId(userId.longValue()),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByExerciseId() {
@@ -483,13 +479,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByExerciseId(exerciseId.longValue());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by exercise", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByExerciseId(exerciseId.longValue()),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByStatus() {
@@ -499,13 +493,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByStatus(status);
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by status", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByStatus(status),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByFlags() {
@@ -515,13 +507,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findFlaggedComments(minFlags);
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by flags", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findFlaggedComments(minFlags),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void hideComment(final CommentViewDto comment) {

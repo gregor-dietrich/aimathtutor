@@ -2,7 +2,9 @@ package de.vptr.aimathtutor.view;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +78,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient Button requestHintButton;
     private transient Button backButton;
     private transient String currentExpression;
-    private transient CompletableFuture<?> pendingAsyncFuture;
+    private final transient ConcurrentHashMap<String, CompletableFuture<?>> pendingAsyncFutures = new ConcurrentHashMap<>();
 
     /**
      * Called before navigation occurs. Extracts exercise ID from route, loads
@@ -357,11 +359,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     @Override
     protected void onDetach(final DetachEvent detachEvent) {
         // Cancel any pending async operations
-        if (this.pendingAsyncFuture != null && !this.pendingAsyncFuture.isDone()) {
-            this.pendingAsyncFuture.cancel(true);
-        }
+        this.pendingAsyncFutures.values().forEach(future -> {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
+        });
+        this.pendingAsyncFutures.clear();
         // Nullify the JS connector to prevent stale callbacks
-        final var ui = this.getUI().orElse(null);
+        final var ui = detachEvent.getUI();
         if (ui != null) {
             ui.getPage().executeJs("if (window.graspableViewConnector) { window.graspableViewConnector = null; }");
         }
@@ -513,42 +518,44 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.pendingAsyncFuture = this.aiTutorService
-                .analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
-                .thenAccept(feedback -> {
-                    ui.access(() -> {
-                        // Only log and display if we got feedback
-                        if (feedback != null) {
-                            // Log interaction
-                            this.aiTutorService.logInteraction(event, feedback);
+        final var rootFuture = this.aiTutorService
+                .analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit);
+        final String requestId = UUID.randomUUID().toString();
+        this.pendingAsyncFutures.put(requestId, rootFuture);
+        rootFuture.thenAccept(feedback -> {
+            ui.access(() -> {
+                // Only log and display if we got feedback
+                if (feedback != null) {
+                    // Log interaction
+                    this.aiTutorService.logInteraction(event, feedback);
 
-                            // Create feedback message and add to conversation context
-                            final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
-                            feedbackMessage.sessionId = this.currentSessionId;
-                            this.conversationContext.addAiMessage(feedbackMessage);
+                    // Create feedback message and add to conversation context
+                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
+                    feedbackMessage.sessionId = this.currentSessionId;
+                    this.conversationContext.addAiMessage(feedbackMessage);
 
-                            // Display feedback inline (replaces displayFeedback method)
-                            final var message = ChatMessageDto.aiFeedback(feedback.message);
-                            message.sessionId = this.currentSessionId;
+                    // Display feedback inline (replaces displayFeedback method)
+                    final var message = ChatMessageDto.aiFeedback(feedback.message);
+                    message.sessionId = this.currentSessionId;
 
-                            // Add hints as part of the message if present
-                            if (feedback.hints != null && !feedback.hints.isEmpty()) {
-                                final StringBuilder fullMessage = new StringBuilder(feedback.message);
-                                for (final String hint : feedback.hints) {
-                                    fullMessage.append("\n💡 ").append(hint);
-                                }
-                                message.message = fullMessage.toString();
-                            }
-
-                            this.chatPanel.addMessage(message);
+                    // Add hints as part of the message if present
+                    if (feedback.hints != null && !feedback.hints.isEmpty()) {
+                        final StringBuilder fullMessage = new StringBuilder(feedback.message);
+                        for (final String hint : feedback.hints) {
+                            fullMessage.append("\n💡 ").append(hint);
                         }
-                    });
-                }).exceptionally(ex -> {
-                    ui.access(() -> {
-                        LOG.error("Error getting AI feedback", ex);
-                    });
-                    return null;
-                });
+                        message.message = fullMessage.toString();
+                    }
+
+                    this.chatPanel.addMessage(message);
+                }
+            });
+        }).exceptionally(ex -> {
+            ui.access(() -> {
+                LOG.error("Error getting AI feedback", ex);
+            });
+            return null;
+        }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }
 
     /**
@@ -578,38 +585,40 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.chatPanel.hideTypingIndicator();
             return;
         }
-        this.pendingAsyncFuture = this.aiTutorService
+        final var rootFuture = this.aiTutorService
                 .answerQuestionAsync(question, this.currentExpression,
                         this.exercise != null ? this.exercise.graspableInitialExpression : null,
                         this.exercise != null ? this.exercise.graspableTargetExpression : null,
-                        this.currentSessionId, this.conversationContext, userIdStr)
-                .thenAccept(answer -> {
-                    // Log the question and answer interaction BEFORE UI access (to ensure proper
-                    // transaction context)
-                    if (sessionId != null) {
-                        try {
-                            this.aiTutorService.logQuestionInteraction(
-                                    sessionId,
-                                    userId,
-                                    exerciseId,
-                                    question,
-                                    answer.message);
-                        } catch (final Exception e) {
-                            LOG.warn("Failed to log question interaction", e);
-                        }
-                    }
+                        this.currentSessionId, this.conversationContext, userIdStr);
+        final String requestId = UUID.randomUUID().toString();
+        this.pendingAsyncFutures.put(requestId, rootFuture);
+        rootFuture.thenAccept(answer -> {
+            // Log the question and answer interaction BEFORE UI access (to ensure proper
+            // transaction context)
+            if (sessionId != null) {
+                try {
+                    this.aiTutorService.logQuestionInteraction(
+                            sessionId,
+                            userId,
+                            exerciseId,
+                            question,
+                            answer.message);
+                } catch (final Exception e) {
+                    LOG.warn("Failed to log question interaction", e);
+                }
+            }
 
-                    ui.access(() -> {
-                        // Hide typing indicator
-                        this.chatPanel.hideTypingIndicator();
+            ui.access(() -> {
+                // Hide typing indicator
+                this.chatPanel.hideTypingIndicator();
 
-                        // Add AI answer to conversation context
-                        this.conversationContext.addAiMessage(answer);
+                // Add AI answer to conversation context
+                this.conversationContext.addAiMessage(answer);
 
-                        // Display AI answer
-                        this.chatPanel.addMessage(answer);
-                    });
-                })
+                // Display AI answer
+                this.chatPanel.addMessage(answer);
+            });
+        })
                 .exceptionally(ex -> {
                     ui.access(() -> {
                         this.chatPanel.hideTypingIndicator();
@@ -618,7 +627,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                                 "Sorry, I encountered an error. Please try again."));
                     });
                     return null;
-                });
+                }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }
 
     private void showNextHint() {

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -12,13 +13,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ConversationContextDto {
 
     @JsonProperty("recent_actions")
-    public List<GraspableEventDto> recentActions = new CopyOnWriteArrayList<>();
+    private final List<GraspableEventDto> recentActions = new CopyOnWriteArrayList<>();
 
     @JsonProperty("recent_questions")
-    public List<ChatMessageDto> recentQuestions = new CopyOnWriteArrayList<>();
+    private final List<ChatMessageDto> recentQuestions = new CopyOnWriteArrayList<>();
 
     @JsonProperty("recent_ai_messages")
-    public List<ChatMessageDto> recentAiMessages = new CopyOnWriteArrayList<>();
+    private final List<ChatMessageDto> recentAiMessages = new CopyOnWriteArrayList<>();
 
     public ConversationContextDto() {
     }
@@ -29,9 +30,27 @@ public class ConversationContextDto {
     public ConversationContextDto(final List<GraspableEventDto> recentActions,
             final List<ChatMessageDto> recentQuestions,
             final List<ChatMessageDto> recentAiMessages) {
-        this.recentActions = recentActions != null ? new CopyOnWriteArrayList<>(recentActions) : new CopyOnWriteArrayList<>();
-        this.recentQuestions = recentQuestions != null ? new CopyOnWriteArrayList<>(recentQuestions) : new CopyOnWriteArrayList<>();
-        this.recentAiMessages = recentAiMessages != null ? new CopyOnWriteArrayList<>(recentAiMessages) : new CopyOnWriteArrayList<>();
+        if (recentActions != null) {
+            this.recentActions.addAll(recentActions);
+        }
+        if (recentQuestions != null) {
+            this.recentQuestions.addAll(recentQuestions);
+        }
+        if (recentAiMessages != null) {
+            this.recentAiMessages.addAll(recentAiMessages);
+        }
+    }
+
+    public List<GraspableEventDto> getRecentActions() {
+        return Collections.unmodifiableList(this.recentActions);
+    }
+
+    public List<ChatMessageDto> getRecentQuestions() {
+        return Collections.unmodifiableList(this.recentQuestions);
+    }
+
+    public List<ChatMessageDto> getRecentAiMessages() {
+        return Collections.unmodifiableList(this.recentAiMessages);
     }
 
     /**
