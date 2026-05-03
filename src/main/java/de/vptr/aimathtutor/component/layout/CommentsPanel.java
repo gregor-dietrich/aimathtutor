@@ -3,10 +3,12 @@ package de.vptr.aimathtutor.component.layout;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.button.Button;
@@ -23,6 +25,8 @@ import de.vptr.aimathtutor.component.button.ReplyButton;
 import de.vptr.aimathtutor.component.button.ReportButton;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentViewDto;
+import de.vptr.aimathtutor.event.CommentCreatedEvent;
+import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.enterprise.inject.spi.CDI;
@@ -47,6 +51,7 @@ public class CommentsPanel extends VerticalLayout {
     private Button submitButton;
     private int currentPage = 0;
     private Long currentParentId = null;
+    private transient Consumer<CommentCreatedEvent> commentCreatedListener;
 
     /**
      * Create a comments panel for the specified exercise/session and user.
@@ -91,6 +96,15 @@ public class CommentsPanel extends VerticalLayout {
 
         // Load initial comments
         this.loadComments();
+
+        // Register programmatic listener for real-time comment updates
+        final var bridge = CDI.current().select(CommentCreatedEventBridge.class).get();
+        this.commentCreatedListener = event -> {
+            if (event.getExerciseId() != null && event.getExerciseId().equals(this.exerciseId)) {
+                this.getUI().ifPresent(ui -> ui.access(this::refresh));
+            }
+        };
+        bridge.addListener(this.commentCreatedListener);
     }
 
     private Div createCommentForm() {
@@ -372,6 +386,19 @@ public class CommentsPanel extends VerticalLayout {
         }
 
         return dateTime.toString();
+    }
+
+    @Override
+    protected void onDetach(final DetachEvent detachEvent) {
+        if (this.commentCreatedListener != null) {
+            try {
+                final var bridge = CDI.current().select(CommentCreatedEventBridge.class).get();
+                bridge.removeListener(this.commentCreatedListener);
+            } catch (final Exception e) {
+                LOG.debug("Failed to remove comment created listener", e);
+            }
+        }
+        super.onDetach(detachEvent);
     }
 
     /**

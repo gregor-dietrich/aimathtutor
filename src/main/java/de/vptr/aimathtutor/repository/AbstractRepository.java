@@ -47,4 +47,11 @@ public abstract class AbstractRepository {
         return q.getResultList();
     }
 
+    /**
+     * Flushes the current persistence context to the database.
+     */
+    public void flush() {
+        this.em.flush();
+    }
+
 }

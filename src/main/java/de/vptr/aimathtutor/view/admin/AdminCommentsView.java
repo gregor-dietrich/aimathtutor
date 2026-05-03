@@ -371,12 +371,12 @@ public class AdminCommentsView extends AbstractAdminView {
             // Get current username from session
             final var session = VaadinSession.getCurrent();
             final var currentUsername = (String) session.getAttribute("authenticated.username");
-            if (currentUsername == null) {
-                NotificationUtil.showError("You must be logged in to manage comments");
-                return;
-            }
 
             if (this.currentComment.id == null) {
+                if (currentUsername == null) {
+                    NotificationUtil.showError("You must be logged in to manage comments");
+                    return;
+                }
                 this.commentService.createComment(commentEntity, currentUsername);
                 NotificationUtil.showSuccess("Comment created successfully");
             } else {

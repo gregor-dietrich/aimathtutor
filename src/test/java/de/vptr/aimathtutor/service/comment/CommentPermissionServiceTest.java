@@ -135,4 +135,24 @@ class CommentPermissionServiceTest {
         // Should not throw
         this.permissionService.verifyCanDelete(comment, author, true);
     }
+
+    @Test
+    @DisplayName("Should allow hard delete by moderator")
+    void shouldAllowHardDeleteByModerator() {
+        final UserEntity author = new UserEntity();
+        author.id = 1L;
+
+        final CommentEntity comment = new CommentEntity();
+        comment.user = author;
+
+        final UserRankEntity rank = new UserRankEntity();
+        rank.adminView = true;
+
+        final UserEntity moderator = new UserEntity();
+        moderator.id = 2L;
+        moderator.rank = rank;
+
+        // Should not throw
+        this.permissionService.verifyCanDelete(comment, moderator, false);
+    }
 }

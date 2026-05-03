@@ -224,7 +224,7 @@ public class UserGroupService {
 
         try {
             this.userGroupMetaRepository.persist(meta);
-            UserGroupMetaEntity.flush();
+            this.userGroupMetaRepository.flush();
         } catch (final PersistenceException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
                 throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);

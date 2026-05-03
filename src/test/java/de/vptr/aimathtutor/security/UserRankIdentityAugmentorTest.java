@@ -115,5 +115,9 @@ class UserRankIdentityAugmentorTest {
         assertFalse(resultRoles.contains(" Admin:View "));
         assertFalse(resultRoles.contains("  EXERCISE:ADD  "));
         assertFalse(resultRoles.stream().anyMatch(r -> r == null || r.isBlank()));
+
+        // Assert at least one rank-specific role not present in the original messyRoles
+        assertTrue(resultRoles.contains("exercise:delete"),
+                "Augmented identity should include rank roles beyond the input set");
     }
 }

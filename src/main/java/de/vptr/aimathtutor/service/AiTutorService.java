@@ -262,9 +262,6 @@ public class AiTutorService {
         if (question == null) {
             throw new IllegalArgumentException("question cannot be null");
         }
-        if (sessionId == null) {
-            throw new IllegalArgumentException("sessionId cannot be null");
-        }
         LOG.debug("Answering question (session: {}, questionLen: {}, contextActions: {})",
                 sessionId,
                 question.length(),

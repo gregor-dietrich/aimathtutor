@@ -233,6 +233,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
 
+        // Cancel any previous pending generation
+        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
+            this.pendingProblemFuture.cancel(true);
+        }
+
         final long requestId = ++this.problemRequestId;
         final var rootFuture = CompletableFuture.supplyAsync(
                 () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
@@ -246,8 +251,13 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 // Wait for canvas to be ready, then load the problem
                 ui.getPage().executeJs(
                         """
+                                window.currentProblemRequestId = $1;
                                 setTimeout(function() {
                                   var loadProblemWhenReady = function() {
+                                    if (window.currentProblemRequestId !== $1) {
+                                      console.log('[GM] Stale problem request skipped');
+                                      return;
+                                    }
                                     if (window.graspableCanvas && window.graspableMathUtils) {
                                       console.log('[GM] Canvas ready, loading initial problem');
                                       window.graspableMathUtils.loadProblem($0, 100, 50);
@@ -259,7 +269,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                                   loadProblemWhenReady();
                                 }, 500);
                                 """,
-                        problem.initialExpression);
+                        problem.initialExpression, requestId);
 
                 // Store initial expression and target for completion checking
                 this.currentExpression = problem.initialExpression;
@@ -541,14 +551,23 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         if (ui == null) {
             return;
         }
+
+        // Invalidate any in-flight generation
+        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
+            this.pendingProblemFuture.cancel(true);
+        }
+        this.pendingProblemFuture = null;
+        ++this.problemRequestId;
+
         ui.getPage().executeJs(
                 """
+                        window.currentProblemRequestId = $1;
                         if (window.graspableMathUtils) {
                           window.graspableMathUtils.clearCanvas();
                           window.graspableMathUtils.loadProblem($0, 100, 50);
                         }
                         """,
-                expression);
+                expression, this.problemRequestId);
 
         // Store expression
         this.currentExpression = expression;
@@ -567,6 +586,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
 
+        // Cancel any previous pending generation
+        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
+            this.pendingProblemFuture.cancel(true);
+        }
+
         final long requestId = ++this.problemRequestId;
         final var rootFuture = CompletableFuture.supplyAsync(
                 () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
@@ -580,12 +604,13 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 // Load problem into Graspable Math using the utility function
                 ui.getPage().executeJs(
                         """
+                                window.currentProblemRequestId = $1;
                                 if (window.graspableMathUtils) {
                                   window.graspableMathUtils.clearCanvas();
                                   window.graspableMathUtils.loadProblem($0, 100, 50);
                                 }
                                 """,
-                        problem.initialExpression);
+                        problem.initialExpression, requestId);
 
                 // Store initial expression and target
                 this.currentExpression = problem.initialExpression;
@@ -614,11 +639,22 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         if (ui == null) {
             return;
         }
-        ui.getPage().executeJs("""
-                if (window.graspableMathUtils) {
-                    window.graspableMathUtils.clearCanvas();
-                }
-                """);
+
+        // Invalidate any in-flight generation
+        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
+            this.pendingProblemFuture.cancel(true);
+        }
+        this.pendingProblemFuture = null;
+        ++this.problemRequestId;
+
+        ui.getPage().executeJs(
+                """
+                        window.currentProblemRequestId = $0;
+                        if (window.graspableMathUtils) {
+                            window.graspableMathUtils.clearCanvas();
+                        }
+                        """,
+                this.problemRequestId);
 
         this.currentExpression = null;
         this.initialExpression = null;
