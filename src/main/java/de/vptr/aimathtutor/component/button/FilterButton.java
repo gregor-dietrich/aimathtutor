@@ -24,6 +24,7 @@ public class FilterButton extends Button {
         super("", filterAction);
         this.setIcon(LineAwesomeIcon.FILTER_SOLID.create());
         this.setTooltipText(tooltipText);
+        this.getElement().setAttribute("aria-label", tooltipText);
         this.addThemeVariants(variants);
     }
 

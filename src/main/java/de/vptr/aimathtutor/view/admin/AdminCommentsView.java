@@ -262,6 +262,7 @@ public class AdminCommentsView extends AbstractAdminView {
             } else if ("DELETED".equals(status)) {
                 statusSpan.getStyle().set("color", "var(--lumo-error-color)");
             }
+            statusSpan.getElement().setAttribute("aria-label", status);
 
             return statusSpan;
         }).setHeader("Status").setWidth("100px").setFlexGrow(0);

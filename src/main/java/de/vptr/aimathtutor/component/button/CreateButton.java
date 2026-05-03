@@ -22,6 +22,7 @@ public class CreateButton extends Button {
         this.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         this.setIcon(LineAwesomeIcon.PLUS_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
     public CreateButton(final ComponentEventListener<ClickEvent<Button>> createAction) {

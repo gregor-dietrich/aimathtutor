@@ -23,6 +23,7 @@ public class RefreshButton extends Button {
         super("", refreshAction);
         this.setIcon(new Icon(VaadinIcon.REFRESH));
         this.setTooltipText(tooltipText);
+        this.getElement().setAttribute("aria-label", tooltipText);
         this.addThemeVariants(variants);
     }
 

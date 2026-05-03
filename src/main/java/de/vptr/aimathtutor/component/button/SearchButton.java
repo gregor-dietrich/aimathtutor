@@ -23,6 +23,7 @@ public class SearchButton extends Button {
         super("", searchAction);
         this.setIcon(LineAwesomeIcon.SEARCH_SOLID.create());
         this.setTooltipText(tooltipText);
+        this.getElement().setAttribute("aria-label", tooltipText);
         this.addThemeVariants(variants);
     }
 

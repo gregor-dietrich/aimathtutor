@@ -172,6 +172,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             adminViewIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (adminViewIcon instanceof SvgIcon) {
                 ((SvgIcon) adminViewIcon).setTooltipText("Admin View");
+                ((SvgIcon) adminViewIcon).getElement().setAttribute("aria-label", "Admin View");
             }
 
             layout.add(adminViewIcon);
@@ -189,6 +190,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add Exercises");
+                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Exercises");
             }
 
             final var editIcon = rank.exerciseEdit != null && rank.exerciseEdit ? LineAwesomeIcon.EDIT_SOLID.create()
@@ -196,6 +198,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
                 ((SvgIcon) editIcon).setTooltipText("Edit Exercises");
+                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Exercises");
             }
 
             final var deleteIcon = rank.exerciseDelete != null && rank.exerciseDelete
@@ -204,6 +207,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
                 ((SvgIcon) deleteIcon).setTooltipText("Delete Exercises");
+                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Exercises");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);
@@ -222,6 +226,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add Lessons");
+                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Lessons");
             }
 
             final var editIcon = rank.lessonEdit != null && rank.lessonEdit
@@ -230,6 +235,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
                 ((SvgIcon) editIcon).setTooltipText("Edit Lessons");
+                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Lessons");
             }
 
             final var deleteIcon = rank.lessonDelete != null && rank.lessonDelete
@@ -238,6 +244,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
                 ((SvgIcon) deleteIcon).setTooltipText("Delete Lessons");
+                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Lessons");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);
@@ -255,6 +262,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add Comments");
+                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Comments");
             }
 
             final var editIcon = rank.commentEdit != null && rank.commentEdit
@@ -263,6 +271,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
                 ((SvgIcon) editIcon).setTooltipText("Edit Comments");
+                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Comments");
             }
 
             final var deleteIcon = rank.commentDelete != null && rank.commentDelete
@@ -271,6 +280,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
                 ((SvgIcon) deleteIcon).setTooltipText("Delete Comments");
+                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Comments");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);
@@ -288,6 +298,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add Users");
+                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Users");
             }
 
             final var editIcon = rank.userEdit != null && rank.userEdit ? LineAwesomeIcon.EDIT_SOLID.create()
@@ -295,6 +306,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
                 ((SvgIcon) editIcon).setTooltipText("Edit Users");
+                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Users");
             }
 
             final var deleteIcon = rank.userDelete != null && rank.userDelete ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
@@ -302,6 +314,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
                 ((SvgIcon) deleteIcon).setTooltipText("Delete Users");
+                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Users");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);
@@ -319,6 +332,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add User Groups");
+                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add User Groups");
             }
 
             final var editIcon = rank.userGroupEdit != null && rank.userGroupEdit ? LineAwesomeIcon.EDIT_SOLID.create()
@@ -326,6 +340,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
                 ((SvgIcon) editIcon).setTooltipText("Edit User Groups");
+                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit User Groups");
             }
 
             final var deleteIcon = rank.userGroupDelete != null && rank.userGroupDelete
@@ -334,6 +349,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
                 ((SvgIcon) deleteIcon).setTooltipText("Delete User Groups");
+                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete User Groups");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);
@@ -351,6 +367,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
                 ((SvgIcon) addIcon).setTooltipText("Add Ranks");
+                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Ranks");
             }
 
             final var editIcon = rank.userRankEdit != null && rank.userRankEdit ? LineAwesomeIcon.EDIT_SOLID.create()
@@ -358,6 +375,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
                 ((SvgIcon) editIcon).setTooltipText("Edit Ranks");
+                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Ranks");
             }
 
             final var deleteIcon = rank.userRankDelete != null && rank.userRankDelete
@@ -366,6 +384,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
                 ((SvgIcon) deleteIcon).setTooltipText("Delete Ranks");
+                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Ranks");
             }
 
             layout.add(addIcon, editIcon, deleteIcon);

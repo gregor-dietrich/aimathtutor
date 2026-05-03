@@ -21,6 +21,7 @@ public class SettingsViewButton extends Button {
         super("", viewAction);
         this.setIcon(LineAwesomeIcon.COG_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
     public SettingsViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction) {

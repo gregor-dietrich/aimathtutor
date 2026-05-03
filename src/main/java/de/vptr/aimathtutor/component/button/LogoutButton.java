@@ -21,6 +21,7 @@ public class LogoutButton extends Button {
         this.addThemeVariants(ButtonVariant.LUMO_ERROR);
         this.setIcon(LineAwesomeIcon.POWER_OFF_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
     public LogoutButton(final ComponentEventListener<ClickEvent<Button>> logoutAction) {

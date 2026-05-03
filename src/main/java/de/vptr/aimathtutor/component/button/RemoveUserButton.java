@@ -28,6 +28,7 @@ public class RemoveUserButton extends Button {
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
         this.setIcon(LineAwesomeIcon.USER_MINUS_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
         this.addClickListener(this::showConfirmationDialog);
     }
 

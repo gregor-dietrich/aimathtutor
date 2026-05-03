@@ -353,32 +353,17 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 ### Phase 6: Code Deduplication (Medium)
 
 #### 6.3 Extract admin CRUD base view — Deferred
+
 - **Problem:** Admin views (`AdminUsersView`, `AdminExercisesView`, `AdminCommentsView`, `AdminLessonsView`, etc.) duplicate constructor boilerplate, `buildUi()` patterns, dialog setup, grid action columns, and save-error handling.
 - **Where:** All admin views under `src/main/java/de/vptr/aimathtutor/view/admin/`
 - **Fix:** Deferred due to high invasiveness. Each admin view has significant custom logic (date filters, custom dialogs, composite grids) that would require heavy generics and reflection to unify. Revisit when views are rewritten or a new admin framework is introduced.
 
 ---
 
-### Phase 7: Accessibility (Low / Medium)
-
-#### 7.1 Add aria-label to icon-only buttons
-- **Problem:** All button components under `component/button/` set icons and tooltips but do not set `aria-label`, making them inaccessible to screen readers.
-- **Where:** Every file under `src/main/java/de/vptr/aimathtutor/component/button/`
-- **Fix:** In each button constructor, after setting the tooltip, also call `getElement().setAttribute("aria-label", tooltipText)`.
-
-#### 7.2 Add text alternatives to color-only status indicators
-- **Problem:** Status indicators in admin grids rely solely on CSS color with no textual alternative for screen readers.
-- **Where:**
-  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminCommentsView.java:258-264`
-  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminSessionsView.java:133`
-  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminUserRanksView.java:170-373`
-- **Fix:** Add `aria-label` or visible text prefixes (e.g., "Active: ", "Banned: ") to status components so color is not the only channel conveying information.
-
----
-
 ### Phase 8: Tests & CI/CD (High / Medium)
 
 #### 8.1 Delete trivial getter/setter tests
+
 - **Problem:** ~30+ test files consist only of trivial getter/setter tests that assign a value and assert it was stored. They provide almost no behavioral coverage and create maintenance noise.
 - **Where:**
   - All files under `src/test/java/de/vptr/aimathtutor/dto/`
@@ -387,6 +372,7 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - **Fix:** Delete these files entirely. Replace with meaningful behavioral tests where appropriate.
 
 #### 8.2 Add security-focused tests
+
 - **Problem:** There are zero tests for critical security classes.
 - **Where:** Missing tests for:
   - `LoginAttemptService`
@@ -407,16 +393,19 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
   - Comment permission matrix (author vs moderator vs stranger)
 
 #### 8.3 Fix CI to run integration tests
+
 - **Problem:** `pom.xml` sets `<skipITs>true</skipITs>` and CI runs `./mvnw test`, so repository integration tests are never executed.
 - **Where:** `.github/workflows/ci-cd.yml` and `pom.xml:25`
 - **Fix:** Either set `skipITs=false` in CI or change the CI command to `./mvnw verify`.
 
 #### 8.4 Fix test DB leakage
+
 - **Problem:** Repository ITs annotate test methods with `@Transactional`, which commits at the end of the test in Quarkus, leaving persisted data in the shared test database.
 - **Where:** `CommentRepositoryIT.java`, `ExerciseRepositoryIT.java`, `StudentSessionRepositoryIT.java`
 - **Fix:** Replace `@Transactional` with `@io.quarkus.test.TestTransaction` so tests roll back automatically.
 
 #### 8.5 Update GitHub Actions cache version
+
 - **Problem:** CI uses `actions/cache@v3` which is outdated.
 - **Where:** `.github/workflows/ci-cd.yml:67`
 - **Fix:** Update to `actions/cache@v4`.
