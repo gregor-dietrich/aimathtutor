@@ -477,37 +477,37 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 ### Phase 3: Resource Leaks & Performance (Critical / High)
 
-#### 3.1 Fix JAX-RS Response leaks
+#### ~~3.1 Fix JAX-RS Response leaks~~ ✅
 - **Problem:** `OllamaService` and `OpenAiService` obtain JAX-RS `Response` objects but never close them. `readEntity()` consumes the entity stream but does not close the underlying `Response`, eventually exhausting the connection pool.
 - **Where:**
   - `src/main/java/de/vptr/aimathtutor/service/OllamaService.java:109,165,191`
   - `src/main/java/de/vptr/aimathtutor/service/OpenAiService.java:135,229`
-- **Fix:** Wrap all JAX-RS calls in try-with-resources: `try (Response response = ...) { ... }`.
+- **Fix:** Wrapped all JAX-RS calls in try-with-resources: `try (Response response = ...) { ... }`.
 
-#### 3.2 Fix ConversationContextDto thread safety
+#### ~~3.2 Fix ConversationContextDto thread safety~~ ✅
 - **Problem:** `ConversationContextDto` holds plain `ArrayList` instances (`recentActions`, `recentQuestions`, `recentAiMessages`). The view passes the same instance to `CompletableFuture.supplyAsync()` running on `ManagedExecutor`. The UI thread may concurrently mutate these lists while the background thread iterates over them, causing `ConcurrentModificationException`.
 - **Where:** `src/main/java/de/vptr/aimathtutor/dto/ConversationContextDto.java:15,18,21`
-- **Fix:** Change the list types to `CopyOnWriteArrayList` or create defensive copies before passing to background threads.
+- **Fix:** Changed the list types to `CopyOnWriteArrayList`.
 
-#### 3.3 Fix AdminConfigView async executor misuse
+#### ~~3.3 Fix AdminConfigView async executor misuse~~ ✅
 - **Problem:** Admin config view connection tests call `CompletableFuture.supplyAsync(testCall::get)` without an explicit `Executor`, using `ForkJoinPool.commonPool()`. Blocking HTTP calls occupy common-pool threads, and CDI contexts are not propagated.
 - **Where:** `src/main/java/de/vptr/aimathtutor/view/admin/AdminConfigView.java:394`
-- **Fix:** Inject `ManagedExecutor` and pass it to `supplyAsync`: `CompletableFuture.supplyAsync(testCall::get, this.managedExecutor)`.
+- **Fix:** Injected `ManagedExecutor` and passed it to `supplyAsync`: `CompletableFuture.supplyAsync(testCall::get, this.managedExecutor)`.
 
-#### 3.4 Fix GraspableMathService regex compilation on every call
-- **Problem:** `normalizeExpression()` calls `expression.replaceAll("\\s+", "")` which compiles the regex pattern on every invocation.
+#### ~~3.4 Fix GraspableMathService regex compilation on every call~~ ✅
+- **Problem:** `normalizeExpression()` calls `expression.replaceAll("\s+", "")` which compiles the regex pattern on every invocation.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/GraspableMathService.java:223`
-- **Fix:** Use a static precompiled `Pattern`: `private static final Pattern WHITESPACE = Pattern.compile("\\s+");` and then `WHITESPACE.matcher(normalized).replaceAll("")`.
+- **Fix:** Replaced with a static precompiled `Pattern`: `private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\s+");`.
 
-#### 3.5 Fix blocking DNS lookup inside @Transactional
+#### ~~3.5 Fix blocking DNS lookup inside @Transactional~~ ✅
 - **Problem:** `AiConfigService.validateUrlSafe()` calls `InetAddress.getByName(host)` (blocking DNS) from within `@Transactional` methods. A slow DNS query holds a DB connection open, potentially exhausting the pool.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/AiConfigService.java:448-508`
-- **Fix:** Move URL/SSRF validation outside the `@Transactional` boundary. Perform validation before entering the transactional method, or split the service method into a non-transactional validation phase and a transactional update phase.
+- **Fix:** Split `updateConfig` and `updateMultipleConfigs` into non-transactional public methods that perform validation (including URL/SSRF checks) before delegating to package-private `@Transactional` persistence methods.
 
-#### 3.6 Fix unnecessary @Transactional on cache reads
+#### ~~3.6 Fix unnecessary @Transactional on cache reads~~ ✅
 - **Problem:** `AiConfigService` getters (including cache lookups) are annotated with `@Transactional`. Opening a JTA transaction just to read from a `ConcurrentHashMap` wastes resources and holds DB connection pool slots.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/AiConfigService.java` getters
-- **Fix:** Remove `@Transactional` from pure cache read methods. Only annotate methods that actually interact with the repository.
+- **Fix:** Removed `@Transactional` from all read-only getter methods (`getConfigValue`, `getConfigValueAsInt`, `getConfigValueAsDouble`, `getConfigValueAsBoolean`, `getAllConfigsByCategory`, `getAllConfigs`, `getConfigsByCategory`).
 
 ---
 

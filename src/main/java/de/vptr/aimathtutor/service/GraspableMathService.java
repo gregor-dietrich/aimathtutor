@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,8 @@ import jakarta.transaction.Transactional;
 public class GraspableMathService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraspableMathService.class);
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     @Inject
     UserRepository userRepository;
@@ -220,7 +223,7 @@ public class GraspableMathService {
         }
 
         // Remove all whitespace
-        String normalized = expression.replaceAll("\\s+", "");
+        String normalized = WHITESPACE_PATTERN.matcher(expression).replaceAll("");
 
         // Convert to lowercase
         normalized = normalized.toLowerCase();

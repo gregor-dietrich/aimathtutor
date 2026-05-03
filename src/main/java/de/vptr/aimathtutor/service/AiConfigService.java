@@ -100,7 +100,6 @@ public class AiConfigService {
      * @param defaultValue the default value if not found
      * @return the configuration value or default
      */
-    @Transactional
     public String getConfigValue(final String key, final String defaultValue) {
         if (key == null) {
             return defaultValue;
@@ -130,7 +129,6 @@ public class AiConfigService {
      * @param defaultValue the default value if not found or parsing fails
      * @return the configuration value or default
      */
-    @Transactional
     public Integer getConfigValueAsInt(final String key, final Integer defaultValue) {
         final String value = this.getConfigValue(key, null);
         if (value == null) {
@@ -152,7 +150,6 @@ public class AiConfigService {
      * @param defaultValue the default value if not found or parsing fails
      * @return the configuration value or default
      */
-    @Transactional
     public Double getConfigValueAsDouble(final String key, final Double defaultValue) {
         final String value = this.getConfigValue(key, null);
         if (value == null) {
@@ -175,7 +172,6 @@ public class AiConfigService {
      * @param defaultValue the default value if not found
      * @return the configuration value or default
      */
-    @Transactional
     public Boolean getConfigValueAsBoolean(final String key, final Boolean defaultValue) {
         final String value = this.getConfigValue(key, null);
         if (value == null) {
@@ -200,7 +196,6 @@ public class AiConfigService {
      * @param category the category to retrieve
      * @return a map of all config keys and values in the category
      */
-    @Transactional
     public Map<String, String> getAllConfigsByCategory(final String category) {
         if (category == null) {
             return new HashMap<>();
@@ -218,7 +213,6 @@ public class AiConfigService {
      *
      * @return a list of all {@link AiConfigDto} objects
      */
-    @Transactional
     public List<AiConfigDto> getAllConfigs() {
         return this.aiConfigRepository.findAll().stream()
                 .map(this::entityToDto)
@@ -231,7 +225,6 @@ public class AiConfigService {
      * @param category the category to retrieve
      * @return a list of {@link AiConfigDto} objects in the category
      */
-    @Transactional
     public List<AiConfigDto> getConfigsByCategory(final String category) {
         return this.aiConfigRepository.findByCategory(category).stream()
                 .map(this::entityToDto)
@@ -248,7 +241,6 @@ public class AiConfigService {
      * @throws IllegalArgumentException if validation fails
      * @throws IllegalStateException    if user is not an admin
      */
-    @Transactional
     public void updateConfig(final String configKey, final String configValue, final Long userId) {
         // Only require configKey to be non-null. Values can be null or empty
         if (configKey == null) {
@@ -257,6 +249,18 @@ public class AiConfigService {
 
         this.validateConfigValue(configKey, configValue);
 
+        // Perform URL validation outside of any DB transaction to avoid holding
+        // a connection during potentially slow DNS resolution.
+        if (configValue != null && !configValue.isBlank()
+                && (configKey.endsWith(".base-url") || configKey.endsWith(".url"))) {
+            this.validateUrlSafe(configKey, configValue);
+        }
+
+        this.persistConfigUpdate(configKey, configValue, userId);
+    }
+
+    @Transactional
+    void persistConfigUpdate(final String configKey, final String configValue, final Long userId) {
         // Verify permission - user must have exercise or lesson management permissions
         final var user = this.userRepository.findById(userId);
         if (user == null || user.rank == null) {
@@ -275,6 +279,8 @@ public class AiConfigService {
         final var entity = existing.orElseGet(() -> {
             final var newEntity = new AiConfigEntity();
             newEntity.configKey = configKey;
+            newEntity.configType = "STRING";
+            newEntity.category = "UNKNOWN";
             return newEntity;
         });
 
@@ -304,12 +310,28 @@ public class AiConfigService {
      * @throws IllegalArgumentException if any validation fails
      * @throws IllegalStateException    if user is not an admin
      */
-    @Transactional
     public void updateMultipleConfigs(final List<AiConfigUpdateDto> updates, final Long userId) {
         if (updates == null || updates.isEmpty()) {
             return;
         }
 
+        // Validate all updates first (outside any DB transaction)
+        for (final AiConfigUpdateDto update : updates) {
+            if (update.configKey == null) {
+                throw new IllegalArgumentException("Configuration key cannot be null");
+            }
+            this.validateConfigValue(update.configKey, update.configValue);
+            if (update.configValue != null && !update.configValue.isBlank()
+                    && (update.configKey.endsWith(".base-url") || update.configKey.endsWith(".url"))) {
+                this.validateUrlSafe(update.configKey, update.configValue);
+            }
+        }
+
+        this.persistMultipleConfigUpdates(updates, userId);
+    }
+
+    @Transactional
+    void persistMultipleConfigUpdates(final List<AiConfigUpdateDto> updates, final Long userId) {
         // Verify permission once
         final UserEntity user = this.userRepository.findById(userId);
         if (user == null || user.rank == null) {
@@ -323,20 +345,14 @@ public class AiConfigService {
                     "Only users with exercise or lesson management permissions can update configuration");
         }
 
-        // Validate all updates first
-        for (final AiConfigUpdateDto update : updates) {
-            if (update.configKey == null) {
-                throw new IllegalArgumentException("Configuration key cannot be null");
-            }
-            this.validateConfigValue(update.configKey, update.configValue);
-        }
-
         // Persist all updates
         for (final AiConfigUpdateDto update : updates) {
             final Optional<AiConfigEntity> existing = this.aiConfigRepository.findByConfigKey(update.configKey);
             final AiConfigEntity entity = existing.orElseGet(() -> {
                 final AiConfigEntity newEntity = new AiConfigEntity();
                 newEntity.configKey = update.configKey;
+                newEntity.configType = "STRING";
+                newEntity.category = "UNKNOWN";
                 return newEntity;
             });
 
@@ -434,10 +450,6 @@ public class AiConfigService {
             }
         }
 
-        // URL validation for base-url configs to prevent SSRF
-        if (configKey.endsWith(".base-url") || configKey.endsWith(".url")) {
-            this.validateUrlSafe(configKey, configValue);
-        }
     }
 
     /**

@@ -1,7 +1,7 @@
 package de.vptr.aimathtutor.dto;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -12,13 +12,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ConversationContextDto {
 
     @JsonProperty("recent_actions")
-    public List<GraspableEventDto> recentActions = new ArrayList<>();
+    public List<GraspableEventDto> recentActions = new CopyOnWriteArrayList<>();
 
     @JsonProperty("recent_questions")
-    public List<ChatMessageDto> recentQuestions = new ArrayList<>();
+    public List<ChatMessageDto> recentQuestions = new CopyOnWriteArrayList<>();
 
     @JsonProperty("recent_ai_messages")
-    public List<ChatMessageDto> recentAiMessages = new ArrayList<>();
+    public List<ChatMessageDto> recentAiMessages = new CopyOnWriteArrayList<>();
 
     public ConversationContextDto() {
     }
@@ -29,9 +29,9 @@ public class ConversationContextDto {
     public ConversationContextDto(final List<GraspableEventDto> recentActions,
             final List<ChatMessageDto> recentQuestions,
             final List<ChatMessageDto> recentAiMessages) {
-        this.recentActions = recentActions != null ? recentActions : new ArrayList<>();
-        this.recentQuestions = recentQuestions != null ? recentQuestions : new ArrayList<>();
-        this.recentAiMessages = recentAiMessages != null ? recentAiMessages : new ArrayList<>();
+        this.recentActions = recentActions != null ? new CopyOnWriteArrayList<>(recentActions) : new CopyOnWriteArrayList<>();
+        this.recentQuestions = recentQuestions != null ? new CopyOnWriteArrayList<>(recentQuestions) : new CopyOnWriteArrayList<>();
+        this.recentAiMessages = recentAiMessages != null ? new CopyOnWriteArrayList<>(recentAiMessages) : new CopyOnWriteArrayList<>();
     }
 
     /**

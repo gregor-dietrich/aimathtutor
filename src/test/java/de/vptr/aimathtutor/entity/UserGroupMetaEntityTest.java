@@ -40,27 +40,27 @@ class UserGroupMetaEntityTest {
         this.userGroupMeta.id = 1L;
         this.userGroupMeta.user = this.user;
         this.userGroupMeta.group = this.group;
-        this.userGroupMeta.timestamp = now;
+        this.userGroupMeta.created = now;
 
         // Then
         assertEquals(1L, this.userGroupMeta.id);
         assertEquals(this.user, this.userGroupMeta.user);
         assertEquals(this.group, this.userGroupMeta.group);
-        assertEquals(now, this.userGroupMeta.timestamp);
+        assertEquals(now, this.userGroupMeta.created);
     }
 
     @Test
-    @DisplayName("Should handle null timestamp")
+    @DisplayName("Should handle null created")
     void shouldHandleNullTimestamp() {
         // When
         this.userGroupMeta.user = this.user;
         this.userGroupMeta.group = this.group;
-        this.userGroupMeta.timestamp = null;
+        this.userGroupMeta.created = null;
 
         // Then
         assertEquals(this.user, this.userGroupMeta.user);
         assertEquals(this.group, this.userGroupMeta.group);
-        assertNull(this.userGroupMeta.timestamp);
+        assertNull(this.userGroupMeta.created);
     }
 
     @Test
@@ -141,7 +141,7 @@ class UserGroupMetaEntityTest {
     }
 
     @Test
-    @DisplayName("Should track membership timestamp")
+    @DisplayName("Should track membership created")
     void shouldTrackMembershipTimestamp() {
         // Given
         final LocalDateTime membershipTime = LocalDateTime.of(2024, 1, 15, 10, 30, 0);
@@ -149,13 +149,13 @@ class UserGroupMetaEntityTest {
         // When
         this.userGroupMeta.user = this.user;
         this.userGroupMeta.group = this.group;
-        this.userGroupMeta.timestamp = membershipTime;
+        this.userGroupMeta.created = membershipTime;
 
         // Then
-        assertEquals(membershipTime, this.userGroupMeta.timestamp);
-        assertEquals(2024, this.userGroupMeta.timestamp.getYear());
-        assertEquals(1, this.userGroupMeta.timestamp.getMonthValue());
-        assertEquals(15, this.userGroupMeta.timestamp.getDayOfMonth());
+        assertEquals(membershipTime, this.userGroupMeta.created);
+        assertEquals(2024, this.userGroupMeta.created.getYear());
+        assertEquals(1, this.userGroupMeta.created.getMonthValue());
+        assertEquals(15, this.userGroupMeta.created.getDayOfMonth());
     }
 
     @Test
@@ -167,14 +167,14 @@ class UserGroupMetaEntityTest {
         // When
         this.userGroupMeta.user = this.user;
         this.userGroupMeta.group = this.group;
-        this.userGroupMeta.timestamp = now;
+        this.userGroupMeta.created = now;
 
         // Then - Verify the association is correctly established
         assertEquals(this.user.id, this.userGroupMeta.user.id);
         assertEquals(this.group.id, this.userGroupMeta.group.id);
         assertEquals(this.user.username, this.userGroupMeta.user.username);
         assertEquals(this.group.name, this.userGroupMeta.group.name);
-        assertNotNull(this.userGroupMeta.timestamp);
+        assertNotNull(this.userGroupMeta.created);
     }
 
     @Test

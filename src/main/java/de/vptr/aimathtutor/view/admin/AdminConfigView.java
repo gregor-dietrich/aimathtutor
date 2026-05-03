@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,9 @@ public class AdminConfigView extends AbstractAdminView {
 
     @Inject
     private transient AiProviderTestService aiProviderTestService;
+
+    @Inject
+    private ManagedExecutor managedExecutor;
 
     @Override
     protected boolean isAuthorized() {
@@ -391,7 +395,7 @@ public class AdminConfigView extends AbstractAdminView {
         if (ui == null) {
             return;
         }
-        CompletableFuture.supplyAsync(testCall::get).thenAccept(result -> {
+        CompletableFuture.supplyAsync(testCall::get, this.managedExecutor).thenAccept(result -> {
             ui.access(() -> {
                 if (result.success) {
                     NotificationUtil.showSuccess(result.message);

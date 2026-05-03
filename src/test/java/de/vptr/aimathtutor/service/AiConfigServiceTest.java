@@ -65,11 +65,13 @@ class AiConfigServiceTest {
         final var adminRank = new UserRankEntity();
         adminRank.id = 1L;
         adminRank.name = "Admin";
+        adminRank.version = 0L;
 
         this.adminUser = new UserEntity();
         this.adminUser.id = 1L;
         this.adminUser.username = "testadmin";
         this.adminUser.rank = adminRank;
+        this.adminUser.version = 0L;
 
         // Ensure admin user exists
         final var existing = this.userRepository.findById(1L);
