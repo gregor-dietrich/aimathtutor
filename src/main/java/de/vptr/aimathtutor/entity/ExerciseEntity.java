@@ -49,10 +49,14 @@ public class ExerciseEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @jakarta.persistence.Version
+    public Long version;
+
     @NotBlank
+    @Column(nullable = false)
     public String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     @NotBlank
     public String content;
 
@@ -64,8 +68,10 @@ public class ExerciseEntity extends PanacheEntityBase {
     @JoinColumn(name = "lesson_id")
     public LessonEntity lesson;
 
+    @Column(nullable = false)
     public Boolean published = false;
 
+    @Column(nullable = false)
     public Boolean commentable = false;
 
     public LocalDateTime created;
@@ -73,7 +79,7 @@ public class ExerciseEntity extends PanacheEntityBase {
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;
 
-    @OneToMany(mappedBy = "exercise")
+    @OneToMany(mappedBy = "exercise", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     public List<CommentEntity> comments;
 

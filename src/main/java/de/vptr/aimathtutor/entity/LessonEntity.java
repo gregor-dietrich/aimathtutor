@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.entity;
 import java.util.List;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -36,7 +37,11 @@ public class LessonEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @jakarta.persistence.Version
+    public Long version;
+
     @NotBlank
+    @Column(nullable = false)
     public String name;
 
     @ManyToOne(fetch = FetchType.LAZY)

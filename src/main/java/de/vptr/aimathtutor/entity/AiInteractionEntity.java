@@ -15,7 +15,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
@@ -41,6 +40,9 @@ public class AiInteractionEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @jakarta.persistence.Version
+    public Long version;
+
     @Column(name = "session_id")
     public String sessionId;
 
@@ -53,7 +55,7 @@ public class AiInteractionEntity extends PanacheEntityBase {
     public ExerciseEntity exercise;
 
     @NotBlank
-    @Column(name = "event_type")
+    @Column(name = "event_type", nullable = false)
     public String eventType; // Type of math action
 
     @Column(name = "student_message", columnDefinition = "TEXT")
@@ -66,7 +68,7 @@ public class AiInteractionEntity extends PanacheEntityBase {
     public String expressionAfter;
 
     @NotBlank
-    @Column(name = "feedback_type")
+    @Column(name = "feedback_type", nullable = false)
     public String feedbackType; // POSITIVE, CORRECTIVE, HINT, etc.
 
     @Column(name = "feedback_message", columnDefinition = "TEXT")
@@ -81,17 +83,7 @@ public class AiInteractionEntity extends PanacheEntityBase {
     @Column(name = "conversation_context", columnDefinition = "TEXT")
     public String conversationContext; // JSON string of context sent with AI request
 
+    @Column(name = "created")
     @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity field intentionally public for ORM mapping")
-    public LocalDateTime timestamp;
-
-    /**
-     * JPA lifecycle callback method invoked before persisting the entity.
-     * Sets the timestamp to the current date and time if not already set.
-     */
-    @PrePersist
-    public void prePersist() {
-        if (this.timestamp == null) {
-            this.timestamp = LocalDateTime.now();
-        }
-    }
+    public LocalDateTime created;
 }

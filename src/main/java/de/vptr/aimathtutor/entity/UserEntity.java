@@ -45,15 +45,20 @@ public class UserEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @jakarta.persistence.Version
+    public Long version;
+
     @NotBlank
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     public String username;
 
     @NotBlank
+    @Column(nullable = false)
     @JsonIgnore
     public String password;
 
     @NotBlank
+    @Column(nullable = false)
     @JsonIgnore
     public String salt;
 
@@ -66,9 +71,11 @@ public class UserEntity extends PanacheEntityBase {
     @Column(unique = true)
     public String email;
 
-    public Boolean banned;
+    @Column(nullable = false)
+    public Boolean banned = false;
 
-    public Boolean activated;
+    @Column(nullable = false)
+    public Boolean activated = false;
 
     @Column(name = "activation_key")
     @JsonIgnore
@@ -92,4 +99,12 @@ public class UserEntity extends PanacheEntityBase {
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     public List<CommentEntity> comments;
+
+    @OneToMany(mappedBy = "flagger", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    public List<CommentFlagEntity> commentFlags;
+
+    @OneToMany(mappedBy = "user", cascade = jakarta.persistence.CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    public List<UserGroupMetaEntity> userGroupMetas;
 }

@@ -206,11 +206,6 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupMetaEntity addUserToGroup(final Long userId, final Long groupId) {
-        // Check if association already exists
-        if (this.userGroupMetaRepository.isUserInGroup(userId, groupId)) {
-            throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);
-        }
-
         final UserEntity user = this.userRepository.findById(userId);
         final UserGroupEntity group = this.userGroupRepository.findById(groupId);
 
@@ -224,8 +219,17 @@ public class UserGroupService {
         final var meta = new UserGroupMetaEntity();
         meta.user = user;
         meta.group = group;
-        meta.timestamp = LocalDateTime.now();
-        this.userGroupMetaRepository.persist(meta);
+        meta.created = LocalDateTime.now();
+
+        try {
+            this.userGroupMetaRepository.persist(meta);
+            UserGroupMetaEntity.flush();
+        } catch (final jakarta.persistence.PersistenceException e) {
+            if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+                throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);
+            }
+            throw e;
+        }
 
         return meta;
     }

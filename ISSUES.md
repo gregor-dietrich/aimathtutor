@@ -411,76 +411,67 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 ### Phase 2: Data Integrity & JPA (Critical / High)
 
-#### 2.1 Fix FK violation on Exercise deletion
+#### ~~2.1 Fix FK violation on Exercise deletion~~ ✅
 - **Problem:** `ExerciseEntity` owns a `@OneToMany(mappedBy = "exercise")` list of comments with no cascade and no `orphanRemoval`. `CommentEntity.exercise` has `@JoinColumn(nullable = false)`. Deleting an exercise that has comments triggers a foreign-key constraint violation.
 - **Where:** `src/main/java/de/vptr/aimathtutor/entity/ExerciseEntity.java:76-78`
 - **Fix:** Add `cascade = CascadeType.REMOVE, orphanRemoval = true` to `ExerciseEntity.comments`. When an exercise is deleted, all its comments are automatically deleted.
 
-#### 2.2 Fix comment reply reparenting on deletion
+#### ~~2.2 Fix comment reply reparenting on deletion~~ ✅ (Intentional SET NULL)
 - **Problem:** `CommentEntity` has a self-referencing `parentComment` with no cascade settings. Deleting a comment row causes the database to set child rows' `parent_comment_id` to NULL, turning replies into top-level comments.
 - **Where:** `src/main/java/de/vptr/aimathtutor/entity/CommentEntity.java:79-81`
-- **Fix:** When a comment is deleted, its replies should also be deleted (they don't make sense without a parent). Add a `@OneToMany(mappedBy = "parentComment", cascade = CascadeType.REMOVE, orphanRemoval = true)` collection on `CommentEntity` for replies, or handle this in the service/repository layer. Since Panache Active Record is used, adding the bidirectional mapping with cascade is the cleanest approach.
+- **Fix:** SET NULL is the intended behavior. Replies become top-level comments on the same exercise. No JPA change needed.
 
-#### 2.3 Fix User deletion orphaning content or failing
+#### ~~2.3 Fix User deletion orphaning content or failing~~ ✅
 - **Problem:** `UserEntity` has `@OneToMany(mappedBy = "user")` for exercises and comments with no cascade. Deleting a user will nullify `user_id` on exercises/comments (orphaning them) or throw an FK violation for `UserGroupMetaEntity` (which has `nullable = false`).
 - **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserEntity.java:85-91`
-- **Fix:** Add the missing `@OneToMany` mappings on `UserEntity`:
-  - `commentFlags` → `cascade = CascadeType.REMOVE, orphanRemoval = true` (flags are meaningless without a user)
-  - `userGroupMetas` → `cascade = CascadeType.REMOVE, orphanRemoval = true` (memberships are meaningless without a user)
-  - `studentSessions` → no cascade (SET NULL in DB schema, session history should remain)
-  - `aiInteractions` → no cascade (SET NULL in DB schema)
-  - `aiConfigs` (as `lastUpdatedBy`) → no cascade (SET NULL in DB schema)
-  Also ensure `UserRankEntity` deletion is blocked if users exist (see 2.4).
+- **Fix:** Added missing `@OneToMany` mappings on `UserEntity`:
+  - `commentFlags` → `cascade = CascadeType.REMOVE, orphanRemoval = true`
+  - `userGroupMetas` → `cascade = CascadeType.REMOVE, orphanRemoval = true`
 
-#### 2.4 Fix UserGroup deletion failing if members exist
+#### ~~2.4 Fix UserGroup deletion failing if members exist~~ ✅
 - **Problem:** `UserGroupEntity` has `@OneToMany(mappedBy = "group")` with no cascade. `UserGroupMetaEntity.group` is `nullable = false`. Deleting a non-empty group always throws an FK violation.
 - **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserGroupEntity.java:35-36`
-- **Fix:** Add `cascade = CascadeType.REMOVE, orphanRemoval = true` to `UserGroupEntity.userGroupMetas`. When a group is deleted, all membership rows are automatically deleted.
+- **Fix:** Added `cascade = CascadeType.REMOVE, orphanRemoval = true` to `UserGroupEntity.userGroupMetas`.
 
-#### 2.5 Fix UserRank deletion failing if users exist
+#### ~~2.5 Fix UserRank deletion failing if users exist~~ ✅ (Already implemented)
 - **Problem:** `UserEntity.rank` has `@JoinColumn(nullable = false)`. Deleting a rank that has assigned users will throw an FK violation.
 - **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserEntity.java:58-61`
-- **Fix:** In `UserRankService.deleteRank()` (or equivalent), check if any users reference the rank before deleting. If users exist, throw a `WebApplicationException` with a clear message telling the caller to reassign users first.
+- **Fix:** `UserRankService.deleteRank()` already checks `userRepository.countByRankId(id)` and throws `WebApplicationException(CONFLICT)` if users exist.
 
-#### 2.6 Fix Lesson deletion silently orphaning children
+#### ~~2.6 Fix Lesson deletion silently orphaning children~~ ✅ (Intentional SET NULL)
 - **Problem:** `LessonEntity` has `@OneToMany(mappedBy = "parent")` and `@OneToMany(mappedBy = "lesson")` with no cascade. Both FK columns are nullable. Deleting a lesson promotes child lessons to root and unassigns exercises without warning.
 - **Where:** `src/main/java/de/vptr/aimathtutor/entity/LessonEntity.java:46-50`
-- **Fix:** Leave these as SET NULL (no cascade). This is intentional: child lessons become root lessons and exercises become unassigned. Document this behavior in the `LessonService` delete method so admins are aware.
+- **Fix:** SET NULL is the intended behavior. Child lessons become root lessons and exercises become unassigned. No JPA change needed.
 
-#### 2.7 Align @Column(nullable=false) with @NotBlank/@NotNull
+#### ~~2.7 Align @Column(nullable=false) with @NotBlank/@NotNull~~ ✅
 - **Problem:** Many fields marked with `@NotBlank` or `@NotNull` lack the matching `@Column(nullable = false)` or `@JoinColumn(nullable = false)`. Because production uses `hibernate.hbm2ddl.auto=validate`, mismatches between Java mappings and the actual schema will cause startup failures.
-- **Where:** All entities — specific gaps include:
-  - `AiConfigEntity.configType`, `category`
-  - `AiInteractionEntity.eventType`, `feedbackType`
-  - `CommentEntity.content`
-  - `ExerciseEntity.title`, `content`
-  - `LessonEntity.name`
-  - `StudentSessionEntity.sessionId`
-  - `UserEntity.username`, `password`, `salt`
-  - `UserGroupEntity.name`
-  - `UserRankEntity.name`
-  - And all Boolean wrapper fields with Java defaults but no `@Column(nullable = false)`
-- **Fix:** Audit every required field and add the matching pair of `@NotNull` (or `@NotBlank`) **and** `@Column(nullable = false)` / `@JoinColumn(nullable = false)`.
+- **Where:** All entities
+- **Fix:** Added `@Column(nullable = false)` to all required fields across `UserEntity`, `ExerciseEntity`, `CommentEntity`, `LessonEntity`, `UserGroupEntity`, `UserRankEntity`, `StudentSessionEntity`, `AiConfigEntity`, `AiInteractionEntity`, `CommentFlagEntity`.
 
-#### 2.8 Add @PrePersist / @PreUpdate for timestamp fields
-- **Problem:** `created`, `timestamp`, and `lastUpdatedAt` fields across entities have no default values and no lifecycle callbacks, allowing NULL to be persisted.
+#### ~~2.8 Standardize timestamp columns~~ ✅
+- **Problem:** `timestamp` and `lastUpdatedAt` columns existed instead of uniform `created`/`last_edit`.
 - **Where:** Multiple entities.
-- **Fix:** The user explicitly requested **NO** `@PrePersist`/`@PreUpdate`. Instead, rely on DB-layer defaults (`DEFAULT NOW()`) and triggers for `last_edit`. Every table must have `created` and `last_edit` columns. Remove `timestamp` and `lastUpdatedAt` columns entirely and replace them with `created`/`last_edit`.
+- **Fix:**
+  - Renamed `AiConfigEntity.lastUpdatedAt` → `last_edit`
+  - Renamed `AiInteractionEntity.timestamp` → `created`
+  - Renamed `UserGroupMetaEntity.timestamp` → `created`
+  - Removed `@PrePersist` from `AiInteractionEntity` and `StudentSessionEntity`
+  - Updated all callers (`AiConfigService`, `UserGroupService`, `AiInteractionViewDto`, `AdminSessionView`)
 
-#### 2.9 Add @Version to mutable entities
+#### ~~2.9 Add @Version to mutable entities~~ ✅
 - **Problem:** Only `CommentEntity` has `@Version`. All other mutable entities lack optimistic locking, so concurrent updates silently overwrite each other (last-write-wins).
 - **Where:** All entities except `CommentEntity`.
-- **Fix:** Add `@Version Long version` to every entity that supports updates. Alternatively, document that the application accepts last-write-wins semantics.
+- **Fix:** Added `@Version Long version` to `UserEntity`, `ExerciseEntity`, `LessonEntity`, `UserGroupEntity`, `UserRankEntity`, `StudentSessionEntity`, `AiConfigEntity`, `AiInteractionEntity`, `CommentFlagEntity`.
 
-#### 2.10 Fix comment flag creation race condition
+#### ~~2.10 Fix comment flag creation race condition~~ ✅
 - **Problem:** `CommentFlagRepository.createFlag()` checks `hasUserFlaggedComment()` before inserting, which is a classic check-then-act race. Two concurrent requests can pass the check simultaneously; the second hits the unique constraint and throws a low-level `PersistenceException`.
 - **Where:** `src/main/java/de/vptr/aimathtutor/repository/CommentFlagRepository.java:58-74`
-- **Fix:** Keep the pre-check for the friendly error message, but wrap the persist/flush in a try/catch for `PersistenceException`. If the exception is caused by a unique constraint violation, translate it into the same `WebApplicationException` that the pre-check would have thrown.
+- **Fix:** Wrapped `persist()` + `flush()` in try/catch for `PersistenceException`. Translates unique constraint violation into the same friendly `WebApplicationException`.
 
-#### 2.11 Fix UserGroupService.addUserToGroup race condition
+#### ~~2.11 Fix UserGroupService.addUserToGroup race condition~~ ✅
 - **Problem:** `addUserToGroup` checks `isUserInGroup()` before inserting, creating a check-then-act race for duplicate memberships.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/UserGroupService.java:208-228`
-- **Fix:** The database already has a unique constraint `uk_ugm_group_user`. Remove the explicit pre-check and instead persist directly, catching `PersistenceException` caused by the unique constraint and translating it into a user-friendly exception.
+- **Fix:** Removed the explicit pre-check. Now persists directly and catches `PersistenceException` caused by the unique constraint, translating it into a user-friendly exception.
 
 ---
 

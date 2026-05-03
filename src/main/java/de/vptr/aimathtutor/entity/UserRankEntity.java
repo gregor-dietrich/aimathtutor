@@ -32,7 +32,11 @@ public class UserRankEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @jakarta.persistence.Version
+    public Long version;
+
     @NotBlank
+    @Column(nullable = false)
     public String name;
 
     // View permissions

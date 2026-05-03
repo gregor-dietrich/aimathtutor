@@ -69,7 +69,16 @@ public class CommentFlagRepository extends AbstractRepository {
         flag.comment = comment;
         flag.flagger = flagger;
         flag.created = LocalDateTime.now();
-        super.em.persist(flag);
+
+        try {
+            super.em.persist(flag);
+            super.em.flush();
+        } catch (final jakarta.persistence.PersistenceException e) {
+            if (e.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+                throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
+            }
+            throw e;
+        }
         return flag;
     }
 

@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.entity;
 import java.time.LocalDateTime;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -46,7 +47,8 @@ public class UserGroupMetaEntity extends PanacheEntityBase {
         @JoinColumn(name = "group_id", nullable = false)
         public UserGroupEntity group;
 
-        public LocalDateTime timestamp;
+        @Column(name = "created")
+        public LocalDateTime created;
 
         // Helper method to check if user is in group
 
