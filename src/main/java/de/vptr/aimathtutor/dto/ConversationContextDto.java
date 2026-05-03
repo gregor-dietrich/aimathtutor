@@ -1,7 +1,8 @@
 package de.vptr.aimathtutor.dto;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,14 +12,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ConversationContextDto {
 
+    // Private final + unmodifiable getters — intentional encapsulation.
+    // Do NOT revert to public fields.
     @JsonProperty("recent_actions")
-    public List<GraspableEventDto> recentActions = new ArrayList<>();
+    private final List<GraspableEventDto> recentActions = new CopyOnWriteArrayList<>();
 
     @JsonProperty("recent_questions")
-    public List<ChatMessageDto> recentQuestions = new ArrayList<>();
+    private final List<ChatMessageDto> recentQuestions = new CopyOnWriteArrayList<>();
 
     @JsonProperty("recent_ai_messages")
-    public List<ChatMessageDto> recentAiMessages = new ArrayList<>();
+    private final List<ChatMessageDto> recentAiMessages = new CopyOnWriteArrayList<>();
 
     public ConversationContextDto() {
     }
@@ -29,9 +32,30 @@ public class ConversationContextDto {
     public ConversationContextDto(final List<GraspableEventDto> recentActions,
             final List<ChatMessageDto> recentQuestions,
             final List<ChatMessageDto> recentAiMessages) {
-        this.recentActions = recentActions != null ? recentActions : new ArrayList<>();
-        this.recentQuestions = recentQuestions != null ? recentQuestions : new ArrayList<>();
-        this.recentAiMessages = recentAiMessages != null ? recentAiMessages : new ArrayList<>();
+        if (recentActions != null) {
+            final int start = Math.max(0, recentActions.size() - 5);
+            this.recentActions.addAll(recentActions.subList(start, recentActions.size()));
+        }
+        if (recentQuestions != null) {
+            final int start = Math.max(0, recentQuestions.size() - 5);
+            this.recentQuestions.addAll(recentQuestions.subList(start, recentQuestions.size()));
+        }
+        if (recentAiMessages != null) {
+            final int start = Math.max(0, recentAiMessages.size() - 5);
+            this.recentAiMessages.addAll(recentAiMessages.subList(start, recentAiMessages.size()));
+        }
+    }
+
+    public List<GraspableEventDto> getRecentActions() {
+        return Collections.unmodifiableList(this.recentActions);
+    }
+
+    public List<ChatMessageDto> getRecentQuestions() {
+        return Collections.unmodifiableList(this.recentQuestions);
+    }
+
+    public List<ChatMessageDto> getRecentAiMessages() {
+        return Collections.unmodifiableList(this.recentAiMessages);
     }
 
     /**

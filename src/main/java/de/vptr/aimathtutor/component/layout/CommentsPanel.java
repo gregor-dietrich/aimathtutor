@@ -3,13 +3,14 @@ package de.vptr.aimathtutor.component.layout;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -23,21 +24,24 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.ReplyButton;
 import de.vptr.aimathtutor.component.button.ReportButton;
 import de.vptr.aimathtutor.dto.CommentDto;
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
+import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.Vetoed;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
  * CommentsPanel: Reusable Vaadin component for displaying and creating
  * comments on exercises. Supports threading, permission-based UI, and
  * pagination. This component is not a CDI bean and performs a programmatic
- * lookup of {@link de.vptr.aimathtutor.service.CommentService} when needed.
+ * lookup of {@link CommentService} when needed.
+ *
+ * NOTE: This class must NOT be @Vetoed and must NOT contain @Observes
+ * methods. @Vetoed classes cannot have CDI observers. Real-time refresh
+ * uses CommentCreatedEventBridge with a programmatic listener.
  */
-@Vetoed
 public class CommentsPanel extends VerticalLayout {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentsPanel.class);
@@ -52,6 +56,7 @@ public class CommentsPanel extends VerticalLayout {
     private Button submitButton;
     private int currentPage = 0;
     private Long currentParentId = null;
+    private transient Consumer<CommentCreatedEvent> commentCreatedListener;
 
     /**
      * Create a comments panel for the specified exercise/session and user.
@@ -96,6 +101,15 @@ public class CommentsPanel extends VerticalLayout {
 
         // Load initial comments
         this.loadComments();
+
+        // Register programmatic listener for real-time comment updates
+        final var bridge = CDI.current().select(CommentCreatedEventBridge.class).get();
+        this.commentCreatedListener = event -> {
+            if (event.getExerciseId() != null && event.getExerciseId().equals(this.exerciseId)) {
+                this.getUI().ifPresent(ui -> ui.access(this::refresh));
+            }
+        };
+        bridge.addListener(this.commentCreatedListener);
     }
 
     private Div createCommentForm() {
@@ -206,8 +220,8 @@ public class CommentsPanel extends VerticalLayout {
                 .set("color", "var(--lumo-contrast-70pct)");
 
         // Content with line break from header
-        final String displayContent = "DELETED".equals(comment.status) ? "[deleted]" : comment.content;
-        final Span content = new Span(displayContent);
+        final String displayContent = CommentStatus.DELETED.equals(comment.status) ? "[deleted]" : comment.content;
+        final Span content = new Span(displayContent != null ? displayContent : "");
         content.addClassName("comment-content");
         content.getStyle()
                 .set("display", "block")
@@ -223,7 +237,7 @@ public class CommentsPanel extends VerticalLayout {
                 .set("margin-top", "0.75rem");
 
         // Show/hide based on status
-        if (!"DELETED".equals(comment.status)) {
+        if (!CommentStatus.DELETED.equals(comment.status)) {
             final Button replyButton = new ReplyButton(e -> this.onReplyClicked(comment.id));
             actions.add(replyButton);
 
@@ -245,7 +259,7 @@ public class CommentsPanel extends VerticalLayout {
         commentDiv.add(header);
 
         // Add edit timestamp if applicable
-        if (comment.editedAt != null) {
+        if (comment.lastEdit != null) {
             final Span editedNote = new Span("(edited)");
             editedNote.addClassName("comment-edited");
             editedNote.getStyle()
@@ -379,6 +393,19 @@ public class CommentsPanel extends VerticalLayout {
         return dateTime.toString();
     }
 
+    @Override
+    protected void onDetach(final DetachEvent detachEvent) {
+        if (this.commentCreatedListener != null) {
+            try {
+                final var bridge = CDI.current().select(CommentCreatedEventBridge.class).get();
+                bridge.removeListener(this.commentCreatedListener);
+            } catch (final Exception e) {
+                LOG.debug("Failed to remove comment created listener", e);
+            }
+        }
+        super.onDetach(detachEvent);
+    }
+
     /**
      * Refresh the comments list by resetting pagination and reloading from the
      * service. Safe to call from UI threads.
@@ -389,21 +416,4 @@ public class CommentsPanel extends VerticalLayout {
         this.loadComments();
     }
 
-    /**
-     * CDI Event observer: Listen for new comments on this exercise.
-     * When a new comment is created elsewhere (by another user), this method
-     * fires and refreshes the comments panel automatically.
-     */
-    public void onCommentCreated(@Observes final CommentCreatedEvent event) {
-        // Only refresh if the event is for our exercise
-        if (event.getExerciseId().equals(this.exerciseId)) {
-            LOG.debug("Comment created event received for exercise {}, refreshing comments", this.exerciseId);
-
-            // Must use UI.getCurrent().access() to update the UI from another thread
-            UI.getCurrent().access(() -> {
-                this.refresh();
-                NotificationUtil.showInfo("New comment added");
-            });
-        }
-    }
 }

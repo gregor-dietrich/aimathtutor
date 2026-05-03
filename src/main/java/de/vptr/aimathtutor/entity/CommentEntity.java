@@ -2,9 +2,15 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -73,7 +79,12 @@ public class CommentEntity extends PanacheEntityBase {
     @JoinColumn(name = "user_id")
     public UserEntity user;
 
+    @Generated(event = EventType.INSERT)
     public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     // NEW: Threading support
     @ManyToOne(fetch = FetchType.LAZY)
@@ -82,16 +93,14 @@ public class CommentEntity extends PanacheEntityBase {
 
     // NEW: Moderation support
     @Column(length = 20)
-    public String status = "VISIBLE"; // VISIBLE, HIDDEN, DELETED
+    @Enumerated(EnumType.STRING)
+    public CommentStatus status = CommentStatus.VISIBLE; // VISIBLE, HIDDEN, DELETED
 
     @Column(name = "flags_count")
     public Integer flagsCount = 0;
 
     @Column(name = "session_id", length = 255)
     public String sessionId;
-
-    @Column(name = "edited_at")
-    public LocalDateTime editedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deleted_by")

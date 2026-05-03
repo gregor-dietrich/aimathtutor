@@ -21,7 +21,7 @@ import jakarta.inject.Inject;
 /**
  * Login view for the application. Provides username/password fields and
  * handles user authentication via the
- * {@link de.vptr.aimathtutor.service.AuthService}.
+ * {@link AuthService}.
  */
 @Route(value = "login", layout = MainLayout.class)
 @PageTitle("AI Math Tutor - Login")
@@ -54,54 +54,49 @@ public class LoginView extends VerticalLayout {
         passwordField.setWidth("300px");
 
         final var loginButton = new Button("Login");
+        // INTENTIONALLY SYNCHRONOUS: Wrapping authService.authenticate() in
+        // CompletableFuture causes ContextNotActiveException during navigation.
         loginButton.addClickListener(e -> {
             final var username = usernameField.getValue();
             final var password = passwordField.getValue();
 
             try {
-                // Disable button during authentication
                 loginButton.setEnabled(false);
                 loginButton.setText("Authenticating...");
 
-                // Perform authentication
                 final var result = this.authService.authenticate(username, password);
 
                 LOG.trace("Authentication result - Status: {}, Message: {}", result.getStatus(), result.getMessage());
 
                 switch (result.getStatus()) {
-                    case SUCCESS:
+                    case SUCCESS -> {
                         LOG.trace("Authentication successful, navigating to main view");
                         this.getUI().ifPresent(ui -> ui.navigate(""));
-                        break;
-
-                    case INVALID_CREDENTIALS:
+                    }
+                    case INVALID_CREDENTIALS -> {
                         LOG.trace("Invalid credentials, showing error message");
                         NotificationUtil.showError(result.getMessage());
                         passwordField.clear();
                         passwordField.focus();
-                        break;
-
-                    case BACKEND_UNAVAILABLE:
+                    }
+                    case BACKEND_UNAVAILABLE -> {
                         LOG.error("Backend unavailable during login, redirecting to error page");
                         this.getUI().ifPresent(ui -> ui.navigate("backend-error"));
-                        break;
-
-                    case INVALID_INPUT:
+                    }
+                    case INVALID_INPUT -> {
                         LOG.trace("Invalid input, showing warning");
                         NotificationUtil.showWarning(result.getMessage());
-                        break;
-
-                    default:
+                    }
+                    default -> {
                         LOG.error("Unknown authentication result status: {}", result.getStatus());
                         NotificationUtil.showError("Unknown error occurred");
-                        break;
+                    }
                 }
 
             } catch (final Exception ex) {
                 LOG.error("Exception during authentication", ex);
                 NotificationUtil.showError("An unexpected error occurred. Please try again.");
             } finally {
-                // Re-enable button
                 loginButton.setEnabled(true);
                 loginButton.setText("Login");
             }

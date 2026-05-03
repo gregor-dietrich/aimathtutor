@@ -2,9 +2,16 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,6 +22,7 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -37,6 +45,9 @@ public class AiConfigEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @NotBlank
     @Column(name = "config_key", unique = true, nullable = false)
     public String configKey;
@@ -44,20 +55,26 @@ public class AiConfigEntity extends PanacheEntityBase {
     @Column(name = "config_value", columnDefinition = "TEXT")
     public String configValue;
 
-    @Column(name = "config_type")
-    public String configType; // "STRING", "INTEGER", "DOUBLE", "BOOLEAN", "TEXT"
+    @Column(name = "config_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    public ConfigType configType; // "STRING", "INTEGER", "DOUBLE", "BOOLEAN", "TEXT"
 
     @Column(name = "is_optional", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     public Boolean isOptional = false; // Whether this config can have empty/null values
 
-    @Column(name = "category")
-    public String category; // "GENERAL", "GEMINI", "OPENAI", "OLLAMA", "PROMPTS"
+    @Column(name = "category", nullable = false)
+    @Enumerated(EnumType.STRING)
+    public ConfigCategory category; // "GENERAL", "GEMINI", "OPENAI", "OLLAMA", "PROMPTS"
 
     @Column(name = "description", columnDefinition = "TEXT")
     public String description;
 
-    @Column(name = "last_updated_at")
-    public LocalDateTime lastUpdatedAt;
+    @Generated(event = EventType.INSERT)
+    public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_updated_by")
@@ -67,41 +84,38 @@ public class AiConfigEntity extends PanacheEntityBase {
      * Default constructor for Hibernate.
      */
     public AiConfigEntity() {
-        this.lastUpdatedAt = LocalDateTime.now();
     }
 
     /**
      * Constructor with required fields.
      */
-    public AiConfigEntity(final String configKey, final String configValue, final String configType,
-            final String category) {
+    public AiConfigEntity(final String configKey, final String configValue, final ConfigType configType,
+            final ConfigCategory category) {
         this.configKey = configKey;
         this.configValue = configValue;
         this.configType = configType;
         this.category = category;
         this.isOptional = false;
-        this.lastUpdatedAt = LocalDateTime.now();
     }
 
     /**
      * Constructor with all fields including optionality.
      */
-    public AiConfigEntity(final String configKey, final String configValue, final String configType,
-            final String category, final String description, final Boolean isOptional) {
+    public AiConfigEntity(final String configKey, final String configValue, final ConfigType configType,
+            final ConfigCategory category, final String description, final Boolean isOptional) {
         this.configKey = configKey;
         this.configValue = configValue;
         this.configType = configType;
         this.category = category;
         this.description = description;
         this.isOptional = isOptional != null ? isOptional : false;
-        this.lastUpdatedAt = LocalDateTime.now();
     }
 
     /**
      * Constructor with description but default optionality (not optional).
      */
-    public AiConfigEntity(final String configKey, final String configValue, final String configType,
-            final String category, final String description) {
+    public AiConfigEntity(final String configKey, final String configValue, final ConfigType configType,
+            final ConfigCategory category, final String description) {
         this(configKey, configValue, configType, category, description, false);
     }
 }

@@ -108,7 +108,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.interactionsGrid.setHeight("400px");
 
         // Configure columns to show conversational interaction
-        this.interactionsGrid.addColumn(interaction -> this.dateTimeFormatter.formatDateTime(interaction.timestamp))
+        this.interactionsGrid.addColumn(interaction -> this.dateTimeFormatter.formatDateTime(interaction.created))
                 .setHeader("Time")
                 .setFlexGrow(0)
                 .setWidth(AppConstants.GRID_ACTION_WIDTH);

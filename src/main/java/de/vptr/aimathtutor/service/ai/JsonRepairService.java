@@ -39,6 +39,9 @@ public class JsonRepairService {
      * @return parsed feedback DTO
      */
     public AiFeedbackDto parseFeedbackFromJson(final String jsonResponse) {
+        if (jsonResponse == null) {
+            throw new IllegalArgumentException("jsonResponse cannot be null");
+        }
         try {
             // Try to extract JSON from response (AI provider might wrap it in markdown)
             var json = jsonResponse.trim();

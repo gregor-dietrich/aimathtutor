@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
@@ -12,6 +13,50 @@ import jakarta.validation.constraints.Size;
  */
 @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO public fields intentionally used for JSON mapping and simplicity")
 public class CommentDto {
+
+    /**
+     * Enumeration of comment statuses.
+     * Maps to string values stored in the database and used in UI components.
+     */
+    public enum CommentStatus {
+        VISIBLE("VISIBLE"),
+        HIDDEN("HIDDEN"),
+        DELETED("DELETED");
+
+        private final String value;
+
+        CommentStatus(final String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String getValue() {
+            return this.value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
+        }
+
+        /**
+         * Converts a string value to the corresponding CommentStatus enum.
+         *
+         * @param value the string value to convert
+         * @return the matching CommentStatus, or null if no match
+         */
+        public static CommentStatus fromString(final String value) {
+            if (value == null) {
+                return null;
+            }
+            for (final CommentStatus status : values()) {
+                if (status.value.equalsIgnoreCase(value)) {
+                    return status;
+                }
+            }
+            return null;
+        }
+    }
 
     public Long id;
 

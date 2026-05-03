@@ -2,7 +2,8 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
-import de.vptr.aimathtutor.enums.DifficultyLevel;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
@@ -12,6 +13,52 @@ import jakarta.validation.constraints.Size;
 @SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class ExerciseDto {
+
+    /**
+     * Enumeration of difficulty levels for exercises and math problems.
+     * Maps to string values stored in the database and used in UI components.
+     */
+    public enum DifficultyLevel {
+
+        BEGINNER("beginner"),
+        INTERMEDIATE("intermediate"),
+        ADVANCED("advanced"),
+        EXPERT("expert");
+
+        private final String value;
+
+        DifficultyLevel(final String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String getValue() {
+            return this.value;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
+        }
+
+        /**
+         * Converts a string value to the corresponding DifficultyLevel enum.
+         *
+         * @param value the string value to convert
+         * @return the matching DifficultyLevel, or null if no match
+         */
+        public static DifficultyLevel fromString(final String value) {
+            if (value == null) {
+                return null;
+            }
+            for (final DifficultyLevel level : values()) {
+                if (level.value.equalsIgnoreCase(value)) {
+                    return level;
+                }
+            }
+            return null;
+        }
+    }
 
     public Long id;
 

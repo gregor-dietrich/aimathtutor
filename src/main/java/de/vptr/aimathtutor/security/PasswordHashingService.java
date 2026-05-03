@@ -1,95 +1,56 @@
 package de.vptr.aimathtutor.security;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
+import io.quarkus.elytron.security.common.BcryptUtil;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Service for secure password hashing and verification using PBKDF2.
- * Implements OWASP-recommended password hashing with random salts and multiple
- * iterations.
+ * Service for secure password hashing and verification using bcrypt.
+ * Delegates to the official Quarkus {@link BcryptUtil} for constant-time
+ * hashing and verification.
  */
 @ApplicationScoped
 public class PasswordHashingService {
 
-    private static final int PBKDF2_ITERATIONS = 100000; // OWASP recommended minimum
-    private static final int SALT_LENGTH = 32; // 32 bytes = 256 bits
-    private static final int HASH_LENGTH = 8 * SALT_LENGTH; // 256 bits
-
     /**
-     * Cryptographically secure random number generator for salt generation.
-     * Initialized once at class loading time and reused for all instances.
-     * While SecureRandom initialization can be slow on some systems, this static
-     * pattern is optimal because:
-     * - Initialization happens only once per JVM startup
-     * - SecureRandom is thread-safe and expensive to instantiate
-     * - Reusing a single instance is both secure and efficient
-     * This is the recommended pattern for cryptographic randomness in production
-     * systems.
-     */
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
-    /**
-     * Generates a random salt
-     * 
-     * @return Base64 encoded salt
-     */
-    public String generateSalt() {
-        final var salt = new byte[SALT_LENGTH];
-        SECURE_RANDOM.nextBytes(salt);
-        return Base64.getEncoder().encodeToString(salt);
-    }
-
-    /**
-     * Hashes a password using PBKDF2 with SHA-256
-     * 
+     * Hashes a plain-text password using bcrypt with a random salt.
+     *
      * @param password the plain text password
-     * @param salt     the salt as a Base64 encoded string
-     * @return the hashed password as a Base64 encoded string
+     * @return the bcrypt hash (includes embedded salt and cost factor)
+     * @throws IllegalArgumentException if password is null or empty
      */
-    public String hashPassword(final String password, final String salt)
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        final var saltBytes = Base64.getDecoder().decode(salt);
-
-        final var spec = new PBEKeySpec(
-                password.toCharArray(),
-                saltBytes,
-                PBKDF2_ITERATIONS,
-                HASH_LENGTH);
-
-        final var factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        final var hash = factory.generateSecret(spec).getEncoded();
-
-        return Base64.getEncoder().encodeToString(hash);
+    public String hashPassword(final String password) {
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password must not be null or blank");
+        }
+        final int byteLength = password.getBytes(StandardCharsets.UTF_8).length;
+        if (byteLength > 72) {
+            throw new IllegalArgumentException("Password must not exceed 72 bytes when encoded as UTF-8");
+        }
+        return BcryptUtil.bcryptHash(password);
     }
 
     /**
-     * Verifies a password against a stored hash
-     * 
-     * @param providedPassword the plain text password to verify
-     * @param storedHash       the stored password hash
-     * @param salt             the salt used for hashing
+     * Verifies a plain-text password against a stored bcrypt hash.
+     *
+     * @param password   the plain text password to verify
+     * @param storedHash the stored bcrypt password hash
      * @return true if the password matches, false otherwise
      */
-    public boolean verifyPassword(final String providedPassword, final String storedHash, final String salt) {
-        if (providedPassword == null || storedHash == null || salt == null) {
+    public boolean verifyPassword(final String password, final String storedHash) {
+        if (password == null || storedHash == null) {
             return false;
         }
 
-        if (providedPassword.isEmpty() || storedHash.isEmpty() || salt.isEmpty()) {
+        if (password.isEmpty() || storedHash.isEmpty()) {
             return false;
         }
 
         try {
-            final var hashedProvidedPassword = this.hashPassword(providedPassword, salt);
-            return hashedProvidedPassword.equals(storedHash);
-        } catch (final NoSuchAlgorithmException | InvalidKeySpecException | IllegalArgumentException e) {
+            return BcryptUtil.matches(password, storedHash);
+        } catch (final RuntimeException e) {
             return false;
         }
     }

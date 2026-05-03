@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.security;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -42,13 +43,18 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
             return Uni.createFrom().item(identity);
         }
 
-        final var username = identity.getPrincipal().getName();
+        final var rawUsername = identity.getPrincipal().getName();
+        final String username = rawUsername != null ? rawUsername.toLowerCase(Locale.ROOT).trim() : null;
 
         return Uni.createFrom().item(() -> this.augmentIdentity(identity, username)).runSubscriptionOn(this.executor);
     }
 
     @Transactional
     SecurityIdentity augmentIdentity(final SecurityIdentity identity, final String username) {
+        if (username == null || username.isEmpty()) {
+            return identity;
+        }
+
         final UserEntity user = UserEntity.find("username", username).firstResult();
 
         if (user == null || user.rank == null) {
@@ -57,9 +63,28 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
 
         final Set<String> roles = this.buildRolesFromUserRank(user.rank);
 
-        return QuarkusSecurityIdentity.builder(identity)
-                .addRoles(roles)
-                .build();
+        final Set<String> normalizedRoles = new HashSet<>();
+        for (final String role : identity.getRoles()) {
+            if (role != null && !role.isBlank()) {
+                normalizedRoles.add(role.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        normalizedRoles.addAll(roles);
+
+        // Build new identity with normalized roles only.
+        // builder(identity) would preserve original un-normalized roles, so we
+        // copy credentials and attributes manually.
+        final var builder = QuarkusSecurityIdentity.builder()
+                .setPrincipal(identity.getPrincipal())
+                .addRoles(normalizedRoles)
+                .addPermissionChecker(identity::checkPermission);
+        for (final var credential : identity.getCredentials()) {
+            builder.addCredential(credential);
+        }
+        for (final var entry : identity.getAttributes().entrySet()) {
+            builder.addAttribute(entry.getKey(), entry.getValue());
+        }
+        return builder.build();
     }
 
     Set<String> buildRolesFromUserRank(final UserRankEntity rank) {

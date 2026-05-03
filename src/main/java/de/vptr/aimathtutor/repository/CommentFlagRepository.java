@@ -1,12 +1,14 @@
 package de.vptr.aimathtutor.repository;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
+
+import org.hibernate.exception.ConstraintViolationException;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.CommentFlagEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -68,8 +70,20 @@ public class CommentFlagRepository extends AbstractRepository {
         final var flag = new CommentFlagEntity();
         flag.comment = comment;
         flag.flagger = flagger;
-        flag.created = LocalDateTime.now();
-        super.em.persist(flag);
+
+        try {
+            super.em.persist(flag);
+            super.em.flush();
+        } catch (final PersistenceException e) {
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof ConstraintViolationException) {
+                    throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
+                }
+                cause = cause.getCause();
+            }
+            throw e;
+        }
         return flag;
     }
 

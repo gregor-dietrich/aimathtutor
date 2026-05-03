@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.service;
 
-import java.time.LocalDateTime;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +11,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
 /**
@@ -62,7 +61,8 @@ public class AuthService {
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
             LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
-            return AuthResultDto.backendUnavailable("Too many failed attempts. Please try again in " + remaining + " seconds.");
+            return AuthResultDto
+                    .backendUnavailable("Too many failed attempts. Please try again in " + remaining + " seconds.");
         }
 
         try {
@@ -90,36 +90,40 @@ public class AuthService {
             }
 
             // Verify password using password hashing service
-            if (!this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
+            if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
-            // Update last login time and persist the user entity
+            // Persist the user entity if needed
             try {
-                user.lastLogin = LocalDateTime.now();
                 this.userRepository.persist(user);
-            } catch (final jakarta.persistence.PersistenceException e) {
-                LOG.warn("Failed to update lastLogin for user {}: {}", user.username, e.getMessage());
-                // continue with login even if lastLogin couldn't be updated
+            } catch (final PersistenceException e) {
+                LOG.warn("Failed to persist user {} during login: {}", user.username, e.getMessage());
+                // continue with login even if persist failed
             }
 
             try {
                 this.loginAttemptService.recordSuccessfulLogin(usernameKey);
-                VaadinSession.getCurrent().setAttribute(USERNAME_KEY, user.username);
-                VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, true);
+                final var session = VaadinSession.getCurrent();
+                if (session != null) {
+                    session.setAttribute(USERNAME_KEY, user.username);
+                    session.setAttribute(AUTHENTICATED_KEY, true);
+                }
             } catch (final RuntimeException e) {
                 LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
-                return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
+                return AuthResultDto
+                        .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
             }
 
             LOG.trace("User authenticated successfully: {}", username);
             return AuthResultDto.success();
 
-        } catch (final jakarta.persistence.PersistenceException e) {
+        } catch (final PersistenceException e) {
             LOG.error("Database error during authentication for user: {}", username, e);
-            return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
+            return AuthResultDto
+                    .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
     }
 
@@ -132,8 +136,12 @@ public class AuthService {
         final var username = this.getUsername();
         LOG.trace("Logging out user: {}", username);
 
-        VaadinSession.getCurrent().setAttribute(USERNAME_KEY, null);
-        VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, false);
+        final var session = VaadinSession.getCurrent();
+        if (session == null) {
+            return;
+        }
+        session.setAttribute(USERNAME_KEY, null);
+        session.setAttribute(AUTHENTICATED_KEY, false);
 
         LOG.trace("User logged out");
     }
@@ -172,7 +180,12 @@ public class AuthService {
      * @return the username of the current user, or null if not authenticated
      */
     public String getUsername() {
-        return (String) VaadinSession.getCurrent().getAttribute(USERNAME_KEY);
+        // VaadinSession.getCurrent() can return null outside UI request context.
+        final var session = VaadinSession.getCurrent();
+        if (session == null) {
+            return null;
+        }
+        return (String) session.getAttribute(USERNAME_KEY);
     }
 
     /**

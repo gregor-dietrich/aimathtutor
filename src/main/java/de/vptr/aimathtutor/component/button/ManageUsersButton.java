@@ -21,7 +21,9 @@ public class ManageUsersButton extends Button {
         super("", addUserAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);
         this.setIcon(LineAwesomeIcon.USERS_COG_SOLID.create());
-        this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        final String label = tooltipText != null && !tooltipText.trim().isEmpty() ? tooltipText : DEFAULT_TOOLTIP;
+        this.setTooltipText(label);
+        this.getElement().setAttribute("aria-label", label);
     }
 
     public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction) {

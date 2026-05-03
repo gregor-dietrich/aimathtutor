@@ -1,8 +1,9 @@
 package de.vptr.aimathtutor.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.hibernate.exception.ConstraintViolationException;
 
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
@@ -15,9 +16,10 @@ import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -206,11 +208,6 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupMetaEntity addUserToGroup(final Long userId, final Long groupId) {
-        // Check if association already exists
-        if (this.userGroupMetaRepository.isUserInGroup(userId, groupId)) {
-            throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);
-        }
-
         final UserEntity user = this.userRepository.findById(userId);
         final UserGroupEntity group = this.userGroupRepository.findById(groupId);
 
@@ -224,8 +221,16 @@ public class UserGroupService {
         final var meta = new UserGroupMetaEntity();
         meta.user = user;
         meta.group = group;
-        meta.timestamp = LocalDateTime.now();
-        this.userGroupMetaRepository.persist(meta);
+
+        try {
+            this.userGroupMetaRepository.persist(meta);
+            this.userGroupMetaRepository.flush();
+        } catch (final PersistenceException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
+                throw new WebApplicationException("User is already in this group", Response.Status.CONFLICT);
+            }
+            throw e;
+        }
 
         return meta;
     }

@@ -22,6 +22,7 @@ public class ReplyButton extends Button {
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
         this.setIcon(LineAwesomeIcon.REPLY_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
     public ReplyButton(final ComponentEventListener<ClickEvent<Button>> replyAction) {

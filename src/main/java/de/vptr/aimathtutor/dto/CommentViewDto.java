@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
 
 /**
@@ -15,12 +16,12 @@ public class CommentViewDto {
     public Long userId;
     public String username;
     public LocalDateTime created;
+    public LocalDateTime lastEdit;
 
     public Long parentId;
-    public String status; // VISIBLE, HIDDEN, DELETED
+    public CommentStatus status; // VISIBLE, HIDDEN, DELETED
     public Integer flagsCount;
     public String sessionId;
-    public LocalDateTime editedAt;
     public Long authorId;
 
     public CommentViewDto() {
@@ -33,10 +34,10 @@ public class CommentViewDto {
         this.id = entity.id;
         this.content = entity.content;
         this.created = entity.created;
-        this.status = entity.status != null ? entity.status : "VISIBLE";
+        this.lastEdit = entity.lastEdit;
+        this.status = entity.status != null ? entity.status : CommentStatus.VISIBLE;
         this.flagsCount = entity.flagsCount != null ? entity.flagsCount : 0;
         this.sessionId = entity.sessionId;
-        this.editedAt = entity.editedAt;
 
         if (entity.exercise != null) {
             this.exerciseId = entity.exercise.id;

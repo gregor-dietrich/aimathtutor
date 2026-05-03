@@ -20,6 +20,9 @@ public class MockAiProvider implements AiProvider {
 
     @Override
     public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
+        if (event == null) {
+            throw new IllegalArgumentException("event cannot be null");
+        }
         final AiFeedbackDto feedback;
 
         // Analyze based on event type

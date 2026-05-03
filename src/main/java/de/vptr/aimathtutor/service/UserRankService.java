@@ -129,26 +129,7 @@ public class UserRankService {
         // Set properties from DTO
         rank.name = rankDto.name;
 
-        // Set permissions from DTO with defaults
-        rank.adminView = rankDto.adminView != null ? rankDto.adminView : false;
-        rank.exerciseAdd = rankDto.exerciseAdd != null ? rankDto.exerciseAdd : false;
-        rank.exerciseDelete = rankDto.exerciseDelete != null ? rankDto.exerciseDelete : false;
-        rank.exerciseEdit = rankDto.exerciseEdit != null ? rankDto.exerciseEdit : false;
-        rank.lessonAdd = rankDto.lessonAdd != null ? rankDto.lessonAdd : false;
-        rank.lessonDelete = rankDto.lessonDelete != null ? rankDto.lessonDelete : false;
-        rank.lessonEdit = rankDto.lessonEdit != null ? rankDto.lessonEdit : false;
-        rank.commentAdd = rankDto.commentAdd != null ? rankDto.commentAdd : false;
-        rank.commentDelete = rankDto.commentDelete != null ? rankDto.commentDelete : false;
-        rank.commentEdit = rankDto.commentEdit != null ? rankDto.commentEdit : false;
-        rank.userAdd = rankDto.userAdd != null ? rankDto.userAdd : false;
-        rank.userDelete = rankDto.userDelete != null ? rankDto.userDelete : false;
-        rank.userEdit = rankDto.userEdit != null ? rankDto.userEdit : false;
-        rank.userGroupAdd = rankDto.userGroupAdd != null ? rankDto.userGroupAdd : false;
-        rank.userGroupDelete = rankDto.userGroupDelete != null ? rankDto.userGroupDelete : false;
-        rank.userGroupEdit = rankDto.userGroupEdit != null ? rankDto.userGroupEdit : false;
-        rank.userRankAdd = rankDto.userRankAdd != null ? rankDto.userRankAdd : false;
-        rank.userRankDelete = rankDto.userRankDelete != null ? rankDto.userRankDelete : false;
-        rank.userRankEdit = rankDto.userRankEdit != null ? rankDto.userRankEdit : false;
+        this.applyAllPermissions(rank, rankDto);
 
         this.userRankRepository.persist(rank);
         return new UserRankViewDto(rank);
@@ -172,25 +153,7 @@ public class UserRankService {
 
         // Complete replacement (PUT semantics)
         existingRank.name = rankDto.name;
-        existingRank.adminView = rankDto.adminView != null ? rankDto.adminView : false;
-        existingRank.exerciseAdd = rankDto.exerciseAdd != null ? rankDto.exerciseAdd : false;
-        existingRank.exerciseDelete = rankDto.exerciseDelete != null ? rankDto.exerciseDelete : false;
-        existingRank.exerciseEdit = rankDto.exerciseEdit != null ? rankDto.exerciseEdit : false;
-        existingRank.lessonAdd = rankDto.lessonAdd != null ? rankDto.lessonAdd : false;
-        existingRank.lessonDelete = rankDto.lessonDelete != null ? rankDto.lessonDelete : false;
-        existingRank.lessonEdit = rankDto.lessonEdit != null ? rankDto.lessonEdit : false;
-        existingRank.commentAdd = rankDto.commentAdd != null ? rankDto.commentAdd : false;
-        existingRank.commentDelete = rankDto.commentDelete != null ? rankDto.commentDelete : false;
-        existingRank.commentEdit = rankDto.commentEdit != null ? rankDto.commentEdit : false;
-        existingRank.userAdd = rankDto.userAdd != null ? rankDto.userAdd : false;
-        existingRank.userDelete = rankDto.userDelete != null ? rankDto.userDelete : false;
-        existingRank.userEdit = rankDto.userEdit != null ? rankDto.userEdit : false;
-        existingRank.userGroupAdd = rankDto.userGroupAdd != null ? rankDto.userGroupAdd : false;
-        existingRank.userGroupDelete = rankDto.userGroupDelete != null ? rankDto.userGroupDelete : false;
-        existingRank.userGroupEdit = rankDto.userGroupEdit != null ? rankDto.userGroupEdit : false;
-        existingRank.userRankAdd = rankDto.userRankAdd != null ? rankDto.userRankAdd : false;
-        existingRank.userRankDelete = rankDto.userRankDelete != null ? rankDto.userRankDelete : false;
-        existingRank.userRankEdit = rankDto.userRankEdit != null ? rankDto.userRankEdit : false;
+        this.applyAllPermissions(existingRank, rankDto);
 
         this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
@@ -217,63 +180,7 @@ public class UserRankService {
         if (rankDto.name != null) {
             existingRank.name = rankDto.name;
         }
-        if (rankDto.adminView != null) {
-            existingRank.adminView = rankDto.adminView;
-        }
-        if (rankDto.exerciseAdd != null) {
-            existingRank.exerciseAdd = rankDto.exerciseAdd;
-        }
-        if (rankDto.exerciseDelete != null) {
-            existingRank.exerciseDelete = rankDto.exerciseDelete;
-        }
-        if (rankDto.exerciseEdit != null) {
-            existingRank.exerciseEdit = rankDto.exerciseEdit;
-        }
-        if (rankDto.lessonAdd != null) {
-            existingRank.lessonAdd = rankDto.lessonAdd;
-        }
-        if (rankDto.lessonDelete != null) {
-            existingRank.lessonDelete = rankDto.lessonDelete;
-        }
-        if (rankDto.lessonEdit != null) {
-            existingRank.lessonEdit = rankDto.lessonEdit;
-        }
-        if (rankDto.commentAdd != null) {
-            existingRank.commentAdd = rankDto.commentAdd;
-        }
-        if (rankDto.commentDelete != null) {
-            existingRank.commentDelete = rankDto.commentDelete;
-        }
-        if (rankDto.commentEdit != null) {
-            existingRank.commentEdit = rankDto.commentEdit;
-        }
-        if (rankDto.userAdd != null) {
-            existingRank.userAdd = rankDto.userAdd;
-        }
-        if (rankDto.userDelete != null) {
-            existingRank.userDelete = rankDto.userDelete;
-        }
-        if (rankDto.userEdit != null) {
-            existingRank.userEdit = rankDto.userEdit;
-        }
-        if (rankDto.userGroupAdd != null) {
-            existingRank.userGroupAdd = rankDto.userGroupAdd;
-        }
-        if (rankDto.userGroupDelete != null) {
-            existingRank.userGroupDelete = rankDto.userGroupDelete;
-        }
-        if (rankDto.userGroupEdit != null) {
-            existingRank.userGroupEdit = rankDto.userGroupEdit;
-        }
-        if (rankDto.userRankAdd != null) {
-            existingRank.userRankAdd = rankDto.userRankAdd;
-        }
-        if (rankDto.userRankDelete != null) {
-            existingRank.userRankDelete = rankDto.userRankDelete;
-        }
-        if (rankDto.userRankEdit != null) {
-            existingRank.userRankEdit = rankDto.userRankEdit;
-        }
+        this.applyProvidedPermissions(existingRank, rankDto);
 
         this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
@@ -305,5 +212,101 @@ public class UserRankService {
         }
 
         return this.userRankRepository.deleteById(id);
+    }
+
+    /**
+     * Applies all permission booleans from the DTO to the entity,
+     * treating null DTO values as false.
+     *
+     * @param target the entity to update
+     * @param source the DTO to read from
+     */
+    private void applyAllPermissions(final UserRankEntity target, final UserRankDto source) {
+        target.adminView = source.adminView != null ? source.adminView : false;
+        target.exerciseAdd = source.exerciseAdd != null ? source.exerciseAdd : false;
+        target.exerciseDelete = source.exerciseDelete != null ? source.exerciseDelete : false;
+        target.exerciseEdit = source.exerciseEdit != null ? source.exerciseEdit : false;
+        target.lessonAdd = source.lessonAdd != null ? source.lessonAdd : false;
+        target.lessonDelete = source.lessonDelete != null ? source.lessonDelete : false;
+        target.lessonEdit = source.lessonEdit != null ? source.lessonEdit : false;
+        target.commentAdd = source.commentAdd != null ? source.commentAdd : false;
+        target.commentDelete = source.commentDelete != null ? source.commentDelete : false;
+        target.commentEdit = source.commentEdit != null ? source.commentEdit : false;
+        target.userAdd = source.userAdd != null ? source.userAdd : false;
+        target.userDelete = source.userDelete != null ? source.userDelete : false;
+        target.userEdit = source.userEdit != null ? source.userEdit : false;
+        target.userGroupAdd = source.userGroupAdd != null ? source.userGroupAdd : false;
+        target.userGroupDelete = source.userGroupDelete != null ? source.userGroupDelete : false;
+        target.userGroupEdit = source.userGroupEdit != null ? source.userGroupEdit : false;
+        target.userRankAdd = source.userRankAdd != null ? source.userRankAdd : false;
+        target.userRankDelete = source.userRankDelete != null ? source.userRankDelete : false;
+        target.userRankEdit = source.userRankEdit != null ? source.userRankEdit : false;
+    }
+
+    /**
+     * Applies only the permission booleans that are explicitly provided
+     * (non-null) in the DTO to the entity. Used for PATCH semantics.
+     *
+     * @param target the entity to update
+     * @param source the DTO to read from
+     */
+    private void applyProvidedPermissions(final UserRankEntity target, final UserRankDto source) {
+        if (source.adminView != null) {
+            target.adminView = source.adminView;
+        }
+        if (source.exerciseAdd != null) {
+            target.exerciseAdd = source.exerciseAdd;
+        }
+        if (source.exerciseDelete != null) {
+            target.exerciseDelete = source.exerciseDelete;
+        }
+        if (source.exerciseEdit != null) {
+            target.exerciseEdit = source.exerciseEdit;
+        }
+        if (source.lessonAdd != null) {
+            target.lessonAdd = source.lessonAdd;
+        }
+        if (source.lessonDelete != null) {
+            target.lessonDelete = source.lessonDelete;
+        }
+        if (source.lessonEdit != null) {
+            target.lessonEdit = source.lessonEdit;
+        }
+        if (source.commentAdd != null) {
+            target.commentAdd = source.commentAdd;
+        }
+        if (source.commentDelete != null) {
+            target.commentDelete = source.commentDelete;
+        }
+        if (source.commentEdit != null) {
+            target.commentEdit = source.commentEdit;
+        }
+        if (source.userAdd != null) {
+            target.userAdd = source.userAdd;
+        }
+        if (source.userDelete != null) {
+            target.userDelete = source.userDelete;
+        }
+        if (source.userEdit != null) {
+            target.userEdit = source.userEdit;
+        }
+        if (source.userGroupAdd != null) {
+            target.userGroupAdd = source.userGroupAdd;
+        }
+        if (source.userGroupDelete != null) {
+            target.userGroupDelete = source.userGroupDelete;
+        }
+        if (source.userGroupEdit != null) {
+            target.userGroupEdit = source.userGroupEdit;
+        }
+        if (source.userRankAdd != null) {
+            target.userRankAdd = source.userRankAdd;
+        }
+        if (source.userRankDelete != null) {
+            target.userRankDelete = source.userRankDelete;
+        }
+        if (source.userRankEdit != null) {
+            target.userRankEdit = source.userRankEdit;
+        }
     }
 }

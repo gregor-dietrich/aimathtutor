@@ -10,7 +10,7 @@ import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+import io.quarkus.test.TestTransaction;
 
 @QuarkusTest
 public class CommentRepositoryIT {
@@ -21,17 +21,19 @@ public class CommentRepositoryIT {
     ExerciseRepository exerciseRepository;
     @Inject
     UserRepository userRepository;
+    @Inject
+    UserRankRepository userRankRepository;
 
     @Test
-    @Transactional
+    @TestTransaction
     public void testFindByExerciseIdWithRelations_eagerFetch() {
         // Setup: create user, exercise, comment
         UserEntity user = new UserEntity();
         user.username = "testuser";
         user.password = "pw";
-        user.salt = "salt";
         user.email = "test@example.com";
         user.activated = true;
+        user.rank = this.userRankRepository.findById(1L);
         userRepository.persist(user);
 
         ExerciseEntity ex = new ExerciseEntity();

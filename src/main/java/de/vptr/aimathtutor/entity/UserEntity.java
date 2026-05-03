@@ -3,10 +3,14 @@ package de.vptr.aimathtutor.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,6 +24,7 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -45,15 +50,17 @@ public class UserEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @NotBlank
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     public String username;
 
     @NotBlank
+    @Column(nullable = false)
+    @JsonIgnore
     public String password;
-
-    @NotBlank
-    public String salt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rank_id", nullable = false)
@@ -64,17 +71,22 @@ public class UserEntity extends PanacheEntityBase {
     @Column(unique = true)
     public String email;
 
-    public Boolean banned;
+    @Column(nullable = false)
+    public Boolean banned = false;
 
-    public Boolean activated;
+    @Column(nullable = false)
+    public Boolean activated = false;
 
     @Column(name = "activation_key")
+    @JsonIgnore
     public String activationKey;
 
+    @Generated(event = EventType.INSERT)
     public LocalDateTime created;
 
-    @Column(name = "last_login")
-    public LocalDateTime lastLogin;
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     @Column(name = "user_avatar_emoji", length = 10)
     public String userAvatarEmoji;
@@ -89,4 +101,12 @@ public class UserEntity extends PanacheEntityBase {
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     public List<CommentEntity> comments;
+
+    @OneToMany(mappedBy = "flagger", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    public List<CommentFlagEntity> commentFlags;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    public List<UserGroupMetaEntity> userGroupMetas;
 }

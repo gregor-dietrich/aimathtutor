@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.repository;
 import java.util.List;
 import java.util.Optional;
 
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -19,6 +20,7 @@ public class AiConfigRepository extends AbstractRepository {
      *
      * @return a list of all {@link AiConfigEntity} objects
      */
+    @Transactional
     public List<AiConfigEntity> findAll() {
         return this.listNamed("AiConfig.findAll", AiConfigEntity.class);
     }
@@ -29,6 +31,7 @@ public class AiConfigRepository extends AbstractRepository {
      * @param configKey the configuration key to search for
      * @return an Optional containing the entity if found, empty otherwise
      */
+    @Transactional
     public Optional<AiConfigEntity> findByConfigKey(final String configKey) {
         if (configKey == null) {
             return Optional.empty();
@@ -45,7 +48,8 @@ public class AiConfigRepository extends AbstractRepository {
      * @param category the category to filter by
      * @return a list of {@link AiConfigEntity} objects in the category
      */
-    public List<AiConfigEntity> findByCategory(final String category) {
+    @Transactional
+    public List<AiConfigEntity> findByCategory(final ConfigCategory category) {
         if (category == null) {
             return List.of();
         }

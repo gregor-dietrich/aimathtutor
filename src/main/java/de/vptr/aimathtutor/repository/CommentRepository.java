@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -304,6 +305,24 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
+     * Counts comments created by a specific user within a database interval.
+     * Uses {@code CURRENT_TIMESTAMP} from the database to avoid JVM/DB timezone
+     * mismatches.
+     *
+     * @param userId   the user ID to filter by
+     * @param interval a PostgreSQL interval literal (e.g. {@code "5 seconds"},
+     *                 {@code "1 day"})
+     * @return the count of comments created by the user within the interval
+     */
+    public long countByUserSinceInterval(final Long userId, final String interval) {
+        final var q = this.em.createNativeQuery(
+                "SELECT COUNT(*) FROM comments WHERE user_id = ?1 AND created > CURRENT_TIMESTAMP - CAST(?2 AS interval)");
+        q.setParameter(1, userId);
+        q.setParameter(2, interval);
+        return ((Number) q.getSingleResult()).longValue();
+    }
+
+    /**
      * Searches for comments matching the given search term.
      *
      * @param searchTerm the search term to match against comment properties
@@ -332,11 +351,10 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves comments with a specific status.
      *
-     * @param status the status value to filter by (e.g., "active", "hidden",
-     *               "flagged")
+     * @param status the status to filter by
      * @return a list of {@link CommentEntity} objects with the specified status
      */
-    public List<CommentEntity> findByStatus(final String status) {
+    public List<CommentEntity> findByStatus(final CommentStatus status) {
         final var q = this.em.createNamedQuery("Comment.findByStatus", CommentEntity.class);
         q.setParameter("st", status);
         return q.getResultList();

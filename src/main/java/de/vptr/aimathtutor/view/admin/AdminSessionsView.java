@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.time.LocalTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,7 +232,7 @@ public class AdminSessionsView extends AbstractAdminView {
             }
 
             final var startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : null;
+            final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
             if (startDateTime != null && endDateTime != null && startDateTime.isAfter(endDateTime)) {
                 NotificationUtil.showError("Start date must be before or equal to end date.");

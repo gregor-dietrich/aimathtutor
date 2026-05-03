@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+import io.quarkus.test.TestTransaction;
 
 @QuarkusTest
 public class ExerciseRepositoryIT {
@@ -18,16 +19,22 @@ public class ExerciseRepositoryIT {
     ExerciseRepository exerciseRepository;
     @Inject
     UserRepository userRepository;
+    @Inject
+    UserRankRepository userRankRepository;
 
     @Test
-    @Transactional
+    @TestTransaction
     public void testFindPublishedAndSearch() {
+        final UserRankEntity rank = new UserRankEntity();
+        rank.name = "ExerciseTestRank";
+        this.userRankRepository.persist(rank);
+
         UserEntity user = new UserEntity();
         user.username = "searchuser";
         user.password = "pw";
-        user.salt = "salt";
         user.email = "search@example.com";
         user.activated = true;
+        user.rank = rank;
         userRepository.persist(user);
 
         ExerciseEntity ex1 = new ExerciseEntity();

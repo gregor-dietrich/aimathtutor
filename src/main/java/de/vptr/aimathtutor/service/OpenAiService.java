@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -60,7 +61,7 @@ public class OpenAiService {
     /**
      * Clean up JAX-RS client resources when the bean is destroyed.
      */
-    @jakarta.annotation.PreDestroy
+    @PreDestroy
     void cleanup() {
         final Client localClient = this.client;
         if (localClient != null) {
@@ -80,7 +81,7 @@ public class OpenAiService {
      * @param prompt The user prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = IllegalStateException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with OpenAI for prompt length: {}", prompt != null ? prompt.length() : 0);
 
@@ -93,10 +94,8 @@ public class OpenAiService {
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
-        Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
-        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
-        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
+        final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         if (model == null || model.isBlank()) {
@@ -132,50 +131,51 @@ public class OpenAiService {
             }
 
             // Make API call
-            final var response = requestBuilder.post(Entity.json(request));
+            try (Response response = requestBuilder.post(Entity.json(request))) {
 
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                final String errorBody = response.readEntity(String.class);
-                LOG.error("OpenAI API error (status {}): {}", response.getStatus(), errorBody);
-                throw new WebApplicationException("OpenAI API error: " + response.getStatus(),
-                        response.getStatus());
+                if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                    final String errorBody = response.readEntity(String.class);
+                    LOG.error("OpenAI API error (status {}): {}", response.getStatus(), errorBody);
+                    throw new WebApplicationException("OpenAI API error: " + response.getStatus(),
+                            response.getStatus());
+                }
+
+                // Parse response
+                final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
+
+                if (openAiResponse.isContentFiltered()) {
+                    LOG.warn("OpenAI response was filtered by content safety policies");
+                    throw new IllegalStateException("Response filtered by content safety policies");
+                }
+
+                if (openAiResponse.isTruncated()) {
+                    LOG.warn("OpenAI response was truncated due to token limit");
+                }
+
+                if (!openAiResponse.isComplete()) {
+                    LOG.warn("OpenAI response not complete. Finish reason: {}",
+                            openAiResponse.choices != null && !openAiResponse.choices.isEmpty()
+                                    ? openAiResponse.choices.get(0).finishReason
+                                    : "unknown");
+                }
+
+                final String content = openAiResponse.getTextContent();
+                if (content == null || content.isBlank()) {
+                    LOG.warn("OpenAI returned empty content");
+                    throw new IllegalStateException("Empty response from OpenAI");
+                }
+
+                // Log token usage if available
+                if (openAiResponse.usage != null) {
+                    LOG.debug("OpenAI usage - Prompt: {} tokens, Completion: {} tokens, Total: {} tokens",
+                            openAiResponse.usage.promptTokens,
+                            openAiResponse.usage.completionTokens,
+                            openAiResponse.usage.totalTokens);
+                }
+
+                LOG.debug("Successfully generated content from OpenAI, length: {}", content.length());
+                return content;
             }
-
-            // Parse response
-            final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
-
-            if (openAiResponse.isContentFiltered()) {
-                LOG.warn("OpenAI response was filtered by content safety policies");
-                throw new IllegalStateException("Response filtered by content safety policies");
-            }
-
-            if (openAiResponse.isTruncated()) {
-                LOG.warn("OpenAI response was truncated due to token limit");
-            }
-
-            if (!openAiResponse.isComplete()) {
-                LOG.warn("OpenAI response not complete. Finish reason: {}",
-                        openAiResponse.choices != null && !openAiResponse.choices.isEmpty()
-                                ? openAiResponse.choices.get(0).finishReason
-                                : "unknown");
-            }
-
-            final String content = openAiResponse.getTextContent();
-            if (content == null || content.isBlank()) {
-                LOG.warn("OpenAI returned empty content");
-                throw new IllegalStateException("Empty response from OpenAI");
-            }
-
-            // Log token usage if available
-            if (openAiResponse.usage != null) {
-                LOG.debug("OpenAI usage - Prompt: {} tokens, Completion: {} tokens, Total: {} tokens",
-                        openAiResponse.usage.promptTokens,
-                        openAiResponse.usage.completionTokens,
-                        openAiResponse.usage.totalTokens);
-            }
-
-            LOG.debug("Successfully generated content from OpenAI, length: {}", content.length());
-            return content;
 
         } catch (final WebApplicationException e) {
             LOG.error("Error calling OpenAI API", e);
@@ -200,10 +200,8 @@ public class OpenAiService {
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
-        Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
-        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
-        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
+        final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         try {
@@ -226,25 +224,29 @@ public class OpenAiService {
                 requestBuilder = requestBuilder.header("OpenAI-Organization", organizationId);
             }
 
-            final var response = requestBuilder.post(Entity.json(request));
+            try (Response response = requestBuilder.post(Entity.json(request))) {
 
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                final String errorBody = response.readEntity(String.class);
-                LOG.error("OpenAI API error (status {}): {}", response.getStatus(), errorBody);
-                throw new WebApplicationException("OpenAI API error: " + response.getStatus(),
-                        response.getStatus());
+                if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                    final String errorBody = response.readEntity(String.class);
+                    LOG.error("OpenAI API error (status {}): {}", response.getStatus(), errorBody);
+                    throw new WebApplicationException("OpenAI API error: " + response.getStatus(),
+                            response.getStatus());
+                }
+
+                final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
+                final String content = openAiResponse.getTextContent();
+
+                if (content == null || content.isBlank()) {
+                    throw new IllegalStateException("Empty response from OpenAI");
+                }
+
+                LOG.debug("Successfully generated JSON content from OpenAI");
+                return content;
             }
 
-            final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
-            final String content = openAiResponse.getTextContent();
-
-            if (content == null || content.isBlank()) {
-                throw new IllegalStateException("Empty response from OpenAI");
-            }
-
-            LOG.debug("Successfully generated JSON content from OpenAI");
-            return content;
-
+        } catch (final WebApplicationException e) {
+            LOG.error("Error calling OpenAI API for JSON", e);
+            throw e;
         } catch (final RuntimeException e) {
             LOG.error("Error calling OpenAI API for JSON", e);
             throw new IllegalStateException("Failed to call OpenAI API", e);

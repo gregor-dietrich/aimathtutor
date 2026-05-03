@@ -11,7 +11,7 @@ import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+import io.quarkus.test.TestTransaction;
 
 @QuarkusTest
 public class StudentSessionRepositoryIT {
@@ -22,16 +22,18 @@ public class StudentSessionRepositoryIT {
     ExerciseRepository exerciseRepository;
     @Inject
     UserRepository userRepository;
+    @Inject
+    UserRankRepository userRankRepository;
 
     @Test
-    @Transactional
+    @TestTransaction
     public void testFindByUserAndDateRange() {
         UserEntity user = new UserEntity();
         user.username = "sessionuser";
         user.password = "pw";
-        user.salt = "salt";
         user.email = "session@example.com";
         user.activated = true;
+        user.rank = this.userRankRepository.findById(1L);
         userRepository.persist(user);
 
         ExerciseEntity ex = new ExerciseEntity();

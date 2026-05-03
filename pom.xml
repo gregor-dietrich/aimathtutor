@@ -180,6 +180,12 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
         </dependency>
+
+        <!-- Quarkus Elytron Security Common for bcrypt hashing utilities -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-elytron-security-common</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -287,6 +293,9 @@
                 <version>${surefire-plugin.version}</version>
                 <configuration>
                     <argLine>@{argLine}</argLine>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>

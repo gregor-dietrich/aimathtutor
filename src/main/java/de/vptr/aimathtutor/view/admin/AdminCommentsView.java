@@ -39,6 +39,7 @@ import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.CommentDto;
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
@@ -180,8 +181,9 @@ public class AdminCommentsView extends AbstractAdminView {
         // Status filter (VISIBLE, HIDDEN, DELETED)
         this.statusFilterSelect = new Select<>();
         this.statusFilterSelect.setLabel("Filter by Status");
-        this.statusFilterSelect.setItems("ALL", "VISIBLE", "HIDDEN", "DELETED");
-        this.statusFilterSelect.setValue("ALL");
+        this.statusFilterSelect.setItems(CommentStatus.VISIBLE.getValue(), CommentStatus.HIDDEN.getValue(),
+                CommentStatus.DELETED.getValue());
+        this.statusFilterSelect.setValue(CommentStatus.VISIBLE.getValue());
         this.statusFilterSelect.addValueChangeListener(ignored -> this.filterByStatus());
 
         // Flags filter (show comments with N+ flags)
@@ -250,18 +252,19 @@ public class AdminCommentsView extends AbstractAdminView {
 
         // Status column
         this.grid.addComponentColumn(comment -> {
-            final var status = comment.status != null ? comment.status : "VISIBLE";
-            final var statusSpan = new Span(status);
+            final var status = comment.status != null ? comment.status : CommentStatus.VISIBLE;
+            final var statusSpan = new Span(status.getValue());
             statusSpan.getStyle().set("font-weight", "600");
 
             // Color-code status
-            if ("VISIBLE".equals(status)) {
+            if (CommentStatus.VISIBLE.equals(status)) {
                 statusSpan.getStyle().set("color", "var(--lumo-success-color)");
-            } else if ("HIDDEN".equals(status)) {
+            } else if (CommentStatus.HIDDEN.equals(status)) {
                 statusSpan.getStyle().set("color", "var(--lumo-warning-color)");
-            } else if ("DELETED".equals(status)) {
+            } else if (CommentStatus.DELETED.equals(status)) {
                 statusSpan.getStyle().set("color", "var(--lumo-error-color)");
             }
+            statusSpan.getElement().setAttribute("aria-label", status.getValue());
 
             return statusSpan;
         }).setHeader("Status").setWidth("100px").setFlexGrow(0);
@@ -284,9 +287,9 @@ public class AdminCommentsView extends AbstractAdminView {
 
         // Hide/Show button (toggle moderation)
         Button moderateButton;
-        if ("VISIBLE".equals(comment.status)) {
+        if (CommentStatus.VISIBLE.equals(comment.status)) {
             moderateButton = new HideButton(ignored -> this.hideComment(comment));
-        } else if ("HIDDEN".equals(comment.status)) {
+        } else if (CommentStatus.HIDDEN.equals(comment.status)) {
             moderateButton = new ShowButton(ignored -> this.showComment(comment));
         } else {
             // DELETED - offer restore option
@@ -372,10 +375,19 @@ public class AdminCommentsView extends AbstractAdminView {
             final var currentUsername = (String) session.getAttribute("authenticated.username");
 
             if (this.currentComment.id == null) {
+                if (currentUsername == null) {
+                    NotificationUtil.showError("You must be logged in to manage comments");
+                    return;
+                }
                 this.commentService.createComment(commentEntity, currentUsername);
                 NotificationUtil.showSuccess("Comment created successfully");
             } else {
-                this.commentService.updateComment(commentEntity);
+                final var editorId = this.authService.getUserId();
+                if (editorId == null) {
+                    NotificationUtil.showError("You must be logged in to edit comments");
+                    return;
+                }
+                this.commentService.editComment(this.currentComment.id, this.currentComment, editorId);
                 NotificationUtil.showSuccess("Comment updated successfully");
             }
 
@@ -392,12 +404,14 @@ public class AdminCommentsView extends AbstractAdminView {
 
     private void deleteComment(final CommentDto comment) {
         try {
-            if (this.commentService.deleteComment(comment.id)) {
-                NotificationUtil.showSuccess("Comment deleted successfully");
-                this.loadCommentsAsync();
-            } else {
-                NotificationUtil.showError("Failed to delete comment");
+            final var requesterId = this.authService.getUserId();
+            if (requesterId == null) {
+                NotificationUtil.showError("You must be logged in to delete comments");
+                return;
             }
+            this.commentService.deleteComment(comment.id, requesterId, true);
+            NotificationUtil.showSuccess("Comment deleted successfully");
+            this.loadCommentsAsync();
         } catch (final Exception e) {
             LOG.error("Error deleting comment", e);
             NotificationUtil.showError("An error occurred while deleting the comment. Please try again.");
@@ -413,16 +427,16 @@ public class AdminCommentsView extends AbstractAdminView {
 
         this.searchButton.setEnabled(false);
         LOG.info("Searching comments with query: {}", query);
-        try {
-            final var comments = this.commentService.searchComments(query.trim());
-            LOG.info("Successfully found {} comments", comments.size());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error searching comments", e);
-            NotificationUtil.showError("An error occurred while searching comments. Please try again.");
-        } finally {
-            this.searchButton.setEnabled(true);
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.searchComments(query.trim()),
+                this,
+                comments -> {
+                    LOG.info("Successfully found {} comments", comments.size());
+                    this.grid.setItems(comments);
+                    this.searchButton.setEnabled(true);
+                },
+                () -> this.searchButton.setEnabled(true),
+                "An error occurred while searching comments. Please try again.");
     }
 
     private void filterByDateRange() {
@@ -439,13 +453,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByDateRange(startDate.toString(), endDate.toString());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by date range", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByDateRange(startDate.toString(), endDate.toString()),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByUser() {
@@ -455,13 +467,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByUserId(userId.longValue());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by user", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByUserId(userId.longValue()),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByExerciseId() {
@@ -471,29 +481,25 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByExerciseId(exerciseId.longValue());
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by exercise", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByExerciseId(exerciseId.longValue()),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByStatus() {
         final String status = this.statusFilterSelect.getValue();
-        if ("ALL".equals(status)) {
+        if (status == null) {
             this.loadCommentsAsync();
             return;
         }
 
-        try {
-            final var comments = this.commentService.findByStatus(status);
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by status", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findByStatus(CommentStatus.fromString(status)),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void filterByFlags() {
@@ -503,13 +509,11 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var comments = this.commentService.findFlaggedComments(minFlags);
-            this.grid.setItems(comments);
-        } catch (final Exception e) {
-            LOG.error("Error filtering comments by flags", e);
-            NotificationUtil.showError("An error occurred while filtering comments. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.commentService.findFlaggedComments(minFlags),
+                this,
+                comments -> this.grid.setItems(comments),
+                "An error occurred while filtering comments. Please try again.");
     }
 
     private void hideComment(final CommentViewDto comment) {

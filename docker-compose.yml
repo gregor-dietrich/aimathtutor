@@ -37,7 +37,7 @@ services:
       POSTGRES_PORT: 5432
     volumes:
       - postgres_data:/var/lib/postgresql/18/docker
-      - ./src/main/resources/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/main/resources/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}"]
       interval: 10s
@@ -45,39 +45,39 @@ services:
       retries: 3
       start_period: 5s
 
-  # Uncomment if you want to use pgAdmin:
-  # pgadmin:
-  #   image: dpage/pgadmin4:9.13.0
-  #   restart: unless-stopped
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
-  #   ports:
-  #     - "42069:80"
-  #   volumes:
-  #     - pgadmin_data:/var/lib/pgadmin
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://pgadmin/ || exit 1"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 10s
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
+# Uncomment if you want to use pgAdmin:
+# pgadmin:
+#   image: dpage/pgadmin4:9.13.0
+#   restart: unless-stopped
+#   environment:
+#     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+#     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
+#   ports:
+#     - "42069:80"
+#   volumes:
+#     - pgadmin_data:/var/lib/pgadmin
+#   healthcheck:
+#     test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://pgadmin/ || exit 1"]
+#     interval: 10s
+#     timeout: 3s
+#     retries: 3
+#     start_period: 10s
+#   depends_on:
+#     db:
+#       condition: service_healthy
 
-  # Uncomment if you want to use Ollama:
-  # ollama:
-  #   image: gregordietrich/ollama:0.15.2
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   healthcheck:
-  #     test: ["CMD", "ollama", "ls"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 10s
+# Uncomment if you want to use Ollama:
+# ollama:
+#   image: gregordietrich/ollama:0.15.2
+#   restart: unless-stopped
+#   volumes:
+#     - ollama_data:/root/.ollama
+#   healthcheck:
+#     test: ["CMD", "ollama", "ls"]
+#     interval: 10s
+#     timeout: 3s
+#     retries: 3
+#     start_period: 10s
 
 volumes:
   aimathtutor_logs:

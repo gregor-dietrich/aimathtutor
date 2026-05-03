@@ -1,9 +1,9 @@
 package de.vptr.aimathtutor.security;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,88 +20,45 @@ class PasswordHashingServiceTest {
     }
 
     @Test
-    @DisplayName("Should generate unique salts")
-    void shouldGenerateUniqueSalts() {
-        // When
-        final String salt1 = this.passwordHashingService.generateSalt();
-        final String salt2 = this.passwordHashingService.generateSalt();
-
-        // Then
-        assertNotNull(salt1);
-        assertNotNull(salt2);
-        assertNotEquals(salt1, salt2);
-        assertFalse(salt1.isEmpty());
-        assertFalse(salt2.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should generate salt of expected length")
-    void shouldGenerateSaltOfExpectedLength() {
-        // When
-        final String salt = this.passwordHashingService.generateSalt();
-
-        // Then
-        // Base64 encoding of 32 bytes should result in 44 characters (with padding)
-        assertTrue(salt.length() >= 40); // Allow some variance for Base64 padding
-    }
-
-    @Test
     @DisplayName("Should hash password successfully")
-    void shouldHashPasswordSuccessfully() throws Exception {
+    void shouldHashPasswordSuccessfully() {
         // Given
         final String password = "testPassword123";
-        final String salt = this.passwordHashingService.generateSalt();
 
         // When
-        final String hashedPassword = this.passwordHashingService.hashPassword(password, salt);
+        final String hashedPassword = this.passwordHashingService.hashPassword(password);
 
         // Then
         assertNotNull(hashedPassword);
         assertFalse(hashedPassword.isEmpty());
         assertNotEquals(password, hashedPassword);
+        // Bcrypt hashes start with $2a$ or $2b$ or $2y$
+        assertTrue(hashedPassword.startsWith("$2"));
     }
 
     @Test
-    @DisplayName("Should produce different hashes for same password with different salts")
-    void shouldProduceDifferentHashesForSamePasswordWithDifferentSalts() throws Exception {
+    @DisplayName("Should produce different hashes for same password")
+    void shouldProduceDifferentHashesForSamePassword() {
         // Given
         final String password = "testPassword123";
-        final String salt1 = this.passwordHashingService.generateSalt();
-        final String salt2 = this.passwordHashingService.generateSalt();
 
         // When
-        final String hash1 = this.passwordHashingService.hashPassword(password, salt1);
-        final String hash2 = this.passwordHashingService.hashPassword(password, salt2);
+        final String hash1 = this.passwordHashingService.hashPassword(password);
+        final String hash2 = this.passwordHashingService.hashPassword(password);
 
         // Then
         assertNotEquals(hash1, hash2);
     }
 
     @Test
-    @DisplayName("Should produce same hash for same password and salt")
-    void shouldProduceSameHashForSamePasswordAndSalt() throws Exception {
-        // Given
-        final String password = "testPassword123";
-        final String salt = this.passwordHashingService.generateSalt();
-
-        // When
-        final String hash1 = this.passwordHashingService.hashPassword(password, salt);
-        final String hash2 = this.passwordHashingService.hashPassword(password, salt);
-
-        // Then
-        assertEquals(hash1, hash2);
-    }
-
-    @Test
     @DisplayName("Should verify correct password")
-    void shouldVerifyCorrectPassword() throws Exception {
+    void shouldVerifyCorrectPassword() {
         // Given
         final String password = "testPassword123";
-        final String salt = this.passwordHashingService.generateSalt();
-        final String storedHash = this.passwordHashingService.hashPassword(password, salt);
+        final String storedHash = this.passwordHashingService.hashPassword(password);
 
         // When
-        final boolean isValid = this.passwordHashingService.verifyPassword(password, storedHash, salt);
+        final boolean isValid = this.passwordHashingService.verifyPassword(password, storedHash);
 
         // Then
         assertTrue(isValid);
@@ -109,15 +66,14 @@ class PasswordHashingServiceTest {
 
     @Test
     @DisplayName("Should reject incorrect password")
-    void shouldRejectIncorrectPassword() throws Exception {
+    void shouldRejectIncorrectPassword() {
         // Given
         final String correctPassword = "testPassword123";
         final String incorrectPassword = "wrongPassword";
-        final String salt = this.passwordHashingService.generateSalt();
-        final String storedHash = this.passwordHashingService.hashPassword(correctPassword, salt);
+        final String storedHash = this.passwordHashingService.hashPassword(correctPassword);
 
         // When
-        final boolean isValid = this.passwordHashingService.verifyPassword(incorrectPassword, storedHash, salt);
+        final boolean isValid = this.passwordHashingService.verifyPassword(incorrectPassword, storedHash);
 
         // Then
         assertFalse(isValid);
@@ -126,11 +82,8 @@ class PasswordHashingServiceTest {
     @Test
     @DisplayName("Should handle null password in verification")
     void shouldHandleNullPasswordInVerification() {
-        // Given
-        final String salt = this.passwordHashingService.generateSalt();
-
         // When
-        final boolean isValid = this.passwordHashingService.verifyPassword(null, "someHash", salt);
+        final boolean isValid = this.passwordHashingService.verifyPassword(null, "someHash");
 
         // Then
         assertFalse(isValid);
@@ -139,21 +92,8 @@ class PasswordHashingServiceTest {
     @Test
     @DisplayName("Should handle null hash in verification")
     void shouldHandleNullHashInVerification() {
-        // Given
-        final String salt = this.passwordHashingService.generateSalt();
-
         // When
-        final boolean isValid = this.passwordHashingService.verifyPassword("password", null, salt);
-
-        // Then
-        assertFalse(isValid);
-    }
-
-    @Test
-    @DisplayName("Should handle null salt in verification")
-    void shouldHandleNullSaltInVerification() {
-        // When
-        final boolean isValid = this.passwordHashingService.verifyPassword("password", "hash", null);
+        final boolean isValid = this.passwordHashingService.verifyPassword("password", null);
 
         // Then
         assertFalse(isValid);
@@ -162,11 +102,8 @@ class PasswordHashingServiceTest {
     @Test
     @DisplayName("Should handle empty password in verification")
     void shouldHandleEmptyPasswordInVerification() {
-        // Given
-        final String salt = this.passwordHashingService.generateSalt();
-
         // When
-        final boolean isValid = this.passwordHashingService.verifyPassword("", "someHash", salt);
+        final boolean isValid = this.passwordHashingService.verifyPassword("", "someHash");
 
         // Then
         assertFalse(isValid);
@@ -175,21 +112,8 @@ class PasswordHashingServiceTest {
     @Test
     @DisplayName("Should handle empty hash in verification")
     void shouldHandleEmptyHashInVerification() {
-        // Given
-        final String salt = this.passwordHashingService.generateSalt();
-
         // When
-        final boolean isValid = this.passwordHashingService.verifyPassword("password", "", salt);
-
-        // Then
-        assertFalse(isValid);
-    }
-
-    @Test
-    @DisplayName("Should handle empty salt in verification")
-    void shouldHandleEmptySaltInVerification() {
-        // When
-        final boolean isValid = this.passwordHashingService.verifyPassword("password", "hash", "");
+        final boolean isValid = this.passwordHashingService.verifyPassword("password", "");
 
         // Then
         assertFalse(isValid);
@@ -197,14 +121,13 @@ class PasswordHashingServiceTest {
 
     @Test
     @DisplayName("Should handle special characters in password")
-    void shouldHandleSpecialCharactersInPassword() throws Exception {
+    void shouldHandleSpecialCharactersInPassword() {
         // Given
         final String password = "pàssw@rd!#$%^&*()_+{}|:<>?[]\\;',./~`";
-        final String salt = this.passwordHashingService.generateSalt();
 
         // When
-        final String hash = this.passwordHashingService.hashPassword(password, salt);
-        final boolean isValid = this.passwordHashingService.verifyPassword(password, hash, salt);
+        final String hash = this.passwordHashingService.hashPassword(password);
+        final boolean isValid = this.passwordHashingService.verifyPassword(password, hash);
 
         // Then
         assertNotNull(hash);
@@ -212,31 +135,22 @@ class PasswordHashingServiceTest {
     }
 
     @Test
-    @DisplayName("Should handle very long passwords")
-    void shouldHandleVeryLongPasswords() throws Exception {
-        // Given
+    @DisplayName("Should reject passwords exceeding 72 bytes")
+    void shouldRejectVeryLongPasswords() {
         final String longPassword = "a".repeat(1000);
-        final String salt = this.passwordHashingService.generateSalt();
-
-        // When
-        final String hash = this.passwordHashingService.hashPassword(longPassword, salt);
-        final boolean isValid = this.passwordHashingService.verifyPassword(longPassword, hash, salt);
-
-        // Then
-        assertNotNull(hash);
-        assertTrue(isValid);
+        assertThrows(IllegalArgumentException.class,
+                () -> this.passwordHashingService.hashPassword(longPassword));
     }
 
     @Test
     @DisplayName("Should handle Unicode characters in password")
-    void shouldHandleUnicodeCharactersInPassword() throws Exception {
+    void shouldHandleUnicodeCharactersInPassword() {
         // Given
         final String unicodePassword = "pássw@rd中文🌟";
-        final String salt = this.passwordHashingService.generateSalt();
 
         // When
-        final String hash = this.passwordHashingService.hashPassword(unicodePassword, salt);
-        final boolean isValid = this.passwordHashingService.verifyPassword(unicodePassword, hash, salt);
+        final String hash = this.passwordHashingService.hashPassword(unicodePassword);
+        final boolean isValid = this.passwordHashingService.verifyPassword(unicodePassword, hash);
 
         // Then
         assertNotNull(hash);
@@ -244,15 +158,27 @@ class PasswordHashingServiceTest {
     }
 
     @Test
-    @DisplayName("Should return false when hash verification throws exception")
-    void shouldReturnFalseWhenHashVerificationThrowsException() {
-        // Given - invalid Base64 salt that will cause exception during hashing
-        final String invalidSalt = "invalid-base64!!!";
+    @DisplayName("Should reject invalid bcrypt hash")
+    void shouldRejectInvalidBcryptHash() {
+        // Given
+        final String invalidHash = "not-a-valid-bcrypt-hash";
 
         // When
-        final boolean result = this.passwordHashingService.verifyPassword("password", "hash", invalidSalt);
+        final boolean result = this.passwordHashingService.verifyPassword("password", invalidHash);
 
         // Then
         assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("Should throw on null password when hashing")
+    void shouldThrowOnNullPasswordWhenHashing() {
+        assertThrows(IllegalArgumentException.class, () -> this.passwordHashingService.hashPassword(null));
+    }
+
+    @Test
+    @DisplayName("Should throw on empty password when hashing")
+    void shouldThrowOnEmptyPasswordWhenHashing() {
+        assertThrows(IllegalArgumentException.class, () -> this.passwordHashingService.hashPassword(""));
     }
 }

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -149,7 +150,7 @@ public class RateLimitService {
                 cooldown[0] = 0;
             } else {
                 final Instant oldest = timestamps.get(0);
-                final long elapsed = java.time.Duration.between(oldest, now).getSeconds();
+                final long elapsed = Duration.between(oldest, now).getSeconds();
                 cooldown[0] = Math.max(0, WINDOW_SECONDS - elapsed);
             }
 

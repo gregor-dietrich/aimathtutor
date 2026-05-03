@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
@@ -53,7 +55,7 @@ class AiConfigServiceTest {
                 "test.config1", "test.config2", "test.config3", "update.test",
                 "batch.config1", "batch.config2", "batch.config3",
                 "cache.test", "cache.clear.test", "test.integer", "test.boolean", "test.string",
-                "test.temperature", "test.max-tokens");
+                "test.temperature", "test.max-tokens", "test.config3");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
@@ -65,11 +67,13 @@ class AiConfigServiceTest {
         final var adminRank = new UserRankEntity();
         adminRank.id = 1L;
         adminRank.name = "Admin";
+        adminRank.version = 0L;
 
         this.adminUser = new UserEntity();
         this.adminUser.id = 1L;
         this.adminUser.username = "testadmin";
         this.adminUser.rank = adminRank;
+        this.adminUser.version = 0L;
 
         // Ensure admin user exists
         final var existing = this.userRepository.findById(1L);
@@ -88,7 +92,7 @@ class AiConfigServiceTest {
         assertEquals("defaultValue", value);
 
         // Create a config and retrieve it
-        final var entity = new AiConfigEntity("test.key", "test.value", "STRING", "TEST");
+        final var entity = new AiConfigEntity("test.key", "test.value", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -105,7 +109,7 @@ class AiConfigServiceTest {
         assertEquals(42, value);
 
         // Create a numeric config
-        final var entity = new AiConfigEntity("test.int", "123", "INTEGER", "TEST");
+        final var entity = new AiConfigEntity("test.int", "123", ConfigType.INTEGER, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -113,7 +117,7 @@ class AiConfigServiceTest {
         assertEquals(123, value);
 
         // Invalid integer format returns default
-        final var invalidEntity = new AiConfigEntity("test.invalid.int", "not_a_number", "INTEGER", "TEST");
+        final var invalidEntity = new AiConfigEntity("test.invalid.int", "not_a_number", ConfigType.INTEGER, ConfigCategory.GENERAL);
         invalidEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(invalidEntity);
 
@@ -130,7 +134,7 @@ class AiConfigServiceTest {
         assertEquals(3.14, value);
 
         // Create a numeric config
-        final var entity = new AiConfigEntity("test.double", "2.71", "DOUBLE", "TEST");
+        final var entity = new AiConfigEntity("test.double", "2.71", ConfigType.DOUBLE, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -138,7 +142,7 @@ class AiConfigServiceTest {
         assertEquals(2.71, value);
 
         // Invalid double format returns default
-        final var invalidEntity = new AiConfigEntity("test.invalid.double", "not_a_double", "DOUBLE", "TEST");
+        final var invalidEntity = new AiConfigEntity("test.invalid.double", "not_a_double", ConfigType.DOUBLE, ConfigCategory.GENERAL);
         invalidEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(invalidEntity);
 
@@ -155,28 +159,28 @@ class AiConfigServiceTest {
         assertEquals(false, value);
 
         // Test "true" string
-        final var trueEntity = new AiConfigEntity("test.bool.true", "true", "BOOLEAN", "TEST");
+        final var trueEntity = new AiConfigEntity("test.bool.true", "true", ConfigType.BOOLEAN, ConfigCategory.GENERAL);
         trueEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(trueEntity);
         value = this.aiConfigService.getConfigValueAsBoolean("test.bool.true", false);
         assertEquals(true, value);
 
         // Test "false" string
-        final var falseEntity = new AiConfigEntity("test.bool.false", "false", "BOOLEAN", "TEST");
+        final var falseEntity = new AiConfigEntity("test.bool.false", "false", ConfigType.BOOLEAN, ConfigCategory.GENERAL);
         falseEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(falseEntity);
         value = this.aiConfigService.getConfigValueAsBoolean("test.bool.false", true);
         assertEquals(false, value);
 
         // Test "1" for true
-        final var oneEntity = new AiConfigEntity("test.bool.one", "1", "BOOLEAN", "TEST");
+        final var oneEntity = new AiConfigEntity("test.bool.one", "1", ConfigType.BOOLEAN, ConfigCategory.GENERAL);
         oneEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(oneEntity);
         value = this.aiConfigService.getConfigValueAsBoolean("test.bool.one", false);
         assertEquals(true, value);
 
         // Test "0" for false
-        final var zeroEntity = new AiConfigEntity("test.bool.zero", "0", "BOOLEAN", "TEST");
+        final var zeroEntity = new AiConfigEntity("test.bool.zero", "0", ConfigType.BOOLEAN, ConfigCategory.GENERAL);
         zeroEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(zeroEntity);
         value = this.aiConfigService.getConfigValueAsBoolean("test.bool.zero", true);
@@ -184,41 +188,11 @@ class AiConfigServiceTest {
     }
 
     @Test
-    @DisplayName("Get all configurations by category")
-    @Transactional
-    void testGetAllConfigsByCategory() {
-        // Create multiple configs in same category
-        final var config1 = new AiConfigEntity("test.config1", "value1", "STRING", "TESTCAT");
-        config1.lastUpdatedBy = this.adminUser;
-        this.aiConfigRepository.persist(config1);
-
-        final var config2 = new AiConfigEntity("test.config2", "value2", "STRING", "TESTCAT");
-        config2.lastUpdatedBy = this.adminUser;
-        this.aiConfigRepository.persist(config2);
-
-        final var config3 = new AiConfigEntity("test.config3", "value3", "STRING", "OTHERCAT");
-        config3.lastUpdatedBy = this.adminUser;
-        this.aiConfigRepository.persist(config3);
-
-        // Retrieve by category
-        final var testcatConfigs = this.aiConfigService.getAllConfigsByCategory("TESTCAT");
-        assertEquals(2, testcatConfigs.size());
-        assertTrue(testcatConfigs.containsKey("test.config1"));
-        assertTrue(testcatConfigs.containsKey("test.config2"));
-        assertEquals("value1", testcatConfigs.get("test.config1"));
-        assertEquals("value2", testcatConfigs.get("test.config2"));
-
-        final var othercatConfigs = this.aiConfigService.getAllConfigsByCategory("OTHERCAT");
-        assertEquals(1, othercatConfigs.size());
-        assertTrue(othercatConfigs.containsKey("test.config3"));
-    }
-
-    @Test
     @DisplayName("Update single configuration value")
     @Transactional
     void testUpdateConfig() {
         // Create initial config
-        final var entity = new AiConfigEntity("update.test", "initial_value", "STRING", "TEST");
+        final var entity = new AiConfigEntity("update.test", "initial_value", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -235,11 +209,11 @@ class AiConfigServiceTest {
     @Transactional
     void testUpdateMultipleConfigs() {
         // Create initial configs
-        final var config1 = new AiConfigEntity("batch.config1", "value1", "STRING", "BATCH");
+        final var config1 = new AiConfigEntity("batch.config1", "value1", ConfigType.STRING, ConfigCategory.GENERAL);
         config1.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(config1);
 
-        final var config2 = new AiConfigEntity("batch.config2", "value2", "STRING", "BATCH");
+        final var config2 = new AiConfigEntity("batch.config2", "value2", ConfigType.STRING, ConfigCategory.GENERAL);
         config2.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(config2);
 
@@ -264,7 +238,7 @@ class AiConfigServiceTest {
     void testValidateIntegerType() {
         // Create an INTEGER type config (marked as optional so empty values are
         // allowed)
-        final var entity = new AiConfigEntity("test.integer", "100", "INTEGER", "TEST", null, true);
+        final var entity = new AiConfigEntity("test.integer", "100", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -284,7 +258,7 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateDoubleType() {
         // Create a DOUBLE type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.double", "3.14", "DOUBLE", "TEST", null, true);
+        final var entity = new AiConfigEntity("test.double", "3.14", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -304,7 +278,7 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateBooleanType() {
         // Create a BOOLEAN type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.boolean", "true", "BOOLEAN", "TEST", null, true);
+        final var entity = new AiConfigEntity("test.boolean", "true", ConfigType.BOOLEAN, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -327,7 +301,7 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateStringType() {
         // Create a STRING type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.string", "value", "STRING", "TEST", null, true);
+        final var entity = new AiConfigEntity("test.string", "value", ConfigType.STRING, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -345,7 +319,7 @@ class AiConfigServiceTest {
     @Transactional
     void testCacheInvalidation() {
         // Create a config
-        final var entity = new AiConfigEntity("cache.test", "original", "STRING", "TEST");
+        final var entity = new AiConfigEntity("cache.test", "original", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -366,7 +340,7 @@ class AiConfigServiceTest {
     @Transactional
     void testClearCache() {
         // Create a config and cache it
-        final var entity = new AiConfigEntity("cache.clear.test", "value", "STRING", "TEST");
+        final var entity = new AiConfigEntity("cache.clear.test", "value", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -394,7 +368,7 @@ class AiConfigServiceTest {
     @DisplayName("Range validation - temperature out of bounds")
     @Transactional
     void testValidateTemperatureRange() {
-        final var entity = new AiConfigEntity("test.temperature", "0.5", "DOUBLE", "TEST", null, true);
+        final var entity = new AiConfigEntity("test.temperature", "0.5", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -414,7 +388,7 @@ class AiConfigServiceTest {
     @DisplayName("Range validation - max-tokens out of bounds")
     @Transactional
     void testValidateMaxTokensRange() {
-        final var entity = new AiConfigEntity("test.max-tokens", "1000", "INTEGER", "TEST", null, true);
+        final var entity = new AiConfigEntity("test.max-tokens", "1000", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 

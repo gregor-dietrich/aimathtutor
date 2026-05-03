@@ -22,7 +22,9 @@ public class RefreshButton extends Button {
             final ButtonVariant... variants) {
         super("", refreshAction);
         this.setIcon(new Icon(VaadinIcon.REFRESH));
-        this.setTooltipText(tooltipText);
+        final String resolvedTooltip = tooltipText != null && !tooltipText.isBlank() ? tooltipText : DEFAULT_TOOLTIP;
+        this.setTooltipText(resolvedTooltip);
+        this.getElement().setAttribute("aria-label", resolvedTooltip);
         this.addThemeVariants(variants);
     }
 

@@ -1,8 +1,14 @@
 package de.vptr.aimathtutor.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +17,7 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -29,10 +36,21 @@ public class UserGroupEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @NotBlank
+    @Column(nullable = false)
     public String name;
 
-    @OneToMany(mappedBy = "group")
+    @Generated(event = EventType.INSERT)
+    public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, orphanRemoval = true)
     public List<UserGroupMetaEntity> userGroupMetas;
 
     // Helper method to get users in this group

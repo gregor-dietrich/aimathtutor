@@ -3,11 +3,13 @@ package de.vptr.aimathtutor.service;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -78,17 +80,16 @@ public class OllamaService {
      * @param prompt The input prompt
      * @return The generated text response
      */
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = IllegalStateException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
-        Double temperature = this.aiConfigService.getConfigValueAsDouble("ollama.temperature", 0.7);
-        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
+        final double temperature = this.aiConfigService.getClampedTemperature("ollama.temperature", 0.7);
         // Default to 2000 tokens to prevent truncated JSON responses
-        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("ollama.max-tokens", 2000);
-        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
+        final int maxTokens = this.aiConfigService.getClampedTokens("ollama.max-tokens", 2000);
 
         if (apiUrl == null || apiUrl.isBlank()) {
             throw new IllegalStateException("Ollama API URL not configured. Please configure via admin settings.");
@@ -106,45 +107,46 @@ public class OllamaService {
 
             // Make API call
             final long startTime = System.currentTimeMillis();
-            final var response = this.getClient().target(url)
+            try (Response response = this.getClient().target(url)
                     .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(request));
+                    .post(Entity.json(request))) {
 
-            final long duration = System.currentTimeMillis() - startTime;
+                final long duration = System.currentTimeMillis() - startTime;
 
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                final String errorBody = response.readEntity(String.class);
-                LOG.error("Ollama API error (status {}): {}", response.getStatus(), errorBody);
-                throw new WebApplicationException("Ollama API error: " + response.getStatus(),
-                        response.getStatus());
+                if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                    final String errorBody = response.readEntity(String.class);
+                    LOG.error("Ollama API error (status {}): {}", response.getStatus(), errorBody);
+                    throw new WebApplicationException("Ollama API error: " + response.getStatus(),
+                            response.getStatus());
+                }
+
+                // Parse response
+                final var ollamaResponse = response.readEntity(OllamaResponseDto.class);
+
+                if (!ollamaResponse.isComplete()) {
+                    LOG.warn("Ollama response not complete");
+                }
+
+                final String content = ollamaResponse.getTextContent();
+                if (content == null || content.isBlank()) {
+                    LOG.warn("Ollama returned empty content");
+                    throw new IllegalStateException("Empty response from Ollama");
+                }
+
+                // Log performance metrics
+                final Double tokensPerSecond = ollamaResponse.getTokensPerSecond();
+                if (tokensPerSecond != null) {
+                    LOG.debug("Ollama generated {} tokens at {} tokens/second in {}ms",
+                            ollamaResponse.evalCount,
+                            String.format("%.2f", tokensPerSecond),
+                            duration);
+                } else {
+                    LOG.debug("Successfully generated content from Ollama in {}ms, length: {}", duration,
+                            content.length());
+                }
+
+                return content;
             }
-
-            // Parse response
-            final var ollamaResponse = response.readEntity(OllamaResponseDto.class);
-
-            if (!ollamaResponse.isComplete()) {
-                LOG.warn("Ollama response not complete");
-            }
-
-            final String content = ollamaResponse.getTextContent();
-            if (content == null || content.isBlank()) {
-                LOG.warn("Ollama returned empty content");
-                throw new IllegalStateException("Empty response from Ollama");
-            }
-
-            // Log performance metrics
-            final Double tokensPerSecond = ollamaResponse.getTokensPerSecond();
-            if (tokensPerSecond != null) {
-                LOG.debug("Ollama generated {} tokens at {} tokens/second in {}ms",
-                        ollamaResponse.evalCount,
-                        String.format("%.2f", tokensPerSecond),
-                        duration);
-            } else {
-                LOG.debug("Successfully generated content from Ollama in {}ms, length: {}", duration,
-                        content.length());
-            }
-
-            return content;
 
         } catch (final WebApplicationException e) {
             LOG.error("Error calling Ollama API", e);
@@ -162,19 +164,20 @@ public class OllamaService {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
             // Check /api/tags endpoint (lists installed models)
-            final var response = this.getClient().target(apiUrl + "/api/tags")
+            try (Response response = this.getClient().target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
-                    .get();
+                    .get()) {
 
-            final boolean available = response.getStatus() == Response.Status.OK.getStatusCode();
+                final boolean available = response.getStatus() == Response.Status.OK.getStatusCode();
 
-            if (available) {
-                LOG.debug("Ollama server is available at {}", apiUrl);
-            } else {
-                LOG.debug("Ollama server not available at {} (status: {})", apiUrl, response.getStatus());
+                if (available) {
+                    LOG.debug("Ollama server is available at {}", apiUrl);
+                } else {
+                    LOG.debug("Ollama server not available at {} (status: {})", apiUrl, response.getStatus());
+                }
+
+                return available;
             }
-
-            return available;
 
         } catch (final RuntimeException e) {
             LOG.debug("Ollama server not available at {}: {}", apiUrl, e.getMessage());
@@ -188,17 +191,18 @@ public class OllamaService {
     public boolean isModelInstalled(final String modelName) {
         final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
         try {
-            final var response = this.getClient().target(apiUrl + "/api/tags")
+            try (Response response = this.getClient().target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
-                    .get();
+                    .get()) {
 
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                return false;
+                if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                    return false;
+                }
+
+                final String body = response.readEntity(String.class);
+                // Simple check if model name appears in response
+                return body.contains(modelName);
             }
-
-            final String body = response.readEntity(String.class);
-            // Simple check if model name appears in response
-            return body.contains(modelName);
 
         } catch (final RuntimeException e) {
             LOG.debug("Error checking if model {} is installed: {}", modelName, e.getMessage());

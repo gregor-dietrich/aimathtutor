@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
+import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.ai.AiInteractionLogger;
@@ -86,11 +87,14 @@ public class AiTutorService {
      */
     AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context,
             final String userIdStr) {
+        if (event == null) {
+            throw new IllegalArgumentException("event cannot be null");
+        }
         LOG.info("Analyzing math action: eventType='{}', beforeLen={}, afterLen={}, contextActions={}",
                 event.eventType,
                 event.expressionBefore != null ? event.expressionBefore.length() : 0,
                 event.expressionAfter != null ? event.expressionAfter.length() : 0,
-                context != null && context.recentActions != null ? context.recentActions.size() : 0);
+                context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
@@ -129,7 +133,7 @@ public class AiTutorService {
         return switch (provider) {
             case "gemini" -> this.safeAnalyze(this.geminiAiProvider, event, context);
             case "openai" -> this.safeAnalyze(this.openAiProvider, event, context);
-            case "ollama" -> this.safeAnalyzeOllama(event, context);
+            case "ollama" -> this.safeAnalyze(this.ollamaAiProvider, event, context);
             default -> this.mockAiProvider.analyzeMathAction(event, context);
         };
     }
@@ -255,10 +259,13 @@ public class AiTutorService {
     ChatMessageDto answerQuestion(final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final String sessionId, final ConversationContextDto context, final String userIdStr) {
+        if (question == null) {
+            throw new IllegalArgumentException("question cannot be null");
+        }
         LOG.debug("Answering question (session: {}, questionLen: {}, contextActions: {})",
                 sessionId,
-                question != null ? question.length() : 0,
-                context != null && context.recentActions != null ? context.recentActions.size() : 0);
+                question.length(),
+                context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
@@ -286,7 +293,8 @@ public class AiTutorService {
                 this.safeAnswer(this.openAiProvider, question, currentExpression, initialExpression, targetExpression,
                         context);
             case "ollama" ->
-                this.safeAnswerOllama(question, currentExpression, initialExpression, targetExpression, context);
+                this.safeAnswer(this.ollamaAiProvider, question, currentExpression, initialExpression, targetExpression,
+                        context);
             default ->
                 this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                         context);
@@ -332,7 +340,7 @@ public class AiTutorService {
      * @param category   The problem category (type of math problem)
      * @return A new Graspable Math problem
      */
-    public GraspableProblemDto generateProblem(final de.vptr.aimathtutor.enums.DifficultyLevel difficulty,
+    public GraspableProblemDto generateProblem(final DifficultyLevel difficulty,
             final GraspableProblemDto.ProblemCategory category) {
         return this.problemGeneratorService.generateProblem(difficulty, category);
     }
@@ -372,20 +380,6 @@ public class AiTutorService {
         }
     }
 
-    private AiFeedbackDto safeAnalyzeOllama(final GraspableEventDto event, final ConversationContextDto context) {
-        if (!this.ollamaAiProvider.isAvailable()) {
-            LOG.warn("Ollama server not available, falling back to mock AI");
-            return this.mockAiProvider.analyzeMathAction(event, context);
-        }
-        try {
-            // CDI proxy applies @Retry automatically
-            return this.ollamaAiProvider.analyzeMathAction(event, context);
-        } catch (final RuntimeException e) {
-            LOG.error("Error using Ollama after retries, falling back to mock", e);
-            return this.mockAiProvider.analyzeMathAction(event, context);
-        }
-    }
-
     private String safeAnswer(final AiProvider provider, final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
@@ -398,25 +392,6 @@ public class AiTutorService {
             return provider.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
         } catch (final RuntimeException e) {
             LOG.error("Error using {}, falling back to mock", provider.getClass().getSimpleName(), e);
-            return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
-                    context);
-        }
-    }
-
-    private String safeAnswerOllama(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
-        if (!this.ollamaAiProvider.isAvailable()) {
-            LOG.warn("Ollama not available, using mock AI");
-            return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
-                    context);
-        }
-        try {
-            // CDI proxy applies @Retry automatically
-            return this.ollamaAiProvider.answerQuestion(question, currentExpression, initialExpression,
-                    targetExpression, context);
-        } catch (final RuntimeException e) {
-            LOG.error("Error using Ollama for question answering after retries, falling back to mock", e);
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                     context);
         }

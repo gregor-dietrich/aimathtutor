@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -374,25 +375,24 @@ public class AdminUserGroupsView extends AbstractAdminView {
     }
 
     private void loadAvailableUsers() {
-        try {
-            final var allUsers = this.userService.getAllUsers();
-
-            // Filter out users already in this group
-            final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
-                    .collect(Collectors.toList());
-            final var currentUserIds = currentUsers.stream()
-                    .map(user -> user.id)
-                    .collect(Collectors.toSet());
-
-            final var availableUsers = allUsers.stream()
-                    .filter(user -> !currentUserIds.contains(user.id))
-                    .collect(Collectors.toList());
-
-            this.availableUsersCombo.setItems(availableUsers);
-        } catch (final Exception e) {
-            LOG.error("Error loading available users", e);
-            NotificationUtil.showError("Error loading available users");
-        }
+        AsyncDataLoader.load(
+                () -> {
+                    final var allUsers = this.userService.getAllUsers();
+                    if (allUsers == null) {
+                        return List.<UserViewDto>of();
+                    }
+                    final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
+                            .collect(Collectors.toList());
+                    final var currentUserIds = currentUsers.stream()
+                            .map(user -> user.id)
+                            .collect(Collectors.toSet());
+                    return allUsers.stream()
+                            .filter(user -> !currentUserIds.contains(user.id))
+                            .collect(Collectors.toList());
+                },
+                this,
+                availableUsers -> this.availableUsersCombo.setItems(availableUsers),
+                "Error loading available users");
     }
 
     private void addUserToGroup() {

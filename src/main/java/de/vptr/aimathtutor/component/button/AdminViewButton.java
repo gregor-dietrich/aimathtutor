@@ -20,6 +20,7 @@ public class AdminViewButton extends Button {
         super("", viewAction);
         this.setIcon(LineAwesomeIcon.TOOLS_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
     public AdminViewButton(final ComponentEventListener<ClickEvent<Button>> viewAction) {

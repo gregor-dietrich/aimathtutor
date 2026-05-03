@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,8 @@ import jakarta.transaction.Transactional;
 public class GraspableMathService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraspableMathService.class);
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     @Inject
     UserRepository userRepository;
@@ -122,11 +125,7 @@ public class GraspableMathService {
      */
     @Transactional
     public void completeSession(final String sessionId) {
-        final var session = this.studentSessionRepository.findBySessionId(sessionId);
-        if (session != null) {
-            session.completed = true;
-            session.endTime = LocalDateTime.now();
-            this.studentSessionRepository.persist(session);
+        if (this.doCompleteSession(sessionId)) {
             LOG.info("Completed session: {}", sessionId);
         }
     }
@@ -220,7 +219,7 @@ public class GraspableMathService {
         }
 
         // Remove all whitespace
-        String normalized = expression.replaceAll("\\s+", "");
+        String normalized = WHITESPACE_PATTERN.matcher(expression).replaceAll("");
 
         // Convert to lowercase
         normalized = normalized.toLowerCase();
@@ -252,15 +251,23 @@ public class GraspableMathService {
      */
     @Transactional
     public void markSessionComplete(final String sessionId) {
-        final var session = this.studentSessionRepository.findBySessionId(sessionId);
-        if (session == null) {
-            LOG.warn("Cannot mark session complete - session not found: {}", sessionId);
-            return;
+        if (!this.doCompleteSession(sessionId)) {
+            LOG.debug("Session not marked complete (not found or already completed): {}", sessionId);
+        } else {
+            LOG.debug("Session marked complete: {}", sessionId);
         }
+    }
 
+    private boolean doCompleteSession(final String sessionId) {
+        final var session = this.studentSessionRepository.findBySessionId(sessionId);
+        if (session == null || Boolean.TRUE.equals(session.completed)) {
+            return false;
+        }
         session.completed = true;
-        session.endTime = LocalDateTime.now();
+        if (session.endTime == null) {
+            session.endTime = LocalDateTime.now();
+        }
         this.studentSessionRepository.persist(session);
-        LOG.debug("Session marked complete: {}", sessionId);
+        return true;
     }
 }

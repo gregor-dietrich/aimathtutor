@@ -41,6 +41,7 @@ import de.vptr.aimathtutor.component.layout.DateFilterLayout;
 import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.ExerciseDto;
+import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.ExerciseService;
@@ -103,11 +104,11 @@ public class AdminExercisesView extends AbstractAdminView {
         }
 
         this.buildUi();
-        this.loadLessonsAsync();
-        this.loadExercisesAsync();
+        this.loadLessons();
+        this.loadExercises();
     }
 
-    private void loadExercisesAsync() {
+    private void loadExercises() {
         LOG.info("Loading exercises");
         try {
             final var exercises = this.exerciseService.getAllExercises();
@@ -119,7 +120,7 @@ public class AdminExercisesView extends AbstractAdminView {
         }
     }
 
-    private void loadPublishedExercisesAsync() {
+    private void loadPublishedExercises() {
         LOG.info("Loading published exercises");
         try {
             final var exercises = this.exerciseService.findPublishedExercises();
@@ -131,7 +132,7 @@ public class AdminExercisesView extends AbstractAdminView {
         }
     }
 
-    private void loadLessonsAsync() {
+    private void loadLessons() {
         LOG.info("Loading lessons");
         try {
             this.availableLessons = this.lessonService.getAllLessons();
@@ -166,7 +167,7 @@ public class AdminExercisesView extends AbstractAdminView {
         final var searchLayout = new SearchLayout(
                 e -> {
                     if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadExercisesAsync();
+                        this.loadExercises();
                     }
                 },
                 ignored -> this.searchExercise(),
@@ -176,7 +177,7 @@ public class AdminExercisesView extends AbstractAdminView {
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
 
-        this.showPublishedButton = new Button("Show Published Only", ignored -> this.loadPublishedExercisesAsync());
+        this.showPublishedButton = new Button("Show Published Only", ignored -> this.loadPublishedExercises());
         this.showPublishedButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         // Date range filter
@@ -205,7 +206,7 @@ public class AdminExercisesView extends AbstractAdminView {
         layout.setSpacing(true);
 
         final var createButton = new CreateButton(ignored -> this.openExerciseDialog(null));
-        final var refreshButton = new RefreshButton(ignored -> this.loadExercisesAsync());
+        final var refreshButton = new RefreshButton(ignored -> this.loadExercises());
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -303,6 +304,10 @@ public class AdminExercisesView extends AbstractAdminView {
         if (exercise == null) {
             try {
                 final var currentUser = this.userService.getCurrentUser();
+                if (currentUser == null || currentUser.id == null) {
+                    NotificationUtil.showError("Error retrieving user information. Please try again.");
+                    return;
+                }
                 this.currentExercise.userId = currentUser.id;
                 this.currentExercise.user = new ExerciseDto.UserField();
                 this.currentExercise.user.setId(currentUser.id);
@@ -396,8 +401,8 @@ public class AdminExercisesView extends AbstractAdminView {
         graspableTargetExpressionField.setHeight("80px");
         graspableTargetExpressionField.setTooltipText("Expected solution to validate against");
 
-        final var graspableDifficultyField = new ComboBox<de.vptr.aimathtutor.enums.DifficultyLevel>("Difficulty");
-        graspableDifficultyField.setItems(de.vptr.aimathtutor.enums.DifficultyLevel.values());
+        final var graspableDifficultyField = new ComboBox<DifficultyLevel>("Difficulty");
+        graspableDifficultyField.setItems(DifficultyLevel.values());
         graspableDifficultyField.setPlaceholder("Select difficulty");
         graspableDifficultyField.setClearButtonVisible(true);
         graspableDifficultyField.setTooltipText("Problem difficulty level for AI adaptation");
@@ -521,8 +526,8 @@ public class AdminExercisesView extends AbstractAdminView {
 
             this.exerciseDialog.close();
             // Refresh exercises and lessons so computed columns (exercise counts) update
-            this.loadExercisesAsync();
-            this.loadLessonsAsync();
+            this.loadExercises();
+            this.loadLessons();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
@@ -541,8 +546,8 @@ public class AdminExercisesView extends AbstractAdminView {
         try {
             if (this.exerciseService.deleteExercise(exercise.id)) {
                 NotificationUtil.showSuccess("Exercise deleted successfully");
-                this.loadExercisesAsync();
-                this.loadLessonsAsync();
+                this.loadExercises();
+                this.loadLessons();
             } else {
                 NotificationUtil.showError("Failed to delete exercise");
             }

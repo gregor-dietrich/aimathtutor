@@ -1,20 +1,23 @@
 package de.vptr.aimathtutor.service;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
-import de.vptr.aimathtutor.enums.DifficultyLevel;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Service for generating random math problems for the Graspable Math workspace.
  *
- * <p>Extracted from {@link AiTutorService} to separate problem generation from
- * AI tutoring orchestration.</p>
+ * <p>
+ * Extracted from {@link AiTutorService} to separate problem generation from
+ * AI tutoring orchestration.
+ * </p>
  */
 @ApplicationScoped
 public class ProblemGeneratorService {
@@ -196,8 +199,8 @@ public class ProblemGeneratorService {
                         cIneq);
                 final int numerator = cIneq - bIneq;
                 final int denominator = aIneq;
-                final int gcd = java.math.BigInteger.valueOf(numerator)
-                        .gcd(java.math.BigInteger.valueOf(denominator)).intValueExact();
+                final int gcd = BigInteger.valueOf(numerator)
+                        .gcd(BigInteger.valueOf(denominator)).intValueExact();
                 final int reducedNum = numerator / gcd;
                 final int reducedDen = denominator / gcd;
                 final String targetValue;

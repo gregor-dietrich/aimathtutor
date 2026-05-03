@@ -2,8 +2,8 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
+import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.enums.DifficultyLevel;
 
 /**
  * View DTO representing an exercise with denormalized user and lesson fields

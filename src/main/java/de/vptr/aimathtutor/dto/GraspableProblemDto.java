@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.vptr.aimathtutor.enums.DifficultyLevel;
+import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.NotNull;
 

@@ -2,7 +2,9 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,8 +17,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -68,8 +70,11 @@ public class StudentSessionEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @NotBlank
-    @Column(name = "session_id", unique = true)
+    @Column(name = "session_id", unique = true, nullable = false)
     public String sessionId;
 
     @NotNull
@@ -83,35 +88,31 @@ public class StudentSessionEntity extends PanacheEntityBase {
     public ExerciseEntity exercise;
 
     @Column(name = "start_time")
-    @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity fields are public by design for ORM mapping")
     public LocalDateTime startTime;
 
     @Column(name = "end_time")
     public LocalDateTime endTime;
 
-    @Column(name = "completed")
+    @Column(name = "completed", nullable = false)
     public Boolean completed = false;
 
-    @Column(name = "actions_count")
+    @Column(name = "actions_count", nullable = false)
     public Integer actionsCount = 0;
 
-    @Column(name = "correct_actions")
+    @Column(name = "correct_actions", nullable = false)
     public Integer correctActions = 0;
 
-    @Column(name = "hints_used")
+    @Column(name = "hints_used", nullable = false)
     public Integer hintsUsed = 0;
 
     @Column(name = "final_expression", columnDefinition = "TEXT")
     public String finalExpression;
 
-    /**
-     * JPA lifecycle callback method invoked before persisting the entity.
-     * Sets the start time to the current date and time if not already set.
-     */
-    @PrePersist
-    public void prePersist() {
-        if (this.startTime == null) {
-            this.startTime = LocalDateTime.now();
-        }
-    }
+    @Generated(event = EventType.INSERT)
+    public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
+
 }

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentRepository;
@@ -73,7 +74,7 @@ public class CommentModerationService {
 
         switch (action.toUpperCase()) {
             case "HIDE":
-                comment.status = "HIDDEN";
+                comment.status = CommentStatus.HIDDEN;
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
                 comment.moderationAction = action.toUpperCase();
@@ -81,7 +82,7 @@ public class CommentModerationService {
                 LOG.info("Comment hidden by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
             case "SHOW":
-                comment.status = "VISIBLE";
+                comment.status = CommentStatus.VISIBLE;
                 comment.flagsCount = 0;
                 comment.deletedBy = null;
                 comment.deletedAt = null;
@@ -93,7 +94,7 @@ public class CommentModerationService {
                 break;
             case "RESTORE":
                 // Restore a deleted comment (same as SHOW) and clear flags
-                comment.status = "VISIBLE";
+                comment.status = CommentStatus.VISIBLE;
                 comment.flagsCount = 0;
                 comment.deletedBy = null;
                 comment.deletedAt = null;
@@ -104,7 +105,7 @@ public class CommentModerationService {
                 LOG.info("Comment restored by moderator: commentId={}, moderatorId={}", commentId, moderatorId);
                 break;
             case "DELETE":
-                comment.status = "DELETED";
+                comment.status = CommentStatus.DELETED;
                 comment.deletedBy = moderator;
                 comment.deletedAt = LocalDateTime.now();
                 comment.moderationReason = reason;

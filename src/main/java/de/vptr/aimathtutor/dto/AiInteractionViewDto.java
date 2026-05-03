@@ -24,7 +24,7 @@ public class AiInteractionViewDto {
     public String feedbackMessage;
     public Double confidenceScore;
     public Boolean actionCorrect;
-    public LocalDateTime timestamp;
+    public LocalDateTime created;
 
     public AiInteractionViewDto() {
     }
@@ -44,7 +44,7 @@ public class AiInteractionViewDto {
             this.feedbackMessage = entity.feedbackMessage;
             this.confidenceScore = entity.confidenceScore;
             this.actionCorrect = entity.actionCorrect;
-            this.timestamp = entity.timestamp;
+            this.created = entity.created;
 
             // Handle user information safely
             if (entity.user != null) {

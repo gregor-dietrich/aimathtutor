@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
@@ -45,7 +47,7 @@ class AiConfigServiceIntegrationTest {
     @BeforeEach
     @Transactional
     void setUp() {
-        // Ensure admin user exists (seeded in import.sql)
+        // Ensure admin user exists (seeded in init.sql)
         final UserEntity admin = this.userRepository.findById(ADMIN_USER_ID);
         assertNotNull(admin, "Admin user should exist in test database");
 
@@ -107,7 +109,7 @@ class AiConfigServiceIntegrationTest {
     @Transactional
     void testUpdateConfigAndReadBack() {
         // Create a test config
-        final var entity = new AiConfigEntity(TEST_KEY, "initial", "STRING", "TEST");
+        final var entity = new AiConfigEntity(TEST_KEY, "initial", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.userRepository.findById(ADMIN_USER_ID);
         this.aiConfigRepository.persist(entity);
 
@@ -123,7 +125,7 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Get all configs by category using seeded data")
     @Transactional
     void testGetAllConfigsByCategory() {
-        final Map<String, String> geminiConfigs = this.aiConfigService.getAllConfigsByCategory("GEMINI");
+        final Map<String, String> geminiConfigs = this.aiConfigService.getAllConfigsByCategory(ConfigCategory.GEMINI);
         assertFalse(geminiConfigs.isEmpty());
         assertTrue(geminiConfigs.containsKey("gemini.model"));
         assertEquals("gemma-3-27b-it", geminiConfigs.get("gemini.model"));
@@ -150,7 +152,7 @@ class AiConfigServiceIntegrationTest {
     @Transactional
     void testCacheInvalidation() {
         // Create test config
-        final var entity = new AiConfigEntity(TEST_KEY, "v1", "STRING", "TEST");
+        final var entity = new AiConfigEntity(TEST_KEY, "v1", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.userRepository.findById(ADMIN_USER_ID);
         this.aiConfigRepository.persist(entity);
 

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.security.PasswordHashingService;
 
 /**
- * Small CLI utility to generate a salt and hash for a password using the
+ * Small CLI utility to generate a bcrypt hash for a password using the
  * project's PasswordHashingService. Intended for local/dev use to create
  * seeded passwords for `init.sql`.
  */
@@ -20,7 +20,7 @@ public final class PasswordUtility {
 
     /**
      * Entry point for the password hashing utility CLI.
-     * Accepts command-line arguments to generate password hashes and salts.
+     * Accepts command-line arguments to generate password hashes.
      * Supports "generate" command with password as argument.
      *
      * @param args command-line arguments (command name and parameters)
@@ -45,15 +45,13 @@ public final class PasswordUtility {
     private static void handleGenerate(final String[] args) {
         final var password = args[1];
         try {
-            final var salt = hashingService.generateSalt();
-            final var hash = hashingService.hashPassword(password, salt);
+            final var hash = hashingService.hashPassword(password);
 
-            System.out.println("salt=" + salt);
             System.out.println("hash=" + hash);
             System.out.println();
             System.out.println("SQL snippet (example):");
-            System.out.println("INSERT INTO users (username, password, salt, rank_id, activated) VALUES ('newuser', '"
-                    + hash + "', '" + salt + "', 3, TRUE);");
+            System.out.println("INSERT INTO users (username, password, rank_id, activated) VALUES ('newuser', '"
+                    + hash + "', 3, TRUE);");
         } catch (final Exception e) {
             LOG.error("Failed to generate hash", e);
             System.exit(3);
@@ -61,11 +59,11 @@ public final class PasswordUtility {
     }
 
     private static void printUsage() {
-        System.out.println("PasswordUtility - small helper to generate salt+hash for local dev");
+        final String className = PasswordUtility.class.getName();
+        System.out.println(className + " - small helper to generate bcrypt hash for local dev");
         System.out.println("Usage:");
-        System.out.println("  java -cp target/classes de.vptr.aimathtutor.util.PasswordUtility generate <password>");
+        System.out.println("  java -cp target/classes " + className + " generate <password>");
         System.out.println("Example:");
-        System.out.println(
-                "  mvn -q -Dexec.mainClass=\"de.vptr.aimathtutor.util.PasswordUtility\" -Dexec.args=\"generate admin\" exec:java");
+        System.out.println("  mvn -q -Dexec.mainClass=\"" + className + "\" -Dexec.args=\"generate admin\" exec:java");
     }
 }

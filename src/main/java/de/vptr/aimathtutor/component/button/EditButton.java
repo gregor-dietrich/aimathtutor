@@ -21,7 +21,9 @@ public class EditButton extends Button {
         super("", editAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
         this.setIcon(LineAwesomeIcon.EDIT_SOLID.create());
-        this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        final String resolvedTooltip = tooltipText != null && !tooltipText.isBlank() ? tooltipText : DEFAULT_TOOLTIP;
+        this.setTooltipText(resolvedTooltip);
+        this.getElement().setAttribute("aria-label", resolvedTooltip);
     }
 
     public EditButton(final ComponentEventListener<ClickEvent<Button>> editAction) {

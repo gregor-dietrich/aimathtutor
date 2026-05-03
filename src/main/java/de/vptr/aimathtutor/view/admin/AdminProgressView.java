@@ -1,7 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -23,7 +23,6 @@ import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
-import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
@@ -35,7 +34,6 @@ import jakarta.inject.Inject;
 @PageTitle("Student Progress - AI Math Tutor")
 public class AdminProgressView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminProgressView.class);
     @Inject
     private transient AnalyticsService analyticsService;
 
@@ -191,13 +189,11 @@ public class AdminProgressView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var progress = this.analyticsService.getUsersProgressSummaryByUsernameSearch(searchTerm);
-            this.grid.setItems(progress);
-        } catch (final Exception e) {
-            LOG.error("Error searching students", e);
-            NotificationUtil.showError("An error occurred while searching students. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getUsersProgressSummaryByUsernameSearch(searchTerm),
+                this,
+                progress -> this.grid.setItems(progress),
+                "An error occurred while searching students. Please try again.");
     }
 
     /**
@@ -218,26 +214,24 @@ public class AdminProgressView extends AbstractAdminView {
      * Pushes date range filtering to the database.
      */
     private void filterByDateRange() {
-        try {
-            final var startDate = this.startDatePicker.getValue();
-            final var endDate = this.endDatePicker.getValue();
+        final var startDate = this.startDatePicker.getValue();
+        final var endDate = this.endDatePicker.getValue();
 
-            if (startDate == null && endDate == null) {
-                this.loadProgressData();
-                return;
-            }
-
-            final var startDateTime = startDate != null ? startDate.atStartOfDay()
-                    : java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
-            final var endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX)
-                    : java.time.LocalDateTime.of(2099, 12, 31, 23, 59, 59);
-
-            final var progress = this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime);
-            this.grid.setItems(progress);
-        } catch (final Exception e) {
-            LOG.error("Error filtering by date range", e);
-            NotificationUtil.showError("An error occurred while filtering by date range. Please try again.");
+        if (startDate == null && endDate == null) {
+            this.loadProgressData();
+            return;
         }
+
+        final var startDateTime = startDate != null ? startDate.atStartOfDay()
+                : LocalDateTime.of(1970, 1, 1, 0, 0);
+        final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX)
+                : LocalDateTime.of(2099, 12, 31, 23, 59, 59);
+
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime),
+                this,
+                progress -> this.grid.setItems(progress),
+                "An error occurred while filtering by date range. Please try again.");
     }
 
     private void resetFilters() {

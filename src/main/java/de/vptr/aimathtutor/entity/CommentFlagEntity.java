@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,6 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.UniqueConstraint;
 
 /**
@@ -34,6 +38,9 @@ public class CommentFlagEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
     public CommentEntity comment;
@@ -42,8 +49,13 @@ public class CommentFlagEntity extends PanacheEntityBase {
     @JoinColumn(name = "flagger_id", nullable = false)
     public UserEntity flagger;
 
+    @Generated(event = EventType.INSERT)
     @Column(name = "created")
     public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     /**
      * Check if a user has already flagged a specific comment

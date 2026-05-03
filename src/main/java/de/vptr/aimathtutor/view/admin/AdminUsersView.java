@@ -20,6 +20,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
@@ -195,9 +196,6 @@ public class AdminUsersView extends AbstractAdminView {
         this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.created)).setHeader("Created")
                 .setWidth("180px").setFlexGrow(0);
 
-        this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.lastLogin)).setHeader("Last Login")
-                .setWidth("180px").setFlexGrow(0);
-
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);
     }
@@ -240,7 +238,7 @@ public class AdminUsersView extends AbstractAdminView {
         form.add(usernameField, emailField);
 
         if (user == null) {
-            final var passwordField = new TextField("Password");
+            final var passwordField = new PasswordField("Password");
             passwordField.setRequired(true);
             passwordField.setInvalid(false);
             form.add(passwordField);
@@ -347,11 +345,11 @@ public class AdminUsersView extends AbstractAdminView {
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        final var newPasswordField = new TextField("New Password");
+        final var newPasswordField = new PasswordField("New Password");
         newPasswordField.setRequired(true);
         newPasswordField.setInvalid(false);
 
-        final var confirmPasswordField = new TextField("Confirm Password");
+        final var confirmPasswordField = new PasswordField("Confirm Password");
         confirmPasswordField.setRequired(true);
         confirmPasswordField.setInvalid(false);
 

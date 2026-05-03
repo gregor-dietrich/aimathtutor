@@ -40,6 +40,14 @@
 
     <module name="TreeWalker">
         <module name="OuterTypeFilename" />
+        <!-- Ban fully-qualified class names in source (use imports instead) -->
+        <module name="RegexpSinglelineJava">
+            <property name="format"
+                value="^(?!\s*(import|package)).*\b(java|javax|jakarta|org|de|com|net|io|edu)\.[a-zA-Z]" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="Use imports instead of Fully Qualified Class Names (FQCN)." />
+        </module>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL" />
             <property name="format"

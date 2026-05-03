@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.repository.CommentFlagRepository;
@@ -71,7 +72,7 @@ public class CommentFlaggingService {
 
         // If flagged enough times, auto-hide
         if (comment.flagsCount >= AppConstants.COMMENT_AUTO_HIDE_THRESHOLD) {
-            comment.status = "HIDDEN";
+            comment.status = CommentStatus.HIDDEN;
             LOG.warn("Comment auto-hidden due to flags: commentId={}, flagCount={}", commentId, comment.flagsCount);
         }
 

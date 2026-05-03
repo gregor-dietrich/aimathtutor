@@ -12,7 +12,7 @@ public class UserViewDto {
 
     public Long id;
     public String username;
-    // Note: password and salt are never exposed in responses for security
+    // Note: password is never exposed in responses for security
     public String email;
     public Long rankId;
     public String rankName;
@@ -20,7 +20,6 @@ public class UserViewDto {
     public Boolean activated;
     // activationKey is sensitive and not exposed in normal responses
     public LocalDateTime created;
-    public LocalDateTime lastLogin;
     public Long exercisesCount;
     public Long commentsCount;
     public String userAvatarEmoji;
@@ -36,7 +35,7 @@ public class UserViewDto {
         if (entity != null) {
             this.id = entity.id;
             this.username = entity.username;
-            // password and salt are NEVER exposed
+            // password is NEVER exposed
             this.email = entity.email;
             this.rankId = entity.rank != null ? entity.rank.id : null;
             this.rankName = entity.rank != null ? entity.rank.name : null;
@@ -44,7 +43,6 @@ public class UserViewDto {
             this.activated = entity.activated;
             // activationKey is not exposed for security
             this.created = entity.created;
-            this.lastLogin = entity.lastLogin;
             this.exercisesCount = entity.exercises != null ? (long) entity.exercises.size() : 0L;
             this.commentsCount = entity.comments != null ? (long) entity.comments.size() : 0L;
             this.userAvatarEmoji = entity.userAvatarEmoji;

@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
@@ -232,6 +233,10 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         startButton.addClickListener(ignored -> {
             // Navigate to ExerciseWorkspaceView for Graspable exercises
             // or to a generic ExerciseView for non-Graspable exercises
+            if (exercise.id == null) {
+                NotificationUtil.showError("Exercise ID is missing");
+                return;
+            }
             UI.getCurrent().navigate(ExerciseWorkspaceView.class,
                     new RouteParameters("exerciseId", exercise.id.toString()));
         });

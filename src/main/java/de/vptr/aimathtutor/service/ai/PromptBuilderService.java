@@ -85,6 +85,9 @@ public class PromptBuilderService {
      * @return the constructed prompt string
      */
     public String buildMathTutoringPrompt(final GraspableEventDto event, final ConversationContextDto context) {
+        if (event == null) {
+            throw new IllegalArgumentException("event cannot be null");
+        }
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
@@ -162,10 +165,11 @@ public class PromptBuilderService {
         if (context == null) {
             return;
         }
-        if (context.recentActions != null && !context.recentActions.isEmpty()) {
+        final var recentActions = context.getRecentActions();
+        if (!recentActions.isEmpty()) {
             prompt.append("<conversation_context>\nRecent student actions:\n");
-            for (int i = 0; i < context.recentActions.size(); ++i) {
-                final var action = context.recentActions.get(i);
+            for (int i = 0; i < recentActions.size(); ++i) {
+                final var action = recentActions.get(i);
                 prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                         i + 1,
                         this.sanitizePromptInput(action.eventType),
@@ -175,19 +179,21 @@ public class PromptBuilderService {
             prompt.append("</conversation_context>\n\n");
         }
 
-        if (context.recentQuestions != null && !context.recentQuestions.isEmpty()) {
+        final var recentQuestions = context.getRecentQuestions();
+        if (!recentQuestions.isEmpty()) {
             prompt.append("<recent_questions>\n");
-            for (int i = 0; i < context.recentQuestions.size(); ++i) {
-                final var q = context.recentQuestions.get(i);
+            for (int i = 0; i < recentQuestions.size(); ++i) {
+                final var q = recentQuestions.get(i);
                 prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(q.message)));
             }
             prompt.append("</recent_questions>\n\n");
         }
 
-        if (context.recentAiMessages != null && !context.recentAiMessages.isEmpty()) {
+        final var recentAiMessages = context.getRecentAiMessages();
+        if (!recentAiMessages.isEmpty()) {
             prompt.append("<recent_responses>\n");
-            for (int i = 0; i < context.recentAiMessages.size(); ++i) {
-                final var msg = context.recentAiMessages.get(i);
+            for (int i = 0; i < recentAiMessages.size(); ++i) {
+                final var msg = recentAiMessages.get(i);
                 prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(msg.message)));
             }
             prompt.append("</recent_responses>\n\n");
@@ -198,10 +204,11 @@ public class PromptBuilderService {
         if (context == null) {
             return;
         }
-        if (context.recentActions != null && !context.recentActions.isEmpty()) {
+        final var recentActionsTutoring = context.getRecentActions();
+        if (!recentActionsTutoring.isEmpty()) {
             prompt.append("\n<recent_actions>\n");
-            for (int i = 0; i < context.recentActions.size(); ++i) {
-                final var action = context.recentActions.get(i);
+            for (int i = 0; i < recentActionsTutoring.size(); ++i) {
+                final var action = recentActionsTutoring.get(i);
                 prompt.append(String.format("%d. %s: '%s' → '%s'%n",
                         i + 1,
                         this.sanitizePromptInput(action.eventType),
@@ -211,19 +218,21 @@ public class PromptBuilderService {
             prompt.append("</recent_actions>\n");
         }
 
-        if (context.recentQuestions != null && !context.recentQuestions.isEmpty()) {
+        final var recentQuestionsTutoring = context.getRecentQuestions();
+        if (!recentQuestionsTutoring.isEmpty()) {
             prompt.append("\n<recent_questions>\n");
-            for (int i = 0; i < context.recentQuestions.size(); ++i) {
-                final var q = context.recentQuestions.get(i);
+            for (int i = 0; i < recentQuestionsTutoring.size(); ++i) {
+                final var q = recentQuestionsTutoring.get(i);
                 prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(q.message)));
             }
             prompt.append("</recent_questions>\n");
         }
 
-        if (context.recentAiMessages != null && !context.recentAiMessages.isEmpty()) {
+        final var recentAiMessagesTutoring = context.getRecentAiMessages();
+        if (!recentAiMessagesTutoring.isEmpty()) {
             prompt.append("\n<recent_feedback>\n");
-            for (int i = 0; i < context.recentAiMessages.size(); ++i) {
-                final var msg = context.recentAiMessages.get(i);
+            for (int i = 0; i < recentAiMessagesTutoring.size(); ++i) {
+                final var msg = recentAiMessagesTutoring.get(i);
                 prompt.append(String.format("%d. \"%s\"%n", i + 1, this.sanitizePromptInput(msg.message)));
             }
             prompt.append("</recent_feedback>\n");

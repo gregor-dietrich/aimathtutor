@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -188,8 +187,6 @@ public class ExerciseService {
         exercise.content = exerciseDto.content;
         exercise.published = exerciseDto.published != null ? exerciseDto.published : false;
         exercise.commentable = exerciseDto.commentable != null ? exerciseDto.commentable : false;
-        exercise.created = LocalDateTime.now();
-        exercise.lastEdit = exercise.created;
 
         // Set Graspable Math fields
         exercise.graspableEnabled = exerciseDto.graspableEnabled != null ? exerciseDto.graspableEnabled : false;
@@ -260,7 +257,6 @@ public class ExerciseService {
         existingExercise.content = exerciseDto.content;
         existingExercise.published = exerciseDto.published != null ? exerciseDto.published : false;
         existingExercise.commentable = exerciseDto.commentable != null ? exerciseDto.commentable : false;
-        existingExercise.lastEdit = LocalDateTime.now();
 
         // Update Graspable Math fields
         existingExercise.graspableEnabled = exerciseDto.graspableEnabled != null ? exerciseDto.graspableEnabled : false;
@@ -363,7 +359,6 @@ public class ExerciseService {
             existingExercise.lesson = lesson;
         }
 
-        existingExercise.lastEdit = LocalDateTime.now();
         this.exerciseRepository.persist(existingExercise);
         return new ExerciseViewDto(existingExercise);
     }
@@ -399,7 +394,7 @@ public class ExerciseService {
 
     /**
      * Finds exercises created within a date range (inclusive).
-     * Date strings are parsed as ISO-8601 dates. Returns all exercises if parsing
+     * Date strings are parsed as ISO-8601 dates. Returns an empty list if parsing
      * fails or dates are null.
      *
      * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
@@ -408,7 +403,7 @@ public class ExerciseService {
      */
     public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
-            return this.getAllExercises();
+            return List.of();
         }
 
         try {
@@ -423,8 +418,7 @@ public class ExerciseService {
                     .map(ExerciseViewDto::new)
                     .toList();
         } catch (final DateTimeParseException e) {
-            // If date parsing fails, return all exercises
-            return this.getAllExercises();
+            return List.of();
         }
     }
 }

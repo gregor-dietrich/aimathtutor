@@ -1,15 +1,28 @@
 -- PostgreSQL initialization script
 
-BEGIN;
+SET timezone = 'UTC';
+
+DROP TABLE IF EXISTS ai_config CASCADE;
+DROP TABLE IF EXISTS ai_interactions CASCADE;
+DROP TABLE IF EXISTS student_sessions CASCADE;
+DROP TABLE IF EXISTS user_groups_meta CASCADE;
+DROP TABLE IF EXISTS comment_flags CASCADE;
+DROP TABLE IF EXISTS comments CASCADE;
+DROP TABLE IF EXISTS exercises CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS lessons CASCADE;
+DROP TABLE IF EXISTS user_groups CASCADE;
+DROP TABLE IF EXISTS user_ranks CASCADE;
 
 -- --------------------------------------------------------
 
 --
--- Structure for table `user_ranks` (must be first - no dependencies)
+-- Structure for table `user_ranks`
 --
 
 CREATE TABLE user_ranks (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   name VARCHAR(255) NOT NULL UNIQUE,
   admin_view BOOLEAN NOT NULL DEFAULT FALSE,
   exercise_add BOOLEAN NOT NULL DEFAULT FALSE,
@@ -29,7 +42,9 @@ CREATE TABLE user_ranks (
   user_group_edit BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_add BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_delete BOOLEAN NOT NULL DEFAULT FALSE,
-  user_rank_edit BOOLEAN NOT NULL DEFAULT FALSE
+  user_rank_edit BOOLEAN NOT NULL DEFAULT FALSE,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 --
@@ -52,29 +67,29 @@ SELECT setval('user_ranks_id_seq', 3, true);
 
 CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  salt VARCHAR(255) NOT NULL,
   rank_id BIGINT NOT NULL,
   email VARCHAR(255) DEFAULT NULL UNIQUE,
   banned BOOLEAN NOT NULL DEFAULT FALSE,
   activated BOOLEAN NOT NULL DEFAULT FALSE,
   activation_key VARCHAR(255) DEFAULT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  user_avatar_emoji VARCHAR(10) NOT NULL DEFAULT '🧒',
-  tutor_avatar_emoji VARCHAR(10) NOT NULL DEFAULT '🤖'
+  last_edit TIMESTAMP,
+  user_avatar_emoji VARCHAR(10) DEFAULT '🧒',
+  tutor_avatar_emoji VARCHAR(10) DEFAULT '🤖'
 );
 
 --
 -- Inserts for table `users`
 --
 
-INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
-(1, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, TRUE),
-(2, 'teacher', 'gqjX9Myv2T0+cSsc7Mk5uP00vWN74acNaV8aVJvvK8Q=', 'Oz3c7v4qJJqqbPHlTzAhilp4O7o+DdW4iBYQMJRABQo=', 2, TRUE),
-(3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, TRUE),
-(4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE);
+INSERT INTO users (id, username, password, rank_id, activated) VALUES
+(1, 'admin', '$2a$10$oPZWHADXmDcVvg1sf5AZq.UyaigCbI3IcB0TvUDnudPMLhRIOz6yq', 1, TRUE),
+(2, 'teacher', '$2a$10$yvvtRbAoD6FH3wcXZw9QSuc8YSV1CbM/PJMY2lSTrJO2BzbXLC6ly', 2, TRUE),
+(3, 'student1', '$2a$10$oa6TbPoMnJlG/O5kDo.pVerJCfkA1.G0YN/gv2lLAwVQrrBTRK8MC', 3, TRUE),
+(4, 'student2', '$2a$10$i8vt4KcKh/ajw5xGHldP8.lrXX0rrG94S0cJ/XUg.svAajTcZvkeC', 3, TRUE);
 
 -- Set sequence to 4 so next value is 5
 SELECT setval('users_id_seq', 4, true);
@@ -87,8 +102,11 @@ SELECT setval('users_id_seq', 4, true);
 
 CREATE TABLE lessons (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   name VARCHAR(255) NOT NULL,
-  parent_id BIGINT DEFAULT NULL
+  parent_id BIGINT DEFAULT NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 -- --------------------------------------------------------
@@ -114,6 +132,7 @@ SELECT setval('lessons_id_seq', 4, true);
 
 CREATE TABLE exercises (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   user_id BIGINT DEFAULT NULL,
@@ -134,7 +153,7 @@ CREATE INDEX exercises_content_fts ON exercises USING gin(to_tsvector('english',
 
 -- --------------------------------------------------------
 
--- Seed exercises for lessons (graspable-enabled where appropriate)
+-- Seed exercises for lessons
 
 INSERT INTO exercises (id, title, content, user_id, lesson_id, published, commentable, graspable_enabled, graspable_initial_expression, graspable_target_expression, graspable_difficulty, graspable_hints)
 VALUES
@@ -155,7 +174,7 @@ SELECT setval('exercises_id_seq', 8, true);
 
 
 --
--- Structure for table `comments` (can now reference users and exercises)
+-- Structure for table `comments`
 --
 
 CREATE TABLE comments (
@@ -169,7 +188,7 @@ CREATE TABLE comments (
   status VARCHAR(20) NOT NULL DEFAULT 'VISIBLE',
   flags_count INT NOT NULL DEFAULT 0,
   session_id VARCHAR(255),
-  edited_at TIMESTAMP,
+  last_edit TIMESTAMP,
   deleted_by BIGINT,
   deleted_at TIMESTAMP,
   moderation_reason VARCHAR(500),
@@ -187,16 +206,19 @@ CREATE INDEX idx_comments_moderator_id ON comments(moderator_id);
 CREATE INDEX idx_comments_session_id ON comments(session_id);
 CREATE INDEX idx_comments_created ON comments(created);
 CREATE INDEX idx_comments_status ON comments(status);
+CREATE INDEX idx_comments_user_created ON comments(user_id, created);
 
 -- Full-text search index for content
 CREATE INDEX comments_content_fts ON comments USING gin(to_tsvector('english', content));
 
--- Table to track which users have flagged which comments (prevents duplicate flags)
+-- Table to track which users have flagged which comments
 CREATE TABLE comment_flags (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   comment_id BIGINT NOT NULL,
   flagger_id BIGINT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP,
   UNIQUE(comment_id, flagger_id),
   FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
   FOREIGN KEY (flagger_id) REFERENCES users(id) ON DELETE CASCADE
@@ -213,7 +235,10 @@ CREATE INDEX idx_comment_flags_flagger_id ON comment_flags(flagger_id);
 
 CREATE TABLE user_groups (
   id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL
+  version BIGINT NOT NULL DEFAULT 0,
+  name VARCHAR(255) NOT NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 --
@@ -238,9 +263,11 @@ SELECT setval('user_groups_id_seq', 5, true);
 
 CREATE TABLE user_groups_meta (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   user_id BIGINT NOT NULL,
   group_id BIGINT NOT NULL,
-  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP,
   UNIQUE (user_id, group_id)
 );
 
@@ -268,16 +295,19 @@ SELECT setval('user_groups_meta_id_seq', 3, true);
 
 CREATE TABLE student_sessions (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   session_id VARCHAR(255) NOT NULL UNIQUE,
   user_id BIGINT NOT NULL,
   exercise_id BIGINT NOT NULL,
-  start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  end_time TIMESTAMP DEFAULT NULL,
+  start_time TIMESTAMP,
+  end_time TIMESTAMP,
   completed BOOLEAN NOT NULL DEFAULT FALSE,
   actions_count INTEGER NOT NULL DEFAULT 0,
   correct_actions INTEGER NOT NULL DEFAULT 0,
   hints_used INTEGER NOT NULL DEFAULT 0,
-  final_expression TEXT
+  final_expression TEXT,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 -- Performance indexes
@@ -292,6 +322,7 @@ CREATE INDEX student_sessions_exercise_id_idx ON student_sessions (exercise_id);
 
 CREATE TABLE ai_interactions (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   session_id VARCHAR(255) DEFAULT NULL,
   user_id BIGINT DEFAULT NULL,
   exercise_id BIGINT DEFAULT NULL,
@@ -304,7 +335,8 @@ CREATE TABLE ai_interactions (
   confidence_score DOUBLE PRECISION DEFAULT NULL,
   action_correct BOOLEAN DEFAULT NULL,
   conversation_context TEXT,
-  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 -- Performance indexes
@@ -320,13 +352,15 @@ CREATE INDEX ai_interactions_exercise_id_idx ON ai_interactions (exercise_id);
 
 CREATE TABLE ai_config (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   config_key VARCHAR(255) NOT NULL UNIQUE,
   config_value TEXT,
   config_type VARCHAR(50),
   is_optional BOOLEAN NOT NULL DEFAULT false,
-  category VARCHAR(50),
+  category VARCHAR(50) NOT NULL,
   description TEXT,
-  last_updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP,
   last_updated_by BIGINT DEFAULT NULL,
   CONSTRAINT fk_ai_config_user FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -436,15 +470,69 @@ ALTER TABLE ai_interactions
 -- --------------------------------------------------------
 
 --
--- Additional indexes for foreign keys (PostgreSQL doesn't auto-index FK columns)
+-- Additional indexes for foreign keys
 --
 
 CREATE INDEX exercises_user_id_idx ON exercises (user_id);
 CREATE INDEX exercises_lesson_id_idx ON exercises (lesson_id);
 CREATE INDEX lessons_parent_id_idx ON lessons (parent_id);
-CREATE INDEX comments_user_id_idx ON comments (user_id);
-CREATE INDEX comments_exercise_id_idx ON comments (exercise_id);
 CREATE INDEX users_rank_id_idx ON users (rank_id);
 CREATE INDEX ai_config_user_id_idx ON ai_config (last_updated_by);
 
-COMMIT;
+-- Trigger function for automatic last_edit management
+CREATE OR REPLACE FUNCTION update_last_edit() RETURNS TRIGGER LANGUAGE plpgsql AS 'BEGIN NEW.last_edit = clock_timestamp(); RETURN NEW; END';
+
+CREATE OR REPLACE TRIGGER user_ranks_set_last_edit
+    BEFORE UPDATE ON user_ranks
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER users_set_last_edit
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER lessons_set_last_edit
+    BEFORE UPDATE ON lessons
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER exercises_set_last_edit
+    BEFORE UPDATE ON exercises
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER comments_set_last_edit
+    BEFORE UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER comment_flags_set_last_edit
+    BEFORE UPDATE ON comment_flags
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER user_groups_set_last_edit
+    BEFORE UPDATE ON user_groups
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER user_groups_meta_set_last_edit
+    BEFORE UPDATE ON user_groups_meta
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER student_sessions_set_last_edit
+    BEFORE UPDATE ON student_sessions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER ai_interactions_set_last_edit
+    BEFORE UPDATE ON ai_interactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER ai_config_set_last_edit
+    BEFORE UPDATE ON ai_config
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();

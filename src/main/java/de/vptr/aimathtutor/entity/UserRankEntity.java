@@ -1,6 +1,10 @@
 package de.vptr.aimathtutor.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -14,6 +18,7 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -32,7 +37,11 @@ public class UserRankEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @Version
+    public Long version;
+
     @NotBlank
+    @Column(nullable = false)
     public String name;
 
     // View permissions
@@ -102,4 +111,11 @@ public class UserRankEntity extends PanacheEntityBase {
     @OneToMany(mappedBy = "rank")
     @JsonIgnore
     public List<UserEntity> users;
+
+    @Generated(event = EventType.INSERT)
+    public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 }
