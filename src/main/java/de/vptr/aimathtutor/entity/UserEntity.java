@@ -57,11 +57,6 @@ public class UserEntity extends PanacheEntityBase {
     @JsonIgnore
     public String password;
 
-    @NotBlank
-    @Column(nullable = false)
-    @JsonIgnore
-    public String salt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rank_id", nullable = false)
     @JsonIgnoreProperties({ "users" })

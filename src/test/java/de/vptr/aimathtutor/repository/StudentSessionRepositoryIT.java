@@ -29,7 +29,6 @@ public class StudentSessionRepositoryIT {
         UserEntity user = new UserEntity();
         user.username = "sessionuser";
         user.password = "pw";
-        user.salt = "salt";
         user.email = "session@example.com";
         user.activated = true;
         userRepository.persist(user);

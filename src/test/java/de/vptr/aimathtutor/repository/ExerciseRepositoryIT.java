@@ -25,7 +25,6 @@ public class ExerciseRepositoryIT {
         UserEntity user = new UserEntity();
         user.username = "searchuser";
         user.password = "pw";
-        user.salt = "salt";
         user.email = "search@example.com";
         user.activated = true;
         userRepository.persist(user);

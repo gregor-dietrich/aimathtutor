@@ -123,7 +123,7 @@ public class UserService {
      * Creates a new user account with provided information.
      * Validates required fields (username, password), checks for duplicate
      * username/email,
-     * hashes password with PBKDF2 salt, and assigns default rank if not specified.
+     * hashes password with bcrypt, and assigns default rank if not specified.
      *
      * @param userDto the user data transfer object with creation details
      * @return the created {@link UserViewDto}

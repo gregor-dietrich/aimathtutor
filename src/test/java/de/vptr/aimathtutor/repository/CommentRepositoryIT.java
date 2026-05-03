@@ -29,7 +29,6 @@ public class CommentRepositoryIT {
         UserEntity user = new UserEntity();
         user.username = "testuser";
         user.password = "pw";
-        user.salt = "salt";
         user.email = "test@example.com";
         user.activated = true;
         userRepository.persist(user);

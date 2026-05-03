@@ -54,7 +54,6 @@ CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  salt VARCHAR(255) NOT NULL,
   rank_id BIGINT NOT NULL,
   email VARCHAR(255) DEFAULT NULL UNIQUE,
   banned BOOLEAN NOT NULL DEFAULT FALSE,
@@ -70,11 +69,11 @@ CREATE TABLE users (
 -- Inserts for table `users`
 --
 
-INSERT INTO users (id, username, password, salt, rank_id, activated) VALUES
-(1, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, TRUE),
-(2, 'teacher', 'gqjX9Myv2T0+cSsc7Mk5uP00vWN74acNaV8aVJvvK8Q=', 'Oz3c7v4qJJqqbPHlTzAhilp4O7o+DdW4iBYQMJRABQo=', 2, TRUE),
-(3, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, TRUE),
-(4, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE);
+INSERT INTO users (id, username, password, rank_id, activated) VALUES
+(1, 'admin', '$2b$12$w8ewBFQZep0CEQDxh4p.9Oaor5uen7aCzkKdSQfKbrk4o9RPFk./O', 1, TRUE),
+(2, 'teacher', '$2b$12$E68NPoLky4lHFGj0OxdYje.QAZkBeUBwhpBukumxE48Gbp1rMmxoK', 2, TRUE),
+(3, 'student1', '$2b$12$QwEJzk2meYHQHbVAFgMOVeEO0PH5pcf98J/waFLClvhiM7kglefZK', 3, TRUE),
+(4, 'student2', '$2b$12$Xu5uhklcRKHKY0DNrEuWBOP/9aJX.gZdJaJ3KR2.YonJgogb3zTlu', 3, TRUE);
 
 -- Set sequence to 4 so next value is 5
 SELECT setval('users_id_seq', 4, true);

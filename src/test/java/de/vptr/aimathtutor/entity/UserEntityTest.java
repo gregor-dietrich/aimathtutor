@@ -37,7 +37,6 @@ class UserEntityTest {
         this.userEntity.id = 1L;
         this.userEntity.username = "testuser";
         this.userEntity.password = "hashedpassword";
-        this.userEntity.salt = "randomsalt";
         this.userEntity.rank = this.userRank;
         this.userEntity.email = "test@example.com";
         this.userEntity.banned = false;
@@ -50,7 +49,6 @@ class UserEntityTest {
         assertEquals(1L, this.userEntity.id);
         assertEquals("testuser", this.userEntity.username);
         assertEquals("hashedpassword", this.userEntity.password);
-        assertEquals("randomsalt", this.userEntity.salt);
         assertEquals(this.userRank, this.userEntity.rank);
         assertEquals("test@example.com", this.userEntity.email);
         assertFalse(this.userEntity.banned);
@@ -67,7 +65,6 @@ class UserEntityTest {
         this.userEntity.id = 1L;
         this.userEntity.username = "testuser";
         this.userEntity.password = "password";
-        this.userEntity.salt = "salt";
         this.userEntity.rank = this.userRank;
         this.userEntity.email = null;
         this.userEntity.banned = null;

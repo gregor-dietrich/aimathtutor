@@ -20,11 +20,11 @@ SELECT setval('user_ranks_id_seq', 3, true);
 -- Inserts for table `users`
 --
 
-INSERT INTO users (id, version, username, password, salt, rank_id, activated, banned) VALUES
-(1, 0, 'admin', '3HWqMv8tiSEbBcsUfxqBx7kY4vw+cSvG7OQXp9uzM0w=', '0l/SGC6gqKwYWjw7sm2IrwzIcAjq/QkO9xXcG/LC56c=', 1, TRUE, FALSE),
-(2, 0, 'teacher', 'gqjX9Myv2T0+cSsc7Mk5uP00vWN74acNaV8aVJvvK8Q=', 'Oz3c7v4qJJqqbPHlTzAhilp4O7o+DdW4iBYQMJRABQo=', 2, TRUE, FALSE),
-(3, 0, 'student1', 't/NeeExH/6i3y2DBq77LXyOkGvnk6TCaE1p/lLObE98=', 'tpINgKObPWkbOrylflSrEECZi5ZHvhv2Wjkzlr9HW3E=', 3, TRUE, FALSE),
-(4, 0, 'student2', '0hCDh1yJvbG4VDOqtZWF3qgL3YPUYneknACoEQ6G8Kc=', '4G1YeLz6tsTH98j9zOoEcxvSK0uZnM51uLhF6O6H7pM=', 3, TRUE, FALSE);
+INSERT INTO users (id, version, username, password, rank_id, activated, banned) VALUES
+(1, 0, 'admin', '$2b$12$w8ewBFQZep0CEQDxh4p.9Oaor5uen7aCzkKdSQfKbrk4o9RPFk./O', 1, TRUE, FALSE),
+(2, 0, 'teacher', '$2b$12$E68NPoLky4lHFGj0OxdYje.QAZkBeUBwhpBukumxE48Gbp1rMmxoK', 2, TRUE, FALSE),
+(3, 0, 'student1', '$2b$12$QwEJzk2meYHQHbVAFgMOVeEO0PH5pcf98J/waFLClvhiM7kglefZK', 3, TRUE, FALSE),
+(4, 0, 'student2', '$2b$12$Xu5uhklcRKHKY0DNrEuWBOP/9aJX.gZdJaJ3KR2.YonJgogb3zTlu', 3, TRUE, FALSE);
 
 -- Set sequence to 4 so next value is 5
 SELECT setval('users_id_seq', 4, true);

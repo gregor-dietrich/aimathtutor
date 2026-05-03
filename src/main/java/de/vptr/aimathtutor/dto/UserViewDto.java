@@ -12,7 +12,7 @@ public class UserViewDto {
 
     public Long id;
     public String username;
-    // Note: password and salt are never exposed in responses for security
+    // Note: password is never exposed in responses for security
     public String email;
     public Long rankId;
     public String rankName;
@@ -36,7 +36,7 @@ public class UserViewDto {
         if (entity != null) {
             this.id = entity.id;
             this.username = entity.username;
-            // password and salt are NEVER exposed
+            // password is NEVER exposed
             this.email = entity.email;
             this.rankId = entity.rank != null ? entity.rank.id : null;
             this.rankName = entity.rank != null ? entity.rank.name : null;
