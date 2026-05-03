@@ -246,7 +246,7 @@ CREATE TABLE user_groups_meta (
   version BIGINT NOT NULL DEFAULT 0,
   user_id BIGINT NOT NULL,
   group_id BIGINT NOT NULL,
-  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (user_id, group_id)
 );
 
@@ -312,7 +312,7 @@ CREATE TABLE ai_interactions (
   confidence_score DOUBLE PRECISION DEFAULT NULL,
   action_correct BOOLEAN DEFAULT NULL,
   conversation_context TEXT,
-  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Performance indexes
