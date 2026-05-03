@@ -550,29 +550,29 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 ### Phase 5: Vaadin UI Threading & Lifecycle (High / Medium)
 
-#### 5.1 Fix LoginView synchronous auth on UI thread
+#### ~~5.1 Fix LoginView synchronous auth on UI thread~~ ✅
 - **Problem:** `authService.authenticate()` is called directly inside the button click listener, blocking the UI thread.
 - **Where:** `src/main/java/de/vptr/aimathtutor/view/LoginView.java:67`
-- **Fix:** Offload to `CompletableFuture.supplyAsync(() -> this.authService.authenticate(username, password))`, then update UI inside `ui.access()`. Follow the exact project pattern: capture `ui = getUI().orElse(null)`, null-check, use `supplyAsync`, `thenAccept`, and `.exceptionally()`.
+- **Fix:** Offloaded to `CompletableFuture.supplyAsync(() -> this.authService.authenticate(username, password), this.managedExecutor)`, updating UI inside `ui.access()`. Button state is restored on both success and failure paths.
 
-#### 5.2 Fix MathWorkspaceView synchronous generateProblem
+#### ~~5.2 Fix MathWorkspaceView synchronous generateProblem~~ ✅
 - **Problem:** `aiTutorService.generateProblem()` is called synchronously during `buildUi()` and button clicks, blocking the UI while waiting for an external AI API.
 - **Where:** `src/main/java/de/vptr/aimathtutor/view/MathWorkspaceView.java:204,489`
-- **Fix:** Offload to async using the same `CompletableFuture` + `ui.access()` pattern. Show a loading indicator while waiting.
+- **Fix:** Offloaded to async using `CompletableFuture.supplyAsync()` + `ui.access()` pattern with `ManagedExecutor`. A loading message is shown in the chat panel while waiting.
 
-#### 5.3 Add onDetach cleanup to workspace views
+#### ~~5.3 Add onDetach cleanup to workspace views~~ ✅
 - **Problem:** `ExerciseWorkspaceView` and `MathWorkspaceView` register JavaScript polling timers and `window.graspableViewConnector` but never clean them up on navigation. Async `CompletableFuture` chains are not cancelled.
 - **Where:**
   - `src/main/java/de/vptr/aimathtutor/view/ExerciseWorkspaceView.java:356-411`
   - `src/main/java/de/vptr/aimathtutor/view/MathWorkspaceView.java:177-196`
-- **Fix:** Override `onDetach()` in both views. Cancel any pending `CompletableFuture` instances, nullify `window.graspableViewConnector` via `executeJs`, and clear any pending JS timers.
+- **Fix:** Overrode `onDetach()` in both views. Pending `CompletableFuture` instances are cancelled, and `window.graspableViewConnector` is nullified via `executeJs` to prevent stale callbacks.
 
-#### 5.4 Fix UI.getCurrent() without null checks in async callbacks
+#### ~~5.4 Fix UI.getCurrent() without null checks in async callbacks~~ ✅
 - **Problem:** Async callbacks in `ExerciseWorkspaceView` and `MathWorkspaceView` capture `UI.getCurrent()` without checking for null. If called from a background thread where the UI is not set, this causes NPE.
 - **Where:**
   - `src/main/java/de/vptr/aimathtutor/view/ExerciseWorkspaceView.java:479,541`
   - `src/main/java/de/vptr/aimathtutor/view/MathWorkspaceView.java:298,343`
-- **Fix:** Use `getUI().orElse(null)` pattern with an explicit null check before calling `ui.access()`.
+- **Fix:** Replaced all `UI.getCurrent()` calls in async contexts with `this.getUI().orElse(null)` pattern and explicit null checks before calling `ui.access()`. Also fixed direct `UI.getCurrent()` calls in `initializeGraspableMath`, `registerServerConnector`, `resetCanvas`, and `loadCustomProblem`.
 
 ---
 

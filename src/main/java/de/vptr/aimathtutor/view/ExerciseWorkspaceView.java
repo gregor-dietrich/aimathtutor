@@ -2,12 +2,14 @@ package de.vptr.aimathtutor.view;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -75,6 +77,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient Button requestHintButton;
     private transient Button backButton;
     private transient String currentExpression;
+    private transient CompletableFuture<?> pendingAsyncFuture;
 
     /**
      * Called before navigation occurs. Extracts exercise ID from route, loads
@@ -198,7 +201,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         this.backButton = new Button("← Back to Exercises", ignored -> {
-            UI.getCurrent().navigate(LessonsView.class);
+            final var ui = this.getUI().orElse(null);
+            if (ui != null) {
+                ui.navigate(LessonsView.class);
+            }
         });
         this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
@@ -349,6 +355,20 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
     }
 
+    @Override
+    protected void onDetach(final DetachEvent detachEvent) {
+        // Cancel any pending async operations
+        if (this.pendingAsyncFuture != null && !this.pendingAsyncFuture.isDone()) {
+            this.pendingAsyncFuture.cancel(true);
+        }
+        // Nullify the JS connector to prevent stale callbacks
+        final var ui = this.getUI().orElse(null);
+        if (ui != null) {
+            ui.getPage().executeJs("if (window.graspableViewConnector) { window.graspableViewConnector = null; }");
+        }
+        super.onDetach(detachEvent);
+    }
+
     /**
      * Initializes the Graspable Math JavaScript widget using the external file.
      * This loads the problem from the exercise configuration.
@@ -360,11 +380,16 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
+
         // Load the external JavaScript file
-        UI.getCurrent().getPage().addJavaScript("/js/graspable-math-init.js");
+        ui.getPage().addJavaScript("/js/graspable-math-init.js");
 
         // Initialize canvas and load problem once ready
-        UI.getCurrent().getPage().executeJs(
+        ui.getPage().executeJs(
                 """
                         var initAttempts = 0;
                         var maxInitAttempts = 50;
@@ -403,7 +428,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      * Registers a server-side connector that JavaScript can call.
      */
     private void registerServerConnector() {
-        UI.getCurrent().getPage().executeJs(
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
+        ui.getPage().executeJs(
                 "window.graspableViewConnector = { onMathAction: function(type, before, after) { "
                         + "   $0.$server.onMathAction(type, before, after); "
                         + "}}",
@@ -459,9 +488,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 this.graspableMathService.markSessionComplete(this.currentSessionId);
 
                 // Show success notification
-                UI.getCurrent().access(() -> {
-                    NotificationUtil.showSuccess("🎉 Congratulations! You've solved the problem correctly!");
-                });
+                final var notifyUi = this.getUI().orElse(null);
+                if (notifyUi != null) {
+                    notifyUi.access(() -> {
+                        NotificationUtil.showSuccess("🎉 Congratulations! You've solved the problem correctly!");
+                    });
+                }
             }
         }
 
@@ -476,10 +508,13 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Get AI feedback asynchronously (may return null if action is insignificant)
         // Don't show typing indicator for math actions - only show it when we get
         // actual feedback
-        final var ui = UI.getCurrent();
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
+        this.pendingAsyncFuture = this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
                 .thenAccept(feedback -> {
                     ui.access(() -> {
                         // Only log and display if we got feedback
@@ -538,8 +573,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final var sessionId = this.currentSessionId;
 
         // Get AI answer asynchronously
-        final var ui = UI.getCurrent();
-        this.aiTutorService
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            this.chatPanel.hideTypingIndicator();
+            return;
+        }
+        this.pendingAsyncFuture = this.aiTutorService
                 .answerQuestionAsync(question, this.currentExpression,
                         this.exercise != null ? this.exercise.graspableInitialExpression : null,
                         this.exercise != null ? this.exercise.graspableTargetExpression : null,

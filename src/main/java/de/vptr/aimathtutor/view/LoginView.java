@@ -14,6 +14,10 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import java.util.concurrent.CompletableFuture;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
+
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -31,6 +35,9 @@ public class LoginView extends VerticalLayout {
 
     @Inject
     private transient AuthService authService;
+
+    @Inject
+    private ManagedExecutor managedExecutor;
 
     /**
      * Construct the login view with username/password fields and a login
@@ -58,53 +65,67 @@ public class LoginView extends VerticalLayout {
             final var username = usernameField.getValue();
             final var password = passwordField.getValue();
 
-            try {
-                // Disable button during authentication
-                loginButton.setEnabled(false);
-                loginButton.setText("Authenticating...");
+            // Disable button during authentication
+            loginButton.setEnabled(false);
+            loginButton.setText("Authenticating...");
 
-                // Perform authentication
-                final var result = this.authService.authenticate(username, password);
-
-                LOG.trace("Authentication result - Status: {}, Message: {}", result.getStatus(), result.getMessage());
-
-                switch (result.getStatus()) {
-                    case SUCCESS:
-                        LOG.trace("Authentication successful, navigating to main view");
-                        this.getUI().ifPresent(ui -> ui.navigate(""));
-                        break;
-
-                    case INVALID_CREDENTIALS:
-                        LOG.trace("Invalid credentials, showing error message");
-                        NotificationUtil.showError(result.getMessage());
-                        passwordField.clear();
-                        passwordField.focus();
-                        break;
-
-                    case BACKEND_UNAVAILABLE:
-                        LOG.error("Backend unavailable during login, redirecting to error page");
-                        this.getUI().ifPresent(ui -> ui.navigate("backend-error"));
-                        break;
-
-                    case INVALID_INPUT:
-                        LOG.trace("Invalid input, showing warning");
-                        NotificationUtil.showWarning(result.getMessage());
-                        break;
-
-                    default:
-                        LOG.error("Unknown authentication result status: {}", result.getStatus());
-                        NotificationUtil.showError("Unknown error occurred");
-                        break;
-                }
-
-            } catch (final Exception ex) {
-                LOG.error("Exception during authentication", ex);
-                NotificationUtil.showError("An unexpected error occurred. Please try again.");
-            } finally {
-                // Re-enable button
+            final var ui = this.getUI().orElse(null);
+            if (ui == null) {
                 loginButton.setEnabled(true);
                 loginButton.setText("Login");
+                return;
             }
+
+            CompletableFuture.supplyAsync(() -> this.authService.authenticate(username, password), this.managedExecutor)
+                    .thenAccept(result -> {
+                        ui.access(() -> {
+                            LOG.trace("Authentication result - Status: {}, Message: {}", result.getStatus(), result.getMessage());
+
+                            switch (result.getStatus()) {
+                                case SUCCESS:
+                                    LOG.trace("Authentication successful, navigating to main view");
+                                    ui.navigate("");
+                                    break;
+
+                                case INVALID_CREDENTIALS:
+                                    LOG.trace("Invalid credentials, showing error message");
+                                    NotificationUtil.showError(result.getMessage());
+                                    passwordField.clear();
+                                    passwordField.focus();
+                                    loginButton.setEnabled(true);
+                                    loginButton.setText("Login");
+                                    break;
+
+                                case BACKEND_UNAVAILABLE:
+                                    LOG.error("Backend unavailable during login, redirecting to error page");
+                                    ui.navigate("backend-error");
+                                    break;
+
+                                case INVALID_INPUT:
+                                    LOG.trace("Invalid input, showing warning");
+                                    NotificationUtil.showWarning(result.getMessage());
+                                    loginButton.setEnabled(true);
+                                    loginButton.setText("Login");
+                                    break;
+
+                                default:
+                                    LOG.error("Unknown authentication result status: {}", result.getStatus());
+                                    NotificationUtil.showError("Unknown error occurred");
+                                    loginButton.setEnabled(true);
+                                    loginButton.setText("Login");
+                                    break;
+                            }
+                        });
+                    })
+                    .exceptionally(ex -> {
+                        ui.access(() -> {
+                            LOG.error("Exception during authentication", ex);
+                            NotificationUtil.showError("An unexpected error occurred. Please try again.");
+                            loginButton.setEnabled(true);
+                            loginButton.setText("Login");
+                        });
+                        return null;
+                    });
         });
 
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
