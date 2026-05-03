@@ -53,7 +53,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **Use `QuarkusSecurityIdentity.builder(identity)` when augmenting** — it preserves credentials, attributes, and permission checkers. Using `builder()` loses original roles. EXCEPTION: When roles need normalization (e.g. `UserRankIdentityAugmentor`), use `builder()` and manually copy credentials/attributes, since `builder(identity)` copies original roles un-normalized.
 - **CommentsPanel must NOT have `@Observes` methods.** It is instantiated with `new`, not CDI. Real-time refresh uses `CommentCreatedEventBridge` with programmatic listeners.
 - **ConversationContextDto fields must stay `private final` with unmodifiable getters.** Do not revert to public fields.
-- **`VaadinSession.getCurrent()` can be null.** Always null-check before use. Applied to `AuthService.getUsername()`, `logout()`, `isAuthenticated()`.
+- **`VaadinSession.getCurrent()` can be null.** Always null-check before use. This applies to `AuthService.getUsername()`, `logout()`, `isAuthenticated()`.
 - **MathWorkspaceView request ID staleness checks must stay.** The `problemRequestId` counter, `pendingProblemFuture.cancel()` calls, and JS-side `window.currentProblemRequestId` check prevent race conditions on rapid problem generation.
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin serializes views for UI state.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.** The latter may return empty during detach.

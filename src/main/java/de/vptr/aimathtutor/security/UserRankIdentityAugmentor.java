@@ -76,7 +76,8 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
         // copy credentials and attributes manually.
         final var builder = QuarkusSecurityIdentity.builder()
                 .setPrincipal(identity.getPrincipal())
-                .addRoles(normalizedRoles);
+                .addRoles(normalizedRoles)
+                .addPermissionChecker(identity::checkPermission);
         for (final var credential : identity.getCredentials()) {
             builder.addCredential(credential);
         }
