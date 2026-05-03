@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -60,7 +61,7 @@ public class OpenAiService {
     /**
      * Clean up JAX-RS client resources when the bean is destroyed.
      */
-    @jakarta.annotation.PreDestroy
+    @PreDestroy
     void cleanup() {
         final Client localClient = this.client;
         if (localClient != null) {

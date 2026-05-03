@@ -10,6 +10,7 @@ BEGIN;
 
 CREATE TABLE user_ranks (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   name VARCHAR(255) NOT NULL UNIQUE,
   admin_view BOOLEAN NOT NULL DEFAULT FALSE,
   exercise_add BOOLEAN NOT NULL DEFAULT FALSE,
@@ -52,6 +53,7 @@ SELECT setval('user_ranks_id_seq', 3, true);
 
 CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   rank_id BIGINT NOT NULL,
@@ -86,6 +88,7 @@ SELECT setval('users_id_seq', 4, true);
 
 CREATE TABLE lessons (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   name VARCHAR(255) NOT NULL,
   parent_id BIGINT DEFAULT NULL
 );
@@ -113,6 +116,7 @@ SELECT setval('lessons_id_seq', 4, true);
 
 CREATE TABLE exercises (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   user_id BIGINT DEFAULT NULL,
@@ -193,6 +197,7 @@ CREATE INDEX comments_content_fts ON comments USING gin(to_tsvector('english', c
 -- Table to track which users have flagged which comments (prevents duplicate flags)
 CREATE TABLE comment_flags (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   comment_id BIGINT NOT NULL,
   flagger_id BIGINT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -212,6 +217,7 @@ CREATE INDEX idx_comment_flags_flagger_id ON comment_flags(flagger_id);
 
 CREATE TABLE user_groups (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   name VARCHAR(255) NOT NULL
 );
 
@@ -237,6 +243,7 @@ SELECT setval('user_groups_id_seq', 5, true);
 
 CREATE TABLE user_groups_meta (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   user_id BIGINT NOT NULL,
   group_id BIGINT NOT NULL,
   timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -267,6 +274,7 @@ SELECT setval('user_groups_meta_id_seq', 3, true);
 
 CREATE TABLE student_sessions (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   session_id VARCHAR(255) NOT NULL UNIQUE,
   user_id BIGINT NOT NULL,
   exercise_id BIGINT NOT NULL,
@@ -291,6 +299,7 @@ CREATE INDEX student_sessions_exercise_id_idx ON student_sessions (exercise_id);
 
 CREATE TABLE ai_interactions (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   session_id VARCHAR(255) DEFAULT NULL,
   user_id BIGINT DEFAULT NULL,
   exercise_id BIGINT DEFAULT NULL,
@@ -319,6 +328,7 @@ CREATE INDEX ai_interactions_exercise_id_idx ON ai_interactions (exercise_id);
 
 CREATE TABLE ai_config (
   id BIGSERIAL PRIMARY KEY,
+  version BIGINT NOT NULL DEFAULT 0,
   config_key VARCHAR(255) NOT NULL UNIQUE,
   config_value TEXT,
   config_type VARCHAR(50),

@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.UniqueConstraint;
 
 /**
@@ -34,7 +35,7 @@ public class CommentFlagEntity extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @jakarta.persistence.Version
+    @Version
     public Long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
