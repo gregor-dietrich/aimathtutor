@@ -11,7 +11,6 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -514,7 +513,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.pendingAsyncFuture = this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
+        this.pendingAsyncFuture = this.aiTutorService
+                .analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
                 .thenAccept(feedback -> {
                     ui.access(() -> {
                         // Only log and display if we got feedback

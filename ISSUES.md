@@ -344,6 +344,12 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - If utility classes required, add `@StyleSheet(Lumo.UTILITY_STYLESHEET)` in `src/main/java/de/vptr/aimathtutor/gui/AppConfig.java`.
 - Fix component-style loading warning (`vaadin-text-field.css`) by enabling `themeComponentStyles` or moving styles to supported setup.
 
+```log
+[WARNING] Theme 'starter-theme' contains component styles, but the 'themeComponentStyles' feature flag is not set, so component styles will not be applied for
+vaadin-text-field.css
+[WARNING] The 'lumoImports' property detected in theme(s) '[starter-theme]' is no longer supported in Vaadin 25. All modules except 'utility' are now loaded automatically when extending Lumo theme. To load utility classes, add '@StyleSheet(Lumo.UTILITY_STYLESHEET)' annotation to 'AppShellConfigurator' implementor.
+```
+
 ---
 
 ## 5. Remediation Plan — Code Review Findings (3.0.0)

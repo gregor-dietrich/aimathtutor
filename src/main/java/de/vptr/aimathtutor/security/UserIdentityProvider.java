@@ -92,6 +92,10 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
             throw new AuthenticationFailedException("Invalid credentials");
         }
 
+        if (user == null) {
+            throw new AuthenticationFailedException("User is null");
+        }
+
         if (Boolean.TRUE.equals(user.banned)) {
             throw new AuthenticationFailedException("User is banned");
         }

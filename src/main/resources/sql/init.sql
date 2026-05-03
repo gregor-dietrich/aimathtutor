@@ -325,7 +325,7 @@ CREATE TABLE ai_config (
   is_optional BOOLEAN NOT NULL DEFAULT false,
   category VARCHAR(50),
   description TEXT,
-  last_updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_updated_by BIGINT DEFAULT NULL,
   CONSTRAINT fk_ai_config_user FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE SET NULL
 );

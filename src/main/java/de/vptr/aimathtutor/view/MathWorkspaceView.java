@@ -10,7 +10,6 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -124,7 +123,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.graspableCanvas.setId("graspable-canvas");
         this.graspableCanvas.getStyle()
                 .set("width", "100%")
-                    .set("height", AppConstants.CANVAS_HEIGHT_MATH)
+                .set("height", AppConstants.CANVAS_HEIGHT_MATH)
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("background-color", "var(--lumo-base-color)")
@@ -234,26 +233,26 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
 
         this.pendingProblemFuture = CompletableFuture.supplyAsync(
-                        () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
-                        this.managedExecutor)
+                () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
+                this.managedExecutor)
                 .thenAccept(problem -> {
                     ui.access(() -> {
                         // Wait for canvas to be ready, then load the problem
                         ui.getPage().executeJs(
                                 """
-                                setTimeout(function() {
-                                  var loadProblemWhenReady = function() {
-                                    if (window.graspableCanvas && window.graspableMathUtils) {
-                                      console.log('[GM] Canvas ready, loading initial problem');
-                                      window.graspableMathUtils.loadProblem($0, 100, 50);
-                                    } else {
-                                      console.log('[GM] Waiting for canvas...');
-                                      setTimeout(loadProblemWhenReady, 200);
-                                    }
-                                  };
-                                  loadProblemWhenReady();
-                                }, 500);
-                                """,
+                                        setTimeout(function() {
+                                          var loadProblemWhenReady = function() {
+                                            if (window.graspableCanvas && window.graspableMathUtils) {
+                                              console.log('[GM] Canvas ready, loading initial problem');
+                                              window.graspableMathUtils.loadProblem($0, 100, 50);
+                                            } else {
+                                              console.log('[GM] Waiting for canvas...');
+                                              setTimeout(loadProblemWhenReady, 200);
+                                            }
+                                          };
+                                          loadProblemWhenReady();
+                                        }, 500);
+                                        """,
                                 problem.initialExpression);
 
                         // Store initial expression and target for completion checking
@@ -269,7 +268,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 .exceptionally(ex -> {
                     ui.access(() -> {
                         LOG.error("Error generating initial problem", ex);
-                        this.chatPanel.addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
+                        this.chatPanel
+                                .addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
                     });
                     return null;
                 });
@@ -352,30 +352,31 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         }
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit).thenAccept(feedback -> {
-            ui.access(() -> {
-                // Only log and display if we got feedback
-                if (feedback != null) {
-                    // Log interaction (optional - for analytics)
-                    this.aiTutorService.logInteraction(event, feedback);
+        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
+                .thenAccept(feedback -> {
+                    ui.access(() -> {
+                        // Only log and display if we got feedback
+                        if (feedback != null) {
+                            // Log interaction (optional - for analytics)
+                            this.aiTutorService.logInteraction(event, feedback);
 
-                    // Display feedback to user
-                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
-                    feedbackMessage.sessionId = this.sessionId;
+                            // Display feedback to user
+                            final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
+                            feedbackMessage.sessionId = this.sessionId;
 
-                    // Add AI message to context
-                    this.conversationContext.addAiMessage(feedbackMessage);
+                            // Add AI message to context
+                            this.conversationContext.addAiMessage(feedbackMessage);
 
-                    // Display in chat
-                    this.chatPanel.addMessage(feedbackMessage);
-                }
-            });
-        }).exceptionally(ex -> {
-            ui.access(() -> {
-                LOG.error("Error getting AI feedback", ex);
-            });
-            return null;
-        });
+                            // Display in chat
+                            this.chatPanel.addMessage(feedbackMessage);
+                        }
+                    });
+                }).exceptionally(ex -> {
+                    ui.access(() -> {
+                        LOG.error("Error getting AI feedback", ex);
+                    });
+                    return null;
+                });
     }
 
     /**
@@ -402,7 +403,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final var userId = this.authService.getUserId();
         final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.initialExpression, this.targetExpression, this.sessionId, this.conversationContext, userIdStr)
+                .answerQuestionAsync(question, this.currentExpression, this.initialExpression, this.targetExpression,
+                        this.sessionId, this.conversationContext, userIdStr)
                 .thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator
@@ -532,11 +534,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         }
         ui.getPage().executeJs(
                 """
-                if (window.graspableMathUtils) {
-                  window.graspableMathUtils.clearCanvas();
-                  window.graspableMathUtils.loadProblem($0, 100, 50);
-                }
-                """,
+                        if (window.graspableMathUtils) {
+                          window.graspableMathUtils.clearCanvas();
+                          window.graspableMathUtils.loadProblem($0, 100, 50);
+                        }
+                        """,
                 expression);
 
         // Store expression
@@ -557,18 +559,18 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
 
         this.pendingProblemFuture = CompletableFuture.supplyAsync(
-                        () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
-                        this.managedExecutor)
+                () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
+                this.managedExecutor)
                 .thenAccept(problem -> {
                     ui.access(() -> {
                         // Load problem into Graspable Math using the utility function
                         ui.getPage().executeJs(
                                 """
-                                if (window.graspableMathUtils) {
-                                  window.graspableMathUtils.clearCanvas();
-                                  window.graspableMathUtils.loadProblem($0, 100, 50);
-                                }
-                                """,
+                                        if (window.graspableMathUtils) {
+                                          window.graspableMathUtils.clearCanvas();
+                                          window.graspableMathUtils.loadProblem($0, 100, 50);
+                                        }
+                                        """,
                                 problem.initialExpression);
 
                         // Store initial expression and target
@@ -583,7 +585,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 .exceptionally(ex -> {
                     ui.access(() -> {
                         LOG.error("Error generating new problem", ex);
-                        this.chatPanel.addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
+                        this.chatPanel
+                                .addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
                     });
                     return null;
                 });

@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -104,6 +103,5 @@ public class StudentSessionEntity extends PanacheEntityBase {
 
     @Column(name = "final_expression", columnDefinition = "TEXT")
     public String finalExpression;
-
 
 }
