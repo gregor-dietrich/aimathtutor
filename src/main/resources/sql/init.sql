@@ -70,10 +70,10 @@ CREATE TABLE users (
 --
 
 INSERT INTO users (id, username, password, rank_id, activated) VALUES
-(1, 'admin', '$2b$12$w8ewBFQZep0CEQDxh4p.9Oaor5uen7aCzkKdSQfKbrk4o9RPFk./O', 1, TRUE),
-(2, 'teacher', '$2b$12$E68NPoLky4lHFGj0OxdYje.QAZkBeUBwhpBukumxE48Gbp1rMmxoK', 2, TRUE),
-(3, 'student1', '$2b$12$QwEJzk2meYHQHbVAFgMOVeEO0PH5pcf98J/waFLClvhiM7kglefZK', 3, TRUE),
-(4, 'student2', '$2b$12$Xu5uhklcRKHKY0DNrEuWBOP/9aJX.gZdJaJ3KR2.YonJgogb3zTlu', 3, TRUE);
+(1, 'admin', '$2a$10$oPZWHADXmDcVvg1sf5AZq.UyaigCbI3IcB0TvUDnudPMLhRIOz6yq', 1, TRUE),
+(2, 'teacher', '$2a$10$yvvtRbAoD6FH3wcXZw9QSuc8YSV1CbM/PJMY2lSTrJO2BzbXLC6ly', 2, TRUE),
+(3, 'student1', '$2a$10$oa6TbPoMnJlG/O5kDo.pVerJCfkA1.G0YN/gv2lLAwVQrrBTRK8MC', 3, TRUE),
+(4, 'student2', '$2a$10$i8vt4KcKh/ajw5xGHldP8.lrXX0rrG94S0cJ/XUg.svAajTcZvkeC', 3, TRUE);
 
 -- Set sequence to 4 so next value is 5
 SELECT setval('users_id_seq', 4, true);

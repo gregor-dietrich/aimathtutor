@@ -9,7 +9,7 @@ import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
+import io.quarkus.test.TestTransaction;
 
 @QuarkusTest
 public class ExerciseRepositoryIT {
@@ -20,7 +20,7 @@ public class ExerciseRepositoryIT {
     UserRepository userRepository;
 
     @Test
-    @Transactional
+    @TestTransaction
     public void testFindPublishedAndSearch() {
         UserEntity user = new UserEntity();
         user.username = "searchuser";

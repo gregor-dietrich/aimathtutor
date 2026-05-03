@@ -107,8 +107,11 @@ public class AuthService {
 
             try {
                 this.loginAttemptService.recordSuccessfulLogin(usernameKey);
-                VaadinSession.getCurrent().setAttribute(USERNAME_KEY, user.username);
-                VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, true);
+                final var session = VaadinSession.getCurrent();
+                if (session != null) {
+                    session.setAttribute(USERNAME_KEY, user.username);
+                    session.setAttribute(AUTHENTICATED_KEY, true);
+                }
             } catch (final RuntimeException e) {
                 LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
                 return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
