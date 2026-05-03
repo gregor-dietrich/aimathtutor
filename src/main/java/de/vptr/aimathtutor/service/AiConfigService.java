@@ -189,6 +189,32 @@ public class AiConfigService {
     }
 
     /**
+     * Retrieves a temperature configuration value clamped to the valid range
+     * [0.0, 2.0].
+     *
+     * @param key          the configuration key
+     * @param defaultValue the default value if not found or parsing fails
+     * @return the clamped temperature value
+     */
+    public double getClampedTemperature(final String key, final double defaultValue) {
+        final Double value = this.getConfigValueAsDouble(key, defaultValue);
+        return (value != null) ? Math.max(0.0, Math.min(2.0, value)) : defaultValue;
+    }
+
+    /**
+     * Retrieves a max-tokens configuration value clamped to the valid range
+     * [1, 8192].
+     *
+     * @param key          the configuration key
+     * @param defaultValue the default value if not found or parsing fails
+     * @return the clamped token limit
+     */
+    public int getClampedTokens(final String key, final int defaultValue) {
+        final Integer value = this.getConfigValueAsInt(key, defaultValue);
+        return (value != null) ? Math.max(1, Math.min(8192, value)) : defaultValue;
+    }
+
+    /**
      * Retrieves all configuration entries in a specific category as a key-value
      * map.
      * Useful for populating UI forms.

@@ -84,6 +84,5 @@ public class AiInteractionEntity extends PanacheEntityBase {
     public String conversationContext; // JSON string of context sent with AI request
 
     @Column(name = "created")
-    @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Panache entity field intentionally public for ORM mapping")
     public LocalDateTime created;
 }

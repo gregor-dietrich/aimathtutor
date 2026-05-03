@@ -269,10 +269,6 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private void loadCurrentSettings() {
         try {
             final UserSettingsDto settings = this.userService.getSettings(this.currentUserId);
-            if (settings == null) {
-                NotificationUtil.showError("Could not load settings");
-                return;
-            }
             this.userAvatarSelect.setValue(settings.userAvatarEmoji);
             this.tutorAvatarSelect.setValue(settings.tutorAvatarEmoji);
             this.updatePreview();

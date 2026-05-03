@@ -58,7 +58,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private transient GraspableMathService graspableMathService;
 
     @Inject
-    private ManagedExecutor managedExecutor;
+    private transient ManagedExecutor managedExecutor;
 
     private Div graspableCanvas;
     private AiChatPanel chatPanel;

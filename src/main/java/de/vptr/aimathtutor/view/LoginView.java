@@ -37,7 +37,7 @@ public class LoginView extends VerticalLayout {
     private transient AuthService authService;
 
     @Inject
-    private ManagedExecutor managedExecutor;
+    private transient ManagedExecutor managedExecutor;
 
     /**
      * Construct the login view with username/password fields and a login

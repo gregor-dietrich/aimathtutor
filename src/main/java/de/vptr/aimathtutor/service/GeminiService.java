@@ -73,10 +73,8 @@ public class GeminiService {
         final String model = this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
         final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url",
                 "https://generativelanguage.googleapis.com");
-        Double temperature = this.aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.7);
-        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
-        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 2000);
-        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
+        final double temperature = this.aiConfigService.getClampedTemperature("gemini.temperature", 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens("gemini.max-tokens", 2000);
 
         if (model == null || model.isBlank()) {
             throw new IllegalStateException("Gemini model not configured. Please configure via admin settings.");

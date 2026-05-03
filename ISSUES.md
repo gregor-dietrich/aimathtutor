@@ -578,39 +578,33 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 ### Phase 6: Code Deduplication (Medium)
 
-#### 6.1 Extract AI provider config loading helper
+#### ~~6.1 Extract AI provider config loading helper~~ ✅
 - **Problem:** `GeminiService`, `OpenAiService`, and `OllamaService` copy-paste identical dynamic config loading and clamping logic for `temperature` and `maxTokens`.
 - **Where:**
   - `src/main/java/de/vptr/aimathtutor/service/GeminiService.java:73-79`
   - `src/main/java/de/vptr/aimathtutor/service/OpenAiService.java:94-99,201-206`
   - `src/main/java/de/vptr/aimathtutor/service/OllamaService.java:84-91`
-- **Fix:** Add helper methods to `AiConfigService`: `getClampedTemperature(String key, double defaultValue)` and `getClampedTokens(String key, int defaultValue)`. Have all three services call these helpers.
+- **Fix:** Added `getClampedTemperature(String key, double defaultValue)` and `getClampedTokens(String key, int defaultValue)` to `AiConfigService`. All three services now call these helpers.
 
-#### 6.2 Remove redundant safeAnalyzeOllama / safeAnswerOllama wrappers
+#### ~~6.2 Remove redundant safeAnalyzeOllama / safeAnswerOllama wrappers~~ ✅
 - **Problem:** `AiTutorService` has nearly identical `safeAnalyze`/`safeAnalyzeOllama` and `safeAnswer`/`safeAnswerOllama`. The Ollama-specific variants are redundant because `@Retry` on `OllamaAiProvider` already goes through the CDI proxy.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/AiTutorService.java:361-423`
-- **Fix:** Remove the Ollama-specific wrappers. Use the generic `safeAnalyze` / `safeAnswer` methods for all providers.
+- **Fix:** Removed the Ollama-specific wrappers. The generic `safeAnalyze` / `safeAnswer` methods now handle all providers uniformly.
 
-#### 6.3 Extract admin CRUD base view
+#### 6.3 Extract admin CRUD base view — Deferred
 - **Problem:** Admin views (`AdminUsersView`, `AdminExercisesView`, `AdminCommentsView`, `AdminLessonsView`, etc.) duplicate constructor boilerplate, `buildUi()` patterns, dialog setup, grid action columns, and save-error handling.
 - **Where:** All admin views under `src/main/java/de/vptr/aimathtutor/view/admin/`
-- **Fix:** Create an abstract `AdminCrudView<T extends PanacheEntityBase, D>` base class with template methods for:
-  - `getEntityClass()`, `getDtoClass()`
-  - `buildGridColumns(Grid<D>)`
-  - `createFormDialog(D dto)`
-  - `saveDto(D dto)`
-  - `deleteEntity(Long id)`
-  Each concrete view extends the base and only implements the entity-specific parts.
+- **Fix:** Deferred due to high invasiveness. Each admin view has significant custom logic (date filters, custom dialogs, composite grids) that would require heavy generics and reflection to unify. Revisit when views are rewritten or a new admin framework is introduced.
 
-#### 6.4 Deduplicate UserRankService boolean mapping
-- **Problem:** `UserRankService.createRank`, `updateRank`, and `toDto` each contain ~18 lines of manual boolean field mapping, creating massive duplication.
+#### ~~6.4 Deduplicate UserRankService boolean mapping~~ ✅
+- **Problem:** `UserRankService.createRank`, `updateRank`, and `patchRank` each contain ~18 lines of manual boolean field mapping, creating massive duplication.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/UserRankService.java:126-155,166-197,209-279`
-- **Fix:** Use reflection or a static map of field names to extract/set the booleans in a loop. Alternatively, create a private `copyRankPermissions(UserRankEntity source, UserRankEntity target)` method and reuse it.
+- **Fix:** Extracted `applyAllPermissions(UserRankEntity, UserRankDto)` for PUT/create semantics and `applyProvidedPermissions(UserRankEntity, UserRankDto)` for PATCH semantics. Both methods are reused across `createRank`, `updateRank`, and `patchRank`.
 
-#### 6.5 Deduplicate GraspableMathService session completion
+#### ~~6.5 Deduplicate GraspableMathService session completion~~ ✅
 - **Problem:** `completeSession()` and `markSessionComplete()` implement the exact same logic.
 - **Where:** `src/main/java/de/vptr/aimathtutor/service/GraspableMathService.java:123-132,253-265`
-- **Fix:** Deprecate one and delegate to the other, or extract a private `doCompleteSession(String sessionId)` method.
+- **Fix:** Extracted private `doCompleteSession(String)` method. Both public methods delegate to it, preserving their original logging behavior.
 
 ---
 

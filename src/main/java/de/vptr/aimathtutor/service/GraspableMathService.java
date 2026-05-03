@@ -125,11 +125,7 @@ public class GraspableMathService {
      */
     @Transactional
     public void completeSession(final String sessionId) {
-        final var session = this.studentSessionRepository.findBySessionId(sessionId);
-        if (session != null) {
-            session.completed = true;
-            session.endTime = LocalDateTime.now();
-            this.studentSessionRepository.persist(session);
+        if (this.doCompleteSession(sessionId)) {
             LOG.info("Completed session: {}", sessionId);
         }
     }
@@ -255,15 +251,21 @@ public class GraspableMathService {
      */
     @Transactional
     public void markSessionComplete(final String sessionId) {
+        if (!this.doCompleteSession(sessionId)) {
+            LOG.warn("Cannot mark session complete - session not found: {}", sessionId);
+        } else {
+            LOG.debug("Session marked complete: {}", sessionId);
+        }
+    }
+
+    private boolean doCompleteSession(final String sessionId) {
         final var session = this.studentSessionRepository.findBySessionId(sessionId);
         if (session == null) {
-            LOG.warn("Cannot mark session complete - session not found: {}", sessionId);
-            return;
+            return false;
         }
-
         session.completed = true;
         session.endTime = LocalDateTime.now();
         this.studentSessionRepository.persist(session);
-        LOG.debug("Session marked complete: {}", sessionId);
+        return true;
     }
 }

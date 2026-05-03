@@ -50,7 +50,7 @@ public class AdminConfigView extends AbstractAdminView {
     private transient AiProviderTestService aiProviderTestService;
 
     @Inject
-    private ManagedExecutor managedExecutor;
+    private transient ManagedExecutor managedExecutor;
 
     @Override
     protected boolean isAuthorized() {

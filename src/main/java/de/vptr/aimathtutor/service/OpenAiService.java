@@ -93,10 +93,8 @@ public class OpenAiService {
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
-        Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
-        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
-        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
+        final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         if (model == null || model.isBlank()) {
@@ -201,10 +199,8 @@ public class OpenAiService {
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue("openai.model", "gpt-5-nano");
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
-        Double temperature = this.aiConfigService.getConfigValueAsDouble("openai.temperature", 0.7);
-        temperature = (temperature != null) ? Math.max(0.0, Math.min(2.0, temperature)) : 0.7;
-        Integer maxTokens = this.aiConfigService.getConfigValueAsInt("openai.max-tokens", 2000);
-        maxTokens = (maxTokens != null) ? Math.max(1, Math.min(8192, maxTokens)) : 2000;
+        final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
         final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
 
         try {
