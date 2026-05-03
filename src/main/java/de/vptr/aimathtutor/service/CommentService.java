@@ -196,6 +196,7 @@ public class CommentService {
             comment.user = this.userRepository.findByUsernameOptional(currentUsername).orElse(null);
         }
 
+        comment.content = this.sanitizeCommentContent(comment.content);
         comment.created = LocalDateTime.now();
         this.commentRepository.persist(comment);
         return new CommentViewDto(comment);
@@ -269,7 +270,7 @@ public class CommentService {
 
         // 6. Create and persist entity
         final CommentEntity comment = new CommentEntity();
-        comment.content = dto.content.trim();
+        comment.content = this.sanitizeCommentContent(dto.content);
         comment.exercise = exercise;
         comment.user = author;
         comment.parentComment = parentComment;
@@ -290,8 +291,22 @@ public class CommentService {
     }
 
     /**
+     * Sanitizes comment content by stripping HTML tags to prevent stored XSS.
+     *
+     * @param content raw comment content
+     * @return sanitized content with HTML tags removed
+     */
+    private String sanitizeCommentContent(final String content) {
+        if (content == null) {
+            return "";
+        }
+        return content.replaceAll("<[^>]*>", "").trim();
+    }
+
+    /**
      * Completely replaces an existing comment (PUT semantics).
      * Only content field is updated; exercise, user, and parent remain unchanged.
+     * Package-private to enforce permission checks through the public API.
      *
      * @param comment the comment entity with id and updated content
      * @return the updated {@link CommentViewDto}
@@ -299,7 +314,7 @@ public class CommentService {
      * @throws ValidationException     if content is missing or empty
      */
     @Transactional
-    public CommentViewDto updateComment(final CommentEntity comment) {
+    CommentViewDto updateComment(final CommentEntity comment) {
         final CommentEntity existingComment = this.commentRepository.findById(comment.id);
         if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
@@ -311,7 +326,7 @@ public class CommentService {
         }
 
         // Only update content field for PUT (since we only allow content in DTO)
-        existingComment.content = comment.content;
+        existingComment.content = this.sanitizeCommentContent(comment.content);
 
         this.commentRepository.persist(existingComment);
         return new CommentViewDto(existingComment);
@@ -321,13 +336,14 @@ public class CommentService {
      * Partially updates an existing comment (PATCH semantics).
      * Only updates comment properties that are explicitly provided in the entity;
      * null values are ignored.
+     * Package-private to enforce permission checks through the public API.
      *
      * @param comment the comment entity with id and partial fields to update
      * @return the updated {@link CommentViewDto}
      * @throws WebApplicationException if comment not found (NOT_FOUND status)
      */
     @Transactional
-    public CommentViewDto patchComment(final CommentEntity comment) {
+    CommentViewDto patchComment(final CommentEntity comment) {
         final CommentEntity existingComment = this.commentRepository.findById(comment.id);
         if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
@@ -335,7 +351,7 @@ public class CommentService {
 
         // Partial update (PATCH semantics) - only update provided fields
         if (comment.content != null) {
-            existingComment.content = comment.content;
+            existingComment.content = this.sanitizeCommentContent(comment.content);
         }
 
         this.commentRepository.persist(existingComment);
@@ -344,13 +360,14 @@ public class CommentService {
 
     /**
      * Deletes a comment by ID (basic overload).
+     * Package-private to enforce permission checks through the public API.
      *
      * @param id the comment ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if comment not
      *         found
      */
     @Transactional
-    public boolean deleteComment(final Long id) {
+    boolean deleteComment(final Long id) {
         return this.commentRepository.deleteById(id);
     }
 

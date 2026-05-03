@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.service;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -160,15 +158,9 @@ public class UserService {
         user.activationKey = userDto.activationKey != null ? userDto.activationKey
                 : UUID.randomUUID().toString();
 
-        // Generate salt and hash password
-        final var salt = this.passwordHashingService.generateSalt();
-        try {
-            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
-            user.salt = salt;
-            user.password = hashedPassword;
-        } catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
-        }
+        // Hash password with bcrypt
+        final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
+        user.password = hashedPassword;
 
         user.created = LocalDateTime.now();
         user.lastLogin = user.created;
@@ -248,14 +240,8 @@ public class UserService {
         // Handle password update if provided
         if (userDto.password != null && !userDto.password.isBlank()) {
             this.validatePassword(userDto.password);
-            final var salt = this.passwordHashingService.generateSalt();
-            try {
-                final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
-                existingUser.salt = salt;
-                existingUser.password = hashedPassword;
-            } catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
-                throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
-            }
+            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
+            existingUser.password = hashedPassword;
         }
 
         // Set rank if provided
@@ -332,14 +318,8 @@ public class UserService {
         // Handle password update if provided
         if (userDto.password != null && !userDto.password.isBlank()) {
             this.validatePassword(userDto.password);
-            final var salt = this.passwordHashingService.generateSalt();
-            try {
-                final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password, salt);
-                existingUser.salt = salt;
-                existingUser.password = hashedPassword;
-            } catch (final java.security.NoSuchAlgorithmException | java.security.spec.InvalidKeySpecException e) {
-                throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
-            }
+            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
+            existingUser.password = hashedPassword;
         }
 
         // Set rank if provided
@@ -424,23 +404,17 @@ public class UserService {
         }
 
         // Verify current password
-        if (!this.passwordHashingService.verifyPassword(currentPassword, user.password, user.salt)) {
+        if (!this.passwordHashingService.verifyPassword(currentPassword, user.password)) {
             throw new ValidationException("Current password is incorrect");
         }
 
         // Validate new password
         this.validatePassword(newPassword);
 
-        // Generate new salt and hash new password
-        final var newSalt = this.passwordHashingService.generateSalt();
-        try {
-            final var hashedPassword = this.passwordHashingService.hashPassword(newPassword, newSalt);
-            user.salt = newSalt;
-            user.password = hashedPassword;
-            this.userRepository.persist(user);
-        } catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new WebApplicationException("Failed to hash password", Response.Status.INTERNAL_SERVER_ERROR);
-        }
+        // Hash new password with bcrypt
+        final var hashedPassword = this.passwordHashingService.hashPassword(newPassword);
+        user.password = hashedPassword;
+        this.userRepository.persist(user);
     }
 
     /**

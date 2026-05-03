@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.service.LoginAttemptService;
 import io.quarkus.security.AuthenticationFailedException;
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.IdentityProvider;
@@ -40,6 +41,9 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
     @Inject
     PasswordHashingService passwordHashingService;
 
+    @Inject
+    LoginAttemptService loginAttemptService;
+
     /**
      * Returns the type of authentication request this provider handles.
      *
@@ -54,17 +58,37 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
     public Uni<SecurityIdentity> authenticate(final UsernamePasswordAuthenticationRequest request,
             final AuthenticationRequestContext context) {
 
-        final String username = request.getUsername();
+        final String rawUsername = request.getUsername();
         final String password = new String(request.getPassword().getPassword());
+        final String username = rawUsername != null ? rawUsername.toLowerCase().trim() : null;
 
         return Uni.createFrom().item(() -> this.authenticateUser(username, password)).runSubscriptionOn(this.executor);
     }
 
     @Transactional
     SecurityIdentity authenticateUser(final String username, final String password) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
+            throw new AuthenticationFailedException("Invalid credentials");
+        }
+
+        if (this.loginAttemptService.isLockedOut(username)) {
+            throw new AuthenticationFailedException("Too many failed attempts. Please try again later.");
+        }
+
         final UserEntity user = UserEntity.find("username = ?1", username).firstResult();
 
-        if (user == null || !this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
+        final boolean passwordValid;
+        if (user == null) {
+            // Perform dummy verification to maintain constant-time response
+            this.passwordHashingService.verifyPassword(password,
+                    "$2a$10$zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+            passwordValid = false;
+        } else {
+            passwordValid = this.passwordHashingService.verifyPassword(password, user.password);
+        }
+
+        if (!passwordValid) {
+            this.loginAttemptService.recordFailedAttempt(username);
             throw new AuthenticationFailedException("Invalid credentials");
         }
 

@@ -50,9 +50,11 @@ public class UserEntity extends PanacheEntityBase {
     public String username;
 
     @NotBlank
+    @JsonIgnore
     public String password;
 
     @NotBlank
+    @JsonIgnore
     public String salt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -69,6 +71,7 @@ public class UserEntity extends PanacheEntityBase {
     public Boolean activated;
 
     @Column(name = "activation_key")
+    @JsonIgnore
     public String activationKey;
 
     public LocalDateTime created;

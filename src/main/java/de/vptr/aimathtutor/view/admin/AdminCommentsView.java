@@ -375,7 +375,12 @@ public class AdminCommentsView extends AbstractAdminView {
                 this.commentService.createComment(commentEntity, currentUsername);
                 NotificationUtil.showSuccess("Comment created successfully");
             } else {
-                this.commentService.updateComment(commentEntity);
+                final var editorId = this.authService.getUserId();
+                if (editorId == null) {
+                    NotificationUtil.showError("You must be logged in to edit comments");
+                    return;
+                }
+                this.commentService.editComment(this.currentComment.id, this.currentComment, editorId);
                 NotificationUtil.showSuccess("Comment updated successfully");
             }
 
@@ -392,12 +397,14 @@ public class AdminCommentsView extends AbstractAdminView {
 
     private void deleteComment(final CommentDto comment) {
         try {
-            if (this.commentService.deleteComment(comment.id)) {
-                NotificationUtil.showSuccess("Comment deleted successfully");
-                this.loadCommentsAsync();
-            } else {
-                NotificationUtil.showError("Failed to delete comment");
+            final var requesterId = this.authService.getUserId();
+            if (requesterId == null) {
+                NotificationUtil.showError("You must be logged in to delete comments");
+                return;
             }
+            this.commentService.deleteComment(comment.id, requesterId, true);
+            NotificationUtil.showSuccess("Comment deleted successfully");
+            this.loadCommentsAsync();
         } catch (final Exception e) {
             LOG.error("Error deleting comment", e);
             NotificationUtil.showError("An error occurred while deleting the comment. Please try again.");

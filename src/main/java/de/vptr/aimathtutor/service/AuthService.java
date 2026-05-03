@@ -90,7 +90,7 @@ public class AuthService {
             }
 
             // Verify password using password hashing service
-            if (!this.passwordHashingService.verifyPassword(password, user.password, user.salt)) {
+            if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
@@ -132,8 +132,16 @@ public class AuthService {
         final var username = this.getUsername();
         LOG.trace("Logging out user: {}", username);
 
-        VaadinSession.getCurrent().setAttribute(USERNAME_KEY, null);
-        VaadinSession.getCurrent().setAttribute(AUTHENTICATED_KEY, false);
+        final var vaadinSession = VaadinSession.getCurrent();
+        if (vaadinSession != null) {
+            vaadinSession.setAttribute(USERNAME_KEY, null);
+            vaadinSession.setAttribute(AUTHENTICATED_KEY, false);
+
+            final var httpSession = vaadinSession.getSession();
+            if (httpSession != null) {
+                httpSession.invalidate();
+            }
+        }
 
         LOG.trace("User logged out");
     }

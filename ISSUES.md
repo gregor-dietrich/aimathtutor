@@ -345,3 +345,344 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - Fix component-style loading warning (`vaadin-text-field.css`) by enabling `themeComponentStyles` or moving styles to supported setup.
 
 ---
+
+## 5. Remediation Plan — Code Review Findings (3.0.0)
+
+---
+
+### Phase 1: Security (Critical)
+
+#### ~~1.1 Switch password hashing from PBKDF2 to bcrypt~~ ✅
+- **Problem:** `PasswordHashingService` uses PBKDF2-HMAC-SHA256 with 100,000 iterations, which is below current OWASP recommendations and dated compared to bcrypt.
+- **Where:** `src/main/java/de/vptr/aimathtutor/security/PasswordHashingService.java`
+- **Fix:** Replace PBKDF2 implementation with `io.quarkus.elytron.security.common.BcryptUtil.bcryptHash()` and `BcryptUtil.matches()`. Remove salt generation since bcrypt embeds the salt in the hash string.
+- **Also updated:**
+  - `src/main/java/de/vptr/aimathtutor/service/AuthService.java:93`
+  - `src/main/java/de/vptr/aimathtutor/security/UserIdentityProvider.java:67`
+  - `src/main/java/de/vptr/aimathtutor/util/PasswordUtility.java:48-49`
+  - `src/test/java/de/vptr/aimathtutor/security/PasswordHashingServiceTest.java`
+  - `src/test/java/de/vptr/aimathtutor/util/PasswordUtilityTest.java`
+  - `pom.xml`
+
+#### ~~1.2 Fix timing attack in password comparison~~ ✅
+- **Problem:** `PasswordHashingService.verifyPassword` previously used `String.equals()` which short-circuits on mismatch, enabling timing attacks.
+- **Where:** `src/main/java/de/vptr/aimathtutor/security/PasswordHashingService.java:91`
+- **Fix:** `BcryptUtil.matches()` already uses constant-time comparison internally, so switching to bcrypt (task 1.1) resolves this automatically. Verify no `String.equals()` remains in the final implementation.
+
+#### ~~1.3 Fix brute-force bypass in UserIdentityProvider~~ ✅
+- **Problem:** `UserIdentityProvider` authenticates users for Quarkus security but does **not** integrate with `LoginAttemptService`. An attacker can bypass the application’s login-throttling by hitting Quarkus-secured endpoints directly.
+- **Where:** `src/main/java/de/vptr/aimathtutor/security/UserIdentityProvider.java:54-96`
+- **Fix:** Inject `LoginAttemptService` into `UserIdentityProvider`. Before verifying credentials, check `loginAttemptService.isLockedOut(username)` and throw `AuthenticationFailedException` if locked out. On failed verification, call `recordFailedAttempt(username)`.
+
+#### ~~1.4 Fix username enumeration via timing in UserIdentityProvider~~ ✅
+- **Problem:** `if (user == null || !this.passwordHashingService.verifyPassword(...))` short-circuits: for non-existent usernames the expensive verify call is skipped, revealing valid usernames via timing.
+- **Where:** `src/main/java/de/vptr/aimathtutor/security/UserIdentityProvider.java:67`
+- **Fix:** When `user == null`, perform a dummy `verifyPassword()` call against a static dummy bcrypt hash (e.g., a hardcoded invalid hash) before rejecting, so the code path always executes the expensive operation. Then always call `loginAttemptService.recordFailedAttempt(username)` regardless of whether the user exists.
+
+#### ~~1.5 Fix inconsistent username normalization~~ ✅
+- **Problem:** `AuthService.authenticate()` normalizes usernames to lowercase (`username.toLowerCase().trim()`), but `UserIdentityProvider.authenticate()` and `UserRankIdentityAugmentor.augment()` do not. If a user is stored as "Admin" but logs in as "admin", the identity provider may fail to find the user and assign no roles.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/service/AuthService.java:59`
+  - `src/main/java/de/vptr/aimathtutor/security/UserIdentityProvider.java:57`
+  - `src/main/java/de/vptr/aimathtutor/security/UserRankIdentityAugmentor.java:45`
+- **Fix:** Apply identical normalization (`toLowerCase().trim()`) in both `UserIdentityProvider` and `UserRankIdentityAugmentor` before querying the database.
+
+#### ~~1.6 Fix session fixation vulnerability~~ ✅
+- **Problem:** `AuthService.logout()` clears session attributes but does not invalidate the underlying HTTP session. The session ID is reused, enabling session fixation attacks.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/AuthService.java:131-139`
+- **Fix:** In `logout()`, call `VaadinSession.getCurrent().getSession().invalidate()` to destroy the HTTP session entirely. Optionally also call `VaadinSession.getCurrent().close()`.
+
+#### ~~1.7 Add @JsonIgnore to sensitive UserEntity fields~~ ✅
+- **Problem:** `password`, `salt`, and `activationKey` are not annotated with `@JsonIgnore`. Any future REST endpoint or accidental JSON serialization will leak password hashes and activation tokens.
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserEntity.java:52-56,71-72`
+- **Fix:** Add `@JsonIgnore` annotation to the `password`, `salt`, and `activationKey` fields.
+
+#### ~~1.8 Protect unprotected CommentService overloads~~ ✅
+- **Problem:** `CommentService.updateComment()`, `patchComment()`, and `deleteComment(Long)` are public service methods that perform updates/hard deletes without calling `CommentPermissionService`. Any future view or accidental direct invocation would allow unauthorized modification.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/CommentService.java:302-318,329-343,352-355`
+- **Fix:** Change the visibility of these three methods from `public` to package-private (no access modifier) so they can only be called from within the `de.vptr.aimathtutor.service` package. The public API (`editComment`, `deleteComment(Long, Long, boolean)`) already enforces permissions and should remain the only external entry point.
+
+#### ~~1.9 Sanitize comment content to prevent latent stored XSS~~ ✅
+- **Problem:** Comment content is stored in the database without any sanitization. While Vaadin `Span` currently renders it as text nodes, any future REST endpoint or `innerHTML`-based rendering would be immediately vulnerable to stored XSS.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/CommentService.java:272,314,419`
+- **Fix:** Add a private `sanitizeCommentContent(String)` method in `CommentService` that strips HTML tags using a simple regex (e.g., `content.replaceAll("<[^>]*>", "")`) and trims whitespace. Call this method in `createComment()` before persisting content. Do not add a new external dependency for this.
+
+---
+
+### Phase 2: Data Integrity & JPA (Critical / High)
+
+#### 2.1 Fix FK violation on Exercise deletion
+- **Problem:** `ExerciseEntity` owns a `@OneToMany(mappedBy = "exercise")` list of comments with no cascade and no `orphanRemoval`. `CommentEntity.exercise` has `@JoinColumn(nullable = false)`. Deleting an exercise that has comments triggers a foreign-key constraint violation.
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/ExerciseEntity.java:76-78`
+- **Fix:** Add `cascade = CascadeType.REMOVE, orphanRemoval = true` to `ExerciseEntity.comments`. When an exercise is deleted, all its comments are automatically deleted.
+
+#### 2.2 Fix comment reply reparenting on deletion
+- **Problem:** `CommentEntity` has a self-referencing `parentComment` with no cascade settings. Deleting a comment row causes the database to set child rows' `parent_comment_id` to NULL, turning replies into top-level comments.
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/CommentEntity.java:79-81`
+- **Fix:** When a comment is deleted, its replies should also be deleted (they don't make sense without a parent). Add a `@OneToMany(mappedBy = "parentComment", cascade = CascadeType.REMOVE, orphanRemoval = true)` collection on `CommentEntity` for replies, or handle this in the service/repository layer. Since Panache Active Record is used, adding the bidirectional mapping with cascade is the cleanest approach.
+
+#### 2.3 Fix User deletion orphaning content or failing
+- **Problem:** `UserEntity` has `@OneToMany(mappedBy = "user")` for exercises and comments with no cascade. Deleting a user will nullify `user_id` on exercises/comments (orphaning them) or throw an FK violation for `UserGroupMetaEntity` (which has `nullable = false`).
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserEntity.java:85-91`
+- **Fix:** Add the missing `@OneToMany` mappings on `UserEntity`:
+  - `commentFlags` → `cascade = CascadeType.REMOVE, orphanRemoval = true` (flags are meaningless without a user)
+  - `userGroupMetas` → `cascade = CascadeType.REMOVE, orphanRemoval = true` (memberships are meaningless without a user)
+  - `studentSessions` → no cascade (SET NULL in DB schema, session history should remain)
+  - `aiInteractions` → no cascade (SET NULL in DB schema)
+  - `aiConfigs` (as `lastUpdatedBy`) → no cascade (SET NULL in DB schema)
+  Also ensure `UserRankEntity` deletion is blocked if users exist (see 2.4).
+
+#### 2.4 Fix UserGroup deletion failing if members exist
+- **Problem:** `UserGroupEntity` has `@OneToMany(mappedBy = "group")` with no cascade. `UserGroupMetaEntity.group` is `nullable = false`. Deleting a non-empty group always throws an FK violation.
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserGroupEntity.java:35-36`
+- **Fix:** Add `cascade = CascadeType.REMOVE, orphanRemoval = true` to `UserGroupEntity.userGroupMetas`. When a group is deleted, all membership rows are automatically deleted.
+
+#### 2.5 Fix UserRank deletion failing if users exist
+- **Problem:** `UserEntity.rank` has `@JoinColumn(nullable = false)`. Deleting a rank that has assigned users will throw an FK violation.
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/UserEntity.java:58-61`
+- **Fix:** In `UserRankService.deleteRank()` (or equivalent), check if any users reference the rank before deleting. If users exist, throw a `WebApplicationException` with a clear message telling the caller to reassign users first.
+
+#### 2.6 Fix Lesson deletion silently orphaning children
+- **Problem:** `LessonEntity` has `@OneToMany(mappedBy = "parent")` and `@OneToMany(mappedBy = "lesson")` with no cascade. Both FK columns are nullable. Deleting a lesson promotes child lessons to root and unassigns exercises without warning.
+- **Where:** `src/main/java/de/vptr/aimathtutor/entity/LessonEntity.java:46-50`
+- **Fix:** Leave these as SET NULL (no cascade). This is intentional: child lessons become root lessons and exercises become unassigned. Document this behavior in the `LessonService` delete method so admins are aware.
+
+#### 2.7 Align @Column(nullable=false) with @NotBlank/@NotNull
+- **Problem:** Many fields marked with `@NotBlank` or `@NotNull` lack the matching `@Column(nullable = false)` or `@JoinColumn(nullable = false)`. Because production uses `hibernate.hbm2ddl.auto=validate`, mismatches between Java mappings and the actual schema will cause startup failures.
+- **Where:** All entities — specific gaps include:
+  - `AiConfigEntity.configType`, `category`
+  - `AiInteractionEntity.eventType`, `feedbackType`
+  - `CommentEntity.content`
+  - `ExerciseEntity.title`, `content`
+  - `LessonEntity.name`
+  - `StudentSessionEntity.sessionId`
+  - `UserEntity.username`, `password`, `salt`
+  - `UserGroupEntity.name`
+  - `UserRankEntity.name`
+  - And all Boolean wrapper fields with Java defaults but no `@Column(nullable = false)`
+- **Fix:** Audit every required field and add the matching pair of `@NotNull` (or `@NotBlank`) **and** `@Column(nullable = false)` / `@JoinColumn(nullable = false)`.
+
+#### 2.8 Add @PrePersist / @PreUpdate for timestamp fields
+- **Problem:** `created`, `timestamp`, and `lastUpdatedAt` fields across entities have no default values and no lifecycle callbacks, allowing NULL to be persisted.
+- **Where:** Multiple entities.
+- **Fix:** The user explicitly requested **NO** `@PrePersist`/`@PreUpdate`. Instead, rely on DB-layer defaults (`DEFAULT NOW()`) and triggers for `last_edit`. Every table must have `created` and `last_edit` columns. Remove `timestamp` and `lastUpdatedAt` columns entirely and replace them with `created`/`last_edit`.
+
+#### 2.9 Add @Version to mutable entities
+- **Problem:** Only `CommentEntity` has `@Version`. All other mutable entities lack optimistic locking, so concurrent updates silently overwrite each other (last-write-wins).
+- **Where:** All entities except `CommentEntity`.
+- **Fix:** Add `@Version Long version` to every entity that supports updates. Alternatively, document that the application accepts last-write-wins semantics.
+
+#### 2.10 Fix comment flag creation race condition
+- **Problem:** `CommentFlagRepository.createFlag()` checks `hasUserFlaggedComment()` before inserting, which is a classic check-then-act race. Two concurrent requests can pass the check simultaneously; the second hits the unique constraint and throws a low-level `PersistenceException`.
+- **Where:** `src/main/java/de/vptr/aimathtutor/repository/CommentFlagRepository.java:58-74`
+- **Fix:** Keep the pre-check for the friendly error message, but wrap the persist/flush in a try/catch for `PersistenceException`. If the exception is caused by a unique constraint violation, translate it into the same `WebApplicationException` that the pre-check would have thrown.
+
+#### 2.11 Fix UserGroupService.addUserToGroup race condition
+- **Problem:** `addUserToGroup` checks `isUserInGroup()` before inserting, creating a check-then-act race for duplicate memberships.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/UserGroupService.java:208-228`
+- **Fix:** The database already has a unique constraint `uk_ugm_group_user`. Remove the explicit pre-check and instead persist directly, catching `PersistenceException` caused by the unique constraint and translating it into a user-friendly exception.
+
+---
+
+### Phase 3: Resource Leaks & Performance (Critical / High)
+
+#### 3.1 Fix JAX-RS Response leaks
+- **Problem:** `OllamaService` and `OpenAiService` obtain JAX-RS `Response` objects but never close them. `readEntity()` consumes the entity stream but does not close the underlying `Response`, eventually exhausting the connection pool.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/service/OllamaService.java:109,165,191`
+  - `src/main/java/de/vptr/aimathtutor/service/OpenAiService.java:135,229`
+- **Fix:** Wrap all JAX-RS calls in try-with-resources: `try (Response response = ...) { ... }`.
+
+#### 3.2 Fix ConversationContextDto thread safety
+- **Problem:** `ConversationContextDto` holds plain `ArrayList` instances (`recentActions`, `recentQuestions`, `recentAiMessages`). The view passes the same instance to `CompletableFuture.supplyAsync()` running on `ManagedExecutor`. The UI thread may concurrently mutate these lists while the background thread iterates over them, causing `ConcurrentModificationException`.
+- **Where:** `src/main/java/de/vptr/aimathtutor/dto/ConversationContextDto.java:15,18,21`
+- **Fix:** Change the list types to `CopyOnWriteArrayList` or create defensive copies before passing to background threads.
+
+#### 3.3 Fix AdminConfigView async executor misuse
+- **Problem:** Admin config view connection tests call `CompletableFuture.supplyAsync(testCall::get)` without an explicit `Executor`, using `ForkJoinPool.commonPool()`. Blocking HTTP calls occupy common-pool threads, and CDI contexts are not propagated.
+- **Where:** `src/main/java/de/vptr/aimathtutor/view/admin/AdminConfigView.java:394`
+- **Fix:** Inject `ManagedExecutor` and pass it to `supplyAsync`: `CompletableFuture.supplyAsync(testCall::get, this.managedExecutor)`.
+
+#### 3.4 Fix GraspableMathService regex compilation on every call
+- **Problem:** `normalizeExpression()` calls `expression.replaceAll("\\s+", "")` which compiles the regex pattern on every invocation.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/GraspableMathService.java:223`
+- **Fix:** Use a static precompiled `Pattern`: `private static final Pattern WHITESPACE = Pattern.compile("\\s+");` and then `WHITESPACE.matcher(normalized).replaceAll("")`.
+
+#### 3.5 Fix blocking DNS lookup inside @Transactional
+- **Problem:** `AiConfigService.validateUrlSafe()` calls `InetAddress.getByName(host)` (blocking DNS) from within `@Transactional` methods. A slow DNS query holds a DB connection open, potentially exhausting the pool.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/AiConfigService.java:448-508`
+- **Fix:** Move URL/SSRF validation outside the `@Transactional` boundary. Perform validation before entering the transactional method, or split the service method into a non-transactional validation phase and a transactional update phase.
+
+#### 3.6 Fix unnecessary @Transactional on cache reads
+- **Problem:** `AiConfigService` getters (including cache lookups) are annotated with `@Transactional`. Opening a JTA transaction just to read from a `ConcurrentHashMap` wastes resources and holds DB connection pool slots.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/AiConfigService.java` getters
+- **Fix:** Remove `@Transactional` from pure cache read methods. Only annotate methods that actually interact with the repository.
+
+---
+
+### Phase 4: Error Handling & Null Safety (High / Medium)
+
+#### 4.1 Fix CommentService.findByDateRange data exposure
+- **Problem:** On `DateTimeParseException`, the method returns **all comments** instead of failing or returning an empty list. This can expose massive amounts of data and degrade performance.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/CommentService.java:527-546`
+- **Fix:** Remove the catch-all fallback. Let the exception propagate, or catch it and return `List.of()` after logging the error. Never return the full dataset on invalid input.
+
+#### 4.2 Fix ExerciseService.findByDateRange data exposure
+- **Problem:** Same anti-pattern as 4.1: on parse failure it returns **all exercises**.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/ExerciseService.java:409-429`
+- **Fix:** Same as 4.1 — return an empty list or propagate the exception. Do not return all exercises.
+
+#### 4.3 Fix NPE risks in views
+- **Problem:** Multiple views dereference potentially null values without guards.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/view/LessonsView.java:235` — `exercise.id.toString()` without null check.
+  - `src/main/java/de/vptr/aimathtutor/view/UserSettingsView.java:81-83` — `getCurrentUser()` result used without null check.
+  - `src/main/java/de/vptr/aimathtutor/view/UserSettingsView.java:267-268` — `getSettings()` result used without null check.
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminExercisesView.java:304-309` — `getCurrentUser()` result used without null check.
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminCommentsView.java:372` — session attribute may be null.
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminConfigView.java:426` — `getUserId()` may return null.
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminUserGroupsView.java:380` — `getAllUsers()` may return null.
+  - `src/main/java/de/vptr/aimathtutor/component/layout/CommentsPanel.java:210` — `new Span(null)` throws NPE.
+  - `src/main/java/de/vptr/aimathtutor/component/layout/CommentsPanel.java:399` — `event.getExerciseId().equals(this.exerciseId)` NPE if event ID is null.
+- **Fix:** Add null checks before dereferencing. Use `Objects.requireNonNull()` with meaningful messages, or add early returns/guards.
+
+#### 4.4 Fix missing null checks in AI service entry points
+- **Problem:** `JsonRepairService`, `PromptBuilderService`, `MockAiProvider`, and `AiTutorService` do not validate null arguments, leading to `NullPointerException` instead of graceful degradation.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/service/ai/JsonRepairService.java:44`
+  - `src/main/java/de/vptr/aimathtutor/service/ai/PromptBuilderService.java:98`
+  - `src/main/java/de/vptr/aimathtutor/service/ai/provider/MockAiProvider.java:26`
+  - `src/main/java/de/vptr/aimathtutor/service/AiTutorService.java:89,258`
+- **Fix:** Add explicit null checks at the beginning of public methods and throw `IllegalArgumentException` with a descriptive message.
+
+---
+
+### Phase 5: Vaadin UI Threading & Lifecycle (High / Medium)
+
+#### 5.1 Fix LoginView synchronous auth on UI thread
+- **Problem:** `authService.authenticate()` is called directly inside the button click listener, blocking the UI thread.
+- **Where:** `src/main/java/de/vptr/aimathtutor/view/LoginView.java:67`
+- **Fix:** Offload to `CompletableFuture.supplyAsync(() -> this.authService.authenticate(username, password))`, then update UI inside `ui.access()`. Follow the exact project pattern: capture `ui = getUI().orElse(null)`, null-check, use `supplyAsync`, `thenAccept`, and `.exceptionally()`.
+
+#### 5.2 Fix MathWorkspaceView synchronous generateProblem
+- **Problem:** `aiTutorService.generateProblem()` is called synchronously during `buildUi()` and button clicks, blocking the UI while waiting for an external AI API.
+- **Where:** `src/main/java/de/vptr/aimathtutor/view/MathWorkspaceView.java:204,489`
+- **Fix:** Offload to async using the same `CompletableFuture` + `ui.access()` pattern. Show a loading indicator while waiting.
+
+#### 5.3 Add onDetach cleanup to workspace views
+- **Problem:** `ExerciseWorkspaceView` and `MathWorkspaceView` register JavaScript polling timers and `window.graspableViewConnector` but never clean them up on navigation. Async `CompletableFuture` chains are not cancelled.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/view/ExerciseWorkspaceView.java:356-411`
+  - `src/main/java/de/vptr/aimathtutor/view/MathWorkspaceView.java:177-196`
+- **Fix:** Override `onDetach()` in both views. Cancel any pending `CompletableFuture` instances, nullify `window.graspableViewConnector` via `executeJs`, and clear any pending JS timers.
+
+#### 5.4 Fix UI.getCurrent() without null checks in async callbacks
+- **Problem:** Async callbacks in `ExerciseWorkspaceView` and `MathWorkspaceView` capture `UI.getCurrent()` without checking for null. If called from a background thread where the UI is not set, this causes NPE.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/view/ExerciseWorkspaceView.java:479,541`
+  - `src/main/java/de/vptr/aimathtutor/view/MathWorkspaceView.java:298,343`
+- **Fix:** Use `getUI().orElse(null)` pattern with an explicit null check before calling `ui.access()`.
+
+---
+
+### Phase 6: Code Deduplication (Medium)
+
+#### 6.1 Extract AI provider config loading helper
+- **Problem:** `GeminiService`, `OpenAiService`, and `OllamaService` copy-paste identical dynamic config loading and clamping logic for `temperature` and `maxTokens`.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/service/GeminiService.java:73-79`
+  - `src/main/java/de/vptr/aimathtutor/service/OpenAiService.java:94-99,201-206`
+  - `src/main/java/de/vptr/aimathtutor/service/OllamaService.java:84-91`
+- **Fix:** Add helper methods to `AiConfigService`: `getClampedTemperature(String key, double defaultValue)` and `getClampedTokens(String key, int defaultValue)`. Have all three services call these helpers.
+
+#### 6.2 Remove redundant safeAnalyzeOllama / safeAnswerOllama wrappers
+- **Problem:** `AiTutorService` has nearly identical `safeAnalyze`/`safeAnalyzeOllama` and `safeAnswer`/`safeAnswerOllama`. The Ollama-specific variants are redundant because `@Retry` on `OllamaAiProvider` already goes through the CDI proxy.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/AiTutorService.java:361-423`
+- **Fix:** Remove the Ollama-specific wrappers. Use the generic `safeAnalyze` / `safeAnswer` methods for all providers.
+
+#### 6.3 Extract admin CRUD base view
+- **Problem:** Admin views (`AdminUsersView`, `AdminExercisesView`, `AdminCommentsView`, `AdminLessonsView`, etc.) duplicate constructor boilerplate, `buildUi()` patterns, dialog setup, grid action columns, and save-error handling.
+- **Where:** All admin views under `src/main/java/de/vptr/aimathtutor/view/admin/`
+- **Fix:** Create an abstract `AdminCrudView<T extends PanacheEntityBase, D>` base class with template methods for:
+  - `getEntityClass()`, `getDtoClass()`
+  - `buildGridColumns(Grid<D>)`
+  - `createFormDialog(D dto)`
+  - `saveDto(D dto)`
+  - `deleteEntity(Long id)`
+  Each concrete view extends the base and only implements the entity-specific parts.
+
+#### 6.4 Deduplicate UserRankService boolean mapping
+- **Problem:** `UserRankService.createRank`, `updateRank`, and `toDto` each contain ~18 lines of manual boolean field mapping, creating massive duplication.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/UserRankService.java:126-155,166-197,209-279`
+- **Fix:** Use reflection or a static map of field names to extract/set the booleans in a loop. Alternatively, create a private `copyRankPermissions(UserRankEntity source, UserRankEntity target)` method and reuse it.
+
+#### 6.5 Deduplicate GraspableMathService session completion
+- **Problem:** `completeSession()` and `markSessionComplete()` implement the exact same logic.
+- **Where:** `src/main/java/de/vptr/aimathtutor/service/GraspableMathService.java:123-132,253-265`
+- **Fix:** Deprecate one and delegate to the other, or extract a private `doCompleteSession(String sessionId)` method.
+
+---
+
+### Phase 7: Accessibility (Low / Medium)
+
+#### 7.1 Add aria-label to icon-only buttons
+- **Problem:** All button components under `component/button/` set icons and tooltips but do not set `aria-label`, making them inaccessible to screen readers.
+- **Where:** Every file under `src/main/java/de/vptr/aimathtutor/component/button/`
+- **Fix:** In each button constructor, after setting the tooltip, also call `getElement().setAttribute("aria-label", tooltipText)`.
+
+#### 7.2 Add text alternatives to color-only status indicators
+- **Problem:** Status indicators in admin grids rely solely on CSS color with no textual alternative for screen readers.
+- **Where:**
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminCommentsView.java:258-264`
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminSessionsView.java:133`
+  - `src/main/java/de/vptr/aimathtutor/view/admin/AdminUserRanksView.java:170-373`
+- **Fix:** Add `aria-label` or visible text prefixes (e.g., "Active: ", "Banned: ") to status components so color is not the only channel conveying information.
+
+---
+
+### Phase 8: Tests & CI/CD (High / Medium)
+
+#### 8.1 Delete trivial getter/setter tests
+- **Problem:** ~30+ test files consist only of trivial getter/setter tests that assign a value and assert it was stored. They provide almost no behavioral coverage and create maintenance noise.
+- **Where:**
+  - All files under `src/test/java/de/vptr/aimathtutor/dto/`
+  - All files under `src/test/java/de/vptr/aimathtutor/entity/`
+  - `src/test/java/de/vptr/aimathtutor/event/CommentCreatedEventTest.java`
+- **Fix:** Delete these files entirely. Replace with meaningful behavioral tests where appropriate.
+
+#### 8.2 Add security-focused tests
+- **Problem:** There are zero tests for critical security classes.
+- **Where:** Missing tests for:
+  - `LoginAttemptService`
+  - `RateLimitService`
+  - `UserIdentityProvider`
+  - `UserRankIdentityAugmentor`
+  - `CommentPermissionService`
+  - `CommentFlaggingService`
+  - `CommentModerationService`
+  - `CommentRateLimitService`
+  - `AuthService` (only null/empty input is tested)
+- **Fix:** Add tests covering:
+  - Valid login with correct credentials
+  - Wrong password rejection
+  - Banned/inactive user rejection
+  - Login throttling / lockout behavior
+  - Role augmentation for different ranks
+  - Comment permission matrix (author vs moderator vs stranger)
+
+#### 8.3 Fix CI to run integration tests
+- **Problem:** `pom.xml` sets `<skipITs>true</skipITs>` and CI runs `./mvnw test`, so repository integration tests are never executed.
+- **Where:** `.github/workflows/ci-cd.yml` and `pom.xml:25`
+- **Fix:** Either set `skipITs=false` in CI or change the CI command to `./mvnw verify`.
+
+#### 8.4 Fix test DB leakage
+- **Problem:** Repository ITs annotate test methods with `@Transactional`, which commits at the end of the test in Quarkus, leaving persisted data in the shared test database.
+- **Where:** `CommentRepositoryIT.java`, `ExerciseRepositoryIT.java`, `StudentSessionRepositoryIT.java`
+- **Fix:** Replace `@Transactional` with `@io.quarkus.test.TestTransaction` so tests roll back automatically.
+
+#### 8.5 Update GitHub Actions cache version
+- **Problem:** CI uses `actions/cache@v3` which is outdated.
+- **Where:** `.github/workflows/ci-cd.yml:67`
+- **Fix:** Update to `actions/cache@v4`.
+
+---

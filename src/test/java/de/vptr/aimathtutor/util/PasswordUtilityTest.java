@@ -10,16 +10,13 @@ import de.vptr.aimathtutor.security.PasswordHashingService;
 public class PasswordUtilityTest {
 
     @Test
-    public void testGenerateAndVerify() throws Exception {
+    public void testGenerateAndVerify() {
         final var service = new PasswordHashingService();
         final var password = "testPassword123";
 
-        final var salt = service.generateSalt();
-        assertNotNull(salt);
-
-        final var hash = service.hashPassword(password, salt);
+        final var hash = service.hashPassword(password);
         assertNotNull(hash);
 
-        assertTrue(service.verifyPassword(password, hash, salt));
+        assertTrue(service.verifyPassword(password, hash));
     }
 }

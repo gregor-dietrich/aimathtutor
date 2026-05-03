@@ -42,13 +42,18 @@ public class UserRankIdentityAugmentor implements SecurityIdentityAugmentor {
             return Uni.createFrom().item(identity);
         }
 
-        final var username = identity.getPrincipal().getName();
+        final var rawUsername = identity.getPrincipal().getName();
+        final String username = rawUsername != null ? rawUsername.toLowerCase().trim() : null;
 
         return Uni.createFrom().item(() -> this.augmentIdentity(identity, username)).runSubscriptionOn(this.executor);
     }
 
     @Transactional
     SecurityIdentity augmentIdentity(final SecurityIdentity identity, final String username) {
+        if (username == null || username.isEmpty()) {
+            return identity;
+        }
+
         final UserEntity user = UserEntity.find("username", username).firstResult();
 
         if (user == null || user.rank == null) {
