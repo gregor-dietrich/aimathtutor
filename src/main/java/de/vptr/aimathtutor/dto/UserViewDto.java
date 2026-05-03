@@ -20,7 +20,6 @@ public class UserViewDto {
     public Boolean activated;
     // activationKey is sensitive and not exposed in normal responses
     public LocalDateTime created;
-    public LocalDateTime lastLogin;
     public Long exercisesCount;
     public Long commentsCount;
     public String userAvatarEmoji;
@@ -44,7 +43,6 @@ public class UserViewDto {
             this.activated = entity.activated;
             // activationKey is not exposed for security
             this.created = entity.created;
-            this.lastLogin = entity.lastLogin;
             this.exercisesCount = entity.exercises != null ? (long) entity.exercises.size() : 0L;
             this.commentsCount = entity.comments != null ? (long) entity.comments.size() : 0L;
             this.userAvatarEmoji = entity.userAvatarEmoji;

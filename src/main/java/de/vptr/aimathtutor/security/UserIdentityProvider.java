@@ -1,10 +1,6 @@
 package de.vptr.aimathtutor.security;
 
-import java.time.LocalDateTime;
-
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.service.LoginAttemptService;
@@ -19,7 +15,6 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 
 /**
@@ -29,8 +24,6 @@ import jakarta.transaction.Transactional;
  */
 @ApplicationScoped
 public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAuthenticationRequest> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserIdentityProvider.class);
 
     @Inject
     ManagedExecutor executor;
@@ -102,20 +95,6 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
 
         if (!Boolean.TRUE.equals(user.activated)) {
             throw new AuthenticationFailedException("User is not activated");
-        }
-
-        // Update lastLogin - ignore optimistic lock exceptions as they're not critical
-        // for authentication
-        try {
-            this.entityManager.createQuery("UPDATE UserEntity u SET u.lastLogin = :now WHERE u.id = :id")
-                    .setParameter("now", LocalDateTime.now())
-                    .setParameter("id", user.id)
-                    .executeUpdate();
-        } catch (final PersistenceException e) {
-            // Log but don't fail authentication for last_login update issues
-            // (OptimisticLockException, etc.)
-            LOG.debug("Failed to update last_login for user {} (this is expected during concurrent logins): {}",
-                    user.username, e.getMessage());
         }
 
         return QuarkusSecurityIdentity.builder()

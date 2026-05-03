@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.LocalDateTime;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +16,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -35,6 +34,9 @@ class CommentRateLimitServiceTest {
 
     @Inject
     ExerciseRepository exerciseRepository;
+
+    @Inject
+    EntityManager em;
 
     @Test
     @DisplayName("Should reject null user ID")
@@ -63,9 +65,9 @@ class CommentRateLimitServiceTest {
         comment.content = "Test comment";
         comment.exercise = exercise;
         comment.user = user;
-        comment.created = LocalDateTime.now();
         comment.status = "VISIBLE";
         this.commentRepository.persist(comment);
+        this.em.flush();
 
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.rateLimitService.checkRateLimit(user.id));
@@ -79,16 +81,22 @@ class CommentRateLimitServiceTest {
         final UserEntity user = this.userRepository.findById(1L);
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
 
-        final LocalDateTime tenSecondsAgo = LocalDateTime.now().minusSeconds(10);
         for (int i = 0; i < 200; i++) {
             final var comment = new CommentEntity();
             comment.content = "Bulk comment " + i;
             comment.exercise = exercise;
             comment.user = user;
-            comment.created = tenSecondsAgo;
             comment.status = "VISIBLE";
             this.commentRepository.persist(comment);
         }
+        this.em.flush();
+
+        // Backdate all comments so the 5-second window does not trigger first
+        this.em.createNativeQuery(
+                "UPDATE comments SET created = CURRENT_TIMESTAMP - interval '10 seconds' WHERE user_id = ?1")
+                .setParameter(1, user.id)
+                .executeUpdate();
+        this.em.flush();
 
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.rateLimitService.checkRateLimit(user.id));

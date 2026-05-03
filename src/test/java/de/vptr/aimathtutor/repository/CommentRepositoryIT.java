@@ -21,6 +21,8 @@ public class CommentRepositoryIT {
     ExerciseRepository exerciseRepository;
     @Inject
     UserRepository userRepository;
+    @Inject
+    UserRankRepository userRankRepository;
 
     @Test
     @TestTransaction
@@ -31,6 +33,7 @@ public class CommentRepositoryIT {
         user.password = "pw";
         user.email = "test@example.com";
         user.activated = true;
+        user.rank = this.userRankRepository.findById(1L);
         userRepository.persist(user);
 
         ExerciseEntity ex = new ExerciseEntity();

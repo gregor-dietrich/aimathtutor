@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.service;
 
-import java.time.LocalDateTime;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +61,8 @@ public class AuthService {
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
             LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
-            return AuthResultDto.backendUnavailable("Too many failed attempts. Please try again in " + remaining + " seconds.");
+            return AuthResultDto
+                    .backendUnavailable("Too many failed attempts. Please try again in " + remaining + " seconds.");
         }
 
         try {
@@ -97,13 +96,12 @@ public class AuthService {
                 return AuthResultDto.invalidCredentials();
             }
 
-            // Update last login time and persist the user entity
+            // Persist the user entity if needed
             try {
-                user.lastLogin = LocalDateTime.now();
                 this.userRepository.persist(user);
             } catch (final PersistenceException e) {
-                LOG.warn("Failed to update lastLogin for user {}: {}", user.username, e.getMessage());
-                // continue with login even if lastLogin couldn't be updated
+                LOG.warn("Failed to persist user {} during login: {}", user.username, e.getMessage());
+                // continue with login even if persist failed
             }
 
             try {
@@ -115,7 +113,8 @@ public class AuthService {
                 }
             } catch (final RuntimeException e) {
                 LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
-                return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
+                return AuthResultDto
+                        .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
             }
 
             LOG.trace("User authenticated successfully: {}", username);
@@ -123,7 +122,8 @@ public class AuthService {
 
         } catch (final PersistenceException e) {
             LOG.error("Database error during authentication for user: {}", username, e);
-            return AuthResultDto.backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
+            return AuthResultDto
+                    .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
     }
 

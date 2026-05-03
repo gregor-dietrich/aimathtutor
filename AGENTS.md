@@ -65,7 +65,7 @@ All are enforced in CI (`build` job); run locally before pushing:
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.3-alpine3.23` image on port `55432`).
 - **Schema strategy:**
-  - **Dev/Test:** `drop-and-create`, loads `src/main/resources/sql/import.sql`.
+  - **Dev/Test:** `drop-and-create`, loads `src/main/resources/sql/init.sql`.
   - **Production:** `validate`, expects schema already present; production seed is `sql/init.sql`.
 - **Test accounts (dev/test seed):** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
 - **Password utility:** `make password` generates salt+hash for `init.sql` inserts.

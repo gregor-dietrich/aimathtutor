@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -73,7 +76,12 @@ public class CommentEntity extends PanacheEntityBase {
     @JoinColumn(name = "user_id")
     public UserEntity user;
 
+    @Generated(event = EventType.INSERT)
     public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     // NEW: Threading support
     @ManyToOne(fetch = FetchType.LAZY)
@@ -89,9 +97,6 @@ public class CommentEntity extends PanacheEntityBase {
 
     @Column(name = "session_id", length = 255)
     public String sessionId;
-
-    @Column(name = "edited_at")
-    public LocalDateTime editedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deleted_by")

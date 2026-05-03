@@ -240,7 +240,7 @@ public class CommentsPanel extends VerticalLayout {
         commentDiv.add(header);
 
         // Add edit timestamp if applicable
-        if (comment.editedAt != null) {
+        if (comment.lastEdit != null) {
             final Span editedNote = new Span("(edited)");
             editedNote.addClassName("comment-edited");
             editedNote.getStyle()

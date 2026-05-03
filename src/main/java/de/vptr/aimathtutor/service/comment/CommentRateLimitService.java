@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.service.comment;
 
-import java.time.LocalDateTime;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +34,9 @@ public class CommentRateLimitService {
         if (userId == null) {
             throw new WebApplicationException("User ID is required", Response.Status.BAD_REQUEST);
         }
-        // Get user's last comment timestamp
-        final LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(RATE_LIMIT_WINDOW_SECONDS);
-        final long recentCount = this.commentRepository.countByUserSince(userId, fiveSecondsAgo);
+        // Check 5-second window using DB time to avoid timezone mismatches
+        final long recentCount = this.commentRepository.countByUserSinceInterval(userId,
+                RATE_LIMIT_WINDOW_SECONDS + " seconds");
 
         if (recentCount > 0) {
             LOG.debug("Rate limit exceeded (5-second window): userId={}, recentCount={}", userId, recentCount);
@@ -46,9 +44,8 @@ public class CommentRateLimitService {
                     Response.Status.TOO_MANY_REQUESTS);
         }
 
-        // Check daily limit
-        final LocalDateTime oneDayAgo = LocalDateTime.now().minusDays(1);
-        final long dailyCount = this.commentRepository.countByUserSince(userId, oneDayAgo);
+        // Check daily limit using DB time to avoid timezone mismatches
+        final long dailyCount = this.commentRepository.countByUserSinceInterval(userId, "1 day");
 
         if (dailyCount >= RATE_LIMIT_DAILY) {
             LOG.warn("Daily comment limit exceeded: userId={}, dailyCount={}, limit={}", userId, dailyCount,

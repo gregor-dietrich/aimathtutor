@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,6 +63,10 @@ public class AiConfigEntity extends PanacheEntityBase {
     @Column(name = "description", columnDefinition = "TEXT")
     public String description;
 
+    @Generated(event = EventType.INSERT)
+    public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;
 
@@ -71,7 +78,6 @@ public class AiConfigEntity extends PanacheEntityBase {
      * Default constructor for Hibernate.
      */
     public AiConfigEntity() {
-        this.lastEdit = LocalDateTime.now();
     }
 
     /**
@@ -84,7 +90,6 @@ public class AiConfigEntity extends PanacheEntityBase {
         this.configType = configType;
         this.category = category;
         this.isOptional = false;
-        this.lastEdit = LocalDateTime.now();
     }
 
     /**
@@ -98,7 +103,6 @@ public class AiConfigEntity extends PanacheEntityBase {
         this.category = category;
         this.description = description;
         this.isOptional = isOptional != null ? isOptional : false;
-        this.lastEdit = LocalDateTime.now();
     }
 
     /**

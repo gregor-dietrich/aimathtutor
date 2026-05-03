@@ -28,8 +28,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -197,7 +197,6 @@ public class CommentService {
         }
 
         comment.content = this.sanitizeCommentContent(comment.content);
-        comment.created = LocalDateTime.now();
         this.commentRepository.persist(comment);
         return new CommentViewDto(comment);
     }
@@ -275,7 +274,6 @@ public class CommentService {
         comment.user = author;
         comment.parentComment = parentComment;
         comment.sessionId = dto.sessionId;
-        comment.created = LocalDateTime.now();
         comment.status = "VISIBLE";
         comment.flagsCount = 0;
         this.commentRepository.persist(comment);
@@ -434,7 +432,6 @@ public class CommentService {
         // Update content
         if (dto.content != null && !dto.content.isBlank()) {
             comment.content = this.sanitizeCommentContent(dto.content);
-            comment.editedAt = LocalDateTime.now();
             this.commentRepository.persist(comment);
             LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
                     comment.user != null && comment.user.id.equals(editorId));

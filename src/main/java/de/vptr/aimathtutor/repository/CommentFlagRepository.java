@@ -1,7 +1,8 @@
 package de.vptr.aimathtutor.repository;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
+
+import org.hibernate.exception.ConstraintViolationException;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.CommentFlagEntity;
@@ -9,7 +10,6 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
-import org.hibernate.exception.ConstraintViolationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -70,7 +70,6 @@ public class CommentFlagRepository extends AbstractRepository {
         final var flag = new CommentFlagEntity();
         flag.comment = comment;
         flag.flagger = flagger;
-        flag.created = LocalDateTime.now();
 
         try {
             super.em.persist(flag);

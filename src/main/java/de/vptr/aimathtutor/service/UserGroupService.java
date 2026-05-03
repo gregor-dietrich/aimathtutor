@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -222,7 +221,6 @@ public class UserGroupService {
         final var meta = new UserGroupMetaEntity();
         meta.user = user;
         meta.group = group;
-        meta.created = LocalDateTime.now();
 
         try {
             this.userGroupMetaRepository.persist(meta);

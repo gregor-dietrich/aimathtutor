@@ -22,6 +22,8 @@ public class StudentSessionRepositoryIT {
     ExerciseRepository exerciseRepository;
     @Inject
     UserRepository userRepository;
+    @Inject
+    UserRankRepository userRankRepository;
 
     @Test
     @TestTransaction
@@ -31,6 +33,7 @@ public class StudentSessionRepositoryIT {
         user.password = "pw";
         user.email = "session@example.com";
         user.activated = true;
+        user.rank = this.userRankRepository.findById(1L);
         userRepository.persist(user);
 
         ExerciseEntity ex = new ExerciseEntity();

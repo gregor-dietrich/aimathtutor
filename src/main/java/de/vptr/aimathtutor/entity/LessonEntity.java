@@ -1,6 +1,10 @@
 package de.vptr.aimathtutor.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
@@ -54,6 +58,13 @@ public class LessonEntity extends PanacheEntityBase {
 
     @OneToMany(mappedBy = "lesson")
     public List<ExerciseEntity> exercises;
+
+    @Generated(event = EventType.INSERT)
+    public LocalDateTime created;
+
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     // Helper method to check if this is a root lesson
 

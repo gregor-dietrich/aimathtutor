@@ -3,6 +3,9 @@ package de.vptr.aimathtutor.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -78,10 +81,12 @@ public class UserEntity extends PanacheEntityBase {
     @JsonIgnore
     public String activationKey;
 
+    @Generated(event = EventType.INSERT)
     public LocalDateTime created;
 
-    @Column(name = "last_login")
-    public LocalDateTime lastLogin;
+    @Generated(event = EventType.UPDATE)
+    @Column(name = "last_edit")
+    public LocalDateTime lastEdit;
 
     @Column(name = "user_avatar_emoji", length = 10)
     public String userAvatarEmoji;

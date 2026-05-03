@@ -3,6 +3,9 @@ package de.vptr.aimathtutor.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.vptr.aimathtutor.enums.DifficultyLevel;
@@ -76,8 +79,10 @@ public class ExerciseEntity extends PanacheEntityBase {
     @Column(nullable = false)
     public Boolean commentable = false;
 
+    @Generated(event = EventType.INSERT)
     public LocalDateTime created;
 
+    @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;
 

@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.service;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -311,7 +310,6 @@ public class AiConfigService {
         });
 
         entity.configValue = configValue;
-        entity.lastEdit = LocalDateTime.now();
         entity.lastUpdatedBy = user;
 
         if (existing.isEmpty()) {
@@ -383,7 +381,6 @@ public class AiConfigService {
             });
 
             entity.configValue = update.configValue;
-            entity.lastEdit = LocalDateTime.now();
             entity.lastUpdatedBy = user;
 
             if (existing.isEmpty()) {
@@ -506,8 +503,8 @@ public class AiConfigService {
         }
 
         // Block localhost and loopback
-        if ("localhost".equals(host) || host.equals("127.0.0.1") || host.startsWith("127.")
-                || host.equals("0.0.0.0") || host.equals("::1") || host.equals("0:0:0:0:0:0:0:1")) {
+        if ("localhost".equals(host) || "127.0.0.1".equals(host) || host.startsWith("127.")
+                || "0.0.0.0".equals(host) || "::1".equals(host) || "0:0:0:0:0:0:0:1".equals(host)) {
             throw new IllegalArgumentException(
                     "Loopback addresses are not allowed for key '" + configKey + "'");
         }

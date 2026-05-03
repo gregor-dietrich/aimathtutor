@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,16 +10,16 @@ import com.vaadin.flow.server.VaadinSession;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.security.PasswordHashingService;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -99,10 +98,12 @@ public class UserService {
             throw new ValidationException("Password is required");
         }
         if (password.length() < AppConstants.PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
-            throw new ValidationException("Password must be between " + AppConstants.PASSWORD_MIN_LENGTH + " and " + PASSWORD_MAX_LENGTH + " characters");
+            throw new ValidationException("Password must be between " + AppConstants.PASSWORD_MIN_LENGTH + " and "
+                    + PASSWORD_MAX_LENGTH + " characters");
         }
         if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).+$")) {
-            throw new ValidationException("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+            throw new ValidationException(
+                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
     }
 
@@ -161,9 +162,6 @@ public class UserService {
         // Hash password with bcrypt
         final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
         user.password = hashedPassword;
-
-        user.created = LocalDateTime.now();
-        user.lastLogin = user.created;
 
         // Set rank if provided, otherwise default to rank 1
         if (userDto.rankId != null) {

@@ -1,6 +1,18 @@
 -- PostgreSQL initialization script
 
-BEGIN;
+SET timezone = 'UTC';
+
+DROP TABLE IF EXISTS ai_config CASCADE;
+DROP TABLE IF EXISTS ai_interactions CASCADE;
+DROP TABLE IF EXISTS student_sessions CASCADE;
+DROP TABLE IF EXISTS user_groups_meta CASCADE;
+DROP TABLE IF EXISTS comment_flags CASCADE;
+DROP TABLE IF EXISTS comments CASCADE;
+DROP TABLE IF EXISTS exercises CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS lessons CASCADE;
+DROP TABLE IF EXISTS user_groups CASCADE;
+DROP TABLE IF EXISTS user_ranks CASCADE;
 
 -- --------------------------------------------------------
 
@@ -30,7 +42,9 @@ CREATE TABLE user_ranks (
   user_group_edit BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_add BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_delete BOOLEAN NOT NULL DEFAULT FALSE,
-  user_rank_edit BOOLEAN NOT NULL DEFAULT FALSE
+  user_rank_edit BOOLEAN NOT NULL DEFAULT FALSE,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 --
@@ -62,9 +76,9 @@ CREATE TABLE users (
   activated BOOLEAN NOT NULL DEFAULT FALSE,
   activation_key VARCHAR(255) DEFAULT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  user_avatar_emoji VARCHAR(10) NOT NULL DEFAULT '🧒',
-  tutor_avatar_emoji VARCHAR(10) NOT NULL DEFAULT '🤖'
+  last_edit TIMESTAMP,
+  user_avatar_emoji VARCHAR(10) DEFAULT '🧒',
+  tutor_avatar_emoji VARCHAR(10) DEFAULT '🤖'
 );
 
 --
@@ -90,7 +104,9 @@ CREATE TABLE lessons (
   id BIGSERIAL PRIMARY KEY,
   version BIGINT NOT NULL DEFAULT 0,
   name VARCHAR(255) NOT NULL,
-  parent_id BIGINT DEFAULT NULL
+  parent_id BIGINT DEFAULT NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 -- --------------------------------------------------------
@@ -172,7 +188,7 @@ CREATE TABLE comments (
   status VARCHAR(20) NOT NULL DEFAULT 'VISIBLE',
   flags_count INT NOT NULL DEFAULT 0,
   session_id VARCHAR(255),
-  edited_at TIMESTAMP,
+  last_edit TIMESTAMP,
   deleted_by BIGINT,
   deleted_at TIMESTAMP,
   moderation_reason VARCHAR(500),
@@ -201,6 +217,7 @@ CREATE TABLE comment_flags (
   comment_id BIGINT NOT NULL,
   flagger_id BIGINT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP,
   UNIQUE(comment_id, flagger_id),
   FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
   FOREIGN KEY (flagger_id) REFERENCES users(id) ON DELETE CASCADE
@@ -218,7 +235,9 @@ CREATE INDEX idx_comment_flags_flagger_id ON comment_flags(flagger_id);
 CREATE TABLE user_groups (
   id BIGSERIAL PRIMARY KEY,
   version BIGINT NOT NULL DEFAULT 0,
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 --
@@ -247,6 +266,7 @@ CREATE TABLE user_groups_meta (
   user_id BIGINT NOT NULL,
   group_id BIGINT NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP,
   UNIQUE (user_id, group_id)
 );
 
@@ -278,13 +298,15 @@ CREATE TABLE student_sessions (
   session_id VARCHAR(255) NOT NULL UNIQUE,
   user_id BIGINT NOT NULL,
   exercise_id BIGINT NOT NULL,
-  start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  end_time TIMESTAMP DEFAULT NULL,
+  start_time TIMESTAMP,
+  end_time TIMESTAMP,
   completed BOOLEAN NOT NULL DEFAULT FALSE,
   actions_count INTEGER NOT NULL DEFAULT 0,
   correct_actions INTEGER NOT NULL DEFAULT 0,
   hints_used INTEGER NOT NULL DEFAULT 0,
-  final_expression TEXT
+  final_expression TEXT,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 -- Performance indexes
@@ -312,7 +334,8 @@ CREATE TABLE ai_interactions (
   confidence_score DOUBLE PRECISION DEFAULT NULL,
   action_correct BOOLEAN DEFAULT NULL,
   conversation_context TEXT,
-  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP
 );
 
 -- Performance indexes
@@ -335,7 +358,8 @@ CREATE TABLE ai_config (
   is_optional BOOLEAN NOT NULL DEFAULT false,
   category VARCHAR(50),
   description TEXT,
-  last_edit TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_edit TIMESTAMP,
   last_updated_by BIGINT DEFAULT NULL,
   CONSTRAINT fk_ai_config_user FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -456,4 +480,60 @@ CREATE INDEX comments_exercise_id_idx ON comments (exercise_id);
 CREATE INDEX users_rank_id_idx ON users (rank_id);
 CREATE INDEX ai_config_user_id_idx ON ai_config (last_updated_by);
 
-COMMIT;
+-- Trigger function for automatic last_edit management
+CREATE OR REPLACE FUNCTION update_last_edit() RETURNS TRIGGER LANGUAGE plpgsql AS 'BEGIN NEW.last_edit = clock_timestamp(); RETURN NEW; END';
+
+CREATE OR REPLACE TRIGGER user_ranks_set_last_edit
+    BEFORE UPDATE ON user_ranks
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER users_set_last_edit
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER lessons_set_last_edit
+    BEFORE UPDATE ON lessons
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER exercises_set_last_edit
+    BEFORE UPDATE ON exercises
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER comments_set_last_edit
+    BEFORE UPDATE ON comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER comment_flags_set_last_edit
+    BEFORE UPDATE ON comment_flags
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER user_groups_set_last_edit
+    BEFORE UPDATE ON user_groups
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER user_groups_meta_set_last_edit
+    BEFORE UPDATE ON user_groups_meta
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER student_sessions_set_last_edit
+    BEFORE UPDATE ON student_sessions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER ai_interactions_set_last_edit
+    BEFORE UPDATE ON ai_interactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();
+
+CREATE OR REPLACE TRIGGER ai_config_set_last_edit
+    BEFORE UPDATE ON ai_config
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_edit();

@@ -195,9 +195,6 @@ public class AdminUsersView extends AbstractAdminView {
         this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.created)).setHeader("Created")
                 .setWidth("180px").setFlexGrow(0);
 
-        this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.lastLogin)).setHeader("Last Login")
-                .setWidth("180px").setFlexGrow(0);
-
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);
     }

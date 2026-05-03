@@ -304,6 +304,24 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
+     * Counts comments created by a specific user within a database interval.
+     * Uses {@code CURRENT_TIMESTAMP} from the database to avoid JVM/DB timezone
+     * mismatches.
+     *
+     * @param userId   the user ID to filter by
+     * @param interval a PostgreSQL interval literal (e.g. {@code "5 seconds"},
+     *                 {@code "1 day"})
+     * @return the count of comments created by the user within the interval
+     */
+    public long countByUserSinceInterval(final Long userId, final String interval) {
+        final var q = this.em.createNativeQuery(
+                "SELECT COUNT(*) FROM comments WHERE user_id = ?1 AND created > CURRENT_TIMESTAMP - CAST(?2 AS interval)");
+        q.setParameter(1, userId);
+        q.setParameter(2, interval);
+        return ((Number) q.getSingleResult()).longValue();
+    }
+
+    /**
      * Searches for comments matching the given search term.
      *
      * @param searchTerm the search term to match against comment properties

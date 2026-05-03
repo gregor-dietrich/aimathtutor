@@ -15,12 +15,12 @@ public class CommentViewDto {
     public Long userId;
     public String username;
     public LocalDateTime created;
+    public LocalDateTime lastEdit;
 
     public Long parentId;
     public String status; // VISIBLE, HIDDEN, DELETED
     public Integer flagsCount;
     public String sessionId;
-    public LocalDateTime editedAt;
     public Long authorId;
 
     public CommentViewDto() {
@@ -33,10 +33,10 @@ public class CommentViewDto {
         this.id = entity.id;
         this.content = entity.content;
         this.created = entity.created;
+        this.lastEdit = entity.lastEdit;
         this.status = entity.status != null ? entity.status : "VISIBLE";
         this.flagsCount = entity.flagsCount != null ? entity.flagsCount : 0;
         this.sessionId = entity.sessionId;
-        this.editedAt = entity.editedAt;
 
         if (entity.exercise != null) {
             this.exerciseId = entity.exercise.id;
