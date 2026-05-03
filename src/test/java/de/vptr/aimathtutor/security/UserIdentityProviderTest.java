@@ -106,7 +106,7 @@ class UserIdentityProviderTest {
     @DisplayName("Should reject banned user")
     @TestTransaction
     void shouldRejectBannedUser() {
-        final UserEntity user = this.userRepository.findById(3L); // student1
+        final UserEntity user = this.userRepository.findByUsername("student1");
         user.banned = true;
 
         final var ex = assertThrows(AuthenticationFailedException.class,
@@ -118,7 +118,7 @@ class UserIdentityProviderTest {
     @DisplayName("Should reject inactive user")
     @TestTransaction
     void shouldRejectInactiveUser() {
-        final UserEntity user = this.userRepository.findById(4L); // student2
+        final UserEntity user = this.userRepository.findByUsername("student2");
         user.activated = false;
 
         final var ex = assertThrows(AuthenticationFailedException.class,

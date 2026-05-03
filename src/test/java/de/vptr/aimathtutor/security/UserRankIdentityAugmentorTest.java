@@ -114,6 +114,14 @@ class UserRankIdentityAugmentorTest {
         assertTrue(resultRoles.contains("lesson:edit"));
         assertFalse(resultRoles.stream().anyMatch(r -> r == null || r.isBlank()));
 
+        assertFalse(resultRoles.contains(" Admin:View "),
+                "Raw role ' Admin:View ' should be normalized to 'admin:view'");
+        assertFalse(resultRoles.contains("  EXERCISE:ADD  "),
+                "Raw role '  EXERCISE:ADD  ' should be normalized to 'exercise:add'");
+
+        assertTrue(resultRoles.contains("lesson:edit"),
+                "Normalized role should be present");
+
         assertTrue(resultRoles.contains("exercise:delete"),
                 "Augmented identity should include rank roles beyond the input set");
     }

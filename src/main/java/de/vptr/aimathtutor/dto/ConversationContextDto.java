@@ -33,13 +33,16 @@ public class ConversationContextDto {
             final List<ChatMessageDto> recentQuestions,
             final List<ChatMessageDto> recentAiMessages) {
         if (recentActions != null) {
-            this.recentActions.addAll(recentActions);
+            final int start = Math.max(0, recentActions.size() - 5);
+            this.recentActions.addAll(recentActions.subList(start, recentActions.size()));
         }
         if (recentQuestions != null) {
-            this.recentQuestions.addAll(recentQuestions);
+            final int start = Math.max(0, recentQuestions.size() - 5);
+            this.recentQuestions.addAll(recentQuestions.subList(start, recentQuestions.size()));
         }
         if (recentAiMessages != null) {
-            this.recentAiMessages.addAll(recentAiMessages);
+            final int start = Math.max(0, recentAiMessages.size() - 5);
+            this.recentAiMessages.addAll(recentAiMessages.subList(start, recentAiMessages.size()));
         }
     }
 
