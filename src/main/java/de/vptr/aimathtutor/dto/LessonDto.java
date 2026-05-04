@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
@@ -16,7 +17,7 @@ public class LessonDto {
 
     public Long id;
 
-    @Size(min = 1, max = 255, message = "Name must be between 1 and 255 characters when provided")
+    @Size(min = AppConstants.LESSON_NAME_MIN_LENGTH, max = AppConstants.LESSON_NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
     public String name;
 
     // Optional parentId for setting parent lesson
