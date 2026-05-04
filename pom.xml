@@ -27,6 +27,7 @@
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <dependency-check-plugin.version>12.2.1</dependency-check-plugin.version>
+        <html-sanitizer.version>20260313.1</html-sanitizer.version>
         <license-plugin.version>2.7.1</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
         <quarkus.platform.version>3.33.1.1</quarkus.platform.version>
@@ -165,6 +166,13 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-elytron-security-common</artifactId>
+        </dependency>
+
+        <!-- OWASP Java HTML Sanitizer for safe stripping of HTML in user content -->
+        <dependency>
+            <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+            <artifactId>owasp-java-html-sanitizer</artifactId>
+            <version>${html-sanitizer.version}</version>
         </dependency>
     </dependencies>
 

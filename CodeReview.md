@@ -2,7 +2,7 @@
 
 ## Recommended Implementation Order
 
-1. **Phase 1:** Critical/Security Issues — address these first, one by one
+1. **Phase 1:** ~~Critical/Security Issues — address these first, one by one~~
 2. **Phase 2:** High-Priority Bugs & Architectural Issues — start with UI thread safety (H2) and auth annotations (H3)
 3. **Phase 3:** Moderate Code Quality & Duplication Issues, Pt. 1 — tackle M1–M6 (extraction/refactoring) as a dedicated refactoring sprint
 4. **Phase 4:** Moderate Code Quality & Duplication Issues, Pt. 2 — tackle M7-M20
@@ -10,16 +10,6 @@
 6. **Phase 6:** Low-Priority / Cosmetic — batch low-priority items
 
 ---
-
-## Phase 1: Critical/Security Issues (Immediate)
-
-| #   | Issue                                                                                        | Location                                                               | Action                                                              |
-| --- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| S1  | **Invalid bcrypt dummy hash** breaks timing-attack mitigation                                | `UserIdentityProvider.java:77`                                         | Replace with valid 60-char bcrypt hash                              |
-| S2  | **No session fixation protection** — session ID not regenerated on login                     | `AuthService.java:109-113`                                             | Invalidate old HTTP session, create new one after auth              |
-| S3  | **Comment XSS sanitizer** uses naive regex `<[^>]*>`                                         | `CommentService.java:297-302`                                          | Replace with OWASP HTML Sanitizer or rely on Vaadin auto-escaping   |
-| S4  | **User impersonation in `createComment`** — caller can set arbitrary `comment.user`          | `CommentService.java:164-201`                                          | Always derive user from `currentUsername`, never trust entity input |
-| S5  | **Missing error notifications** in async AI feedback handlers — user sees nothing on failure | `MathWorkspaceView.java:396-401`, `ExerciseWorkspaceView.java:553-558` | Add `Notification.show()` in `exceptionally` handlers               |
 
 ## Phase 2: High-Priority Bugs & Architectural Issues
 

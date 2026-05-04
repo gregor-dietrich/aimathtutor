@@ -25,6 +25,10 @@ import jakarta.transaction.Transactional;
 @ApplicationScoped
 public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAuthenticationRequest> {
 
+    // Valid 60-char bcrypt hash (cost 10) used to keep response time constant
+    // when the username is not found, so attackers cannot enumerate users by timing.
+    private static final String DUMMY_BCRYPT_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
     @Inject
     ManagedExecutor executor;
 
@@ -73,8 +77,7 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
         final boolean passwordValid;
         if (user == null) {
             // Perform dummy verification to maintain constant-time response
-            this.passwordHashingService.verifyPassword(password,
-                    "$2a$10$zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+            this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
             passwordValid = false;
         } else {
             passwordValid = this.passwordHashingService.verifyPassword(password, user.password);

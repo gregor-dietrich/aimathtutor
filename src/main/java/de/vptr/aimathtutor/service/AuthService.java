@@ -3,6 +3,8 @@ package de.vptr.aimathtutor.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.server.VaadinRequest;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.AuthResultDto;
@@ -106,6 +108,12 @@ public class AuthService {
 
             try {
                 this.loginAttemptService.recordSuccessfulLogin(usernameKey);
+                // Regenerate session ID to defeat session-fixation attacks where an
+                // attacker pre-sets the victim's session ID before login.
+                final VaadinRequest request = VaadinRequest.getCurrent();
+                if (request != null) {
+                    VaadinService.reinitializeSession(request);
+                }
                 final var session = VaadinSession.getCurrent();
                 if (session != null) {
                     session.setAttribute(USERNAME_KEY, user.username);
@@ -142,6 +150,13 @@ public class AuthService {
         }
         session.setAttribute(USERNAME_KEY, null);
         session.setAttribute(AUTHENTICATED_KEY, false);
+
+        // Regenerate session ID after logout so a leaked pre-logout ID cannot
+        // be reused by an attacker on a future login from the same browser.
+        final VaadinRequest request = VaadinRequest.getCurrent();
+        if (request != null) {
+            VaadinService.reinitializeSession(request);
+        }
 
         LOG.trace("User logged out");
     }
