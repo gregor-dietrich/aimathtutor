@@ -106,20 +106,17 @@ public class AiConfigService {
             return defaultValue;
         }
 
-        // Check cache first
-        if (this.configCache.containsKey(key)) {
-            return this.configCache.get(key);
+        final String cached = this.configCache.get(key);
+        if (cached != null) {
+            return cached;
         }
 
-        // Query database
-        final Optional<AiConfigEntity> entity = this.aiConfigRepository.findByConfigKey(key);
-        if (entity.isPresent()) {
-            final String value = entity.get().configValue;
-            this.configCache.put(key, value);
-            return value;
-        }
-
-        return defaultValue;
+        return this.aiConfigRepository.findByConfigKey(key)
+                .map(entity -> {
+                    this.configCache.put(entity.configKey, entity.configValue);
+                    return entity.configValue;
+                })
+                .orElse(defaultValue);
     }
 
     /**

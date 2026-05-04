@@ -58,11 +58,20 @@ public class AuthService {
         }
 
         final String usernameKey = username.toLowerCase().trim();
+        final String clientIp = this.extractClientIp();
 
-        // Check login attempt throttling
+        // Check login attempt throttling by username
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
             LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
+            return AuthResultDto
+                    .backendUnavailable("Too many failed attempts. Try again later.");
+        }
+
+        // Check login attempt throttling by IP
+        if (clientIp != null && this.loginAttemptService.isLockedOut(clientIp)) {
+            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientIp);
+            LOG.warn("Authentication throttled for IP: {} ({}s remaining)", clientIp, remaining);
             return AuthResultDto
                     .backendUnavailable("Too many failed attempts. Try again later.");
         }
@@ -74,6 +83,9 @@ public class AuthService {
             if (user == null) {
                 LOG.trace("Authentication failed - user not found: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -81,6 +93,9 @@ public class AuthService {
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -88,6 +103,9 @@ public class AuthService {
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -95,6 +113,9 @@ public class AuthService {
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -108,6 +129,9 @@ public class AuthService {
 
             try {
                 this.loginAttemptService.recordSuccessfulLogin(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordSuccessfulLogin(clientIp);
+                }
                 // Regenerate session ID to defeat session-fixation attacks where an
                 // attacker pre-sets the victim's session ID before login.
                 final VaadinRequest request = VaadinRequest.getCurrent();
@@ -133,6 +157,18 @@ public class AuthService {
             return AuthResultDto
                     .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
+    }
+
+    private String extractClientIp() {
+        final VaadinRequest request = VaadinRequest.getCurrent();
+        if (request == null) {
+            return null;
+        }
+        final String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     /**

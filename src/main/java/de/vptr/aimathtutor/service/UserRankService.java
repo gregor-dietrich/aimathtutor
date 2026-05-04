@@ -89,6 +89,7 @@ public class UserRankService {
      * @param name the name of the rank to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
+    @Transactional
     public Optional<UserRankViewDto> findByName(final String name) {
         return this.userRankRepository.findByName(name)
                 .map(UserRankViewDto::new);

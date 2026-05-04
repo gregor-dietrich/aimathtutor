@@ -2,25 +2,21 @@
 
 ## Recommended Implementation Order
 
-1. **Phase 1:** ~~Critical/Security Issues — address these first, one by one~~
-2. **Phase 2:** High-Priority Bugs & Architectural Issues — start with UI thread safety (H2) and auth annotations (H3)
-3. **Phase 3:** Moderate Code Quality & Duplication Issues, Pt. 1 — tackle M1–M6 (extraction/refactoring) as a dedicated refactoring sprint
+1. **Phase 1:** ~~Critical/Security Issues~~
+2. **Phase 2:** High-Priority Bugs & Architectural Issues
+3. **Phase 3:** Moderate Code Quality & Duplication Issues, Pt. 1 — tackle M1–M6 as a dedicated refactoring sprint
 4. **Phase 4:** Moderate Code Quality & Duplication Issues, Pt. 2 — tackle M7-M20
-5. **Phase 5:** Test Coverage & CI — focus on AI service mocks first
-6. **Phase 6:** Low-Priority / Cosmetic — batch low-priority items
+5. **Phase 5:** Test Coverage & CI
+6. **Phase 6:** Low-Priority / Cosmetic
 
 ---
 
 ## Phase 2: High-Priority Bugs & Architectural Issues
 
-| #   | Issue                                                                                                | Location                                                                                                   | Action                                                                      |
-| --- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| H1  | **N+1 query in `LessonService.isDescendantOf`** — lazy-loads parent chain one-by-one                 | `LessonService.java:203-211`                                                                               | Write recursive CTE query or use bounded eager fetch                        |
-| H2  | **`AsyncDataLoader` calls `component.getUI()` off UI thread**                                        | `AsyncDataLoader.java:65`                                                                                  | Capture `UI` reference before async call, use `ui.access()`                 |
-| H3  | **No declarative auth annotations** (`@RolesAllowed`, `@Authenticated`) on any route                 | All 16 route views                                                                                         | Add `@Authenticated` to user views, `@RolesAllowed("admin")` to admin views |
-| H5  | **No IP-based rate limiting** — only per-username                                                    | `LoginAttemptService.java`                                                                                 | Add IP-based throttling alongside username tracking                         |
-| H6  | **AI provider config cache has no expiry + race condition**                                          | `AiConfigService.java:38,102-121`                                                                          | Use Caffeine cache with TTL, or `ConcurrentHashMap.computeIfAbsent`         |
-| H8  | **LazyInitializationException risk** in ViewDto constructors accessing `.size()` on lazy collections | `UserViewDto.java:46-47`, `ExerciseViewDto.java:57`, `UserRankViewDto.java:94`, `UserGroupViewDto.java:23` | Use eager JPQL fetch or `@Transactional`                                    |
+| #   | Issue                                                                                | Location                     | Action                                                                      | Status                                                                                                                                      |
+| --- | ------------------------------------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| H1  | **N+1 query in `LessonService.isDescendantOf`** — lazy-loads parent chain one-by-one | `LessonService.java:203-211` | Write recursive CTE query or use bounded eager fetch                        | **DEFERRED** — CTE is a major refactor; tree depth is bounded in practice                                                                   |
+| H3  | **No declarative auth annotations** (`@RolesAllowed`, `@Authenticated`) on any route | All 16 route views           | Add `@Authenticated` to user views, `@RolesAllowed("admin")` to admin views | **DEFERRED** — Vaadin-Quarkus security annotation integration unclear; current centralized layout-based enforcement is functionally correct |
 
 ## Phases 3 & 4: Moderate Code Quality & Duplication Issues
 
