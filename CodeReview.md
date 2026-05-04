@@ -2,16 +2,16 @@
 
 ## Recommended Implementation Order
 
-1. **Phase 1:** Critical security issues — address these first, one by one
-2. **Phase 2:** High-priority bugs — start with UI thread safety (H2) and auth annotations (H3)
-3. **Phase 3:** Code duplication and quality — tackle M1–M6 (extraction/refactoring) as a dedicated refactoring sprint
-4. **Phase 4:** Code duplication and quality — tackle M7-M20
-5. **Phase 5:** Test coverage — focus on AI service mocks first
-6. **Phase 6:** Polish Part 2 — batch low-priority items
+1. **Phase 1:** Critical/Security Issues — address these first, one by one
+2. **Phase 2:** High-Priority Bugs & Architectural Issues — start with UI thread safety (H2) and auth annotations (H3)
+3. **Phase 3:** Moderate Code Quality & Duplication Issues, Pt. 1 — tackle M1–M6 (extraction/refactoring) as a dedicated refactoring sprint
+4. **Phase 4:** Moderate Code Quality & Duplication Issues, Pt. 2 — tackle M7-M20
+5. **Phase 5:** Test Coverage & CI — focus on AI service mocks first
+6. **Phase 6:** Low-Priority / Cosmetic — batch low-priority items
 
 ---
 
-## Phase 1: Critical Security Fixes (Immediate)
+## Phase 1: Critical/Security Issues (Immediate)
 
 | #   | Issue                                                                                        | Location                                                               | Action                                                              |
 | --- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -23,19 +23,16 @@
 
 ## Phase 2: High-Priority Bugs & Architectural Issues
 
-| #   | Issue                                                                                                | Location                                                                                                           | Action                                                                      |
-| --- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| H1  | **N+1 query in `LessonService.isDescendantOf`** — lazy-loads parent chain one-by-one                 | `LessonService.java:203-211`                                                                                       | Write recursive CTE query or use bounded eager fetch                        |
-| H2  | **`AsyncDataLoader` calls `component.getUI()` off UI thread**                                        | `AsyncDataLoader.java:65`                                                                                          | Capture `UI` reference before async call, use `ui.access()`                 |
-| H3  | **No declarative auth annotations** (`@RolesAllowed`, `@Authenticated`) on any route                 | All 16 route views                                                                                                 | Add `@Authenticated` to user views, `@RolesAllowed("admin")` to admin views |
-| H4  | **Lockout time leaked to attacker** — exact remaining seconds in error message                       | `AuthService.java:64-65`                                                                                           | Return generic "Too many failed attempts. Try again later."                 |
-| H5  | **No IP-based rate limiting** — only per-username                                                    | `LoginAttemptService.java`                                                                                         | Add IP-based throttling alongside username tracking                         |
-| H6  | **AI provider config cache has no expiry + race condition**                                          | `AiConfigService.java:38,102-121`                                                                                  | Use Caffeine cache with TTL, or `ConcurrentHashMap.computeIfAbsent`         |
-| H7  | **`VaadinSession.getCurrent()` can be null** — used directly in AdminCommentsView                    | `AdminCommentsView.java:373`                                                                                       | Replace with `authService.getUsername()`                                    |
-| H8  | **LazyInitializationException risk** in ViewDto constructors accessing `.size()` on lazy collections | `UserViewDto.java:46-47`, `ExerciseViewDto.java:57`, `UserRankViewDto.java:94`, `UserGroupViewDto.java:23`         | Use eager JPQL fetch or `@Transactional`                                    |
-| H9  | **`Integer` wrappers for DB `NOT NULL DEFAULT 0` columns** — risk of NPE                             | `StudentSessionEntity.java:99-106`, `CommentEntity.java:95`, `UserEntity.java:74-78`, `UserRankEntity.java:48-109` | Change to primitive `int`/`boolean`                                         |
+| #   | Issue                                                                                                | Location                                                                                                   | Action                                                                      |
+| --- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| H1  | **N+1 query in `LessonService.isDescendantOf`** — lazy-loads parent chain one-by-one                 | `LessonService.java:203-211`                                                                               | Write recursive CTE query or use bounded eager fetch                        |
+| H2  | **`AsyncDataLoader` calls `component.getUI()` off UI thread**                                        | `AsyncDataLoader.java:65`                                                                                  | Capture `UI` reference before async call, use `ui.access()`                 |
+| H3  | **No declarative auth annotations** (`@RolesAllowed`, `@Authenticated`) on any route                 | All 16 route views                                                                                         | Add `@Authenticated` to user views, `@RolesAllowed("admin")` to admin views |
+| H5  | **No IP-based rate limiting** — only per-username                                                    | `LoginAttemptService.java`                                                                                 | Add IP-based throttling alongside username tracking                         |
+| H6  | **AI provider config cache has no expiry + race condition**                                          | `AiConfigService.java:38,102-121`                                                                          | Use Caffeine cache with TTL, or `ConcurrentHashMap.computeIfAbsent`         |
+| H8  | **LazyInitializationException risk** in ViewDto constructors accessing `.size()` on lazy collections | `UserViewDto.java:46-47`, `ExerciseViewDto.java:57`, `UserRankViewDto.java:94`, `UserGroupViewDto.java:23` | Use eager JPQL fetch or `@Transactional`                                    |
 
-## Phase 3: Moderate Code Quality & Duplication Issues
+## Phases 3 & 4: Moderate Code Quality & Duplication Issues
 
 | #   | Issue                                                                                                                          | Location                                                                                                         | Action                                                                                                          |
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -46,21 +43,14 @@
 | M5  | **7x duplicated permission column pattern** in AdminUserRanksView (248-line method)                                            | `AdminUserRanksView.java:145-393`                                                                                | Extract `createPermissionColumn(String name, Function<BooleanGetter>)`                                          |
 | M6  | **Duplicated topbar code** between MainLayout and AdminMainLayout                                                              | `MainLayout.java:191-252`, `AdminMainLayout.java:253-295`                                                        | Extract shared `TopBarComponent` or utility                                                                     |
 | M7  | **Error handling inconsistency across AI services** — different exception types, missing safety checks                         | All three AI services                                                                                            | Standardize: custom `AiProviderException` with HTTP status, add truncation/completeness checks to Gemini/Ollama |
-| M8  | **`ErrorMessageUtil` brittle manual JSON parsing**                                                                             | `ErrorMessageUtil.java:26-34`                                                                                    | Replace with Jackson `ObjectMapper`                                                                             |
 | M9  | **Sync service calls blocking UI thread** across multiple views                                                                | LessonsView, UserSettingsView, ExerciseWorkspaceView, AdminExercisesView, AdminSessionsView, AdminUserGroupsView | Wrap in `AsyncDataLoader` or `CompletableFuture.supplyAsync`                                                    |
 | M10 | **DB auth query on every navigation** — `isAuthenticated()` hits DB every `beforeEnter`                                        | `AuthService.java:154-174`                                                                                       | Cache auth result with short TTL or use session-based check                                                     |
 | M11 | **TOCTOU race in `CommentFlagRepository.createFlag`**                                                                          | `CommentFlagRepository.java:60-88`                                                                               | Use DB unique constraint + catch `ConstraintViolationException` for clean response                              |
-| M12 | **Missing `@Transactional`** on `UserService.findActiveUsers` and `LessonService.findByParentId`                               | `UserService.java:352`, `LessonService.java:70`                                                                  | Add `@Transactional`                                                                                            |
 | M13 | **Config key magic strings** throughout AdminConfigView                                                                        | `AdminConfigView.java`                                                                                           | Extract to `AiConfigKeys` constants class                                                                       |
-| M14 | **`ConversationContextDto` magic number 5** for max context items                                                              | `ConversationContextDto.java:36-46,67,80,94`                                                                     | Extract to `MAX_CONTEXT_ITEMS = 5`                                                                              |
 | M15 | **`DifficultyLevel.fromString()` returns null** on unrecognized value                                                          | `DifficultyLevel.java:38-48`                                                                                     | Return `Optional` or throw `IllegalArgumentException`                                                           |
-| M16 | **Duplicate message objects in ExerciseWorkspaceView AI feedback**                                                             | `ExerciseWorkspaceView.java:533-538`                                                                             | Use single `ChatMessageDto` instance                                                                            |
 | M17 | **Inconsistent `initialized` flag pattern** across views                                                                       | Multiple                                                                                                         | Standardize: always use `initialized` flag for views that rebuild on navigation                                 |
-| M18 | **`isModelInstalled` uses fragile substring matching** on JSON response                                                        | `OllamaService.java:188-208`                                                                                     | Parse JSON and check model list properly                                                                        |
-| M19 | **`CommentViewDto.toCommentDto()` is lossy** — drops status, parentId, sessionId                                               | `CommentViewDto.java:60-66`                                                                                      | Either add missing fields or document the intentional lossiness                                                 |
-| M20 | **Missing NOT NULL on `CommentEntity.content` `@Column`**                                                                      | `CommentEntity.java:67`                                                                                          | Add `nullable = false` to match DB schema                                                                       |
 
-## Phase 4: Test Coverage & CI
+## Phase 5: Test Coverage & CI
 
 | #   | Issue                                                                                                                                                    | Action                                                                              |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -73,24 +63,11 @@
 | T7  | **CI security job lacks Maven cache**                                                                                                                    | Add `actions/cache@v4` to security job                                              |
 | T8  | **No `.env.example` template** in repository                                                                                                             | Create one documenting all required env vars                                        |
 
-## Phase 5: Low-Priority / Cosmetic
+## Phase 6: Low-Priority / Cosmetic
 
-| #   | Issue                                                                                      | Action                                                                    |
-| --- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| L1  | `LessonViewDto` catches `LazyInitializationException` — code smell                         | Use eager JPQL fetch instead                                              |
-| L2  | `PasswordUtility` instantiates CDI bean directly (`new PasswordHashingService()`)          | Inject or use `CDI.current().select()`                                    |
-| L3  | Linear equation coefficient display bug (`1x` instead of `x`)                              | `ProblemGeneratorService.java:78-83`                                      |
-| L4  | No session timeout configured                                                              | Add `quarkus.http.session-timeout=30M`                                    |
-| L5  | `CommentEntity.flagsCount` uses `Integer` instead of `int`                                 | Change to primitive                                                       |
-| L6  | `UserDto` password validation message hardcodes length                                     | Use `AppConstants.PASSWORD_MIN_LENGTH` in message                         |
-| L7  | Column header "Lessons" for `exercisesCount` in AdminLessonsView                           | Fix labeling                                                              |
-| L8  | `GeminiResponseDto.SafetyRating.lesson` likely misnamed field                              | Rename or remove                                                          |
-| L9  | `AiFeedbackDto` default confidence 1.0 is unrealistic                                      | Change default to 0.5 or null                                             |
-| L10 | `ChatMessageDto`/`GraspableEventDto` default `LocalDateTime.now()` in no-arg constructor   | Remove auto-default, let caller set timestamp                             |
-| L11 | `Dockerfile.ubuntu`/`Dockerfile.alpine` missing `-XX:+EnableDynamicAgentLoading`           | Add to `JAVA_OPTS_APPEND`                                                 |
-| L12 | `AiConfigEntity` has duplicate unique constraint on `configKey`                            | Remove one (keep `@Column(unique=true)` or `@UniqueConstraint`, not both) |
-| L13 | `OPENAI_ORG_ID` default empty string sends header always                                   | Default to null, conditionally include header                             |
-| L14 | `OllamaService.httpClient` not closed on `@PreDestroy`                                     | Add cleanup method                                                        |
-| L15 | `CommentService.createComment(entity,String)` doesn't fire CDI event for real-time updates | Fire `commentCreatedEvent`                                                |
+| #   | Issue                                                              | Action                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L1  | `LessonViewDto` catches `LazyInitializationException` — code smell | Use eager JPQL fetch instead                                                                                                                                                        |
+| L4  | No session timeout configured                                      | ~~Add `quarkus.http.session-timeout=30M`~~ — **NOTE:** suggested config property does not exist in Quarkus 3.33, need to find another way to handle this, or can we leave it as is? |
 
 ---

@@ -72,10 +72,10 @@ public class UserEntity extends PanacheEntityBase {
     public String email;
 
     @Column(nullable = false)
-    public Boolean banned = false;
+    public boolean banned = false;
 
     @Column(nullable = false)
-    public Boolean activated = false;
+    public boolean activated = false;
 
     @Column(name = "activation_key")
     @JsonIgnore

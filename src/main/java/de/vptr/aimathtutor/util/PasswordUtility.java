@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.security.PasswordHashingService;
+import jakarta.enterprise.inject.spi.CDI;
 
 /**
  * Small CLI utility to generate a bcrypt hash for a password using the
@@ -13,7 +14,15 @@ import de.vptr.aimathtutor.security.PasswordHashingService;
 public final class PasswordUtility {
 
     private static final Logger LOG = LoggerFactory.getLogger(PasswordUtility.class);
-    private static final PasswordHashingService hashingService = new PasswordHashingService();
+
+    private static PasswordHashingService getHashingService() {
+        try {
+            return CDI.current().select(PasswordHashingService.class).get();
+        } catch (final IllegalStateException e) {
+            // CDI not available in CLI context — instantiate directly
+            return new PasswordHashingService();
+        }
+    }
 
     private PasswordUtility() {
     }
@@ -45,7 +54,7 @@ public final class PasswordUtility {
     private static void handleGenerate(final String[] args) {
         final var password = args[1];
         try {
-            final var hash = hashingService.hashPassword(password);
+            final var hash = getHashingService().hashPassword(password);
 
             System.out.println("hash=" + hash);
             System.out.println();

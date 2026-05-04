@@ -38,7 +38,6 @@ public class GraspableEventDto {
     public Boolean isComplete; // Whether this action resulted in problem completion
 
     public GraspableEventDto() {
-        this.timestamp = LocalDateTime.now();
     }
 
     /**

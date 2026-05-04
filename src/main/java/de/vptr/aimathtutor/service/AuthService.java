@@ -62,7 +62,7 @@ public class AuthService {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
             LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
             return AuthResultDto
-                    .backendUnavailable("Too many failed attempts. Please try again in " + remaining + " seconds.");
+                    .backendUnavailable("Too many failed attempts. Try again later.");
         }
 
         try {
@@ -76,14 +76,14 @@ public class AuthService {
             }
 
             // Check if user is banned
-            if (user.banned != null && user.banned) {
+            if (user.banned) {
                 LOG.trace("Authentication failed - user is banned: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Check if user is activated
-            if (user.activated == null || !user.activated) {
+            if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 return AuthResultDto.invalidCredentials();
@@ -169,7 +169,7 @@ public class AuthService {
         }
 
         final var user = this.userRepository.findByUsername(username);
-        final var result = user != null && Boolean.TRUE.equals(user.activated) && !Boolean.TRUE.equals(user.banned);
+        final var result = user != null && user.activated && !user.banned;
         LOG.trace("Checking authentication status: {}", result);
         return result;
     }

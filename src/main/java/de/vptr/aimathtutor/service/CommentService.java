@@ -178,13 +178,13 @@ public class CommentService {
         }
 
         // Validate exercise is published
-        if (existingExercise.published == null || !existingExercise.published) {
+        if (!existingExercise.published) {
             throw new WebApplicationException("Cannot add comment to an unpublished exercise.",
                     Response.Status.BAD_REQUEST);
         }
 
         // Validate exercise allows comments
-        if (existingExercise.commentable == null || !existingExercise.commentable) {
+        if (!existingExercise.commentable) {
             throw new WebApplicationException("Comments are not allowed on this exercise.",
                     Response.Status.BAD_REQUEST);
         }
@@ -199,6 +199,14 @@ public class CommentService {
 
         comment.content = this.sanitizeCommentContent(comment.content);
         this.commentRepository.persist(comment);
+
+        // Fire CDI event for real-time updates
+        if (comment.user != null) {
+            this.commentCreatedEvent.fire(new CommentCreatedEvent(
+                    comment.id, comment.exercise.id, comment.user.id, comment.user.username,
+                    comment.content, comment.created));
+        }
+
         return new CommentViewDto(comment);
     }
 
@@ -229,13 +237,13 @@ public class CommentService {
                     authorId);
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
-        if (!Boolean.TRUE.equals(exercise.published)) {
+        if (!exercise.published) {
             LOG.warn("Comment creation failed: exercise not published for exerciseId={}, authorId={}", dto.exerciseId,
                     authorId);
             throw new WebApplicationException("Cannot comment on unpublished exercise",
                     Response.Status.BAD_REQUEST);
         }
-        if (!Boolean.TRUE.equals(exercise.commentable)) {
+        if (!exercise.commentable) {
             LOG.warn("Comment creation failed: comments not allowed for exerciseId={}, authorId={}", dto.exerciseId,
                     authorId);
             throw new WebApplicationException("Comments not allowed on this exercise",

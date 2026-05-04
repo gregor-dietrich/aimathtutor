@@ -67,7 +67,7 @@ public class CommentEntity extends PanacheEntityBase {
     @Version
     public Long version;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     @NotBlank
     public String content;
 
@@ -97,7 +97,7 @@ public class CommentEntity extends PanacheEntityBase {
     public CommentStatus status = CommentStatus.VISIBLE; // VISIBLE, HIDDEN, DELETED
 
     @Column(name = "flags_count")
-    public Integer flagsCount = 0;
+    public int flagsCount = 0;
 
     @Column(name = "session_id", length = 255)
     public String sessionId;

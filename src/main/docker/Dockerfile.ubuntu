@@ -101,7 +101,7 @@ USER 185
 WORKDIR /deployments
 
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-ENV JAVA_OPTS_APPEND="--add-opens java.base/java.lang=ALL-UNNAMED"
+ENV JAVA_OPTS_APPEND="--add-opens java.base/java.lang=ALL-UNNAMED -XX:+EnableDynamicAgentLoading"
 
 ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
 CMD []

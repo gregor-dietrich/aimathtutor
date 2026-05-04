@@ -215,7 +215,7 @@ public class AdminLessonsView extends AbstractAdminView {
                 .setFlexGrow(0);
 
         this.treeGrid.addColumn(lesson -> lesson.exercisesCount)
-                .setHeader("Lessons")
+                .setHeader("Exercises")
                 .setFlexGrow(0);
 
         // Add action column

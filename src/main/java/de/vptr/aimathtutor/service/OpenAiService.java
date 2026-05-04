@@ -96,7 +96,7 @@ public class OpenAiService {
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
         final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
         final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
-        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
+        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", null);
 
         if (model == null || model.isBlank()) {
             throw new IllegalStateException("OpenAI model not configured. Please configure via admin settings.");
@@ -202,7 +202,7 @@ public class OpenAiService {
         final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", "https://api.openai.com/v1");
         final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
         final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
-        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", "");
+        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", null);
 
         try {
             final String systemPrompt = "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";

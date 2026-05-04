@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
+import de.vptr.aimathtutor.dto.OllamaTagsResponseDto;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -199,9 +200,12 @@ public class OllamaService {
                     return false;
                 }
 
-                final String body = response.readEntity(String.class);
-                // Simple check if model name appears in response
-                return body.contains(modelName);
+                final var tagsResponse = response.readEntity(OllamaTagsResponseDto.class);
+                if (tagsResponse.models != null) {
+                    return tagsResponse.models.stream()
+                            .anyMatch(m -> modelName.equals(m.name) || modelName.equals(m.model));
+                }
+                return false;
             }
 
         } catch (final RuntimeException e) {

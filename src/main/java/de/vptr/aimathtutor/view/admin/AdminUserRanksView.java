@@ -167,7 +167,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var adminViewIcon = rank.adminView != null && rank.adminView ? LineAwesomeIcon.CHECK_SOLID.create()
+            final var adminViewIcon = rank.adminView ? LineAwesomeIcon.CHECK_SOLID.create()
                     : LineAwesomeIcon.BAN_SOLID.create();
             adminViewIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (adminViewIcon instanceof SvgIcon) {
@@ -185,7 +185,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.exerciseAdd != null && rank.exerciseAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.exerciseAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
@@ -193,7 +193,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Exercises");
             }
 
-            final var editIcon = rank.exerciseEdit != null && rank.exerciseEdit ? LineAwesomeIcon.EDIT_SOLID.create()
+            final var editIcon = rank.exerciseEdit ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
@@ -201,7 +201,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Exercises");
             }
 
-            final var deleteIcon = rank.exerciseDelete != null && rank.exerciseDelete
+            final var deleteIcon = rank.exerciseDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -220,7 +220,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.lessonAdd != null && rank.lessonAdd
+            final var addIcon = rank.lessonAdd
                     ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -229,7 +229,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Lessons");
             }
 
-            final var editIcon = rank.lessonEdit != null && rank.lessonEdit
+            final var editIcon = rank.lessonEdit
                     ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -238,7 +238,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Lessons");
             }
 
-            final var deleteIcon = rank.lessonDelete != null && rank.lessonDelete
+            final var deleteIcon = rank.lessonDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -257,7 +257,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.commentAdd != null && rank.commentAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.commentAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
@@ -265,7 +265,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Comments");
             }
 
-            final var editIcon = rank.commentEdit != null && rank.commentEdit
+            final var editIcon = rank.commentEdit
                     ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -274,7 +274,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Comments");
             }
 
-            final var deleteIcon = rank.commentDelete != null && rank.commentDelete
+            final var deleteIcon = rank.commentDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -293,7 +293,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.userAdd != null && rank.userAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.userAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
@@ -301,7 +301,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Users");
             }
 
-            final var editIcon = rank.userEdit != null && rank.userEdit ? LineAwesomeIcon.EDIT_SOLID.create()
+            final var editIcon = rank.userEdit ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
@@ -309,7 +309,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Users");
             }
 
-            final var deleteIcon = rank.userDelete != null && rank.userDelete ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
+            final var deleteIcon = rank.userDelete ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (deleteIcon instanceof SvgIcon) {
@@ -327,7 +327,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.userGroupAdd != null && rank.userGroupAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.userGroupAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
@@ -335,7 +335,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add User Groups");
             }
 
-            final var editIcon = rank.userGroupEdit != null && rank.userGroupEdit ? LineAwesomeIcon.EDIT_SOLID.create()
+            final var editIcon = rank.userGroupEdit ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
@@ -343,7 +343,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit User Groups");
             }
 
-            final var deleteIcon = rank.userGroupDelete != null && rank.userGroupDelete
+            final var deleteIcon = rank.userGroupDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -362,7 +362,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
 
-            final var addIcon = rank.userRankAdd != null && rank.userRankAdd ? LineAwesomeIcon.PLUS_SOLID.create()
+            final var addIcon = rank.userRankAdd ? LineAwesomeIcon.PLUS_SOLID.create()
                     : new Span("");
             addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (addIcon instanceof SvgIcon) {
@@ -370,7 +370,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Ranks");
             }
 
-            final var editIcon = rank.userRankEdit != null && rank.userRankEdit ? LineAwesomeIcon.EDIT_SOLID.create()
+            final var editIcon = rank.userRankEdit ? LineAwesomeIcon.EDIT_SOLID.create()
                     : new Span("");
             editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
             if (editIcon instanceof SvgIcon) {
@@ -378,7 +378,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Ranks");
             }
 
-            final var deleteIcon = rank.userRankDelete != null && rank.userRankDelete
+            final var deleteIcon = rank.userRankDelete
                     ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
                     : new Span("");
             deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
@@ -470,58 +470,58 @@ public class AdminUserRanksView extends AbstractAdminView {
                 .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
 
         // View permissions bindings
-        this.binder.bind(adminViewField, rank1 -> rank1.adminView != null ? rank1.adminView : false,
+        this.binder.bind(adminViewField, rank1 -> rank1.adminView,
                 (rank1, value) -> rank1.adminView = value);
 
         // Exercise permissions bindings
-        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd != null ? rank1.exerciseAdd : false,
+        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd,
                 (rank1, value) -> rank1.exerciseAdd = value);
-        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit != null ? rank1.exerciseEdit : false,
+        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit,
                 (rank1, value) -> rank1.exerciseEdit = value);
-        this.binder.bind(exerciseDeleteField, rank1 -> rank1.exerciseDelete != null ? rank1.exerciseDelete : false,
+        this.binder.bind(exerciseDeleteField, rank1 -> rank1.exerciseDelete,
                 (rank1, value) -> rank1.exerciseDelete = value);
 
         // Lesson permissions bindings
-        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd != null ? rank1.lessonAdd : false,
+        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd,
                 (rank1, value) -> rank1.lessonAdd = value);
         this.binder.bind(lessonEditField,
-                rank1 -> rank1.lessonEdit != null ? rank1.lessonEdit : false,
+                rank1 -> rank1.lessonEdit,
                 (rank1, value) -> rank1.lessonEdit = value);
         this.binder.bind(lessonDeleteField,
-                rank1 -> rank1.lessonDelete != null ? rank1.lessonDelete : false,
+                rank1 -> rank1.lessonDelete,
                 (rank1, value) -> rank1.lessonDelete = value);
 
         // Comment permissions bindings
-        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd != null ? rank1.commentAdd : false,
+        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd,
                 (rank1, value) -> rank1.commentAdd = value);
-        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit != null ? rank1.commentEdit : false,
+        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit,
                 (rank1, value) -> rank1.commentEdit = value);
         this.binder.bind(commentDeleteField,
-                rank1 -> rank1.commentDelete != null ? rank1.commentDelete : false,
+                rank1 -> rank1.commentDelete,
                 (rank1, value) -> rank1.commentDelete = value);
 
         // User permissions bindings
-        this.binder.bind(userAddField, rank1 -> rank1.userAdd != null ? rank1.userAdd : false,
+        this.binder.bind(userAddField, rank1 -> rank1.userAdd,
                 (rank1, value) -> rank1.userAdd = value);
-        this.binder.bind(userEditField, rank1 -> rank1.userEdit != null ? rank1.userEdit : false,
+        this.binder.bind(userEditField, rank1 -> rank1.userEdit,
                 (rank1, value) -> rank1.userEdit = value);
-        this.binder.bind(userDeleteField, rank1 -> rank1.userDelete != null ? rank1.userDelete : false,
+        this.binder.bind(userDeleteField, rank1 -> rank1.userDelete,
                 (rank1, value) -> rank1.userDelete = value);
 
         // User group permissions bindings
-        this.binder.bind(userGroupAddField, rank1 -> rank1.userGroupAdd != null ? rank1.userGroupAdd : false,
+        this.binder.bind(userGroupAddField, rank1 -> rank1.userGroupAdd,
                 (rank1, value) -> rank1.userGroupAdd = value);
-        this.binder.bind(userGroupEditField, rank1 -> rank1.userGroupEdit != null ? rank1.userGroupEdit : false,
+        this.binder.bind(userGroupEditField, rank1 -> rank1.userGroupEdit,
                 (rank1, value) -> rank1.userGroupEdit = value);
-        this.binder.bind(userGroupDeleteField, rank1 -> rank1.userGroupDelete != null ? rank1.userGroupDelete : false,
+        this.binder.bind(userGroupDeleteField, rank1 -> rank1.userGroupDelete,
                 (rank1, value) -> rank1.userGroupDelete = value);
 
         // User rank permissions bindings
-        this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd != null ? rank1.userRankAdd : false,
+        this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd,
                 (rank1, value) -> rank1.userRankAdd = value);
-        this.binder.bind(userRankEditField, rank1 -> rank1.userRankEdit != null ? rank1.userRankEdit : false,
+        this.binder.bind(userRankEditField, rank1 -> rank1.userRankEdit,
                 (rank1, value) -> rank1.userRankEdit = value);
-        this.binder.bind(userRankDeleteField, rank1 -> rank1.userRankDelete != null ? rank1.userRankDelete : false,
+        this.binder.bind(userRankDeleteField, rank1 -> rank1.userRankDelete,
                 (rank1, value) -> rank1.userRankDelete = value);
 
         form.add(nameField);

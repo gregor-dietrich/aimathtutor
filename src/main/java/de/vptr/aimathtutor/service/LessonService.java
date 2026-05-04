@@ -67,6 +67,7 @@ public class LessonService {
      * @param parentId the parent lesson ID
      * @return a list of child {@link LessonViewDto}s
      */
+    @Transactional
     public List<LessonViewDto> findByParentId(final Long parentId) {
         return this.lessonRepository.findByParentId(parentId).stream().map(LessonViewDto::new).toList();
     }

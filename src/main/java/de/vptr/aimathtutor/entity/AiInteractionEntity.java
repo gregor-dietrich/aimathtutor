@@ -81,7 +81,7 @@ public class AiInteractionEntity extends PanacheEntityBase {
     public Double confidenceScore;
 
     @Column(name = "action_correct")
-    public Boolean actionCorrect;
+    public boolean actionCorrect;
 
     @Column(name = "conversation_context", columnDefinition = "TEXT")
     public String conversationContext; // JSON string of context sent with AI request

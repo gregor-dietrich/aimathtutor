@@ -68,7 +68,7 @@ public class CommentFlaggingService {
         this.commentFlagRepository.createFlag(comment, flagger);
 
         // Increment flag count
-        comment.flagsCount = (comment.flagsCount != null ? comment.flagsCount : 0) + 1;
+        comment.flagsCount = comment.flagsCount + 1;
 
         // If flagged enough times, auto-hide
         if (comment.flagsCount >= AppConstants.COMMENT_AUTO_HIDE_THRESHOLD) {

@@ -89,11 +89,11 @@ public class UserIdentityProvider implements IdentityProvider<UsernamePasswordAu
             throw new AuthenticationFailedException("User is null");
         }
 
-        if (Boolean.TRUE.equals(user.banned)) {
+        if (user.banned) {
             throw new AuthenticationFailedException("User is banned");
         }
 
-        if (!Boolean.TRUE.equals(user.activated)) {
+        if (!user.activated) {
             throw new AuthenticationFailedException("User is not activated");
         }
 

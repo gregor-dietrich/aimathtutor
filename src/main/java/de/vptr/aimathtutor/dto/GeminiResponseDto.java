@@ -54,7 +54,7 @@ public class GeminiResponseDto {
      */
     public static class SafetyRating {
         @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Safety rating fields are optional in API responses")
-        public String lesson;
+        public String category;
         @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Probability may exist but is not used by the client")
         public String probability;
     }

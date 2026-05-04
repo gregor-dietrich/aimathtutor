@@ -349,6 +349,7 @@ public class UserService {
      *
      * @return a list of active {@link UserViewDto}s
      */
+    @Transactional
     public List<UserViewDto> findActiveUsers() {
         return this.userRepository.findActiveUsers().stream().map(UserViewDto::new).toList();
     }

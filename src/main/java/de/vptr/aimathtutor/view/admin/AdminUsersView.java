@@ -181,14 +181,14 @@ public class AdminUsersView extends AbstractAdminView {
 
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
-            checkbox.setValue(user.activated != null ? user.activated : false);
+            checkbox.setValue(user.activated);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Activated").setWidth("100px").setFlexGrow(0);
 
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
-            checkbox.setValue(user.banned != null ? user.banned : false);
+            checkbox.setValue(user.banned);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Banned").setWidth("100px").setFlexGrow(0);
@@ -291,9 +291,9 @@ public class AdminUsersView extends AbstractAdminView {
                         (user1, value) -> user1.email = (value == null || value.isBlank()) ? null
                                 : value.trim());
 
-        this.binder.bind(activatedField, user1 -> user1.activated != null ? user1.activated : false,
+        this.binder.bind(activatedField, user1 -> user1.activated,
                 (user1, value) -> user1.activated = value);
-        this.binder.bind(bannedField, user1 -> user1.banned != null ? user1.banned : false,
+        this.binder.bind(bannedField, user1 -> user1.banned,
                 (user1, value) -> user1.banned = value);
 
         // Rank binding - convert between UserRankViewDto and rankId

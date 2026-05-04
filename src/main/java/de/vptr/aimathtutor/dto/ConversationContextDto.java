@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ConversationContextDto {
 
+    private static final int MAX_CONTEXT_ITEMS = 5;
+
     // Private final + unmodifiable getters — intentional encapsulation.
     // Do NOT revert to public fields.
     @JsonProperty("recent_actions")
@@ -33,15 +35,15 @@ public class ConversationContextDto {
             final List<ChatMessageDto> recentQuestions,
             final List<ChatMessageDto> recentAiMessages) {
         if (recentActions != null) {
-            final int start = Math.max(0, recentActions.size() - 5);
+            final int start = Math.max(0, recentActions.size() - MAX_CONTEXT_ITEMS);
             this.recentActions.addAll(recentActions.subList(start, recentActions.size()));
         }
         if (recentQuestions != null) {
-            final int start = Math.max(0, recentQuestions.size() - 5);
+            final int start = Math.max(0, recentQuestions.size() - MAX_CONTEXT_ITEMS);
             this.recentQuestions.addAll(recentQuestions.subList(start, recentQuestions.size()));
         }
         if (recentAiMessages != null) {
-            final int start = Math.max(0, recentAiMessages.size() - 5);
+            final int start = Math.max(0, recentAiMessages.size() - MAX_CONTEXT_ITEMS);
             this.recentAiMessages.addAll(recentAiMessages.subList(start, recentAiMessages.size()));
         }
     }
@@ -64,34 +66,34 @@ public class ConversationContextDto {
     public void addAction(final GraspableEventDto action) {
         if (action != null) {
             this.recentActions.add(action);
-            if (this.recentActions.size() > 5) {
+            if (this.recentActions.size() > MAX_CONTEXT_ITEMS) {
                 this.recentActions.remove(0); // Remove oldest
             }
         }
     }
 
     /**
-     * Adds a user question to the context, keeping only the last 5
+     * Adds a user question to the context, keeping only the last {@value #MAX_CONTEXT_ITEMS}
      */
     public void addQuestion(final ChatMessageDto question) {
         if (question != null && question.sender == ChatMessageDto.Sender.USER
                 && question.messageType == ChatMessageDto.MessageType.QUESTION) {
             this.recentQuestions.add(question);
-            if (this.recentQuestions.size() > 5) {
+            if (this.recentQuestions.size() > MAX_CONTEXT_ITEMS) {
                 this.recentQuestions.remove(0); // Remove oldest
             }
         }
     }
 
     /**
-     * Adds an AI message to the context, keeping only the last 5
+     * Adds an AI message to the context, keeping only the last {@value #MAX_CONTEXT_ITEMS}
      */
     public void addAiMessage(final ChatMessageDto message) {
         if (message != null && message.sender == ChatMessageDto.Sender.AI
                 && (message.messageType == ChatMessageDto.MessageType.FEEDBACK
                         || message.messageType == ChatMessageDto.MessageType.ANSWER)) {
             this.recentAiMessages.add(message);
-            if (this.recentAiMessages.size() > 5) {
+            if (this.recentAiMessages.size() > MAX_CONTEXT_ITEMS) {
                 this.recentAiMessages.remove(0); // Remove oldest
             }
         }

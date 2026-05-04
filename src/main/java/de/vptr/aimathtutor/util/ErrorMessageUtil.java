@@ -3,6 +3,9 @@ package de.vptr.aimathtutor.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -11,6 +14,7 @@ import jakarta.ws.rs.core.Response;
 public class ErrorMessageUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(ErrorMessageUtil.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * Extracts error message from HTTP response body.
@@ -22,19 +26,26 @@ public class ErrorMessageUtil {
             if (response.hasEntity() && response.getStatus() >= 400) {
                 final String responseBody = response.readEntity(String.class);
                 if (responseBody != null && !responseBody.isBlank()) {
-                    if (responseBody.contains("\"message\"")) {
-                        int messageStart = responseBody.indexOf("\"message\"");
-                        if (messageStart != -1) {
-                            messageStart = responseBody.indexOf(":", messageStart) + 1;
-                            final int messageEnd = responseBody.indexOf("\"", messageStart + 1);
-                            if (messageEnd != -1) {
-                                final String message = responseBody.substring(messageStart + 1, messageEnd);
-                                return message.trim();
+                    final String trimmed = responseBody.trim();
+                    // Try structured JSON first
+                    if (trimmed.startsWith("{")) {
+                        try {
+                            final JsonNode root = OBJECT_MAPPER.readTree(trimmed);
+                            final String msg = findMessageNode(root);
+                            if (msg != null && !msg.isEmpty()) {
+                                return msg;
                             }
+                        } catch (final Exception e) {
+                            // JSON parsing failed — fall through to regex/plain-text fallback
+                        }
+                        // Fallback for malformed JSON: try regex extraction
+                        final String regexMsg = extractMessageWithRegex(trimmed);
+                        if (regexMsg != null) {
+                            return regexMsg;
                         }
                     }
                     // If no structured message found, return the whole body (might be plain text)
-                    return responseBody.trim();
+                    return trimmed;
                 }
             }
         } catch (final Exception e) {
@@ -43,5 +54,39 @@ public class ErrorMessageUtil {
 
         // Fall back to HTTP status
         return "HTTP " + response.getStatus();
+    }
+
+    private static String findMessageNode(final JsonNode root) {
+        if (root == null) {
+            return null;
+        }
+        // Check top-level message
+        if (root.has("message") && root.get("message").isTextual()) {
+            return root.get("message").asText().trim();
+        }
+        // Check nested error.message
+        if (root.has("error") && root.get("error").isObject()
+                && root.get("error").has("message")
+                && root.get("error").get("message").isTextual()) {
+            return root.get("error").get("message").asText().trim();
+        }
+        return null;
+    }
+
+    private static String extractMessageWithRegex(final String responseBody) {
+        if (!responseBody.contains("\"message\"")) {
+            return null;
+        }
+        var messageStart = responseBody.indexOf("\"message\"");
+        if (messageStart == -1) {
+            return null;
+        }
+        messageStart = responseBody.indexOf(":", messageStart) + 1;
+        final var messageEnd = responseBody.indexOf("\"", messageStart + 1);
+        if (messageEnd == -1) {
+            return null;
+        }
+        final var message = responseBody.substring(messageStart + 1, messageEnd);
+        return message.trim();
     }
 }

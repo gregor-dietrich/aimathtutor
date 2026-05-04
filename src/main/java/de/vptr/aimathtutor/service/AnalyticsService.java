@@ -303,7 +303,7 @@ public class AnalyticsService {
 
         final int totalSessions = sessions.size();
         final int completedSessions = (int) sessions.stream()
-                .filter(s -> s.completed != null && s.completed)
+                .filter(s -> s.completed)
                 .count();
 
         // Note: one problem = one session/exercise attempt
@@ -314,12 +314,12 @@ public class AnalyticsService {
         final int completedProblems = completedSessions;
 
         final int hintsUsed = sessions.stream()
-                .mapToInt(s -> s.hintsUsed != null ? s.hintsUsed : 0)
+                .mapToInt(s -> s.hintsUsed)
                 .sum();
 
         // Average actions per problem (per session)
         final double totalActions = sessions.stream()
-                .mapToInt(s -> s.actionsCount != null ? s.actionsCount : 0)
+                .mapToInt(s -> s.actionsCount)
                 .sum();
         final double averageActionsPerProblem = totalSessions > 0 ? totalActions / totalSessions : 0.0;
 
@@ -329,7 +329,7 @@ public class AnalyticsService {
          * Not the same as completion rate.
          */
         final int totalCorrectActions = sessions.stream()
-                .mapToInt(s -> s.correctActions != null ? s.correctActions : 0)
+                .mapToInt(s -> s.correctActions)
                 .sum();
         final double successRate = totalActions > 0 ? (double) totalCorrectActions / totalActions : 0.0;
 

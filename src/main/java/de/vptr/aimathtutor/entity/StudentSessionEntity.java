@@ -94,16 +94,16 @@ public class StudentSessionEntity extends PanacheEntityBase {
     public LocalDateTime endTime;
 
     @Column(name = "completed", nullable = false)
-    public Boolean completed = false;
+    public boolean completed = false;
 
     @Column(name = "actions_count", nullable = false)
-    public Integer actionsCount = 0;
+    public int actionsCount = 0;
 
     @Column(name = "correct_actions", nullable = false)
-    public Integer correctActions = 0;
+    public int correctActions = 0;
 
     @Column(name = "hints_used", nullable = false)
-    public Integer hintsUsed = 0;
+    public int hintsUsed = 0;
 
     @Column(name = "final_expression", columnDefinition = "TEXT")
     public String finalExpression;

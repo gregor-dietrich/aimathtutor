@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -11,7 +12,8 @@ public class UserRankDto {
 
     public Long id;
 
-    @Size(min = 1, max = 100, message = "Name must be between 1 and 100 characters")
+    @Size(min = AppConstants.USERNAME_MIN_LENGTH, max = AppConstants.USERNAME_MAX_LENGTH, message = "Name must be between "
+            + AppConstants.USERNAME_MIN_LENGTH + " and " + AppConstants.USERNAME_MAX_LENGTH + " characters")
     public String name;
 
     // View permissions

@@ -21,7 +21,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 
@@ -31,9 +30,7 @@ import jakarta.validation.constraints.NotBlank;
  * without requiring application restart.
  */
 @Entity
-@Table(name = "ai_config", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "config_key")
-})
+@Table(name = "ai_config")
 @NamedQueries({
         @NamedQuery(name = "AiConfig.findByKey", query = "FROM AiConfigEntity WHERE configKey = :key"),
         @NamedQuery(name = "AiConfig.findByCategory", query = "FROM AiConfigEntity WHERE category = :category ORDER BY configKey"),
@@ -60,7 +57,7 @@ public class AiConfigEntity extends PanacheEntityBase {
     public ConfigType configType; // "STRING", "INTEGER", "DOUBLE", "BOOLEAN", "TEXT"
 
     @Column(name = "is_optional", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
-    public Boolean isOptional = false; // Whether this config can have empty/null values
+    public boolean isOptional = false; // Whether this config can have empty/null values
 
     @Column(name = "category", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -102,13 +99,13 @@ public class AiConfigEntity extends PanacheEntityBase {
      * Constructor with all fields including optionality.
      */
     public AiConfigEntity(final String configKey, final String configValue, final ConfigType configType,
-            final ConfigCategory category, final String description, final Boolean isOptional) {
+            final ConfigCategory category, final String description, final boolean isOptional) {
         this.configKey = configKey;
         this.configValue = configValue;
         this.configType = configType;
         this.category = category;
         this.description = description;
-        this.isOptional = isOptional != null ? isOptional : false;
+        this.isOptional = isOptional;
     }
 
     /**

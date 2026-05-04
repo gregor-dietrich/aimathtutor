@@ -17,8 +17,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 
 /**
  * CommentFlagEntity: Tracks which users have flagged which comments.

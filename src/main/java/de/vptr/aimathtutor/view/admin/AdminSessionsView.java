@@ -195,13 +195,11 @@ public class AdminSessionsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var sessions = this.analyticsService.searchSessions(searchTerm);
-            this.grid.setItems(sessions);
-        } catch (final Exception e) {
-            LOG.error("Error searching sessions", e);
-            NotificationUtil.showError("An error occurred while searching sessions. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.analyticsService.searchSessions(searchTerm),
+                this,
+                sessions -> this.grid.setItems(sessions),
+                "An error occurred while searching sessions. Please try again.");
     }
 
     /**
@@ -222,29 +220,27 @@ public class AdminSessionsView extends AbstractAdminView {
      * Pushes date range filtering to the database.
      */
     private void filterByDateRange() {
-        try {
-            final var startDate = this.startDatePicker.getValue();
-            final var endDate = this.endDatePicker.getValue();
+        final var startDate = this.startDatePicker.getValue();
+        final var endDate = this.endDatePicker.getValue();
 
-            if (startDate == null && endDate == null) {
-                this.loadSessions();
-                return;
-            }
-
-            final var startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-            final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
-
-            if (startDateTime != null && endDateTime != null && startDateTime.isAfter(endDateTime)) {
-                NotificationUtil.showError("Start date must be before or equal to end date.");
-                return;
-            }
-
-            final var sessions = this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime);
-            this.grid.setItems(sessions);
-        } catch (final Exception e) {
-            LOG.error("Error filtering by date range", e);
-            NotificationUtil.showError("An error occurred while filtering by date range. Please try again.");
+        if (startDate == null && endDate == null) {
+            this.loadSessions();
+            return;
         }
+
+        final var startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
+
+        if (startDateTime != null && endDateTime != null && startDateTime.isAfter(endDateTime)) {
+            NotificationUtil.showError("Start date must be before or equal to end date.");
+            return;
+        }
+
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime),
+                this,
+                sessions -> this.grid.setItems(sessions),
+                "An error occurred while filtering by date range. Please try again.");
     }
 
     private void resetFilters() {

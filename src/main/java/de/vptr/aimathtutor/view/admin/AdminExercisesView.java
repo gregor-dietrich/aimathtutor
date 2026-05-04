@@ -48,6 +48,7 @@ import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -110,37 +111,41 @@ public class AdminExercisesView extends AbstractAdminView {
 
     private void loadExercises() {
         LOG.info("Loading exercises");
-        try {
-            final var exercises = this.exerciseService.getAllExercises();
-            LOG.info("Successfully loaded {} exercises", exercises.size());
-            this.grid.setItems(exercises);
-        } catch (final Exception e) {
-            LOG.error("Error loading exercises", e);
-            NotificationUtil.showError("Failed to load exercises. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.exerciseService.getAllExercises(),
+                this,
+                exercises -> {
+                    LOG.info("Successfully loaded {} exercises", exercises.size());
+                    this.grid.setItems(exercises);
+                },
+                "Failed to load exercises. Please try again.");
     }
 
     private void loadPublishedExercises() {
         LOG.info("Loading published exercises");
-        try {
-            final var exercises = this.exerciseService.findPublishedExercises();
-            LOG.info("Successfully loaded {} published exercises", exercises.size());
-            this.grid.setItems(exercises);
-        } catch (final Exception e) {
-            LOG.error("Error loading published exercises", e);
-            NotificationUtil.showError("Failed to load published exercises. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.exerciseService.findPublishedExercises(),
+                this,
+                exercises -> {
+                    LOG.info("Successfully loaded {} published exercises", exercises.size());
+                    this.grid.setItems(exercises);
+                },
+                "Failed to load published exercises. Please try again.");
     }
 
     private void loadLessons() {
         LOG.info("Loading lessons");
-        try {
-            this.availableLessons = this.lessonService.getAllLessons();
-            LOG.info("Successfully loaded {} lessons", this.availableLessons.size());
-        } catch (final Exception e) {
-            LOG.error("Error loading lessons", e);
-            this.availableLessons = List.of(); // Empty list as fallback
-        }
+        AsyncDataLoader.load(
+                () -> this.lessonService.getAllLessons(),
+                this,
+                lessons -> {
+                    this.availableLessons = lessons;
+                    LOG.info("Successfully loaded {} lessons", this.availableLessons.size());
+                },
+                () -> {
+                    this.availableLessons = List.of();
+                },
+                "Failed to load lessons. Please try again.");
     }
 
     /**
@@ -241,14 +246,14 @@ public class AdminExercisesView extends AbstractAdminView {
 
         this.grid.addComponentColumn(exercise -> {
             final var checkbox = new Checkbox();
-            checkbox.setValue(exercise.published != null ? exercise.published : false);
+            checkbox.setValue(exercise.published);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Published").setWidth("100px").setFlexGrow(0);
 
         this.grid.addComponentColumn(exercise -> {
             final var checkbox = new Checkbox();
-            checkbox.setValue(exercise.commentable != null ? exercise.commentable : false);
+            checkbox.setValue(exercise.commentable);
             checkbox.setReadOnly(true);
             return checkbox;
         }).setHeader("Commentable").setWidth("100px").setFlexGrow(0);
@@ -354,9 +359,9 @@ public class AdminExercisesView extends AbstractAdminView {
         this.binder.forField(contentField)
                 .withValidator(value -> value != null && !value.isBlank(), "Content is required")
                 .bind(exercise1 -> exercise1.content, (exercise1, value) -> exercise1.content = value);
-        this.binder.bind(publishedField, exercise1 -> exercise1.published != null ? exercise1.published : false,
+        this.binder.bind(publishedField, exercise1 -> exercise1.published,
                 (exercise1, value) -> exercise1.published = value);
-        this.binder.bind(commentableField, exercise1 -> exercise1.commentable != null ? exercise1.commentable : false,
+        this.binder.bind(commentableField, exercise1 -> exercise1.commentable,
                 (exercise1, value) -> exercise1.commentable = value);
 
         // Lesson binding - convert between LessonViewDto and lessonId
@@ -568,16 +573,19 @@ public class AdminExercisesView extends AbstractAdminView {
         }
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        try {
-            final var exercises = this.exerciseService.searchExercises(query.trim());
-            this.grid.setItems(exercises);
-        } catch (final Exception e) {
-            LOG.error("Error searching exercises", e);
-            NotificationUtil.showError("An error occurred while searching exercises. Please try again.");
-        } finally {
-            this.searchButton.setEnabled(true);
-            this.searchButton.setText("Search");
-        }
+        AsyncDataLoader.load(
+                () -> this.exerciseService.searchExercises(query.trim()),
+                this,
+                exercises -> {
+                    this.grid.setItems(exercises);
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                },
+                () -> {
+                    this.searchButton.setEnabled(true);
+                    this.searchButton.setText("Search");
+                },
+                "An error occurred while searching exercises. Please try again.");
     }
 
     /**
@@ -597,13 +605,11 @@ public class AdminExercisesView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var exercises = this.exerciseService.findByDateRange(startDate.toString(), endDate.toString());
-            this.grid.setItems(exercises);
-        } catch (final Exception e) {
-            LOG.error("Error filtering exercises by date range", e);
-            NotificationUtil.showError("An error occurred while filtering exercises. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.exerciseService.findByDateRange(startDate.toString(), endDate.toString()),
+                this,
+                exercises -> this.grid.setItems(exercises),
+                "An error occurred while filtering exercises. Please try again.");
     }
 
     private void filterByUser() {
@@ -613,12 +619,10 @@ public class AdminExercisesView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var exercises = this.exerciseService.findByUserId(userId.longValue());
-            this.grid.setItems(exercises);
-        } catch (final Exception e) {
-            LOG.error("Error filtering exercises by user", e);
-            NotificationUtil.showError("An error occurred while filtering exercises. Please try again.");
-        }
+        AsyncDataLoader.load(
+                () -> this.exerciseService.findByUserId(userId.longValue()),
+                this,
+                exercises -> this.grid.setItems(exercises),
+                "An error occurred while filtering exercises. Please try again.");
     }
 }

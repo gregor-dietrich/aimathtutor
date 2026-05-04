@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * Represents a message in the chat interface between student and AI tutor.
  * Can be either a user question or an AI response.
@@ -39,6 +41,7 @@ public class ChatMessageDto {
     @JsonProperty("session_id")
     public String sessionId;
 
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Set by caller or Jackson at runtime")
     public LocalDateTime timestamp;
 
     // Optional: Reference to the action that triggered this message (for feedback)
@@ -46,7 +49,6 @@ public class ChatMessageDto {
     public String relatedAction;
 
     public ChatMessageDto() {
-        this.timestamp = LocalDateTime.now();
     }
 
     /**

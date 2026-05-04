@@ -57,7 +57,7 @@ public class AiFeedbackDto {
         this.hints = new ArrayList<>();
         this.suggestedNextSteps = new ArrayList<>();
         this.relatedConcepts = new ArrayList<>();
-        this.confidence = 1.0;
+        this.confidence = 0.5;
     }
 
     /**

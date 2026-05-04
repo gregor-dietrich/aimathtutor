@@ -53,6 +53,7 @@ public class ExerciseService {
      *
      * @return a list of all {@link ExerciseViewDto} in the system
      */
+    @Transactional
     public List<ExerciseViewDto> getAllExercises() {
         return this.exerciseRepository.findAllOrdered().stream()
                 .map(ExerciseViewDto::new)
@@ -66,6 +67,7 @@ public class ExerciseService {
      * @return an {@link Optional} containing the {@link ExerciseViewDto} with
      *         completion data, or empty if not found
      */
+    @Transactional
     public Optional<ExerciseViewDto> findById(final Long id) {
         return this.exerciseRepository.findByIdOptional(id)
                 .map(entity -> this.exerciseCompletionService.enrichWithCompletionData(new ExerciseViewDto(entity)));
@@ -77,6 +79,7 @@ public class ExerciseService {
      * @return a list of published {@link ExerciseViewDto}s with enriched completion
      *         data
      */
+    @Transactional
     public List<ExerciseViewDto> findPublishedExercises() {
         final List<ExerciseViewDto> dtos = this.exerciseRepository.findPublished().stream()
                 .map(ExerciseViewDto::new)
@@ -90,6 +93,7 @@ public class ExerciseService {
      * @param userId the user ID
      * @return a list of {@link ExerciseViewDto}s authored by the user
      */
+    @Transactional
     public List<ExerciseViewDto> findByUserId(final Long userId) {
         return this.exerciseRepository.findByUserId(userId).stream()
                 .map(ExerciseViewDto::new)
@@ -103,6 +107,7 @@ public class ExerciseService {
      * @return a list of {@link ExerciseViewDto}s in the lesson with enriched
      *         completion data
      */
+    @Transactional
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
         final List<ExerciseViewDto> dtos = this.exerciseRepository.findByLessonId(lessonId).stream()
                 .map(ExerciseViewDto::new)
@@ -116,6 +121,7 @@ public class ExerciseService {
      *
      * @return a map of lesson ID to list of published {@link ExerciseViewDto}s
      */
+    @Transactional
     public Map<Long, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
         final List<ExerciseViewDto> dtos = this.exerciseRepository.findPublished().stream()
                 .map(ExerciseViewDto::new)
@@ -130,6 +136,7 @@ public class ExerciseService {
      *
      * @return a list of Graspable Math enabled {@link ExerciseViewDto}s
      */
+    @Transactional
     public List<ExerciseViewDto> findGraspableMathExercises() {
         return this.exerciseRepository.findGraspableMathExercises().stream()
                 .map(ExerciseViewDto::new)
@@ -143,6 +150,7 @@ public class ExerciseService {
      * @return a list of Graspable Math enabled {@link ExerciseViewDto}s in the
      *         lesson
      */
+    @Transactional
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
         return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream()
                 .map(ExerciseViewDto::new)
@@ -382,6 +390,7 @@ public class ExerciseService {
      * @param query the search query string (title/content match)
      * @return a list of matching {@link ExerciseViewDto}s
      */
+    @Transactional
     public List<ExerciseViewDto> searchExercises(final String query) {
         if (query == null || query.isBlank()) {
             return this.getAllExercises();
@@ -401,6 +410,7 @@ public class ExerciseService {
      * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
      * @return a list of {@link ExerciseViewDto}s created within the date range
      */
+    @Transactional
     public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
         if (startDate == null || endDate == null) {
             return List.of();

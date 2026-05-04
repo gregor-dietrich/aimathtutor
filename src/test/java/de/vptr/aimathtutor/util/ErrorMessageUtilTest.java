@@ -126,7 +126,7 @@ class ErrorMessageUtilTest {
         String result = ErrorMessageUtil.extractErrorMessage(response);
 
         // Then
-        assertEquals("Error: \\", result); // The parser stops at the first quote
+        assertEquals("Error: \"field\" is required", result);
     }
 
     @Test

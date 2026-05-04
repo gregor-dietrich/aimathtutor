@@ -529,24 +529,17 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                     // Log interaction
                     this.aiTutorService.logInteraction(event, feedback);
 
-                    // Create feedback message and add to conversation context
-                    final var feedbackMessage = ChatMessageDto.aiFeedback(feedback.message);
-                    feedbackMessage.sessionId = this.currentSessionId;
-                    this.conversationContext.addAiMessage(feedbackMessage);
-
-                    // Display feedback inline (replaces displayFeedback method)
-                    final var message = ChatMessageDto.aiFeedback(feedback.message);
-                    message.sessionId = this.currentSessionId;
-
-                    // Add hints as part of the message if present
+                    // Build feedback message with hints
+                    final StringBuilder fullMessage = new StringBuilder(feedback.message);
                     if (feedback.hints != null && !feedback.hints.isEmpty()) {
-                        final StringBuilder fullMessage = new StringBuilder(feedback.message);
                         for (final String hint : feedback.hints) {
                             fullMessage.append("\n💡 ").append(hint);
                         }
-                        message.message = fullMessage.toString();
                     }
 
+                    final var message = ChatMessageDto.aiFeedback(fullMessage.toString());
+                    message.sessionId = this.currentSessionId;
+                    this.conversationContext.addAiMessage(message);
                     this.chatPanel.addMessage(message);
                 }
             });

@@ -365,13 +365,11 @@ public class AdminUserGroupsView extends AbstractAdminView {
     }
 
     private void loadGroupUsers() {
-        try {
-            final var users = this.groupService.getUsersInGroup(this.selectedGroup.id);
-            this.userGrid.setItems(users);
-        } catch (final Exception e) {
-            LOG.error("Unexpected error loading group users", e);
-            NotificationUtil.showError("Unexpected error occurred");
-        }
+        AsyncDataLoader.load(
+                () -> this.groupService.getUsersInGroup(this.selectedGroup.id),
+                this,
+                users -> this.userGrid.setItems(users),
+                "Unexpected error occurred");
     }
 
     private void loadAvailableUsers() {
@@ -454,12 +452,10 @@ public class AdminUserGroupsView extends AbstractAdminView {
             return;
         }
 
-        try {
-            final var groups = this.groupService.getGroupsForUser(userId.longValue());
-            this.grid.setItems(groups);
-        } catch (final Exception e) {
-            LOG.error("Error filtering groups by user", e);
-            NotificationUtil.showError("Failed to filter groups");
-        }
+        AsyncDataLoader.load(
+                () -> this.groupService.getGroupsForUser(userId.longValue()),
+                this,
+                groups -> this.grid.setItems(groups),
+                "Failed to filter groups");
     }
 }

@@ -75,8 +75,9 @@ public class ProblemGeneratorService {
                 final int x = random.nextInt(varMax * 2 + 1) - varMax; // -varMax to varMax
                 final int c = a * x + b;
                 problem.title = "Solve for x";
-                problem.initialExpression = String.format("%dx %s %d = %d",
-                        a,
+                final String coefStr = a == 1 ? "x" : a + "x";
+                problem.initialExpression = String.format("%s %s %d = %d",
+                        coefStr,
                         b >= 0 ? "+" : "-",
                         Math.abs(b),
                         c);

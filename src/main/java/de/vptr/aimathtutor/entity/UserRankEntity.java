@@ -46,67 +46,67 @@ public class UserRankEntity extends PanacheEntityBase {
 
     // View permissions
     @Column(name = "admin_view")
-    public Boolean adminView = false;
+    public boolean adminView = false;
 
     // Exercise permissions
     @Column(name = "exercise_add")
-    public Boolean exerciseAdd = false;
+    public boolean exerciseAdd = false;
 
     @Column(name = "exercise_delete")
-    public Boolean exerciseDelete = false;
+    public boolean exerciseDelete = false;
 
     @Column(name = "exercise_edit")
-    public Boolean exerciseEdit = false;
+    public boolean exerciseEdit = false;
 
     // Lesson permissions
     @Column(name = "lesson_add")
-    public Boolean lessonAdd = false;
+    public boolean lessonAdd = false;
 
     @Column(name = "lesson_delete")
-    public Boolean lessonDelete = false;
+    public boolean lessonDelete = false;
 
     @Column(name = "lesson_edit")
-    public Boolean lessonEdit = false;
+    public boolean lessonEdit = false;
 
     // Comment permissions
     @Column(name = "comment_add")
-    public Boolean commentAdd = false;
+    public boolean commentAdd = false;
 
     @Column(name = "comment_delete")
-    public Boolean commentDelete = false;
+    public boolean commentDelete = false;
 
     @Column(name = "comment_edit")
-    public Boolean commentEdit = false;
+    public boolean commentEdit = false;
 
     // User permissions
     @Column(name = "user_add")
-    public Boolean userAdd = false;
+    public boolean userAdd = false;
 
     @Column(name = "user_delete")
-    public Boolean userDelete = false;
+    public boolean userDelete = false;
 
     @Column(name = "user_edit")
-    public Boolean userEdit = false;
+    public boolean userEdit = false;
 
     // User group permissions
     @Column(name = "user_group_add")
-    public Boolean userGroupAdd = false;
+    public boolean userGroupAdd = false;
 
     @Column(name = "user_group_delete")
-    public Boolean userGroupDelete = false;
+    public boolean userGroupDelete = false;
 
     @Column(name = "user_group_edit")
-    public Boolean userGroupEdit = false;
+    public boolean userGroupEdit = false;
 
     // User rank permissions
     @Column(name = "user_rank_add")
-    public Boolean userRankAdd = false;
+    public boolean userRankAdd = false;
 
     @Column(name = "user_rank_delete")
-    public Boolean userRankDelete = false;
+    public boolean userRankDelete = false;
 
     @Column(name = "user_rank_edit")
-    public Boolean userRankEdit = false;
+    public boolean userRankEdit = false;
 
     @OneToMany(mappedBy = "rank")
     @JsonIgnore

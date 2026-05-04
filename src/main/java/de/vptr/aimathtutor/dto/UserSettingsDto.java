@@ -8,11 +8,13 @@ import jakarta.validation.constraints.Size;
  */
 public class UserSettingsDto {
 
-    @Size(max = 100, message = "Current password must not exceed 100 characters")
+    @Size(max = AppConstants.PASSWORD_MAX_LENGTH, message = "Current password must not exceed "
+            + AppConstants.PASSWORD_MAX_LENGTH + " characters")
     public String currentPassword;
 
     // Note: message must match PASSWORD_MIN_LENGTH (currently 8)
-    @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = 100, message = "New password must be between 8 and 100 characters")
+    @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = AppConstants.PASSWORD_MAX_LENGTH, message = "New password must be between "
+            + AppConstants.PASSWORD_MIN_LENGTH + " and " + AppConstants.PASSWORD_MAX_LENGTH + " characters")
     public String newPassword;
 
     @Size(max = 10, message = "User avatar emoji must not exceed 10 characters")

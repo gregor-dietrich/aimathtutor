@@ -141,7 +141,7 @@ CREATE TABLE exercises (
   commentable BOOLEAN NOT NULL DEFAULT FALSE,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_edit TIMESTAMP DEFAULT NULL,
-  graspable_enabled BOOLEAN DEFAULT FALSE,
+  graspable_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   graspable_initial_expression TEXT,
   graspable_target_expression TEXT,
   graspable_difficulty VARCHAR(50),
@@ -333,7 +333,7 @@ CREATE TABLE ai_interactions (
   feedback_type VARCHAR(50) NOT NULL,
   feedback_message TEXT,
   confidence_score DOUBLE PRECISION DEFAULT NULL,
-  action_correct BOOLEAN DEFAULT NULL,
+  action_correct BOOLEAN NOT NULL DEFAULT NULL,
   conversation_context TEXT,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_edit TIMESTAMP
