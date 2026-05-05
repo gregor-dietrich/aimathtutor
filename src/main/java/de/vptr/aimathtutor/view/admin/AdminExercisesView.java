@@ -44,6 +44,7 @@ import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserService;
@@ -536,6 +537,8 @@ public class AdminExercisesView extends AbstractAdminView {
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving exercise", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -556,6 +559,8 @@ public class AdminExercisesView extends AbstractAdminView {
             } else {
                 NotificationUtil.showError("Failed to delete exercise");
             }
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting exercise", e);
             NotificationUtil.showError("Unexpected error occurred");

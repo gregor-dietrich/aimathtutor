@@ -36,6 +36,7 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
@@ -438,6 +439,8 @@ public class AdminUsersView extends AbstractAdminView {
                     .reduce((a, b) -> a + "; " + b)
                     .orElse("Invalid input");
             NotificationUtil.showError(messages);
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving user", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -452,6 +455,8 @@ public class AdminUsersView extends AbstractAdminView {
             } else {
                 NotificationUtil.showError("Failed to delete user");
             }
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting user", e);
             NotificationUtil.showError("Unexpected error occurred");
