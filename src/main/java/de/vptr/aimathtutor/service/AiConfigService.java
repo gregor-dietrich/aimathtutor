@@ -114,7 +114,11 @@ public class AiConfigService {
 
         return this.aiConfigRepository.findByConfigKey(key)
                 .map(entity -> {
-                    this.configCache.put(entity.configKey, entity.configValue);
+                    if (entity.configValue != null) {
+                        this.configCache.put(entity.configKey, entity.configValue);
+                    } else {
+                        this.configCache.remove(entity.configKey);
+                    }
                     return entity.configValue;
                 })
                 .orElse(defaultValue);

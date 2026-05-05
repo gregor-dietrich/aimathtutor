@@ -173,11 +173,17 @@ public class AuthService {
         if (request == null) {
             return null;
         }
+        final String remoteAddr = request.getRemoteAddr();
         final String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
+        if (forwarded != null && !forwarded.isBlank() && this.isTrustedProxy(remoteAddr)) {
             return forwarded.split(",")[0].trim();
         }
-        return request.getRemoteAddr();
+        return remoteAddr;
+    }
+
+    private boolean isTrustedProxy(final String remoteAddr) {
+        return "127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr)
+                || "0:0:0:0:0:0:0:1".equals(remoteAddr);
     }
 
     /**
