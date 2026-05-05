@@ -24,6 +24,7 @@ import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
@@ -267,15 +268,17 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     }
 
     private void loadCurrentSettings() {
-        try {
-            final UserSettingsDto settings = this.userService.getSettings(this.currentUserId);
-            this.userAvatarSelect.setValue(settings.userAvatarEmoji);
-            this.tutorAvatarSelect.setValue(settings.tutorAvatarEmoji);
-            this.updatePreview();
-        } catch (final Exception e) {
-            LOG.error("Failed to load settings", e);
-            NotificationUtil.showError("Failed to load settings");
-        }
+        AsyncDataLoader.load(
+                () -> this.userService.getSettings(this.currentUserId),
+                this,
+                this::applySettings,
+                "Failed to load settings");
+    }
+
+    private void applySettings(final UserSettingsDto settings) {
+        this.userAvatarSelect.setValue(settings.userAvatarEmoji);
+        this.tutorAvatarSelect.setValue(settings.tutorAvatarEmoji);
+        this.updatePreview();
     }
 
     private void handlePasswordChange() {

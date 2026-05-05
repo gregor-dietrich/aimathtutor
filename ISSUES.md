@@ -319,7 +319,7 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 
 **Plan:**
 
-1. Classify sensitive fields across entities (starting with `UserEntity.email`, `UserEntity.lastIp`) and record lookup requirements (display-only vs searchable).
+1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
 2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
 3. Add blind-index/hash companion columns for fields requiring equality search.
 4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
@@ -349,19 +349,5 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 vaadin-text-field.css
 [WARNING] The 'lumoImports' property detected in theme(s) '[starter-theme]' is no longer supported in Vaadin 25. All modules except 'utility' are now loaded automatically when extending Lumo theme. To load utility classes, add '@StyleSheet(Lumo.UTILITY_STYLESHEET)' annotation to 'AppShellConfigurator' implementor.
 ```
-
----
-
-## 5. Remediation Plan — Code Review Findings (3.0.0)
-
----
-
-### Phase 6: Code Deduplication (Medium)
-
-#### 6.3 Extract admin CRUD base view — Deferred
-
-- **Problem:** Admin views (`AdminUsersView`, `AdminExercisesView`, `AdminCommentsView`, `AdminLessonsView`, etc.) duplicate constructor boilerplate, `buildUi()` patterns, dialog setup, grid action columns, and save-error handling.
-- **Where:** All admin views under `src/main/java/de/vptr/aimathtutor/view/admin/`
-- **Fix:** Deferred due to high invasiveness. Each admin view has significant custom logic (date filters, custom dialogs, composite grids) that would require heavy generics and reflection to unify. Revisit when views are rewritten or a new admin framework is introduced.
 
 ---

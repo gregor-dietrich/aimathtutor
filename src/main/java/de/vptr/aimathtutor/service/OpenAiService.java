@@ -10,10 +10,12 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
 import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.service.ai.AiProviderException;
+import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -43,7 +45,7 @@ public class OpenAiService extends AbstractAiProviderService {
 
     @Override
     protected String getConfigPrefix() {
-        return "openai";
+        return AiConfigKeys.OPENAI_PREFIX;
     }
 
     @Override
@@ -104,7 +106,7 @@ public class OpenAiService extends AbstractAiProviderService {
      * @param prompt The user prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = IllegalStateException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
         return this.doGenerate(prompt, CHAT_SYSTEM_PROMPT, false);
     }
@@ -112,7 +114,7 @@ public class OpenAiService extends AbstractAiProviderService {
     /**
      * Generate content with JSON mode (guarantees valid JSON)
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateJsonContent(final String prompt) {
         return this.doGenerate(prompt, JSON_SYSTEM_PROMPT, true);
     }
@@ -123,18 +125,14 @@ public class OpenAiService extends AbstractAiProviderService {
 
         this.requireApiKey(this.apiKey, "OPENAI_API_KEY");
 
-        final String model = this.aiConfigService.getConfigValue("openai.model", DEFAULT_MODEL);
-        final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url", DEFAULT_BASE_URL);
-        final double temperature = this.aiConfigService.getClampedTemperature("openai.temperature", 0.7);
-        final int maxTokens = this.aiConfigService.getClampedTokens("openai.max-tokens", 2000);
-        final String organizationId = this.aiConfigService.getConfigValue("openai.organization-id", null);
+        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_MODEL, DEFAULT_MODEL);
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, DEFAULT_BASE_URL);
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OPENAI_TEMPERATURE, 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OPENAI_MAX_TOKENS, 2000);
+        final String organizationId = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_ORGANIZATION_ID, null);
 
-        if (model == null || model.isBlank()) {
-            throw new IllegalStateException("OpenAI model not configured. Please configure via admin settings.");
-        }
-        if (baseUrl == null || baseUrl.isBlank()) {
-            throw new IllegalStateException("OpenAI API URL not configured. Please configure via admin settings.");
-        }
+        this.requireConfigured(model, "OpenAI model");
+        this.requireConfigured(baseUrl, "OpenAI API URL");
 
         try {
             final var request = jsonMode
@@ -156,15 +154,15 @@ public class OpenAiService extends AbstractAiProviderService {
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
                     LOG.error("OpenAI API error (status {}): {}", response.getStatus(), errorBody);
-                    throw new WebApplicationException("OpenAI API error: " + response.getStatus(),
-                            response.getStatus());
+                    throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
                 final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
 
                 if (openAiResponse.isContentFiltered()) {
                     LOG.warn("OpenAI response was filtered by content safety policies");
-                    throw new IllegalStateException("Response filtered by content safety policies");
+                    throw new NonRetryableAiProviderException(this.getProviderName(),
+                            "Response filtered by content safety policies");
                 }
 
                 if (openAiResponse.isTruncated()) {
@@ -191,12 +189,12 @@ public class OpenAiService extends AbstractAiProviderService {
                 return content;
             }
 
-        } catch (final WebApplicationException e) {
-            LOG.error("Error calling OpenAI API", e);
+        } catch (final AiProviderException e) {
+            LOG.error("OpenAI provider call failed", e);
             throw e;
         } catch (final RuntimeException e) {
             LOG.error("Unexpected error calling OpenAI API", e);
-            throw new IllegalStateException("Failed to call OpenAI API", e);
+            throw AiProviderException.transportFailure(this.getProviderName(), "Failed to call OpenAI API", e);
         }
     }
 }

@@ -11,11 +11,13 @@ import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
 import de.vptr.aimathtutor.dto.OllamaTagsResponseDto;
 import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.service.ai.AiProviderException;
+import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -46,7 +48,7 @@ public class OllamaService extends AbstractAiProviderService {
 
     @Override
     protected String getConfigPrefix() {
-        return "ollama";
+        return AiConfigKeys.OLLAMA_PREFIX;
     }
 
     @Override
@@ -104,23 +106,19 @@ public class OllamaService extends AbstractAiProviderService {
      * @param prompt The input prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = IllegalStateException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
-        final String model = this.aiConfigService.getConfigValue("ollama.model", DEFAULT_MODEL);
-        final double temperature = this.aiConfigService.getClampedTemperature("ollama.temperature", 0.7);
+        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
+        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_MODEL, DEFAULT_MODEL);
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OLLAMA_TEMPERATURE, 0.7);
         // Default to 2000 tokens to prevent truncated JSON responses
-        final int maxTokens = this.aiConfigService.getClampedTokens("ollama.max-tokens", 2000);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OLLAMA_MAX_TOKENS, 2000);
 
-        if (apiUrl == null || apiUrl.isBlank()) {
-            throw new IllegalStateException("Ollama API URL not configured. Please configure via admin settings.");
-        }
-        if (model == null || model.isBlank()) {
-            throw new IllegalStateException("Ollama model not configured. Please configure via admin settings.");
-        }
+        this.requireConfigured(apiUrl, "Ollama API URL");
+        this.requireConfigured(model, "Ollama model");
 
         try {
             // Create request
@@ -140,8 +138,7 @@ public class OllamaService extends AbstractAiProviderService {
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
                     LOG.error("Ollama API error (status {}): {}", response.getStatus(), errorBody);
-                    throw new WebApplicationException("Ollama API error: " + response.getStatus(),
-                            response.getStatus());
+                    throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
                 // Parse response
@@ -149,6 +146,11 @@ public class OllamaService extends AbstractAiProviderService {
 
                 if (!ollamaResponse.isComplete()) {
                     LOG.warn("Ollama response not complete");
+                }
+
+                if (ollamaResponse.isTruncated()) {
+                    LOG.warn("Ollama response was truncated due to max-tokens limit (done_reason={})",
+                            ollamaResponse.doneReason);
                 }
 
                 final String content = this.requireNonEmptyContent(ollamaResponse.getTextContent());
@@ -168,12 +170,13 @@ public class OllamaService extends AbstractAiProviderService {
                 return content;
             }
 
-        } catch (final WebApplicationException e) {
-            LOG.error("Error calling Ollama API", e);
+        } catch (final AiProviderException e) {
+            LOG.error("Ollama provider call failed", e);
             throw e;
         } catch (final RuntimeException e) {
             LOG.error("Unexpected error calling Ollama API", e);
-            throw new IllegalStateException("Failed to call Ollama API: " + e.getMessage(), e);
+            throw AiProviderException.transportFailure(this.getProviderName(),
+                    "Failed to call Ollama API: " + e.getMessage(), e);
         }
     }
 
@@ -181,7 +184,7 @@ public class OllamaService extends AbstractAiProviderService {
      * Check if Ollama server is available
      */
     public boolean isAvailable() {
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
+        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
         try {
             // Check /api/tags endpoint (lists installed models)
             try (Response response = this.getClient().target(apiUrl + "/api/tags")
@@ -209,7 +212,7 @@ public class OllamaService extends AbstractAiProviderService {
      * Check if a specific model is installed
      */
     public boolean isModelInstalled(final String modelName) {
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
+        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
         try {
             try (Response response = this.getClient().target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
@@ -237,6 +240,6 @@ public class OllamaService extends AbstractAiProviderService {
      * Get the API URL
      */
     public String getApiUrl() {
-        return this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
+        return this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
     }
 }

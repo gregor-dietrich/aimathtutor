@@ -17,6 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
 import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.service.ai.AiProviderException;
+import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -44,7 +47,7 @@ public class GeminiService extends AbstractAiProviderService {
 
     @Override
     protected String getConfigPrefix() {
-        return "gemini";
+        return AiConfigKeys.GEMINI_PREFIX;
     }
 
     @Override
@@ -79,24 +82,20 @@ public class GeminiService extends AbstractAiProviderService {
      * @param prompt The input prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = IllegalStateException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 
         this.requireApiKey(this.apiKey, "GEMINI_API_KEY");
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue("gemini.model", DEFAULT_MODEL);
-        final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url", DEFAULT_BASE_URL);
-        final double temperature = this.aiConfigService.getClampedTemperature("gemini.temperature", 0.7);
-        final int maxTokens = this.aiConfigService.getClampedTokens("gemini.max-tokens", 2000);
+        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.GEMINI_MODEL, DEFAULT_MODEL);
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GEMINI_API_BASE_URL, DEFAULT_BASE_URL);
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.GEMINI_TEMPERATURE, 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.GEMINI_MAX_TOKENS, 2000);
 
-        if (model == null || model.isBlank()) {
-            throw new IllegalStateException("Gemini model not configured. Please configure via admin settings.");
-        }
-        if (baseUrl == null || baseUrl.isBlank()) {
-            throw new IllegalStateException("Gemini API URL not configured. Please configure via admin settings.");
-        }
+        this.requireConfigured(model, "Gemini model");
+        this.requireConfigured(baseUrl, "Gemini API URL");
 
         try {
             // Create request DTO
@@ -128,7 +127,7 @@ public class GeminiService extends AbstractAiProviderService {
 
             if (statusCode != 200) {
                 LOG.error("Gemini API error (status {}): {}", statusCode, responseBody);
-                throw new IllegalStateException("Gemini API error: " + statusCode + " - " + responseBody);
+                throw AiProviderException.httpFailure(this.getProviderName(), statusCode, responseBody);
             }
 
             // Parse response
@@ -136,7 +135,13 @@ public class GeminiService extends AbstractAiProviderService {
 
             if (geminiResponse.isBlocked()) {
                 LOG.warn("Gemini response was blocked by safety filters");
-                throw new IllegalStateException("Response blocked by safety filters");
+                throw new NonRetryableAiProviderException(this.getProviderName(),
+                        "Response blocked by safety filters");
+            }
+
+            if (geminiResponse.isTruncated()) {
+                LOG.warn("Gemini response was truncated due to token limit (finishReason={})",
+                        geminiResponse.getFinishReason());
             }
 
             final String content = this.requireNonEmptyContent(geminiResponse.getTextContent());
@@ -144,13 +149,16 @@ public class GeminiService extends AbstractAiProviderService {
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
 
+        } catch (final AiProviderException e) {
+            LOG.error("Gemini provider call failed", e);
+            throw e;
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOG.error("Error calling Gemini API", e);
-            throw new IllegalStateException("Failed to call Gemini API", e);
+            LOG.error("Gemini call interrupted", e);
+            throw AiProviderException.transportFailure(this.getProviderName(), "Call interrupted", e);
         } catch (final IOException e) {
             LOG.error("Error calling Gemini API", e);
-            throw new IllegalStateException("Failed to call Gemini API", e);
+            throw AiProviderException.transportFailure(this.getProviderName(), "Failed to call Gemini API", e);
         }
     }
 }

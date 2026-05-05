@@ -49,25 +49,36 @@ public abstract class AbstractAiProviderService {
     }
 
     /**
-     * Throws {@link IllegalStateException} when the API key is missing.
+     * Throws {@link NonRetryableAiProviderException} when the API key is missing.
      *
      * @param apiKey     the resolved API key value
      * @param envVarName the environment variable users should set
      */
     protected void requireApiKey(final String apiKey, final String envVarName) {
         if (!isApiKeyConfigured(apiKey)) {
-            throw new IllegalStateException(this.getProviderName()
-                    + " API key not configured. Please set " + envVarName + " environment variable");
+            throw new NonRetryableAiProviderException(this.getProviderName(),
+                    "API key not configured. Please set " + envVarName + " environment variable");
         }
     }
 
     /**
-     * Throws {@link IllegalStateException} when the response content is empty.
+     * Throws {@link NonRetryableAiProviderException} when the response content is empty.
      */
     protected String requireNonEmptyContent(final String content) {
         if (content == null || content.isBlank()) {
-            throw new IllegalStateException("Empty response from " + this.getProviderName());
+            throw new NonRetryableAiProviderException(this.getProviderName(), "Empty response");
         }
         return content;
+    }
+
+    /**
+     * Throws {@link NonRetryableAiProviderException} when a required dynamic
+     * configuration value is missing.
+     */
+    protected void requireConfigured(final String value, final String settingDescription) {
+        if (value == null || value.isBlank()) {
+            throw new NonRetryableAiProviderException(this.getProviderName(),
+                    settingDescription + " not configured. Please configure via admin settings.");
+        }
     }
 }

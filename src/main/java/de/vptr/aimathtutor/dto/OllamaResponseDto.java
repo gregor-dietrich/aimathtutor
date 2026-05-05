@@ -13,6 +13,8 @@ public class OllamaResponseDto {
     public String createdAt;
     public String response;
     public Boolean done;
+    @JsonProperty("done_reason")
+    public String doneReason;
     @JsonProperty("total_duration")
     public Long totalDuration;
     @JsonProperty("load_duration")
@@ -36,6 +38,15 @@ public class OllamaResponseDto {
      */
     public boolean isComplete() {
         return this.done != null && this.done;
+    }
+
+    /**
+     * Check if the response was truncated due to the max-tokens limit.
+     * Ollama reports {@code "length"} as the {@code done_reason} when
+     * generation was cut off by {@code num_predict}.
+     */
+    public boolean isTruncated() {
+        return "length".equalsIgnoreCase(this.doneReason);
     }
 
     /**

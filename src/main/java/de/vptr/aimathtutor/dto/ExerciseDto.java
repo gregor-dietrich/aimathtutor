@@ -41,24 +41,6 @@ public class ExerciseDto {
         public String toString() {
             return this.value;
         }
-
-        /**
-         * Converts a string value to the corresponding DifficultyLevel enum.
-         *
-         * @param value the string value to convert
-         * @return the matching DifficultyLevel, or null if no match
-         */
-        public static DifficultyLevel fromString(final String value) {
-            if (value == null) {
-                return null;
-            }
-            for (final DifficultyLevel level : values()) {
-                if (level.value.equalsIgnoreCase(value)) {
-                    return level;
-                }
-            }
-            return null;
-        }
     }
 
     public Long id;

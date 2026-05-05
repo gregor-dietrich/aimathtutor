@@ -29,6 +29,7 @@ import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.AiConfigService;
 import de.vptr.aimathtutor.service.AiProviderTestService;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -156,14 +157,14 @@ public class AdminConfigView extends AbstractAdminView {
 
         // AI Enabled
         final var enabledCheckbox = new Checkbox("Enable AI Tutor");
-        final String enabledValue = this.aiConfigService.getConfigValue("ai.tutor.enabled", "true");
+        final String enabledValue = this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, "true");
         enabledCheckbox.setValue("true".equalsIgnoreCase(enabledValue));
         enabledCheckbox.setLabel("Enable AI Tutor");
 
         // AI Provider selection
         final var providerCombo = new ComboBox<String>("AI Provider");
         providerCombo.setItems("mock", "gemini", "ollama", "openai");
-        providerCombo.setValue(this.aiConfigService.getConfigValue("ai.tutor.provider", "mock"));
+        providerCombo.setValue(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"));
         providerCombo.setWidthFull();
 
         // Save button
@@ -189,14 +190,14 @@ public class AdminConfigView extends AbstractAdminView {
         final var apiKeyField = this.createReadOnlyApiKeyField("GEMINI_API_KEY",
                 "https://aistudio.google.com/app/apikey");
 
-        final var modelField = this.createTextConfigField("Model", "gemini.model", "gemma-3-27b-it",
+        final var modelField = this.createTextConfigField("Model", AiConfigKeys.GEMINI_MODEL, "gemma-3-27b-it",
                 "Gemini model name (e.g., gemma-3-27b-it)");
 
-        final var urlField = this.createTextConfigField("API Base URL", "gemini.api.base-url",
+        final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.GEMINI_API_BASE_URL,
                 "https://generativelanguage.googleapis.com", null);
 
-        final var tempField = this.createTemperatureField("gemini");
-        final var maxTokensField = this.createMaxTokensField("gemini");
+        final var tempField = this.createTemperatureField(AiConfigKeys.GEMINI_PREFIX);
+        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.GEMINI_PREFIX);
 
         final var saveBtn = new Button("Save",
                 ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
@@ -215,16 +216,16 @@ public class AdminConfigView extends AbstractAdminView {
                 "https://platform.openai.com/api-keys");
 
         final var orgIdField = this.createTextConfigField("Organization ID (Optional)",
-                "openai.organization-id", "", null);
+                AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
 
-        final var modelField = this.createTextConfigField("Model", "openai.model", "gpt-5-nano",
+        final var modelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-5-nano",
                 "OpenAI model name (e.g., gpt-5-nano)");
 
-        final var urlField = this.createTextConfigField("API Base URL", "openai.api.base-url",
+        final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.OPENAI_API_BASE_URL,
                 "https://api.openai.com/v1", null);
 
-        final var tempField = this.createTemperatureField("openai");
-        final var maxTokensField = this.createMaxTokensField("openai");
+        final var tempField = this.createTemperatureField(AiConfigKeys.OPENAI_PREFIX);
+        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.OPENAI_PREFIX);
 
         final var saveBtn = new Button("Save",
                 ignored -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
@@ -240,19 +241,20 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        final var apiUrlField = this.createTextConfigField("API URL", "ollama.api.url", "http://ollama:11434",
-                "Ollama API URL (e.g., http://localhost:11434)");
+        final var apiUrlField = this.createTextConfigField("API URL", AiConfigKeys.OLLAMA_API_URL,
+                "http://ollama:11434", "Ollama API URL (e.g., http://localhost:11434)");
 
-        final var modelField = this.createTextConfigField("Model", "ollama.model", "llama3.2:3b",
+        final var modelField = this.createTextConfigField("Model", AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b",
                 "Ollama model name (e.g., llama3.2:3b)");
 
-        final var tempField = this.createTemperatureField("ollama");
+        final var tempField = this.createTemperatureField(AiConfigKeys.OLLAMA_PREFIX);
 
-        final var maxTokensField = this.createMaxTokensField("ollama");
+        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.OLLAMA_PREFIX);
         maxTokensField.setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
 
         final var timeoutField = new NumberField("Timeout (seconds)");
-        timeoutField.setValue(this.aiConfigService.getConfigValueAsInt("ollama.timeout-seconds", 30).doubleValue());
+        timeoutField.setValue(this.aiConfigService.getConfigValueAsInt(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, 30)
+                .doubleValue());
         timeoutField.setMin(1);
         timeoutField.setMax(300);
         timeoutField.setStep(1);
@@ -273,13 +275,13 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setPadding(true);
 
         final var qaPrefix = this.createPromptArea("Question Answering Prefix",
-                "ai.prompt.question.answering.prefix", "Prefix for question answering prompts");
+                AiConfigKeys.PROMPT_QUESTION_PREFIX, "Prefix for question answering prompts");
         final var qaPostfix = this.createPromptArea("Question Answering Postfix",
-                "ai.prompt.question.answering.postfix", "Postfix for question answering prompts");
+                AiConfigKeys.PROMPT_QUESTION_POSTFIX, "Postfix for question answering prompts");
         final var mtPrefix = this.createPromptArea("Math Tutoring Prefix",
-                "ai.prompt.math.tutoring.prefix", "Prefix for math tutoring prompts");
+                AiConfigKeys.PROMPT_TUTORING_PREFIX, "Prefix for math tutoring prompts");
         final var mtPostfix = this.createPromptArea("Math Tutoring Postfix",
-                "ai.prompt.math.tutoring.postfix", "Postfix for math tutoring prompts");
+                AiConfigKeys.PROMPT_TUTORING_POSTFIX, "Postfix for math tutoring prompts");
 
         // Save button
         final var saveBtn = new Button("Save",
@@ -453,45 +455,45 @@ public class AdminConfigView extends AbstractAdminView {
     private void saveGeneralConfig(final Checkbox enabledCheckbox,
             final ComboBox<String> providerCombo) {
         this.saveProviderConfig("AI", List.of(
-                new AiConfigUpdateDto("ai.tutor.enabled", enabledCheckbox.getValue() ? "true" : "false"),
-                new AiConfigUpdateDto("ai.tutor.provider", providerCombo.getValue())));
+                new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED, enabledCheckbox.getValue() ? "true" : "false"),
+                new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, providerCombo.getValue())));
     }
 
     private void saveGeminiConfig(final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         this.saveProviderConfig("Gemini", List.of(
-                new AiConfigUpdateDto("gemini.model", modelField.getValue()),
-                new AiConfigUpdateDto("gemini.api.base-url", urlField.getValue()),
-                new AiConfigUpdateDto("gemini.temperature", temperatureOrDefault(tempField)),
-                new AiConfigUpdateDto("gemini.max-tokens", intOrDefault(maxTokensField, "2000"))));
+                new AiConfigUpdateDto(AiConfigKeys.GEMINI_MODEL, modelField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.GEMINI_API_BASE_URL, urlField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.GEMINI_TEMPERATURE, temperatureOrDefault(tempField)),
+                new AiConfigUpdateDto(AiConfigKeys.GEMINI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
     }
 
     private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
         this.saveProviderConfig("OpenAI", List.of(
-                new AiConfigUpdateDto("openai.organization-id", orgIdField.getValue()),
-                new AiConfigUpdateDto("openai.model", modelField.getValue()),
-                new AiConfigUpdateDto("openai.api.base-url", urlField.getValue()),
-                new AiConfigUpdateDto("openai.temperature", temperatureOrDefault(tempField)),
-                new AiConfigUpdateDto("openai.max-tokens", intOrDefault(maxTokensField, "2000"))));
+                new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, orgIdField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, modelField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, urlField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE, temperatureOrDefault(tempField)),
+                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
     }
 
     private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField,
             final NumberField tempField, final NumberField maxTokensField, final NumberField timeoutField) {
         this.saveProviderConfig("Ollama", List.of(
-                new AiConfigUpdateDto("ollama.api.url", apiUrlField.getValue()),
-                new AiConfigUpdateDto("ollama.model", modelField.getValue()),
-                new AiConfigUpdateDto("ollama.temperature", temperatureOrDefault(tempField)),
-                new AiConfigUpdateDto("ollama.max-tokens", intOrDefault(maxTokensField, "2000")),
-                new AiConfigUpdateDto("ollama.timeout-seconds", intOrDefault(timeoutField, "30"))));
+                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, apiUrlField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, modelField.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE, temperatureOrDefault(tempField)),
+                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS, intOrDefault(maxTokensField, "2000")),
+                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, intOrDefault(timeoutField, "30"))));
     }
 
     private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
             final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
         this.saveProviderConfig("Prompts", List.of(
-                new AiConfigUpdateDto("ai.prompt.question.answering.prefix", questionPrefixArea.getValue()),
-                new AiConfigUpdateDto("ai.prompt.question.answering.postfix", questionPostfixArea.getValue()),
-                new AiConfigUpdateDto("ai.prompt.math.tutoring.prefix", tutoringPrefixArea.getValue()),
-                new AiConfigUpdateDto("ai.prompt.math.tutoring.postfix", tutoringPostfixArea.getValue())));
+                new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_PREFIX, questionPrefixArea.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_POSTFIX, questionPostfixArea.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_PREFIX, tutoringPrefixArea.getValue()),
+                new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_POSTFIX, tutoringPostfixArea.getValue())));
     }
 }

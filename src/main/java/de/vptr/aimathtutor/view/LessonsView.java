@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -63,32 +64,36 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     private void buildUi() {
         this.removeAll();
 
-        // Welcome header
+        // Welcome header rendered immediately so the user has feedback while
+        // lessons/exercises load in the background.
         final var welcomeLabel = new H2("Welcome, " + this.authService.getUsername() + "!");
         welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
-
         this.add(welcomeLabel);
 
-        // Get all lessons
-        final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
+        AsyncDataLoader.load(
+                () -> {
+                    final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
+                    final Map<Long, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
+                            .findPublishedExercisesByLessonMap();
+                    return new LessonsPayload(lessons, exercisesByLesson);
+                },
+                this,
+                this::renderLessons,
+                "Failed to load lessons. Please try again.");
+    }
 
-        // Batch-load all published exercises grouped by lesson to avoid N+1
-        final Map<Long, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
-                .findPublishedExercisesByLessonMap();
+    private void renderLessons(final LessonsPayload payload) {
+        final List<ExerciseViewDto> standaloneExercises = payload.exercisesByLesson.getOrDefault(null, List.of());
 
-        // Also show standalone exercises (not in any lesson)
-        final List<ExerciseViewDto> standaloneExercises = exercisesByLesson.getOrDefault(null, List.of());
-
-        if (lessons.isEmpty() && standaloneExercises.isEmpty()) {
+        if (payload.lessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
             noLessonsMsg.getStyle().set("color", "var(--lumo-secondary-text-color)");
             this.add(noLessonsMsg);
             return;
         }
 
-        // Display each lesson with its exercises
-        for (final LessonViewDto lesson : lessons) {
-            final List<ExerciseViewDto> exercises = exercisesByLesson.getOrDefault(lesson.getId(), List.of());
+        for (final LessonViewDto lesson : payload.lessons) {
+            final List<ExerciseViewDto> exercises = payload.exercisesByLesson.getOrDefault(lesson.getId(), List.of());
             this.add(this.createLessonCard(lesson, exercises));
         }
 
@@ -112,6 +117,10 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             standaloneSection.add(exerciseGrid);
             this.add(standaloneSection);
         }
+    }
+
+    private record LessonsPayload(List<LessonViewDto> lessons,
+            Map<Long, List<ExerciseViewDto>> exercisesByLesson) {
     }
 
     private VerticalLayout createLessonCard(final LessonViewDto lesson, final List<ExerciseViewDto> exercises) {

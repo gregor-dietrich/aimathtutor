@@ -37,6 +37,14 @@ public class AuthService {
 
     private static final String USERNAME_KEY = "authenticated.username";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
+    private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
+
+    /**
+     * How long an {@link #isAuthenticated()} result may be served from the session
+     * without re-validating against the database. Keeps {@code beforeEnter} navigation
+     * checks off the DB while still picking up bans/deactivations within a short window.
+     */
+    private static final long AUTH_CACHE_TTL_MILLIS = 30_000L;
 
     /**
      * Authenticates a user with the provided credentials.
@@ -142,6 +150,7 @@ public class AuthService {
                 if (session != null) {
                     session.setAttribute(USERNAME_KEY, user.username);
                     session.setAttribute(AUTHENTICATED_KEY, true);
+                    session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
                 }
             } catch (final RuntimeException e) {
                 LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
@@ -186,6 +195,7 @@ public class AuthService {
         }
         session.setAttribute(USERNAME_KEY, null);
         session.setAttribute(AUTHENTICATED_KEY, false);
+        session.setAttribute(LAST_DB_CHECK_KEY, null);
 
         // Regenerate session ID after logout so a leaked pre-logout ID cannot
         // be reused by an attacker on a future login from the same browser.
@@ -219,9 +229,22 @@ public class AuthService {
             return false;
         }
 
+        // Skip the DB lookup when we re-validated within the cache window.
+        // Vaadin navigation calls beforeEnter on every route change, and the
+        // findByUsername hit otherwise dominates page-to-page latency.
+        final var lastCheck = (Long) session.getAttribute(LAST_DB_CHECK_KEY);
+        if (lastCheck != null && System.currentTimeMillis() - lastCheck < AUTH_CACHE_TTL_MILLIS) {
+            return true;
+        }
+
         final var user = this.userRepository.findByUsername(username);
         final var result = user != null && user.activated && !user.banned;
-        LOG.trace("Checking authentication status: {}", result);
+        if (result) {
+            session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
+        } else {
+            session.setAttribute(LAST_DB_CHECK_KEY, null);
+        }
+        LOG.trace("Checking authentication status (DB hit): {}", result);
         return result;
     }
 

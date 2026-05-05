@@ -101,4 +101,27 @@ public class GeminiResponseDto {
     public boolean isEmptyResponse() {
         return this.candidates == null || this.candidates.isEmpty();
     }
+
+    /**
+     * Check if the response was truncated due to the token limit
+     * (Gemini reports {@code "MAX_TOKENS"} as the finish reason).
+     */
+    public boolean isTruncated() {
+        if (this.candidates == null || this.candidates.isEmpty()) {
+            return false;
+        }
+        return "MAX_TOKENS".equals(this.candidates.get(0).finishReason);
+    }
+
+    /**
+     * Returns the finish reason of the first candidate.
+     *
+     * @return the finish reason, or {@code null} if no candidates are present.
+     */
+    public String getFinishReason() {
+        if (this.candidates == null || this.candidates.isEmpty()) {
+            return null;
+        }
+        return this.candidates.get(0).finishReason;
+    }
 }

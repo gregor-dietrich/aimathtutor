@@ -39,9 +39,9 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString("ai.prompt.question.answering.prefix",
+        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_PREFIX,
                 "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.");
-        final var postfix = this.getConfigString("ai.prompt.question.answering.postfix",
+        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_POSTFIX,
                 "Provide a helpful, encouraging answer that:\n- Guides the student's thinking without solving it for them\n- Is concise (2-3 sentences max)\n- Relates to their current problem if possible\n- Uses clear, simple language\n- Encourages them to try the next step\n\nYour answer:");
 
         prompt.append(prefix);
@@ -91,9 +91,9 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString("ai.prompt.math.tutoring.prefix",
+        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_PREFIX,
                 "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback.");
-        final var postfix = this.getConfigString("ai.prompt.math.tutoring.postfix",
+        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_POSTFIX,
                 "Provide feedback in the following JSON format:\n{\n  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n  \"hints\": [],\n  \"suggestedNextSteps\": [],\n  \"confidence\": 0.0 to 1.0\n}\n\nIMPORTANT Guidelines:\n- Keep message to ONE SHORT sentence (max 15 words)\n- Be encouraging but not overly enthusiastic\n- If the action is correct, give brief praise\n- If incorrect, point out the error gently\n- Only provide hints array if student made a mistake (max 1-2 hints)\n- Do NOT provide hints for correct actions\n- Leave suggestedNextSteps empty unless specifically needed\n- Be specific about what they did, not generic\n");
 
         prompt.append(prefix);
