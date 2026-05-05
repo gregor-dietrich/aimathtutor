@@ -1,6 +1,8 @@
 package de.vptr.aimathtutor.dto;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+
+import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
 
@@ -60,7 +62,7 @@ public class CommentDto {
 
     public Long id;
 
-    @Size(min = 1, max = 10000, message = "Content must be between 1 and 10000 characters when provided")
+    @Size(min = AppConstants.COMMENT_CONTENT_MIN_LENGTH, max = AppConstants.COMMENT_CONTENT_MAX_LENGTH, message = "Content must be between {min} and {max} characters")
     public String content;
 
     // Required for POST operations (creation)

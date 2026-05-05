@@ -21,6 +21,7 @@ import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -41,34 +42,34 @@ public class AiConfigService {
 
     // Default values for runtime reset to factory defaults.
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
-            Map.entry("ai.tutor.enabled", "true"),
-            Map.entry("ai.tutor.provider", "mock"),
-            Map.entry("gemini.model", "gemma-3-27b-it"),
-            Map.entry("gemini.api.base-url", "https://generativelanguage.googleapis.com"),
-            Map.entry("gemini.temperature", "0.7"),
-            Map.entry("gemini.max-tokens", "2000"),
-            Map.entry("openai.model", "gpt-5-nano"),
-            Map.entry("openai.organization-id", ""),
-            Map.entry("openai.api.base-url", "https://api.openai.com/v1"),
-            Map.entry("openai.temperature", "0.7"),
-            Map.entry("openai.max-tokens", "2000"),
-            Map.entry("ollama.api.url", "http://ollama:11434"),
-            Map.entry("ollama.model", "llama3.2:3b"),
-            Map.entry("ollama.temperature", "0.7"),
-            Map.entry("ollama.max-tokens", "2000"),
-            Map.entry("ollama.timeout-seconds", "30"),
-            Map.entry("ai.prompt.question.answering.prefix",
+            Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"),
+            Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
+            Map.entry(AiConfigKeys.GEMINI_MODEL, "gemma-3-27b-it"),
+            Map.entry(AiConfigKeys.GEMINI_API_BASE_URL, "https://generativelanguage.googleapis.com"),
+            Map.entry(AiConfigKeys.GEMINI_TEMPERATURE, "0.7"),
+            Map.entry(AiConfigKeys.GEMINI_MAX_TOKENS, "2000"),
+            Map.entry(AiConfigKeys.OPENAI_MODEL, "gpt-5-nano"),
+            Map.entry(AiConfigKeys.OPENAI_ORGANIZATION_ID, ""),
+            Map.entry(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1"),
+            Map.entry(AiConfigKeys.OPENAI_TEMPERATURE, "0.7"),
+            Map.entry(AiConfigKeys.OPENAI_MAX_TOKENS, "2000"),
+            Map.entry(AiConfigKeys.OLLAMA_API_URL, "http://ollama:11434"),
+            Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"),
+            Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
+            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"),
+            Map.entry(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, "30"),
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
                     "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question."),
-            Map.entry("ai.prompt.question.answering.postfix",
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX,
                     "Provide a helpful, encouraging answer that:\n"
                             + "- Guides the student's thinking without solving it for them\n"
                             + "- Is concise (2-3 sentences max)\n"
                             + "- Relates to their current problem if possible\n"
                             + "- Uses clear, simple language\n"
                             + "- Encourages them to try the next step\n\nYour answer:"),
-            Map.entry("ai.prompt.math.tutoring.prefix",
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX,
                     "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback."),
-            Map.entry("ai.prompt.math.tutoring.postfix",
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX,
                     "Provide feedback in the following JSON format:\n"
                             + "{\n"
                             + "  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n"
@@ -106,20 +107,21 @@ public class AiConfigService {
             return defaultValue;
         }
 
-        // Check cache first
-        if (this.configCache.containsKey(key)) {
-            return this.configCache.get(key);
+        final String cached = this.configCache.get(key);
+        if (cached != null) {
+            return cached;
         }
 
-        // Query database
-        final Optional<AiConfigEntity> entity = this.aiConfigRepository.findByConfigKey(key);
-        if (entity.isPresent()) {
-            final String value = entity.get().configValue;
-            this.configCache.put(key, value);
-            return value;
-        }
-
-        return defaultValue;
+        return this.aiConfigRepository.findByConfigKey(key)
+                .map(entity -> {
+                    if (entity.configValue != null) {
+                        this.configCache.put(entity.configKey, entity.configValue);
+                    } else {
+                        this.configCache.remove(entity.configKey);
+                    }
+                    return entity.configValue;
+                })
+                .orElse(defaultValue);
     }
 
     /**

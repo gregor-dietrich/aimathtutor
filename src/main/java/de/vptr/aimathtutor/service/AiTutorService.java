@@ -12,6 +12,7 @@ import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.service.ai.AiInteractionLogger;
 import de.vptr.aimathtutor.service.ai.JsonRepairService;
 import de.vptr.aimathtutor.service.ai.provider.AiProvider;
@@ -97,7 +98,7 @@ public class AiTutorService {
                 context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
-        final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
+        final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true);
         if (!aiEnabled) {
             LOG.debug("AI is disabled, returning null");
             return null; // Don't provide feedback if AI is disabled
@@ -117,7 +118,7 @@ public class AiTutorService {
         }
 
         // Load dynamic provider configuration
-        final var aiProvider = this.getConfigString("ai.tutor.provider", "mock");
+        final var aiProvider = this.getConfigString(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
         LOG.info("Action is significant, generating feedback with provider: {}", aiProvider);
 
         // Use different AI provider based on configuration
@@ -268,14 +269,14 @@ public class AiTutorService {
                 context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
-        final Boolean aiEnabled = this.getConfigBoolean("ai.tutor.enabled", true);
+        final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true);
         if (!aiEnabled) {
             return ChatMessageDto.aiAnswer(
                     "I'm currently offline, but keep working on the problem! You can ask your teacher for help.");
         }
 
         // Use different AI provider based on configuration
-        final var aiProvider = this.getConfigString("ai.tutor.provider", "mock");
+        final var aiProvider = this.getConfigString(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
 
         // Apply per-user rate limiting for non-mock providers

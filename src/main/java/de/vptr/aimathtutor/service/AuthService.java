@@ -3,6 +3,8 @@ package de.vptr.aimathtutor.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vaadin.flow.server.VaadinRequest;
+import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.AuthResultDto;
@@ -35,6 +37,14 @@ public class AuthService {
 
     private static final String USERNAME_KEY = "authenticated.username";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
+    private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
+
+    /**
+     * How long an {@link #isAuthenticated()} result may be served from the session
+     * without re-validating against the database. Keeps {@code beforeEnter} navigation
+     * checks off the DB while still picking up bans/deactivations within a short window.
+     */
+    private static final long AUTH_CACHE_TTL_MILLIS = 30_000L;
 
     /**
      * Authenticates a user with the provided credentials.
@@ -56,11 +66,20 @@ public class AuthService {
         }
 
         final String usernameKey = username.toLowerCase().trim();
+        final String clientIp = this.extractClientIp();
 
-        // Check login attempt throttling
+        // Check login attempt throttling by username
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
             LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
+            return AuthResultDto
+                    .backendUnavailable("Too many failed attempts. Try again later.");
+        }
+
+        // Check login attempt throttling by IP
+        if (clientIp != null && this.loginAttemptService.isLockedOut(clientIp)) {
+            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientIp);
+            LOG.warn("Authentication throttled for IP: {} ({}s remaining)", clientIp, remaining);
             return AuthResultDto
                     .backendUnavailable("Too many failed attempts. Try again later.");
         }
@@ -72,6 +91,9 @@ public class AuthService {
             if (user == null) {
                 LOG.trace("Authentication failed - user not found: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -79,6 +101,9 @@ public class AuthService {
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -86,6 +111,9 @@ public class AuthService {
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -93,6 +121,9 @@ public class AuthService {
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordFailedAttempt(clientIp);
+                }
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -106,10 +137,20 @@ public class AuthService {
 
             try {
                 this.loginAttemptService.recordSuccessfulLogin(usernameKey);
+                if (clientIp != null) {
+                    this.loginAttemptService.recordSuccessfulLogin(clientIp);
+                }
+                // Regenerate session ID to defeat session-fixation attacks where an
+                // attacker pre-sets the victim's session ID before login.
+                final VaadinRequest request = VaadinRequest.getCurrent();
+                if (request != null) {
+                    VaadinService.reinitializeSession(request);
+                }
                 final var session = VaadinSession.getCurrent();
                 if (session != null) {
                     session.setAttribute(USERNAME_KEY, user.username);
                     session.setAttribute(AUTHENTICATED_KEY, true);
+                    session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
                 }
             } catch (final RuntimeException e) {
                 LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
@@ -127,6 +168,24 @@ public class AuthService {
         }
     }
 
+    private String extractClientIp() {
+        final VaadinRequest request = VaadinRequest.getCurrent();
+        if (request == null) {
+            return null;
+        }
+        final String remoteAddr = request.getRemoteAddr();
+        final String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank() && this.isTrustedProxy(remoteAddr)) {
+            return forwarded.split(",")[0].trim();
+        }
+        return remoteAddr;
+    }
+
+    private boolean isTrustedProxy(final String remoteAddr) {
+        return "127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr)
+                || "0:0:0:0:0:0:0:1".equals(remoteAddr);
+    }
+
     /**
      * Clears the current user's authentication session.
      * Removes stored username, password, and authentication status from the
@@ -142,6 +201,14 @@ public class AuthService {
         }
         session.setAttribute(USERNAME_KEY, null);
         session.setAttribute(AUTHENTICATED_KEY, false);
+        session.setAttribute(LAST_DB_CHECK_KEY, null);
+
+        // Regenerate session ID after logout so a leaked pre-logout ID cannot
+        // be reused by an attacker on a future login from the same browser.
+        final VaadinRequest request = VaadinRequest.getCurrent();
+        if (request != null) {
+            VaadinService.reinitializeSession(request);
+        }
 
         LOG.trace("User logged out");
     }
@@ -168,9 +235,22 @@ public class AuthService {
             return false;
         }
 
+        // Skip the DB lookup when we re-validated within the cache window.
+        // Vaadin navigation calls beforeEnter on every route change, and the
+        // findByUsername hit otherwise dominates page-to-page latency.
+        final var lastCheck = (Long) session.getAttribute(LAST_DB_CHECK_KEY);
+        if (lastCheck != null && System.currentTimeMillis() - lastCheck < AUTH_CACHE_TTL_MILLIS) {
+            return true;
+        }
+
         final var user = this.userRepository.findByUsername(username);
         final var result = user != null && user.activated && !user.banned;
-        LOG.trace("Checking authentication status: {}", result);
+        if (result) {
+            session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
+        } else {
+            session.setAttribute(LAST_DB_CHECK_KEY, null);
+        }
+        LOG.trace("Checking authentication status (DB hit): {}", result);
         return result;
     }
 

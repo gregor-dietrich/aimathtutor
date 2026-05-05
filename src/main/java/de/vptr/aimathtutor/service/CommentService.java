@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,10 @@ import jakarta.ws.rs.core.Response;
 public class CommentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommentService.class);
+
+    // Strict policy: disallow all HTML elements/attributes. Tags are dropped and
+    // residual <, >, & characters are HTML-escaped, yielding safe plain text.
+    private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
 
     @Inject
     UserService userService;
@@ -192,10 +198,16 @@ public class CommentService {
         // Always assign the managed exercise entity
         comment.exercise = existingExercise;
 
-        // Auto-assign current user if not provided (skip existence check)
-        if (comment.user == null) {
-            comment.user = this.userRepository.findByUsernameOptional(currentUsername).orElse(null);
-        }
+        // Always derive the author from the trusted currentUsername; never honour
+        // a caller-supplied user, which would allow impersonation.
+        final UserEntity author = this.userRepository.findByUsernameOptional(currentUsername)
+                .orElseThrow(() -> new WebApplicationException("Authenticated user not found",
+                        Response.Status.UNAUTHORIZED));
+        comment.user = author;
+
+        // Defensively wipe the id so a caller cannot redirect the persist to an
+        // existing row.
+        comment.id = null;
 
         comment.content = this.sanitizeCommentContent(comment.content);
         this.commentRepository.persist(comment);
@@ -305,9 +317,13 @@ public class CommentService {
      */
     private String sanitizeCommentContent(final String content) {
         if (content == null) {
-            return "";
+            throw new ValidationException("Comment content cannot be null");
         }
-        return content.replaceAll("<[^>]*>", "").trim();
+        final String sanitized = STRICT_HTML_POLICY.sanitize(content).trim();
+        if (sanitized.isEmpty()) {
+            throw new ValidationException("Comment content cannot be blank after sanitization");
+        }
+        return sanitized;
     }
 
     /**

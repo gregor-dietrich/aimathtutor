@@ -2,6 +2,8 @@ package de.vptr.aimathtutor.service;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.slf4j.Logger;
@@ -24,6 +26,17 @@ public class ProblemGeneratorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProblemGeneratorService.class);
 
+    private final Random random;
+
+    public ProblemGeneratorService() {
+        this.random = ThreadLocalRandom.current();
+    }
+
+    public ProblemGeneratorService(final Random random) {
+        Objects.requireNonNull(random, "random must not be null");
+        this.random = new Random(random.nextLong());
+    }
+
     /**
      * Generates a new math problem based on the given category.
      *
@@ -45,7 +58,7 @@ public class ProblemGeneratorService {
         // - ThreadLocalRandom is more efficient for concurrent access
         // - Each thread has its own random instance, avoiding contention
         // - No initialization overhead compared to SecureRandom
-        final var random = ThreadLocalRandom.current();
+        final var random = this.random;
 
         // Difficulty-based parameter scaling
         final int coefMax = switch (difficulty) {

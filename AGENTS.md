@@ -50,7 +50,6 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 ### Critical Anti-Patterns (Do Not Propose)
 
 - **Do NOT make LoginView async.** Wrapping `authService.authenticate()` in `CompletableFuture.supplyAsync()` causes `ContextNotActiveException` on navigation because `ui.access()` has no CDI request context. `MainLayout.beforeEnter()` calls `isAuthenticated()` which needs the EntityManager. Keep login synchronous. Tried and reverted multiple times.
-- **Use `QuarkusSecurityIdentity.builder(identity)` when augmenting** — it preserves credentials, attributes, and permission checkers. Using `builder()` loses original roles. EXCEPTION: When roles need normalization (e.g. `UserRankIdentityAugmentor`), use `builder()` and manually copy credentials/attributes, since `builder(identity)` copies original roles un-normalized.
 - **CommentsPanel must NOT have `@Observes` methods.** It is instantiated with `new`, not CDI. Real-time refresh uses `CommentCreatedEventBridge` with programmatic listeners.
 - **ConversationContextDto fields must stay `private final` with unmodifiable getters.** Do not revert to public fields.
 - **`VaadinSession.getCurrent()` can be null.** Always null-check before use. This applies to `AuthService.getUsername()`, `logout()`, `isAuthenticated()`.

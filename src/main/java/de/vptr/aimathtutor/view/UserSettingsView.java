@@ -1,8 +1,5 @@
 package de.vptr.aimathtutor.view;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -24,9 +21,9 @@ import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
-import jakarta.validation.ValidationException;
 
 /**
  * User settings view for changing password and customizing chat avatars.
@@ -34,8 +31,6 @@ import jakarta.validation.ValidationException;
 @Route(value = "settings", layout = MainLayout.class)
 @PageTitle("Settings")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserSettingsView.class);
 
     @Inject
     private transient AuthService authService;
@@ -54,6 +49,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private Long currentUserId;
     private String currentUsername;
     private String currentEmail;
+
+    private boolean passwordChangeInProgress;
+    private boolean avatarUpdateInProgress;
 
     /**
      * Called before navigation occurs. Checks authentication, loads current user
@@ -165,7 +163,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.newPasswordField = new PasswordField("New Password");
         this.newPasswordField.setRequired(true);
-        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH + " characters with uppercase, lowercase, digit and symbol");
+        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH
+                + " characters with uppercase, lowercase, digit and symbol");
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
@@ -267,15 +266,17 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     }
 
     private void loadCurrentSettings() {
-        try {
-            final UserSettingsDto settings = this.userService.getSettings(this.currentUserId);
-            this.userAvatarSelect.setValue(settings.userAvatarEmoji);
-            this.tutorAvatarSelect.setValue(settings.tutorAvatarEmoji);
-            this.updatePreview();
-        } catch (final Exception e) {
-            LOG.error("Failed to load settings", e);
-            NotificationUtil.showError("Failed to load settings");
-        }
+        AsyncDataLoader.load(
+                () -> this.userService.getSettings(this.currentUserId),
+                this,
+                this::applySettings,
+                "Failed to load settings");
+    }
+
+    private void applySettings(final UserSettingsDto settings) {
+        this.userAvatarSelect.setValue(settings.userAvatarEmoji);
+        this.tutorAvatarSelect.setValue(settings.tutorAvatarEmoji);
+        this.updatePreview();
     }
 
     private void handlePasswordChange() {
@@ -295,7 +296,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         if (newPassword.length() < AppConstants.PASSWORD_MIN_LENGTH) {
-            NotificationUtil.showError("New password must be at least " + AppConstants.PASSWORD_MIN_LENGTH + " characters long");
+            NotificationUtil.showError(
+                    "New password must be at least " + AppConstants.PASSWORD_MIN_LENGTH + " characters long");
             return;
         }
 
@@ -309,20 +311,32 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        try {
-            this.userService.changePassword(this.currentUserId, currentPassword, newPassword);
-            NotificationUtil.showSuccess("Password changed successfully");
+        if (this.passwordChangeInProgress) {
+            return;
+        }
+        this.passwordChangeInProgress = true;
+        this.currentPasswordField.setEnabled(false);
+        this.newPasswordField.setEnabled(false);
+        this.confirmPasswordField.setEnabled(false);
 
-            // Clear fields
+        AsyncDataLoader.load(() -> {
+            this.userService.changePassword(this.currentUserId, currentPassword, newPassword);
+            return null;
+        }, this, ignored -> {
+            NotificationUtil.showSuccess("Password changed successfully");
             this.currentPasswordField.clear();
             this.newPasswordField.clear();
             this.confirmPasswordField.clear();
-        } catch (final ValidationException e) {
-            NotificationUtil.showError(e.getMessage());
-        } catch (final Exception e) {
-            LOG.error("Failed to change password", e);
-            NotificationUtil.showError("Failed to change password");
-        }
+            this.passwordChangeInProgress = false;
+            this.currentPasswordField.setEnabled(true);
+            this.newPasswordField.setEnabled(true);
+            this.confirmPasswordField.setEnabled(true);
+        }, () -> {
+            this.passwordChangeInProgress = false;
+            this.currentPasswordField.setEnabled(true);
+            this.newPasswordField.setEnabled(true);
+            this.confirmPasswordField.setEnabled(true);
+        }, "Failed to change password");
     }
 
     private void handleAvatarChange() {
@@ -339,14 +353,25 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        try {
-            this.userService.updateAvatars(this.currentUserId, userEmoji, tutorEmoji);
-            NotificationUtil.showSuccess("Avatars updated successfully");
-        } catch (final ValidationException e) {
-            NotificationUtil.showError(e.getMessage());
-        } catch (final Exception e) {
-            LOG.error("Failed to update avatars", e);
-            NotificationUtil.showError("Failed to update avatars");
+        if (this.avatarUpdateInProgress) {
+            return;
         }
+        this.avatarUpdateInProgress = true;
+        this.userAvatarSelect.setEnabled(false);
+        this.tutorAvatarSelect.setEnabled(false);
+
+        AsyncDataLoader.load(() -> {
+            this.userService.updateAvatars(this.currentUserId, userEmoji, tutorEmoji);
+            return null;
+        }, this, ignored -> {
+            NotificationUtil.showSuccess("Avatars updated successfully");
+            this.avatarUpdateInProgress = false;
+            this.userAvatarSelect.setEnabled(true);
+            this.tutorAvatarSelect.setEnabled(true);
+        }, () -> {
+            this.avatarUpdateInProgress = false;
+            this.userAvatarSelect.setEnabled(true);
+            this.tutorAvatarSelect.setEnabled(true);
+        }, "Failed to update avatars");
     }
 }

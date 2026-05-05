@@ -2,20 +2,6 @@
 
 ## 0. General
 
-### Implementation Priority
-
-1. **Security & Safety** (Auth unification, XSS, JS injection, rate limits, password storage, API key exposure)
-2. **Error Handling & Reliability** (Broad exception catches, NPE risks, PII in logs, user-facing error leaks)
-3. **Database & Query Optimization** (Broken named queries, missing indexes, N+1 queries, in-memory filtering)
-4. **Graspable Math Action Validation (isValidAction)** (Task 7)
-5. **Multiple Problems Per Exercise** (Task 2)
-6. **AdminConfigView: Performance Optimization** (Task 5.2 — service-level config caching)
-7. **Gamification** (Task 6)
-8. **Code Quality & Architecture** (Base admin view, split oversized services, extract constants, dead code)
-9. **AI Service Hardening** (Prompt injection defense, config validation, response handling)
-10. **Miscellaneous Fixes** (Keyboard accessibility, admin dashboard diagrams)
-11. **Pagination** (Phase 7 — lowest priority)
-
 ### Testing Checklist (for each feature)
 
 - [ ] Unit tests for service methods
@@ -262,37 +248,7 @@ Keep rules configurable via `AdminGamificationView`.
 
 ---
 
-## 4. Miscellaneous Fixes
-
-### 4.1 Admin Dashboard Enhancement
-
-The admin dashboard could use some further enhancement, such as diagrams.
-
-### 4.2 Keyboard accessibility
-
-Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
-
-> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
-
-### 4.3 Pagination
-
-Add server-side pagination for admin views to handle large datasets gracefully (Vaadin `DataProvider.fromCallbacks()` + backend paged queries + `count()` methods). **Priority: Phase 7 — lowest urgency.**
-
-> **Consistency check:** When implementing, check all admin views (Users, Exercises, Lessons, Comments, Sessions, Progress, UserGroups, UserRanks) for identical grid-loading patterns and fix them consistently.
-
-### 4.4 Unit Test Coverage
-
-Unit test coverage should be reviewed and improved across multiple packages. Specific gaps identified:
-
-- Service tests only cover null/empty input validation (no happy paths, updates, deletions, search, or edge cases).
-- No repository tests for custom queries (e.g., broken named queries in `ExerciseRepository` would not be caught).
-- No view/presenter tests; Vaadin views are completely untested.
-- No usage of Mockito/Panache Mock for true unit tests in isolation; all tests use `@QuarkusTest` with real DB.
-- `AiTutorServiceTest` has a test that catches generic `Exception` and asserts on message, making it pass regardless of actual behavior.
-
-> **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
-
-### 4.5 ULIDs as Primary/Foreign Keys (API)
+### 4. ULIDs as Primary/Foreign Keys
 
 **Goal:** remove sequential IDs from external surfaces; use ULIDs to reduce enumeration risk.
 
@@ -311,15 +267,17 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - No external endpoint exposes numeric IDs.
 - All existing records have unique non-null ULIDs.
 - Clients and docs fully switched to ULIDs.
-- SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
+- SpotBugs, CheckStyle and all Maven Tests passing.
 
-### 4.6 Encrypt-at-Rest (API)
+---
+
+### 5. Encrypt-at-Rest
 
 **Goal:** encrypt PII at rest with file-backed key management.
 
 **Plan:**
 
-1. Classify sensitive fields across entities (starting with `UserEntity.email`, `UserEntity.lastIp`) and record lookup requirements (display-only vs searchable).
+1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
 2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
 3. Add blind-index/hash companion columns for fields requiring equality search.
 4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
@@ -336,32 +294,42 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - Target PII fields are stored encrypted at rest.
 - App starts with existing key or generates one when absent.
 - Compose/dev setup persists key material via mounted volume.
-- SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
-
-### 4.7 Vaadin 25 theme migration fixes (GUI)
-
-- Replace deprecated `lumoImports` usage in `src/main/frontend/themes/starter-theme/theme.json`.
-- If utility classes required, add `@StyleSheet(Lumo.UTILITY_STYLESHEET)` in `src/main/java/de/vptr/aimathtutor/gui/AppConfig.java`.
-- Fix component-style loading warning (`vaadin-text-field.css`) by enabling `themeComponentStyles` or moving styles to supported setup.
-
-```log
-[WARNING] Theme 'starter-theme' contains component styles, but the 'themeComponentStyles' feature flag is not set, so component styles will not be applied for
-vaadin-text-field.css
-[WARNING] The 'lumoImports' property detected in theme(s) '[starter-theme]' is no longer supported in Vaadin 25. All modules except 'utility' are now loaded automatically when extending Lumo theme. To load utility classes, add '@StyleSheet(Lumo.UTILITY_STYLESHEET)' annotation to 'AppShellConfigurator' implementor.
-```
+- SpotBugs, CheckStyle and all Maven Tests passing.
 
 ---
 
-## 5. Remediation Plan — Code Review Findings (3.0.0)
+## 6. Miscellaneous Fixes
+
+### 6.1 Admin Dashboard Enhancement
+
+The admin dashboard could use some further enhancement, such as diagrams.
+
+### 6.2 Keyboard accessibility
+
+Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
+
+> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
+
+### 6.3 OWASP Dependency-Check & Secret Scanning
+
+**Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
+
+**Why implement:** OWASP dependency-check is a documented Code Quality Gate (`failBuildOnCVSS=7`). Running it in CI prevents known-vulnerable dependencies from reaching `main`. Gitleaks secret scanning prevents accidental credential commits.
+
+**Action:**
+
+1. Add the `NVD_API_KEY` as a GitHub repository secret.
+2. Uncomment the OWASP dependency-check and Gitleaks steps in the `security` job.
+3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break.
 
 ---
 
-### Phase 6: Code Deduplication (Medium)
+### 6.4 — Maven Cache in Security Job
 
-#### 6.3 Extract admin CRUD base view — Deferred
+**Issue:** The `security` CI job compiles the project (`./mvnw clean install package -DskipTests`) without caching Maven dependencies, while the `build` job already has `actions/cache@v4`.
 
-- **Problem:** Admin views (`AdminUsersView`, `AdminExercisesView`, `AdminCommentsView`, `AdminLessonsView`, etc.) duplicate constructor boilerplate, `buildUi()` patterns, dialog setup, grid action columns, and save-error handling.
-- **Where:** All admin views under `src/main/java/de/vptr/aimathtutor/view/admin/`
-- **Fix:** Deferred due to high invasiveness. Each admin view has significant custom logic (date filters, custom dialogs, composite grids) that would require heavy generics and reflection to unify. Revisit when views are rewritten or a new admin framework is introduced.
+**Why implement:** Zero-risk improvement. Caching dependencies cuts CI time by minutes on every run.
+
+**Action:** Add the same `actions/cache@v4` block (path `~/.m2/repository`, key `${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}`) to the `security` job before the compile step.
 
 ---

@@ -12,8 +12,7 @@ public class UserRankDto {
 
     public Long id;
 
-    @Size(min = AppConstants.USERNAME_MIN_LENGTH, max = AppConstants.USERNAME_MAX_LENGTH, message = "Name must be between "
-            + AppConstants.USERNAME_MIN_LENGTH + " and " + AppConstants.USERNAME_MAX_LENGTH + " characters")
+    @Size(min = AppConstants.USERRANK_NAME_MIN_LENGTH, max = AppConstants.USERRANK_NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
     public String name;
 
     // View permissions

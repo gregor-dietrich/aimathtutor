@@ -60,15 +60,51 @@ public final class AppConstants {
     /** Default AI avatar emoji. */
     public static final String AVATAR_DEFAULT_AI = "🤖";
 
-    /** Minimum username length. */
-    public static final int USERNAME_MIN_LENGTH = 1;
+    /** Minimum user name length. */
+    public static final int USER_USERNAME_MIN_LENGTH = 3;
 
-    /** Maximum username length. */
-    public static final int USERNAME_MAX_LENGTH = 100;
+    /** Maximum user name length. */
+    public static final int USER_USERNAME_MAX_LENGTH = 50;
 
     /** Minimum password length. */
     public static final int PASSWORD_MIN_LENGTH = 8;
 
     /** Maximum password length. */
     public static final int PASSWORD_MAX_LENGTH = 100;
+
+    /** Minimum userrank name length. */
+    public static final int USERRANK_NAME_MIN_LENGTH = 1;
+
+    /** Maximum userrank name length. */
+    public static final int USERRANK_NAME_MAX_LENGTH = 100;
+
+    /** Minimum comment content length. */
+    public static final int COMMENT_CONTENT_MIN_LENGTH = 1;
+
+    /** Maximum comment content length. */
+    public static final int COMMENT_CONTENT_MAX_LENGTH = 1000;
+
+    /** Minimum exercise name length. */
+    public static final int EXERCISE_TITLE_MIN_LENGTH = 1;
+
+    /** Maximum exercise name length. */
+    public static final int EXERCISE_TITLE_MAX_LENGTH = 255;
+
+    /** Minimum exercise content length. */
+    public static final int EXERCISE_CONTENT_MIN_LENGTH = 1;
+
+    /** Maximum exercise content length. */
+    public static final int EXERCISE_CONTENT_MAX_LENGTH = 50000;
+
+    /** Maximum exercise expression length. */
+    public static final int EXERCISE_EXPRESSION_MAX_LENGTH = 1000;
+
+    /** Maximum exercise hints length. */
+    public static final int EXERCISE_HINTS_MAX_LENGTH = 5000;
+
+    /** Minimum lesson name length. */
+    public static final int LESSON_NAME_MIN_LENGTH = 1;
+
+    /** Maximum lesson name length. */
+    public static final int LESSON_NAME_MAX_LENGTH = 255;
 }

@@ -11,10 +11,10 @@ public class UserDto {
 
     public Long id;
 
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(min = AppConstants.USER_USERNAME_MIN_LENGTH, max = AppConstants.USER_USERNAME_MAX_LENGTH, message = "Username must be between {min} and {max} characters")
     public String username;
 
-    @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = 100, message = "Password must be between {min} and {max} characters")
+    @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = AppConstants.PASSWORD_MAX_LENGTH, message = "Password must be between {min} and {max} characters")
     public String password;
 
     @Email(message = "Email must be valid")

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
+import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -57,7 +58,7 @@ public class AiProviderTestService {
                     "Gemini API key not configured. Set the GEMINI_API_KEY environment variable.");
         }
 
-        final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url",
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GEMINI_API_BASE_URL,
                 "https://generativelanguage.googleapis.com");
         try {
             final HttpRequest request = HttpRequest.newBuilder()
@@ -97,7 +98,7 @@ public class AiProviderTestService {
                     "OpenAI API key not configured. Set the OPENAI_API_KEY environment variable.");
         }
 
-        final String baseUrl = this.aiConfigService.getConfigValue("openai.api.base-url",
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL,
                 "https://api.openai.com/v1");
         try {
             final HttpRequest request = HttpRequest.newBuilder()
@@ -143,7 +144,7 @@ public class AiProviderTestService {
      * Tests the currently configured AI provider.
      */
     public AiProviderTestResultDto testCurrentProvider() {
-        final String provider = this.aiConfigService.getConfigValue("ai.tutor.provider", "mock");
+        final String provider = this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
         return switch (provider != null ? provider.toLowerCase() : "mock") {
             case "gemini" -> this.testGemini();
             case "openai" -> this.testOpenAi();
