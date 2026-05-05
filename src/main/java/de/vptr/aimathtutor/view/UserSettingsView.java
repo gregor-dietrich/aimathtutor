@@ -1,8 +1,5 @@
 package de.vptr.aimathtutor.view;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -27,7 +24,6 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
-import jakarta.validation.ValidationException;
 
 /**
  * User settings view for changing password and customizing chat avatars.
@@ -35,8 +31,6 @@ import jakarta.validation.ValidationException;
 @Route(value = "settings", layout = MainLayout.class)
 @PageTitle("Settings")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserSettingsView.class);
 
     @Inject
     private transient AuthService authService;
@@ -166,7 +160,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.newPasswordField = new PasswordField("New Password");
         this.newPasswordField.setRequired(true);
-        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH + " characters with uppercase, lowercase, digit and symbol");
+        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH
+                + " characters with uppercase, lowercase, digit and symbol");
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
@@ -298,7 +293,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         if (newPassword.length() < AppConstants.PASSWORD_MIN_LENGTH) {
-            NotificationUtil.showError("New password must be at least " + AppConstants.PASSWORD_MIN_LENGTH + " characters long");
+            NotificationUtil.showError(
+                    "New password must be at least " + AppConstants.PASSWORD_MIN_LENGTH + " characters long");
             return;
         }
 
@@ -312,20 +308,15 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        try {
+        AsyncDataLoader.load(() -> {
             this.userService.changePassword(this.currentUserId, currentPassword, newPassword);
+            return null;
+        }, this, ignored -> {
             NotificationUtil.showSuccess("Password changed successfully");
-
-            // Clear fields
             this.currentPasswordField.clear();
             this.newPasswordField.clear();
             this.confirmPasswordField.clear();
-        } catch (final ValidationException e) {
-            NotificationUtil.showError(e.getMessage());
-        } catch (final Exception e) {
-            LOG.error("Failed to change password", e);
-            NotificationUtil.showError("Failed to change password");
-        }
+        }, "Failed to change password");
     }
 
     private void handleAvatarChange() {
@@ -342,14 +333,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
-        try {
+        AsyncDataLoader.load(() -> {
             this.userService.updateAvatars(this.currentUserId, userEmoji, tutorEmoji);
-            NotificationUtil.showSuccess("Avatars updated successfully");
-        } catch (final ValidationException e) {
-            NotificationUtil.showError(e.getMessage());
-        } catch (final Exception e) {
-            LOG.error("Failed to update avatars", e);
-            NotificationUtil.showError("Failed to update avatars");
-        }
+            return null;
+        }, this, ignored -> NotificationUtil.showSuccess("Avatars updated successfully"), "Failed to update avatars");
     }
 }
