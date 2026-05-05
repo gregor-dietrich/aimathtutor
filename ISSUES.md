@@ -267,7 +267,7 @@ Keep rules configurable via `AdminGamificationView`.
 - No external endpoint exposes numeric IDs.
 - All existing records have unique non-null ULIDs.
 - Clients and docs fully switched to ULIDs.
-- SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
+- SpotBugs, CheckStyle and all Maven Tests passing.
 
 ---
 
@@ -294,32 +294,20 @@ Keep rules configurable via `AdminGamificationView`.
 - Target PII fields are stored encrypted at rest.
 - App starts with existing key or generates one when absent.
 - Compose/dev setup persists key material via mounted volume.
-- SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
+- SpotBugs, CheckStyle and all Maven Tests passing.
 
 ---
 
 ## 6. Miscellaneous Fixes
 
-### 4.1 Admin Dashboard Enhancement
+### 6.1 Admin Dashboard Enhancement
 
 The admin dashboard could use some further enhancement, such as diagrams.
 
-### 4.2 Keyboard accessibility
+### 6.2 Keyboard accessibility
 
 Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
 
 > **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
 
 ---
-
-### 7. Vaadin 25 theme migration fixes (GUI)
-
-- Replace deprecated `lumoImports` usage in `src/main/frontend/themes/starter-theme/theme.json`.
-- If utility classes required, add `@StyleSheet(Lumo.UTILITY_STYLESHEET)` in `src/main/java/de/vptr/aimathtutor/gui/AppConfig.java`.
-- Fix component-style loading warning (`vaadin-text-field.css`) by enabling `themeComponentStyles` or moving styles to supported setup.
-
-```log
-[WARNING] Theme 'starter-theme' contains component styles, but the 'themeComponentStyles' feature flag is not set, so component styles will not be applied for
-vaadin-text-field.css
-[WARNING] The 'lumoImports' property detected in theme(s) '[starter-theme]' is no longer supported in Vaadin 25. All modules except 'utility' are now loaded automatically when extending Lumo theme. To load utility classes, add '@StyleSheet(Lumo.UTILITY_STYLESHEET)' annotation to 'AppShellConfigurator' implementor.
-```
