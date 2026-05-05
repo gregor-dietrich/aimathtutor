@@ -16,9 +16,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+
+import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * CommentFlagEntity: Tracks which users have flagged which comments.
@@ -30,7 +33,8 @@ import jakarta.persistence.Version;
 })
 @NamedQueries({
         @NamedQuery(name = "CommentFlag.countByCommentAndFlagger", query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u"),
-        @NamedQuery(name = "CommentFlag.findByComment", query = "FROM CommentFlagEntity WHERE comment.id = :c")
+        @NamedQuery(name = "CommentFlag.findByComment", query = "FROM CommentFlagEntity WHERE comment.id = :c"),
+        @NamedQuery(name = "CommentFlag.findByPublicId", query = "FROM CommentFlagEntity WHERE publicId = :p")
 })
 public class CommentFlagEntity extends PanacheEntityBase {
 
@@ -40,6 +44,16 @@ public class CommentFlagEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    public String publicId;
+
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null) {
+            this.publicId = UlidService.generate();
+        }
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)

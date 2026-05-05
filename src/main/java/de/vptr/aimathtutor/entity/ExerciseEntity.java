@@ -25,9 +25,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
+
+import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity representing math exercises in the system.
@@ -35,17 +38,18 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "exercises", indexes = {
         @Index(name = "idx_exercise_lesson_published", columnList = "lesson_id, published"),
-        @Index(name = "idx_exercise_published_id", columnList = "published, id DESC"),
-        @Index(name = "idx_exercise_user_id", columnList = "user_id, id DESC")
+        @Index(name = "idx_exercise_public_id", columnList = "public_id"),
+        @Index(name = "idx_exercise_user_id", columnList = "user_id, created DESC")
 })
 @NamedQueries({
-        @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.findPublished", query = "FROM ExerciseEntity WHERE published = true ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.findByUserId", query = "FROM ExerciseEntity WHERE user.id = :u ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY id DESC"),
-        @NamedQuery(name = "Exercise.searchByTerm", query = "FROM ExerciseEntity WHERE LOWER(title) LIKE :s OR LOWER(content) LIKE :s ORDER BY id DESC"),
+        @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findByPublicId", query = "FROM ExerciseEntity WHERE publicId = :p"),
+        @NamedQuery(name = "Exercise.findPublished", query = "FROM ExerciseEntity WHERE published = true ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findByUserId", query = "FROM ExerciseEntity WHERE user.id = :u ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.searchByTerm", query = "FROM ExerciseEntity WHERE LOWER(title) LIKE :s OR LOWER(content) LIKE :s ORDER BY created DESC"),
         @NamedQuery(name = "Exercise.findByDateRange", query = "FROM ExerciseEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
 })
 public class ExerciseEntity extends PanacheEntityBase {
@@ -56,6 +60,16 @@ public class ExerciseEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    public String publicId;
+
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null) {
+            this.publicId = UlidService.generate();
+        }
+    }
 
     @NotBlank
     @Column(nullable = false)

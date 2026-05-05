@@ -23,10 +23,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+
+import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity representing users in the system.
@@ -34,10 +37,11 @@ import jakarta.validation.constraints.NotBlank;
 @NamedQueries({
         @NamedQuery(name = "User.findByUsername", query = "FROM UserEntity WHERE username = :u"),
         @NamedQuery(name = "User.findByEmail", query = "FROM UserEntity WHERE email = :e"),
-        @NamedQuery(name = "User.findAllOrdered", query = "FROM UserEntity ORDER BY id DESC"),
-        @NamedQuery(name = "User.findActive", query = "FROM UserEntity WHERE activated = true and banned = false ORDER BY id DESC"),
-        @NamedQuery(name = "User.findByRankId", query = "FROM UserEntity WHERE rank.id = :r ORDER BY id DESC"),
-        @NamedQuery(name = "User.searchByTerm", query = "FROM UserEntity WHERE LOWER(username) LIKE :s OR LOWER(email) LIKE :s ORDER BY id DESC"),
+        @NamedQuery(name = "User.findByPublicId", query = "FROM UserEntity WHERE publicId = :p"),
+        @NamedQuery(name = "User.findAllOrdered", query = "FROM UserEntity ORDER BY created DESC"),
+        @NamedQuery(name = "User.findActive", query = "FROM UserEntity WHERE activated = true and banned = false ORDER BY created DESC"),
+        @NamedQuery(name = "User.findByRankId", query = "FROM UserEntity WHERE rank.id = :r ORDER BY created DESC"),
+        @NamedQuery(name = "User.searchByTerm", query = "FROM UserEntity WHERE LOWER(username) LIKE :s OR LOWER(email) LIKE :s ORDER BY created DESC"),
         @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r")
 })
 @Entity
@@ -52,6 +56,16 @@ public class UserEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    public String publicId;
+
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null) {
+            this.publicId = UlidService.generate();
+        }
+    }
 
     @NotBlank
     @Column(nullable = false, unique = true)

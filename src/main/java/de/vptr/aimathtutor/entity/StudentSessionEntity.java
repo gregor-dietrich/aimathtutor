@@ -17,10 +17,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity to track student sessions in Graspable Math workspace.
@@ -35,10 +38,11 @@ import jakarta.validation.constraints.NotNull;
 })
 @NamedQueries({
         @NamedQuery(name = "StudentSession.findBySessionId", query = "FROM StudentSessionEntity WHERE sessionId = :s"),
+        @NamedQuery(name = "StudentSession.findByPublicId", query = "FROM StudentSessionEntity WHERE publicId = :p"),
         @NamedQuery(name = "StudentSession.findByUserId", query = "FROM StudentSessionEntity WHERE user.id = :u"),
         @NamedQuery(name = "StudentSession.findByExerciseId", query = "FROM StudentSessionEntity WHERE exercise.id = :e"),
-        @NamedQuery(name = "StudentSession.findAllOrdered", query = "FROM StudentSessionEntity ORDER BY id DESC"),
-        @NamedQuery(name = "StudentSession.findByUserAndExercise", query = "FROM StudentSessionEntity WHERE user.id = :u and exercise.id = :e ORDER BY id DESC"),
+        @NamedQuery(name = "StudentSession.findAllOrdered", query = "FROM StudentSessionEntity ORDER BY startTime DESC"),
+        @NamedQuery(name = "StudentSession.findByUserAndExercise", query = "FROM StudentSessionEntity WHERE user.id = :u and exercise.id = :e ORDER BY startTime DESC"),
         @NamedQuery(name = "StudentSession.findByUserAndDateRange", query = "FROM StudentSessionEntity WHERE user.id = :u and startTime >= :s and startTime <= :e ORDER BY startTime DESC"),
         @NamedQuery(name = "StudentSession.findByExerciseAndDateRange", query = "FROM StudentSessionEntity WHERE exercise.id = :e and startTime >= :s and startTime <= :en ORDER BY startTime DESC"),
         @NamedQuery(name = "StudentSession.findByCompletedAndDateRange", query = "FROM StudentSessionEntity WHERE completed = :c and startTime >= :s and startTime <= :e ORDER BY startTime DESC"),
@@ -47,10 +51,10 @@ import jakarta.validation.constraints.NotNull;
         @NamedQuery(name = "StudentSession.countByCompleted", query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE completed = :c"),
         @NamedQuery(name = "StudentSession.countAll", query = "SELECT COUNT(s) FROM StudentSessionEntity s"),
         @NamedQuery(name = "StudentSession.searchByUserOrExercise", query = "FROM StudentSessionEntity WHERE lower(user.username) like :p or lower(exercise.title) like :p ORDER BY startTime DESC"),
-        @NamedQuery(name = "StudentSession.findAllWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise ORDER BY s.id DESC"),
+        @NamedQuery(name = "StudentSession.findAllWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByUserIdWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.user.id = :u"),
         @NamedQuery(name = "StudentSession.findByExerciseIdWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.exercise.id = :e"),
-        @NamedQuery(name = "StudentSession.findByUserAndExerciseWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.user.id = :u and s.exercise.id = :e ORDER BY s.id DESC"),
+        @NamedQuery(name = "StudentSession.findByUserAndExerciseWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.user.id = :u and s.exercise.id = :e ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByUserAndDateRangeWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.user.id = :u and s.startTime >= :s and s.startTime <= :e ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByExerciseAndDateRangeWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.exercise.id = :e and s.startTime >= :s and s.startTime <= :en ORDER BY s.startTime DESC"),
         @NamedQuery(name = "StudentSession.findByCompletedAndDateRangeWithRelations", query = "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.completed = :c and s.startTime >= :s and s.startTime <= :e ORDER BY s.startTime DESC"),
@@ -72,6 +76,16 @@ public class StudentSessionEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    public String publicId;
+
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null) {
+            this.publicId = UlidService.generate();
+        }
+    }
 
     @NotBlank
     @Column(name = "session_id", unique = true, nullable = false)
