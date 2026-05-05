@@ -14,7 +14,8 @@ public abstract class AbstractAiProviderService {
     protected AiConfigService aiConfigService;
 
     /**
-     * The configuration key prefix for this provider (e.g. "openai", "gemini", "ollama").
+     * The configuration key prefix for this provider (e.g. "openai", "gemini",
+     * "ollama").
      */
     protected abstract String getConfigPrefix();
 
@@ -37,7 +38,8 @@ public abstract class AbstractAiProviderService {
      * The currently configured model name.
      */
     public String getModel() {
-        return this.aiConfigService.getConfigValue(this.getConfigPrefix() + ".model", this.getDefaultModel());
+        return this.aiConfigService.getConfigValue(this.getConfigPrefix() + AiConfigKeys.SUFFIX_MODEL,
+                this.getDefaultModel());
     }
 
     /**
@@ -62,7 +64,8 @@ public abstract class AbstractAiProviderService {
     }
 
     /**
-     * Throws {@link NonRetryableAiProviderException} when the response content is empty.
+     * Throws {@link NonRetryableAiProviderException} when the response content is
+     * empty.
      */
     protected String requireNonEmptyContent(final String content) {
         if (content == null || content.isBlank()) {
