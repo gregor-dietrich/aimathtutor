@@ -27,21 +27,15 @@
 
 ## Phase 5: Test Coverage & CI
 
-| #   | Issue                                                                                                                                                    | Action                                                                                        |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| T1  | **No tests at all** for OpenAiService, GeminiService, OllamaService, GraspableMathService, ProblemGeneratorService                                       | Add unit tests with mocked HTTP clients                                                       |
-| T2  | **Service tests only test validation** — UserService, UserGroupService, LessonService, ExerciseService, CommentService tests only cover null/empty input | Add happy-path and integration tests                                                          |
-| T3  | **Duplicate test**: `PasswordUtilityTest` tests same class as `PasswordHashingServiceTest`                                                               | Merge into one test class                                                                     |
-| T4  | **No `@Retry` behavior tests** for AI services                                                                                                           | Add tests verifying retry on transient failure and abort on `NonRetryableAiProviderException` |
-| T5  | **`ThemeServiceTest` creates `new ThemeService()`** — will break if CDI dependencies added                                                               | Use `@Inject` via `@QuarkusTest`                                                              |
-| T6  | **CI pipeline missing OWASP dep-check and secret scanning** (commented out)                                                                              | Uncomment and configure `NVD_API_KEY` repository secret                                       |
-| T7  | **CI security job lacks Maven cache**                                                                                                                    | Add `actions/cache@v4` to security job                                                        |
+| #   | Issue                                                                       | Action                                                  |
+| --- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| T6  | **CI pipeline missing OWASP dep-check and secret scanning** (commented out) | Uncomment and configure `NVD_API_KEY` repository secret |
+| T7  | **CI security job lacks Maven cache**                                       | Add `actions/cache@v4` to security job                  |
 
 ## Phase 6: Low-Priority / Cosmetic
 
-| #   | Issue                                                              | Action                                                                                                                                                                              |
-| --- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L1  | `LessonViewDto` catches `LazyInitializationException` — code smell | Use eager JPQL fetch instead                                                                                                                                                        |
-| L4  | No session timeout configured                                      | ~~Add `quarkus.http.session-timeout=30M`~~ — **NOTE:** suggested config property does not exist in Quarkus 3.33, need to find another way to handle this, or can we leave it as is? |
+| #   | Issue                         | Action                                                                                                                                                                              |
+| --- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L4  | No session timeout configured | ~~Add `quarkus.http.session-timeout=30M`~~ — **NOTE:** suggested config property does not exist in Quarkus 3.33, need to find another way to handle this, or can we leave it as is? |
 
 ---

@@ -6,20 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.service.ThemeService.Theme;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
+@QuarkusTest
 class ThemeServiceTest {
 
-    private ThemeService themeService;
-
-    @BeforeEach
-    void setUp() {
-        this.themeService = new ThemeService();
-    }
+    @Inject
+    ThemeService themeService;
 
     @Test
     @DisplayName("Should return SYSTEM theme as default when no session")

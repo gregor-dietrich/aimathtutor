@@ -2,8 +2,6 @@ package de.vptr.aimathtutor.dto;
 
 import java.util.List;
 
-import org.hibernate.LazyInitializationException;
-
 import de.vptr.aimathtutor.entity.LessonEntity;
 
 /**
@@ -38,34 +36,21 @@ public class LessonViewDto {
             this.parentName = entity.parent.name;
         }
 
-        // Compute children count and IDs safely
-        try {
-            if (entity.children != null && !entity.children.isEmpty()) {
-                this.childrenCount = entity.children.size();
-                this.childrenIds = entity.children.stream()
-                        .map(child -> child.id)
-                        .toList();
-            } else {
-                this.childrenCount = 0;
-                this.childrenIds = List.of();
-            }
-        } catch (final LazyInitializationException e) {
-            // Collection not initialized, set defaults
+        if (entity.children != null && !entity.children.isEmpty()) {
+            this.childrenCount = entity.children.size();
+            this.childrenIds = entity.children.stream()
+                    .map(child -> child.id)
+                    .toList();
+        } else {
             this.childrenCount = 0;
             this.childrenIds = List.of();
         }
 
-        // Compute exercises count safely (only count published exercises)
-        try {
-            if (entity.exercises != null) {
-                this.exercisesCount = (int) entity.exercises.stream()
-                        .filter(ex -> Boolean.TRUE.equals(ex.published))
-                        .count();
-            } else {
-                this.exercisesCount = 0;
-            }
-        } catch (final LazyInitializationException e) {
-            // Collection not initialized, set default
+        if (entity.exercises != null) {
+            this.exercisesCount = (int) entity.exercises.stream()
+                    .filter(ex -> Boolean.TRUE.equals(ex.published))
+                    .count();
+        } else {
             this.exercisesCount = 0;
         }
     }
