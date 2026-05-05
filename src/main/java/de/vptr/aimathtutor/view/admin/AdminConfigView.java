@@ -201,7 +201,10 @@ public class AdminConfigView extends AbstractAdminView {
 
         final var saveBtn = new Button("Save",
                 ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
-        final var testBtn = new Button("Test Connection", ignored -> this.testGeminiConnection());
+        final var testBtn = new Button("Test Connection", ignored -> {
+            this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField);
+            this.testGeminiConnection();
+        });
 
         panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, this.buildSaveTestRow(saveBtn, testBtn));
         return panel;
@@ -229,7 +232,10 @@ public class AdminConfigView extends AbstractAdminView {
 
         final var saveBtn = new Button("Save",
                 ignored -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
-        final var testBtn = new Button("Test Connection", ignored -> this.testOpenAiConnection());
+        final var testBtn = new Button("Test Connection", ignored -> {
+            this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField);
+            this.testOpenAiConnection();
+        });
 
         panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField,
                 this.buildSaveTestRow(saveBtn, testBtn));
@@ -262,7 +268,10 @@ public class AdminConfigView extends AbstractAdminView {
 
         final var saveBtn = new Button("Save",
                 ignored -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
-        final var testBtn = new Button("Test Connection", ignored -> this.testOllamaConnection());
+        final var testBtn = new Button("Test Connection", ignored -> {
+            this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField);
+            this.testOllamaConnection();
+        });
 
         panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField,
                 this.buildSaveTestRow(saveBtn, testBtn));
@@ -415,7 +424,7 @@ public class AdminConfigView extends AbstractAdminView {
             NotificationUtil.showSuccess(label + " configuration updated successfully");
             LOG.info("{} config saved", label);
         } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error. Please check your input.");
+            NotificationUtil.showError("Validation error: " + e.getMessage());
             LOG.error("Validation error saving {} config", label, e);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
@@ -430,7 +439,14 @@ public class AdminConfigView extends AbstractAdminView {
 
     private static String intOrDefault(final NumberField field, final String defaultValue) {
         final var value = field.getValue();
-        return value != null ? Integer.toString(value.intValue()) : defaultValue;
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value.doubleValue() != value.intValue()) {
+            throw new IllegalArgumentException(
+                    field.getLabel() + " must be a whole number, but got: " + value);
+        }
+        return Integer.toString(value.intValue());
     }
 
     private void resetAllToDefaults() {
