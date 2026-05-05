@@ -17,6 +17,7 @@ import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -38,6 +39,9 @@ class CommentServiceTest {
     @Inject
     private UserRepository userRepository;
 
+    @Inject
+    private CommentRepository commentRepository;
+
     private ExerciseViewDto createCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher);
@@ -45,10 +49,16 @@ class CommentServiceTest {
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         dto.title = "ex_" + suffix;
         dto.content = "exercise content " + suffix;
-        dto.userId = teacher.id;
+        dto.userPublicId = teacher.publicId;
         dto.published = true;
         dto.commentable = true;
         return this.exerciseService.createExercise(dto);
+    }
+
+    private Long getCommentNumericId(final String publicId) {
+        return this.commentRepository.findByPublicId(publicId)
+                .map(c -> c.id)
+                .orElseThrow(() -> new AssertionError("Comment not found: " + publicId));
     }
 
     @Test
@@ -117,7 +127,7 @@ class CommentServiceTest {
         final var dto = new ExerciseDto();
         dto.title = "noncommentable_" + UUID.randomUUID().toString().substring(0, 8);
         dto.content = "x";
-        dto.userId = teacher.id;
+        dto.userPublicId = teacher.publicId;
         dto.published = true;
         dto.commentable = false;
         final var ex = this.exerciseService.createExercise(dto);
@@ -145,7 +155,7 @@ class CommentServiceTest {
         comment.exercise = exerciseRef;
         final CommentViewDto created = this.commentService.createComment(comment, "student1");
 
-        final var found = this.commentService.findById(created.id);
+        final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
 
         assertTrue(found.isPresent());
         assertEquals("hello world", found.get().content);
@@ -183,9 +193,9 @@ class CommentServiceTest {
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "student1 fixture must exist");
 
-        this.commentService.deleteComment(created.id, student.id, true);
+        this.commentService.deleteComment(created.publicId, student.id, true);
 
-        final var found = this.commentService.findById(created.id);
+        final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent(), "Soft-deleted comment should still be findable");
     }
 
@@ -203,11 +213,11 @@ class CommentServiceTest {
         final var admin = this.userRepository.findByUsername("admin");
         assertNotNull(admin);
 
-        this.commentService.moderateComment(created.id, "HIDE", admin.id, "spam");
+        this.commentService.moderateComment(created.publicId, "HIDE", admin.id, "spam");
 
-        final var found = this.commentService.findById(created.id);
+        final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent());
         final var hidden = this.commentService.findByStatus(CommentStatus.HIDDEN);
-        assertTrue(hidden.stream().anyMatch(c -> c.id.equals(created.id)));
+        assertTrue(hidden.stream().anyMatch(c -> c.publicId.equals(created.publicId)));
     }
 }

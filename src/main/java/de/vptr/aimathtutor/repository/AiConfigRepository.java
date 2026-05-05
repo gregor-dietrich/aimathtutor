@@ -42,6 +42,12 @@ public class AiConfigRepository extends AbstractRepository {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
+    /**
+     * Retrieves an AI configuration by its public identifier.
+     *
+     * @param publicId the public ID of the configuration
+     * @return an {@link Optional} containing the configuration if found, empty otherwise
+     */
     public Optional<AiConfigEntity> findByPublicId(final String publicId) {
         if (publicId == null) {
             return Optional.empty();

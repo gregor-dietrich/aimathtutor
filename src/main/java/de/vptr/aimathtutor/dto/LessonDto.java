@@ -24,17 +24,31 @@ public class LessonDto {
 
     public ParentField parent;
 
+    /**
+     * Nested field representing a parent lesson reference.
+     */
     public static class ParentField {
         public String publicId;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public ParentField() {
         }
 
+        /**
+         * Constructs a ParentField with the given public ID.
+         *
+         * @param publicId the parent lesson's public identifier
+         */
         public ParentField(final String publicId) {
             this.publicId = publicId;
         }
     }
 
+    /**
+     * Synchronizes the nested parent field with the flat parentPublicId field.
+     */
     public void syncParent() {
         if (this.parent != null && this.parent.publicId != null) {
             this.parentPublicId = this.parent.publicId;

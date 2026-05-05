@@ -79,9 +79,22 @@ public class ExerciseDto {
     public UserField user;
     public LessonField lesson;
 
+    /**
+     * Default constructor for JSON mapping.
+     */
     public ExerciseDto() {
     }
 
+    /**
+     * Constructs an ExerciseDto with the given exercise details.
+     *
+     * @param title          the exercise title
+     * @param content        the exercise content
+     * @param userPublicId   the author's public ID
+     * @param lessonPublicId the parent lesson's public ID
+     * @param published      whether the exercise is published
+     * @param commentable    whether comments are enabled
+     */
     public ExerciseDto(final String title, final String content, final String userPublicId, final String lessonPublicId,
             final Boolean published, final Boolean commentable) {
         this.title = title;
@@ -92,13 +105,24 @@ public class ExerciseDto {
         this.commentable = commentable;
     }
 
+    /**
+     * Nested field representing a user reference.
+     */
     public static class UserField {
         public String publicId;
         public String username;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public UserField() {
         }
 
+        /**
+         * Constructs a UserField with the given public ID.
+         *
+         * @param publicId the user's public identifier
+         */
         public UserField(final String publicId) {
             this.publicId = publicId;
         }
@@ -112,18 +136,32 @@ public class ExerciseDto {
         }
     }
 
+    /**
+     * Nested field representing a lesson reference.
+     */
     public static class LessonField {
         public String publicId;
         public String name;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public LessonField() {
         }
 
+        /**
+         * Constructs a LessonField with the given public ID.
+         *
+         * @param publicId the lesson's public identifier
+         */
         public LessonField(final String publicId) {
             this.publicId = publicId;
         }
     }
 
+    /**
+     * Synchronizes the nested user and lesson fields with their flat public ID fields.
+     */
     public void syncNestedFields() {
         if (this.user != null && this.user.publicId != null) {
             this.userPublicId = this.user.publicId;

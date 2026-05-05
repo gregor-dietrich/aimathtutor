@@ -215,12 +215,12 @@ public class LessonService {
     /**
      * Deletes a lesson by ID.
      *
-     * @param id the lesson ID to delete
+     * @param publicId the lesson ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if lesson not found
      */
     @Transactional
-    public boolean deleteLesson(final Long id) {
-        return this.lessonRepository.deleteById(id);
+    public boolean deleteLesson(final String publicId) {
+        return this.lessonRepository.deleteByPublicId(publicId);
     }
 
     /**

@@ -24,6 +24,12 @@ public class AiInteractionRepository extends AbstractRepository {
         return this.listNamed("AiInteraction.findAll", AiInteractionEntity.class);
     }
 
+    /**
+     * Retrieves an AI interaction by its public identifier.
+     *
+     * @param publicId the public ID of the interaction
+     * @return an {@link Optional} containing the interaction if found, empty otherwise
+     */
     public Optional<AiInteractionEntity> findByPublicId(final String publicId) {
         if (publicId == null) {
             return Optional.empty();

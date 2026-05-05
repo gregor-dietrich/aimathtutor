@@ -69,11 +69,20 @@ public class CommentDto {
     // Ignored for PUT/PATCH operations (exerciseId comes from the URL path)
     public String exercisePublicId;
 
+    // Internal numeric ID for UI component use
+    public Long exerciseId;
+
     // NEW: For threading support
     public String parentCommentPublicId;
 
+    // Internal numeric ID for UI component use
+    public Long parentCommentId;
+
     // NEW: For lesson comments (future extension)
     public String lessonPublicId;
+
+    // Internal numeric ID for UI component use
+    public Long lessonId;
 
     // NEW: For tracking which session the comment was made during
     public String sessionId;
@@ -82,21 +91,29 @@ public class CommentDto {
     public ExerciseField exercise;
 
     /**
-     * Helper class for nested exercise field access
+     * Nested field representing an exercise reference.
      */
     public static class ExerciseField {
         public String publicId;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public ExerciseField() {
         }
 
+        /**
+         * Constructs an ExerciseField with the given public ID.
+         *
+         * @param publicId the exercise's public identifier
+         */
         public ExerciseField(final String publicId) {
             this.publicId = publicId;
         }
     }
 
     /**
-     * Ensure exerciseId and exercise stay in sync
+     * Synchronizes the nested exercise field with the flat exercisePublicId field.
      */
     public void syncExercise() {
         if (this.exercise != null && this.exercise.publicId != null) {

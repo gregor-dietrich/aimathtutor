@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -32,6 +33,12 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultStream().findFirst().orElse(null);
     }
 
+    /**
+     * Retrieves a student session by its public identifier.
+     *
+     * @param publicId the public ID of the session
+     * @return an {@link Optional} containing the session if found, empty otherwise
+     */
     public Optional<StudentSessionEntity> findByPublicId(final String publicId) {
         if (publicId == null) {
             return Optional.empty();

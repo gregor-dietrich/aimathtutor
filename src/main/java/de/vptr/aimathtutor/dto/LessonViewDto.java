@@ -18,9 +18,17 @@ public class LessonViewDto {
     public int exercisesCount;
     public List<String> childrenPublicIds;
 
+    /**
+     * Default constructor for JSON mapping.
+     */
     public LessonViewDto() {
     }
 
+    /**
+     * Constructs a LessonViewDto from a lesson entity.
+     *
+     * @param entity the lesson entity to convert
+     */
     public LessonViewDto(final LessonEntity entity) {
         this.publicId = entity.publicId;
         this.name = entity.name;
@@ -62,6 +70,11 @@ public class LessonViewDto {
         return this.publicId;
     }
 
+    /**
+     * Converts this view DTO to a lesson operation DTO.
+     *
+     * @return a {@link LessonDto} with the same data
+     */
     public LessonDto toLessonDto() {
         final var dto = new LessonDto();
         dto.publicId = this.publicId;

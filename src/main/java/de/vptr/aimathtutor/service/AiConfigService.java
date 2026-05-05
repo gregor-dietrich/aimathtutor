@@ -578,7 +578,7 @@ public class AiConfigService {
      */
     private AiConfigDto entityToDto(final AiConfigEntity entity) {
         final String lastUpdatedByName = entity.lastUpdatedBy != null ? entity.lastUpdatedBy.username : "system";
-        return new AiConfigDto(entity.id, entity.configKey, entity.configValue, entity.configType,
+        return new AiConfigDto(entity.publicId, entity.configKey, entity.configValue, entity.configType,
                 entity.category, entity.description, entity.lastEdit, lastUpdatedByName);
     }
 }

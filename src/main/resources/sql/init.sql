@@ -451,6 +451,9 @@ IMPORTANT Guidelines:
 - Leave suggestedNextSteps empty unless specifically needed
 - Be specific about what they did, not generic', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', false, 1);
 
+-- Set sequence to 20 so next value is 21
+SELECT setval('ai_config_id_seq', 20, true);
+
 -- Performance indexes
 CREATE INDEX ai_config_key_idx ON ai_config (config_key);
 CREATE INDEX ai_config_category_idx ON ai_config (category);

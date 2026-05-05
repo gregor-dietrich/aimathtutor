@@ -38,6 +38,12 @@ public class UserRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    /**
+     * Retrieves a user by their public identifier.
+     *
+     * @param publicId the public ID of the user
+     * @return an {@link Optional} containing the user if found, empty otherwise
+     */
     public Optional<UserEntity> findByPublicId(final String publicId) {
         if (publicId == null) {
             return Optional.empty();
@@ -151,6 +157,22 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
+     * Counts users with a specific rank by public ID.
+     *
+     * @param rankPublicId the rank public ID to filter by
+     * @return the count of users with the specified rank
+     */
+    public long countByRankPublicId(final String rankPublicId) {
+        if (rankPublicId == null) {
+            return 0L;
+        }
+        final var q = this.em.createQuery(
+                "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.publicId = :r", Long.class);
+        q.setParameter("r", rankPublicId);
+        return q.getSingleResult();
+    }
+
+    /**
      * Searches for users matching the given search term.
      *
      * @param searchTerm the search term to match against user properties;
@@ -175,6 +197,22 @@ public class UserRepository extends AbstractRepository {
     @Transactional
     public boolean deleteById(final Long id) {
         final UserEntity e = this.findById(id);
+        if (e == null) {
+            return false;
+        }
+        this.em.remove(e);
+        return true;
+    }
+
+    /**
+     * Deletes a user by its public identifier.
+     *
+     * @param publicId the public ID of the user to delete
+     * @return true if the user was successfully deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteByPublicId(final String publicId) {
+        final UserEntity e = this.findByPublicId(publicId).orElse(null);
         if (e == null) {
             return false;
         }

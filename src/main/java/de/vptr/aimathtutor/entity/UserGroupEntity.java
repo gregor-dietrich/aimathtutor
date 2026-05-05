@@ -46,6 +46,9 @@ public class UserGroupEntity extends PanacheEntityBase {
     @Column(name = "public_id", nullable = false, unique = true, length = 26)
     public String publicId;
 
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
     @PrePersist
     public void generatePublicId() {
         if (this.publicId == null) {

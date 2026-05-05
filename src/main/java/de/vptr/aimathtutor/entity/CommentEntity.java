@@ -44,7 +44,7 @@ import de.vptr.aimathtutor.service.UlidService;
         @NamedQuery(name = "Comment.findBySessionId", query = "FROM CommentEntity WHERE sessionId = :s ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findBySessionIdWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.sessionId = :s ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findReplies", query = "FROM CommentEntity WHERE parentComment.id = :p AND status = 'VISIBLE' ORDER BY created ASC"),
-        @NamedQuery(name = "Comment.findRepliesWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.parentComment.id = :p AND c.status = 'VISIBLE' ORDER BY c.created ASC"),
+        @NamedQuery(name = "Comment.findRepliesWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.parentComment.publicId = :p AND c.status = 'VISIBLE' ORDER BY c.created ASC"),
         @NamedQuery(name = "Comment.findRepliesPaged", query = "FROM CommentEntity WHERE parentComment.id = :p AND status = 'VISIBLE' ORDER BY created ASC"),
         @NamedQuery(name = "Comment.findTopLevelByExercise", query = "FROM CommentEntity WHERE exercise.id = :e AND parentComment IS NULL AND status = 'VISIBLE' ORDER BY created DESC"),
         @NamedQuery(name = "Comment.countByUserSince", query = "SELECT COUNT(c) FROM CommentEntity c WHERE c.user.id = :u AND c.created >= :s"),
@@ -74,6 +74,9 @@ public class CommentEntity extends PanacheEntityBase {
     @Column(name = "public_id", nullable = false, unique = true, length = 26)
     public String publicId;
 
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
     @PrePersist
     public void generatePublicId() {
         if (this.publicId == null) {

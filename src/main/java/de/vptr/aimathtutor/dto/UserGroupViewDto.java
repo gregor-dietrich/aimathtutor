@@ -14,24 +14,11 @@ public class UserGroupViewDto {
     public UserGroupViewDto() {
     }
 
-    public UserGroupViewDto(final UserGroupEntity entity) {
-        this.publicId = entity.publicId;
-        this.name = entity.name;
-        this.userCount = entity.getUserCount();
-    }
-
-    public UserGroupDto toUserGroupDto() {
-        final var dto = new UserGroupDto();
-        dto.publicId = this.publicId;
-        dto.name = this.name;
-        return dto;
-    }
-
     /**
      * Constructs a UserGroupViewDto from a UserGroupEntity.
      */
     public UserGroupViewDto(final UserGroupEntity entity) {
-        this.id = entity.id;
+        this.publicId = entity.publicId;
         this.name = entity.name;
         this.userCount = entity.getUserCount();
     }
@@ -43,7 +30,7 @@ public class UserGroupViewDto {
      */
     public UserGroupDto toUserGroupDto() {
         final var dto = new UserGroupDto();
-        dto.id = this.id;
+        dto.publicId = this.publicId;
         dto.name = this.name;
         return dto;
     }

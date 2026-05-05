@@ -223,7 +223,7 @@ public class AdminExercisesView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(exercise -> exercise.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH)
+        this.grid.addColumn(exercise -> exercise.publicId).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH)
                 .setFlexGrow(0);
 
         // Make the title column clickable
@@ -288,7 +288,7 @@ public class AdminExercisesView extends AbstractAdminView {
         final var editButton = new EditButton(ignored -> this.openExerciseDialog(exercise));
         final var deleteButton = new DeleteButton(ignored -> this.deleteExercise(exercise));
         final var commentButton = new CommentButton(ignored -> UI.getCurrent().navigate(AdminCommentsView.class,
-                new QueryParameters(Map.of("exerciseId", List.of(String.valueOf(exercise.id))))));
+                new QueryParameters(Map.of("exerciseId", List.of(exercise.publicId)))));
 
         layout.add(editButton, deleteButton, commentButton);
         return layout;
@@ -309,13 +309,13 @@ public class AdminExercisesView extends AbstractAdminView {
         if (exercise == null) {
             try {
                 final var currentUser = this.userService.getCurrentUser();
-                if (currentUser == null || currentUser.id == null) {
+                if (currentUser == null || currentUser.publicId == null) {
                     NotificationUtil.showError("Error retrieving user information. Please try again.");
                     return;
                 }
-                this.currentExercise.userId = currentUser.id;
+                this.currentExercise.userPublicId = currentUser.publicId;
                 this.currentExercise.user = new ExerciseDto.UserField();
-                this.currentExercise.user.setId(currentUser.id);
+                this.currentExercise.user.setPublicId(currentUser.publicId);
                 this.currentExercise.user.setUsername(currentUser.username);
             } catch (final Exception e) {
                 LOG.error("Error retrieving current user for new exercise", e);
@@ -364,12 +364,12 @@ public class AdminExercisesView extends AbstractAdminView {
         this.binder.bind(commentableField, exercise1 -> exercise1.commentable,
                 (exercise1, value) -> exercise1.commentable = value);
 
-        // Lesson binding - convert between LessonViewDto and lessonId
+        // Lesson binding - convert between LessonViewDto and lessonPublicId
         this.binder.bind(lessonField,
                 exercise1 -> {
-                    if (exercise1.lessonId != null && this.availableLessons != null) {
+                    if (exercise1.lessonPublicId != null && this.availableLessons != null) {
                         return this.availableLessons.stream()
-                                .filter(cat -> cat.getId().equals(exercise1.lessonId))
+                                .filter(cat -> cat.getPublicId().equals(exercise1.lessonPublicId))
                                 .findFirst()
                                 .orElse(null);
                     }
@@ -377,15 +377,15 @@ public class AdminExercisesView extends AbstractAdminView {
                 },
                 (exercise1, value) -> {
                     if (value != null) {
-                        exercise1.lessonId = value.getId();
+                        exercise1.lessonPublicId = value.getPublicId();
                         // Also update the lesson object for consistency
                         if (exercise1.lesson == null) {
                             exercise1.lesson = new ExerciseDto.LessonField();
                         }
-                        exercise1.lesson.id = value.getId();
+                        exercise1.lesson.publicId = value.getPublicId();
                         exercise1.lesson.name = value.getName();
                     } else {
-                        exercise1.lessonId = null;
+                        exercise1.lessonPublicId = null;
                         exercise1.lesson = null;
                     }
                 });
@@ -521,11 +521,11 @@ public class AdminExercisesView extends AbstractAdminView {
             this.currentExercise.created = null;
             this.currentExercise.lastEdit = null;
 
-            if (this.currentExercise.id == null) {
+            if (this.currentExercise.publicId == null) {
                 this.exerciseService.createExercise(this.currentExercise);
                 NotificationUtil.showSuccess("Exercise created successfully");
             } else {
-                this.exerciseService.updateExercise(this.currentExercise.id, this.currentExercise);
+                this.exerciseService.updateExercise(this.currentExercise.publicId, this.currentExercise);
                 NotificationUtil.showSuccess("Exercise updated successfully");
             }
 
@@ -549,7 +549,7 @@ public class AdminExercisesView extends AbstractAdminView {
      */
     private void deleteExercise(final ExerciseViewDto exercise) {
         try {
-            if (this.exerciseService.deleteExercise(exercise.id)) {
+            if (this.exerciseService.deleteExercise(exercise.publicId)) {
                 NotificationUtil.showSuccess("Exercise deleted successfully");
                 this.loadExercises();
                 this.loadLessons();

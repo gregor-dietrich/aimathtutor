@@ -34,6 +34,12 @@ public class UserRankRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    /**
+     * Retrieves a user rank by its public identifier.
+     *
+     * @param publicId the public ID of the rank
+     * @return an {@link Optional} containing the rank if found, empty otherwise
+     */
     public Optional<UserRankEntity> findByPublicId(final String publicId) {
         if (publicId == null) {
             return Optional.empty();
@@ -104,6 +110,22 @@ public class UserRankRepository extends AbstractRepository {
     @Transactional
     public boolean deleteById(final Long id) {
         final UserRankEntity e = this.findById(id);
+        if (e == null) {
+            return false;
+        }
+        this.em.remove(e);
+        return true;
+    }
+
+    /**
+     * Deletes a user rank by its public identifier.
+     *
+     * @param publicId the public ID of the user rank to delete
+     * @return true if the rank was successfully deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteByPublicId(final String publicId) {
+        final UserRankEntity e = this.findByPublicId(publicId).orElse(null);
         if (e == null) {
             return false;
         }

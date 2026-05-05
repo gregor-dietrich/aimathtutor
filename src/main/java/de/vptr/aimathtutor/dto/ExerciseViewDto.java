@@ -11,6 +11,7 @@ import de.vptr.aimathtutor.entity.ExerciseEntity;
  */
 public class ExerciseViewDto {
 
+    public Long id;
     public String publicId;
     public String title;
     public String content;
@@ -43,6 +44,7 @@ public class ExerciseViewDto {
      */
     public ExerciseViewDto(final ExerciseEntity entity) {
         if (entity != null) {
+            this.id = entity.id;
             this.publicId = entity.publicId;
             this.title = entity.title;
             this.content = entity.content;

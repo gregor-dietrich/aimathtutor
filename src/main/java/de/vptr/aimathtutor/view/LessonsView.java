@@ -73,7 +73,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         AsyncDataLoader.load(
                 () -> {
                     final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
-                    final Map<Long, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
+                    final Map<String, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
                             .findPublishedExercisesByLessonMap();
                     return new LessonsPayload(lessons, exercisesByLesson);
                 },
@@ -93,7 +93,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         for (final LessonViewDto lesson : payload.lessons) {
-            final List<ExerciseViewDto> exercises = payload.exercisesByLesson.getOrDefault(lesson.getId(), List.of());
+            final List<ExerciseViewDto> exercises = payload.exercisesByLesson.getOrDefault(lesson.getPublicId(), List.of());
             this.add(this.createLessonCard(lesson, exercises));
         }
 
@@ -120,7 +120,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private record LessonsPayload(List<LessonViewDto> lessons,
-            Map<Long, List<ExerciseViewDto>> exercisesByLesson) {
+            Map<String, List<ExerciseViewDto>> exercisesByLesson) {
     }
 
     private VerticalLayout createLessonCard(final LessonViewDto lesson, final List<ExerciseViewDto> exercises) {

@@ -82,17 +82,17 @@ public class UserGroupService {
     /**
      * Retrieves all users in a specific group.
      *
-     * @param groupId the group ID
+     * @param groupPublicId the group public ID
      * @return a list of {@link UserViewDto}s in the group
      * @throws WebApplicationException if group not found (NOT_FOUND status)
      */
     @Transactional
-    public List<UserViewDto> getUsersInGroup(final Long groupId) {
-        final UserGroupEntity group = this.userGroupRepository.findById(groupId);
+    public List<UserViewDto> getUsersInGroup(final String groupPublicId) {
+        final UserGroupEntity group = this.userGroupRepository.findByPublicId(groupPublicId).orElse(null);
         if (group == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
         }
-        final var metas = this.userGroupMetaRepository.findByGroupIdWithUsers(groupId);
+        final var metas = this.userGroupMetaRepository.findByGroupPublicIdWithUsers(groupPublicId);
         return metas.stream()
                 .map(meta -> new UserViewDto(meta.user))
                 .toList();
@@ -101,12 +101,12 @@ public class UserGroupService {
     /**
      * Retrieves all groups that a specific user belongs to.
      *
-     * @param userId the user ID
+     * @param userPublicId the user public ID
      * @return a list of {@link UserGroupViewDto}s the user is in
      */
     @Transactional
-    public List<UserGroupViewDto> getGroupsForUser(final Long userId) {
-        final var metas = this.userGroupMetaRepository.findByUserId(userId);
+    public List<UserGroupViewDto> getGroupsForUser(final String userPublicId) {
+        final var metas = this.userGroupMetaRepository.findByUserPublicId(userPublicId);
         return metas.stream()
                 .map(meta -> new UserGroupViewDto(meta.group))
                 .toList();
@@ -135,19 +135,19 @@ public class UserGroupService {
     /**
      * Completely replaces a user group (PUT semantics).
      *
-     * @param id       the group ID to update
+     * @param publicId the group public ID to update
      * @param groupDto the new group data with name
      * @return the updated {@link UserGroupViewDto}
      * @throws WebApplicationException if group not found (NOT_FOUND status)
      * @throws ValidationException     if name is missing or empty
      */
     @Transactional
-    public UserGroupViewDto updateGroup(final Long id, final @Valid UserGroupDto groupDto) {
+    public UserGroupViewDto updateGroup(final String publicId, final @Valid UserGroupDto groupDto) {
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
 
-        final UserGroupEntity existingGroup = this.userGroupRepository.findById(id);
+        final UserGroupEntity existingGroup = this.userGroupRepository.findByPublicId(publicId).orElse(null);
         if (existingGroup == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
         }
@@ -186,30 +186,30 @@ public class UserGroupService {
     }
 
     /**
-     * Deletes a user group by ID.
+     * Deletes a user group by public ID.
      *
-     * @param id the group ID to delete
+     * @param publicId the group public ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if group not found
      */
     @Transactional
-    public boolean deleteGroup(final Long id) {
-        return this.userGroupRepository.deleteById(id);
+    public boolean deleteGroup(final String publicId) {
+        return this.userGroupRepository.deleteByPublicId(publicId);
     }
 
     /**
      * Adds a user to a group membership.
      * Creates a {@link UserGroupMetaEntity} association between user and group.
      *
-     * @param userId  the user ID to add
-     * @param groupId the group ID to add user to
+     * @param userPublicId  the user public ID to add
+     * @param groupPublicId the group public ID to add user to
      * @return the created {@link UserGroupMetaEntity} membership record
      * @throws WebApplicationException if user/group not found or user already in
      *                                 group (CONFLICT)
      */
     @Transactional
-    public UserGroupMetaEntity addUserToGroup(final Long userId, final Long groupId) {
-        final UserEntity user = this.userRepository.findById(userId);
-        final UserGroupEntity group = this.userGroupRepository.findById(groupId);
+    public UserGroupMetaEntity addUserToGroup(final String userPublicId, final String groupPublicId) {
+        final UserEntity user = this.userRepository.findByPublicId(userPublicId).orElse(null);
+        final UserGroupEntity group = this.userGroupRepository.findByPublicId(groupPublicId).orElse(null);
 
         if (user == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
@@ -238,14 +238,14 @@ public class UserGroupService {
     /**
      * Removes a user from a group membership.
      *
-     * @param userId  the user ID to remove
-     * @param groupId the group ID to remove user from
+     * @param userPublicId  the user public ID to remove
+     * @param groupPublicId the group public ID to remove user from
      * @return {@code true} if removal succeeded, {@code false} if membership not
      *         found
      */
     @Transactional
-    public boolean removeUserFromGroup(final Long userId, final Long groupId) {
-        final var meta = this.userGroupMetaRepository.findByUserAndGroup(userId, groupId);
+    public boolean removeUserFromGroup(final String userPublicId, final String groupPublicId) {
+        final var meta = this.userGroupMetaRepository.findByUserPublicIdAndGroupPublicId(userPublicId, groupPublicId);
         if (meta == null) {
             return false;
         }

@@ -22,4 +22,16 @@
   <Match>
     <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED" />
   </Match>
+
+  <!--
+    PA_PUBLIC_PRIMITIVE_ATTRIBUTE:
+    Entity fields are intentionally public for direct access in Panache Active Record pattern.
+    This is the standard Quarkus Panache design. The publicId field follows the same pattern
+    as the existing id field and other entity fields.
+  -->
+  <Match>
+    <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" />
+    <Class name="~de\.vptr\.aimathtutor\.entity\..*Entity" />
+    <Field name="publicId" />
+  </Match>
 </FindBugsFilter>

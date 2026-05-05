@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
+import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -27,6 +29,9 @@ class UserGroupServiceTest {
 
     @Inject
     private UserGroupService userGroupService;
+
+    @Inject
+    private UserGroupRepository userGroupRepository;
 
     @Inject
     private UserRepository userRepository;
@@ -82,7 +87,7 @@ class UserGroupServiceTest {
         final UserGroupViewDto created = this.userGroupService.createGroup(dto);
 
         assertNotNull(created);
-        assertNotNull(created.id);
+        assertNotNull(created.publicId);
         assertEquals(dto.name, created.name);
     }
 
@@ -91,8 +96,9 @@ class UserGroupServiceTest {
     @TestTransaction
     void shouldFindGroupById() {
         final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
+        final var groupEntity = this.userGroupRepository.findByPublicId(created.publicId).orElseThrow();
 
-        final var found = this.userGroupService.findById(created.id);
+        final var found = this.userGroupService.findById(groupEntity.id);
 
         assertTrue(found.isPresent());
         assertEquals(created.name, found.get().name);
@@ -107,7 +113,7 @@ class UserGroupServiceTest {
         final var found = this.userGroupService.findByName(created.name);
 
         assertTrue(found.isPresent());
-        assertEquals(created.id, found.get().id);
+        assertEquals(created.publicId, found.get().publicId);
     }
 
     @Test
@@ -118,12 +124,13 @@ class UserGroupServiceTest {
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "Seeded student1 should exist");
 
-        this.userGroupService.addUserToGroup(student.id, group.id);
+        this.userGroupService.addUserToGroup(student.publicId, group.publicId);
 
-        final var members = this.userGroupService.getUsersInGroup(group.id);
+        final var groupEntity = this.userGroupRepository.findByPublicId(group.publicId).orElseThrow();
+        final var members = this.userGroupService.getUsersInGroup(group.publicId);
         assertEquals(1, members.size());
         assertEquals("student1", members.get(0).username);
-        assertTrue(this.userGroupService.isUserInGroup(student.id, group.id));
+        assertTrue(this.userGroupService.isUserInGroup(student.id, groupEntity.id));
     }
 
     @Test
@@ -132,12 +139,13 @@ class UserGroupServiceTest {
     void shouldRemoveUserFromGroup() {
         final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
         final var student = this.userRepository.findByUsername("student1");
-        this.userGroupService.addUserToGroup(student.id, group.id);
+        this.userGroupService.addUserToGroup(student.publicId, group.publicId);
 
-        final boolean removed = this.userGroupService.removeUserFromGroup(student.id, group.id);
+        final boolean removed = this.userGroupService.removeUserFromGroup(student.publicId, group.publicId);
 
         assertTrue(removed);
-        assertFalse(this.userGroupService.isUserInGroup(student.id, group.id));
+        final var groupEntity = this.userGroupRepository.findByPublicId(group.publicId).orElseThrow();
+        assertFalse(this.userGroupService.isUserInGroup(student.id, groupEntity.id));
     }
 
     @Test
@@ -145,7 +153,7 @@ class UserGroupServiceTest {
     @TestTransaction
     void shouldThrowNotFoundForUnknownGroup() {
         final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.userGroupService.getUsersInGroup(99999L));
+                () -> this.userGroupService.getUsersInGroup("00000000000000000000000000"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
     }
 
@@ -155,9 +163,10 @@ class UserGroupServiceTest {
     void shouldDeleteGroup() {
         final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
 
-        final boolean deleted = this.userGroupService.deleteGroup(group.id);
+        final boolean deleted = this.userGroupService.deleteGroup(group.publicId);
+        final var groupEntity = this.userGroupRepository.findByPublicId(group.publicId).orElse(null);
 
         assertTrue(deleted);
-        assertTrue(this.userGroupService.findById(group.id).isEmpty());
+        assertNull(groupEntity);
     }
 }

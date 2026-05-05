@@ -64,6 +64,18 @@ public class UserService {
     }
 
     /**
+     * Finds a user by public ID.
+     *
+     * @param publicId the user public ID
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
+     *         not found
+     */
+    @Transactional
+    public Optional<UserViewDto> findByPublicId(final String publicId) {
+        return this.userRepository.findByPublicId(publicId).map(UserViewDto::new);
+    }
+
+    /**
      * Finds a user by ID.
      *
      * @param id the user ID
@@ -164,10 +176,10 @@ public class UserService {
         user.password = hashedPassword;
 
         // Set rank if provided, otherwise default to rank 1
-        if (userDto.rankId != null) {
-            final var rank = this.userRankRepository.findById(userDto.rankId);
+        if (userDto.rankPublicId != null) {
+            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
             if (rank == null) {
-                throw new ValidationException("Rank with ID " + userDto.rankId + " not found");
+                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
             }
             user.rank = rank;
         } else {
@@ -193,7 +205,7 @@ public class UserService {
      * Validates duplicate username/email (skipping current values) and hashes new
      * passwords.
      *
-     * @param id      the user ID to update
+     * @param publicId the user public ID to update
      * @param userDto the new user data
      * @return the updated {@link UserViewDto}
      * @throws WebApplicationException if user not found (NOT_FOUND status)
@@ -201,13 +213,13 @@ public class UserService {
      *                                 fields missing
      */
     @Transactional
-    public UserViewDto updateUser(final Long id, final @Valid UserDto userDto) {
+    public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
         // Validate required fields for PUT
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for updating a user");
         }
 
-        final UserEntity existingUser = this.userRepository.findById(id);
+        final UserEntity existingUser = this.userRepository.findByPublicId(publicId).orElse(null);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
@@ -243,10 +255,10 @@ public class UserService {
         }
 
         // Set rank if provided
-        if (userDto.rankId != null) {
-            final var rank = this.userRankRepository.findById(userDto.rankId);
+        if (userDto.rankPublicId != null) {
+            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
             if (rank == null) {
-                throw new ValidationException("Rank with ID " + userDto.rankId + " not found");
+                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
             }
             existingUser.rank = rank;
         } else {
@@ -265,15 +277,15 @@ public class UserService {
      * Validates duplicate username/email if being changed, and hashes new passwords
      * if provided.
      *
-     * @param id      the user ID to update
+     * @param publicId the user public ID to update
      * @param userDto the partial user data with selected fields to update
      * @return the updated {@link UserViewDto}
      * @throws WebApplicationException if user not found (NOT_FOUND status)
      * @throws ValidationException     if username/email is duplicate
      */
     @Transactional
-    public UserViewDto patchUser(final Long id, final @Valid UserDto userDto) {
-        final UserEntity existingUser = this.userRepository.findById(id);
+    public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
+        final UserEntity existingUser = this.userRepository.findByPublicId(publicId).orElse(null);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
@@ -321,10 +333,10 @@ public class UserService {
         }
 
         // Set rank if provided
-        if (userDto.rankId != null) {
-            final var rank = this.userRankRepository.findById(userDto.rankId);
+        if (userDto.rankPublicId != null) {
+            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
             if (rank == null) {
-                throw new ValidationException("Rank with ID " + userDto.rankId + " not found");
+                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
             }
             existingUser.rank = rank;
         }
@@ -334,14 +346,14 @@ public class UserService {
     }
 
     /**
-     * Deletes a user account by ID.
+     * Deletes a user account by public ID.
      *
-     * @param id the user ID to delete
+     * @param publicId the user public ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if user not found
      */
     @Transactional
-    public boolean deleteUser(final Long id) {
-        return this.userRepository.deleteById(id);
+    public boolean deleteUser(final String publicId) {
+        return this.userRepository.deleteByPublicId(publicId);
     }
 
     /**

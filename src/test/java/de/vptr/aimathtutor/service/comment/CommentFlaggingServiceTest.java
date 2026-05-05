@@ -46,7 +46,7 @@ class CommentFlaggingServiceTest {
     void shouldThrowNotFoundForNonExistentComment() {
         final UserEntity user = this.userRepository.findByUsername("admin");
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.flaggingService.flagComment(99999L, user.id, "spam"));
+                () -> this.flaggingService.flagComment("00000000000000000000000000", user.id, "spam"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -58,7 +58,7 @@ class CommentFlaggingServiceTest {
         final var comment = this.createComment(exercise, this.userRepository.findByUsername("admin"));
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.flaggingService.flagComment(comment.id, 99999L, "spam"));
+                () -> this.flaggingService.flagComment(comment.publicId, 99999L, "spam"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -71,7 +71,7 @@ class CommentFlaggingServiceTest {
         final var comment = this.createComment(exercise, author);
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.flaggingService.flagComment(comment.id, author.id, "spam"));
+                () -> this.flaggingService.flagComment(comment.publicId, author.id, "spam"));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -84,7 +84,7 @@ class CommentFlaggingServiceTest {
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
-        this.flaggingService.flagComment(comment.id, flagger.id, "inappropriate");
+        this.flaggingService.flagComment(comment.publicId, flagger.id, "inappropriate");
         assertEquals(1, comment.flagsCount);
     }
 
@@ -102,7 +102,7 @@ class CommentFlaggingServiceTest {
                 this.userRepository.findByUsername("student2").id
         };
         for (final Long flaggerId : flaggerIds) {
-            this.flaggingService.flagComment(comment.id, flaggerId, "spam");
+            this.flaggingService.flagComment(comment.publicId, flaggerId, "spam");
         }
 
         // Create additional flaggers to reach threshold
@@ -115,7 +115,7 @@ class CommentFlaggingServiceTest {
             flagger.activated = true;
             flagger.banned = false;
             this.userRepository.persist(flagger);
-            this.flaggingService.flagComment(comment.id, flagger.id, "spam");
+            this.flaggingService.flagComment(comment.publicId, flagger.id, "spam");
         }
 
         assertEquals(AppConstants.COMMENT_AUTO_HIDE_THRESHOLD, comment.flagsCount);
