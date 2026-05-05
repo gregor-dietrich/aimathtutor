@@ -48,6 +48,28 @@ public class CommentRepository extends AbstractRepository {
         return Optional.ofNullable(this.em.find(CommentEntity.class, id));
     }
 
+    public Optional<CommentEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("Comment.findByPublicId", CommentEntity.class);
+        q.setParameter("id", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    public Optional<CommentEntity> findByPublicIdWithRelations(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createQuery(
+                "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.publicId = :p",
+                CommentEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves an optional comment by its unique identifier with related entities
      * eagerly loaded.

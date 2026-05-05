@@ -42,6 +42,16 @@ public class AiConfigRepository extends AbstractRepository {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
+    public Optional<AiConfigEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("AiConfig.findByPublicId", AiConfigEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves all configuration entries in a specific category.
      *

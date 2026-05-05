@@ -39,6 +39,16 @@ public class LessonRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    public Optional<LessonEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("Lesson.findByPublicId", LessonEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves all lessons from the database in a defined order (descending by
      * ID).

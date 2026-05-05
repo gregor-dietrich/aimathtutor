@@ -38,6 +38,16 @@ public class UserRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    public Optional<UserEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("User.findByPublicId", UserEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves an optional user by its username.
      *

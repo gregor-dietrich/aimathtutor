@@ -35,6 +35,16 @@ public class UserGroupRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    public Optional<UserGroupEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("UserGroup.findByPublicId", UserGroupEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves a user group by its unique identifier.
      *

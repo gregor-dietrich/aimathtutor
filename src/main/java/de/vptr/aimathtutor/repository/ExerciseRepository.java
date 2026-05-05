@@ -35,6 +35,16 @@ public class ExerciseRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    public Optional<ExerciseEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("Exercise.findByPublicId", ExerciseEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves an exercise by its unique identifier.
      *

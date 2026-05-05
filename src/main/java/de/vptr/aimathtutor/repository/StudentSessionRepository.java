@@ -32,6 +32,16 @@ public class StudentSessionRepository extends AbstractRepository {
         return q.getResultStream().findFirst().orElse(null);
     }
 
+    public Optional<StudentSessionEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findByPublicId", StudentSessionEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Find a student session by its external session id with relations eagerly
      * loaded.

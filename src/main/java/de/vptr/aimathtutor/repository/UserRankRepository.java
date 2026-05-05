@@ -34,6 +34,16 @@ public class UserRankRepository extends AbstractRepository {
         return Optional.ofNullable(this.findById(id));
     }
 
+    public Optional<UserRankEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("UserRank.findByPublicId", UserRankEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
     /**
      * Retrieves a user rank by its unique identifier.
      *
