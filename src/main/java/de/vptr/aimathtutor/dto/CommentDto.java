@@ -60,20 +60,20 @@ public class CommentDto {
         }
     }
 
-    public Long id;
+    public String publicId;
 
     @Size(min = AppConstants.COMMENT_CONTENT_MIN_LENGTH, max = AppConstants.COMMENT_CONTENT_MAX_LENGTH, message = "Content must be between {min} and {max} characters")
     public String content;
 
     // Required for POST operations (creation)
     // Ignored for PUT/PATCH operations (exerciseId comes from the URL path)
-    public Long exerciseId;
+    public String exercisePublicId;
 
     // NEW: For threading support
-    public Long parentCommentId;
+    public String parentCommentPublicId;
 
     // NEW: For lesson comments (future extension)
-    public Long lessonId;
+    public String lessonPublicId;
 
     // NEW: For tracking which session the comment was made during
     public String sessionId;
@@ -85,13 +85,13 @@ public class CommentDto {
      * Helper class for nested exercise field access
      */
     public static class ExerciseField {
-        public Long id;
+        public String publicId;
 
         public ExerciseField() {
         }
 
-        public ExerciseField(final Long id) {
-            this.id = id;
+        public ExerciseField(final String publicId) {
+            this.publicId = publicId;
         }
     }
 
@@ -99,10 +99,10 @@ public class CommentDto {
      * Ensure exerciseId and exercise stay in sync
      */
     public void syncExercise() {
-        if (this.exercise != null && this.exercise.id != null) {
-            this.exerciseId = this.exercise.id;
-        } else if (this.exerciseId != null) {
-            this.exercise = new ExerciseField(this.exerciseId);
+        if (this.exercise != null && this.exercise.publicId != null) {
+            this.exercisePublicId = this.exercise.publicId;
+        } else if (this.exercisePublicId != null) {
+            this.exercise = new ExerciseField(this.exercisePublicId);
         }
     }
 }

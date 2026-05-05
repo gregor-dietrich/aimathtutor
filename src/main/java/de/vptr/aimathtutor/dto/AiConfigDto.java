@@ -105,7 +105,7 @@ public class AiConfigDto {
         }
     }
 
-    public Long id;
+    public String publicId;
 
     @JsonProperty("config_key")
     public String configKey;
@@ -147,10 +147,10 @@ public class AiConfigDto {
     /**
      * Constructor with all fields.
      */
-    public AiConfigDto(final Long id, final String configKey, final String configValue,
+    public AiConfigDto(final String publicId, final String configKey, final String configValue,
             final ConfigType configType, final ConfigCategory category, final String description,
             final LocalDateTime lastUpdatedAt, final String lastUpdatedBy) {
-        this.id = id;
+        this.publicId = publicId;
         this.configKey = configKey;
         this.configValue = configValue;
         this.configType = configType;

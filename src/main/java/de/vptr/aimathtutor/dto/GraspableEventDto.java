@@ -22,11 +22,11 @@ public class GraspableEventDto {
     @JsonProperty("action_details")
     public String actionDetails; // Additional context about the action (JSON string)
 
-    @JsonProperty("student_id")
-    public Long studentId;
+    @JsonProperty("student_public_id")
+    public String studentPublicId;
 
-    @JsonProperty("exercise_id")
-    public Long exerciseId;
+    @JsonProperty("exercise_public_id")
+    public String exercisePublicId;
 
     @JsonProperty("session_id")
     public String sessionId; // Unique identifier for this student session
@@ -44,14 +44,14 @@ public class GraspableEventDto {
      * Constructs a GraspableEventDto with the specified parameters.
      */
     public GraspableEventDto(final String eventType, final String expressionBefore,
-            final String expressionAfter, final Long studentId,
-            final Long exerciseId, final String sessionId) {
+            final String expressionAfter, final String studentPublicId,
+            final String exercisePublicId, final String sessionId) {
         this();
         this.eventType = eventType;
         this.expressionBefore = expressionBefore;
         this.expressionAfter = expressionAfter;
-        this.studentId = studentId;
-        this.exerciseId = exerciseId;
+        this.studentPublicId = studentPublicId;
+        this.exercisePublicId = exercisePublicId;
         this.sessionId = sessionId;
     }
 
@@ -64,8 +64,8 @@ public class GraspableEventDto {
                 + "eventType='" + this.eventType + '\''
                 + ", expressionBefore='" + this.expressionBefore + '\''
                 + ", expressionAfter='" + this.expressionAfter + '\''
-                + ", studentId=" + this.studentId
-                + ", exerciseId=" + this.exerciseId
+                + ", studentPublicId=" + this.studentPublicId
+                + ", exercisePublicId=" + this.exercisePublicId
                 + ", sessionId='" + this.sessionId + '\''
                 + ", timestamp=" + this.timestamp
                 + ", correct=" + this.correct

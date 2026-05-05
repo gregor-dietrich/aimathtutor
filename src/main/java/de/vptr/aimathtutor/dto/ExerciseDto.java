@@ -43,7 +43,7 @@ public class ExerciseDto {
         }
     }
 
-    public Long id;
+    public String publicId;
 
     @Size(min = AppConstants.EXERCISE_TITLE_MIN_LENGTH, max = AppConstants.EXERCISE_TITLE_MAX_LENGTH, message = "Title must be between {min} and {max} characters")
     public String title;
@@ -51,9 +51,9 @@ public class ExerciseDto {
     @Size(min = AppConstants.EXERCISE_CONTENT_MIN_LENGTH, max = AppConstants.EXERCISE_CONTENT_MAX_LENGTH, message = "Content must be between {min} and {max} characters")
     public String content;
 
-    public Long userId;
+    public String userPublicId;
 
-    public Long lessonId;
+    public String lessonPublicId;
 
     public Boolean published;
 
@@ -63,7 +63,6 @@ public class ExerciseDto {
 
     public LocalDateTime lastEdit;
 
-    // Graspable Math fields
     public Boolean graspableEnabled;
 
     @Size(max = AppConstants.EXERCISE_EXPRESSION_MAX_LENGTH, message = "Initial expression must not exceed {max} characters")
@@ -77,95 +76,65 @@ public class ExerciseDto {
     @Size(max = AppConstants.EXERCISE_HINTS_MAX_LENGTH, message = "Hints must not exceed {max} characters")
     public String graspableHints;
 
-    // Helper fields for compatibility with old code that used nested objects
     public UserField user;
     public LessonField lesson;
 
     public ExerciseDto() {
     }
 
-    /**
-     * Constructs an ExerciseDto with the specified parameters.
-     *
-     * @param title       the title of the exercise
-     * @param content     the content of the exercise
-     * @param userId      the ID of the user who created the exercise
-     * @param lessonId    the ID of the lesson associated with the exercise
-     * @param published   whether the exercise is published or not
-     * @param commentable whether the exercise is commentable or not
-     */
-    public ExerciseDto(final String title, final String content, final Long userId, final Long lessonId,
+    public ExerciseDto(final String title, final String content, final String userPublicId, final String lessonPublicId,
             final Boolean published, final Boolean commentable) {
         this.title = title;
         this.content = content;
-        this.userId = userId;
-        this.lessonId = lessonId;
+        this.userPublicId = userPublicId;
+        this.lessonPublicId = lessonPublicId;
         this.published = published;
         this.commentable = commentable;
     }
 
-    /**
-     * Helper class for nested user field access.
-     */
     public static class UserField {
-        public Long id;
+        public String publicId;
         public String username;
 
         public UserField() {
         }
 
-        public UserField(final Long id) {
-            this.id = id;
+        public UserField(final String publicId) {
+            this.publicId = publicId;
         }
 
-        /**
-         * Set the nested user's id.
-         *
-         * @param id user id
-         */
-        public void setId(final Long id) {
-            this.id = id;
+        public void setPublicId(final String publicId) {
+            this.publicId = publicId;
         }
 
-        /**
-         * Set the nested user's username.
-         *
-         * @param username username string
-         */
         public void setUsername(final String username) {
             this.username = username;
         }
     }
 
-    /**
-     * Helper class for nested lesson field access.
-     */
     public static class LessonField {
-        public Long id;
+        public String publicId;
         public String name;
 
         public LessonField() {
         }
 
-        public LessonField(final Long id) {
-            this.id = id;
+        public LessonField(final String publicId) {
+            this.publicId = publicId;
         }
     }
 
-    /**
-     * Ensure userId/lessonId and nested objects stay in sync
-     */
     public void syncNestedFields() {
-        if (this.user != null && this.user.id != null) {
-            this.userId = this.user.id;
-        } else if (this.userId != null && this.user == null) {
-            this.user = new UserField(this.userId);
+        if (this.user != null && this.user.publicId != null) {
+            this.userPublicId = this.user.publicId;
+        } else if (this.userPublicId != null && this.user == null) {
+            this.user = new UserField(this.userPublicId);
         }
 
-        if (this.lesson != null && this.lesson.id != null) {
-            this.lessonId = this.lesson.id;
-        } else if (this.lessonId != null && this.lesson == null) {
-            this.lesson = new LessonField(this.lessonId);
+        if (this.lesson != null && this.lesson.publicId != null) {
+            this.lessonPublicId = this.lesson.publicId;
+        } else if (this.lessonPublicId != null && this.lesson == null) {
+            this.lesson = new LessonField(this.lessonPublicId);
         }
     }
 }
