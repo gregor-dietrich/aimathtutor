@@ -70,6 +70,7 @@ class OllamaServiceTest {
         assertEquals(AppConstants.RETRY_MAX_RETRIES, retry.maxRetries());
         assertEquals(AppConstants.RETRY_DELAY_MS, retry.delay());
         assertEquals(AppConstants.RETRY_JITTER_MS, retry.jitter());
+        assertEquals(1, retry.abortOn().length);
         assertSame(NonRetryableAiProviderException.class, retry.abortOn()[0]);
     }
 }

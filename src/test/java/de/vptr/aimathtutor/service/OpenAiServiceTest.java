@@ -62,6 +62,8 @@ class OpenAiServiceTest {
 
         assertNotNull(retry);
         assertEquals(AppConstants.RETRY_MAX_RETRIES, retry.maxRetries());
+        assertEquals(AppConstants.RETRY_DELAY_MS, retry.delay());
+        assertEquals(1, retry.abortOn().length);
         assertSame(NonRetryableAiProviderException.class, retry.abortOn()[0]);
     }
 }

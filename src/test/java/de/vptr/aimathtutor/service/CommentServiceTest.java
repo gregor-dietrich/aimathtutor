@@ -113,6 +113,7 @@ class CommentServiceTest {
     @TestTransaction
     void shouldRejectCommentOnNonCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
+        assertNotNull(teacher, "teacher fixture must exist");
         final var dto = new ExerciseDto();
         dto.title = "noncommentable_" + UUID.randomUUID().toString().substring(0, 8);
         dto.content = "x";
@@ -180,6 +181,7 @@ class CommentServiceTest {
         comment.exercise = exerciseRef;
         final CommentViewDto created = this.commentService.createComment(comment, "student1");
         final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "student1 fixture must exist");
 
         this.commentService.deleteComment(created.id, student.id, true);
 
