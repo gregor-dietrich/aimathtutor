@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -72,9 +73,11 @@ class ProblemGeneratorServiceTest {
     @Test
     @DisplayName("Should produce varied problems across invocations")
     void shouldProduceVariedProblemsAcrossInvocations() {
+        final Random deterministicRandom = new Random(42L);
+        final ProblemGeneratorService testService = new ProblemGeneratorService(deterministicRandom);
         final Set<String> expressions = new HashSet<>();
         for (int i = 0; i < 20; i++) {
-            final GraspableProblemDto p = this.service.generateProblem(DifficultyLevel.INTERMEDIATE,
+            final GraspableProblemDto p = testService.generateProblem(DifficultyLevel.INTERMEDIATE,
                     ProblemCategory.LINEAR_EQUATIONS);
             expressions.add(p.initialExpression);
         }

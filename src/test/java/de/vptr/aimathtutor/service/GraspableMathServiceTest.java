@@ -40,6 +40,7 @@ class GraspableMathServiceTest {
 
     private Long createExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
+        assertNotNull(teacher, "seeded teacher must exist");
         final var dto = new ExerciseDto();
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         dto.title = "ex_" + suffix;
@@ -181,12 +182,15 @@ class GraspableMathServiceTest {
     void shouldListUserAndExerciseSessions() {
         final Long exerciseId = this.createExercise();
         final Long userId = this.studentId();
+        final int userSessionsBefore = this.graspableMathService.getUserSessions(userId).size();
+        final int exerciseSessionsBefore = this.graspableMathService.getExerciseSessions(exerciseId).size();
+
         this.graspableMathService.createSession(userId, exerciseId);
 
-        final var userSessions = this.graspableMathService.getUserSessions(userId);
-        final var exerciseSessions = this.graspableMathService.getExerciseSessions(exerciseId);
+        final int userSessionsAfter = this.graspableMathService.getUserSessions(userId).size();
+        final int exerciseSessionsAfter = this.graspableMathService.getExerciseSessions(exerciseId).size();
 
-        assertFalse(userSessions.isEmpty());
-        assertFalse(exerciseSessions.isEmpty());
+        assertEquals(userSessionsBefore + 1, userSessionsAfter);
+        assertEquals(exerciseSessionsBefore + 1, exerciseSessionsAfter);
     }
 }

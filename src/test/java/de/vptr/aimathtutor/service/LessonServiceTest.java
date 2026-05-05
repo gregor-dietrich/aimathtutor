@@ -16,6 +16,7 @@ import de.vptr.aimathtutor.entity.LessonEntity;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
@@ -26,6 +27,9 @@ class LessonServiceTest {
 
     @Inject
     private LessonService lessonService;
+
+    @Inject
+    private EntityManager em;
 
     private LessonEntity buildLesson(final String prefix) {
         final var lesson = new LessonEntity();
@@ -172,6 +176,23 @@ class LessonServiceTest {
     @TestTransaction
     void shouldReturnDtoWithInitializedCollections() {
         this.lessonService.createLesson(this.buildLesson("init"));
+
+        final var lessons = this.lessonService.getAllLessons();
+
+        assertFalse(lessons.isEmpty());
+        for (final var lesson : lessons) {
+            assertNotNull(lesson.childrenIds, "childrenIds should never be null");
+            assertTrue(lesson.childrenCount >= 0);
+            assertTrue(lesson.exercisesCount >= 0);
+        }
+    }
+
+    @Test
+    @DisplayName("Should return DTO with initialized collections after context close")
+    void shouldReturnDtoWithInitializedCollectionsAfterContextClose() {
+        this.lessonService.createLesson(this.buildLesson("init"));
+
+        this.em.clear();
 
         final var lessons = this.lessonService.getAllLessons();
 
