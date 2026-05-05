@@ -14,10 +14,10 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouterLayout;
 
 import de.vptr.aimathtutor.component.NavigationTabs;
+import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.AdminViewButton;
 import de.vptr.aimathtutor.component.button.LogoutButton;
 import de.vptr.aimathtutor.component.button.SettingsViewButton;
-import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
@@ -45,8 +45,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     @Inject
     private transient UserRankService userRankService;
 
-    private HorizontalLayout topBar;
-    private HorizontalLayout rightSide;
+    private TopBar topBar;
     private boolean initialized = false;
 
     /**
@@ -147,55 +146,31 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.setPadding(false);
         this.setSpacing(false);
 
-        this.createTopBar();
-    }
-
-    private void createTopBar() {
-        this.topBar = new HorizontalLayout();
-        this.topBar.setWidthFull();
-        this.topBar.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        this.topBar.setPadding(true);
-
-        // Create navigation menu
         this.navigationTabs = new NavigationTabs();
-
-        // Create right side components container
-        this.rightSide = new HorizontalLayout();
-        this.rightSide.setSpacing(true);
-
-        final var themeToggle = new ThemeToggleButton(this.themeService);
-        this.rightSide.add(themeToggle);
-
-        this.topBar.add(this.rightSide);
+        this.topBar = new TopBar(this.themeService);
         this.addComponentAsFirst(this.topBar);
     }
 
     private void showNavigationTabs() {
         if (this.navigationTabs != null && this.topBar != null) {
-            if (!this.topBar.getChildren().anyMatch(component -> component == this.navigationTabs)) {
-                this.topBar.removeAll();
-                this.topBar.add(this.navigationTabs, this.rightSide);
-                this.topBar.setJustifyContentMode(JustifyContentMode.BETWEEN);
-            }
+            this.topBar.setLeftContent(this.navigationTabs);
         }
     }
 
     private void hideNavigationTabs() {
-        if (this.navigationTabs != null && this.topBar != null) {
-            this.topBar.removeAll();
-            this.topBar.add(this.rightSide);
-            this.topBar.setJustifyContentMode(JustifyContentMode.END);
+        if (this.topBar != null) {
+            this.topBar.setLeftContent(null);
         }
     }
 
     private void addButtonsToTopBar() {
-        // Check if buttons already exist, if so don't add them again
-        if (this.logoutButton != null && this.rightSide.getChildren().anyMatch(c -> c == this.logoutButton)) {
+        // Avoid adding twice
+        if (this.logoutButton != null
+                && this.topBar.getRightSide().getChildren().anyMatch(c -> c == this.logoutButton)) {
             return;
         }
 
-        // Only create admin button if user is authenticated and has admin:view
-        // permission
+        // Only create admin button if user has admin:view permission
         final var userRank = this.userRankService.getCurrentUserRank();
         if (userRank != null && userRank.canAdminView()) {
             this.adminViewButton = new AdminViewButton(
@@ -204,7 +179,6 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             this.adminViewButton = null;
         }
 
-        // Settings button
         this.settingsButton = new SettingsViewButton(e -> {
             final var currentLocation = UI.getCurrent().getInternals().getActiveViewLocation();
             if (currentLocation == null || !"settings".equals(currentLocation.getPath())) {
@@ -217,37 +191,16 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
         });
 
-        // Add buttons
-        final var componentCount = this.rightSide.getComponentCount();
-        if (componentCount > 0) {
-            this.rightSide.addComponentAtIndex(componentCount - 1, this.logoutButton);
-            this.rightSide.addComponentAtIndex(componentCount - 1, this.settingsButton);
-            if (this.adminViewButton != null) {
-                this.rightSide.addComponentAtIndex(componentCount - 1, this.adminViewButton);
-            }
-        } else {
-            if (this.adminViewButton != null) {
-                this.rightSide.add(this.adminViewButton);
-            }
-            this.rightSide.add(this.settingsButton);
-            this.rightSide.add(this.logoutButton);
-        }
+        this.topBar.addRightSideButtons(this.adminViewButton, this.settingsButton, this.logoutButton);
     }
 
     private void removeButtonsFromTopBar() {
-        if (this.rightSide != null) {
-            if (this.logoutButton != null) {
-                this.rightSide.remove(this.logoutButton);
-                this.logoutButton = null;
-            }
-            if (this.settingsButton != null) {
-                this.rightSide.remove(this.settingsButton);
-                this.settingsButton = null;
-            }
-            if (this.adminViewButton != null) {
-                this.rightSide.remove(this.adminViewButton);
-                this.adminViewButton = null;
-            }
+        if (this.topBar == null) {
+            return;
         }
+        this.topBar.removeFromRightSide(this.adminViewButton, this.settingsButton, this.logoutButton);
+        this.adminViewButton = null;
+        this.settingsButton = null;
+        this.logoutButton = null;
     }
 }

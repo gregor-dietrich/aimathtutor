@@ -15,8 +15,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouterLayout;
 
 import de.vptr.aimathtutor.component.AdminNavigationTabs;
+import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.LogoutButton;
-import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.component.button.UserViewButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
@@ -50,8 +50,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     @Inject
     private transient UserRankService userRankService;
 
-    private transient HorizontalLayout topBar;
-    private transient HorizontalLayout rightSide;
+    private transient TopBar topBar;
     private transient HorizontalLayout mainLayout;
     private transient VerticalLayout sidebar;
     private transient VerticalLayout contentArea;
@@ -180,26 +179,13 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     private void createTopBar() {
-        this.topBar = new HorizontalLayout();
-        this.topBar.setWidthFull();
-        this.topBar.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        this.topBar.setPadding(true);
+        this.topBar = new TopBar(this.themeService);
 
-        // Create left side with title
-        final var leftSide = new HorizontalLayout();
         final var title = new H1("AI Math Tutor - Admin Panel");
         title.getStyle().set("margin", "0");
         title.getStyle().set("color", "var(--lumo-primary-text-color)");
-        leftSide.add(title);
+        this.topBar.setLeftContent(title);
 
-        // Create right side components container
-        this.rightSide = new HorizontalLayout();
-        this.rightSide.setSpacing(true);
-
-        final var themeToggle = new ThemeToggleButton(this.themeService);
-        this.rightSide.add(themeToggle);
-
-        this.topBar.add(leftSide, this.rightSide);
         this.addComponentAsFirst(this.topBar);
     }
 
@@ -251,46 +237,27 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     private void addButtonsToTopBar() {
-        if (this.rightSide != null) {
-            // Remove existing buttons if present
-            if (this.logoutButton != null) {
-                this.rightSide.remove(this.logoutButton);
-            }
-            if (this.userViewButton != null) {
-                this.rightSide.remove(this.userViewButton);
-            }
-
-            // Create new logout button
-            this.logoutButton = new LogoutButton(e -> {
-                this.authService.logout();
-                this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-            });
-
-            // Create new AdminView button
-            this.userViewButton = new UserViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate(LessonsView.class)));
-
-            // Add buttons
-            final var componentCount = this.rightSide.getComponentCount();
-            if (componentCount > 0) {
-                this.rightSide.addComponentAtIndex(componentCount - 1, this.logoutButton);
-                this.rightSide.addComponentAtIndex(componentCount - 1, this.userViewButton);
-            } else {
-                this.rightSide.add(this.logoutButton);
-                this.rightSide.add(this.userViewButton);
-            }
+        if (this.topBar == null) {
+            return;
         }
+        // Replace existing buttons if present
+        this.topBar.removeFromRightSide(this.logoutButton, this.userViewButton);
+
+        this.logoutButton = new LogoutButton(e -> {
+            this.authService.logout();
+            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
+        });
+        this.userViewButton = new UserViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate(LessonsView.class)));
+
+        this.topBar.addRightSideButtons(this.userViewButton, this.logoutButton);
     }
 
     private void removeButtonsFromTopBar() {
-        if (this.rightSide != null) {
-            if (this.logoutButton != null) {
-                this.rightSide.remove(this.logoutButton);
-                this.logoutButton = null;
-            }
-            if (this.userViewButton != null) {
-                this.rightSide.remove(this.userViewButton);
-                this.userViewButton = null;
-            }
+        if (this.topBar == null) {
+            return;
         }
+        this.topBar.removeFromRightSide(this.logoutButton, this.userViewButton);
+        this.logoutButton = null;
+        this.userViewButton = null;
     }
 }

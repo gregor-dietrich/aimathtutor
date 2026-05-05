@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
 import de.vptr.aimathtutor.dto.OllamaTagsResponseDto;
+import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -27,12 +28,11 @@ import jakarta.ws.rs.core.Response;
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
-public class OllamaService {
+public class OllamaService extends AbstractAiProviderService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OllamaService.class);
-
-    @Inject
-    AiConfigService aiConfigService;
+    private static final String DEFAULT_MODEL = "llama3.2:3b";
+    private static final String DEFAULT_API_URL = "http://ollama:11434";
 
     @Inject
     @ConfigProperty(name = "ollama.client.connect-timeout-seconds", defaultValue = "10")
@@ -44,10 +44,33 @@ public class OllamaService {
 
     private volatile Client client;
 
+    @Override
+    protected String getConfigPrefix() {
+        return "ollama";
+    }
+
+    @Override
+    protected String getDefaultModel() {
+        return DEFAULT_MODEL;
+    }
+
+    @Override
+    protected String getProviderName() {
+        return "Ollama";
+    }
+
+    /**
+     * Ollama is configured when the server is reachable; no API key is required.
+     */
+    @Override
+    public boolean isConfigured() {
+        return this.isAvailable();
+    }
+
     /**
      * Get or create the JAX-RS client with thread-safe lazy initialization.
      * This avoids creating the client if Ollama is not the active AI provider.
-     * 
+     *
      * @return The configured JAX-RS Client instance
      */
     private synchronized Client getClient() {
@@ -77,7 +100,7 @@ public class OllamaService {
 
     /**
      * Generate content using Ollama Generate API
-     * 
+     *
      * @param prompt The input prompt
      * @return The generated text response
      */
@@ -86,8 +109,8 @@ public class OllamaService {
         LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
-        final String model = this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
+        final String model = this.aiConfigService.getConfigValue("ollama.model", DEFAULT_MODEL);
         final double temperature = this.aiConfigService.getClampedTemperature("ollama.temperature", 0.7);
         // Default to 2000 tokens to prevent truncated JSON responses
         final int maxTokens = this.aiConfigService.getClampedTokens("ollama.max-tokens", 2000);
@@ -128,11 +151,7 @@ public class OllamaService {
                     LOG.warn("Ollama response not complete");
                 }
 
-                final String content = ollamaResponse.getTextContent();
-                if (content == null || content.isBlank()) {
-                    LOG.warn("Ollama returned empty content");
-                    throw new IllegalStateException("Empty response from Ollama");
-                }
+                final String content = this.requireNonEmptyContent(ollamaResponse.getTextContent());
 
                 // Log performance metrics
                 final Double tokensPerSecond = ollamaResponse.getTokensPerSecond();
@@ -162,7 +181,7 @@ public class OllamaService {
      * Check if Ollama server is available
      */
     public boolean isAvailable() {
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
         try {
             // Check /api/tags endpoint (lists installed models)
             try (Response response = this.getClient().target(apiUrl + "/api/tags")
@@ -190,7 +209,7 @@ public class OllamaService {
      * Check if a specific model is installed
      */
     public boolean isModelInstalled(final String modelName) {
-        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
+        final String apiUrl = this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
         try {
             try (Response response = this.getClient().target(apiUrl + "/api/tags")
                     .request(MediaType.APPLICATION_JSON)
@@ -215,23 +234,9 @@ public class OllamaService {
     }
 
     /**
-     * Check if Ollama is properly configured
-     */
-    public boolean isConfigured() {
-        return this.isAvailable();
-    }
-
-    /**
-     * Get the current model name
-     */
-    public String getModel() {
-        return this.aiConfigService.getConfigValue("ollama.model", "llama3.2:3b");
-    }
-
-    /**
      * Get the API URL
      */
     public String getApiUrl() {
-        return this.aiConfigService.getConfigValue("ollama.api.url", "http://ollama:11434");
+        return this.aiConfigService.getConfigValue("ollama.api.url", DEFAULT_API_URL);
     }
 }

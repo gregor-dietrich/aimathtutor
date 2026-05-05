@@ -1,10 +1,13 @@
 package de.vptr.aimathtutor.view.admin;
 
 
+import java.util.function.Predicate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -161,236 +164,78 @@ public class AdminUserRanksView extends AbstractAdminView {
             return nameSpan;
         }).setHeader("Name").setFlexGrow(2);
 
-        // View permissions
+        // View permissions: single check/ban icon
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
-
-            final var adminViewIcon = rank.adminView ? LineAwesomeIcon.CHECK_SOLID.create()
-                    : LineAwesomeIcon.BAN_SOLID.create();
-            adminViewIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (adminViewIcon instanceof SvgIcon) {
-                ((SvgIcon) adminViewIcon).setTooltipText("Admin View");
-                ((SvgIcon) adminViewIcon).getElement().setAttribute("aria-label", "Admin View");
-            }
-
-            layout.add(adminViewIcon);
+            layout.add(this.permissionIcon(
+                    rank.adminView ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
+                    "Admin View"));
             return layout;
         }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
 
-        // Exercise permissions
+        // CRUD permission columns share the same add/edit/delete icon pattern
+        this.addCrudPermissionColumn("Exercises", "Exercises",
+                rank -> rank.exerciseAdd, rank -> rank.exerciseEdit, rank -> rank.exerciseDelete);
+        this.addCrudPermissionColumn("Lessons", "Lessons",
+                rank -> rank.lessonAdd, rank -> rank.lessonEdit, rank -> rank.lessonDelete);
+        this.addCrudPermissionColumn("Comments", "Comments",
+                rank -> rank.commentAdd, rank -> rank.commentEdit, rank -> rank.commentDelete);
+        this.addCrudPermissionColumn("Users", "Users",
+                rank -> rank.userAdd, rank -> rank.userEdit, rank -> rank.userDelete);
+        this.addCrudPermissionColumn("User Groups", "User Groups",
+                rank -> rank.userGroupAdd, rank -> rank.userGroupEdit, rank -> rank.userGroupDelete);
+        this.addCrudPermissionColumn("User Ranks", "Ranks",
+                rank -> rank.userRankAdd, rank -> rank.userRankEdit, rank -> rank.userRankDelete);
+
+        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
+                .setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
+    }
+
+    /**
+     * Append a CRUD permission column showing add/edit/delete icons whose
+     * visibility is driven by per-rank booleans.
+     *
+     * @param header     column header text (e.g. "Exercises")
+     * @param entityName entity noun used in tooltips (e.g. "Exercises", "Ranks")
+     */
+    private void addCrudPermissionColumn(final String header, final String entityName,
+            final Predicate<UserRankViewDto> canAdd,
+            final Predicate<UserRankViewDto> canEdit,
+            final Predicate<UserRankViewDto> canDelete) {
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
-
-            final var addIcon = rank.exerciseAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Exercises");
-                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Exercises");
-            }
-
-            final var editIcon = rank.exerciseEdit ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Exercises");
-                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Exercises");
-            }
-
-            final var deleteIcon = rank.exerciseDelete
-                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Exercises");
-                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Exercises");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
+            layout.add(
+                    this.permissionIconOrPlaceholder(canAdd.test(rank), LineAwesomeIcon.PLUS_SOLID,
+                            "Add " + entityName),
+                    this.permissionIconOrPlaceholder(canEdit.test(rank), LineAwesomeIcon.EDIT_SOLID,
+                            "Edit " + entityName),
+                    this.permissionIconOrPlaceholder(canDelete.test(rank), LineAwesomeIcon.TRASH_ALT_SOLID,
+                            "Delete " + entityName));
             return layout;
-        }).setHeader("Exercises").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
+        }).setHeader(header).setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
+    }
 
-        // Lesson permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
+    private Component permissionIconOrPlaceholder(final boolean enabled, final LineAwesomeIcon icon,
+            final String label) {
+        return enabled ? this.permissionIcon(icon, label) : this.iconPlaceholder();
+    }
 
-            final var addIcon = rank.lessonAdd
-                    ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Lessons");
-                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Lessons");
-            }
+    private SvgIcon permissionIcon(final LineAwesomeIcon icon, final String label) {
+        final var svg = icon.create();
+        svg.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
+        svg.setTooltipText(label);
+        svg.getElement().setAttribute("aria-label", label);
+        return svg;
+    }
 
-            final var editIcon = rank.lessonEdit
-                    ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Lessons");
-                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Lessons");
-            }
-
-            final var deleteIcon = rank.lessonDelete
-                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Lessons");
-                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Lessons");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("Lessons").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
-
-        // Comment permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.commentAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Comments");
-                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Comments");
-            }
-
-            final var editIcon = rank.commentEdit
-                    ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Comments");
-                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Comments");
-            }
-
-            final var deleteIcon = rank.commentDelete
-                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Comments");
-                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Comments");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("Comments").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
-
-        // User permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.userAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Users");
-                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Users");
-            }
-
-            final var editIcon = rank.userEdit ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Users");
-                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Users");
-            }
-
-            final var deleteIcon = rank.userDelete ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Users");
-                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Users");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("Users").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
-
-        // User group permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.userGroupAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add User Groups");
-                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add User Groups");
-            }
-
-            final var editIcon = rank.userGroupEdit ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit User Groups");
-                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit User Groups");
-            }
-
-            final var deleteIcon = rank.userGroupDelete
-                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete User Groups");
-                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete User Groups");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("User Groups").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
-
-        // User rank permissions
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-
-            final var addIcon = rank.userRankAdd ? LineAwesomeIcon.PLUS_SOLID.create()
-                    : new Span("");
-            addIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (addIcon instanceof SvgIcon) {
-                ((SvgIcon) addIcon).setTooltipText("Add Ranks");
-                ((SvgIcon) addIcon).getElement().setAttribute("aria-label", "Add Ranks");
-            }
-
-            final var editIcon = rank.userRankEdit ? LineAwesomeIcon.EDIT_SOLID.create()
-                    : new Span("");
-            editIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (editIcon instanceof SvgIcon) {
-                ((SvgIcon) editIcon).setTooltipText("Edit Ranks");
-                ((SvgIcon) editIcon).getElement().setAttribute("aria-label", "Edit Ranks");
-            }
-
-            final var deleteIcon = rank.userRankDelete
-                    ? LineAwesomeIcon.TRASH_ALT_SOLID.create()
-                    : new Span("");
-            deleteIcon.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-            if (deleteIcon instanceof SvgIcon) {
-                ((SvgIcon) deleteIcon).setTooltipText("Delete Ranks");
-                ((SvgIcon) deleteIcon).getElement().setAttribute("aria-label", "Delete Ranks");
-            }
-
-            layout.add(addIcon, editIcon, deleteIcon);
-            return layout;
-        }).setHeader("User Ranks").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0); // Add action column
-        this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
+    private Component iconPlaceholder() {
+        final var span = new Span("");
+        span.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
+        return span;
     }
 
     /**

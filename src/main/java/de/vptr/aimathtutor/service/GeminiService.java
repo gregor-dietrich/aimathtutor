@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
+import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -27,20 +28,39 @@ import jakarta.inject.Inject;
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
-public class GeminiService {
+public class GeminiService extends AbstractAiProviderService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GeminiService.class);
+    private static final String DEFAULT_MODEL = "gemma-3-27b-it";
+    private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
     @ConfigProperty(name = "gemini.api.key", defaultValue = "")
     private String apiKey; // API key is always read from environment variable, never from database
 
     @Inject
-    AiConfigService aiConfigService;
-
-    @Inject
     ObjectMapper objectMapper;
 
     private HttpClient httpClient;
+
+    @Override
+    protected String getConfigPrefix() {
+        return "gemini";
+    }
+
+    @Override
+    protected String getDefaultModel() {
+        return DEFAULT_MODEL;
+    }
+
+    @Override
+    protected String getProviderName() {
+        return "Gemini";
+    }
+
+    @Override
+    public boolean isConfigured() {
+        return isApiKeyConfigured(this.apiKey);
+    }
 
     @PostConstruct
     void init() {
@@ -55,7 +75,7 @@ public class GeminiService {
 
     /**
      * Generate content using Gemini API
-     * 
+     *
      * @param prompt The input prompt
      * @return The generated text response
      */
@@ -63,16 +83,11 @@ public class GeminiService {
     public String generateContent(final String prompt) {
         LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
 
-        if (this.apiKey == null || this.apiKey.isBlank() || this.apiKey.startsWith("${")) {
-            LOG.warn("Gemini API key not configured");
-            throw new IllegalStateException(
-                    "Gemini API key not configured. Please set GEMINI_API_KEY environment variable");
-        }
+        this.requireApiKey(this.apiKey, "GEMINI_API_KEY");
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
-        final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url",
-                "https://generativelanguage.googleapis.com");
+        final String model = this.aiConfigService.getConfigValue("gemini.model", DEFAULT_MODEL);
+        final String baseUrl = this.aiConfigService.getConfigValue("gemini.api.base-url", DEFAULT_BASE_URL);
         final double temperature = this.aiConfigService.getClampedTemperature("gemini.temperature", 0.7);
         final int maxTokens = this.aiConfigService.getClampedTokens("gemini.max-tokens", 2000);
 
@@ -124,11 +139,7 @@ public class GeminiService {
                 throw new IllegalStateException("Response blocked by safety filters");
             }
 
-            final String content = geminiResponse.getTextContent();
-            if (content == null || content.isBlank()) {
-                LOG.warn("Gemini returned empty content");
-                throw new IllegalStateException("Empty response from Gemini");
-            }
+            final String content = this.requireNonEmptyContent(geminiResponse.getTextContent());
 
             LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
             return content;
@@ -141,19 +152,5 @@ public class GeminiService {
             LOG.error("Error calling Gemini API", e);
             throw new IllegalStateException("Failed to call Gemini API", e);
         }
-    }
-
-    /**
-     * Check if Gemini is properly configured
-     */
-    public boolean isConfigured() {
-        return this.apiKey != null && !this.apiKey.isBlank() && !this.apiKey.startsWith("${");
-    }
-
-    /**
-     * Get the current model name
-     */
-    public String getModel() {
-        return this.aiConfigService.getConfigValue("gemini.model", "gemma-3-27b-it");
     }
 }
