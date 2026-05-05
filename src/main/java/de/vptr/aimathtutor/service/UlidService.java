@@ -29,7 +29,7 @@ public class UlidService {
      * Validates the given ULID and throws an exception if the format is invalid.
      *
      * @param ulid the ULID string to validate
-     * @throws jakarta.ws.rs.BadRequestException if the ULID format is invalid
+     * @throws BadRequestException if the ULID format is invalid
      */
     public static void requireValid(final String ulid) {
         if (!isValid(ulid)) {

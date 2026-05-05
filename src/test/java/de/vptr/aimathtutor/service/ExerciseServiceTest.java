@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
@@ -35,7 +36,7 @@ class ExerciseServiceTest {
     private UserRepository userRepository;
 
     @Inject
-    private jakarta.persistence.EntityManager em;
+    private EntityManager em;
 
     private String teacherPublicId() {
         final var teacher = this.userRepository.findByUsername("teacher");
@@ -154,7 +155,8 @@ class ExerciseServiceTest {
     @DisplayName("Should find exercise by id and route through completion enrichment")
     @TestTransaction
     void shouldFindExerciseById() {
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), true));
 
         final var found = this.exerciseService.findById(created.id);
 
@@ -217,7 +219,8 @@ class ExerciseServiceTest {
     @DisplayName("Should delete exercise by id")
     @TestTransaction
     void shouldDeleteExercise() {
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), true));
 
         final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
