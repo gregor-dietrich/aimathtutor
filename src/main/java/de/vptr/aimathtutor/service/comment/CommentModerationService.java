@@ -31,9 +31,6 @@ public class CommentModerationService {
     @Inject
     UserRepository userRepository;
 
-    @Inject
-    CommentPermissionService commentPermissionService;
-
     /**
      * Moderate a comment (hide/unhide/restore/delete).
      *
@@ -61,10 +58,9 @@ public class CommentModerationService {
         }
 
         final UserEntity moderator = this.userRepository.findById(moderatorId);
-        if (!this.commentPermissionService.isModerator(moderator)) {
-            LOG.warn("Moderate comment unauthorized: commentPublicId={}, moderatorId={}", commentPublicId, moderatorId);
-            throw new WebApplicationException("Only moderators can perform moderation",
-                    Response.Status.FORBIDDEN);
+        if (moderator == null) {
+            LOG.warn("Moderate comment failed: moderator not found commentPublicId={}, moderatorId={}", commentPublicId, moderatorId);
+            throw new WebApplicationException("Moderator not found", Response.Status.BAD_REQUEST);
         }
 
         if (action == null) {

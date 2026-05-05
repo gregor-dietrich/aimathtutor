@@ -41,6 +41,9 @@ public class UserGroupService {
     @Inject
     UserGroupMetaRepository userGroupMetaRepository;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Retrieves all user groups.
      *
@@ -121,6 +124,8 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto createGroup(final @Valid UserGroupDto groupDto) {
+        this.permissionService.requireUserGroupAdd();
+
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
@@ -143,6 +148,8 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto updateGroup(final String publicId, final @Valid UserGroupDto groupDto) {
+        this.permissionService.requireUserGroupEdit();
+
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
@@ -193,6 +200,7 @@ public class UserGroupService {
      */
     @Transactional
     public boolean deleteGroup(final String publicId) {
+        this.permissionService.requireUserGroupDelete();
         return this.userGroupRepository.deleteByPublicId(publicId);
     }
 
