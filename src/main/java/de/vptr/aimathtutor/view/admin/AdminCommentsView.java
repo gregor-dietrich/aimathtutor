@@ -26,6 +26,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
+
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.HideButton;
@@ -189,14 +190,11 @@ public class AdminCommentsView extends AbstractAdminView {
         this.flagsFilterField.setMin(0);
         this.flagsFilterField.setMax(1000);
         this.flagsFilterField.setValue(0);
-        this.flagsFilterField.setWidthFull();
+        this.flagsFilterField.setWidth("150px");
         this.flagsFilterField.addValueChangeListener(ignored -> this.filterByFlags());
 
-        final var flagsFilterLayout = new HorizontalLayout(this.flagsFilterField);
-        flagsFilterLayout.setWidthFull();
-
-        final var statusAndFlagsLayout = new HorizontalLayout(this.statusFilterSelect, flagsFilterLayout);
-        statusAndFlagsLayout.setWidthFull();
+        final var statusAndFlagsLayout = new HorizontalLayout(this.statusFilterSelect, this.flagsFilterField);
+        statusAndFlagsLayout.setAlignItems(Alignment.END);
         statusAndFlagsLayout.setSpacing(true);
 
         searchLayout.add(dateFilterLayout, userFilterLayout, exerciseFilterLayout, statusAndFlagsLayout);

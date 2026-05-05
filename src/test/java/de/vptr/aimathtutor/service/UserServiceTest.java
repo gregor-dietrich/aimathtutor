@@ -15,6 +15,7 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -31,6 +32,9 @@ class UserServiceTest {
 
     @Inject
     private UserRepository userRepository;
+
+    @InjectMock
+    private PermissionService permissionService;
 
     private UserDto buildValidDto() {
         final var dto = new UserDto();

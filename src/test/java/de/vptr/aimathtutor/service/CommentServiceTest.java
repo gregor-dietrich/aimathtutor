@@ -11,14 +11,14 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
-import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -41,6 +41,9 @@ class CommentServiceTest {
 
     @Inject
     private CommentRepository commentRepository;
+
+    @InjectMock
+    private PermissionService permissionService;
 
     private ExerciseViewDto createCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
@@ -65,11 +68,12 @@ class CommentServiceTest {
     @DisplayName("Should throw ValidationException when creating comment with null content")
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithNullContent() {
-        final CommentEntity comment = new CommentEntity();
-        comment.content = null;
+        final var dto = new CommentDto();
+        dto.content = null;
+        dto.exerciseId = 1L;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(comment, "testuser");
+            this.commentService.createComment(dto, 1L);
         });
     }
 
@@ -77,11 +81,12 @@ class CommentServiceTest {
     @DisplayName("Should throw ValidationException when creating comment with empty content")
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithEmptyContent() {
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "";
+        final var dto = new CommentDto();
+        dto.content = "";
+        dto.exerciseId = 1L;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(comment, "testuser");
+            this.commentService.createComment(dto, 1L);
         });
     }
 
@@ -89,11 +94,12 @@ class CommentServiceTest {
     @DisplayName("Should throw ValidationException when creating comment with whitespace content")
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithWhitespaceContent() {
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "   ";
+        final var dto = new CommentDto();
+        dto.content = "   ";
+        dto.exerciseId = 1L;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(comment, "testuser");
+            this.commentService.createComment(dto, 1L);
         });
     }
 
@@ -103,13 +109,12 @@ class CommentServiceTest {
     void shouldSanitizeHtmlInComment() {
         final ExerciseViewDto exercise = this.createCommentableExercise();
 
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "<script>alert(1)</script>safe text";
-        final var exerciseRef = new ExerciseEntity();
-        exerciseRef.id = exercise.id;
-        comment.exercise = exerciseRef;
+        final var dto = new CommentDto();
+        dto.content = "<script>alert(1)</script>safe text";
+        dto.exerciseId = exercise.id;
 
-        final CommentViewDto created = this.commentService.createComment(comment, "student1");
+        final CommentViewDto created = this.commentService.createComment(dto,
+                this.userRepository.findByUsername("student1").id);
 
         assertNotNull(created);
         assertNotNull(created.content);
@@ -124,22 +129,20 @@ class CommentServiceTest {
     void shouldRejectCommentOnNonCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher, "teacher fixture must exist");
-        final var dto = new ExerciseDto();
-        dto.title = "noncommentable_" + UUID.randomUUID().toString().substring(0, 8);
-        dto.content = "x";
-        dto.userPublicId = teacher.publicId;
-        dto.published = true;
-        dto.commentable = false;
-        final var ex = this.exerciseService.createExercise(dto);
+        final var exDto = new ExerciseDto();
+        exDto.title = "noncommentable_" + UUID.randomUUID().toString().substring(0, 8);
+        exDto.content = "x";
+        exDto.userPublicId = teacher.publicId;
+        exDto.published = true;
+        exDto.commentable = false;
+        final var ex = this.exerciseService.createExercise(exDto);
 
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "hi";
-        final var exerciseRef = new ExerciseEntity();
-        exerciseRef.id = ex.id;
-        comment.exercise = exerciseRef;
+        final var dto = new CommentDto();
+        dto.content = "hi";
+        dto.exerciseId = ex.id;
 
         final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.commentService.createComment(comment, "student1"));
+                () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
@@ -148,12 +151,11 @@ class CommentServiceTest {
     @TestTransaction
     void shouldFindCommentById() {
         final ExerciseViewDto exercise = this.createCommentableExercise();
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "hello world";
-        final var exerciseRef = new ExerciseEntity();
-        exerciseRef.id = exercise.id;
-        comment.exercise = exerciseRef;
-        final CommentViewDto created = this.commentService.createComment(comment, "student1");
+        final var dto = new CommentDto();
+        dto.content = "hello world";
+        dto.exerciseId = exercise.id;
+        final CommentViewDto created = this.commentService.createComment(dto,
+                this.userRepository.findByUsername("student1").id);
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
 
@@ -166,12 +168,10 @@ class CommentServiceTest {
     @TestTransaction
     void shouldListCommentsByExercise() {
         final ExerciseViewDto exercise = this.createCommentableExercise();
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "comment one";
-        final var exerciseRef = new ExerciseEntity();
-        exerciseRef.id = exercise.id;
-        comment.exercise = exerciseRef;
-        this.commentService.createComment(comment, "student1");
+        final var dto = new CommentDto();
+        dto.content = "comment one";
+        dto.exerciseId = exercise.id;
+        this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
 
         final var comments = this.commentService.findByExerciseId(exercise.id);
 
@@ -184,12 +184,11 @@ class CommentServiceTest {
     @TestTransaction
     void shouldSoftDeleteCommentAsAuthor() {
         final ExerciseViewDto exercise = this.createCommentableExercise();
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "to delete";
-        final var exerciseRef = new ExerciseEntity();
-        exerciseRef.id = exercise.id;
-        comment.exercise = exerciseRef;
-        final CommentViewDto created = this.commentService.createComment(comment, "student1");
+        final var dto = new CommentDto();
+        dto.content = "to delete";
+        dto.exerciseId = exercise.id;
+        final CommentViewDto created = this.commentService.createComment(dto,
+                this.userRepository.findByUsername("student1").id);
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "student1 fixture must exist");
 
@@ -204,12 +203,11 @@ class CommentServiceTest {
     @TestTransaction
     void shouldHideCommentViaModeration() {
         final ExerciseViewDto exercise = this.createCommentableExercise();
-        final CommentEntity comment = new CommentEntity();
-        comment.content = "needs hiding";
-        final var exerciseRef = new ExerciseEntity();
-        exerciseRef.id = exercise.id;
-        comment.exercise = exerciseRef;
-        final CommentViewDto created = this.commentService.createComment(comment, "student1");
+        final var dto = new CommentDto();
+        dto.content = "needs hiding";
+        dto.exerciseId = exercise.id;
+        final CommentViewDto created = this.commentService.createComment(dto,
+                this.userRepository.findByUsername("student1").id);
         final var admin = this.userRepository.findByUsername("admin");
         assertNotNull(admin);
 

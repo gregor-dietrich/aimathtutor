@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -23,45 +22,35 @@ class CommentPermissionServiceTest {
     CommentPermissionService permissionService;
 
     @Test
-    @DisplayName("Should identify moderator by exerciseEdit permission")
-    void shouldIdentifyModeratorByExerciseEditPermission() {
-        final UserRankEntity rank = new UserRankEntity();
-        rank.exerciseEdit = true;
+    @DisplayName("Should identify author correctly")
+    void shouldIdentifyAuthor() {
+        final UserEntity author = new UserEntity();
+        author.id = 1L;
 
-        final UserEntity user = new UserEntity();
-        user.rank = rank;
+        final CommentEntity comment = new CommentEntity();
+        comment.user = author;
 
-        assertTrue(this.permissionService.isModerator(user));
+        assertTrue(this.permissionService.isAuthor(comment, author));
     }
 
     @Test
-    @DisplayName("Should identify moderator by adminView permission")
-    void shouldIdentifyModeratorByAdminViewPermission() {
-        final UserRankEntity rank = new UserRankEntity();
-        rank.adminView = true;
+    @DisplayName("Should not identify non-author as author")
+    void shouldNotIdentifyNonAuthor() {
+        final UserEntity author = new UserEntity();
+        author.id = 1L;
 
-        final UserEntity user = new UserEntity();
-        user.rank = rank;
+        final UserEntity stranger = new UserEntity();
+        stranger.id = 2L;
 
-        assertTrue(this.permissionService.isModerator(user));
+        final CommentEntity comment = new CommentEntity();
+        comment.user = author;
+
+        assertFalse(this.permissionService.isAuthor(comment, stranger));
     }
 
     @Test
-    @DisplayName("Should not identify regular user as moderator")
-    void shouldNotIdentifyRegularUserAsModerator() {
-        final UserRankEntity rank = new UserRankEntity();
-        rank.exerciseEdit = false;
-        rank.adminView = false;
-
-        final UserEntity user = new UserEntity();
-        user.rank = rank;
-
-        assertFalse(this.permissionService.isModerator(user));
-    }
-
-    @Test
-    @DisplayName("Should allow author to edit their own comment")
-    void shouldAllowAuthorToEditOwnComment() {
+    @DisplayName("Should allow author to pass verifyIsAuthorOrThrow")
+    void shouldAllowAuthor() {
         final UserEntity author = new UserEntity();
         author.id = 1L;
 
@@ -69,32 +58,12 @@ class CommentPermissionServiceTest {
         comment.user = author;
 
         // Should not throw
-        this.permissionService.verifyCanEdit(comment, author);
+        this.permissionService.verifyIsAuthorOrThrow(comment, author);
     }
 
     @Test
-    @DisplayName("Should allow moderator to edit any comment")
-    void shouldAllowModeratorToEditAnyComment() {
-        final UserRankEntity rank = new UserRankEntity();
-        rank.adminView = true;
-
-        final UserEntity moderator = new UserEntity();
-        moderator.id = 2L;
-        moderator.rank = rank;
-
-        final UserEntity author = new UserEntity();
-        author.id = 1L;
-
-        final CommentEntity comment = new CommentEntity();
-        comment.user = author;
-
-        // Should not throw
-        this.permissionService.verifyCanEdit(comment, moderator);
-    }
-
-    @Test
-    @DisplayName("Should forbid stranger from editing comment")
-    void shouldForbidStrangerFromEditingComment() {
+    @DisplayName("Should forbid stranger from passing verifyIsAuthorOrThrow")
+    void shouldForbidStranger() {
         final UserEntity author = new UserEntity();
         author.id = 1L;
 
@@ -105,54 +74,7 @@ class CommentPermissionServiceTest {
         comment.user = author;
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.permissionService.verifyCanEdit(comment, stranger));
+                () -> this.permissionService.verifyIsAuthorOrThrow(comment, stranger));
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
-    }
-
-    @Test
-    @DisplayName("Should forbid hard delete by non-moderator")
-    void shouldForbidHardDeleteByNonModerator() {
-        final UserEntity author = new UserEntity();
-        author.id = 1L;
-
-        final CommentEntity comment = new CommentEntity();
-        comment.user = author;
-
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.permissionService.verifyCanDelete(comment, author, false));
-        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
-    }
-
-    @Test
-    @DisplayName("Should allow soft delete by author")
-    void shouldAllowSoftDeleteByAuthor() {
-        final UserEntity author = new UserEntity();
-        author.id = 1L;
-
-        final CommentEntity comment = new CommentEntity();
-        comment.user = author;
-
-        // Should not throw
-        this.permissionService.verifyCanDelete(comment, author, true);
-    }
-
-    @Test
-    @DisplayName("Should allow hard delete by moderator")
-    void shouldAllowHardDeleteByModerator() {
-        final UserEntity author = new UserEntity();
-        author.id = 1L;
-
-        final CommentEntity comment = new CommentEntity();
-        comment.user = author;
-
-        final UserRankEntity rank = new UserRankEntity();
-        rank.adminView = true;
-
-        final UserEntity moderator = new UserEntity();
-        moderator.id = 2L;
-        moderator.rank = rank;
-
-        // Should not throw
-        this.permissionService.verifyCanDelete(comment, moderator, false);
     }
 }
