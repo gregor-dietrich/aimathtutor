@@ -2,20 +2,6 @@
 
 ## 0. General
 
-### Implementation Priority
-
-1. **Security & Safety** (Auth unification, XSS, JS injection, rate limits, password storage, API key exposure)
-2. **Error Handling & Reliability** (Broad exception catches, NPE risks, PII in logs, user-facing error leaks)
-3. **Database & Query Optimization** (Broken named queries, missing indexes, N+1 queries, in-memory filtering)
-4. **Graspable Math Action Validation (isValidAction)** (Task 7)
-5. **Multiple Problems Per Exercise** (Task 2)
-6. **AdminConfigView: Performance Optimization** (Task 5.2 — service-level config caching)
-7. **Gamification** (Task 6)
-8. **Code Quality & Architecture** (Base admin view, split oversized services, extract constants, dead code)
-9. **AI Service Hardening** (Prompt injection defense, config validation, response handling)
-10. **Miscellaneous Fixes** (Keyboard accessibility, admin dashboard diagrams)
-11. **Pagination** (Phase 7 — lowest priority)
-
 ### Testing Checklist (for each feature)
 
 - [ ] Unit tests for service methods
@@ -262,37 +248,7 @@ Keep rules configurable via `AdminGamificationView`.
 
 ---
 
-## 4. Miscellaneous Fixes
-
-### 4.1 Admin Dashboard Enhancement
-
-The admin dashboard could use some further enhancement, such as diagrams.
-
-### 4.2 Keyboard accessibility
-
-Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
-
-> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
-
-### 4.3 Pagination
-
-Add server-side pagination for admin views to handle large datasets gracefully (Vaadin `DataProvider.fromCallbacks()` + backend paged queries + `count()` methods). **Priority: Phase 7 — lowest urgency.**
-
-> **Consistency check:** When implementing, check all admin views (Users, Exercises, Lessons, Comments, Sessions, Progress, UserGroups, UserRanks) for identical grid-loading patterns and fix them consistently.
-
-### 4.4 Unit Test Coverage
-
-Unit test coverage should be reviewed and improved across multiple packages. Specific gaps identified:
-
-- Service tests only cover null/empty input validation (no happy paths, updates, deletions, search, or edge cases).
-- No repository tests for custom queries (e.g., broken named queries in `ExerciseRepository` would not be caught).
-- No view/presenter tests; Vaadin views are completely untested.
-- No usage of Mockito/Panache Mock for true unit tests in isolation; all tests use `@QuarkusTest` with real DB.
-- `AiTutorServiceTest` has a test that catches generic `Exception` and asserts on message, making it pass regardless of actual behavior.
-
-> **Consistency check:** When adding tests, check all service test classes for identical gaps and fix them consistently.
-
-### 4.5 ULIDs as Primary/Foreign Keys (API)
+### 4. ULIDs as Primary/Foreign Keys
 
 **Goal:** remove sequential IDs from external surfaces; use ULIDs to reduce enumeration risk.
 
@@ -313,7 +269,9 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - Clients and docs fully switched to ULIDs.
 - SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
 
-### 4.6 Encrypt-at-Rest (API)
+---
+
+### 5. Encrypt-at-Rest
 
 **Goal:** encrypt PII at rest with file-backed key management.
 
@@ -338,7 +296,23 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 - Compose/dev setup persists key material via mounted volume.
 - SpotBugs, CheckStyle and all Maven Tests passing for api and gui.
 
-### 4.7 Vaadin 25 theme migration fixes (GUI)
+---
+
+## 6. Miscellaneous Fixes
+
+### 4.1 Admin Dashboard Enhancement
+
+The admin dashboard could use some further enhancement, such as diagrams.
+
+### 4.2 Keyboard accessibility
+
+Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
+
+> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
+
+---
+
+### 7. Vaadin 25 theme migration fixes (GUI)
 
 - Replace deprecated `lumoImports` usage in `src/main/frontend/themes/starter-theme/theme.json`.
 - If utility classes required, add `@StyleSheet(Lumo.UTILITY_STYLESHEET)` in `src/main/java/de/vptr/aimathtutor/gui/AppConfig.java`.
@@ -349,5 +323,3 @@ Unit test coverage should be reviewed and improved across multiple packages. Spe
 vaadin-text-field.css
 [WARNING] The 'lumoImports' property detected in theme(s) '[starter-theme]' is no longer supported in Vaadin 25. All modules except 'utility' are now loaded automatically when extending Lumo theme. To load utility classes, add '@StyleSheet(Lumo.UTILITY_STYLESHEET)' annotation to 'AppShellConfigurator' implementor.
 ```
-
----

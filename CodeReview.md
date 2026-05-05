@@ -36,7 +36,6 @@
 | T5  | **`ThemeServiceTest` creates `new ThemeService()`** — will break if CDI dependencies added                                                               | Use `@Inject` via `@QuarkusTest`                                                              |
 | T6  | **CI pipeline missing OWASP dep-check and secret scanning** (commented out)                                                                              | Uncomment and configure `NVD_API_KEY` repository secret                                       |
 | T7  | **CI security job lacks Maven cache**                                                                                                                    | Add `actions/cache@v4` to security job                                                        |
-| T8  | **No `.env.example` template** in repository                                                                                                             | Create one documenting all required env vars                                                  |
 
 ## Phase 6: Low-Priority / Cosmetic
 
