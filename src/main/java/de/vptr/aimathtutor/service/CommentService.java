@@ -317,11 +317,11 @@ public class CommentService {
      */
     private String sanitizeCommentContent(final String content) {
         if (content == null) {
-            throw new IllegalArgumentException("Comment content cannot be null");
+            throw new ValidationException("Comment content cannot be null");
         }
         final String sanitized = STRICT_HTML_POLICY.sanitize(content).trim();
         if (sanitized.isEmpty()) {
-            throw new IllegalArgumentException("Comment content cannot be blank after sanitization");
+            throw new ValidationException("Comment content cannot be blank after sanitization");
         }
         return sanitized;
     }

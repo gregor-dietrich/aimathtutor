@@ -189,6 +189,7 @@ class LessonServiceTest {
 
     @Test
     @DisplayName("Should return DTO with initialized collections after context close")
+    @TestTransaction
     void shouldReturnDtoWithInitializedCollectionsAfterContextClose() {
         this.lessonService.createLesson(this.buildLesson("init"));
 

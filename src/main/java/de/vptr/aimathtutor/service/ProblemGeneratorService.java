@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -32,7 +33,8 @@ public class ProblemGeneratorService {
     }
 
     public ProblemGeneratorService(final Random random) {
-        this.random = random;
+        Objects.requireNonNull(random, "random must not be null");
+        this.random = new Random(random.nextLong());
     }
 
     /**

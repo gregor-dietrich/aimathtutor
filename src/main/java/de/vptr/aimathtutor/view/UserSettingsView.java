@@ -50,6 +50,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private String currentUsername;
     private String currentEmail;
 
+    private boolean passwordChangeInProgress;
+    private boolean avatarUpdateInProgress;
+
     /**
      * Called before navigation occurs. Checks authentication, loads current user
      * information,
@@ -308,6 +311,14 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
+        if (this.passwordChangeInProgress) {
+            return;
+        }
+        this.passwordChangeInProgress = true;
+        this.currentPasswordField.setEnabled(false);
+        this.newPasswordField.setEnabled(false);
+        this.confirmPasswordField.setEnabled(false);
+
         AsyncDataLoader.load(() -> {
             this.userService.changePassword(this.currentUserId, currentPassword, newPassword);
             return null;
@@ -316,6 +327,15 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             this.currentPasswordField.clear();
             this.newPasswordField.clear();
             this.confirmPasswordField.clear();
+            this.passwordChangeInProgress = false;
+            this.currentPasswordField.setEnabled(true);
+            this.newPasswordField.setEnabled(true);
+            this.confirmPasswordField.setEnabled(true);
+        }, () -> {
+            this.passwordChangeInProgress = false;
+            this.currentPasswordField.setEnabled(true);
+            this.newPasswordField.setEnabled(true);
+            this.confirmPasswordField.setEnabled(true);
         }, "Failed to change password");
     }
 
@@ -333,9 +353,25 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             return;
         }
 
+        if (this.avatarUpdateInProgress) {
+            return;
+        }
+        this.avatarUpdateInProgress = true;
+        this.userAvatarSelect.setEnabled(false);
+        this.tutorAvatarSelect.setEnabled(false);
+
         AsyncDataLoader.load(() -> {
             this.userService.updateAvatars(this.currentUserId, userEmoji, tutorEmoji);
             return null;
-        }, this, ignored -> NotificationUtil.showSuccess("Avatars updated successfully"), "Failed to update avatars");
+        }, this, ignored -> {
+            NotificationUtil.showSuccess("Avatars updated successfully");
+            this.avatarUpdateInProgress = false;
+            this.userAvatarSelect.setEnabled(true);
+            this.tutorAvatarSelect.setEnabled(true);
+        }, () -> {
+            this.avatarUpdateInProgress = false;
+            this.userAvatarSelect.setEnabled(true);
+            this.tutorAvatarSelect.setEnabled(true);
+        }, "Failed to update avatars");
     }
 }
