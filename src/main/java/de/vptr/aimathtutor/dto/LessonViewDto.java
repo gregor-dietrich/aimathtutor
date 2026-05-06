@@ -9,41 +9,44 @@ import de.vptr.aimathtutor.entity.LessonEntity;
  * Contains computed fields and safe data for client responses.
  */
 public class LessonViewDto {
-    public Long id;
+    public String publicId;
     public String name;
-    public Long parentId;
+    public String parentPublicId;
     public String parentName;
     public boolean isRootLesson;
     public int childrenCount;
     public int exercisesCount;
-    public List<Long> childrenIds;
+    public List<String> childrenPublicIds;
 
+    /**
+     * Default constructor for JSON mapping.
+     */
     public LessonViewDto() {
-        // Default constructor for Jackson
     }
 
     /**
-     * Constructs a LessonViewDto from a LessonEntity.
+     * Constructs a LessonViewDto from a lesson entity.
+     *
+     * @param entity the lesson entity to convert
      */
     public LessonViewDto(final LessonEntity entity) {
-        this.id = entity.id;
+        this.publicId = entity.publicId;
         this.name = entity.name;
         this.isRootLesson = entity.isRootLesson();
 
-        // Handle parent information safely
         if (entity.parent != null) {
-            this.parentId = entity.parent.id;
+            this.parentPublicId = entity.parent.publicId;
             this.parentName = entity.parent.name;
         }
 
         if (entity.children != null && !entity.children.isEmpty()) {
             this.childrenCount = entity.children.size();
-            this.childrenIds = entity.children.stream()
-                    .map(child -> child.id)
+            this.childrenPublicIds = entity.children.stream()
+                    .map(child -> child.publicId)
                     .toList();
         } else {
             this.childrenCount = 0;
-            this.childrenIds = List.of();
+            this.childrenPublicIds = List.of();
         }
 
         if (entity.exercises != null) {
@@ -55,37 +58,30 @@ public class LessonViewDto {
         }
     }
 
-    /**
-     * Helper method to check if this is a root lesson
-     */
     public boolean isRootLesson() {
         return this.isRootLesson;
     }
 
-    /**
-     * Getter for name
-     */
     public String getName() {
         return this.name;
     }
 
-    /**
-     * Getter for id
-     */
-    public Long getId() {
-        return this.id;
+    public String getPublicId() {
+        return this.publicId;
     }
 
     /**
-     * Convert this ViewDto to a LessonDto for create/update operations
+     * Converts this view DTO to a lesson operation DTO.
+     *
+     * @return a {@link LessonDto} with the same data
      */
     public LessonDto toLessonDto() {
         final var dto = new LessonDto();
-        dto.id = this.id;
+        dto.publicId = this.publicId;
         dto.name = this.name;
-        dto.parentId = this.parentId;
-        if (this.parentId != null) {
-            dto.parent = new LessonDto.ParentField(this.parentId);
+        dto.parentPublicId = this.parentPublicId;
+        if (this.parentPublicId != null) {
+            dto.parent = new LessonDto.ParentField(this.parentPublicId);
         }
         return dto;
     }

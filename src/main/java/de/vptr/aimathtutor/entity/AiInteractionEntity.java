@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
@@ -32,7 +34,8 @@ import jakarta.validation.constraints.NotBlank;
         @Index(name = "idx_ai_exercise", columnList = "exercise_id")
 })
 @NamedQueries({
-        @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY id DESC"),
+        @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY created DESC, id DESC"),
+        @NamedQuery(name = "AiInteraction.findByPublicId", query = "FROM AiInteractionEntity WHERE publicId = :p"),
         @NamedQuery(name = "AiInteraction.findBySessionId", query = "FROM AiInteractionEntity WHERE sessionId = :s"),
         @NamedQuery(name = "AiInteraction.findByUserId", query = "FROM AiInteractionEntity WHERE user.id = :u"),
         @NamedQuery(name = "AiInteraction.findByExerciseId", query = "FROM AiInteractionEntity WHERE exercise.id = :e")
@@ -45,6 +48,21 @@ public class AiInteractionEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     @Column(name = "session_id")
     public String sessionId;

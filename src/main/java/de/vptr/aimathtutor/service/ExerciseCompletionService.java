@@ -90,7 +90,7 @@ public class ExerciseCompletionService {
                     .getSessionsByUserGroupedByExercise(currentUserId);
 
             for (final ExerciseViewDto dto : dtos) {
-                final var userSessions = sessionsByExercise.getOrDefault(dto.id, List.of());
+                final var userSessions = sessionsByExercise.getOrDefault(dto.publicId, List.of());
                 final var completedSessions = userSessions.stream()
                         .filter(s -> Boolean.TRUE.equals(s.completed))
                         .toList();

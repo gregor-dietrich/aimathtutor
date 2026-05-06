@@ -22,6 +22,22 @@ import jakarta.ws.rs.core.Response;
 public class CommentFlagRepository extends AbstractRepository {
 
     /**
+     * Retrieves a comment flag by its public identifier.
+     *
+     * @param publicId the public ID of the flag
+     * @return an {@link Optional} containing the flag if found, empty otherwise
+     */
+    public Optional<CommentFlagEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = super.em.createNamedQuery("CommentFlag.findByPublicId", CommentFlagEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    /**
      * Checks if a specific user has already flagged a given comment.
      *
      * @param commentId the ID of the comment to check

@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
  */
 public class UserDto {
 
-    public Long id;
+    public String publicId;
 
     @Size(min = AppConstants.USER_USERNAME_MIN_LENGTH, max = AppConstants.USER_USERNAME_MAX_LENGTH, message = "Username must be between {min} and {max} characters")
     public String username;
@@ -21,7 +21,7 @@ public class UserDto {
     @Size(max = 255, message = "Email must not exceed 255 characters")
     public String email;
 
-    public Long rankId;
+    public String rankPublicId;
 
     public Boolean banned;
 
@@ -35,12 +35,12 @@ public class UserDto {
     /**
      * Constructs a UserDto with the specified parameters.
      */
-    public UserDto(final String username, final String password, final String email, final Long rankId,
+    public UserDto(final String username, final String password, final String email, final String rankPublicId,
             final Boolean banned, final Boolean activated, final String activationKey) {
         this.username = username;
         this.password = password;
         this.email = email;
-        this.rankId = rankId;
+        this.rankPublicId = rankPublicId;
         this.banned = banned;
         this.activated = activated;
         this.activationKey = activationKey;

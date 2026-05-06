@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -16,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
@@ -26,9 +28,10 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "user_groups")
 @NamedQueries({
-        @NamedQuery(name = "UserGroup.findAll", query = "FROM UserGroupEntity ORDER BY id DESC"),
+        @NamedQuery(name = "UserGroup.findAll", query = "FROM UserGroupEntity ORDER BY created DESC"),
+        @NamedQuery(name = "UserGroup.findByPublicId", query = "FROM UserGroupEntity WHERE publicId = :p"),
         @NamedQuery(name = "UserGroup.findByName", query = "FROM UserGroupEntity WHERE name = :n"),
-        @NamedQuery(name = "UserGroup.searchByName", query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY id DESC")
+        @NamedQuery(name = "UserGroup.searchByName", query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY created DESC")
 })
 public class UserGroupEntity extends PanacheEntityBase {
 
@@ -38,6 +41,21 @@ public class UserGroupEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     @NotBlank
     @Column(nullable = false)

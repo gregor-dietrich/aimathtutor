@@ -110,6 +110,23 @@ public class CommentService {
     }
 
     /**
+     * Finds a single comment by its public ID with loaded relationships.
+     *
+     * @param publicId the comment public ID
+     * @return an {@link Optional} containing the {@link CommentViewDto} with
+     *         exercise/user data, or empty if not found
+     */
+    @Transactional
+    public Optional<CommentViewDto> findByPublicId(final String publicId) {
+        final Optional<CommentEntity> comment = this.commentRepository.findByPublicIdWithRelations(publicId);
+        if (comment.isPresent()) {
+            final CommentEntity entity = comment.get();
+            return Optional.of(new CommentViewDto(entity));
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Retrieves all top-level and threaded comments for a specific exercise.
      *
      * @param exerciseId the exercise ID
@@ -227,15 +244,15 @@ public class CommentService {
      */
     @Transactional
     public CommentViewDto createComment(final @Valid CommentDto dto, final Long authorId) {
-        LOG.info("Creating comment for exerciseId={}, authorId={}", dto.exerciseId, authorId);
+        LOG.info("Creating comment for exercisePublicId={}, authorId={}", dto.exercisePublicId, authorId);
 
         // 1. Validate input
         if (dto.content == null || dto.content.isBlank()) {
-            LOG.warn("Comment creation failed: empty content for exerciseId={}, authorId={}", dto.exerciseId, authorId);
+            LOG.warn("Comment creation failed: empty content for exercisePublicId={}, authorId={}", dto.exercisePublicId, authorId);
             throw new ValidationException("Content is required");
         }
-        if (dto.exerciseId == null) {
-            LOG.warn("Comment creation failed: missing exerciseId for authorId={}", authorId);
+        if (dto.exercisePublicId == null) {
+            LOG.warn("Comment creation failed: missing exercisePublicId for authorId={}", authorId);
             throw new ValidationException("Exercise ID is required");
         }
 
@@ -243,20 +260,20 @@ public class CommentService {
         this.commentRateLimitService.checkRateLimit(authorId);
 
         // 3. Validate exercise exists and allows comments
-        final ExerciseEntity exercise = this.exerciseRepository.findById(dto.exerciseId);
+        final ExerciseEntity exercise = this.exerciseRepository.findByPublicId(dto.exercisePublicId).orElse(null);
         if (exercise == null) {
-            LOG.warn("Comment creation failed: exercise not found for exerciseId={}, authorId={}", dto.exerciseId,
+            LOG.warn("Comment creation failed: exercise not found for exercisePublicId={}, authorId={}", dto.exercisePublicId,
                     authorId);
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
         if (!exercise.published) {
-            LOG.warn("Comment creation failed: exercise not published for exerciseId={}, authorId={}", dto.exerciseId,
+            LOG.warn("Comment creation failed: exercise not published for exercisePublicId={}, authorId={}", dto.exercisePublicId,
                     authorId);
             throw new WebApplicationException("Cannot comment on unpublished exercise",
                     Response.Status.BAD_REQUEST);
         }
         if (!exercise.commentable) {
-            LOG.warn("Comment creation failed: comments not allowed for exerciseId={}, authorId={}", dto.exerciseId,
+            LOG.warn("Comment creation failed: comments not allowed for exercisePublicId={}, authorId={}", dto.exercisePublicId,
                     authorId);
             throw new WebApplicationException("Comments not allowed on this exercise",
                     Response.Status.BAD_REQUEST);
@@ -264,19 +281,25 @@ public class CommentService {
 
         // 4. Validate parent comment if threading
         CommentEntity parentComment = null;
-        if (dto.parentCommentId != null) {
-            LOG.debug("Creating reply comment: parentId={} for exerciseId={}, authorId={}", dto.parentCommentId,
-                    dto.exerciseId, authorId);
-            parentComment = this.commentRepository.findById(dto.parentCommentId);
+        if (dto.parentCommentPublicId != null) {
+            LOG.debug("Creating reply comment: parentPublicId={} for exercisePublicId={}, authorId={}", dto.parentCommentPublicId,
+                    dto.exercisePublicId, authorId);
+            parentComment = this.commentRepository.findByPublicId(dto.parentCommentPublicId).orElse(null);
             if (parentComment == null) {
-                LOG.warn("Comment creation failed: parent comment not found for parentId={}, authorId={}",
-                        dto.parentCommentId, authorId);
+                LOG.warn("Comment creation failed: parent comment not found for parentPublicId={}, authorId={}",
+                        dto.parentCommentPublicId, authorId);
                 throw new WebApplicationException("Parent comment not found", Response.Status.BAD_REQUEST);
             }
             if (parentComment.status != CommentStatus.VISIBLE) {
-                LOG.warn("Comment creation failed: cannot reply to hidden/deleted comment parentId={}, authorId={}",
-                        dto.parentCommentId, authorId);
+                LOG.warn("Comment creation failed: cannot reply to hidden/deleted comment parentPublicId={}, authorId={}",
+                        dto.parentCommentPublicId, authorId);
                 throw new WebApplicationException("Cannot reply to deleted/hidden comment",
+                        Response.Status.BAD_REQUEST);
+            }
+            if (!parentComment.exercise.publicId.equals(dto.exercisePublicId)) {
+                LOG.warn("Comment creation failed: parent comment belongs to different exercise. parentPublicId={}, parentExercisePublicId={}, dto.exercisePublicId={}, authorId={}",
+                        dto.parentCommentPublicId, parentComment.exercise.publicId, dto.exercisePublicId, authorId);
+                throw new WebApplicationException("Parent comment belongs to a different exercise",
                         Response.Status.BAD_REQUEST);
             }
         }
@@ -304,7 +327,7 @@ public class CommentService {
                 comment.id, comment.exercise.id, comment.user.id, comment.user.username,
                 comment.content, comment.created));
 
-        LOG.info("Comment created successfully: commentId={}, exerciseId={}, authorId={}", comment.id, dto.exerciseId,
+        LOG.info("Comment created successfully: commentId={}, exercisePublicId={}, authorId={}", comment.id, dto.exercisePublicId,
                 authorId);
         return new CommentViewDto(comment);
     }
@@ -398,13 +421,13 @@ public class CommentService {
      * Delete a comment (soft or hard)
      */
     @Transactional
-    public void deleteComment(final Long commentId, final Long requesterId, final boolean softDelete) {
-        LOG.info("Attempting to delete comment: commentId={}, requesterId={}, softDelete={}", commentId, requesterId,
+    public void deleteComment(final String commentPublicId, final Long requesterId, final boolean softDelete) {
+        LOG.info("Attempting to delete comment: commentPublicId={}, requesterId={}, softDelete={}", commentPublicId, requesterId,
                 softDelete);
 
-        final CommentEntity comment = this.commentRepository.findById(commentId);
+        final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Delete comment failed: comment not found commentId={}, requesterId={}", commentId, requesterId);
+            LOG.warn("Delete comment failed: comment not found commentPublicId={}, requesterId={}", commentPublicId, requesterId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
@@ -416,19 +439,14 @@ public class CommentService {
 
         this.commentPermissionService.verifyCanDelete(comment, requester, softDelete);
 
-        final boolean isAuthor = comment.user != null && comment.user.id.equals(requesterId);
-
         if (softDelete) {
-            // Soft delete: mark as deleted but preserve data
             comment.status = CommentStatus.DELETED;
-            comment.deletedBy = requester;
             comment.deletedAt = LocalDateTime.now();
-            this.commentRepository.persist(comment);
-            LOG.info("Comment soft-deleted: commentId={}, requesterId={}, isAuthor={}", commentId, requesterId,
-                    isAuthor);
+            comment.deletedBy = requester;
+            LOG.info("Comment soft-deleted: commentPublicId={}, requesterId={}", commentPublicId, requesterId);
         } else {
-            this.commentRepository.deleteById(commentId);
-            LOG.info("Comment hard-deleted: commentId={}, requesterId={}", commentId, requesterId);
+            this.commentRepository.deleteByPublicId(commentPublicId);
+            LOG.info("Comment hard-deleted: commentPublicId={}, requesterId={}", commentPublicId, requesterId);
         }
     }
 
@@ -436,12 +454,12 @@ public class CommentService {
      * Edit a comment with permission check
      */
     @Transactional
-    public CommentViewDto editComment(final Long commentId, final @Valid CommentDto dto, final Long editorId) {
-        LOG.info("Attempting to edit comment: commentId={}, editorId={}", commentId, editorId);
+    public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto, final Long editorId) {
+        LOG.info("Attempting to edit comment: commentPublicId={}, editorId={}", commentPublicId, editorId);
 
-        final CommentEntity comment = this.commentRepository.findById(commentId);
+        final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Edit comment failed: comment not found commentId={}, editorId={}", commentId, editorId);
+            LOG.warn("Edit comment failed: comment not found commentPublicId={}, editorId={}", commentPublicId, editorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
@@ -458,8 +476,8 @@ public class CommentService {
         if (dto.content != null && !dto.content.isBlank()) {
             comment.content = this.sanitizeCommentContent(dto.content);
             this.commentRepository.persist(comment);
-            LOG.info("Comment edited successfully: commentId={}, editorId={}, isAuthor={}", commentId, editorId,
-                    comment.user != null && comment.user.id.equals(editorId));
+            LOG.info("Comment edited successfully: commentPublicId={}, editorId={}, isAuthor={}", commentPublicId, editorId,
+                    comment.user != null && comment.user.publicId.equals(editor.publicId));
         }
 
         return new CommentViewDto(comment);
@@ -469,8 +487,8 @@ public class CommentService {
      * Flag a comment for moderation review
      */
     @Transactional
-    public void flagComment(final Long commentId, final Long flaggerId, final String reason) {
-        this.commentFlaggingService.flagComment(commentId, flaggerId, reason);
+    public void flagComment(final String commentPublicId, final Long flaggerId, final String reason) {
+        this.commentFlaggingService.flagComment(commentPublicId, flaggerId, reason);
     }
 
     /**
@@ -481,15 +499,15 @@ public class CommentService {
             final Long exerciseId,
             final int page,
             final int pageSize,
-            final Long parentId) {
+            final String parentPublicId) {
 
         List<CommentEntity> comments;
-        if (parentId == null) {
+        if (parentPublicId == null) {
             // Top-level comments (these methods already fetch relations)
             comments = this.commentRepository.findTopLevelByExercise(exerciseId, page, pageSize);
         } else {
             // Replies to specific parent
-            comments = this.commentRepository.findRepliesPaged(parentId, page, pageSize);
+            comments = this.commentRepository.findRepliesPaged(parentPublicId, page, pageSize);
         }
 
         return comments.stream()
@@ -514,19 +532,19 @@ public class CommentService {
      */
     @Transactional
     public void moderateComment(
-            final Long commentId,
+            final String commentPublicId,
             final String action,
             final Long moderatorId,
             final String reason) {
-        this.commentModerationService.moderateComment(commentId, action, moderatorId, reason);
+        this.commentModerationService.moderateComment(commentPublicId, action, moderatorId, reason);
     }
 
     /**
      * Find replies to a comment
      */
     @Transactional
-    public List<CommentViewDto> findReplies(final Long parentCommentId) {
-        final List<CommentEntity> replies = this.commentRepository.findRepliesWithRelations(parentCommentId);
+    public List<CommentViewDto> findReplies(final String parentPublicId) {
+        final List<CommentEntity> replies = this.commentRepository.findRepliesWithRelations(parentPublicId);
 
         return replies.stream()
                 .map(CommentViewDto::new)

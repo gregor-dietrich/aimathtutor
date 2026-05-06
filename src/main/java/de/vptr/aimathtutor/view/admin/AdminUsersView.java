@@ -37,7 +37,6 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.service.UserService;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -161,7 +160,7 @@ public class AdminUsersView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(user -> user.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(user -> user.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
 
         // Make the username column clickable
         this.grid.addComponentColumn(user -> {
@@ -296,21 +295,21 @@ public class AdminUsersView extends AbstractAdminView {
         this.binder.bind(bannedField, user1 -> user1.banned,
                 (user1, value) -> user1.banned = value);
 
-        // Rank binding - convert between UserRankViewDto and rankId
+        // Rank binding - convert between UserRankViewDto and rankPublicId
         this.binder.forField(rankField)
                 .asRequired("Rank is required")
                 .bind(
                         user1 -> {
-                            if (user1.rankId != null && this.availableRanks != null) {
+                            if (user1.rankPublicId != null && this.availableRanks != null) {
                                 return this.availableRanks.stream()
-                                        .filter(rank -> rank.id.equals(user1.rankId))
+                                        .filter(rank -> rank.publicId.equals(user1.rankPublicId))
                                         .findFirst()
                                         .orElse(null);
                             }
                             return null;
                         },
                         (user1, value) -> {
-                            user1.rankId = value != null ? value.id : null;
+                            user1.rankPublicId = value != null ? value.publicId : null;
                         });
 
         // Button layout
@@ -373,7 +372,7 @@ public class AdminUsersView extends AbstractAdminView {
                 return;
             }
 
-            this.changeUserPassword(user.id, newPassword);
+            this.changeUserPassword(user.publicId, newPassword);
         });
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
@@ -390,14 +389,14 @@ public class AdminUsersView extends AbstractAdminView {
         this.passwordDialog.open();
     }
 
-    private void changeUserPassword(final Long userId, final String newPassword) {
+    private void changeUserPassword(final String userPublicId, final String newPassword) {
         try {
             // Create a UserDto with only the password field set
             final var passwordUpdateDto = new UserDto();
-            passwordUpdateDto.id = userId;
+            passwordUpdateDto.publicId = userPublicId;
             passwordUpdateDto.password = newPassword;
 
-            this.userService.patchUser(userId, passwordUpdateDto);
+            this.userService.patchUser(userPublicId, passwordUpdateDto);
             NotificationUtil.showSuccess("Password changed successfully");
             this.passwordDialog.close();
         } catch (final Exception e) {
@@ -410,7 +409,7 @@ public class AdminUsersView extends AbstractAdminView {
         try {
             this.binder.writeBean(this.currentUser);
 
-            if (this.currentUser.id == null) {
+            if (this.currentUser.publicId == null) {
                 if (this.currentUser.password == null || this.currentUser.password.isBlank()) {
                     NotificationUtil.showError("Password is required for new users");
                     return;
@@ -418,7 +417,7 @@ public class AdminUsersView extends AbstractAdminView {
                 this.userService.createUser(this.currentUser);
                 NotificationUtil.showSuccess("User created successfully.");
             } else {
-                this.userService.updateUser(this.currentUser.id, this.currentUser);
+                this.userService.updateUser(this.currentUser.publicId, this.currentUser);
                 NotificationUtil.showSuccess("User updated successfully");
             }
 
@@ -447,7 +446,7 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void deleteUser(final UserViewDto user) {
         try {
-            if (this.userService.deleteUser(user.id)) {
+            if (this.userService.deleteUser(user.publicId)) {
                 NotificationUtil.showSuccess("User deleted successfully");
                 this.loadUsersAsync();
             } else {

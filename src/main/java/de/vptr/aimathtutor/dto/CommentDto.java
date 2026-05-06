@@ -60,19 +60,28 @@ public class CommentDto {
         }
     }
 
-    public Long id;
+    public String publicId;
 
     @Size(min = AppConstants.COMMENT_CONTENT_MIN_LENGTH, max = AppConstants.COMMENT_CONTENT_MAX_LENGTH, message = "Content must be between {min} and {max} characters")
     public String content;
 
     // Required for POST operations (creation)
     // Ignored for PUT/PATCH operations (exerciseId comes from the URL path)
+    public String exercisePublicId;
+
+    // Internal numeric ID for UI component use
     public Long exerciseId;
 
     // NEW: For threading support
+    public String parentCommentPublicId;
+
+    // Internal numeric ID for UI component use
     public Long parentCommentId;
 
     // NEW: For lesson comments (future extension)
+    public String lessonPublicId;
+
+    // Internal numeric ID for UI component use
     public Long lessonId;
 
     // NEW: For tracking which session the comment was made during
@@ -82,27 +91,35 @@ public class CommentDto {
     public ExerciseField exercise;
 
     /**
-     * Helper class for nested exercise field access
+     * Nested field representing an exercise reference.
      */
     public static class ExerciseField {
-        public Long id;
+        public String publicId;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public ExerciseField() {
         }
 
-        public ExerciseField(final Long id) {
-            this.id = id;
+        /**
+         * Constructs an ExerciseField with the given public ID.
+         *
+         * @param publicId the exercise's public identifier
+         */
+        public ExerciseField(final String publicId) {
+            this.publicId = publicId;
         }
     }
 
     /**
-     * Ensure exerciseId and exercise stay in sync
+     * Synchronizes the nested exercise field with the flat exercisePublicId field.
      */
     public void syncExercise() {
-        if (this.exercise != null && this.exercise.id != null) {
-            this.exerciseId = this.exercise.id;
-        } else if (this.exerciseId != null) {
-            this.exercise = new ExerciseField(this.exerciseId);
+        if (this.exercise != null && this.exercise.publicId != null) {
+            this.exercisePublicId = this.exercise.publicId;
+        } else if (this.exercisePublicId != null) {
+            this.exercise = new ExerciseField(this.exercisePublicId);
         }
     }
 }

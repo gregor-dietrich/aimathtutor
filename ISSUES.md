@@ -248,30 +248,7 @@ Keep rules configurable via `AdminGamificationView`.
 
 ---
 
-### 4. ULIDs as Primary/Foreign Keys
-
-**Goal:** remove sequential IDs from external surfaces; use ULIDs to reduce enumeration risk.
-
-**Plan:**
-
-1. Inventory every entity/resource exposing numeric IDs in API routes, DTOs, and GUI URLs.
-2. Add immutable `publicId` ULID column per entity (unique + indexed). Keep current numeric PK/FK internal during migration.
-3. Create DB migration to add columns and indexes, backfill ULIDs for existing rows, then enforce `NOT NULL`.
-4. Update API contracts to accept/return ULIDs only (path params, request/response DTOs, service lookups by `publicId`).
-5. Update GUI routing and REST clients to use ULIDs end-to-end.
-6. Add ULID validation + tests for CRUD and authorization flows using ULID identifiers.
-7. Roll out in two steps: compatibility window (dual-read), then remove numeric-ID access from controllers/DTOs.
-
-**Done when:**
-
-- No external endpoint exposes numeric IDs.
-- All existing records have unique non-null ULIDs.
-- Clients and docs fully switched to ULIDs.
-- SpotBugs, CheckStyle and all Maven Tests passing.
-
----
-
-### 5. Encrypt-at-Rest
+### 4. Encrypt-at-Rest
 
 **Goal:** encrypt PII at rest with file-backed key management.
 
@@ -298,13 +275,13 @@ Keep rules configurable via `AdminGamificationView`.
 
 ---
 
-## 6. Miscellaneous Fixes
+## 5. Miscellaneous Fixes
 
-### 6.1 Admin Dashboard Enhancement
+### 5.1 Admin Dashboard Enhancement
 
 The admin dashboard could use some further enhancement, such as diagrams.
 
-### 6.2 Keyboard accessibility
+### 5.2 Keyboard accessibility
 
 Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
 

@@ -1,7 +1,10 @@
 package de.vptr.aimathtutor.view;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -9,6 +12,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -73,7 +77,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         AsyncDataLoader.load(
                 () -> {
                     final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
-                    final Map<Long, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
+                    final Map<String, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
                             .findPublishedExercisesByLessonMap();
                     return new LessonsPayload(lessons, exercisesByLesson);
                 },
@@ -83,18 +87,30 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private void renderLessons(final LessonsPayload payload) {
+        // Exercises with no lesson are stored under null key
         final List<ExerciseViewDto> standaloneExercises = payload.exercisesByLesson.getOrDefault(null, List.of());
 
-        if (payload.lessons.isEmpty() && standaloneExercises.isEmpty()) {
+        // Build a lookup map for child lesson resolution
+        final Map<String, LessonViewDto> lessonByPublicId = new HashMap<>();
+        for (final LessonViewDto l : payload.lessons) {
+            lessonByPublicId.put(l.getPublicId(), l);
+        }
+
+        // Only root lessons are rendered at the top level
+        final List<LessonViewDto> rootLessons = payload.lessons.stream()
+                .filter(l -> l.isRootLesson())
+                .toList();
+
+        if (rootLessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
             noLessonsMsg.getStyle().set("color", "var(--lumo-secondary-text-color)");
             this.add(noLessonsMsg);
             return;
         }
 
-        for (final LessonViewDto lesson : payload.lessons) {
-            final List<ExerciseViewDto> exercises = payload.exercisesByLesson.getOrDefault(lesson.getId(), List.of());
-            this.add(this.createLessonCard(lesson, exercises));
+        for (final LessonViewDto lesson : rootLessons) {
+            final Set<String> visited = new HashSet<>();
+            this.add(this.createLessonSection(lesson, 0, lessonByPublicId, payload.exercisesByLesson, visited));
         }
 
         if (!standaloneExercises.isEmpty()) {
@@ -120,44 +136,78 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private record LessonsPayload(List<LessonViewDto> lessons,
-            Map<Long, List<ExerciseViewDto>> exercisesByLesson) {
+            Map<String, List<ExerciseViewDto>> exercisesByLesson) {
     }
 
-    private VerticalLayout createLessonCard(final LessonViewDto lesson, final List<ExerciseViewDto> exercises) {
-        final var lessonCard = new VerticalLayout();
-        lessonCard.setSpacing(true);
-        lessonCard.setPadding(true);
-        lessonCard.setWidthFull();
-        lessonCard.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("margin-bottom", "var(--lumo-space-m)");
+    private VerticalLayout createLessonSection(
+            final LessonViewDto lesson,
+            final int depth,
+            final Map<String, LessonViewDto> lessonByPublicId,
+            final Map<String, List<ExerciseViewDto>> exercisesByLesson,
+            final Set<String> visited) {
+        final var section = new VerticalLayout();
+        section.setSpacing(true);
+        section.setPadding(depth == 0);
+        section.setWidthFull();
 
-        // Lesson title and description
-        final var lessonTitle = new H3(lesson.getName());
-        lessonTitle.getStyle().set("margin", "0");
-        lessonCard.add(lessonTitle);
+        if (depth == 0) {
+            section.getStyle()
+                    .set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)")
+                    .set("margin-bottom", "var(--lumo-space-m)");
+        } else {
+            section.getStyle()
+                    .set("border-left", "3px solid var(--lumo-primary-color)")
+                    .set("padding-left", "var(--lumo-space-m)");
+        }
 
-        if (exercises.isEmpty()) {
+        if (depth == 0) {
+            final var h = new H3(lesson.getName());
+            h.getStyle().set("margin", "0 0 var(--lumo-space-s) 0");
+            section.add(h);
+        } else if (depth == 1) {
+            final var h = new H4(lesson.getName());
+            h.getStyle().set("margin", "0 0 var(--lumo-space-xs) 0");
+            section.add(h);
+        } else {
+            final var s = new Span(lesson.getName());
+            s.getStyle()
+                    .set("font-weight", "600")
+                    .set("font-size", "var(--lumo-font-size-s)")
+                    .set("display", "block");
+            section.add(s);
+        }
+
+        visited.add(lesson.getPublicId());
+
+        for (final String childId : lesson.childrenPublicIds) {
+            if (visited.contains(childId)) {
+                continue;
+            }
+            final LessonViewDto child = lessonByPublicId.get(childId);
+            if (child != null) {
+                section.add(this.createLessonSection(child, depth + 1, lessonByPublicId, exercisesByLesson, visited));
+            }
+        }
+
+        final List<ExerciseViewDto> exercises = exercisesByLesson.getOrDefault(lesson.getPublicId(), List.of());
+        if (!exercises.isEmpty()) {
+            final var exerciseGrid = new HorizontalLayout();
+            exerciseGrid.setSpacing(true);
+            exerciseGrid.getStyle().set("flex-wrap", "wrap");
+            for (final ExerciseViewDto exercise : exercises) {
+                exerciseGrid.add(this.createExerciseCard(exercise));
+            }
+            section.add(exerciseGrid);
+        } else if (lesson.childrenPublicIds.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");
             noExercisesMsg.getStyle()
                     .set("color", "var(--lumo-secondary-text-color)")
                     .set("font-style", "italic");
-            lessonCard.add(noExercisesMsg);
-        } else {
-            // Exercise cards in a horizontal layout
-            final var exerciseGrid = new HorizontalLayout();
-            exerciseGrid.setSpacing(true);
-            exerciseGrid.getStyle().set("flex-wrap", "wrap");
-
-            for (final ExerciseViewDto exercise : exercises) {
-                exerciseGrid.add(this.createExerciseCard(exercise));
-            }
-
-            lessonCard.add(exerciseGrid);
+            section.add(noExercisesMsg);
         }
 
-        return lessonCard;
+        return section;
     }
 
     private Div createExerciseCard(final ExerciseViewDto exercise) {
@@ -242,12 +292,12 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         startButton.addClickListener(ignored -> {
             // Navigate to ExerciseWorkspaceView for Graspable exercises
             // or to a generic ExerciseView for non-Graspable exercises
-            if (exercise.id == null) {
+            if (exercise.publicId == null) {
                 NotificationUtil.showError("Exercise ID is missing");
                 return;
             }
             UI.getCurrent().navigate(ExerciseWorkspaceView.class,
-                    new RouteParameters("exerciseId", exercise.id.toString()));
+                    new RouteParameters("exerciseId", exercise.publicId));
         });
 
         card.add(titleSpan, badgeLayout, startButton);

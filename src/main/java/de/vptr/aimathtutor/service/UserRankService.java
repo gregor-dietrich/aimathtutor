@@ -12,6 +12,7 @@ import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
@@ -69,6 +70,18 @@ public class UserRankService {
         return this.userRankRepository.findAll().stream()
                 .map(UserRankViewDto::new)
                 .toList();
+    }
+
+    /**
+     * Retrieves a user rank by its unique public identifier.
+     *
+     * @param publicId the rank public ID to search for
+     * @return an {@link Optional} containing the rank if found, empty otherwise
+     */
+    @Transactional
+    public Optional<UserRankViewDto> findByPublicId(final String publicId) {
+        return this.userRankRepository.findByPublicId(publicId)
+                .map(UserRankViewDto::new);
     }
 
     /**
@@ -140,14 +153,14 @@ public class UserRankService {
      * Updates an existing user rank with new permission values.
      * Performs complete replacement of all permissions (PUT semantics).
      *
-     * @param id      the ID of the rank to update
-     * @param rankDto the new rank data with updated permissions
+     * @param publicId the public ID of the rank to update
+     * @param rankDto  the new rank data with updated permissions
      * @return the updated {@link UserRankViewDto}
      * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
-    public UserRankViewDto updateRank(final Long id, final @Valid UserRankDto rankDto) {
-        final UserRankEntity existingRank = this.userRankRepository.findById(id);
+    public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
+        final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }
@@ -165,14 +178,14 @@ public class UserRankService {
      * Only updates permissions that are explicitly provided in the DTO; null values
      * are ignored.
      *
-     * @param id      the ID of the rank to update
-     * @param rankDto the partial rank data with selected permissions to update
+     * @param publicId the public ID of the rank to update
+     * @param rankDto  the partial rank data with selected permissions to update
      * @return the updated {@link UserRankViewDto}
      * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
-    public UserRankViewDto patchRank(final Long id, final @Valid UserRankDto rankDto) {
-        final UserRankEntity existingRank = this.userRankRepository.findById(id);
+    public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
+        final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }
@@ -188,22 +201,22 @@ public class UserRankService {
     }
 
     /**
-     * Deletes a user rank by ID.
+     * Deletes a user rank by public ID.
      * Prevents deletion if users are currently assigned to this rank.
      *
-     * @param id the ID of the rank to delete
+     * @param publicId the public ID of the rank to delete
      * @return {@code true} if deletion succeeded, {@code false} if rank not found
      * @throws WebApplicationException if rank has assigned users (CONFLICT status)
      */
     @Transactional
-    public boolean deleteRank(final Long id) {
-        final UserRankEntity rank = this.userRankRepository.findById(id);
+    public boolean deleteRank(final String publicId) {
+        final UserRankEntity rank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (rank == null) {
             return false;
         }
 
         // Check if rank has associated users using COUNT query
-        final long userCount = this.userRepository.countByRankId(id);
+        final long userCount = this.userRepository.countByRankPublicId(publicId);
         if (userCount > 0) {
             throw new WebApplicationException(
                     "Cannot delete rank because "
@@ -212,7 +225,15 @@ public class UserRankService {
                     Response.Status.CONFLICT);
         }
 
-        return this.userRankRepository.deleteById(id);
+        try {
+            final boolean deleted = this.userRankRepository.deleteByPublicId(publicId);
+            this.userRankRepository.flush();
+            return deleted;
+        } catch (final PersistenceException e) {
+            throw new WebApplicationException(
+                    "Cannot delete rank because users are assigned to this rank. Please reassign these users to a different rank before deleting.",
+                    Response.Status.CONFLICT);
+        }
     }
 
     /**

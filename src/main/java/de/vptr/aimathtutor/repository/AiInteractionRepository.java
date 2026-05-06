@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,6 +22,22 @@ public class AiInteractionRepository extends AbstractRepository {
      */
     public List<AiInteractionEntity> findAll() {
         return this.listNamed("AiInteraction.findAll", AiInteractionEntity.class);
+    }
+
+    /**
+     * Retrieves an AI interaction by its public identifier.
+     *
+     * @param publicId the public ID of the interaction
+     * @return an {@link Optional} containing the interaction if found, empty otherwise
+     */
+    public Optional<AiInteractionEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("AiInteraction.findByPublicId", AiInteractionEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
     }
 
     /**

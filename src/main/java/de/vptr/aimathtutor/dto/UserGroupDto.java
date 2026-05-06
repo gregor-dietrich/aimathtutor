@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
  * Contains user group information including identifier and name.
  */
 public class UserGroupDto {
-    public Long id;
+    public String publicId;
 
     @NotBlank(message = "Name is required")
     public String name;

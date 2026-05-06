@@ -12,6 +12,9 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import io.quarkus.test.TestTransaction;
 
+/**
+ * Integration tests for {@link ExerciseRepository}.
+ */
 @QuarkusTest
 public class ExerciseRepositoryIT {
 

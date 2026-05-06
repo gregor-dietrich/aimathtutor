@@ -44,7 +44,7 @@
         <module name="RegexpSinglelineJava">
             <property name="format"
                 value="^(?!\s*(import|package)).*\b(java|javax|jakarta|org|de|com|net|io|edu)\.[a-zA-Z]" />
-            <property name="ignoreComments" value="true" />
+            <property name="ignoreComments" value="false" />
             <property name="message"
                 value="Use imports instead of Fully Qualified Class Names (FQCN)." />
         </module>

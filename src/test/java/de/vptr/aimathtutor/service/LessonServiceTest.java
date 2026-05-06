@@ -31,6 +31,14 @@ class LessonServiceTest {
     @Inject
     private EntityManager em;
 
+    private Long getLessonNumericId(final String publicId) {
+        return this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", publicId)
+                .getSingleResult()
+                .id;
+    }
+
     private LessonEntity buildLesson(final String prefix) {
         final var lesson = new LessonEntity();
         lesson.name = prefix + "_" + UUID.randomUUID().toString().substring(0, 8);
@@ -81,7 +89,7 @@ class LessonServiceTest {
 
         final LessonViewDto created = this.lessonService.createLesson(lesson);
 
-        assertNotNull(created.id);
+        assertNotNull(created.publicId);
         assertEquals(lesson.name, created.name);
         assertTrue(created.isRootLesson);
         assertEquals(0, created.childrenCount);
@@ -95,12 +103,12 @@ class LessonServiceTest {
 
         final LessonEntity child = this.buildLesson("child");
         final LessonEntity parentRef = new LessonEntity();
-        parentRef.id = parent.id;
+        parentRef.id = this.getLessonNumericId(parent.publicId);
         child.parent = parentRef;
 
         final LessonViewDto childDto = this.lessonService.createLesson(child);
 
-        assertEquals(parent.id, childDto.parentId);
+        assertEquals(parent.publicId, childDto.parentPublicId);
         assertEquals(parent.name, childDto.parentName);
         assertFalse(childDto.isRootLesson);
     }
@@ -126,14 +134,14 @@ class LessonServiceTest {
         final LessonViewDto parent = this.lessonService.createLesson(this.buildLesson("p"));
         final LessonEntity childRef = this.buildLesson("c");
         final LessonEntity parentRef = new LessonEntity();
-        parentRef.id = parent.id;
+        parentRef.id = this.getLessonNumericId(parent.publicId);
         childRef.parent = parentRef;
         final LessonViewDto created = this.lessonService.createLesson(childRef);
 
-        final var children = this.lessonService.findByParentId(parent.id);
+        final var children = this.lessonService.findByParentId(this.getLessonNumericId(parent.publicId));
 
         assertEquals(1, children.size());
-        assertEquals(created.id, children.get(0).id);
+        assertEquals(created.publicId, children.get(0).publicId);
     }
 
     @Test
@@ -143,15 +151,15 @@ class LessonServiceTest {
         final LessonViewDto parent = this.lessonService.createLesson(this.buildLesson("a"));
         final LessonEntity childEntity = this.buildLesson("b");
         final LessonEntity parentRef = new LessonEntity();
-        parentRef.id = parent.id;
+        parentRef.id = this.getLessonNumericId(parent.publicId);
         childEntity.parent = parentRef;
         final LessonViewDto child = this.lessonService.createLesson(childEntity);
 
         final LessonEntity update = new LessonEntity();
-        update.id = parent.id;
+        update.publicId = parent.publicId;
         update.name = "renamed";
         final LessonEntity newParent = new LessonEntity();
-        newParent.id = child.id;
+        newParent.publicId = child.publicId;
         update.parent = newParent;
 
         final var thrown = assertThrows(WebApplicationException.class,
@@ -164,11 +172,12 @@ class LessonServiceTest {
     @TestTransaction
     void shouldDeleteLesson() {
         final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("del"));
+        final Long numericId = this.getLessonNumericId(created.publicId);
 
-        final boolean deleted = this.lessonService.deleteLesson(created.id);
+        final boolean deleted = this.lessonService.deleteLesson(created.publicId);
 
         assertTrue(deleted);
-        assertTrue(this.lessonService.findById(created.id).isEmpty());
+        assertTrue(this.lessonService.findById(numericId).isEmpty());
     }
 
     @Test
@@ -181,7 +190,7 @@ class LessonServiceTest {
 
         assertFalse(lessons.isEmpty());
         for (final var lesson : lessons) {
-            assertNotNull(lesson.childrenIds, "childrenIds should never be null");
+            assertNotNull(lesson.childrenPublicIds, "childrenPublicIds should never be null");
             assertTrue(lesson.childrenCount >= 0);
             assertTrue(lesson.exercisesCount >= 0);
         }
@@ -199,7 +208,7 @@ class LessonServiceTest {
 
         assertFalse(lessons.isEmpty());
         for (final var lesson : lessons) {
-            assertNotNull(lesson.childrenIds, "childrenIds should never be null");
+            assertNotNull(lesson.childrenPublicIds, "childrenPublicIds should never be null");
             assertTrue(lesson.childrenCount >= 0);
             assertTrue(lesson.exercisesCount >= 0);
         }

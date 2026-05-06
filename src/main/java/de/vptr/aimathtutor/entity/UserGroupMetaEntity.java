@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +18,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
@@ -32,6 +34,7 @@ import jakarta.persistence.Version;
 })
 @NamedQueries({
         @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
+        @NamedQuery(name = "UserGroupMeta.findByPublicId", query = "FROM UserGroupMetaEntity WHERE publicId = :p"),
         @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
         @NamedQuery(name = "UserGroupMeta.countByUserAndGroup", query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
         @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g"),
@@ -45,6 +48,21 @@ public class UserGroupMetaEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

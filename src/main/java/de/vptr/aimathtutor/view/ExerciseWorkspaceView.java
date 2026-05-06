@@ -101,21 +101,15 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
-        try {
-            this.exerciseId = Long.parseLong(exerciseIdParam.get());
-            if (this.exerciseId == null || this.exerciseId <= 0) {
-                NotificationUtil.showError("Invalid exercise ID");
-                event.rerouteTo(LessonsView.class);
-                return;
-            }
-        } catch (final NumberFormatException e) {
+        final String exercisePublicId = exerciseIdParam.get();
+        if (exercisePublicId.isBlank()) {
             NotificationUtil.showError("Invalid exercise ID");
             event.rerouteTo(LessonsView.class);
             return;
         }
 
         // Load exercise from database
-        final Optional<ExerciseViewDto> exerciseOpt = this.exerciseService.findById(this.exerciseId);
+        final Optional<ExerciseViewDto> exerciseOpt = this.exerciseService.findByPublicId(exercisePublicId);
         if (exerciseOpt.isEmpty()) {
             NotificationUtil.showError("Exercise not found");
             event.rerouteTo(LessonsView.class);
@@ -123,6 +117,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         this.exercise = exerciseOpt.get();
+        this.exerciseId = this.exercise.id;
 
         // Check if exercise is published (students can only see published exercises)
         if (!Boolean.TRUE.equals(this.exercise.published)) {
@@ -304,7 +299,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         if (this.exercise.commentable) {
             // Create comments panel (full width, below canvas)
-            this.commentsPanel = new CommentsPanel(this.exerciseId, this.currentSessionId,
+            this.commentsPanel = new CommentsPanel(this.exerciseId, this.exercise.publicId, this.currentSessionId,
                     this.authService.getUserId());
             this.commentsPanel.getStyle().set("margin-top", "1rem");
 

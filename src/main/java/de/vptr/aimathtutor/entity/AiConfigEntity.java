@@ -7,6 +7,7 @@ import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
@@ -33,6 +35,7 @@ import jakarta.validation.constraints.NotBlank;
 @Table(name = "ai_config")
 @NamedQueries({
         @NamedQuery(name = "AiConfig.findByKey", query = "FROM AiConfigEntity WHERE configKey = :key"),
+        @NamedQuery(name = "AiConfig.findByPublicId", query = "FROM AiConfigEntity WHERE publicId = :p"),
         @NamedQuery(name = "AiConfig.findByCategory", query = "FROM AiConfigEntity WHERE category = :category ORDER BY configKey"),
         @NamedQuery(name = "AiConfig.findAll", query = "FROM AiConfigEntity ORDER BY category, configKey"),
 })
@@ -76,6 +79,21 @@ public class AiConfigEntity extends PanacheEntityBase {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_updated_by")
     public UserEntity lastUpdatedBy;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     /**
      * Default constructor for Hibernate.

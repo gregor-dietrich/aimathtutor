@@ -11,11 +11,11 @@ import de.vptr.aimathtutor.entity.StudentSessionEntity;
  */
 public class StudentSessionViewDto {
 
-    public Long id;
+    public String publicId;
     public String sessionId;
-    public Long userId;
+    public String userPublicId;
     public String username;
-    public Long exerciseId;
+    public String exercisePublicId;
     public String exerciseTitle;
     public LocalDateTime startTime;
     public LocalDateTime endTime;
@@ -37,7 +37,7 @@ public class StudentSessionViewDto {
      */
     public StudentSessionViewDto(final StudentSessionEntity entity) {
         if (entity != null) {
-            this.id = entity.id;
+            this.publicId = entity.publicId;
             this.sessionId = entity.sessionId;
             this.startTime = entity.startTime;
             this.endTime = entity.endTime;
@@ -49,13 +49,13 @@ public class StudentSessionViewDto {
 
             // Handle user information safely
             if (entity.user != null) {
-                this.userId = entity.user.id;
+                this.userPublicId = entity.user.publicId;
                 this.username = entity.user.username;
             }
 
             // Handle exercise information safely
             if (entity.exercise != null) {
-                this.exerciseId = entity.exercise.id;
+                this.exercisePublicId = entity.exercise.publicId;
                 this.exerciseTitle = entity.exercise.title;
             }
 

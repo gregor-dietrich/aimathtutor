@@ -55,9 +55,6 @@ public class GraspableEventDto {
         this.sessionId = sessionId;
     }
 
-    /**
-     * Debug-friendly string representation of the event.
-     */
     @Override
     public String toString() {
         return "GraspableEventDto{"

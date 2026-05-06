@@ -114,9 +114,9 @@ public class AdminLessonsView extends AbstractAdminView {
         // If a matching lesson has a parent that's not in the search results,
         // we show it as a top-level item for better visibility
 
-        // Get all lesson IDs that exist in the search results
-        final var lessonIdsInResults = searchResults.stream()
-                .map(cat -> cat.id)
+        // Get all lesson publicIds that exist in the search results
+        final var lessonPublicIdsInResults = searchResults.stream()
+                .map(cat -> cat.publicId)
                 .collect(Collectors.toSet());
 
         // Find lessons to show at the top level:
@@ -124,11 +124,11 @@ public class AdminLessonsView extends AbstractAdminView {
         // 2. Lessons whose parent is not in the search results (orphaned in this
         // context)
         final var topLevelLessons = searchResults.stream()
-                .filter(cat -> cat.parentId == null || !lessonIdsInResults.contains(cat.parentId))
+                .filter(cat -> cat.parentPublicId == null || !lessonPublicIdsInResults.contains(cat.parentPublicId))
                 .toList();
 
         this.treeGrid.setItems(topLevelLessons, lesson -> searchResults.stream()
-                .filter(cat -> cat.parentId != null && cat.parentId.equals(lesson.id))
+                .filter(cat -> cat.parentPublicId != null && cat.parentPublicId.equals(lesson.publicId))
                 .toList());
 
         // Expand all search results for better visibility
@@ -143,7 +143,7 @@ public class AdminLessonsView extends AbstractAdminView {
      */
     private List<LessonViewDto> getChildrenOfLesson(final LessonViewDto parent) {
         return this.allLessons.stream()
-                .filter(lesson -> lesson.parentId != null && lesson.parentId.equals(parent.id))
+                .filter(lesson -> lesson.parentPublicId != null && lesson.parentPublicId.equals(parent.publicId))
                 .toList();
     }
 
@@ -263,7 +263,7 @@ public class AdminLessonsView extends AbstractAdminView {
             final var availableParents = this.allLessons.stream()
                     .map(LessonViewDto::toLessonDto)
                     .filter(cat -> lesson == null || !this.isDescendantOf(cat, lesson))
-                    .filter(cat -> lesson == null || !cat.id.equals(lesson.id))
+                    .filter(cat -> lesson == null || !cat.publicId.equals(lesson.publicId))
                     .toList();
             parentField.setItems(availableParents);
         }
@@ -278,12 +278,12 @@ public class AdminLessonsView extends AbstractAdminView {
                 .bind(
                         cat -> {
                             // Convert from DTO parent field
-                            if (cat.parent != null && cat.parent.id != null) {
+                            if (cat.parent != null && cat.parent.publicId != null) {
                                 // Find the LessonDto from available parents
                                 if (this.allLessons != null) {
                                     return this.allLessons.stream()
                                             .map(LessonViewDto::toLessonDto)
-                                            .filter(c -> c.id.equals(cat.parent.id))
+                                            .filter(c -> c.publicId.equals(cat.parent.publicId))
                                             .findFirst()
                                             .orElse(null);
                                 }
@@ -292,14 +292,14 @@ public class AdminLessonsView extends AbstractAdminView {
                         },
                         (cat, value) -> {
                             // Convert back to DTO parent field
-                            if (value != null && value.id != null) {
-                                cat.parentId = value.id;
+                            if (value != null && value.publicId != null) {
+                                cat.parentPublicId = value.publicId;
                                 if (cat.parent == null) {
                                     cat.parent = new LessonDto.ParentField();
                                 }
-                                cat.parent.id = value.id;
+                                cat.parent.publicId = value.publicId;
                             } else {
-                                cat.parentId = null;
+                                cat.parentPublicId = null;
                                 cat.parent = null;
                             }
                         });
@@ -335,13 +335,13 @@ public class AdminLessonsView extends AbstractAdminView {
         if (potential.parent == null) {
             return false;
         }
-        if (potential.parent.id.equals(ancestor.id)) {
+        if (potential.parent.publicId.equals(ancestor.publicId)) {
             return true;
         }
 
         // Find the parent in the list and check recursively
         final var parent = this.allLessons.stream()
-                .filter(cat -> cat.id.equals(potential.parent.id))
+                .filter(cat -> cat.publicId.equals(potential.parent.publicId))
                 .map(LessonViewDto::toLessonDto)
                 .findFirst()
                 .orElse(null);
@@ -362,17 +362,17 @@ public class AdminLessonsView extends AbstractAdminView {
 
             // Convert DTO to Entity for service call
             final var lessonEntity = new LessonEntity();
-            lessonEntity.id = this.currentLesson.id;
+            lessonEntity.publicId = this.currentLesson.publicId;
             lessonEntity.name = this.currentLesson.name;
 
             // Set parent if specified
-            if (this.currentLesson.parentId != null) {
+            if (this.currentLesson.parentPublicId != null) {
                 final var parentEntity = new LessonEntity();
-                parentEntity.id = this.currentLesson.parentId;
+                parentEntity.publicId = this.currentLesson.parentPublicId;
                 lessonEntity.parent = parentEntity;
             }
 
-            if (this.currentLesson.id == null) {
+            if (this.currentLesson.publicId == null) {
                 this.lessonService.createLesson(lessonEntity);
                 NotificationUtil.showSuccess("Lesson created successfully");
             } else {
@@ -394,7 +394,7 @@ public class AdminLessonsView extends AbstractAdminView {
     private void deleteLesson(final LessonDto lesson) {
         // Check if lesson has children
         final boolean hasChildren = this.allLessons.stream()
-                .anyMatch(cat -> cat.parentId != null && cat.parentId.equals(lesson.id));
+                .anyMatch(cat -> cat.parentPublicId != null && cat.parentPublicId.equals(lesson.publicId));
 
         if (hasChildren) {
             NotificationUtil
@@ -403,7 +403,7 @@ public class AdminLessonsView extends AbstractAdminView {
         }
 
         try {
-            if (this.lessonService.deleteLesson(lesson.id)) {
+            if (this.lessonService.deleteLesson(lesson.publicId)) {
                 NotificationUtil.showSuccess("Lesson deleted successfully");
                 this.loadLessonsAsync();
             } else {

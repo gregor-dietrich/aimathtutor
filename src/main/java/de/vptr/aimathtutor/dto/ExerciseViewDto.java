@@ -12,11 +12,12 @@ import de.vptr.aimathtutor.entity.ExerciseEntity;
 public class ExerciseViewDto {
 
     public Long id;
+    public String publicId;
     public String title;
     public String content;
-    public Long userId;
+    public String userPublicId;
     public String username;
-    public Long lessonId;
+    public String lessonPublicId;
     public String lessonName;
     public Boolean published;
     public Boolean commentable;
@@ -44,11 +45,12 @@ public class ExerciseViewDto {
     public ExerciseViewDto(final ExerciseEntity entity) {
         if (entity != null) {
             this.id = entity.id;
+            this.publicId = entity.publicId;
             this.title = entity.title;
             this.content = entity.content;
-            this.userId = entity.user != null ? entity.user.id : null;
+            this.userPublicId = entity.user != null ? entity.user.publicId : null;
             this.username = entity.user != null ? entity.user.username : null;
-            this.lessonId = entity.lesson != null ? entity.lesson.id : null;
+            this.lessonPublicId = entity.lesson != null ? entity.lesson.publicId : null;
             this.lessonName = entity.lesson != null ? entity.lesson.name : null;
             this.published = entity.published;
             this.commentable = entity.commentable;
@@ -66,10 +68,10 @@ public class ExerciseViewDto {
     }
 
     /**
-     * Getter for id
+     * Getter for publicId
      */
-    public Long getId() {
-        return this.id;
+    public String getPublicId() {
+        return this.publicId;
     }
 
     /**
@@ -77,11 +79,11 @@ public class ExerciseViewDto {
      */
     public ExerciseDto toExerciseDto() {
         final ExerciseDto dto = new ExerciseDto();
-        dto.id = this.id;
+        dto.publicId = this.publicId;
         dto.title = this.title;
         dto.content = this.content;
-        dto.userId = this.userId;
-        dto.lessonId = this.lessonId;
+        dto.userPublicId = this.userPublicId;
+        dto.lessonPublicId = this.lessonPublicId;
         dto.published = this.published;
         dto.commentable = this.commentable;
         dto.created = this.created;

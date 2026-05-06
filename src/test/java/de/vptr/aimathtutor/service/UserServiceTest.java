@@ -115,10 +115,10 @@ class UserServiceTest {
         final UserViewDto created = this.userService.createUser(dto);
 
         assertNotNull(created);
-        assertNotNull(created.id);
+        assertNotNull(created.publicId);
         assertEquals(dto.username, created.username);
         assertEquals(dto.email, created.email);
-        assertNotNull(created.rankId);
+        assertNotNull(created.rankPublicId);
     }
 
     @Test
@@ -127,8 +127,9 @@ class UserServiceTest {
     void shouldFindUserById() {
         final UserDto dto = this.buildValidDto();
         final UserViewDto created = this.userService.createUser(dto);
+        final var userEntity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
 
-        final var found = this.userService.findById(created.id);
+        final var found = this.userService.findById(userEntity.id);
 
         assertTrue(found.isPresent());
         assertEquals(dto.username, found.get().username);
@@ -176,7 +177,7 @@ class UserServiceTest {
         final UserDto dto = this.buildValidDto();
         final UserViewDto created = this.userService.createUser(dto);
 
-        final UserEntity entity = this.userRepository.findById(created.id);
+        final UserEntity entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
         assertNotNull(entity);
         assertNotNull(entity.password);
         assertTrue(entity.password.startsWith("$2"), "Password should be a bcrypt hash, was: " + entity.password);

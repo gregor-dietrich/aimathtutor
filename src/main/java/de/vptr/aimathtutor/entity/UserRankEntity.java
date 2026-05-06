@@ -8,6 +8,7 @@ import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
@@ -27,9 +29,10 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "user_ranks")
 @NamedQueries({
-        @NamedQuery(name = "UserRank.findAll", query = "FROM UserRankEntity ORDER BY id DESC"),
+        @NamedQuery(name = "UserRank.findAll", query = "FROM UserRankEntity ORDER BY created DESC, id DESC"),
+        @NamedQuery(name = "UserRank.findByPublicId", query = "FROM UserRankEntity WHERE publicId = :p"),
         @NamedQuery(name = "UserRank.findByName", query = "FROM UserRankEntity WHERE name = :n"),
-        @NamedQuery(name = "UserRank.searchByName", query = "FROM UserRankEntity WHERE LOWER(name) LIKE :s ORDER BY id DESC")
+        @NamedQuery(name = "UserRank.searchByName", query = "FROM UserRankEntity WHERE LOWER(name) LIKE :s ORDER BY created DESC, id DESC")
 })
 public class UserRankEntity extends PanacheEntityBase {
 
@@ -39,6 +42,21 @@ public class UserRankEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     @NotBlank
     @Column(nullable = false)

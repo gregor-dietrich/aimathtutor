@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
@@ -34,18 +35,21 @@ class ExerciseServiceTest {
     @Inject
     private UserRepository userRepository;
 
-    private Long teacherId() {
+    @Inject
+    private EntityManager em;
+
+    private String teacherPublicId() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher, "Seeded teacher user should exist");
-        return teacher.id;
+        return teacher.publicId;
     }
 
-    private ExerciseDto buildDto(final Long userId, final boolean published) {
+    private ExerciseDto buildDto(final String userPublicId, final boolean published) {
         final var dto = new ExerciseDto();
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         dto.title = "Exercise " + suffix;
         dto.content = "Content for " + suffix;
-        dto.userId = userId;
+        dto.userPublicId = userPublicId;
         dto.published = published;
         dto.commentable = false;
         return dto;
@@ -58,7 +62,7 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = null;
         exerciseDto.content = "Content";
-        exerciseDto.userId = 1L;
+        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -72,7 +76,7 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "";
         exerciseDto.content = "Content";
-        exerciseDto.userId = 1L;
+        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -86,7 +90,7 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";
         exerciseDto.content = null;
-        exerciseDto.userId = 1L;
+        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -100,7 +104,7 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";
         exerciseDto.content = "";
-        exerciseDto.userId = 1L;
+        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -114,7 +118,7 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";
         exerciseDto.content = "Content";
-        exerciseDto.userId = null;
+        exerciseDto.userPublicId = null;
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -125,7 +129,7 @@ class ExerciseServiceTest {
     @DisplayName("Should reject Graspable Math exercise without target expression")
     @Transactional
     void shouldRejectGraspableExerciseWithoutTarget() {
-        final ExerciseDto dto = this.buildDto(this.teacherId(), false);
+        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), false);
         dto.graspableEnabled = Boolean.TRUE;
         dto.graspableTargetExpression = null;
 
@@ -136,14 +140,14 @@ class ExerciseServiceTest {
     @DisplayName("Should create exercise with valid data")
     @TestTransaction
     void shouldCreateExerciseWithValidData() {
-        final ExerciseDto dto = this.buildDto(this.teacherId(), true);
+        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
 
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
 
-        assertNotNull(created.id);
+        assertNotNull(created.publicId);
         assertEquals(dto.title, created.title);
         assertEquals(dto.content, created.content);
-        assertEquals(this.teacherId(), created.userId);
+        assertEquals(this.teacherPublicId(), created.userPublicId);
         assertTrue(created.published);
     }
 
@@ -151,12 +155,13 @@ class ExerciseServiceTest {
     @DisplayName("Should find exercise by id and route through completion enrichment")
     @TestTransaction
     void shouldFindExerciseById() {
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherId(), true));
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), true));
 
         final var found = this.exerciseService.findById(created.id);
 
         assertTrue(found.isPresent());
-        assertEquals(created.id, found.get().id);
+        assertEquals(created.publicId, found.get().publicId);
         assertEquals(created.title, found.get().title);
     }
 
@@ -164,14 +169,14 @@ class ExerciseServiceTest {
     @DisplayName("Should find only published exercises")
     @TestTransaction
     void shouldFindPublishedExercisesOnly() {
-        final var teacherId = this.teacherId();
+        final var teacherId = this.teacherPublicId();
         final ExerciseViewDto pub = this.exerciseService.createExercise(this.buildDto(teacherId, true));
         final ExerciseViewDto draft = this.exerciseService.createExercise(this.buildDto(teacherId, false));
 
         final var published = this.exerciseService.findPublishedExercises();
 
-        assertTrue(published.stream().anyMatch(e -> e.id.equals(pub.id)));
-        assertFalse(published.stream().anyMatch(e -> e.id.equals(draft.id)));
+        assertTrue(published.stream().anyMatch(e -> e.publicId.equals(pub.publicId)));
+        assertFalse(published.stream().anyMatch(e -> e.publicId.equals(draft.publicId)));
     }
 
     @Test
@@ -182,36 +187,42 @@ class ExerciseServiceTest {
         lessonEntity.name = "lesson_" + UUID.randomUUID().toString().substring(0, 8);
         final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
 
-        final ExerciseDto dto = this.buildDto(this.teacherId(), true);
-        dto.lessonId = lesson.id;
+        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
+        dto.lessonPublicId = lesson.publicId;
 
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
 
-        assertEquals(lesson.id, created.lessonId);
-        final var exercises = this.exerciseService.findByLessonId(lesson.id);
+        assertEquals(lesson.publicId, created.lessonPublicId);
+        final var lessonEntityForLookup = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", lesson.publicId)
+                .getSingleResult();
+        final var exercises = this.exerciseService.findByLessonId(lessonEntityForLookup.id);
         assertEquals(1, exercises.size());
-        assertEquals(created.id, exercises.get(0).id);
+        assertEquals(created.publicId, exercises.get(0).publicId);
     }
 
     @Test
     @DisplayName("Should find exercises by user id")
     @TestTransaction
     void shouldFindExercisesByUserId() {
-        final var teacherId = this.teacherId();
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(teacherId, true));
+        final var teacher = this.userRepository.findByUsername("teacher");
+        assertNotNull(teacher, "Seeded teacher user should exist");
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(teacher.publicId, true));
 
-        final var byUser = this.exerciseService.findByUserId(teacherId);
+        final var byUser = this.exerciseService.findByUserId(teacher.id);
 
-        assertTrue(byUser.stream().anyMatch(e -> e.id.equals(created.id)));
+        assertTrue(byUser.stream().anyMatch(e -> e.publicId.equals(created.publicId)));
     }
 
     @Test
     @DisplayName("Should delete exercise by id")
     @TestTransaction
     void shouldDeleteExercise() {
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherId(), true));
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), true));
 
-        final boolean deleted = this.exerciseService.deleteExercise(created.id);
+        final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
         assertTrue(deleted);
         assertTrue(this.exerciseService.findById(created.id).isEmpty());

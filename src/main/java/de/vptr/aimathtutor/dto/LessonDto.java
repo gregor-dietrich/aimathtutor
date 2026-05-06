@@ -15,41 +15,45 @@ import jakarta.validation.constraints.Size;
 @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO public fields intentionally used for JSON mapping and convenience")
 public class LessonDto {
 
-    public Long id;
+    public String publicId;
 
     @Size(min = AppConstants.LESSON_NAME_MIN_LENGTH, max = AppConstants.LESSON_NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
     public String name;
 
-    // Optional parentId for setting parent lesson
-    // null = make it a root lesson
-    // positive value = set to that parent
-    public Long parentId;
+    public String parentPublicId;
 
-    // Helper field for compatibility with old code that used nested objects
     public ParentField parent;
 
     /**
-     * Helper class for nested parent field access
+     * Nested field representing a parent lesson reference.
      */
     public static class ParentField {
-        public Long id;
+        public String publicId;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public ParentField() {
         }
 
-        public ParentField(final Long id) {
-            this.id = id;
+        /**
+         * Constructs a ParentField with the given public ID.
+         *
+         * @param publicId the parent lesson's public identifier
+         */
+        public ParentField(final String publicId) {
+            this.publicId = publicId;
         }
     }
 
     /**
-     * Ensure parentId and parent stay in sync
+     * Synchronizes the nested parent field with the flat parentPublicId field.
      */
     public void syncParent() {
-        if (this.parent != null && this.parent.id != null) {
-            this.parentId = this.parent.id;
-        } else if (this.parentId != null) {
-            this.parent = new ParentField(this.parentId);
+        if (this.parent != null && this.parent.publicId != null) {
+            this.parentPublicId = this.parent.publicId;
+        } else if (this.parentPublicId != null) {
+            this.parent = new ParentField(this.parentPublicId);
         }
     }
 }

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,7 +19,6 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
@@ -33,14 +33,13 @@ import de.vptr.aimathtutor.component.button.ManageUsersButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.button.RemoveUserButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
-import de.vptr.aimathtutor.component.layout.IntegerFilterLayout;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.service.UlidService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -60,7 +59,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
     private transient Grid<UserGroupViewDto> grid;
     private transient TextField searchField;
     private transient Button searchButton;
-    private transient IntegerField userIdField;
+    private transient TextField userPublicIdField;
 
     private transient Dialog groupDialog;
     private transient Binder<UserGroupDto> binder;
@@ -131,12 +130,26 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
 
-        // User ID filter
-        final var userFilterLayout = new IntegerFilterLayout(
-                ignored -> this.filterByUser(),
-                "Enter User ID...",
-                "Filter by User");
-        this.userIdField = userFilterLayout.getIntegerField();
+        // User public ID filter
+        final var userFilterLayout = new HorizontalLayout();
+        userFilterLayout.setAlignItems(Alignment.END);
+        userFilterLayout.setSpacing(true);
+        final var userPublicIdInput = new TextField();
+        userPublicIdInput.setPlaceholder("Enter User Public ID...");
+        userPublicIdInput.setWidth("200px");
+        userPublicIdInput.setPattern("^[0-7][0-9A-HJKMNP-TV-Z]{25}$");
+        userPublicIdInput.setErrorMessage("Invalid ULID format");
+        userPublicIdInput.addValueChangeListener(e -> userPublicIdInput.setInvalid(false));
+        final var userFilterButton = new Button("Filter by User", ignored -> {
+            final String value = userPublicIdInput.getValue();
+            if (value != null && !value.isBlank() && !UlidService.isValid(value)) {
+                userPublicIdInput.setInvalid(true);
+                return;
+            }
+            this.filterByUser();
+        });
+        userFilterLayout.add(userPublicIdInput, userFilterButton);
+        this.userPublicIdField = userPublicIdInput;
 
         searchLayout.add(userFilterLayout);
         return searchLayout;
@@ -159,7 +172,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(group -> group.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(group -> group.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
 
         // Make the name column clickable
         this.grid.addComponentColumn(group -> {
@@ -249,11 +262,11 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
             this.binder.writeBean(this.currentGroup);
 
-            if (this.currentGroup.id == null) {
+            if (this.currentGroup.publicId == null) {
                 this.groupService.createGroup(this.currentGroup);
                 NotificationUtil.showSuccess("Group created successfully");
             } else {
-                this.groupService.updateGroup(this.currentGroup.id, this.currentGroup);
+                this.groupService.updateGroup(this.currentGroup.publicId, this.currentGroup);
                 NotificationUtil.showSuccess("Group updated successfully");
             }
 
@@ -270,7 +283,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
     private void deleteGroup(final UserGroupViewDto group) {
         try {
-            if (this.groupService.deleteGroup(group.id)) {
+            if (this.groupService.deleteGroup(group.publicId)) {
                 NotificationUtil.showSuccess("Group deleted successfully");
                 this.loadGroupsAsync();
             } else {
@@ -314,7 +327,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.userGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.userGrid.setHeight("300px");
 
-        this.userGrid.addColumn(user -> user.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.userGrid.addColumn(user -> user.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
         this.userGrid.addColumn(user -> user.username).setHeader("Username").setFlexGrow(1);
         this.userGrid.addColumn(user -> user.email != null ? user.email : "no email").setHeader("Email").setFlexGrow(1);
 
@@ -366,7 +379,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
     private void loadGroupUsers() {
         AsyncDataLoader.load(
-                () -> this.groupService.getUsersInGroup(this.selectedGroup.id),
+                () -> this.groupService.getUsersInGroup(this.selectedGroup.publicId),
                 this,
                 users -> this.userGrid.setItems(users),
                 "Unexpected error occurred");
@@ -379,13 +392,11 @@ public class AdminUserGroupsView extends AbstractAdminView {
                     if (allUsers == null) {
                         return List.<UserViewDto>of();
                     }
-                    final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
-                            .collect(Collectors.toList());
-                    final var currentUserIds = currentUsers.stream()
-                            .map(user -> user.id)
-                            .collect(Collectors.toSet());
+                    final var currentUsers = this.groupService.getUsersInGroup(this.selectedGroup.publicId);
+                    final var currentUserPublicIds = currentUsers == null ? Set.<String>of()
+                            : currentUsers.stream().map(user -> user.publicId).collect(Collectors.toSet());
                     return allUsers.stream()
-                            .filter(user -> !currentUserIds.contains(user.id))
+                            .filter(user -> !currentUserPublicIds.contains(user.publicId))
                             .collect(Collectors.toList());
                 },
                 this,
@@ -404,7 +415,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
                 .collect(Collectors.toList());
         final boolean alreadyInGroup = currentUsers.stream()
-                .anyMatch(user -> user.id.equals(selectedUser.id));
+                .anyMatch(user -> user.publicId.equals(selectedUser.publicId));
 
         if (alreadyInGroup) {
             NotificationUtil.showWarning("User is already a member of this group");
@@ -413,7 +424,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         }
 
         try {
-            this.groupService.addUserToGroup(selectedUser.id, this.selectedGroup.id);
+            this.groupService.addUserToGroup(selectedUser.publicId, this.selectedGroup.publicId);
             NotificationUtil.showSuccess("User added to group successfully");
             // Refresh user lists for the dialog
             this.loadGroupUsers();
@@ -429,7 +440,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
     private void removeUserFromGroup(final UserViewDto user) {
         try {
-            if (this.groupService.removeUserFromGroup(user.id, this.selectedGroup.id)) {
+            if (this.groupService.removeUserFromGroup(user.publicId, this.selectedGroup.publicId)) {
                 NotificationUtil.showSuccess("User removed from group successfully");
                 // Refresh user lists for the dialog
                 this.loadGroupUsers();
@@ -446,14 +457,14 @@ public class AdminUserGroupsView extends AbstractAdminView {
     }
 
     private void filterByUser() {
-        final Integer userId = this.userIdField.getValue();
-        if (userId == null) {
+        final String userPublicId = this.userPublicIdField.getValue();
+        if (userPublicId == null || userPublicId.isBlank()) {
             this.loadGroupsAsync();
             return;
         }
 
         AsyncDataLoader.load(
-                () -> this.groupService.getGroupsForUser(userId.longValue()),
+                () -> this.groupService.getGroupsForUser(userPublicId),
                 this,
                 groups -> this.grid.setItems(groups),
                 "Failed to filter groups");

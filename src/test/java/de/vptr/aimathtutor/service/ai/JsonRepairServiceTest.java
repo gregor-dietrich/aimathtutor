@@ -51,14 +51,14 @@ class JsonRepairServiceTest {
     @DisplayName("stripQuotationMarks should remove smart double quotes (U+201C and U+201D)")
     void stripQuotationMarksShouldRemoveSmartDoubleQuotes() {
         // Smart double quotes: " (U+201C) and " (U+201D)
-        assertEquals("Hello world", this.jsonRepairService.stripQuotationMarks("\u201CHello world\u201D"));
+        assertEquals("Hello world", this.jsonRepairService.stripQuotationMarks("“Hello world”"));
     }
 
     @Test
     @DisplayName("stripQuotationMarks should remove smart single quotes (U+2018 and U+2019)")
     void stripQuotationMarksShouldRemoveSmartSingleQuotes() {
         // Smart single quotes: ' (U+2018) and ' (U+2019)
-        assertEquals("Hello world", this.jsonRepairService.stripQuotationMarks("\u2018Hello world\u2019"));
+        assertEquals("Hello world", this.jsonRepairService.stripQuotationMarks("‘Hello world’"));
     }
 
     @Test
@@ -70,7 +70,7 @@ class JsonRepairServiceTest {
 
         // Multiple levels of smart quotes
         assertEquals("inner",
-                this.jsonRepairService.stripQuotationMarks("\u201C\u201Cinner\u201D\u201D"));
+                this.jsonRepairService.stripQuotationMarks("““inner””"));
     }
 
     @Test
@@ -78,8 +78,8 @@ class JsonRepairServiceTest {
     void stripQuotationMarksShouldNotRemoveMismatchedQuotes() {
         // Mismatched quotes should be left alone
         assertEquals("\"Hello world'", this.jsonRepairService.stripQuotationMarks("\"Hello world'"));
-        assertEquals("\u201CHello world\u2019",
-                this.jsonRepairService.stripQuotationMarks("\u201CHello world\u2019"));
+        assertEquals("“Hello world’",
+                this.jsonRepairService.stripQuotationMarks("“Hello world’"));
     }
 
     @Test
@@ -101,7 +101,7 @@ class JsonRepairServiceTest {
     void stripQuotationMarksShouldHandleOnlyQuotes() {
         // Just matching quotes should result in empty or trimmed content
         assertEquals("", this.jsonRepairService.stripQuotationMarks("\"\""));
-        assertEquals("", this.jsonRepairService.stripQuotationMarks("\u201C\u201D"));
+        assertEquals("", this.jsonRepairService.stripQuotationMarks("“”"));
     }
 
     @Test

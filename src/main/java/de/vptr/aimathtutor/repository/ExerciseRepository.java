@@ -36,6 +36,22 @@ public class ExerciseRepository extends AbstractRepository {
     }
 
     /**
+     * Retrieves an exercise by its public identifier.
+     *
+     * @param publicId the public ID of the exercise
+     * @return an {@link Optional} containing the exercise if found, empty otherwise
+     */
+    public Optional<ExerciseEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("Exercise.findByPublicId", ExerciseEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    /**
      * Retrieves an exercise by its unique identifier.
      *
      * @param id the exercise ID
@@ -127,6 +143,22 @@ public class ExerciseRepository extends AbstractRepository {
     @Transactional
     public boolean deleteById(final Long id) {
         final ExerciseEntity e = this.findById(id);
+        if (e == null) {
+            return false;
+        }
+        this.em.remove(e);
+        return true;
+    }
+
+    /**
+     * Deletes the exercise with the given public ID.
+     *
+     * @param publicId the public ID of the exercise to delete
+     * @return true if the exercise was successfully deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteByPublicId(final String publicId) {
+        final ExerciseEntity e = this.findByPublicId(publicId).orElse(null);
         if (e == null) {
             return false;
         }

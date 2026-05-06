@@ -7,7 +7,7 @@ import de.vptr.aimathtutor.entity.UserRankEntity;
  */
 public class UserRankViewDto {
 
-    public Long id;
+    public String publicId;
     public String name;
 
     // View permissions
@@ -54,7 +54,7 @@ public class UserRankViewDto {
      */
     public UserRankViewDto(final UserRankEntity entity) {
         if (entity != null) {
-            this.id = entity.id;
+            this.publicId = entity.publicId;
             this.name = entity.name;
 
             // View permissions
@@ -158,7 +158,7 @@ public class UserRankViewDto {
      */
     public UserRankDto toUserRankDto() {
         final var dto = new UserRankDto();
-        dto.id = this.id;
+        dto.publicId = this.publicId;
         dto.name = this.name;
         dto.adminView = this.adminView;
         dto.exerciseAdd = this.exerciseAdd;

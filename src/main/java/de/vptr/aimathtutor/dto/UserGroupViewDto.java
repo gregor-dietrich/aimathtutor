@@ -7,7 +7,7 @@ import de.vptr.aimathtutor.entity.UserGroupEntity;
  * and conversion helper to the editable UserGroupDto.
  */
 public class UserGroupViewDto {
-    public Long id;
+    public String publicId;
     public String name;
     public Long userCount;
 
@@ -18,7 +18,7 @@ public class UserGroupViewDto {
      * Constructs a UserGroupViewDto from a UserGroupEntity.
      */
     public UserGroupViewDto(final UserGroupEntity entity) {
-        this.id = entity.id;
+        this.publicId = entity.publicId;
         this.name = entity.name;
         this.userCount = entity.getUserCount();
     }
@@ -30,7 +30,7 @@ public class UserGroupViewDto {
      */
     public UserGroupDto toUserGroupDto() {
         final var dto = new UserGroupDto();
-        dto.id = this.id;
+        dto.publicId = this.publicId;
         dto.name = this.name;
         return dto;
     }

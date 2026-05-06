@@ -220,7 +220,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(comment -> comment.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(comment -> comment.publicId).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Exercise title column
         this.grid.addComponentColumn(comment -> {
@@ -358,20 +358,20 @@ public class AdminCommentsView extends AbstractAdminView {
 
             // Convert DTO to Entity for service call
             final var commentEntity = new CommentEntity();
-            commentEntity.id = this.currentComment.id;
+            commentEntity.publicId = this.currentComment.publicId;
             commentEntity.content = this.currentComment.content;
 
             // Set exercise if specified
-            if (this.currentComment.exerciseId != null) {
+            if (this.currentComment.exercisePublicId != null) {
                 final var exerciseEntity = new ExerciseEntity();
-                exerciseEntity.id = this.currentComment.exerciseId;
+                exerciseEntity.publicId = this.currentComment.exercisePublicId;
                 commentEntity.exercise = exerciseEntity;
             }
 
             // Get current username from auth service
             final var currentUsername = this.authService.getUsername();
 
-            if (this.currentComment.id == null) {
+            if (this.currentComment.publicId == null) {
                 if (currentUsername == null) {
                     NotificationUtil.showError("You must be logged in to manage comments");
                     return;
@@ -384,7 +384,7 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("You must be logged in to edit comments");
                     return;
                 }
-                this.commentService.editComment(this.currentComment.id, this.currentComment, editorId);
+                this.commentService.editComment(this.currentComment.publicId, this.currentComment, editorId);
                 NotificationUtil.showSuccess("Comment updated successfully");
             }
 
@@ -406,7 +406,7 @@ public class AdminCommentsView extends AbstractAdminView {
                 NotificationUtil.showError("You must be logged in to delete comments");
                 return;
             }
-            this.commentService.deleteComment(comment.id, requesterId, true);
+            this.commentService.deleteComment(comment.publicId, requesterId, true);
             NotificationUtil.showSuccess("Comment deleted successfully");
             this.loadCommentsAsync();
         } catch (final Exception e) {
@@ -517,7 +517,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.showModerationReasonDialog("Hide Comment", "Why are you hiding this comment?", reason -> {
             try {
                 final var currentUserId = this.authService.getUserId();
-                this.commentService.moderateComment(comment.id, "HIDE", currentUserId, reason);
+                this.commentService.moderateComment(comment.publicId, "HIDE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment hidden successfully");
                 this.loadCommentsAsync();
             } catch (final Exception e) {
@@ -531,7 +531,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.showModerationReasonDialog("Show Comment", "Why are you showing this comment again?", reason -> {
             try {
                 final var currentUserId = this.authService.getUserId();
-                this.commentService.moderateComment(comment.id, "SHOW", currentUserId, reason);
+                this.commentService.moderateComment(comment.publicId, "SHOW", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment shown successfully");
                 this.loadCommentsAsync();
             } catch (final Exception e) {
@@ -545,7 +545,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.showModerationReasonDialog("Restore Comment", "Why are you restoring this comment?", reason -> {
             try {
                 final var currentUserId = this.authService.getUserId();
-                this.commentService.moderateComment(comment.id, "RESTORE", currentUserId, reason);
+                this.commentService.moderateComment(comment.publicId, "RESTORE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment restored successfully");
                 this.loadCommentsAsync();
             } catch (final Exception e) {

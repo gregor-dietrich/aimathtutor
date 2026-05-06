@@ -10,11 +10,11 @@ import de.vptr.aimathtutor.entity.UserEntity;
  */
 public class UserViewDto {
 
-    public Long id;
+    public String publicId;
     public String username;
     // Note: password is never exposed in responses for security
     public String email;
-    public Long rankId;
+    public String rankPublicId;
     public String rankName;
     public Boolean banned;
     public Boolean activated;
@@ -33,11 +33,11 @@ public class UserViewDto {
      */
     public UserViewDto(final UserEntity entity) {
         if (entity != null) {
-            this.id = entity.id;
+            this.publicId = entity.publicId;
             this.username = entity.username;
             // password is NEVER exposed
             this.email = entity.email;
-            this.rankId = entity.rank != null ? entity.rank.id : null;
+            this.rankPublicId = entity.rank != null ? entity.rank.publicId : null;
             this.rankName = entity.rank != null ? entity.rank.name : null;
             this.banned = entity.banned;
             this.activated = entity.activated;
@@ -59,10 +59,10 @@ public class UserViewDto {
      */
     public UserDto toUserDto() {
         final var dto = new UserDto();
-        dto.id = this.id;
+        dto.publicId = this.publicId;
         dto.username = this.username;
         dto.email = this.email;
-        dto.rankId = this.rankId;
+        dto.rankPublicId = this.rankPublicId;
         dto.banned = this.banned;
         dto.activated = this.activated;
         // password is not included - must be set separately if updating password

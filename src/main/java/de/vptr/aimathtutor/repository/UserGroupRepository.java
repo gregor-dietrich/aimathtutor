@@ -36,6 +36,22 @@ public class UserGroupRepository extends AbstractRepository {
     }
 
     /**
+     * Retrieves a user group by its public identifier.
+     *
+     * @param publicId the public ID of the group
+     * @return an {@link Optional} containing the group if found, empty otherwise
+     */
+    public Optional<UserGroupEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("UserGroup.findByPublicId", UserGroupEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    /**
      * Retrieves a user group by its unique identifier.
      *
      * @param id the user group ID
@@ -95,6 +111,22 @@ public class UserGroupRepository extends AbstractRepository {
     @Transactional
     public boolean deleteById(final Long id) {
         final UserGroupEntity e = this.findById(id);
+        if (e == null) {
+            return false;
+        }
+        this.em.remove(e);
+        return true;
+    }
+
+    /**
+     * Deletes a user group by its public identifier.
+     *
+     * @param publicId the public ID of the user group to delete
+     * @return true if the user group was successfully deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteByPublicId(final String publicId) {
+        final UserGroupEntity e = this.findByPublicId(publicId).orElse(null);
         if (e == null) {
             return false;
         }

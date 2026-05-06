@@ -296,7 +296,7 @@ public class AnalyticsService {
             final List<StudentSessionEntity> sessions) {
         if (sessions.isEmpty()) {
             return new StudentProgressSummaryDto(
-                    user.id,
+                    user.publicId,
                     user.username,
                     0, 0, 0, 0, 0, 0.0, 0.0, null);
         }
@@ -339,7 +339,7 @@ public class AnalyticsService {
                 .orElse(null);
 
         return new StudentProgressSummaryDto(
-                user.id,
+                user.publicId,
                 user.username,
                 totalSessions,
                 completedSessions,
@@ -430,7 +430,7 @@ public class AnalyticsService {
      * Used for batch-loading completion data to avoid N+1 queries.
      */
     @Transactional
-    public Map<Long, List<StudentSessionViewDto>> getSessionsByUserGroupedByExercise(final Long userId) {
+    public Map<String, List<StudentSessionViewDto>> getSessionsByUserGroupedByExercise(final Long userId) {
         LOG.trace("Getting sessions grouped by exercise for user: {}", userId);
         if (userId == null) {
             return Map.of();
@@ -439,7 +439,7 @@ public class AnalyticsService {
         return sessions.stream()
                 .map(StudentSessionViewDto::new)
                 .collect(Collectors.groupingBy(
-                        s -> s.exerciseId != null ? s.exerciseId : 0L));
+                        s -> s.exercisePublicId != null ? s.exercisePublicId : ""));
     }
 
     /**

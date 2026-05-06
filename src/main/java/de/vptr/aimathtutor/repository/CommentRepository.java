@@ -49,6 +49,40 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
+     * Retrieves a comment by its public identifier.
+     *
+     * @param publicId the public ID of the comment
+     * @return an {@link Optional} containing the comment if found, empty otherwise
+     */
+    public Optional<CommentEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("Comment.findByPublicId", CommentEntity.class);
+        q.setParameter("id", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    /**
+     * Retrieves a comment by its public identifier with related entities eagerly loaded.
+     *
+     * @param publicId the public ID of the comment
+     * @return an {@link Optional} containing the comment with relations if found, empty otherwise
+     */
+    public Optional<CommentEntity> findByPublicIdWithRelations(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createQuery(
+                "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.publicId = :p",
+                CommentEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    /**
      * Retrieves an optional comment by its unique identifier with related entities
      * eagerly loaded.
      * This prevents lazy-loading issues by fetching user, exercise, and parent
@@ -198,6 +232,22 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
+     * Deletes a comment by its public identifier.
+     *
+     * @param publicId the public ID of the comment to delete
+     * @return true if the comment was successfully deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteByPublicId(final String publicId) {
+        final CommentEntity e = this.findByPublicId(publicId).orElse(null);
+        if (e == null) {
+            return false;
+        }
+        this.em.remove(e);
+        return true;
+    }
+
+    /**
      * Retrieves all comments associated with a specific student session.
      *
      * @param sessionId the session ID to filter by
@@ -228,13 +278,16 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves all reply comments to a specific parent comment.
      *
-     * @param parentCommentId the ID of the parent comment to filter by
+     * @param parentPublicId the public ID of the parent comment to filter by
      * @return a list of {@link CommentEntity} objects that are replies to the
      *         parent
      */
-    public List<CommentEntity> findReplies(final Long parentCommentId) {
+    public List<CommentEntity> findReplies(final String parentPublicId) {
+        if (parentPublicId == null) {
+            return List.of();
+        }
         final var q = this.em.createNamedQuery("Comment.findReplies", CommentEntity.class);
-        q.setParameter("p", parentCommentId);
+        q.setParameter("p", parentPublicId);
         return q.getResultList();
     }
 
@@ -242,16 +295,16 @@ public class CommentRepository extends AbstractRepository {
      * Retrieves all reply comments to a specific parent comment with related
      * entities eagerly loaded.
      *
-     * @param parentCommentId the ID of the parent comment to filter by
+     * @param parentPublicId the public ID of the parent comment to filter by
      * @return a list of {@link CommentEntity} objects with relations that are
      *         replies to the parent
      */
-    public List<CommentEntity> findRepliesWithRelations(final Long parentCommentId) {
-        if (parentCommentId == null) {
+    public List<CommentEntity> findRepliesWithRelations(final String parentPublicId) {
+        if (parentPublicId == null) {
             return List.of();
         }
         final var q = this.em.createNamedQuery("Comment.findRepliesWithRelations", CommentEntity.class);
-        q.setParameter("p", parentCommentId);
+        q.setParameter("p", parentPublicId);
         return q.getResultList();
     }
 
@@ -276,15 +329,18 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves reply comments with pagination.
      *
-     * @param parentId the ID of the parent comment to filter by
-     * @param page     the page number (0-indexed)
-     * @param pageSize the number of replies per page
+     * @param parentPublicId the public ID of the parent comment to filter by
+     * @param page           the page number (0-indexed)
+     * @param pageSize       the number of replies per page
      * @return a paginated list of {@link CommentEntity} objects that are replies to
      *         the parent
      */
-    public List<CommentEntity> findRepliesPaged(final Long parentId, final int page, final int pageSize) {
+    public List<CommentEntity> findRepliesPaged(final String parentPublicId, final int page, final int pageSize) {
+        if (parentPublicId == null) {
+            return List.of();
+        }
         final var q = this.em.createNamedQuery("Comment.findRepliesPaged", CommentEntity.class);
-        q.setParameter("p", parentId);
+        q.setParameter("p", parentPublicId);
         q.setFirstResult(page * pageSize);
         q.setMaxResults(pageSize);
         return q.getResultList();

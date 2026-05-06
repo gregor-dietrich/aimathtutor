@@ -2,6 +2,9 @@ package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import de.vptr.aimathtutor.util.AppConstants;
@@ -14,6 +17,8 @@ import jakarta.validation.constraints.Size;
 @SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" }, justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class ExerciseDto {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExerciseDto.class);
 
     /**
      * Enumeration of difficulty levels for exercises and math problems.
@@ -43,7 +48,7 @@ public class ExerciseDto {
         }
     }
 
-    public Long id;
+    public String publicId;
 
     @Size(min = AppConstants.EXERCISE_TITLE_MIN_LENGTH, max = AppConstants.EXERCISE_TITLE_MAX_LENGTH, message = "Title must be between {min} and {max} characters")
     public String title;
@@ -51,9 +56,9 @@ public class ExerciseDto {
     @Size(min = AppConstants.EXERCISE_CONTENT_MIN_LENGTH, max = AppConstants.EXERCISE_CONTENT_MAX_LENGTH, message = "Content must be between {min} and {max} characters")
     public String content;
 
-    public Long userId;
+    public String userPublicId;
 
-    public Long lessonId;
+    public String lessonPublicId;
 
     public Boolean published;
 
@@ -63,7 +68,6 @@ public class ExerciseDto {
 
     public LocalDateTime lastEdit;
 
-    // Graspable Math fields
     public Boolean graspableEnabled;
 
     @Size(max = AppConstants.EXERCISE_EXPRESSION_MAX_LENGTH, message = "Initial expression must not exceed {max} characters")
@@ -77,95 +81,122 @@ public class ExerciseDto {
     @Size(max = AppConstants.EXERCISE_HINTS_MAX_LENGTH, message = "Hints must not exceed {max} characters")
     public String graspableHints;
 
-    // Helper fields for compatibility with old code that used nested objects
     public UserField user;
     public LessonField lesson;
 
+    /**
+     * Default constructor for JSON mapping.
+     */
     public ExerciseDto() {
     }
 
     /**
-     * Constructs an ExerciseDto with the specified parameters.
+     * Constructs an ExerciseDto with the given exercise details.
      *
-     * @param title       the title of the exercise
-     * @param content     the content of the exercise
-     * @param userId      the ID of the user who created the exercise
-     * @param lessonId    the ID of the lesson associated with the exercise
-     * @param published   whether the exercise is published or not
-     * @param commentable whether the exercise is commentable or not
+     * @param title          the exercise title
+     * @param content        the exercise content
+     * @param userPublicId   the author's public ID
+     * @param lessonPublicId the parent lesson's public ID
+     * @param published      whether the exercise is published
+     * @param commentable    whether comments are enabled
      */
-    public ExerciseDto(final String title, final String content, final Long userId, final Long lessonId,
+    public ExerciseDto(final String title, final String content, final String userPublicId, final String lessonPublicId,
             final Boolean published, final Boolean commentable) {
         this.title = title;
         this.content = content;
-        this.userId = userId;
-        this.lessonId = lessonId;
+        this.userPublicId = userPublicId;
+        this.lessonPublicId = lessonPublicId;
         this.published = published;
         this.commentable = commentable;
     }
 
     /**
-     * Helper class for nested user field access.
+     * Nested field representing a user reference.
      */
     public static class UserField {
-        public Long id;
+        public String publicId;
         public String username;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public UserField() {
         }
 
-        public UserField(final Long id) {
-            this.id = id;
+        /**
+         * Constructs a UserField with the given public ID.
+         *
+         * @param publicId the user's public identifier
+         */
+        public UserField(final String publicId) {
+            this.publicId = publicId;
         }
 
-        /**
-         * Set the nested user's id.
-         *
-         * @param id user id
-         */
-        public void setId(final Long id) {
-            this.id = id;
+        public void setPublicId(final String publicId) {
+            this.publicId = publicId;
         }
 
-        /**
-         * Set the nested user's username.
-         *
-         * @param username username string
-         */
         public void setUsername(final String username) {
             this.username = username;
         }
     }
 
     /**
-     * Helper class for nested lesson field access.
+     * Nested field representing a lesson reference.
      */
     public static class LessonField {
-        public Long id;
+        public String publicId;
         public String name;
 
+        /**
+         * Default constructor for JSON mapping.
+         */
         public LessonField() {
         }
 
-        public LessonField(final Long id) {
-            this.id = id;
+        /**
+         * Constructs a LessonField with the given public ID.
+         *
+         * @param publicId the lesson's public identifier
+         */
+        public LessonField(final String publicId) {
+            this.publicId = publicId;
+        }
+
+        public void setPublicId(final String publicId) {
+            this.publicId = publicId;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
         }
     }
 
     /**
-     * Ensure userId/lessonId and nested objects stay in sync
+     * Synchronizes the nested user and lesson fields with their flat public ID fields.
+     * When both a nested object and its corresponding flat field are present and
+     * non-null, the nested object's publicId takes precedence and will overwrite
+     * the flat field. A warning is logged when the two values differ.
      */
     public void syncNestedFields() {
-        if (this.user != null && this.user.id != null) {
-            this.userId = this.user.id;
-        } else if (this.userId != null && this.user == null) {
-            this.user = new UserField(this.userId);
+        if (this.user != null && this.user.publicId != null) {
+            if (this.userPublicId != null && !this.user.publicId.equals(this.userPublicId)) {
+                LOG.warn("Conflict in syncNestedFields: user.publicId ({}) differs from userPublicId ({}). Using nested value.",
+                        this.user.publicId, this.userPublicId);
+            }
+            this.userPublicId = this.user.publicId;
+        } else if (this.userPublicId != null && this.user == null) {
+            this.user = new UserField(this.userPublicId);
         }
 
-        if (this.lesson != null && this.lesson.id != null) {
-            this.lessonId = this.lesson.id;
-        } else if (this.lessonId != null && this.lesson == null) {
-            this.lesson = new LessonField(this.lessonId);
+        if (this.lesson != null && this.lesson.publicId != null) {
+            if (this.lessonPublicId != null && !this.lesson.publicId.equals(this.lessonPublicId)) {
+                LOG.warn("Conflict in syncNestedFields: lesson.publicId ({}) differs from lessonPublicId ({}). Using nested value.",
+                        this.lesson.publicId, this.lessonPublicId);
+            }
+            this.lessonPublicId = this.lesson.publicId;
+        } else if (this.lessonPublicId != null && this.lesson == null) {
+            this.lesson = new LessonField(this.lessonPublicId);
         }
     }
 }

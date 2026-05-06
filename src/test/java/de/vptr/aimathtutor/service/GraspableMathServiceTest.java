@@ -45,7 +45,7 @@ class GraspableMathServiceTest {
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         dto.title = "ex_" + suffix;
         dto.content = "content " + suffix;
-        dto.userId = teacher.id;
+        dto.userPublicId = teacher.publicId;
         dto.published = true;
         dto.commentable = false;
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);

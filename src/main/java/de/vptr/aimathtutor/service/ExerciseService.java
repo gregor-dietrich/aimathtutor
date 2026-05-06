@@ -74,6 +74,19 @@ public class ExerciseService {
     }
 
     /**
+     * Retrieves a single exercise by its public ID with user completion tracking.
+     *
+     * @param publicId the exercise public ID
+     * @return an {@link Optional} containing the {@link ExerciseViewDto} with
+     *         completion data, or empty if not found
+     */
+    @Transactional
+    public Optional<ExerciseViewDto> findByPublicId(final String publicId) {
+        return this.exerciseRepository.findByPublicId(publicId)
+                .map(entity -> this.exerciseCompletionService.enrichWithCompletionData(new ExerciseViewDto(entity)));
+    }
+
+    /**
      * Retrieves all published exercises with user completion tracking.
      *
      * @return a list of published {@link ExerciseViewDto}s with enriched completion
@@ -122,13 +135,13 @@ public class ExerciseService {
      * @return a map of lesson ID to list of published {@link ExerciseViewDto}s
      */
     @Transactional
-    public Map<Long, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
+    public Map<String, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
         final List<ExerciseViewDto> dtos = this.exerciseRepository.findPublished().stream()
                 .map(ExerciseViewDto::new)
                 .toList();
         final List<ExerciseViewDto> enriched = this.exerciseCompletionService.enrichListWithCompletionData(dtos);
         return enriched.stream().collect(HashMap::new,
-                (map, dto) -> map.computeIfAbsent(dto.lessonId, ignored -> new ArrayList<>()).add(dto), Map::putAll);
+                (map, dto) -> map.computeIfAbsent(dto.lessonPublicId, ignored -> new ArrayList<>()).add(dto), Map::putAll);
     }
 
     /**
@@ -177,7 +190,7 @@ public class ExerciseService {
         if (exerciseDto.content == null || exerciseDto.content.isBlank()) {
             throw new ValidationException("Content is required for creating an exercise");
         }
-        if (exerciseDto.userId == null) {
+        if (exerciseDto.userPublicId == null) {
             throw new ValidationException("User ID is required for creating an exercise");
         }
 
@@ -204,17 +217,17 @@ public class ExerciseService {
         exercise.graspableHints = exerciseDto.graspableHints;
 
         // Set user - required for creation
-        final UserEntity user = this.userRepository.findById(exerciseDto.userId);
+        final UserEntity user = this.userRepository.findByPublicId(exerciseDto.userPublicId).orElse(null);
         if (user == null) {
-            throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
+            throw new ValidationException("User with publicId " + exerciseDto.userPublicId + " not found");
         }
         exercise.user = user;
 
-        // Set exercise if provided
-        if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
+        // Set lesson if provided
+        if (exerciseDto.lessonPublicId != null) {
+            final LessonEntity lesson = this.lessonRepository.findByPublicId(exerciseDto.lessonPublicId).orElse(null);
             if (lesson == null) {
-                throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
+                throw new ValidationException("Lesson with publicId " + exerciseDto.lessonPublicId + " not found");
             }
             exercise.lesson = lesson;
         }
@@ -229,7 +242,7 @@ public class ExerciseService {
      * Graspable Math configuration.
      * Updates last edit timestamp. Preserves existing user if userId not provided.
      *
-     * @param id          the exercise ID to update
+     * @param publicId    the exercise ID to update
      * @param exerciseDto the new exercise data
      * @return the updated {@link ExerciseViewDto}
      * @throws WebApplicationException if exercise not found (NOT_FOUND status)
@@ -237,7 +250,7 @@ public class ExerciseService {
      *                                 are invalid
      */
     @Transactional
-    public ExerciseViewDto updateExercise(final Long id, final @Valid ExerciseDto exerciseDto) {
+    public ExerciseViewDto updateExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
         // Validate required fields for PUT
         if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for updating an exercise");
@@ -246,7 +259,7 @@ public class ExerciseService {
             throw new ValidationException("Content is required for updating an exercise");
         }
 
-        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
+        final ExerciseEntity existingExercise = this.exerciseRepository.findByPublicId(publicId).orElse(null);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
@@ -274,20 +287,20 @@ public class ExerciseService {
         existingExercise.graspableHints = exerciseDto.graspableHints;
 
         // Set user if provided, otherwise keep existing user
-        if (exerciseDto.userId != null) {
-            final UserEntity user = this.userRepository.findById(exerciseDto.userId);
+        if (exerciseDto.userPublicId != null) {
+            final UserEntity user = this.userRepository.findByPublicId(exerciseDto.userPublicId).orElse(null);
             if (user == null) {
-                throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
+                throw new ValidationException("User with publicId " + exerciseDto.userPublicId + " not found");
             }
             existingExercise.user = user;
         }
-        // Note: Do not set to null if userId is not provided - preserve existing user
+        // Note: Do not set to null if userPublicId is not provided - preserve existing user
 
         // Set lesson if provided
-        if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
+        if (exerciseDto.lessonPublicId != null) {
+            final LessonEntity lesson = this.lessonRepository.findByPublicId(exerciseDto.lessonPublicId).orElse(null);
             if (lesson == null) {
-                throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
+                throw new ValidationException("Lesson with publicId " + exerciseDto.lessonPublicId + " not found");
             }
             existingExercise.lesson = lesson;
         } else {
@@ -305,15 +318,15 @@ public class ExerciseService {
      * Updates last edit timestamp. Validates user and lesson references if
      * provided.
      *
-     * @param id          the exercise ID to update
+     * @param publicId    the public ID of the exercise to update
      * @param exerciseDto the partial exercise data with selected fields to update
      * @return the updated {@link ExerciseViewDto}
      * @throws WebApplicationException if exercise not found (NOT_FOUND status)
      * @throws ValidationException     if provided references are invalid
      */
     @Transactional
-    public ExerciseViewDto patchExercise(final Long id, final @Valid ExerciseDto exerciseDto) {
-        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
+    public ExerciseViewDto patchExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
+        final ExerciseEntity existingExercise = this.exerciseRepository.findByPublicId(publicId).orElse(null);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
@@ -350,19 +363,19 @@ public class ExerciseService {
         }
 
         // Set user if provided
-        if (exerciseDto.userId != null) {
-            final UserEntity user = this.userRepository.findById(exerciseDto.userId);
+        if (exerciseDto.userPublicId != null) {
+            final UserEntity user = this.userRepository.findByPublicId(exerciseDto.userPublicId).orElse(null);
             if (user == null) {
-                throw new ValidationException("User with ID " + exerciseDto.userId + " not found");
+                throw new ValidationException("User with publicId " + exerciseDto.userPublicId + " not found");
             }
             existingExercise.user = user;
         }
 
         // Set lesson if provided
-        if (exerciseDto.lessonId != null) {
-            final LessonEntity lesson = this.lessonRepository.findById(exerciseDto.lessonId);
+        if (exerciseDto.lessonPublicId != null) {
+            final LessonEntity lesson = this.lessonRepository.findByPublicId(exerciseDto.lessonPublicId).orElse(null);
             if (lesson == null) {
-                throw new ValidationException("Lesson with ID " + exerciseDto.lessonId + " not found");
+                throw new ValidationException("Lesson with publicId " + exerciseDto.lessonPublicId + " not found");
             }
             existingExercise.lesson = lesson;
         }
@@ -374,13 +387,13 @@ public class ExerciseService {
     /**
      * Deletes an exercise by ID.
      *
-     * @param id the exercise ID to delete
+     * @param publicId the exercise ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if exercise not
      *         found
      */
     @Transactional
-    public boolean deleteExercise(final Long id) {
-        return this.exerciseRepository.deleteById(id);
+    public boolean deleteExercise(final String publicId) {
+        return this.exerciseRepository.deleteByPublicId(publicId);
     }
 
     /**

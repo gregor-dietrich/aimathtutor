@@ -47,6 +47,7 @@ public class CommentsPanel extends VerticalLayout {
     private static final Logger LOG = LoggerFactory.getLogger(CommentsPanel.class);
 
     private final Long exerciseId;
+    private final String exercisePublicId;
     private final String sessionId;
     private final Long currentUserId;
     private static final int pageSize = 50;
@@ -55,18 +56,21 @@ public class CommentsPanel extends VerticalLayout {
     private TextArea commentTextArea;
     private Button submitButton;
     private int currentPage = 0;
-    private Long currentParentId = null;
+    private String currentParentPublicId = null;
     private transient Consumer<CommentCreatedEvent> commentCreatedListener;
 
     /**
      * Create a comments panel for the specified exercise/session and user.
      *
-     * @param exerciseId    id of the exercise to display comments for
-     * @param sessionId     external session id (optional)
-     * @param currentUserId current user database id (may be null)
+     * @param exerciseId       id of the exercise to display comments for
+     * @param exercisePublicId public id of the exercise to display comments for
+     * @param sessionId        external session id (optional)
+     * @param currentUserId    current user database id (may be null)
      */
-    public CommentsPanel(final Long exerciseId, final String sessionId, final Long currentUserId) {
+    public CommentsPanel(final Long exerciseId, final String exercisePublicId, final String sessionId,
+            final Long currentUserId) {
         this.exerciseId = exerciseId;
+        this.exercisePublicId = exercisePublicId;
         this.sessionId = sessionId;
         this.currentUserId = currentUserId;
         this.buildUi();
@@ -165,9 +169,9 @@ public class CommentsPanel extends VerticalLayout {
             this.commentsContainer.add(commentDiv);
 
             // If this comment has replies, load and display them
-            if (Boolean.TRUE.equals(comment.parentId == null)) {
+            if (comment.parentPublicId == null) {
                 try {
-                    final List<CommentViewDto> replies = this.getCommentService().findReplies(comment.id);
+                    final List<CommentViewDto> replies = this.getCommentService().findReplies(comment.publicId);
                     if (!replies.isEmpty()) {
                         final Div repliesContainer = new Div();
                         repliesContainer.addClassName("comment-replies");
@@ -183,7 +187,7 @@ public class CommentsPanel extends VerticalLayout {
                         this.commentsContainer.add(repliesContainer);
                     }
                 } catch (final Exception e) {
-                    LOG.debug("Failed to load replies for comment {}", comment.id, e);
+                    LOG.debug("Failed to load replies for comment {}", comment.publicId, e);
                 }
             }
         }
@@ -238,21 +242,21 @@ public class CommentsPanel extends VerticalLayout {
 
         // Show/hide based on status
         if (!CommentStatus.DELETED.equals(comment.status)) {
-            final Button replyButton = new ReplyButton(e -> this.onReplyClicked(comment.id));
+            final Button replyButton = new ReplyButton(e -> this.onReplyClicked(comment.publicId));
             actions.add(replyButton);
 
             if (comment.authorId == null || !comment.authorId.equals(this.currentUserId)) {
-                final Button reportButton = new ReportButton(e -> this.onReportClicked(comment.id));
+                final Button reportButton = new ReportButton(e -> this.onReportClicked(comment.publicId));
                 actions.add(reportButton);
             }
         }
 
         // Edit/Delete if author
         if (comment.authorId != null && comment.authorId.equals(this.currentUserId)) {
-            final Button editButton = new EditButton(e -> this.onEditClicked(comment.id, comment.content));
+            final Button editButton = new EditButton(e -> this.onEditClicked(comment.publicId, comment.content));
             actions.add(editButton);
 
-            final Button deleteButton = new DeleteButton(e -> this.onDeleteClicked(comment.id));
+            final Button deleteButton = new DeleteButton(e -> this.onDeleteClicked(comment.publicId));
             actions.add(deleteButton);
         }
 
@@ -284,19 +288,18 @@ public class CommentsPanel extends VerticalLayout {
             // Create DTO
             final CommentDto dto = new CommentDto();
             dto.content = text;
-            dto.exerciseId = this.exerciseId;
-            dto.parentCommentId = this.currentParentId;
+            dto.exercisePublicId = this.exercisePublicId;
+            dto.parentCommentPublicId = this.currentParentPublicId;
             dto.sessionId = this.sessionId;
 
             // Call service
             this.getCommentService().createComment(dto, this.currentUserId);
 
-            // Clear form
+            // Clear form and fully exit reply mode
             this.commentTextArea.clear();
-
-            // Reset pagination and reload
-            this.currentPage = 0;
-            this.loadComments();
+            this.refresh();
+            this.commentTextArea.setPlaceholder("Write a comment...");
+            this.submitButton.setText("Post Comment");
 
             NotificationUtil.showSuccess("Comment posted!");
         } catch (final Exception e) {
@@ -305,8 +308,8 @@ public class CommentsPanel extends VerticalLayout {
         }
     }
 
-    private void onReplyClicked(final Long commentId) {
-        this.currentParentId = commentId;
+    private void onReplyClicked(final String commentPublicId) {
+        this.currentParentPublicId = commentPublicId;
         this.commentTextArea.focus();
         this.commentTextArea.setPlaceholder("Reply to comment...");
         this.submitButton.setText("Post Reply");
@@ -316,7 +319,7 @@ public class CommentsPanel extends VerticalLayout {
         // when we next refresh the view
     }
 
-    private void onEditClicked(final Long commentId, final String currentContent) {
+    private void onEditClicked(final String commentPublicId, final String currentContent) {
         final Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Edit Comment");
 
@@ -328,7 +331,7 @@ public class CommentsPanel extends VerticalLayout {
             try {
                 final CommentDto dto = new CommentDto();
                 dto.content = editArea.getValue();
-                this.getCommentService().editComment(commentId, dto, this.currentUserId);
+                this.getCommentService().editComment(commentPublicId, dto, this.currentUserId);
                 dialog.close();
                 this.loadComments();
                 NotificationUtil.showSuccess("Comment updated!");
@@ -345,9 +348,9 @@ public class CommentsPanel extends VerticalLayout {
         dialog.open();
     }
 
-    private void onDeleteClicked(final Long commentId) {
+    private void onDeleteClicked(final String commentPublicId) {
         try {
-            this.getCommentService().deleteComment(commentId, this.currentUserId, true); // soft delete
+            this.getCommentService().deleteComment(commentPublicId, this.currentUserId, true); // soft delete
             this.loadComments();
             NotificationUtil.showSuccess("Comment deleted!");
         } catch (final Exception ex) {
@@ -356,9 +359,9 @@ public class CommentsPanel extends VerticalLayout {
         }
     }
 
-    private void onReportClicked(final Long commentId) {
+    private void onReportClicked(final String commentPublicId) {
         try {
-            this.getCommentService().flagComment(commentId, this.currentUserId, "Comment reported");
+            this.getCommentService().flagComment(commentPublicId, this.currentUserId, "Comment reported");
             NotificationUtil.showSuccess("Comment flagged for review");
         } catch (final Exception ex) {
             LOG.error("Failed to flag comment", ex);
@@ -412,7 +415,7 @@ public class CommentsPanel extends VerticalLayout {
      */
     public void refresh() {
         this.currentPage = 0;
-        this.currentParentId = null;
+        this.currentParentPublicId = null;
         this.loadComments();
     }
 

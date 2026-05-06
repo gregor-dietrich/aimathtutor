@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  */
 public class StudentProgressSummaryDto {
 
-    public Long userId;
+    public String userPublicId;
     public String username;
     public Integer totalSessions;
     public Integer completedSessions;
@@ -26,7 +26,7 @@ public class StudentProgressSummaryDto {
      * Constructs a StudentProgressSummaryDto with the specified parameters.
      */
     public StudentProgressSummaryDto(
-            final Long userId,
+            final String userPublicId,
             final String username,
             final Integer totalSessions,
             final Integer completedSessions,
@@ -36,7 +36,7 @@ public class StudentProgressSummaryDto {
             final Double averageActionsPerProblem,
             final Double successRate,
             final LocalDateTime lastActivity) {
-        this.userId = userId;
+        this.userPublicId = userPublicId;
         this.username = username;
         this.totalSessions = totalSessions;
         this.completedSessions = completedSessions;

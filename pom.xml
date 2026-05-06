@@ -34,6 +34,7 @@
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
+        <ulid-creator.version>5.2.4</ulid-creator.version>
         <vaadin.version>25.1.4</vaadin.version>
     </properties>
 
@@ -168,6 +169,13 @@
             <artifactId>owasp-java-html-sanitizer</artifactId>
             <version>${html-sanitizer.version}</version>
         </dependency>
+
+        <!-- ULID Creator for generating URL-safe unique identifiers -->
+        <dependency>
+            <groupId>com.github.f4b6a3</groupId>
+            <artifactId>ulid-creator</artifactId>
+            <version>${ulid-creator.version}</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -251,6 +259,7 @@
                     <configLocation>checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                 </configuration>
             </plugin>
             <plugin>

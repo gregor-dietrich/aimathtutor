@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,6 +20,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
@@ -31,9 +33,10 @@ import jakarta.validation.constraints.NotBlank;
         @Index(name = "idx_lesson_parent", columnList = "parent_id")
 })
 @NamedQueries({
-        @NamedQuery(name = "Lesson.findAllOrdered", query = "FROM LessonEntity ORDER BY id DESC"),
-        @NamedQuery(name = "Lesson.findRootLessons", query = "FROM LessonEntity WHERE parent IS NULL ORDER BY id DESC"),
-        @NamedQuery(name = "Lesson.findByParentId", query = "FROM LessonEntity WHERE parent.id = :p ORDER BY id DESC"),
+        @NamedQuery(name = "Lesson.findAllOrdered", query = "FROM LessonEntity ORDER BY created DESC, id DESC"),
+        @NamedQuery(name = "Lesson.findByPublicId", query = "FROM LessonEntity WHERE publicId = :p"),
+        @NamedQuery(name = "Lesson.findRootLessons", query = "FROM LessonEntity WHERE parent IS NULL ORDER BY created DESC, id DESC"),
+        @NamedQuery(name = "Lesson.findByParentId", query = "FROM LessonEntity WHERE parent.id = :p ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "Lesson.searchByName", query = "FROM LessonEntity WHERE LOWER(name) LIKE :s")
 })
 public class LessonEntity extends PanacheEntityBase {
@@ -44,6 +47,21 @@ public class LessonEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     @NotBlank
     @Column(nullable = false)

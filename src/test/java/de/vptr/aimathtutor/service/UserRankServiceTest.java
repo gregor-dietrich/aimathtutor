@@ -78,7 +78,8 @@ class UserRankServiceTest {
         final UserRankViewDto created = this.userRankService.createRank(rankDto);
 
         // Test: Find by ID
-        final Optional<UserRankViewDto> found = this.userRankService.findById(created.id);
+        final var rankEntity = this.userRankRepository.findByPublicId(created.publicId).orElseThrow();
+        final Optional<UserRankViewDto> found = this.userRankService.findById(rankEntity.id);
 
         assertTrue(found.isPresent());
         assertEquals("TestRank", found.get().name);
@@ -158,7 +159,7 @@ class UserRankServiceTest {
         updateDto.adminView = true;
         updateDto.exerciseAdd = true;
         updateDto.exerciseEdit = true;
-        final UserRankViewDto updated = this.userRankService.updateRank(created.id, updateDto);
+        final UserRankViewDto updated = this.userRankService.updateRank(created.publicId, updateDto);
 
         assertTrue(updated.adminView);
         assertTrue(updated.exerciseAdd);
@@ -191,7 +192,7 @@ class UserRankServiceTest {
         final UserRankDto updateDto = new UserRankDto();
         updateDto.name = "NonExistent";
 
-        assertThrows(Exception.class, () -> this.userRankService.updateRank(99999L, updateDto));
+        assertThrows(Exception.class, () -> this.userRankService.updateRank("00000000000000000000000000", updateDto));
     }
 
     @Test

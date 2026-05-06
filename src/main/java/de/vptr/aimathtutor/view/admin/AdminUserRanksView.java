@@ -151,7 +151,7 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(rank -> rank.id).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(rank -> rank.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
 
         // Make the name column clickable
         this.grid.addComponentColumn(rank -> {
@@ -433,11 +433,11 @@ public class AdminUserRanksView extends AbstractAdminView {
 
             this.binder.writeBean(this.currentRank);
 
-            if (this.currentRank.id == null) {
+            if (this.currentRank.publicId == null) {
                 this.rankService.createRank(this.currentRank);
                 NotificationUtil.showSuccess("Rank created successfully");
             } else {
-                this.rankService.updateRank(this.currentRank.id, this.currentRank);
+                this.rankService.updateRank(this.currentRank.publicId, this.currentRank);
                 NotificationUtil.showSuccess("Rank updated successfully");
             }
 
@@ -454,7 +454,7 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void deleteRank(final UserRankViewDto rank) {
         try {
-            if (this.rankService.deleteRank(rank.id)) {
+            if (this.rankService.deleteRank(rank.publicId)) {
                 NotificationUtil.showSuccess("Rank deleted successfully");
                 this.loadRanksAsync();
             } else {

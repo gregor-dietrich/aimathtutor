@@ -40,6 +40,22 @@ public class LessonRepository extends AbstractRepository {
     }
 
     /**
+     * Retrieves a lesson by its public identifier.
+     *
+     * @param publicId the public ID of the lesson
+     * @return an {@link Optional} containing the lesson if found, empty otherwise
+     */
+    public Optional<LessonEntity> findByPublicId(final String publicId) {
+        if (publicId == null) {
+            return Optional.empty();
+        }
+        final var q = this.em.createNamedQuery("Lesson.findByPublicId", LessonEntity.class);
+        q.setParameter("p", publicId);
+        q.setMaxResults(1);
+        return q.getResultStream().findFirst();
+    }
+
+    /**
      * Retrieves all lessons from the database in a defined order (descending by
      * ID).
      *
@@ -104,6 +120,22 @@ public class LessonRepository extends AbstractRepository {
     @Transactional
     public boolean deleteById(final Long id) {
         final LessonEntity e = this.findById(id);
+        if (e == null) {
+            return false;
+        }
+        this.em.remove(e);
+        return true;
+    }
+
+    /**
+     * Deletes the lesson with the given public ID.
+     *
+     * @param publicId the public ID of the lesson to delete
+     * @return true if the lesson was successfully deleted, false if not found
+     */
+    @Transactional
+    public boolean deleteByPublicId(final String publicId) {
+        final LessonEntity e = this.findByPublicId(publicId).orElse(null);
         if (e == null) {
             return false;
         }

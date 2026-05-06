@@ -6,6 +6,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
@@ -28,8 +30,9 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing comments on exercises.
  */
 @NamedQueries({
-        @NamedQuery(name = "Comment.findAllOrdered", query = "FROM CommentEntity ORDER BY id DESC"),
-        @NamedQuery(name = "Comment.findAllWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment ORDER BY c.id DESC"),
+        @NamedQuery(name = "Comment.findAllOrdered", query = "FROM CommentEntity ORDER BY created DESC"),
+        @NamedQuery(name = "Comment.findByPublicId", query = "FROM CommentEntity WHERE publicId = :id"),
+        @NamedQuery(name = "Comment.findAllWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findByIdWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.id = :id"),
         @NamedQuery(name = "Comment.findByExerciseId", query = "FROM CommentEntity WHERE exercise.id = :e ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findByExerciseIdWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.exercise.id = :e ORDER BY c.created DESC"),
@@ -39,10 +42,10 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findRecentWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findBySessionId", query = "FROM CommentEntity WHERE sessionId = :s ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findBySessionIdWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.sessionId = :s ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findReplies", query = "FROM CommentEntity WHERE parentComment.id = :p AND status = 'VISIBLE' ORDER BY created ASC"),
-        @NamedQuery(name = "Comment.findRepliesWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.parentComment.id = :p AND c.status = 'VISIBLE' ORDER BY c.created ASC"),
-        @NamedQuery(name = "Comment.findRepliesPaged", query = "FROM CommentEntity WHERE parentComment.id = :p AND status = 'VISIBLE' ORDER BY created ASC"),
-        @NamedQuery(name = "Comment.findTopLevelByExercise", query = "FROM CommentEntity WHERE exercise.id = :e AND parentComment IS NULL AND status = 'VISIBLE' ORDER BY id DESC"),
+        @NamedQuery(name = "Comment.findReplies", query = "FROM CommentEntity WHERE parentComment.publicId = :p AND status = 'VISIBLE' ORDER BY created ASC"),
+        @NamedQuery(name = "Comment.findRepliesWithRelations", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.parentComment.publicId = :p AND c.status = 'VISIBLE' ORDER BY c.created ASC"),
+        @NamedQuery(name = "Comment.findRepliesPaged", query = "FROM CommentEntity WHERE parentComment.publicId = :p AND status = 'VISIBLE' ORDER BY created ASC"),
+        @NamedQuery(name = "Comment.findTopLevelByExercise", query = "FROM CommentEntity WHERE exercise.id = :e AND parentComment IS NULL AND status = 'VISIBLE' ORDER BY created DESC"),
         @NamedQuery(name = "Comment.countByUserSince", query = "SELECT COUNT(c) FROM CommentEntity c WHERE c.user.id = :u AND c.created >= :s"),
         @NamedQuery(name = "Comment.searchByTerm", query = "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE LOWER(c.content) LIKE LOWER(:s) AND c.status != 'DELETED' ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findByDateRange", query = "FROM CommentEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
@@ -66,6 +69,21 @@ public class CommentEntity extends PanacheEntityBase {
 
     @Version
     public Long version;
+
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    public String publicId;
+
+    /**
+     * Generates a ULID-based public identifier for this entity if not already set.
+     */
+    @PrePersist
+    public void generatePublicId() {
+        if (this.publicId == null || this.publicId.isBlank()) {
+            this.publicId = UlidService.generate();
+            return;
+        }
+        UlidService.requireValid(this.publicId);
+    }
 
     @Column(columnDefinition = "TEXT", nullable = false)
     @NotBlank

@@ -45,7 +45,7 @@ class CommentModerationServiceTest {
     void shouldThrowNotFoundForNonExistentComment() {
         final UserEntity moderator = this.userRepository.findById(1L);
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment(99999L, "HIDE", moderator.id, "reason"));
+                () -> this.moderationService.moderateComment("00000000000000000000000000", "HIDE", moderator.id, "reason"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -58,7 +58,7 @@ class CommentModerationServiceTest {
         final var comment = this.createComment(exercise, regularUser);
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment(comment.id, "HIDE", regularUser.id, "reason"));
+                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", regularUser.id, "reason"));
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -71,7 +71,7 @@ class CommentModerationServiceTest {
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
-        this.moderationService.moderateComment(comment.id, "HIDE", moderator.id, "Offensive content");
+        this.moderationService.moderateComment(comment.publicId, "HIDE", moderator.id, "Offensive content");
 
         assertEquals(CommentStatus.HIDDEN, comment.status);
         assertEquals("Offensive content", comment.moderationReason);
@@ -92,7 +92,7 @@ class CommentModerationServiceTest {
         comment.deletedBy = moderator;
         comment.deletedAt = LocalDateTime.now();
 
-        this.moderationService.moderateComment(comment.id, "SHOW", moderator.id, "Approved");
+        this.moderationService.moderateComment(comment.publicId, "SHOW", moderator.id, "Approved");
 
         assertEquals(CommentStatus.VISIBLE, comment.status);
         assertEquals(0, comment.flagsCount);
@@ -110,7 +110,7 @@ class CommentModerationServiceTest {
         final var comment = this.createComment(exercise, author);
         comment.status = CommentStatus.DELETED;
 
-        this.moderationService.moderateComment(comment.id, "RESTORE", moderator.id, "Restored");
+        this.moderationService.moderateComment(comment.publicId, "RESTORE", moderator.id, "Restored");
 
         assertEquals(CommentStatus.VISIBLE, comment.status);
         assertEquals(0, comment.flagsCount);
@@ -126,7 +126,7 @@ class CommentModerationServiceTest {
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
-        this.moderationService.moderateComment(comment.id, "DELETE", moderator.id, "Spam");
+        this.moderationService.moderateComment(comment.publicId, "DELETE", moderator.id, "Spam");
 
         assertEquals(CommentStatus.DELETED, comment.status);
         assertEquals("DELETE", comment.moderationAction);
@@ -144,7 +144,7 @@ class CommentModerationServiceTest {
         final var comment = this.createComment(exercise, author);
 
         assertThrows(ValidationException.class,
-                () -> this.moderationService.moderateComment(comment.id, "INVALID", moderator.id, "reason"));
+                () -> this.moderationService.moderateComment(comment.publicId, "INVALID", moderator.id, "reason"));
     }
 
     @Test
@@ -158,7 +158,7 @@ class CommentModerationServiceTest {
 
         final String longReason = "a".repeat(501);
         assertThrows(ValidationException.class,
-                () -> this.moderationService.moderateComment(comment.id, "HIDE", moderator.id, longReason));
+                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", moderator.id, longReason));
     }
 
     @Test
@@ -171,7 +171,7 @@ class CommentModerationServiceTest {
         final var comment = this.createComment(exercise, author);
 
         assertThrows(ValidationException.class,
-                () -> this.moderationService.moderateComment(comment.id, null, moderator.id, "reason"));
+                () -> this.moderationService.moderateComment(comment.publicId, null, moderator.id, "reason"));
     }
 
     private CommentEntity createComment(final ExerciseEntity exercise, final UserEntity user) {
