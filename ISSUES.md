@@ -289,7 +289,7 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
-### 6. OWASP Dependency-Check & Secret Scanning
+## 6. OWASP Dependency-Check & Secret Scanning
 
 **Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
 

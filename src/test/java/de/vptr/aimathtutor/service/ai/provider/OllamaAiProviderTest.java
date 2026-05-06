@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
@@ -57,14 +57,17 @@ class OllamaAiProviderTest {
         final var context = new ConversationContextDto();
         final var expected = AiFeedbackDto.hint("Factor out the common term.");
 
-        when(this.promptBuilderService.buildMathTutoringPrompt(any(), any())).thenReturn("prompt");
+        when(this.promptBuilderService.buildMathTutoringPrompt(event, context)).thenReturn("prompt");
         when(this.ollamaService.generateContent("prompt")).thenReturn("{\"type\":\"HINT\"}");
-        when(this.jsonRepairService.parseFeedbackFromJson(any())).thenReturn(expected);
+        when(this.jsonRepairService.parseFeedbackFromJson("{\"type\":\"HINT\"}")).thenReturn(expected);
 
         final var result = this.ollamaAiProvider.analyzeMathAction(event, context);
 
         assertNotNull(result);
         assertEquals("Factor out the common term.", result.message);
+        verify(this.promptBuilderService).buildMathTutoringPrompt(event, context);
+        verify(this.ollamaService).generateContent("prompt");
+        verify(this.jsonRepairService).parseFeedbackFromJson("{\"type\":\"HINT\"}");
     }
 
     @Test
@@ -72,7 +75,7 @@ class OllamaAiProviderTest {
     void testAnswerQuestion_returnsGeneratedContent() {
         final var context = new ConversationContextDto();
 
-        when(this.promptBuilderService.buildQuestionAnsweringPrompt(any(), any(), any(), any(), any()))
+        when(this.promptBuilderService.buildQuestionAnsweringPrompt("How do I factor?", "x^2", "x^2+x", "x", context))
                 .thenReturn("q-prompt");
         when(this.ollamaService.generateContent("q-prompt")).thenReturn("Factor using FOIL.");
 
@@ -80,5 +83,7 @@ class OllamaAiProviderTest {
 
         assertNotNull(result);
         assertEquals("Factor using FOIL.", result);
+        verify(this.promptBuilderService).buildQuestionAnsweringPrompt("How do I factor?", "x^2", "x^2+x", "x", context);
+        verify(this.ollamaService).generateContent("q-prompt");
     }
 }

@@ -146,5 +146,7 @@ public class ExerciseRepositoryIT {
 
         final List<ExerciseEntity> result = this.exerciseRepository.search("");
         Assertions.assertFalse(result.isEmpty(), "Blank search should return all exercises");
+        Assertions.assertTrue(result.stream().anyMatch(e -> "BlankSearchEx".equals(e.title)),
+                "Blank search should include the test exercise");
     }
 }
