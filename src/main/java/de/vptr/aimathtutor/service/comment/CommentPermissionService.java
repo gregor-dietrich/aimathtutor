@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.comment;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.service.PermissionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response.Status;
@@ -9,7 +10,7 @@ import jakarta.ws.rs.core.Response.Status;
 /**
  * Service for comment ownership checks.
  * Rank-based permissions (e.g. commentEdit, commentDelete) are enforced
- * by {@link de.vptr.aimathtutor.service.PermissionService} in the service layer.
+ * by {@link PermissionService} in the service layer.
  * This class only verifies that a user is the author of a comment.
  */
 @ApplicationScoped
