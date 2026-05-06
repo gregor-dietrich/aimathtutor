@@ -40,6 +40,7 @@ class OllamaAiProviderTest {
     void testIsAvailable_whenAvailable() {
         when(this.ollamaService.isAvailable()).thenReturn(true);
         assertTrue(this.ollamaAiProvider.isAvailable());
+        verify(this.ollamaService).isAvailable();
     }
 
     @Test
@@ -47,6 +48,7 @@ class OllamaAiProviderTest {
     void testIsAvailable_whenNotAvailable() {
         when(this.ollamaService.isAvailable()).thenReturn(false);
         assertFalse(this.ollamaAiProvider.isAvailable());
+        verify(this.ollamaService).isAvailable();
     }
 
     @Test
@@ -83,7 +85,8 @@ class OllamaAiProviderTest {
 
         assertNotNull(result);
         assertEquals("Factor using FOIL.", result);
-        verify(this.promptBuilderService).buildQuestionAnsweringPrompt("How do I factor?", "x^2", "x^2+x", "x", context);
+        verify(this.promptBuilderService).buildQuestionAnsweringPrompt("How do I factor?", "x^2", "x^2+x", "x",
+                context);
         verify(this.ollamaService).generateContent("q-prompt");
     }
 }
