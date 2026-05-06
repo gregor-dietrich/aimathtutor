@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -337,7 +338,8 @@ class ExerciseServiceTest {
     @TestTransaction
     void testFindByDateRange_today() {
         this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
-        final String today = LocalDate.now().toString();
+        // DB stores CURRENT_TIMESTAMP in UTC; use UTC date to match
+        final String today = LocalDate.now(ZoneOffset.UTC).toString();
         final var results = this.exerciseService.findByDateRange(today, today);
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Exercise created today should be in today's date range");
