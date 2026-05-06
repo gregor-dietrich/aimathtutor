@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
@@ -37,7 +36,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class AiTutorService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiTutorService.class);
+    private static final Logger LOG = Logger.getLogger(AiTutorService.class);
 
     @Inject
     AiConfigService aiConfigService;
@@ -91,10 +90,10 @@ public class AiTutorService {
         if (event == null) {
             throw new IllegalArgumentException("event cannot be null");
         }
-        LOG.info("Analyzing math action: eventType='{}', beforeLen={}, afterLen={}, contextActions={}",
-                event.eventType,
-                event.expressionBefore != null ? event.expressionBefore.length() : 0,
-                event.expressionAfter != null ? event.expressionAfter.length() : 0,
+        LOG.infof("Analyzing math action: eventType='%s', beforeLen=%s, afterLen=%s, contextActions=%s", 
+                event.eventType, 
+                event.expressionBefore != null ? event.expressionBefore.length() : 0, 
+                event.expressionAfter != null ? event.expressionAfter.length() : 0, 
                 context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
@@ -112,14 +111,14 @@ public class AiTutorService {
 
         // Filter out insignificant actions to reduce spam
         if (!this.isSignificantAction(event)) {
-            LOG.info("Skipping feedback for insignificant action: eventType='{}'",
+            LOG.infof("Skipping feedback for insignificant action: eventType='%s'", 
                     event.eventType);
             return null;
         }
 
         // Load dynamic provider configuration
         final var aiProvider = this.getConfigString(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
-        LOG.info("Action is significant, generating feedback with provider: {}", aiProvider);
+        LOG.infof("Action is significant, generating feedback with provider: %s",  aiProvider);
 
         // Use different AI provider based on configuration
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
@@ -179,7 +178,7 @@ public class AiTutorService {
             return false;
         }
         if (!this.rateLimitService.tryConsume(userIdStr)) {
-            LOG.warn("AI tutor rate limit exceeded for user: {}", userIdStr);
+            LOG.warnf("AI tutor rate limit exceeded for user: %s",  userIdStr);
             return false;
         }
         return true;
@@ -222,7 +221,7 @@ public class AiTutorService {
         if (type.contains("postinteraction")
                 || type.contains("addsubnumbers") // Automatic number combining
                 || type.contains("autosimp")) {
-            LOG.debug("Skipping automatic simplification: {}", type);
+            LOG.debugf("Skipping automatic simplification: %s",  type);
             return false;
         }
 
@@ -263,9 +262,9 @@ public class AiTutorService {
         if (question == null) {
             throw new IllegalArgumentException("question cannot be null");
         }
-        LOG.debug("Answering question (session: {}, questionLen: {}, contextActions: {})",
-                sessionId,
-                question.length(),
+        LOG.debugf("Answering question (session: %s, questionLen: %s, contextActions: %s)", 
+                sessionId, 
+                question.length(), 
                 context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
@@ -370,13 +369,13 @@ public class AiTutorService {
     private AiFeedbackDto safeAnalyze(final AiProvider provider, final GraspableEventDto event,
             final ConversationContextDto context) {
         if (!provider.isAvailable()) {
-            LOG.warn("{} not configured, falling back to mock AI", provider.getClass().getSimpleName());
+            LOG.warnf("%s not configured, falling back to mock AI",  provider.getClass().getSimpleName());
             return this.mockAiProvider.analyzeMathAction(event, context);
         }
         try {
             return provider.analyzeMathAction(event, context);
         } catch (final RuntimeException e) {
-            LOG.error("Error using {}, falling back to mock", provider.getClass().getSimpleName(), e);
+            LOG.errorf(e, "Error using %s, falling back to mock",  provider.getClass().getSimpleName());
             return this.mockAiProvider.analyzeMathAction(event, context);
         }
     }
@@ -385,14 +384,14 @@ public class AiTutorService {
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
         if (!provider.isAvailable()) {
-            LOG.warn("{} not configured, falling back to mock AI", provider.getClass().getSimpleName());
+            LOG.warnf("%s not configured, falling back to mock AI",  provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                     context);
         }
         try {
             return provider.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
         } catch (final RuntimeException e) {
-            LOG.error("Error using {}, falling back to mock", provider.getClass().getSimpleName(), e);
+            LOG.errorf(e, "Error using %s, falling back to mock",  provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                     context);
         }
@@ -400,7 +399,7 @@ public class AiTutorService {
 
     private String getConfigString(final String key, final String defaultValue) {
         if (this.aiConfigService == null) {
-            LOG.debug("AiConfigService not injected, using default for key={}", key);
+            LOG.debugf("AiConfigService not injected, using default for key=%s",  key);
             return defaultValue;
         }
         return this.aiConfigService.getConfigValue(key, defaultValue);
@@ -408,7 +407,7 @@ public class AiTutorService {
 
     private Boolean getConfigBoolean(final String key, final Boolean defaultValue) {
         if (this.aiConfigService == null) {
-            LOG.debug("AiConfigService not injected, using default for key={}", key);
+            LOG.debugf("AiConfigService not injected, using default for key=%s",  key);
             return defaultValue;
         }
         return this.aiConfigService.getConfigValueAsBoolean(key, defaultValue);

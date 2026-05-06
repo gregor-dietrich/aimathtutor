@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -60,7 +59,7 @@ import jakarta.inject.Inject;
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
 public class AdminExercisesView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminExercisesView.class);
+    private static final Logger LOG = Logger.getLogger(AdminExercisesView.class);
 
     @Inject
     private transient ExerciseService exerciseService;
@@ -116,7 +115,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 () -> this.exerciseService.getAllExercises(),
                 this,
                 exercises -> {
-                    LOG.info("Successfully loaded {} exercises", exercises.size());
+                    LOG.infof("Successfully loaded %s exercises",  exercises.size());
                     this.grid.setItems(exercises);
                 },
                 "Failed to load exercises. Please try again.");
@@ -128,7 +127,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 () -> this.exerciseService.findPublishedExercises(),
                 this,
                 exercises -> {
-                    LOG.info("Successfully loaded {} published exercises", exercises.size());
+                    LOG.infof("Successfully loaded %s published exercises",  exercises.size());
                     this.grid.setItems(exercises);
                 },
                 "Failed to load published exercises. Please try again.");
@@ -141,7 +140,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 this,
                 lessons -> {
                     this.availableLessons = lessons;
-                    LOG.info("Successfully loaded {} lessons", this.availableLessons.size());
+                    LOG.infof("Successfully loaded %s lessons",  this.availableLessons.size());
                 },
                 () -> {
                     this.availableLessons = List.of();

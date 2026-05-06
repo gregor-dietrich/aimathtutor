@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
@@ -21,7 +20,7 @@ import jakarta.transaction.Transactional;
  */
 @ApplicationScoped
 public class AuthService {
-    private static final Logger LOG = LoggerFactory.getLogger(AuthService.class);
+    private static final Logger LOG = Logger.getLogger(AuthService.class);
 
     @Inject
     PasswordHashingService passwordHashingService;
@@ -41,8 +40,10 @@ public class AuthService {
 
     /**
      * How long an {@link #isAuthenticated()} result may be served from the session
-     * without re-validating against the database. Keeps {@code beforeEnter} navigation
-     * checks off the DB while still picking up bans/deactivations within a short window.
+     * without re-validating against the database. Keeps {@code beforeEnter}
+     * navigation
+     * checks off the DB while still picking up bans/deactivations within a short
+     * window.
      */
     private static final long AUTH_CACHE_TTL_MILLIS = 30_000L;
 
@@ -58,7 +59,7 @@ public class AuthService {
      */
     @Transactional
     public AuthResultDto authenticate(final String username, final String password) {
-        LOG.trace("Starting authentication for user: {}", username);
+        LOG.tracef("Starting authentication for user: %s",  username);
 
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             LOG.trace("Username or password is empty");
@@ -71,7 +72,7 @@ public class AuthService {
         // Check login attempt throttling by username
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
-            LOG.warn("Authentication throttled for user: {} ({}s remaining)", username, remaining);
+            LOG.warnf("Authentication throttled for user: %s (%ss remaining)",  username,  remaining);
             return AuthResultDto
                     .backendUnavailable("Too many failed attempts. Try again later.");
         }
@@ -79,7 +80,7 @@ public class AuthService {
         // Check login attempt throttling by IP
         if (clientIp != null && this.loginAttemptService.isLockedOut(clientIp)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientIp);
-            LOG.warn("Authentication throttled for IP: {} ({}s remaining)", clientIp, remaining);
+            LOG.warnf("Authentication throttled for IP: %s (%ss remaining)",  clientIp,  remaining);
             return AuthResultDto
                     .backendUnavailable("Too many failed attempts. Try again later.");
         }
@@ -89,7 +90,7 @@ public class AuthService {
             final var user = this.userRepository.findByUsername(usernameKey);
 
             if (user == null) {
-                LOG.trace("Authentication failed - user not found: {}", usernameKey);
+                LOG.tracef("Authentication failed - user not found: %s",  usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -99,7 +100,7 @@ public class AuthService {
 
             // Check if user is banned
             if (user.banned) {
-                LOG.trace("Authentication failed - user is banned: {}", usernameKey);
+                LOG.tracef("Authentication failed - user is banned: %s",  usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -109,7 +110,7 @@ public class AuthService {
 
             // Check if user is activated
             if (!user.activated) {
-                LOG.trace("Authentication failed - user is not activated: {}", usernameKey);
+                LOG.tracef("Authentication failed - user is not activated: %s",  usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -119,7 +120,7 @@ public class AuthService {
 
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
-                LOG.trace("Authentication failed - invalid password for user: {}", usernameKey);
+                LOG.tracef("Authentication failed - invalid password for user: %s",  usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -131,7 +132,7 @@ public class AuthService {
             try {
                 this.userRepository.persist(user);
             } catch (final PersistenceException e) {
-                LOG.warn("Failed to persist user {} during login: {}", user.username, e.getMessage());
+                LOG.warnf(e, "Failed to persist user %s during login: %s",  user.username,  e.getMessage());
                 // continue with login even if persist failed
             }
 
@@ -153,16 +154,16 @@ public class AuthService {
                     session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
                 }
             } catch (final RuntimeException e) {
-                LOG.error("Failed to complete login for user {}: {}", username, e.getMessage(), e);
+                LOG.errorf(e, "Failed to complete login for user %s: %s",  username,  e.getMessage());
                 return AuthResultDto
                         .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
             }
 
-            LOG.trace("User authenticated successfully: {}", username);
+            LOG.tracef("User authenticated successfully: %s",  username);
             return AuthResultDto.success();
 
         } catch (final PersistenceException e) {
-            LOG.error("Database error during authentication for user: {}", username, e);
+            LOG.errorf(e, "Database error during authentication for user: %s",  username);
             return AuthResultDto
                     .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
@@ -193,7 +194,7 @@ public class AuthService {
      */
     public void logout() {
         final var username = this.getUsername();
-        LOG.trace("Logging out user: {}", username);
+        LOG.tracef("Logging out user: %s",  username);
 
         final var session = VaadinSession.getCurrent();
         if (session == null) {
@@ -250,7 +251,7 @@ public class AuthService {
         } else {
             session.setAttribute(LAST_DB_CHECK_KEY, null);
         }
-        LOG.trace("Checking authentication status (DB hit): {}", result);
+        LOG.tracef("Checking authentication status (DB hit): %s",  result);
         return result;
     }
 

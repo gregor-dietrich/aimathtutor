@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -19,7 +18,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class JsonRepairService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JsonRepairService.class);
+    private static final Logger LOG = Logger.getLogger(JsonRepairService.class);
 
     // Smart quote characters for stripping from AI responses
     // Using constants avoids checkstyle's AvoidEscapedUnicodeCharacters warning
@@ -125,8 +124,8 @@ public class JsonRepairService {
 
         // If unbalanced, try to repair
         if (openBraces > 0 || openBrackets > 0) {
-            LOG.debug("Attempting to repair truncated JSON: {} open braces, {} open brackets",
-                    openBraces, openBrackets);
+            LOG.debugf("Attempting to repair truncated JSON: %s open braces, %s open brackets", 
+                    openBraces,  openBrackets);
 
             final var repaired = new StringBuilder(json);
 
@@ -173,7 +172,7 @@ public class JsonRepairService {
 
         if (matcher.find()) {
             final String extractedMessage = this.unescapeJsonString(matcher.group(1));
-            LOG.debug("Extracted message from truncated response: {}", extractedMessage);
+            LOG.debugf("Extracted message from truncated response: %s",  extractedMessage);
 
             // Try to determine the type
             // Pattern handles escaped quotes within the value: matches

@@ -9,8 +9,7 @@ import java.time.Duration;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,7 +32,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class GeminiService extends AbstractAiProviderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GeminiService.class);
+    private static final Logger LOG = Logger.getLogger(GeminiService.class);
     private static final String DEFAULT_MODEL = "gemma-3-27b-it";
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
@@ -84,7 +83,7 @@ public class GeminiService extends AbstractAiProviderService {
      */
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
-        LOG.debug("Generating content with Gemini for prompt length: {}", prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating content with Gemini for prompt length: %s",  prompt != null ? prompt.length() : 0);
 
         this.requireApiKey(this.apiKey, "GEMINI_API_KEY");
 
@@ -108,7 +107,7 @@ public class GeminiService extends AbstractAiProviderService {
             final String url = String.format("%s/v1beta/models/%s:generateContent",
                     baseUrl, model);
 
-            LOG.debug("Calling Gemini API at: {}", url);
+            LOG.debugf("Calling Gemini API at: %s",  url);
 
             // Create HTTP request with API key in header instead of query param
             final HttpRequest request = HttpRequest.newBuilder()
@@ -126,7 +125,7 @@ public class GeminiService extends AbstractAiProviderService {
             final String responseBody = response.body();
 
             if (statusCode != 200) {
-                LOG.error("Gemini API error (status {}): {}", statusCode, responseBody);
+                LOG.errorf("Gemini API error (status %s): %s",  statusCode,  responseBody);
                 throw AiProviderException.httpFailure(this.getProviderName(), statusCode, responseBody);
             }
 
@@ -140,13 +139,13 @@ public class GeminiService extends AbstractAiProviderService {
             }
 
             if (geminiResponse.isTruncated()) {
-                LOG.warn("Gemini response was truncated due to token limit (finishReason={})",
+                LOG.warnf("Gemini response was truncated due to token limit (finishReason=%s)", 
                         geminiResponse.getFinishReason());
             }
 
             final String content = this.requireNonEmptyContent(geminiResponse.getTextContent());
 
-            LOG.debug("Successfully generated content from Gemini, length: {}", content.length());
+            LOG.debugf("Successfully generated content from Gemini, length: %s",  content.length());
             return content;
 
         } catch (final AiProviderException e) {

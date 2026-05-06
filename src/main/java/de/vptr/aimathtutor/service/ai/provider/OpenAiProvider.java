@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service.ai.provider;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
@@ -19,7 +18,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class OpenAiProvider implements AiProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OpenAiProvider.class);
+    private static final Logger LOG = Logger.getLogger(OpenAiProvider.class);
 
     @Inject
     OpenAiService openAiService;

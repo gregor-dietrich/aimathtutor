@@ -10,8 +10,7 @@ import java.util.stream.Collectors;
 
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
@@ -45,7 +44,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class CommentService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommentService.class);
+    private static final Logger LOG = Logger.getLogger(CommentService.class);
 
     // Strict policy: disallow all HTML elements/attributes. Tags are dropped and
     // residual <, >, & characters are HTML-escaped, yielding safe plain text.
@@ -180,17 +179,18 @@ public class CommentService {
      */
     @Transactional
     public CommentViewDto createComment(final @Valid CommentDto dto, final Long authorId) {
-        LOG.info("Creating comment for exercisePublicId={}, authorId={}", dto.exercisePublicId, authorId);
+        LOG.infof("Creating comment for exercisePublicId=%s, authorId=%s",  dto.exercisePublicId,  authorId);
 
         this.permissionService.requireCommentAdd();
 
         // 1. Validate input
         if (dto.content == null || dto.content.isBlank()) {
-            LOG.warn("Comment creation failed: empty content for exercisePublicId={}, authorId={}", dto.exercisePublicId, authorId);
+            LOG.warnf("Comment creation failed: empty content for exercisePublicId=%s, authorId=%s", 
+                    dto.exercisePublicId,  authorId);
             throw new ValidationException("Content is required");
         }
         if (dto.exercisePublicId == null) {
-            LOG.warn("Comment creation failed: missing exercisePublicId for authorId={}", authorId);
+            LOG.warnf("Comment creation failed: missing exercisePublicId for authorId=%s",  authorId);
             throw new ValidationException("Exercise ID is required");
         }
 
@@ -200,18 +200,21 @@ public class CommentService {
         // 3. Validate exercise exists and allows comments
         final ExerciseEntity exercise = this.exerciseRepository.findByPublicId(dto.exercisePublicId).orElse(null);
         if (exercise == null) {
-            LOG.warn("Comment creation failed: exercise not found for exercisePublicId={}, authorId={}", dto.exercisePublicId,
+            LOG.warnf("Comment creation failed: exercise not found for exercisePublicId=%s, authorId=%s", 
+                    dto.exercisePublicId, 
                     authorId);
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
         if (!exercise.published) {
-            LOG.warn("Comment creation failed: exercise not published for exercisePublicId={}, authorId={}", dto.exercisePublicId,
+            LOG.warnf("Comment creation failed: exercise not published for exercisePublicId=%s, authorId=%s", 
+                    dto.exercisePublicId, 
                     authorId);
             throw new WebApplicationException("Cannot comment on unpublished exercise",
                     Response.Status.BAD_REQUEST);
         }
         if (!exercise.commentable) {
-            LOG.warn("Comment creation failed: comments not allowed for exercisePublicId={}, authorId={}", dto.exercisePublicId,
+            LOG.warnf("Comment creation failed: comments not allowed for exercisePublicId=%s, authorId=%s", 
+                    dto.exercisePublicId, 
                     authorId);
             throw new WebApplicationException("Comments not allowed on this exercise",
                     Response.Status.BAD_REQUEST);
@@ -220,23 +223,26 @@ public class CommentService {
         // 4. Validate parent comment if threading
         CommentEntity parentComment = null;
         if (dto.parentCommentPublicId != null) {
-            LOG.debug("Creating reply comment: parentPublicId={} for exercisePublicId={}, authorId={}", dto.parentCommentPublicId,
-                    dto.exercisePublicId, authorId);
+            LOG.debugf("Creating reply comment: parentPublicId=%s for exercisePublicId=%s, authorId=%s", 
+                    dto.parentCommentPublicId, 
+                    dto.exercisePublicId,  authorId);
             parentComment = this.commentRepository.findByPublicId(dto.parentCommentPublicId).orElse(null);
             if (parentComment == null) {
-                LOG.warn("Comment creation failed: parent comment not found for parentPublicId={}, authorId={}",
-                        dto.parentCommentPublicId, authorId);
+                LOG.warnf("Comment creation failed: parent comment not found for parentPublicId=%s, authorId=%s", 
+                        dto.parentCommentPublicId,  authorId);
                 throw new WebApplicationException("Parent comment not found", Response.Status.BAD_REQUEST);
             }
             if (parentComment.status != CommentStatus.VISIBLE) {
-                LOG.warn("Comment creation failed: cannot reply to hidden/deleted comment parentPublicId={}, authorId={}",
-                        dto.parentCommentPublicId, authorId);
+                LOG.warnf(
+                        "Comment creation failed: cannot reply to hidden/deleted comment parentPublicId=%s, authorId=%s", 
+                        dto.parentCommentPublicId,  authorId);
                 throw new WebApplicationException("Cannot reply to deleted/hidden comment",
                         Response.Status.BAD_REQUEST);
             }
             if (!parentComment.exercise.publicId.equals(dto.exercisePublicId)) {
-                LOG.warn("Comment creation failed: parent comment belongs to different exercise. parentPublicId={}, parentExercisePublicId={}, dto.exercisePublicId={}, authorId={}",
-                        dto.parentCommentPublicId, parentComment.exercise.publicId, dto.exercisePublicId, authorId);
+                LOG.warnf(
+                        "Comment creation failed: parent comment belongs to different exercise. parentPublicId=%s, parentExercisePublicId=%s, dto.exercisePublicId=%s, authorId=%s", 
+                        dto.parentCommentPublicId,  parentComment.exercise.publicId,  dto.exercisePublicId,  authorId);
                 throw new WebApplicationException("Parent comment belongs to a different exercise",
                         Response.Status.BAD_REQUEST);
             }
@@ -245,7 +251,7 @@ public class CommentService {
         // 5. Get author
         final UserEntity author = this.userRepository.findById(authorId);
         if (author == null) {
-            LOG.warn("Comment creation failed: user not found for authorId={}", authorId);
+            LOG.warnf("Comment creation failed: user not found for authorId=%s",  authorId);
             throw new WebApplicationException("User not found", Response.Status.BAD_REQUEST);
         }
 
@@ -265,7 +271,8 @@ public class CommentService {
                 comment.id, comment.exercise.id, comment.user.id, comment.user.username,
                 comment.content, comment.created));
 
-        LOG.info("Comment created successfully: commentId={}, exercisePublicId={}, authorId={}", comment.id, dto.exercisePublicId,
+        LOG.infof("Comment created successfully: commentId=%s, exercisePublicId=%s, authorId=%s",  comment.id, 
+                dto.exercisePublicId, 
                 authorId);
         return new CommentViewDto(comment);
     }
@@ -360,18 +367,20 @@ public class CommentService {
      */
     @Transactional
     public void deleteComment(final String commentPublicId, final Long requesterId, final boolean softDelete) {
-        LOG.info("Attempting to delete comment: commentPublicId={}, requesterId={}, softDelete={}", commentPublicId, requesterId,
+        LOG.infof("Attempting to delete comment: commentPublicId=%s, requesterId=%s, softDelete=%s",  commentPublicId, 
+                requesterId, 
                 softDelete);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Delete comment failed: comment not found commentPublicId={}, requesterId={}", commentPublicId, requesterId);
+            LOG.warnf("Delete comment failed: comment not found commentPublicId=%s, requesterId=%s",  commentPublicId, 
+                    requesterId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
         final UserEntity requester = this.userRepository.findById(requesterId);
         if (requester == null) {
-            LOG.warn("Delete comment failed: requester not found requesterId={}", requesterId);
+            LOG.warnf("Delete comment failed: requester not found requesterId=%s",  requesterId);
             throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
         }
 
@@ -384,11 +393,11 @@ public class CommentService {
             comment.status = CommentStatus.DELETED;
             comment.deletedAt = LocalDateTime.now();
             comment.deletedBy = requester;
-            LOG.info("Comment soft-deleted: commentPublicId={}, requesterId={}", commentPublicId, requesterId);
+            LOG.infof("Comment soft-deleted: commentPublicId=%s, requesterId=%s",  commentPublicId,  requesterId);
         } else {
             this.permissionService.requireCommentDelete();
             this.commentRepository.deleteByPublicId(commentPublicId);
-            LOG.info("Comment hard-deleted: commentPublicId={}, requesterId={}", commentPublicId, requesterId);
+            LOG.infof("Comment hard-deleted: commentPublicId=%s, requesterId=%s",  commentPublicId,  requesterId);
         }
     }
 
@@ -397,21 +406,23 @@ public class CommentService {
      */
     @Transactional
     public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto, final Long editorId) {
-        LOG.info("Attempting to edit comment: commentPublicId={}, editorId={}", commentPublicId, editorId);
+        LOG.infof("Attempting to edit comment: commentPublicId=%s, editorId=%s",  commentPublicId,  editorId);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Edit comment failed: comment not found commentPublicId={}, editorId={}", commentPublicId, editorId);
+            LOG.warnf("Edit comment failed: comment not found commentPublicId=%s, editorId=%s",  commentPublicId, 
+                    editorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
         final UserEntity editor = this.userRepository.findById(editorId);
         if (editor == null) {
-            LOG.warn("Edit comment failed: editor not found editorId={}", editorId);
+            LOG.warnf("Edit comment failed: editor not found editorId=%s",  editorId);
             throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
-        // Authors can always edit their own comments; non-authors need explicit permission
+        // Authors can always edit their own comments; non-authors need explicit
+        // permission
         if (!this.commentPermissionService.isAuthor(comment, editor)) {
             this.permissionService.requireCommentEdit();
         }
@@ -420,7 +431,8 @@ public class CommentService {
         if (dto.content != null && !dto.content.isBlank()) {
             comment.content = this.sanitizeCommentContent(dto.content);
             this.commentRepository.persist(comment);
-            LOG.info("Comment edited successfully: commentPublicId={}, editorId={}, isAuthor={}", commentPublicId, editorId,
+            LOG.infof("Comment edited successfully: commentPublicId=%s, editorId=%s, isAuthor=%s",  commentPublicId, 
+                    editorId, 
                     comment.user != null && comment.user.publicId.equals(editor.publicId));
         }
 
@@ -544,7 +556,7 @@ public class CommentService {
                     .map(CommentViewDto::new)
                     .collect(Collectors.toList());
         } catch (final DateTimeParseException e) {
-            LOG.warn("Invalid date range provided: startDate='{}', endDate='{}'", startDate, endDate);
+            LOG.warnf(e, "Invalid date range provided: startDate='%s', endDate='%s'",  startDate,  endDate);
             return List.of();
         }
     }

@@ -2,8 +2,7 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.button.Button;
@@ -49,7 +48,7 @@ import jakarta.validation.ConstraintViolationException;
  */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends AbstractAdminView {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
+    private static final Logger LOG = Logger.getLogger(AdminUsersView.class);
 
     @Inject
     private transient UserService userService;
@@ -96,7 +95,7 @@ public class AdminUsersView extends AbstractAdminView {
                 () -> this.userService.getAllUsers(),
                 this,
                 users -> {
-                    LOG.info("Successfully loaded {} users", users.size());
+                    LOG.infof("Successfully loaded %s users",  users.size());
                     this.grid.setItems(users);
                 },
                 "Failed to load users. Please try again.");
@@ -108,7 +107,7 @@ public class AdminUsersView extends AbstractAdminView {
                 () -> this.userRankService.getAllRanks(),
                 this,
                 ranks -> {
-                    LOG.info("Successfully loaded {} ranks", ranks.size());
+                    LOG.infof("Successfully loaded %s ranks",  ranks.size());
                     this.availableRanks = ranks;
                 },
                 "Failed to load ranks. Please try again.");
@@ -401,7 +400,7 @@ public class AdminUsersView extends AbstractAdminView {
             NotificationUtil.showSuccess("Password changed successfully");
             this.passwordDialog.close();
         } catch (final PermissionDeniedException e) {
-            LOG.warn("Permission denied changing password: {}", e.getMessage());
+            LOG.warnf("Permission denied changing password: %s",  e.getMessage());
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error changing password", e);

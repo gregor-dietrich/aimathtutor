@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +12,7 @@ import jakarta.ws.rs.core.Response;
  */
 public class ErrorMessageUtil {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ErrorMessageUtil.class);
+    private static final Logger LOG = Logger.getLogger(ErrorMessageUtil.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
@@ -49,7 +48,7 @@ public class ErrorMessageUtil {
                 }
             }
         } catch (final Exception e) {
-            LOG.warn("Failed to extract error message from {} response: {}", response.getStatus(), e.getMessage());
+            LOG.warnf(e, "Failed to extract error message from %s response",  response.getStatus());
         }
 
         // Fall back to HTTP status

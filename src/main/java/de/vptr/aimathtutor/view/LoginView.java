@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.view;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.Key;
@@ -27,7 +26,7 @@ import jakarta.inject.Inject;
 @PageTitle("AI Math Tutor - Login")
 public class LoginView extends VerticalLayout {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LoginView.class);
+    private static final Logger LOG = Logger.getLogger(LoginView.class);
 
     @Inject
     private transient AuthService authService;
@@ -66,7 +65,7 @@ public class LoginView extends VerticalLayout {
 
                 final var result = this.authService.authenticate(username, password);
 
-                LOG.trace("Authentication result - Status: {}, Message: {}", result.getStatus(), result.getMessage());
+                LOG.tracef("Authentication result - Status: %s, Message: %s",  result.getStatus(),  result.getMessage());
 
                 switch (result.getStatus()) {
                     case SUCCESS -> {
@@ -88,7 +87,7 @@ public class LoginView extends VerticalLayout {
                         NotificationUtil.showWarning(result.getMessage());
                     }
                     default -> {
-                        LOG.error("Unknown authentication result status: {}", result.getStatus());
+                        LOG.errorf("Unknown authentication result status: %s",  result.getStatus());
                         NotificationUtil.showError("Unknown error occurred");
                     }
                 }

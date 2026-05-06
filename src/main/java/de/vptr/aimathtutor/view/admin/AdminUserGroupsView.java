@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -38,11 +37,11 @@ import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.service.UlidService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.UlidUtil;
 import jakarta.inject.Inject;
 
 /**
@@ -50,7 +49,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
 public class AdminUserGroupsView extends AbstractAdminView {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupsView.class);
+    private static final Logger LOG = Logger.getLogger(AdminUserGroupsView.class);
 
     @Inject
     private transient UserGroupService groupService;
@@ -143,7 +142,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         userPublicIdInput.addValueChangeListener(e -> userPublicIdInput.setInvalid(false));
         final var userFilterButton = new Button("Filter by User", ignored -> {
             final String value = userPublicIdInput.getValue();
-            if (value != null && !value.isBlank() && !UlidService.isValid(value)) {
+            if (value != null && !value.isBlank() && !UlidUtil.isValid(value)) {
                 userPublicIdInput.setInvalid(true);
                 return;
             }
@@ -308,7 +307,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.info("Starting async group search with query: {}", query);
+        LOG.debugf("Starting async group search with query length: %s", query.length());
 
         AsyncDataLoader.load(
                 () -> this.groupService.searchGroups(query),

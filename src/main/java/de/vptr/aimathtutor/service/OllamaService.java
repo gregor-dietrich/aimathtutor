@@ -4,8 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
@@ -32,7 +31,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class OllamaService extends AbstractAiProviderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OllamaService.class);
+    private static final Logger LOG = Logger.getLogger(OllamaService.class);
     private static final String DEFAULT_MODEL = "llama3.2:3b";
     private static final String DEFAULT_API_URL = "http://ollama:11434";
 
@@ -81,8 +80,8 @@ public class OllamaService extends AbstractAiProviderService {
                     .connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
                     .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS)
                     .build();
-            LOG.debug("Initialized Ollama JAX-RS Client (connectTimeout={}s, readTimeout={}s)",
-                    this.connectTimeoutSeconds, this.readTimeoutSeconds);
+            LOG.debugf("Initialized Ollama JAX-RS Client (connectTimeout=%ss, readTimeout=%ss)", 
+                    this.connectTimeoutSeconds,  this.readTimeoutSeconds);
         }
         return this.client;
     }
@@ -108,7 +107,7 @@ public class OllamaService extends AbstractAiProviderService {
      */
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
-        LOG.debug("Generating content with Ollama for prompt length: {}", prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating content with Ollama for prompt length: %s",  prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
         final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
@@ -137,7 +136,7 @@ public class OllamaService extends AbstractAiProviderService {
 
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
-                    LOG.error("Ollama API error (status {}): {}", response.getStatus(), errorBody);
+                    LOG.errorf("Ollama API error (status %s): %s",  response.getStatus(),  errorBody);
                     throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
@@ -149,7 +148,7 @@ public class OllamaService extends AbstractAiProviderService {
                 }
 
                 if (ollamaResponse.isTruncated()) {
-                    LOG.warn("Ollama response was truncated due to max-tokens limit (done_reason={})",
+                    LOG.warnf("Ollama response was truncated due to max-tokens limit (done_reason=%s)", 
                             ollamaResponse.doneReason);
                 }
 
@@ -158,12 +157,12 @@ public class OllamaService extends AbstractAiProviderService {
                 // Log performance metrics
                 final Double tokensPerSecond = ollamaResponse.getTokensPerSecond();
                 if (tokensPerSecond != null) {
-                    LOG.debug("Ollama generated {} tokens at {} tokens/second in {}ms",
-                            ollamaResponse.evalCount,
+                    LOG.debugf("Ollama generated %s tokens at %s tokens/second in %sms",
+                            (Object) ollamaResponse.evalCount,
                             String.format("%.2f", tokensPerSecond),
                             duration);
                 } else {
-                    LOG.debug("Successfully generated content from Ollama in {}ms, length: {}", duration,
+                    LOG.debugf("Successfully generated content from Ollama in %sms, length: %s",  duration, 
                             content.length());
                 }
 
@@ -194,16 +193,16 @@ public class OllamaService extends AbstractAiProviderService {
                 final boolean available = response.getStatus() == Response.Status.OK.getStatusCode();
 
                 if (available) {
-                    LOG.debug("Ollama server is available at {}", apiUrl);
+                    LOG.debugf("Ollama server is available at %s",  apiUrl);
                 } else {
-                    LOG.debug("Ollama server not available at {} (status: {})", apiUrl, response.getStatus());
+                    LOG.debugf("Ollama server not available at %s (status: %s)",  apiUrl,  response.getStatus());
                 }
 
                 return available;
             }
 
         } catch (final RuntimeException e) {
-            LOG.debug("Ollama server not available at {}: {}", apiUrl, e.getMessage());
+            LOG.debugf(e, "Ollama server not available at %s: %s",  apiUrl,  e.getMessage());
             return false;
         }
     }
@@ -231,7 +230,7 @@ public class OllamaService extends AbstractAiProviderService {
             }
 
         } catch (final RuntimeException e) {
-            LOG.debug("Error checking if model {} is installed: {}", modelName, e.getMessage());
+            LOG.debugf("Error checking if model %s is installed: %s",  modelName,  e.getMessage());
             return false;
         }
     }

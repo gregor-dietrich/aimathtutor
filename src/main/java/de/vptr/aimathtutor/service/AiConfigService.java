@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiConfigDto;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
@@ -35,7 +34,7 @@ import jakarta.transaction.Transactional;
 @ApplicationScoped
 public class AiConfigService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiConfigService.class);
+    private static final Logger LOG = Logger.getLogger(AiConfigService.class);
 
     // Internal cache for configuration values to reduce database hits.
     private final Map<String, String> configCache = new ConcurrentHashMap<>();
@@ -140,7 +139,7 @@ public class AiConfigService {
         try {
             return Integer.parseInt(value);
         } catch (final NumberFormatException e) {
-            LOG.warn("Failed to parse integer config '{}' with value '{}': {}", key, value, e.getMessage());
+            LOG.warnf(e, "Failed to parse integer config '%s' with value '%s'",  key,  value);
             return defaultValue;
         }
     }
@@ -161,7 +160,7 @@ public class AiConfigService {
         try {
             return Double.parseDouble(value);
         } catch (final NumberFormatException e) {
-            LOG.warn("Failed to parse double config '{}' with value '{}': {}", key, value, e.getMessage());
+            LOG.warnf(e, "Failed to parse double config '%s' with value '%s'",  key,  value);
             return defaultValue;
         }
     }
@@ -187,7 +186,7 @@ public class AiConfigService {
         if ("false".equals(lower) || "0".equals(lower)) {
             return false;
         }
-        LOG.warn("Failed to parse boolean config '{}' with value '{}', using default", key, value);
+        LOG.warnf("Failed to parse boolean config '%s' with value '%s', using default",  key,  value);
         return defaultValue;
     }
 
@@ -325,7 +324,7 @@ public class AiConfigService {
         // Invalidate cache
         this.configCache.remove(configKey);
 
-        LOG.info("Configuration updated: key='{}', updatedBy='{}'", configKey, user.username);
+        LOG.infof("Configuration updated: key='%s', updatedBy='%s'",  configKey,  user.username);
     }
 
     /**
@@ -397,7 +396,7 @@ public class AiConfigService {
             this.configCache.remove(update.configKey);
         }
 
-        LOG.info("Multiple configurations updated: count={}, updatedBy='{}'", updates.size(), user.username);
+        LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'",  updates.size(),  user.username);
     }
 
     /**
@@ -567,7 +566,7 @@ public class AiConfigService {
                 .map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue()))
                 .toList();
         this.updateMultipleConfigs(updates, userId);
-        LOG.info("All AI configurations reset to defaults by userId='{}'", userId);
+        LOG.infof("All AI configurations reset to defaults by userId='%s'",  userId);
     }
 
     /**

@@ -6,8 +6,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
@@ -49,7 +48,7 @@ import jakarta.inject.Inject;
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
-    private static final Logger LOG = LoggerFactory.getLogger(ExerciseWorkspaceView.class);
+    private static final Logger LOG = Logger.getLogger(ExerciseWorkspaceView.class);
 
     @Inject
     private transient ExerciseService exerciseService;
@@ -375,7 +374,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private void initializeGraspableMath() {
         if (this.exercise.graspableInitialExpression == null
                 || this.exercise.graspableInitialExpression.isBlank()) {
-            LOG.warn("No initial expression configured for exercise {}", this.exerciseId);
+            LOG.warnf("No initial expression configured for exercise %s",  this.exerciseId);
             return;
         }
 
@@ -444,7 +443,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      */
     @ClientCallable
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
-        LOG.debug("Math action: type={}, before={}, after={}", eventType, expressionBefore, expressionAfter);
+        LOG.debugf("Math action: type=%s, before=%s, after=%s",  eventType,  expressionBefore,  expressionAfter);
 
         // Update current expression
         this.currentExpression = expressionAfter;

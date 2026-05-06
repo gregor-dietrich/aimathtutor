@@ -302,17 +302,3 @@ Clickable spans are used extensively across views, especially admin views, howev
 3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break.
 
 ---
-
-### 7. Replace SLF4J Logger with JBoss Logging
-
-**Goal:** Replace all `org.slf4j.LoggerFactory.getLogger` / `org.slf4j.Logger` usages with `org.jboss.logging.Logger.getLogger` / `org.jboss.logging.Logger` throughout the codebase to align with Quarkus best practices.
-
-**Why:** Quarkus uses JBoss Logging as its logging facade. Using SLF4J directly bypasses Quarkus-managed log configuration, MDC context propagation, and structured logging support.
-
-**Action:**
-
-1. Search for all occurrences: `grep -rn "org.slf4j" src/`
-2. Replace each `LoggerFactory.getLogger(Foo.class)` with `Logger.getLogger(Foo.class)` and update the import from `org.slf4j.Logger` / `org.slf4j.LoggerFactory` to `org.jboss.logging.Logger`.
-3. Enforce via Checkstyle: add `IllegalImport` for `org.slf4j.Logger` and `org.slf4j.LoggerFactory` so the pattern cannot re-enter the codebase.
-
----

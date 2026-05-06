@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
@@ -24,7 +23,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class ProblemGeneratorService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProblemGeneratorService.class);
+    private static final Logger LOG = Logger.getLogger(ProblemGeneratorService.class);
 
     private final Random random;
 
@@ -46,7 +45,7 @@ public class ProblemGeneratorService {
      */
     public GraspableProblemDto generateProblem(final DifficultyLevel difficulty,
             final GraspableProblemDto.ProblemCategory category) {
-        LOG.debug("Generating problem: difficulty={}, category={}", difficulty, category);
+        LOG.debugf("Generating problem: difficulty=%s, category=%s",  difficulty,  category);
 
         final var problem = new GraspableProblemDto();
         problem.difficulty = difficulty;

@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.HasElement;
@@ -35,7 +34,7 @@ import jakarta.inject.Inject;
  * layout.
  */
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminMainLayout.class);
+    private static final Logger LOG = Logger.getLogger(AdminMainLayout.class);
 
     private transient Button userViewButton;
     private transient Button logoutButton;
@@ -109,7 +108,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
         final var targetView = event.getNavigationTarget();
 
-        LOG.trace("MainLayout.beforeEnter - Target: {}", targetView.getSimpleName());
+        LOG.tracef("MainLayout.beforeEnter - Target: %s",  targetView.getSimpleName());
 
         // Skip auth check for the login view
         if (targetView == LoginView.class) {

@@ -5,8 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.Component;
 
@@ -16,7 +15,7 @@ import com.vaadin.flow.component.Component;
  */
 public final class AsyncDataLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AsyncDataLoader.class);
+    private static final Logger LOG = Logger.getLogger(AsyncDataLoader.class);
 
     private AsyncDataLoader() {
         // Utility class
@@ -68,7 +67,7 @@ public final class AsyncDataLoader {
                             onSuccess.accept(data);
                             return;
                         }
-                        LOG.error("Async load failed: {}", throwable.getMessage(), throwable);
+                        LOG.errorf(throwable, "Async load failed: %s",  throwable.getMessage());
                         NotificationUtil.showError(errorMessage);
                         if (onError == null) {
                             return;

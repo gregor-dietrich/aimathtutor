@@ -5,8 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -45,7 +44,7 @@ import jakarta.enterprise.inject.spi.CDI;
  */
 public class CommentsPanel extends VerticalLayout {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommentsPanel.class);
+    private static final Logger LOG = Logger.getLogger(CommentsPanel.class);
 
     private final Long exerciseId;
     private final String exercisePublicId;
@@ -188,7 +187,7 @@ public class CommentsPanel extends VerticalLayout {
                         this.commentsContainer.add(repliesContainer);
                     }
                 } catch (final Exception e) {
-                    LOG.debug("Failed to load replies for comment {}", comment.publicId, e);
+                    LOG.debugf(e, "Failed to load replies for comment %s",  comment.publicId);
                 }
             }
         }

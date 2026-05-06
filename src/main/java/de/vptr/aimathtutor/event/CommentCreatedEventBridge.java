@@ -4,21 +4,21 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
 /**
- * Bridge bean that forwards CDI {@link CommentCreatedEvent}s to programmatically
+ * Bridge bean that forwards CDI {@link CommentCreatedEvent}s to
+ * programmatically
  * registered listeners. Allows non-CDI components (e.g. Vaadin layouts created
  * with {@code new}) to observe comment creation events without becoming beans.
  */
 @ApplicationScoped
 public class CommentCreatedEventBridge {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommentCreatedEventBridge.class);
+    private static final Logger LOG = Logger.getLogger(CommentCreatedEventBridge.class);
 
     private final Set<Consumer<CommentCreatedEvent>> listeners = new CopyOnWriteArraySet<>();
 
@@ -45,7 +45,7 @@ public class CommentCreatedEventBridge {
             try {
                 listener.accept(event);
             } catch (final Throwable t) {
-                LOG.error("Listener {} failed handling event {}", listener.getClass().getName(), event, t);
+                LOG.errorf(t, "Listener %s failed handling event %s",  listener.getClass().getName(),  event);
             }
         }
     }

@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.inject.spi.CDI;
@@ -13,7 +12,7 @@ import jakarta.enterprise.inject.spi.CDI;
  */
 public final class PasswordUtility {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PasswordUtility.class);
+    private static final Logger LOG = Logger.getLogger(PasswordUtility.class);
 
     private static PasswordHashingService getHashingService() {
         try {
@@ -44,7 +43,7 @@ public final class PasswordUtility {
         switch (cmd) {
             case "generate" -> handleGenerate(args);
             default -> {
-                LOG.error("Unknown command: {}", cmd);
+                LOG.errorf("Unknown command: %s",  cmd);
                 printUsage();
                 System.exit(2);
             }

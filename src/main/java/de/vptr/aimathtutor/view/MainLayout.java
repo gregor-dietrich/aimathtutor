@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.view;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
@@ -29,7 +28,7 @@ import jakarta.inject.Inject;
  */
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
+    private static final Logger LOG = Logger.getLogger(MainLayout.class);
 
     private Button adminViewButton;
     private Button settingsButton;
@@ -87,7 +86,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
         final var targetView = event.getNavigationTarget();
 
-        LOG.trace("MainLayout.beforeEnter - Target: {}", targetView.getSimpleName());
+        LOG.tracef("MainLayout.beforeEnter - Target: %s",  targetView.getSimpleName());
 
         // No backend health check needed since we're using direct database access
         LOG.trace("User authenticated, building UI");
@@ -111,7 +110,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.addButtonsToTopBar();
         this.showNavigationTabs();
 
-        LOG.trace("All checks passed for {}", targetView.getSimpleName());
+        LOG.tracef("All checks passed for %s",  targetView.getSimpleName());
     }
 
     private void updateLogoutButtonVisibility() {

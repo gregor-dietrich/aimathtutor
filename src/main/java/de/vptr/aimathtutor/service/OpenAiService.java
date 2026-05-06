@@ -4,8 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
@@ -31,7 +30,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class OpenAiService extends AbstractAiProviderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
+    private static final Logger LOG = Logger.getLogger(OpenAiService.class);
     private static final String DEFAULT_MODEL = "gpt-5-nano";
     private static final String DEFAULT_BASE_URL = "https://api.openai.com/v1";
     private static final String CHAT_SYSTEM_PROMPT = "You are an encouraging AI math tutor helping students learn algebra. "
@@ -120,8 +119,8 @@ public class OpenAiService extends AbstractAiProviderService {
     }
 
     private String doGenerate(final String prompt, final String systemPrompt, final boolean jsonMode) {
-        LOG.debug("Generating {} content with OpenAI for prompt length: {}",
-                jsonMode ? "JSON" : "text", prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating %s content with OpenAI for prompt length: %s", 
+                jsonMode ? "JSON" : "text",  prompt != null ? prompt.length() : 0);
 
         this.requireApiKey(this.apiKey, "OPENAI_API_KEY");
 
@@ -153,7 +152,7 @@ public class OpenAiService extends AbstractAiProviderService {
 
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
-                    LOG.error("OpenAI API error (status {}): {}", response.getStatus(), errorBody);
+                    LOG.errorf("OpenAI API error (status %s): %s",  response.getStatus(),  errorBody);
                     throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
@@ -170,7 +169,7 @@ public class OpenAiService extends AbstractAiProviderService {
                 }
 
                 if (!openAiResponse.isComplete()) {
-                    LOG.warn("OpenAI response not complete. Finish reason: {}",
+                    LOG.warnf("OpenAI response not complete. Finish reason: %s", 
                             openAiResponse.choices != null && !openAiResponse.choices.isEmpty()
                                     ? openAiResponse.choices.get(0).finishReason
                                     : "unknown");
@@ -179,13 +178,13 @@ public class OpenAiService extends AbstractAiProviderService {
                 final String content = this.requireNonEmptyContent(openAiResponse.getTextContent());
 
                 if (openAiResponse.usage != null) {
-                    LOG.debug("OpenAI usage - Prompt: {} tokens, Completion: {} tokens, Total: {} tokens",
-                            openAiResponse.usage.promptTokens,
-                            openAiResponse.usage.completionTokens,
+                    LOG.debugf("OpenAI usage - Prompt: %s tokens, Completion: %s tokens, Total: %s tokens", 
+                            openAiResponse.usage.promptTokens, 
+                            openAiResponse.usage.completionTokens, 
                             openAiResponse.usage.totalTokens);
                 }
 
-                LOG.debug("Successfully generated content from OpenAI, length: {}", content.length());
+                LOG.debugf("Successfully generated content from OpenAI, length: %s",  content.length());
                 return content;
             }
 

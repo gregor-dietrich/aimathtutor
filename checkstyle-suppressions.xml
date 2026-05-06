@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
-<!DOCTYPE suppressions PUBLIC
-    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
-    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN" "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 <suppressions>
     <!-- IT suffix is the standard Maven convention for integration-test classes -->
     <suppress checks="AbbreviationAsWordInName" files=".*IT\.java$" />
-    <!-- UlidCreator may only be imported by UlidService itself -->
-    <suppress checks="IllegalImport" files="UlidService\.java$" />
+    <!-- UlidCreator may only be imported by UlidUtil itself -->
+    <suppress id="IllegalImport.UlidCreator" files="UlidUtil\.java$" />
 </suppressions>

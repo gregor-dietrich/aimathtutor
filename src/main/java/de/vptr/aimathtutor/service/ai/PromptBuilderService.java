@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
@@ -16,7 +15,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class PromptBuilderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PromptBuilderService.class);
+    private static final Logger LOG = Logger.getLogger(PromptBuilderService.class);
 
     private static final int MAX_PROMPT_INPUT_LENGTH = 2000;
 
@@ -72,7 +71,7 @@ public class PromptBuilderService {
         prompt.append(postfix);
 
         final var promptString = prompt.toString();
-        LOG.debug("Sending QuestionAnsweringPrompt, length={}", promptString.length());
+        LOG.debugf("Sending QuestionAnsweringPrompt, length=%s",  promptString.length());
 
         return promptString;
     }
@@ -123,7 +122,7 @@ public class PromptBuilderService {
         prompt.append(postfix);
 
         final var promptString = prompt.toString();
-        LOG.debug("Sending MathTutoringPrompt, length={}", promptString.length());
+        LOG.debugf("Sending MathTutoringPrompt, length=%s",  promptString.length());
 
         return promptString;
     }
@@ -155,7 +154,7 @@ public class PromptBuilderService {
      */
     private String getConfigString(final String key, final String defaultValue) {
         if (this.aiConfigService == null) {
-            LOG.debug("AiConfigService not injected, using default for key={}", key);
+            LOG.debugf("AiConfigService not injected, using default for key=%s",  key);
             return defaultValue;
         }
         return this.aiConfigService.getConfigValue(key, defaultValue);

@@ -7,8 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
@@ -22,7 +21,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class AiProviderTestService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiProviderTestService.class);
+    private static final Logger LOG = Logger.getLogger(AiProviderTestService.class);
     private static final int TEST_TIMEOUT_SECONDS = 5;
 
     @Inject
@@ -83,7 +82,7 @@ public class AiProviderTestService {
             LOG.warn("Gemini connection test interrupted", e);
             return AiProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
-            LOG.warn("Gemini endpoint unreachable: {}", e.getMessage());
+            LOG.warnf(e, "Gemini endpoint unreachable: %s",  e.getMessage());
             return AiProviderTestResultDto.fail("Cannot reach Gemini endpoint: " + e.getMessage());
         }
     }
@@ -123,7 +122,7 @@ public class AiProviderTestService {
             LOG.warn("OpenAI connection test interrupted", e);
             return AiProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
-            LOG.warn("OpenAI endpoint unreachable: {}", e.getMessage());
+            LOG.warnf(e, "OpenAI endpoint unreachable: %s",  e.getMessage());
             return AiProviderTestResultDto.fail("Cannot reach OpenAI endpoint: " + e.getMessage());
         }
     }

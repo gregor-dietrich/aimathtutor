@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -44,7 +43,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
 public class AdminLessonsView extends AbstractAdminView {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminLessonsView.class);
+    private static final Logger LOG = Logger.getLogger(AdminLessonsView.class);
 
     @Inject
     private transient LessonService lessonService;
