@@ -556,7 +556,7 @@ public class CommentService {
                     .map(CommentViewDto::new)
                     .collect(Collectors.toList());
         } catch (final DateTimeParseException e) {
-            LOG.warnf("Invalid date range provided: startDate='%s', endDate='%s'",  startDate,  endDate);
+            LOG.warnf(e, "Invalid date range provided: startDate='%s', endDate='%s'",  startDate,  endDate);
             return List.of();
         }
     }

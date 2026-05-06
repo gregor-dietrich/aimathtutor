@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service.comment;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import org.jboss.logging.Logger;
 
@@ -59,9 +60,14 @@ public class CommentModerationService {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
+        if (moderatorId == null) {
+            LOG.warnf("Moderate comment failed: moderatorId is null commentPublicId=%s",  commentPublicId);
+            throw new WebApplicationException("Moderator ID is required", Response.Status.BAD_REQUEST);
+        }
+
         final UserEntity moderator = this.userRepository.findById(moderatorId);
         if (moderator == null) {
-            LOG.warnf("Moderate comment failed: moderator not found commentPublicId=%s, moderatorId=%s",  commentPublicId, 
+            LOG.warnf("Moderate comment failed: moderator not found commentPublicId=%s, moderatorId=%s",  commentPublicId,
                     moderatorId);
             throw new WebApplicationException("Moderator not found", Response.Status.BAD_REQUEST);
         }
@@ -71,14 +77,15 @@ public class CommentModerationService {
             throw new ValidationException("Moderation action is required");
         }
 
-        switch (action.toUpperCase()) {
+        final String normalizedAction = action.toUpperCase(Locale.ROOT);
+        switch (normalizedAction) {
             case "HIDE":
                 comment.status = CommentStatus.HIDDEN;
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
-                comment.moderationAction = action.toUpperCase();
+                comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment hidden by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId, 
+                LOG.infof("Comment hidden by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
                         moderatorId);
                 break;
             case "SHOW":
@@ -88,9 +95,9 @@ public class CommentModerationService {
                 comment.deletedAt = null;
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
-                comment.moderationAction = action.toUpperCase();
+                comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment shown by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId, 
+                LOG.infof("Comment shown by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
                         moderatorId);
                 break;
             case "RESTORE":
@@ -101,9 +108,9 @@ public class CommentModerationService {
                 comment.deletedAt = null;
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
-                comment.moderationAction = action.toUpperCase();
+                comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment restored by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId, 
+                LOG.infof("Comment restored by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
                         moderatorId);
                 break;
             case "DELETE":
@@ -112,14 +119,14 @@ public class CommentModerationService {
                 comment.deletedAt = LocalDateTime.now();
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
-                comment.moderationAction = action.toUpperCase();
+                comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment deleted by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId, 
+                LOG.infof("Comment deleted by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
                         moderatorId);
                 break;
             default:
-                LOG.warnf("Invalid moderation action: action=%s, commentPublicId=%s, moderatorId=%s",  action, 
-                        commentPublicId, 
+                LOG.warnf("Invalid moderation action: action=%s, commentPublicId=%s, moderatorId=%s",  action,
+                        commentPublicId,
                         moderatorId);
                 throw new ValidationException("Invalid moderation action: " + action);
         }
