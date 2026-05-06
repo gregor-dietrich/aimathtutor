@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 
@@ -20,6 +21,7 @@ import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.comment.CommentRateLimitService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -46,6 +48,9 @@ class CommentServiceTest {
 
     @InjectMock
     private PermissionService permissionService;
+
+    @InjectMock
+    private CommentRateLimitService commentRateLimitService;
 
     private ExerciseViewDto createCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
@@ -234,5 +239,137 @@ class CommentServiceTest {
         assertTrue(hidden.stream().anyMatch(c -> c.publicId.equals(created.publicId)));
         verify(this.permissionService).requireCommentAdd();
         verify(this.permissionService).requireCommentEdit();
+    }
+
+    @Test
+    @DisplayName("editComment updates content for the author")
+    @TestTransaction
+    void testEditComment_authorCanEdit() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "original content";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        final var editDto = new CommentDto();
+        editDto.content = "edited content";
+        final CommentViewDto edited = this.commentService.editComment(created.publicId, editDto, student.id);
+
+        assertEquals("edited content", edited.content);
+    }
+
+    @Test
+    @DisplayName("editComment calls requireCommentEdit for non-author")
+    @TestTransaction
+    void testEditComment_nonAuthorRequiresPermission() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student1 = this.userRepository.findByUsername("student1");
+        final var student2 = this.userRepository.findByUsername("student2");
+        final var dto = new CommentDto();
+        dto.content = "student1's comment";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student1.id);
+
+        // Non-author edit should trigger the permission check — configure it to deny
+        doThrow(new WebApplicationException("Forbidden", Response.Status.FORBIDDEN))
+                .when(this.permissionService).requireCommentEdit();
+
+        final var editDto = new CommentDto();
+        editDto.content = "student2 sneaking in";
+
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.commentService.editComment(created.publicId, editDto, student2.id));
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("listCommentsByExercise returns paged results")
+    @TestTransaction
+    void testListCommentsByExercise_paged() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+
+        for (int i = 0; i < 3; i++) {
+            final var d = new CommentDto();
+            d.content = "comment " + i;
+            d.exercisePublicId = exercise.publicId;
+            this.commentService.createComment(d, student.id);
+        }
+
+        final var page1 = this.commentService.listCommentsByExercise(exercise.id, 0, 2, null);
+        assertNotNull(page1);
+        assertFalse(page1.isEmpty(), "First page should have comments");
+        assertTrue(page1.size() <= 2, "Page size should be respected");
+    }
+
+    @Test
+    @DisplayName("findRecentComments returns at most limit number of comments")
+    @TestTransaction
+    void testFindRecentComments_limitRespected() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        for (int i = 0; i < 5; i++) {
+            final var d = new CommentDto();
+            d.content = "comment " + i;
+            d.exercisePublicId = exercise.publicId;
+            this.commentService.createComment(d, student.id);
+        }
+
+        final var recent = this.commentService.findRecentComments(3);
+        assertNotNull(recent);
+        assertTrue(recent.size() <= 3, "findRecentComments(3) should return at most 3");
+    }
+
+    @Test
+    @DisplayName("findByUserId returns only comments by that user")
+    @TestTransaction
+    void testFindByUserId_filtered() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "my comment";
+        dto.exercisePublicId = exercise.publicId;
+        this.commentService.createComment(dto, student.id);
+
+        final var results = this.commentService.findByUserId(student.id);
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().allMatch(c -> student.publicId.equals(c.authorPublicId)),
+                "All comments should belong to student1");
+    }
+
+    @Test
+    @DisplayName("searchComments returns empty list for blank query")
+    @TestTransaction
+    void testSearchComments_blank() {
+        final var results = this.commentService.searchComments("");
+        assertNotNull(results);
+        assertTrue(results.isEmpty(), "Blank search should return empty list per service contract");
+    }
+
+    @Test
+    @DisplayName("findFlaggedComments with minFlags=0 returns non-null list")
+    @TestTransaction
+    void testFindFlaggedComments_zeroMin() {
+        final var results = this.commentService.findFlaggedComments(0);
+        assertNotNull(results);
+    }
+
+    @Test
+    @DisplayName("findByStatus VISIBLE returns visible comments")
+    @TestTransaction
+    void testFindByStatus_visible() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "visible comment";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        final var visible = this.commentService.findByStatus(CommentStatus.VISIBLE);
+        assertNotNull(visible);
+        assertTrue(visible.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
+                "Newly created comment should have VISIBLE status");
     }
 }

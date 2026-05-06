@@ -289,7 +289,7 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
-### 6 OWASP Dependency-Check & Secret Scanning
+### 6. OWASP Dependency-Check & Secret Scanning
 
 **Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
 
@@ -300,5 +300,56 @@ Clickable spans are used extensively across views, especially admin views, howev
 1. Add the `NVD_API_KEY` as a GitHub repository secret.
 2. Uncomment the OWASP dependency-check and Gitleaks steps in the `security` job.
 3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break.
+
+---
+
+## 7. Test Coverage — Next-Wave Targets
+
+After the first coverage push (JaCoCo + new/expanded service tests), the following classes still lack meaningful direct coverage and represent the highest-ROI remaining work. Implement as separate PRs in priority order.
+
+### 7a. AI Provider Implementations (High ROI)
+
+**Classes:** `GeminiAiProvider`, `OpenAiProvider`, `OllamaAiProvider`
+**Gap:** These are the core integration paths between the tutor logic and external AI APIs. They are only exercised indirectly through `AiTutorServiceTest`, which mocks the provider.
+**Approach:** Use `@InjectMock` on the underlying `GeminiService` / `OpenAiService` / `OllamaService` to stub `generateContent()` / `generateJsonContent()`. Test:
+
+- `analyzeMathAction()` — returns a valid `AiFeedbackDto` when the mock returns valid JSON
+- `answerQuestion()` — returns a non-blank string
+- Error path: stub throws an exception → verify `AiProviderException` (or `NonRetryableAiProviderException`) is raised
+
+### 7b. Repository Integration Tests (High ROI)
+
+**Classes:** All 11 in `de.vptr.aimathtutor.repository` (only 4 have IT tests today)
+**Gap:** Search queries, date-range queries, count aggregations, and cascade deletes are untested at the repository layer — bugs here would only surface in production.
+**Approach:** Extend the existing `*IT` pattern (`@QuarkusTest` + `@TestTransaction` + seeded data). Priority targets:
+
+- `UserRepository.search()`, `findActiveUsers()`
+- `ExerciseRepository.search()`, `findByDateRange()`
+- `CommentRepository.search()`, `findByStatus()`, `findFlaggedComments()`
+- `StudentSessionRepository.countAll()`, `countByCompleted()`, `searchByUserOrExerciseTerm()`
+
+### 7c. AbstractAiProviderService (Medium ROI)
+
+**Class:** `AbstractAiProviderService`
+**Gap:** The shared helper methods (`isConfigured()`, `requireApiKey()`, `requireConfigured()`, `requireNonEmptyContent()`) are invoked by every provider but have no direct unit test.
+**Approach:** `MockAiProvider` already extends `AbstractAiProviderService`. Add tests to `MockAiProviderTest` that verify the inherited behaviour, e.g. `requireNonEmptyContent(null)` throws, `isApiKeyConfigured("not-configured")` returns false.
+
+### 7d. ExerciseCompletionService (Medium ROI)
+
+**Class:** `ExerciseCompletionService`
+**Gap:** `enrichWithCompletionData()` and `enrichListWithCompletionData()` are the only two public methods — both untested.
+**Approach:** Use `@QuarkusTest` + `@TestTransaction`. Create an exercise, create a session for student1, call `enrichWithCompletionData()` with the exercise DTO and student1's ID, assert that `completedCount` / `hasCompleted` are populated.
+
+### 7e. AiInteractionLogger (Medium ROI)
+
+**Class:** `AiInteractionLogger`
+**Gap:** `logInteraction()` and `logQuestionInteraction()` persist `AiInteractionEntity` records — the only way to verify AI interactions are logged is to count rows.
+**Approach:** `@QuarkusTest` + `@TestTransaction`. Call each method, then assert `AiInteractionRepository.countAll()` increased by 1.
+
+### 7f. Vaadin Views (Low ROI / Long-term)
+
+**Package:** `de.vptr.aimathtutor.view`
+**Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.
+**Approach:** Introduce [Vaadin TestBench](https://vaadin.com/docs/latest/testing/end-to-end) or [Playwright](https://playwright.dev/) for end-to-end tests. This is a multi-day investment and should be treated as a separate project initiative, not a quick fix.
 
 ---

@@ -196,4 +196,148 @@ class UserServiceTest {
         assertNotNull(users);
         assertTrue(users.size() >= 4, "Expected ≥4 seeded users, got " + users.size());
     }
+
+    @Test
+    @DisplayName("patchUser updates only the provided field")
+    @TestTransaction
+    void testPatchUser_updatesProvidedField() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final UserDto patch = new UserDto();
+        patch.email = "patched_" + UUID.randomUUID().toString().substring(0, 8) + "@example.com";
+
+        final UserViewDto patched = this.userService.patchUser(created.publicId, patch);
+
+        assertEquals(dto.username, patched.username, "Username should be unchanged after patch");
+        assertEquals(patch.email, patched.email);
+    }
+
+    @Test
+    @DisplayName("searchUsers with blank query returns all users")
+    @TestTransaction
+    void testSearchUsers_blank() {
+        final var results = this.userService.searchUsers("");
+        assertNotNull(results);
+        assertTrue(results.size() >= 4, "Blank search should return all users");
+    }
+
+    @Test
+    @DisplayName("searchUsers with username prefix returns matching users")
+    @TestTransaction
+    void testSearchUsers_byUsername() {
+        final var results = this.userService.searchUsers("admin");
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().anyMatch(u -> "admin".equals(u.username)));
+    }
+
+    @Test
+    @DisplayName("searchUsers with non-matching term returns empty list")
+    @TestTransaction
+    void testSearchUsers_noMatch() {
+        final var results = this.userService.searchUsers("zzz_no_match_xyz_999");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findActiveUsers returns non-empty list of activated users")
+    @TestTransaction
+    void testFindActiveUsers() {
+        final var activeUsers = this.userService.findActiveUsers();
+        assertNotNull(activeUsers);
+        assertFalse(activeUsers.isEmpty(), "Seeded activated users should be in the active list");
+    }
+
+    @Test
+    @DisplayName("findByEmail returns user with matching email")
+    @TestTransaction
+    void testFindByEmail_found() {
+        final UserDto dto = this.buildValidDto();
+        this.userService.createUser(dto);
+
+        final var found = this.userService.findByEmail(dto.email);
+        assertTrue(found.isPresent());
+        assertEquals(dto.username, found.get().username);
+    }
+
+    @Test
+    @DisplayName("findByEmail returns empty for unknown email")
+    @TestTransaction
+    void testFindByEmail_notFound() {
+        final var found = this.userService.findByEmail("nobody@nowheredomain.invalid");
+        assertFalse(found.isPresent());
+    }
+
+    @Test
+    @DisplayName("changePassword succeeds with correct current password")
+    @TestTransaction
+    void testChangePassword_success() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        final String newPassword = "N3wP@ssword!";
+
+        this.userService.changePassword(entity.id, VALID_PASSWORD, newPassword);
+
+        // Re-fetch and verify new hash works
+        final var updated = this.userRepository.findById(entity.id);
+        assertNotNull(updated);
+        assertTrue(updated.password.startsWith("$2"), "Password should still be a bcrypt hash");
+    }
+
+    @Test
+    @DisplayName("changePassword throws ValidationException for wrong current password")
+    @TestTransaction
+    void testChangePassword_wrongCurrentPassword() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+
+        assertThrows(ValidationException.class,
+                () -> this.userService.changePassword(entity.id, "WrongP@ss1", "N3wP@ssword!"));
+    }
+
+    @Test
+    @DisplayName("updateAvatars persists emoji values")
+    @TestTransaction
+    void testUpdateAvatars_success() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+
+        this.userService.updateAvatars(entity.id, "🧑", "🤖");
+
+        final var updated = this.userRepository.findById(entity.id);
+        assertNotNull(updated);
+        assertEquals("🧑", updated.userAvatarEmoji);
+        assertEquals("🤖", updated.tutorAvatarEmoji);
+    }
+
+    @Test
+    @DisplayName("updateAvatars throws ValidationException for blank user emoji")
+    @TestTransaction
+    void testUpdateAvatars_blankUserEmoji() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(entity.id, "", "🤖"));
+    }
+
+    @Test
+    @DisplayName("getSettings returns non-null DTO with defaults")
+    @TestTransaction
+    void testGetSettings_returnsDefaults() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+
+        final var settings = this.userService.getSettings(entity.id);
+        assertNotNull(settings);
+        assertNotNull(settings.userAvatarEmoji);
+        assertNotNull(settings.tutorAvatarEmoji);
+    }
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -230,5 +231,115 @@ class ExerciseServiceTest {
 
         assertTrue(deleted);
         assertTrue(this.exerciseService.findById(created.id).isEmpty());
+    }
+
+    @Test
+    @DisplayName("updateExercise replaces all fields")
+    @TestTransaction
+    void testUpdateExercise_replacesFields() {
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), false));
+
+        final ExerciseDto update = new ExerciseDto();
+        update.title = "Updated Title";
+        update.content = "Updated content";
+        update.userPublicId = this.teacherPublicId();
+        update.published = true;
+        update.commentable = true;
+
+        final ExerciseViewDto updated = this.exerciseService.updateExercise(created.publicId, update);
+
+        assertEquals("Updated Title", updated.title);
+        assertEquals("Updated content", updated.content);
+        assertTrue(updated.published);
+        assertTrue(updated.commentable);
+    }
+
+    @Test
+    @DisplayName("patchExercise updates only the provided field")
+    @TestTransaction
+    void testPatchExercise_updatesProvidedField() {
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), false));
+
+        final ExerciseDto patch = new ExerciseDto();
+        patch.published = true;
+
+        final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
+
+        assertEquals(created.title, patched.title, "Title should be unchanged after patch");
+        assertTrue(patched.published);
+    }
+
+    @Test
+    @DisplayName("searchExercises with blank query returns all exercises")
+    @TestTransaction
+    void testSearchExercises_blank() {
+        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final var results = this.exerciseService.searchExercises("");
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Blank query should return all exercises");
+    }
+
+    @Test
+    @DisplayName("searchExercises with matching term returns results")
+    @TestTransaction
+    void testSearchExercises_match() {
+        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
+        final String uniqueTitle = "UniqueSearchableTitle_" + UUID.randomUUID().toString().substring(0, 8);
+        dto.title = uniqueTitle;
+        this.exerciseService.createExercise(dto);
+
+        final var results = this.exerciseService.searchExercises(uniqueTitle);
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().anyMatch(e -> uniqueTitle.equals(e.title)));
+    }
+
+    @Test
+    @DisplayName("searchExercises with non-matching term returns empty list")
+    @TestTransaction
+    void testSearchExercises_noMatch() {
+        final var results = this.exerciseService.searchExercises("zzz_nonexistent_xyz_9999");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findGraspableMathExercises returns only graspable exercises")
+    @TestTransaction
+    void testFindGraspableMathExercises() {
+        final var results = this.exerciseService.findGraspableMathExercises();
+        assertNotNull(results);
+        assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
+                "All returned exercises should have graspableEnabled=true");
+    }
+
+    @Test
+    @DisplayName("findPublishedExercisesByLessonMap returns a non-null map")
+    @TestTransaction
+    void testFindPublishedExercisesByLessonMap() {
+        final var map = this.exerciseService.findPublishedExercisesByLessonMap();
+        assertNotNull(map);
+    }
+
+    @Test
+    @DisplayName("findByDateRange with null dates returns empty list")
+    @TestTransaction
+    void testFindByDateRange_nullDates() {
+        final var results = this.exerciseService.findByDateRange(null, null);
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByDateRange with today's range includes recently created exercise")
+    @TestTransaction
+    void testFindByDateRange_today() {
+        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final String today = LocalDate.now().toString();
+        final var results = this.exerciseService.findByDateRange(today, today);
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Exercise created today should be in today's date range");
     }
 }

@@ -217,4 +217,79 @@ class LessonServiceTest {
             assertTrue(lesson.exercisesCount >= 0);
         }
     }
+
+    @Test
+    @DisplayName("updateLesson replaces the lesson name")
+    @TestTransaction
+    void testUpdateLesson_replacesName() {
+        final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("update_src"));
+
+        final LessonEntity update = new LessonEntity();
+        update.publicId = created.publicId;
+        update.name = "Updated Lesson Name";
+
+        final LessonViewDto updated = this.lessonService.updateLesson(update);
+
+        assertEquals("Updated Lesson Name", updated.name);
+    }
+
+    @Test
+    @DisplayName("patchLesson updates only the provided name")
+    @TestTransaction
+    void testPatchLesson_updatesName() {
+        final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("patch_src"));
+
+        final LessonEntity patch = new LessonEntity();
+        patch.publicId = created.publicId;
+        patch.name = "Patched Name";
+
+        final LessonViewDto patched = this.lessonService.patchLesson(patch);
+
+        assertEquals("Patched Name", patched.name);
+    }
+
+    @Test
+    @DisplayName("findRootLessons returns only lessons without a parent")
+    @TestTransaction
+    void testFindRootLessons_returnsOnlyRoots() {
+        this.lessonService.createLesson(this.buildLesson("root"));
+        final var roots = this.lessonService.findRootLessons();
+        assertNotNull(roots);
+        assertFalse(roots.isEmpty(), "There should be at least one root lesson");
+        assertTrue(roots.stream().allMatch(l -> l.parentPublicId == null),
+                "Root lessons should have no parent");
+    }
+
+    @Test
+    @DisplayName("searchLessons with blank query returns all lessons")
+    @TestTransaction
+    void testSearchLessons_blank() {
+        this.lessonService.createLesson(this.buildLesson("search_blank"));
+        final var results = this.lessonService.searchLessons("");
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Blank query should return all lessons");
+    }
+
+    @Test
+    @DisplayName("searchLessons with matching term finds the lesson")
+    @TestTransaction
+    void testSearchLessons_match() {
+        final LessonEntity lesson = this.buildLesson("UniqueSearchable");
+        final String uniqueName = lesson.name;
+        this.lessonService.createLesson(lesson);
+
+        final var results = this.lessonService.searchLessons(uniqueName);
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Search should find the lesson by name");
+        assertTrue(results.stream().anyMatch(l -> uniqueName.equals(l.name)));
+    }
+
+    @Test
+    @DisplayName("searchLessons with non-matching term returns empty list")
+    @TestTransaction
+    void testSearchLessons_noMatch() {
+        final var results = this.lessonService.searchLessons("zzz_nobody_here_xyz_9999");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
 }
