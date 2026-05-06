@@ -252,6 +252,8 @@ class UserRankServiceTest {
         final UserRankDto createDto = new UserRankDto();
         createDto.name = "PatchTestRank_" + UUID.randomUUID().toString().substring(0, 8);
         createDto.exerciseAdd = false;
+        createDto.adminView = false;
+        createDto.commentAdd = true;
         final UserRankViewDto created = this.userRankService.createRank(createDto);
 
         final UserRankDto patch = new UserRankDto();
@@ -262,6 +264,8 @@ class UserRankServiceTest {
 
         assertEquals(patch.name, patched.name, "Name should be updated");
         assertTrue(patched.exerciseAdd, "exerciseAdd should be updated to true");
+        assertEquals(created.adminView, patched.adminView, "adminView should be unchanged after patch");
+        assertEquals(created.commentAdd, patched.commentAdd, "commentAdd should be unchanged after patch");
     }
 
     @Test

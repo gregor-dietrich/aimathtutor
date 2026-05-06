@@ -310,8 +310,18 @@ class ExerciseServiceTest {
     @DisplayName("findGraspableMathExercises returns only graspable exercises")
     @TestTransaction
     void testFindGraspableMathExercises() {
+        final ExerciseDto graspableDto = this.buildDto(this.teacherPublicId(), true);
+        graspableDto.graspableEnabled = Boolean.TRUE;
+        graspableDto.graspableTargetExpression = "x=1";
+        final ExerciseViewDto graspableExercise = this.exerciseService.createExercise(graspableDto);
+
+        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+
         final var results = this.exerciseService.findGraspableMathExercises();
         assertNotNull(results);
+        assertFalse(results.isEmpty(), "Should find at least the seeded graspable exercise");
+        assertTrue(results.stream().anyMatch(e -> graspableExercise.publicId.equals(e.publicId)),
+                "Seeded graspable exercise should be in results");
         assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
                 "All returned exercises should have graspableEnabled=true");
     }
@@ -337,12 +347,13 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with today's range includes recently created exercise")
     @TestTransaction
     void testFindByDateRange_today() {
-        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
         // DB stores CURRENT_TIMESTAMP in UTC; use UTC date to match
         final String today = LocalDate.now(ZoneOffset.UTC).toString();
         final var results = this.exerciseService.findByDateRange(today, today);
         assertNotNull(results);
-        assertFalse(results.isEmpty(), "Exercise created today should be in today's date range");
+        assertTrue(results.stream().anyMatch(e -> created.publicId.equals(e.publicId)),
+                "Exercise created today should be in today's date range");
     }
 
     @Test
@@ -375,11 +386,23 @@ class ExerciseServiceTest {
         nonGmDto.lessonPublicId = lesson.publicId;
         this.exerciseService.createExercise(nonGmDto);
 
+        // Graspable exercise in a different lesson — must not appear in results
+        final var otherLessonEntity = new LessonEntity();
+        otherLessonEntity.name = "other_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto otherLesson = this.lessonService.createLesson(otherLessonEntity);
+        final ExerciseDto otherGmDto = this.buildDto(this.teacherPublicId(), true);
+        otherGmDto.lessonPublicId = otherLesson.publicId;
+        otherGmDto.graspableEnabled = Boolean.TRUE;
+        otherGmDto.graspableTargetExpression = "y=2";
+        final ExerciseViewDto otherGmExercise = this.exerciseService.createExercise(otherGmDto);
+
         final var results = this.exerciseService.findGraspableMathExercisesByLesson(lessonDb.id);
         assertNotNull(results);
         assertTrue(results.stream().anyMatch(e -> gmExercise.publicId.equals(e.publicId)),
                 "GM exercise should be in results");
         assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
                 "All returned exercises should have graspableEnabled=true");
+        assertFalse(results.stream().anyMatch(e -> otherGmExercise.publicId.equals(e.publicId)),
+                "GM exercise from a different lesson should not be in results");
     }
 }

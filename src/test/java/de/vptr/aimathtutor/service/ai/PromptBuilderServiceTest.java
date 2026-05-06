@@ -50,9 +50,9 @@ class PromptBuilderServiceTest {
     @DisplayName("sanitizePromptInput truncates input over 2000 chars and appends marker")
     void sanitizePromptInput_overLimit() {
         final String input = "a".repeat(2001);
+        final String expected = "a".repeat(2000) + "...[truncated]";
         final String result = this.promptBuilderService.sanitizePromptInput(input);
-        assertTrue(result.endsWith("...[truncated]"));
-        assertTrue(result.startsWith("a".repeat(2000)));
+        assertEquals(expected, result);
     }
 
     @Test
@@ -116,6 +116,8 @@ class PromptBuilderServiceTest {
                 "What next?", "x=2", null, null, null);
         assertNotNull(prompt);
         assertFalse(prompt.contains("<conversation_context>"));
+        assertFalse(prompt.contains("<recent_questions>"));
+        assertFalse(prompt.contains("<recent_responses>"));
     }
 
     @Test
@@ -139,6 +141,8 @@ class PromptBuilderServiceTest {
         assertTrue(prompt.contains("<student_action>"));
         assertTrue(prompt.contains("<current_action>"));
         assertFalse(prompt.contains("<recent_actions>"));
+        assertFalse(prompt.contains("<recent_questions>"));
+        assertFalse(prompt.contains("<recent_feedback>"));
     }
 
     @Test

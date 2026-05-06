@@ -222,6 +222,6 @@ class GraspableMathServiceTest {
     @DisplayName("getSession returns null for unknown session id")
     @TestTransaction
     void testGetSession_notFound() {
-        assertNull(this.graspableMathService.getSession("nonexistent-session-id-xyz"));
+        assertNull(this.graspableMathService.getSession(UUID.randomUUID().toString()));
     }
 }
