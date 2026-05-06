@@ -36,6 +36,11 @@
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
         <ulid-creator.version>5.2.4</ulid-creator.version>
         <vaadin.version>25.1.4</vaadin.version>
+
+        <!-- CVE-2026-41417: transitive via com.vaadin:vaadin-quarkus-extension -->
+        <netty-codec-http.version>4.1.133.Final</netty-codec-http.version>
+        <!-- CVE-2026-42198: transitive via io.quarkus:quarkus-jdbc-postgresql -->
+        <postgresql.version>42.7.11</postgresql.version>
     </properties>
 
     <dependencyManagement>
@@ -56,6 +61,20 @@
                 <version>${vaadin.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- Pin to fix CVE-2026-41417 (HTTP request smuggling via DefaultHttpRequest.setUri()); transitive via com.vaadin:vaadin-quarkus-extension -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-http</artifactId>
+                <version>${netty-codec-http.version}</version>
+            </dependency>
+
+            <!-- Pin to fix CVE-2026-42198 (CPU exhaustion DoS via unbounded PBKDF2 iterations in SCRAM auth); transitive via io.quarkus:quarkus-jdbc-postgresql -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
