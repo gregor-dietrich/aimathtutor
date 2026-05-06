@@ -75,7 +75,7 @@ class CommentServiceTest {
         assertNotNull(student, "student1 fixture must exist");
         final var dto = new CommentDto();
         dto.content = null;
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
 
         assertThrows(ValidationException.class, () -> {
             this.commentService.createComment(dto, student.id);
@@ -91,7 +91,7 @@ class CommentServiceTest {
         assertNotNull(student, "student1 fixture must exist");
         final var dto = new CommentDto();
         dto.content = "";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
 
         assertThrows(ValidationException.class, () -> {
             this.commentService.createComment(dto, student.id);
@@ -107,7 +107,7 @@ class CommentServiceTest {
         assertNotNull(student, "student1 fixture must exist");
         final var dto = new CommentDto();
         dto.content = "   ";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
 
         assertThrows(ValidationException.class, () -> {
             this.commentService.createComment(dto, student.id);
@@ -122,7 +122,7 @@ class CommentServiceTest {
 
         final var dto = new CommentDto();
         dto.content = "<script>alert(1)</script>safe text";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
 
         final CommentViewDto created = this.commentService.createComment(dto,
                 this.userRepository.findByUsername("student1").id);
@@ -151,7 +151,7 @@ class CommentServiceTest {
 
         final var dto = new CommentDto();
         dto.content = "hi";
-        dto.exerciseId = ex.id;
+        dto.exercisePublicId = ex.publicId;
 
         final var thrown = assertThrows(WebApplicationException.class,
                 () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
@@ -166,7 +166,7 @@ class CommentServiceTest {
         final ExerciseViewDto exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = "hello world";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.commentService.createComment(dto,
                 this.userRepository.findByUsername("student1").id);
 
@@ -183,7 +183,7 @@ class CommentServiceTest {
         final ExerciseViewDto exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = "comment one";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
         this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
 
         final var comments = this.commentService.findByExerciseId(exercise.id);
@@ -199,7 +199,7 @@ class CommentServiceTest {
         final ExerciseViewDto exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = "to delete";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.commentService.createComment(dto,
                 this.userRepository.findByUsername("student1").id);
         final var student = this.userRepository.findByUsername("student1");
@@ -220,7 +220,7 @@ class CommentServiceTest {
         final ExerciseViewDto exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = "needs hiding";
-        dto.exerciseId = exercise.id;
+        dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.commentService.createComment(dto,
                 this.userRepository.findByUsername("student1").id);
         final var admin = this.userRepository.findByUsername("admin");
