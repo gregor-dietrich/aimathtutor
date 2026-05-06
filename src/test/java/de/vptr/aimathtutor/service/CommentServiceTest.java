@@ -71,12 +71,14 @@ class CommentServiceTest {
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithNullContent() {
         final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "student1 fixture must exist");
         final var dto = new CommentDto();
         dto.content = null;
         dto.exerciseId = exercise.id;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(dto, 1L);
+            this.commentService.createComment(dto, student.id);
         });
     }
 
@@ -85,12 +87,14 @@ class CommentServiceTest {
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithEmptyContent() {
         final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "student1 fixture must exist");
         final var dto = new CommentDto();
         dto.content = "";
         dto.exerciseId = exercise.id;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(dto, 1L);
+            this.commentService.createComment(dto, student.id);
         });
     }
 
@@ -99,12 +103,14 @@ class CommentServiceTest {
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithWhitespaceContent() {
         final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "student1 fixture must exist");
         final var dto = new CommentDto();
         dto.content = "   ";
         dto.exerciseId = exercise.id;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(dto, 1L);
+            this.commentService.createComment(dto, student.id);
         });
     }
 
