@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,8 +23,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity to track student sessions in Graspable Math workspace.
@@ -85,9 +84,11 @@ public class StudentSessionEntity extends PanacheEntityBase {
      */
     @PrePersist
     public void generatePublicId() {
-        if (this.publicId == null) {
+        if (this.publicId == null || this.publicId.isBlank()) {
             this.publicId = UlidService.generate();
+            return;
         }
+        UlidService.requireValid(this.publicId);
     }
 
     @NotBlank

@@ -88,9 +88,11 @@ public class AiConfigEntity extends PanacheEntityBase {
      */
     @PrePersist
     public void generatePublicId() {
-        if (this.publicId == null) {
+        if (this.publicId == null || this.publicId.isBlank()) {
             this.publicId = UlidService.generate();
+            return;
         }
+        UlidService.requireValid(this.publicId);
     }
 
     /**

@@ -9,6 +9,7 @@ import org.hibernate.generator.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -29,8 +30,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
-
-import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity representing math exercises in the system.
@@ -69,9 +68,11 @@ public class ExerciseEntity extends PanacheEntityBase {
      */
     @PrePersist
     public void generatePublicId() {
-        if (this.publicId == null) {
+        if (this.publicId == null || this.publicId.isBlank()) {
             this.publicId = UlidService.generate();
+            return;
         }
+        UlidService.requireValid(this.publicId);
     }
 
     @NotBlank
