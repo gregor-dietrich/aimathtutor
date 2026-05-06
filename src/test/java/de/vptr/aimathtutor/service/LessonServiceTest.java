@@ -231,6 +231,13 @@ class LessonServiceTest {
         final LessonViewDto updated = this.lessonService.updateLesson(update);
 
         assertEquals("Updated Lesson Name", updated.name);
+
+        final LessonEntity persisted = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", created.publicId)
+                .getSingleResult();
+        assertEquals("Updated Lesson Name", persisted.name,
+                "Updated name should be persisted in the database");
     }
 
     @Test
@@ -238,6 +245,7 @@ class LessonServiceTest {
     @TestTransaction
     void testPatchLesson_updatesName() {
         final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("patch_src"));
+        final String originalPublicId = created.publicId;
 
         final LessonEntity patch = new LessonEntity();
         patch.publicId = created.publicId;
@@ -246,6 +254,14 @@ class LessonServiceTest {
         final LessonViewDto patched = this.lessonService.patchLesson(patch);
 
         assertEquals("Patched Name", patched.name);
+        assertEquals(originalPublicId, patched.publicId, "publicId should be unchanged after patch");
+
+        final LessonEntity persisted = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", originalPublicId)
+                .getSingleResult();
+        assertEquals("Patched Name", persisted.name,
+                "Patched name should be persisted in the database");
     }
 
     @Test
@@ -273,10 +289,12 @@ class LessonServiceTest {
     @DisplayName("searchLessons with blank query returns all lessons")
     @TestTransaction
     void testSearchLessons_blank() {
-        this.lessonService.createLesson(this.buildLesson("search_blank"));
+        final LessonViewDto createdLesson = this.lessonService.createLesson(this.buildLesson("search_blank"));
         final var results = this.lessonService.searchLessons("");
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Blank query should return all lessons");
+        assertTrue(results.stream().anyMatch(l -> createdLesson.publicId.equals(l.publicId)),
+                "Blank search should include the newly created lesson");
     }
 
     @Test

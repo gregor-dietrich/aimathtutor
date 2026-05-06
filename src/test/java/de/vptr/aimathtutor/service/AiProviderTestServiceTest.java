@@ -57,12 +57,12 @@ class AiProviderTestServiceTest {
     }
 
     @Test
-    @DisplayName("testOllama returns failure when Ollama server is unavailable")
-    void testTestOllama_unavailable() {
-        // No Ollama server in CI / test environment
+    @DisplayName("testOllama returns a non-null result with a non-blank message")
+    void testTestOllama_returnsResult() {
+        // Ollama may or may not be available — either success or failure is valid.
         final AiProviderTestResultDto result = this.aiProviderTestService.testOllama();
         assertNotNull(result);
-        assertFalse(result.success, "Ollama unavailable in test env — should fail");
         assertNotNull(result.message);
+        assertFalse(result.message.isBlank());
     }
 }

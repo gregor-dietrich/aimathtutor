@@ -257,6 +257,11 @@ class CommentServiceTest {
         final CommentViewDto edited = this.commentService.editComment(created.publicId, editDto, student.id);
 
         assertEquals("edited content", edited.content);
+
+        final var persisted = this.commentRepository.findByPublicId(created.publicId);
+        assertTrue(persisted.isPresent());
+        assertEquals("edited content", persisted.get().content,
+                "Edited content should be persisted in the database");
     }
 
     @Test
@@ -334,6 +339,9 @@ class CommentServiceTest {
         final var recent = this.commentService.findRecentComments(3);
         assertNotNull(recent);
         assertEquals(3, recent.size(), "findRecentComments(3) should return exactly 3 comments");
+        assertEquals("recent 4", recent.get(0).content, "Most recent comment should be first");
+        assertEquals("recent 3", recent.get(1).content, "Second most recent should be second");
+        assertEquals("recent 2", recent.get(2).content, "Third most recent should be third");
     }
 
     @Test
@@ -367,8 +375,20 @@ class CommentServiceTest {
     @DisplayName("findFlaggedComments with minFlags=0 returns non-null list")
     @TestTransaction
     void testFindFlaggedComments_zeroMin() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "flaggable comment";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        final var entity = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
+        entity.flagsCount = 2;
+
         final var results = this.commentService.findFlaggedComments(0);
         assertNotNull(results);
+        assertTrue(results.stream().anyMatch(c -> created.publicId.equals(c.publicId)),
+                "Flagged comment should appear in results");
     }
 
     @Test

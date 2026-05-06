@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -114,8 +115,7 @@ class AbstractAiProviderServiceTest {
     @DisplayName("requireNonEmptyContent returns content unchanged when non-empty")
     void testRequireNonEmptyContent_returnsWhenValid() {
         final String content = PROVIDER.callRequireNonEmptyContent("valid content");
-        assertNotNull(content);
-        assertTrue(content.contains("valid"));
+        assertEquals("valid content", content);
     }
 
     @Test

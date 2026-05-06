@@ -109,6 +109,12 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         this.graspableMathService.createSession(studentId, exerciseId);
 
+        final var otherStudent = this.userRepository.findByUsername("student2");
+        assertNotNull(otherStudent, "Seeded student2 must exist");
+        final Long otherStudentId = otherStudent.id;
+        final Long otherExerciseId = this.createExercise();
+        final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
+
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByUserAndExercise(studentId,
                 exerciseId);
         assertNotNull(sessions);
@@ -117,13 +123,6 @@ class AnalyticsServiceTest {
             assertEquals("student1", s.username, "All sessions should belong to student1");
             assertEquals(this.exerciseService.findById(exerciseId).orElseThrow().publicId, s.exercisePublicId,
                     "All sessions should belong to the exercise");
-        }
-
-        final Long otherStudentId = this.userRepository.findByUsername("student2").id;
-        final Long otherExerciseId = this.createExercise();
-        final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
-
-        for (final StudentSessionViewDto s : sessions) {
             assertFalse(otherSessionId.equals(s.sessionId),
                     "Sessions from other student/exercise should not appear");
         }
@@ -219,7 +218,9 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getUserProgressSummary returns zero-session summary for user with no sessions")
     void testGetUserProgressSummary_noSessions() {
-        final Long adminId = this.userRepository.findByUsername("admin").id;
+        final var admin = this.userRepository.findByUsername("admin");
+        assertNotNull(admin, "Seeded admin must exist");
+        final Long adminId = admin.id;
         final StudentProgressSummaryDto summary = this.analyticsService.getUserProgressSummary(adminId);
         assertNotNull(summary);
         assertEquals("admin", summary.username);
