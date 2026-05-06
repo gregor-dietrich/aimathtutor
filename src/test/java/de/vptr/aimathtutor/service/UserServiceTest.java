@@ -347,4 +347,55 @@ class UserServiceTest {
         assertNotNull(settings.userAvatarEmoji);
         assertNotNull(settings.tutorAvatarEmoji);
     }
+
+    @Test
+    @DisplayName("findByPublicId returns empty for unknown publicId")
+    @TestTransaction
+    void testFindByPublicId_notFound() {
+        final var result = this.userService.findByPublicId("00000000000000000000000000");
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("deleteUser succeeds and makes the user unfindable")
+    @TestTransaction
+    void testDeleteUser_success() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final boolean deleted = this.userService.deleteUser(created.publicId);
+
+        assertTrue(deleted);
+        assertFalse(this.userService.findByPublicId(created.publicId).isPresent(),
+                "User should not be findable after deletion");
+    }
+
+    @Test
+    @DisplayName("deleteUser returns false for unknown publicId")
+    @TestTransaction
+    void testDeleteUser_notFound() {
+        final boolean deleted = this.userService.deleteUser("00000000000000000000000000");
+        assertFalse(deleted);
+    }
+
+    @Test
+    @DisplayName("updateUser replaces username and email")
+    @TestTransaction
+    void testUpdateUser_replacesFields() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final UserDto update = new UserDto();
+        final String newSuffix = UUID.randomUUID().toString().substring(0, 8);
+        update.username = "updated_" + newSuffix;
+        update.email = "updated_" + newSuffix + "@example.com";
+        update.password = VALID_PASSWORD;
+        update.activated = true;
+
+        final UserViewDto updated = this.userService.updateUser(created.publicId, update);
+
+        assertEquals(update.username, updated.username);
+        assertEquals(update.email, updated.email);
+        assertTrue(updated.activated);
+    }
 }

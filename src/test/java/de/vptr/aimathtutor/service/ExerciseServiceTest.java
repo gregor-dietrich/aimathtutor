@@ -342,4 +342,42 @@ class ExerciseServiceTest {
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Exercise created today should be in today's date range");
     }
+
+    @Test
+    @DisplayName("findByPublicId returns empty for unknown publicId")
+    @TestTransaction
+    void testFindByPublicId_notFound() {
+        final var result = this.exerciseService.findByPublicId("00000000000000000000000000");
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("findGraspableMathExercisesByLesson returns only GM exercises in that lesson")
+    @TestTransaction
+    void testFindGraspableMathExercisesByLesson() {
+        final var lessonEntity = new LessonEntity();
+        lessonEntity.name = "gm_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
+        final var lessonDb = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", lesson.publicId)
+                .getSingleResult();
+
+        final ExerciseDto gmDto = this.buildDto(this.teacherPublicId(), true);
+        gmDto.lessonPublicId = lesson.publicId;
+        gmDto.graspableEnabled = Boolean.TRUE;
+        gmDto.graspableTargetExpression = "x=1";
+        final ExerciseViewDto gmExercise = this.exerciseService.createExercise(gmDto);
+
+        final ExerciseDto nonGmDto = this.buildDto(this.teacherPublicId(), true);
+        nonGmDto.lessonPublicId = lesson.publicId;
+        this.exerciseService.createExercise(nonGmDto);
+
+        final var results = this.exerciseService.findGraspableMathExercisesByLesson(lessonDb.id);
+        assertNotNull(results);
+        assertTrue(results.stream().anyMatch(e -> gmExercise.publicId.equals(e.publicId)),
+                "GM exercise should be in results");
+        assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
+                "All returned exercises should have graspableEnabled=true");
+    }
 }

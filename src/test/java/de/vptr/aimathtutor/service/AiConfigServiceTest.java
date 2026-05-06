@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -117,7 +116,8 @@ class AiConfigServiceTest {
         assertEquals(123, value);
 
         // Invalid integer format returns default
-        final var invalidEntity = new AiConfigEntity("test.invalid.int", "not_a_number", ConfigType.INTEGER, ConfigCategory.GENERAL);
+        final var invalidEntity = new AiConfigEntity("test.invalid.int", "not_a_number", ConfigType.INTEGER,
+                ConfigCategory.GENERAL);
         invalidEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(invalidEntity);
 
@@ -142,7 +142,8 @@ class AiConfigServiceTest {
         assertEquals(2.71, value);
 
         // Invalid double format returns default
-        final var invalidEntity = new AiConfigEntity("test.invalid.double", "not_a_double", ConfigType.DOUBLE, ConfigCategory.GENERAL);
+        final var invalidEntity = new AiConfigEntity("test.invalid.double", "not_a_double", ConfigType.DOUBLE,
+                ConfigCategory.GENERAL);
         invalidEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(invalidEntity);
 
@@ -166,7 +167,8 @@ class AiConfigServiceTest {
         assertEquals(true, value);
 
         // Test "false" string
-        final var falseEntity = new AiConfigEntity("test.bool.false", "false", ConfigType.BOOLEAN, ConfigCategory.GENERAL);
+        final var falseEntity = new AiConfigEntity("test.bool.false", "false", ConfigType.BOOLEAN,
+                ConfigCategory.GENERAL);
         falseEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(falseEntity);
         value = this.aiConfigService.getConfigValueAsBoolean("test.bool.false", true);
@@ -192,7 +194,8 @@ class AiConfigServiceTest {
     @Transactional
     void testUpdateConfig() {
         // Create initial config
-        final var entity = new AiConfigEntity("update.test", "initial_value", ConfigType.STRING, ConfigCategory.GENERAL);
+        final var entity = new AiConfigEntity("update.test", "initial_value", ConfigType.STRING,
+                ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -238,7 +241,8 @@ class AiConfigServiceTest {
     void testValidateIntegerType() {
         // Create an INTEGER type config (marked as optional so empty values are
         // allowed)
-        final var entity = new AiConfigEntity("test.integer", "100", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
+        final var entity = new AiConfigEntity("test.integer", "100", ConfigType.INTEGER, ConfigCategory.GENERAL, null,
+                true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -258,7 +262,8 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateDoubleType() {
         // Create a DOUBLE type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.double", "3.14", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
+        final var entity = new AiConfigEntity("test.double", "3.14", ConfigType.DOUBLE, ConfigCategory.GENERAL, null,
+                true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -278,7 +283,8 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateBooleanType() {
         // Create a BOOLEAN type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.boolean", "true", ConfigType.BOOLEAN, ConfigCategory.GENERAL, null, true);
+        final var entity = new AiConfigEntity("test.boolean", "true", ConfigType.BOOLEAN, ConfigCategory.GENERAL, null,
+                true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -301,7 +307,8 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateStringType() {
         // Create a STRING type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.string", "value", ConfigType.STRING, ConfigCategory.GENERAL, null, true);
+        final var entity = new AiConfigEntity("test.string", "value", ConfigType.STRING, ConfigCategory.GENERAL, null,
+                true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -368,7 +375,8 @@ class AiConfigServiceTest {
     @DisplayName("Range validation - temperature out of bounds")
     @Transactional
     void testValidateTemperatureRange() {
-        final var entity = new AiConfigEntity("test.temperature", "0.5", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
+        final var entity = new AiConfigEntity("test.temperature", "0.5", ConfigType.DOUBLE, ConfigCategory.GENERAL,
+                null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -388,7 +396,8 @@ class AiConfigServiceTest {
     @DisplayName("Range validation - max-tokens out of bounds")
     @Transactional
     void testValidateMaxTokensRange() {
-        final var entity = new AiConfigEntity("test.max-tokens", "1000", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
+        final var entity = new AiConfigEntity("test.max-tokens", "1000", ConfigType.INTEGER, ConfigCategory.GENERAL,
+                null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 

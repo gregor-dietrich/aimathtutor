@@ -540,6 +540,149 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
+    @DisplayName("getSessionsByUserAndDateRange returns session within range and excludes it outside")
+    void testGetSessionsByUserAndDateRange() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final var within = this.analyticsService.getSessionsByUserAndDateRange(studentId, start, end);
+        assertNotNull(within);
+        assertTrue(within.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should appear within the date range");
+
+        final LocalDateTime futureStart = LocalDateTime.now().plusHours(1);
+        final LocalDateTime futureEnd = LocalDateTime.now().plusHours(2);
+        final var outside = this.analyticsService.getSessionsByUserAndDateRange(studentId, futureStart, futureEnd);
+        assertNotNull(outside);
+        assertFalse(outside.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should not appear in a future range");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getSessionsByExerciseAndDateRange returns session within range and excludes it outside")
+    void testGetSessionsByExerciseAndDateRange() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final var within = this.analyticsService.getSessionsByExerciseAndDateRange(exerciseId, start, end);
+        assertNotNull(within);
+        assertTrue(within.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should appear within the date range");
+
+        final LocalDateTime futureStart = LocalDateTime.now().plusHours(1);
+        final LocalDateTime futureEnd = LocalDateTime.now().plusHours(2);
+        final var outside = this.analyticsService.getSessionsByExerciseAndDateRange(exerciseId, futureStart, futureEnd);
+        assertNotNull(outside);
+        assertFalse(outside.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should not appear in a future range");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getSessionsByStatusAndDateRange filters completed vs incomplete sessions")
+    void testGetSessionsByStatusAndDateRange() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        this.graspableMathService.markSessionComplete(sessionId);
+
+        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+
+        final var completed = this.analyticsService.getSessionsByStatusAndDateRange(Boolean.TRUE, start, end);
+        assertNotNull(completed);
+        assertTrue(completed.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Completed session should appear when filtering completed=true");
+
+        final var incomplete = this.analyticsService.getSessionsByStatusAndDateRange(Boolean.FALSE, start, end);
+        assertNotNull(incomplete);
+        assertFalse(incomplete.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Completed session should not appear when filtering completed=false");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getAiInteractionsByExercise returns interactions for that exercise")
+    void testGetAiInteractionsByExercise() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
+
+        final var interaction = new AiInteractionEntity();
+        interaction.sessionId = sessionId;
+        interaction.user = user;
+        interaction.exercise = exercise;
+        interaction.eventType = "test_exercise_interaction";
+        interaction.feedbackType = "POSITIVE";
+        this.aiInteractionRepository.persist(interaction);
+
+        final Long otherExerciseId = this.createExercise();
+        final var otherExercise = this.exerciseRepository.findById(otherExerciseId);
+        final String otherSessionId = this.graspableMathService.createSession(studentId, otherExerciseId);
+        final var otherInteraction = new AiInteractionEntity();
+        otherInteraction.sessionId = otherSessionId;
+        otherInteraction.user = user;
+        otherInteraction.exercise = otherExercise;
+        otherInteraction.eventType = "other_exercise_interaction";
+        otherInteraction.feedbackType = "HINT";
+        this.aiInteractionRepository.persist(otherInteraction);
+
+        final List<AiInteractionViewDto> results = this.analyticsService.getAiInteractionsByExercise(exerciseId);
+        assertNotNull(results);
+        assertTrue(results.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
+                "Interaction for the exercise should appear");
+        assertFalse(results.stream().anyMatch(i -> otherSessionId.equals(i.sessionId)),
+                "Interaction from a different exercise should not appear");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getUsersProgressSummaryByDateRange includes users active in range and excludes those outside")
+    void testGetUsersProgressSummaryByDateRange() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
+
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = user;
+        session.exercise = exercise;
+        session.startTime = LocalDateTime.now();
+        this.studentSessionRepository.persist(session);
+
+        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final var summaries = this.analyticsService.getUsersProgressSummaryByDateRange(start, end);
+        assertNotNull(summaries);
+        assertTrue(summaries.stream().anyMatch(s -> "student1".equals(s.username)),
+                "student1 should appear in the date range summary");
+
+        final LocalDateTime pastStart = LocalDateTime.now().minusHours(2);
+        final LocalDateTime pastEnd = LocalDateTime.now().minusHours(1);
+        final var pastSummaries = this.analyticsService.getUsersProgressSummaryByDateRange(pastStart, pastEnd);
+        assertNotNull(pastSummaries);
+        assertFalse(pastSummaries.stream().anyMatch(s -> "student1".equals(s.username)
+                && s.totalSessions > 0),
+                "student1 should not appear active in an old range with no sessions");
+    }
+
+    @Test
+    @TestTransaction
     @DisplayName("getProblemCategoryStats returns a non-null map")
     void testGetProblemCategoryStats() {
         final Long studentId = this.studentId();

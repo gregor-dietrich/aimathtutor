@@ -203,4 +203,25 @@ class GraspableMathServiceTest {
     void testCheckCompletion_bothNull() {
         assertFalse(this.graspableMathService.checkCompletion(null, null));
     }
+
+    @Test
+    @DisplayName("completeSession marks session completed with endTime set")
+    @TestTransaction
+    void testCompleteSession() {
+        final String sessionId = this.graspableMathService.createSession(this.studentId(), this.createExercise());
+
+        this.graspableMathService.completeSession(sessionId);
+
+        final var session = this.graspableMathService.getSession(sessionId);
+        assertNotNull(session);
+        assertTrue(session.completed);
+        assertNotNull(session.endTime);
+    }
+
+    @Test
+    @DisplayName("getSession returns null for unknown session id")
+    @TestTransaction
+    void testGetSession_notFound() {
+        assertNull(this.graspableMathService.getSession("nonexistent-session-id-xyz"));
+    }
 }

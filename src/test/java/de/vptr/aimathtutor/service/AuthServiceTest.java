@@ -2,12 +2,17 @@ package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import de.vptr.aimathtutor.dto.AuthResultDto;
+import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.LoginAttemptService;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -17,6 +22,12 @@ class AuthServiceTest {
 
     @Inject
     private AuthService authService;
+
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
+    private LoginAttemptService loginAttemptService;
 
     @Test
     @DisplayName("Should return invalid input when username is null")
@@ -91,5 +102,50 @@ class AuthServiceTest {
         final AuthResultDto result = this.authService.authenticate("nonexistent", "password");
         assertFalse(result.isSuccess());
         assertEquals("Invalid username or password", result.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should reject banned user")
+    @TestTransaction
+    void shouldRejectBannedUser() {
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "Seeded student1 must exist");
+        student.banned = true;
+        this.userRepository.persist(student);
+
+        final AuthResultDto result = this.authService.authenticate("student1", "student1");
+        assertFalse(result.isSuccess());
+        assertEquals("Invalid username or password", result.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should reject non-activated user")
+    @TestTransaction
+    void shouldRejectNonActivatedUser() {
+        final var student = this.userRepository.findByUsername("student2");
+        assertNotNull(student, "Seeded student2 must exist");
+        student.activated = false;
+        this.userRepository.persist(student);
+
+        final AuthResultDto result = this.authService.authenticate("student2", "student2");
+        assertFalse(result.isSuccess());
+        assertEquals("Invalid username or password", result.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throttle after too many failed attempts")
+    void shouldThrottleAfterTooManyFailedAttempts() {
+        final String uniqueKey = "throttle_test_" + UUID.randomUUID().toString().substring(0, 8);
+        for (int i = 0; i < 5; i++) {
+            this.loginAttemptService.recordFailedAttempt(uniqueKey);
+        }
+        assertTrue(this.loginAttemptService.isLockedOut(uniqueKey));
+
+        final AuthResultDto result = this.authService.authenticate(uniqueKey, "anypassword");
+        assertFalse(result.isSuccess());
+        assertTrue(result.getMessage().contains("Too many failed attempts"),
+                "Expected throttle message, got: " + result.getMessage());
+
+        this.loginAttemptService.recordSuccessfulLogin(uniqueKey);
     }
 }

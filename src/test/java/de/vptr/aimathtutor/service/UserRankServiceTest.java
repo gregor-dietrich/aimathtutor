@@ -8,18 +8,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.service.UserService;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Integration tests for UserRankService.
@@ -34,6 +40,9 @@ class UserRankServiceTest {
 
     @Inject
     UserRankRepository userRankRepository;
+
+    @Inject
+    UserService userService;
 
     @InjectMock
     PermissionService permissionService;
@@ -227,5 +236,63 @@ class UserRankServiceTest {
         rankDto.name = "   ";
 
         assertThrows(Exception.class, () -> this.userRankService.createRank(rankDto));
+    }
+
+    @Test
+    @DisplayName("findByPublicId returns empty for unknown publicId")
+    @Transactional
+    void testFindByPublicId_notFound() {
+        final var result = this.userRankService.findByPublicId("00000000000000000000000000");
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("patchRank updates only provided fields")
+    @Transactional
+    void testPatchRank() {
+        final UserRankDto createDto = new UserRankDto();
+        createDto.name = "PatchTestRank_" + UUID.randomUUID().toString().substring(0, 8);
+        createDto.exerciseAdd = false;
+        final UserRankViewDto created = this.userRankService.createRank(createDto);
+
+        final UserRankDto patch = new UserRankDto();
+        patch.name = "PatchedName_" + UUID.randomUUID().toString().substring(0, 8);
+        patch.exerciseAdd = true;
+
+        final UserRankViewDto patched = this.userRankService.patchRank(created.publicId, patch);
+
+        assertEquals(patch.name, patched.name, "Name should be updated");
+        assertTrue(patched.exerciseAdd, "exerciseAdd should be updated to true");
+    }
+
+    @Test
+    @DisplayName("deleteRank returns false for unknown publicId")
+    @Transactional
+    void testDeleteRank_notFound() {
+        final boolean deleted = this.userRankService.deleteRank("00000000000000000000000000");
+        assertFalse(deleted);
+    }
+
+    @Test
+    @DisplayName("deleteRank throws CONFLICT when users are assigned to the rank")
+    @TestTransaction
+    void testDeleteRank_withAssignedUsers() {
+        final UserRankDto rankDto = new UserRankDto();
+        rankDto.name = "ConflictRank_" + UUID.randomUUID().toString().substring(0, 8);
+        rankDto.commentAdd = true;
+        final UserRankViewDto rank = this.userRankService.createRank(rankDto);
+
+        final UserDto userDto = new UserDto();
+        final String suffix = UUID.randomUUID().toString().substring(0, 8);
+        userDto.username = "rankuser_" + suffix;
+        userDto.password = "P@ssw0rd1";
+        userDto.email = "rankuser_" + suffix + "@example.com";
+        userDto.rankPublicId = rank.publicId;
+        userDto.activated = true;
+        this.userService.createUser(userDto);
+
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.userRankService.deleteRank(rank.publicId));
+        assertEquals(Response.Status.CONFLICT.getStatusCode(), ex.getResponse().getStatus());
     }
 }

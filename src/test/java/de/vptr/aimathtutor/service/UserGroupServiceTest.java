@@ -223,6 +223,18 @@ class UserGroupServiceTest {
     }
 
     @Test
+    @DisplayName("getAllGroups returns non-null list that includes a newly created group")
+    @TestTransaction
+    void testGetAllGroups() {
+        final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
+
+        final var all = this.userGroupService.getAllGroups();
+        assertNotNull(all);
+        assertTrue(all.stream().anyMatch(g -> g.publicId.equals(created.publicId)),
+                "Newly created group should appear in getAllGroups");
+    }
+
+    @Test
     @DisplayName("getGroupsForUser returns groups after adding user")
     @TestTransaction
     void testGetGroupsForUser_returnsMembership() {

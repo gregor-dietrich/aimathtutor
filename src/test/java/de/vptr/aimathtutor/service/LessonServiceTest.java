@@ -325,4 +325,20 @@ class LessonServiceTest {
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
+
+    @Test
+    @DisplayName("findById returns empty for unknown id")
+    @TestTransaction
+    void testFindById_notFound() {
+        final var result = this.lessonService.findById(-999L);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("deleteLesson returns false for unknown publicId")
+    @TestTransaction
+    void testDeleteLesson_notFound() {
+        final boolean deleted = this.lessonService.deleteLesson("00000000000000000000000000");
+        assertFalse(deleted);
+    }
 }

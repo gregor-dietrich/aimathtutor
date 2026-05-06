@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
 
@@ -407,5 +407,91 @@ class CommentServiceTest {
         assertNotNull(visible);
         assertTrue(visible.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
                 "Newly created comment should have VISIBLE status");
+    }
+
+    @Test
+    @DisplayName("getAllComments returns non-null list that includes newly created comment")
+    @TestTransaction
+    void testGetAllComments() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "all comments test";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        final var all = this.commentService.getAllComments();
+        assertNotNull(all);
+        assertTrue(all.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
+                "Newly created comment should appear in getAllComments");
+    }
+
+    @Test
+    @DisplayName("findByPublicId returns empty for unknown publicId")
+    @TestTransaction
+    void testFindByPublicId_notFound() {
+        final var result = this.commentService.findByPublicId("00000000000000000000000000");
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("hard delete removes comment from repository")
+    @TestTransaction
+    void testHardDeleteComment() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "to hard delete";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        this.commentService.deleteComment(created.publicId, student.id, false);
+
+        assertFalse(this.commentRepository.findByPublicId(created.publicId).isPresent(),
+                "Hard-deleted comment should be removed from the repository");
+    }
+
+    @Test
+    @DisplayName("findReplies returns replies to a parent comment")
+    @TestTransaction
+    void testFindReplies() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+
+        final var parentDto = new CommentDto();
+        parentDto.content = "parent comment";
+        parentDto.exercisePublicId = exercise.publicId;
+        final CommentViewDto parent = this.commentService.createComment(parentDto, student.id);
+
+        final var replyDto = new CommentDto();
+        replyDto.content = "reply comment";
+        replyDto.exercisePublicId = exercise.publicId;
+        replyDto.parentCommentPublicId = parent.publicId;
+        final CommentViewDto reply = this.commentService.createComment(replyDto, student.id);
+
+        final var replies = this.commentService.findReplies(parent.publicId);
+        assertNotNull(replies);
+        assertTrue(replies.stream().anyMatch(c -> c.publicId.equals(reply.publicId)),
+                "Reply should appear in findReplies for the parent");
+    }
+
+    @Test
+    @DisplayName("listCommentsBySession returns comments with the given sessionId")
+    @TestTransaction
+    void testListCommentsBySession() {
+        final ExerciseViewDto exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final String sessionId = "test-session-" + UUID.randomUUID().toString().substring(0, 8);
+
+        final var dto = new CommentDto();
+        dto.content = "session comment";
+        dto.exercisePublicId = exercise.publicId;
+        dto.sessionId = sessionId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        final var results = this.commentService.listCommentsBySession(sessionId);
+        assertNotNull(results);
+        assertTrue(results.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
+                "Comment with matching sessionId should be returned");
     }
 }
