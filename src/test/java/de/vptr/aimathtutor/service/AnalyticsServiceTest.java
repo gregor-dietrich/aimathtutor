@@ -149,9 +149,11 @@ class AnalyticsServiceTest {
         assertFalse(sessions.isEmpty());
         assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
                 "Expected session should be present");
+        final var exercise = this.exerciseService.findById(exerciseId).orElseThrow();
+        final String expectedExercisePublicId = exercise.publicId;
         for (final StudentSessionViewDto s : sessions) {
             assertEquals("student1", s.username, "All sessions should belong to student1");
-            assertEquals(this.exerciseService.findById(exerciseId).orElseThrow().publicId, s.exercisePublicId,
+            assertEquals(expectedExercisePublicId, s.exercisePublicId,
                     "All sessions should belong to the exercise");
         }
         assertFalse(sessions.stream().anyMatch(s -> sameUserDiffExerciseSessionId.equals(s.sessionId)),
@@ -275,6 +277,44 @@ class AnalyticsServiceTest {
         assertNotNull(interactions);
         assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
                 "Seeded interaction should appear for the user");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getAiInteractionsByUser filters out other users' interactions")
+    void testGetAiInteractionsByUser_filtersByUser() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final var interaction = new AiInteractionEntity();
+        interaction.sessionId = sessionId;
+        final var userForInteraction = this.userRepository.findById(studentId);
+        assertNotNull(userForInteraction, "Seeded student1 must exist");
+        interaction.user = userForInteraction;
+        interaction.eventType = "test_event_user_filter";
+        interaction.feedbackType = "NEGATIVE";
+        this.aiInteractionRepository.persist(interaction);
+
+        final var otherStudent = this.userRepository.findByUsername("student2");
+        assertNotNull(otherStudent, "Seeded student2 must exist");
+        final Long otherStudentId = otherStudent.id;
+        final Long otherExerciseId = this.createExercise();
+        final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
+
+        final var otherInteraction = new AiInteractionEntity();
+        otherInteraction.sessionId = otherSessionId;
+        otherInteraction.user = otherStudent;
+        otherInteraction.eventType = "test_event_other_user";
+        otherInteraction.feedbackType = "HINT";
+        this.aiInteractionRepository.persist(otherInteraction);
+
+        final List<AiInteractionViewDto> interactions = this.analyticsService.getAiInteractionsByUser(studentId);
+        assertNotNull(interactions);
+        assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
+                "Seeded interaction should appear for the user");
+        assertFalse(interactions.stream().anyMatch(i -> otherSessionId.equals(i.sessionId)),
+                "Interactions from other users should not appear");
     }
 
     @Test
