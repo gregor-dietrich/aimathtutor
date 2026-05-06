@@ -262,6 +262,7 @@ class CommentServiceTest {
         assertTrue(persisted.isPresent());
         assertEquals("edited content", persisted.get().content,
                 "Edited content should be persisted in the database");
+        verify(this.permissionService, never()).requireCommentEdit();
     }
 
     @Test

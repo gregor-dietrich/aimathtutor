@@ -18,6 +18,12 @@ import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
+import de.vptr.aimathtutor.entity.AiInteractionEntity;
+import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.entity.StudentSessionEntity;
+import de.vptr.aimathtutor.repository.AiInteractionRepository;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
+import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
@@ -41,6 +47,15 @@ class AnalyticsServiceTest {
 
     @InjectMock
     PermissionService permissionService;
+
+    @Inject
+    StudentSessionRepository studentSessionRepository;
+
+    @Inject
+    AiInteractionRepository aiInteractionRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
 
     private Long studentId() {
         final var user = this.userRepository.findByUsername("student1");
@@ -66,8 +81,14 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getAllSessions returns a non-null list")
     void testGetAllSessions() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
         final List<StudentSessionViewDto> sessions = this.analyticsService.getAllSessions();
         assertNotNull(sessions);
+        assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Seeded session should appear in the list");
     }
 
     @Test
@@ -147,8 +168,14 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getSessionsByDateRange with null bounds returns all sessions")
     void testGetSessionsByDateRange_nullBounds() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(null, null);
         assertNotNull(sessions);
+        assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Seeded session should appear when bounds are null");
     }
 
     @Test
@@ -184,8 +211,21 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getAllAiInteractions returns a non-null list")
     void testGetAllAiInteractions() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final var interaction = new AiInteractionEntity();
+        interaction.sessionId = sessionId;
+        interaction.user = this.userRepository.findById(studentId);
+        interaction.eventType = "test_event";
+        interaction.feedbackType = "HINT";
+        this.aiInteractionRepository.persist(interaction);
+
         final List<AiInteractionViewDto> interactions = this.analyticsService.getAllAiInteractions();
         assertNotNull(interactions);
+        assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
+                "Seeded interaction should appear in the list");
     }
 
     @Test
@@ -202,8 +242,21 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getAiInteractionsByUser returns a non-null list")
     void testGetAiInteractionsByUser() {
-        final List<AiInteractionViewDto> interactions = this.analyticsService.getAiInteractionsByUser(this.studentId());
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final var interaction = new AiInteractionEntity();
+        interaction.sessionId = sessionId;
+        interaction.user = this.userRepository.findById(studentId);
+        interaction.eventType = "test_event_user";
+        interaction.feedbackType = "POSITIVE";
+        this.aiInteractionRepository.persist(interaction);
+
+        final List<AiInteractionViewDto> interactions = this.analyticsService.getAiInteractionsByUser(studentId);
         assertNotNull(interactions);
+        assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
+                "Seeded interaction should appear for the user");
     }
 
     @Test
@@ -357,8 +410,24 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getProblemCategoryStats returns a non-null map")
     void testGetProblemCategoryStats() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = this.userRepository.findById(studentId);
+        session.exercise = exercise;
+        session.completed = true;
+        session.actionsCount = 5;
+        session.correctActions = 4;
+        this.studentSessionRepository.persist(session);
+
         final var stats = this.analyticsService.getProblemCategoryStats();
         assertNotNull(stats);
+        assertTrue(stats.containsKey(exercise.title),
+                "Stats should contain the seeded exercise title");
+        assertEquals(1, stats.get(exercise.title),
+                "Should have exactly one completed session for the exercise");
     }
 
 }

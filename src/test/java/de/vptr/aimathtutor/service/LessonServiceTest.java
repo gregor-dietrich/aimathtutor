@@ -232,6 +232,9 @@ class LessonServiceTest {
 
         assertEquals("Updated Lesson Name", updated.name);
 
+        this.em.flush();
+        this.em.clear();
+
         final LessonEntity persisted = this.em.createQuery(
                 "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
                 .setParameter("p", created.publicId)
@@ -255,6 +258,9 @@ class LessonServiceTest {
 
         assertEquals("Patched Name", patched.name);
         assertEquals(originalPublicId, patched.publicId, "publicId should be unchanged after patch");
+
+        this.em.flush();
+        this.em.clear();
 
         final LessonEntity persisted = this.em.createQuery(
                 "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
