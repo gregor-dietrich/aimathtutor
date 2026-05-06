@@ -7,7 +7,7 @@ import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
-import de.vptr.aimathtutor.service.UlidService;
+import de.vptr.aimathtutor.util.UlidUtil;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -89,10 +89,10 @@ public class AiConfigEntity extends PanacheEntityBase {
     @PrePersist
     public void generatePublicId() {
         if (this.publicId == null || this.publicId.isBlank()) {
-            this.publicId = UlidService.generate();
+            this.publicId = UlidUtil.generate();
             return;
         }
-        UlidService.requireValid(this.publicId);
+        UlidUtil.requireValid(this.publicId);
     }
 
     /**

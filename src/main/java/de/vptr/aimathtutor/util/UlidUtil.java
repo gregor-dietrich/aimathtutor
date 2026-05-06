@@ -1,17 +1,17 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.util;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 
 import jakarta.ws.rs.BadRequestException;
 
 /**
- * Utility service for generating and validating ULID identifiers.
+ * Utility class for generating and validating ULIDs.
  */
-public final class UlidService {
+public final class UlidUtil {
 
     private static final String ULID_REGEX = "^[0-7][0-9A-HJKMNP-TV-Z]{25}$";
 
-    private UlidService() {
+    private UlidUtil() {
         // Utility class
     }
 

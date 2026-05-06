@@ -37,11 +37,11 @@ import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.service.UlidService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.UlidUtil;
 import jakarta.inject.Inject;
 
 /**
@@ -142,7 +142,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         userPublicIdInput.addValueChangeListener(e -> userPublicIdInput.setInvalid(false));
         final var userFilterButton = new Button("Filter by User", ignored -> {
             final String value = userPublicIdInput.getValue();
-            if (value != null && !value.isBlank() && !UlidService.isValid(value)) {
+            if (value != null && !value.isBlank() && !UlidUtil.isValid(value)) {
                 userPublicIdInput.setInvalid(true);
                 return;
             }
@@ -307,7 +307,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.infof("Starting async group search with query: %s",  query);
+        LOG.infof("Starting async group search with query: %s", query);
 
         AsyncDataLoader.load(
                 () -> this.groupService.searchGroups(query),
