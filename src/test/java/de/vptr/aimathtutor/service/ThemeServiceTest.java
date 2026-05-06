@@ -73,14 +73,14 @@ class ThemeServiceTest {
 
     @Test
     @DisplayName("Should set theme without active UI")
-    void shouldSetThemeWithoutActiveUI() {
+    void shouldSetThemeWithoutActiveUi() {
         // When - This should not throw an exception even without active UI
         assertDoesNotThrow(() -> this.themeService.setTheme(Theme.DARK));
     }
 
     @Test
     @DisplayName("Should apply theme without active UI")
-    void shouldApplyThemeWithoutActiveUI() {
+    void shouldApplyThemeWithoutActiveUi() {
         // When - This should not throw an exception even without active UI
         assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.LIGHT));
         assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.DARK));
