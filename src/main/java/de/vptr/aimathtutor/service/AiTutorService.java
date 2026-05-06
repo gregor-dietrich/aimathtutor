@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
@@ -37,7 +36,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class AiTutorService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiTutorService.class);
+    private static final Logger LOG = Logger.getLogger(AiTutorService.class);
 
     @Inject
     AiConfigService aiConfigService;

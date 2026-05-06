@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +12,7 @@ import jakarta.ws.rs.core.Response;
  */
 public class ErrorMessageUtil {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ErrorMessageUtil.class);
+    private static final Logger LOG = Logger.getLogger(ErrorMessageUtil.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**

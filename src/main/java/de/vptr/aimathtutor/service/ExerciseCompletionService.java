@@ -2,8 +2,7 @@ package de.vptr.aimathtutor.service;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -13,13 +12,15 @@ import jakarta.inject.Inject;
  * Service responsible for enriching exercise DTOs with user-specific completion
  * data.
  *
- * <p>Decoupled from {@link ExerciseService} to keep exercise CRUD separate from
- * analytics/read-model concerns.</p>
+ * <p>
+ * Decoupled from {@link ExerciseService} to keep exercise CRUD separate from
+ * analytics/read-model concerns.
+ * </p>
  */
 @ApplicationScoped
 public class ExerciseCompletionService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ExerciseCompletionService.class);
+    private static final Logger LOG = Logger.getLogger(ExerciseCompletionService.class);
 
     @Inject
     AuthService authService;

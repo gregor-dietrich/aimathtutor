@@ -9,8 +9,7 @@ import java.time.Duration;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,7 +32,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class GeminiService extends AbstractAiProviderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GeminiService.class);
+    private static final Logger LOG = Logger.getLogger(GeminiService.class);
     private static final String DEFAULT_MODEL = "gemma-3-27b-it";
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 

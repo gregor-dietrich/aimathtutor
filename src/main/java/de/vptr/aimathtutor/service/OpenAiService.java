@@ -4,8 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
@@ -31,7 +30,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class OpenAiService extends AbstractAiProviderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OpenAiService.class);
+    private static final Logger LOG = Logger.getLogger(OpenAiService.class);
     private static final String DEFAULT_MODEL = "gpt-5-nano";
     private static final String DEFAULT_BASE_URL = "https://api.openai.com/v1";
     private static final String CHAT_SYSTEM_PROMPT = "You are an encouraging AI math tutor helping students learn algebra. "

@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
@@ -16,7 +15,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class PromptBuilderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PromptBuilderService.class);
+    private static final Logger LOG = Logger.getLogger(PromptBuilderService.class);
 
     private static final int MAX_PROMPT_INPUT_LENGTH = 2000;
 

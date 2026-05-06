@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
@@ -21,7 +20,7 @@ import jakarta.transaction.Transactional;
  */
 @ApplicationScoped
 public class AuthService {
-    private static final Logger LOG = LoggerFactory.getLogger(AuthService.class);
+    private static final Logger LOG = Logger.getLogger(AuthService.class);
 
     @Inject
     PasswordHashingService passwordHashingService;
@@ -41,8 +40,10 @@ public class AuthService {
 
     /**
      * How long an {@link #isAuthenticated()} result may be served from the session
-     * without re-validating against the database. Keeps {@code beforeEnter} navigation
-     * checks off the DB while still picking up bans/deactivations within a short window.
+     * without re-validating against the database. Keeps {@code beforeEnter}
+     * navigation
+     * checks off the DB while still picking up bans/deactivations within a short
+     * window.
      */
     private static final long AUTH_CACHE_TTL_MILLIS = 30_000L;
 

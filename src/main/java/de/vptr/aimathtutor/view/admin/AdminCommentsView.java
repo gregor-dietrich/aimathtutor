@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalDate;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -55,7 +54,7 @@ import jakarta.inject.Inject;
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
 public class AdminCommentsView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminCommentsView.class);
+    private static final Logger LOG = Logger.getLogger(AdminCommentsView.class);
 
     @Inject
     private transient CommentService commentService;
@@ -217,7 +216,8 @@ public class AdminCommentsView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(comment -> comment.publicId).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(comment -> comment.publicId).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH)
+                .setFlexGrow(0);
 
         // Exercise title column
         this.grid.addComponentColumn(comment -> {

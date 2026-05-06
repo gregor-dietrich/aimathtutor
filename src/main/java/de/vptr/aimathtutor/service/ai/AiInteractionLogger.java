@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.service.ai;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,7 +25,7 @@ import jakarta.transaction.Transactional;
 @ApplicationScoped
 public class AiInteractionLogger {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiInteractionLogger.class);
+    private static final Logger LOG = Logger.getLogger(AiInteractionLogger.class);
 
     @Inject
     UserRepository userRepository;

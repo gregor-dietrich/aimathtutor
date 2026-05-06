@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -19,7 +18,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class JsonRepairService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JsonRepairService.class);
+    private static final Logger LOG = Logger.getLogger(JsonRepairService.class);
 
     // Smart quote characters for stripping from AI responses
     // Using constants avoids checkstyle's AvoidEscapedUnicodeCharacters warning

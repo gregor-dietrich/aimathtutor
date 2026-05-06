@@ -2,8 +2,7 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.button.Button;
@@ -49,7 +48,7 @@ import jakarta.validation.ConstraintViolationException;
  */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
 public class AdminUsersView extends AbstractAdminView {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUsersView.class);
+    private static final Logger LOG = Logger.getLogger(AdminUsersView.class);
 
     @Inject
     private transient UserService userService;

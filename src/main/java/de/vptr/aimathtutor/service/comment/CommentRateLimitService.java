@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service.comment;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.repository.CommentRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,7 +14,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class CommentRateLimitService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommentRateLimitService.class);
+    private static final Logger LOG = Logger.getLogger(CommentRateLimitService.class);
 
     private static final long RATE_LIMIT_WINDOW_SECONDS = 5;
     private static final int RATE_LIMIT_DAILY = 200;

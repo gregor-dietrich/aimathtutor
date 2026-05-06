@@ -10,8 +10,7 @@ import java.util.stream.Collectors;
 
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
@@ -45,7 +44,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class CommentService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommentService.class);
+    private static final Logger LOG = Logger.getLogger(CommentService.class);
 
     // Strict policy: disallow all HTML elements/attributes. Tags are dropped and
     // residual <, >, & characters are HTML-escaped, yielding safe plain text.
@@ -186,7 +185,8 @@ public class CommentService {
 
         // 1. Validate input
         if (dto.content == null || dto.content.isBlank()) {
-            LOG.warn("Comment creation failed: empty content for exercisePublicId={}, authorId={}", dto.exercisePublicId, authorId);
+            LOG.warn("Comment creation failed: empty content for exercisePublicId={}, authorId={}",
+                    dto.exercisePublicId, authorId);
             throw new ValidationException("Content is required");
         }
         if (dto.exercisePublicId == null) {
@@ -200,18 +200,21 @@ public class CommentService {
         // 3. Validate exercise exists and allows comments
         final ExerciseEntity exercise = this.exerciseRepository.findByPublicId(dto.exercisePublicId).orElse(null);
         if (exercise == null) {
-            LOG.warn("Comment creation failed: exercise not found for exercisePublicId={}, authorId={}", dto.exercisePublicId,
+            LOG.warn("Comment creation failed: exercise not found for exercisePublicId={}, authorId={}",
+                    dto.exercisePublicId,
                     authorId);
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
         if (!exercise.published) {
-            LOG.warn("Comment creation failed: exercise not published for exercisePublicId={}, authorId={}", dto.exercisePublicId,
+            LOG.warn("Comment creation failed: exercise not published for exercisePublicId={}, authorId={}",
+                    dto.exercisePublicId,
                     authorId);
             throw new WebApplicationException("Cannot comment on unpublished exercise",
                     Response.Status.BAD_REQUEST);
         }
         if (!exercise.commentable) {
-            LOG.warn("Comment creation failed: comments not allowed for exercisePublicId={}, authorId={}", dto.exercisePublicId,
+            LOG.warn("Comment creation failed: comments not allowed for exercisePublicId={}, authorId={}",
+                    dto.exercisePublicId,
                     authorId);
             throw new WebApplicationException("Comments not allowed on this exercise",
                     Response.Status.BAD_REQUEST);
@@ -220,7 +223,8 @@ public class CommentService {
         // 4. Validate parent comment if threading
         CommentEntity parentComment = null;
         if (dto.parentCommentPublicId != null) {
-            LOG.debug("Creating reply comment: parentPublicId={} for exercisePublicId={}, authorId={}", dto.parentCommentPublicId,
+            LOG.debug("Creating reply comment: parentPublicId={} for exercisePublicId={}, authorId={}",
+                    dto.parentCommentPublicId,
                     dto.exercisePublicId, authorId);
             parentComment = this.commentRepository.findByPublicId(dto.parentCommentPublicId).orElse(null);
             if (parentComment == null) {
@@ -229,13 +233,15 @@ public class CommentService {
                 throw new WebApplicationException("Parent comment not found", Response.Status.BAD_REQUEST);
             }
             if (parentComment.status != CommentStatus.VISIBLE) {
-                LOG.warn("Comment creation failed: cannot reply to hidden/deleted comment parentPublicId={}, authorId={}",
+                LOG.warn(
+                        "Comment creation failed: cannot reply to hidden/deleted comment parentPublicId={}, authorId={}",
                         dto.parentCommentPublicId, authorId);
                 throw new WebApplicationException("Cannot reply to deleted/hidden comment",
                         Response.Status.BAD_REQUEST);
             }
             if (!parentComment.exercise.publicId.equals(dto.exercisePublicId)) {
-                LOG.warn("Comment creation failed: parent comment belongs to different exercise. parentPublicId={}, parentExercisePublicId={}, dto.exercisePublicId={}, authorId={}",
+                LOG.warn(
+                        "Comment creation failed: parent comment belongs to different exercise. parentPublicId={}, parentExercisePublicId={}, dto.exercisePublicId={}, authorId={}",
                         dto.parentCommentPublicId, parentComment.exercise.publicId, dto.exercisePublicId, authorId);
                 throw new WebApplicationException("Parent comment belongs to a different exercise",
                         Response.Status.BAD_REQUEST);
@@ -265,7 +271,8 @@ public class CommentService {
                 comment.id, comment.exercise.id, comment.user.id, comment.user.username,
                 comment.content, comment.created));
 
-        LOG.info("Comment created successfully: commentId={}, exercisePublicId={}, authorId={}", comment.id, dto.exercisePublicId,
+        LOG.info("Comment created successfully: commentId={}, exercisePublicId={}, authorId={}", comment.id,
+                dto.exercisePublicId,
                 authorId);
         return new CommentViewDto(comment);
     }
@@ -360,12 +367,14 @@ public class CommentService {
      */
     @Transactional
     public void deleteComment(final String commentPublicId, final Long requesterId, final boolean softDelete) {
-        LOG.info("Attempting to delete comment: commentPublicId={}, requesterId={}, softDelete={}", commentPublicId, requesterId,
+        LOG.info("Attempting to delete comment: commentPublicId={}, requesterId={}, softDelete={}", commentPublicId,
+                requesterId,
                 softDelete);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Delete comment failed: comment not found commentPublicId={}, requesterId={}", commentPublicId, requesterId);
+            LOG.warn("Delete comment failed: comment not found commentPublicId={}, requesterId={}", commentPublicId,
+                    requesterId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
@@ -401,7 +410,8 @@ public class CommentService {
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Edit comment failed: comment not found commentPublicId={}, editorId={}", commentPublicId, editorId);
+            LOG.warn("Edit comment failed: comment not found commentPublicId={}, editorId={}", commentPublicId,
+                    editorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
@@ -411,7 +421,8 @@ public class CommentService {
             throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
-        // Authors can always edit their own comments; non-authors need explicit permission
+        // Authors can always edit their own comments; non-authors need explicit
+        // permission
         if (!this.commentPermissionService.isAuthor(comment, editor)) {
             this.permissionService.requireCommentEdit();
         }
@@ -420,7 +431,8 @@ public class CommentService {
         if (dto.content != null && !dto.content.isBlank()) {
             comment.content = this.sanitizeCommentContent(dto.content);
             this.commentRepository.persist(comment);
-            LOG.info("Comment edited successfully: commentPublicId={}, editorId={}, isAuthor={}", commentPublicId, editorId,
+            LOG.info("Comment edited successfully: commentPublicId={}, editorId={}, isAuthor={}", commentPublicId,
+                    editorId,
                     comment.user != null && comment.user.publicId.equals(editor.publicId));
         }
 

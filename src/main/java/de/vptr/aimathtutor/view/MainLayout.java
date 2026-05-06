@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.view;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
@@ -29,7 +28,7 @@ import jakarta.inject.Inject;
  */
 public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MainLayout.class);
+    private static final Logger LOG = Logger.getLogger(MainLayout.class);
 
     private Button adminViewButton;
     private Button settingsButton;

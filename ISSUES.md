@@ -309,10 +309,42 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 **Why:** Quarkus uses JBoss Logging as its logging facade. Using SLF4J directly bypasses Quarkus-managed log configuration, MDC context propagation, and structured logging support.
 
-**Action:**
+**Status:**
 
-1. Search for all occurrences: `grep -rn "org.slf4j" src/`
-2. Replace each `LoggerFactory.getLogger(Foo.class)` with `Logger.getLogger(Foo.class)` and update the import from `org.slf4j.Logger` / `org.slf4j.LoggerFactory` to `org.jboss.logging.Logger`.
-3. Enforce via Checkstyle: add `IllegalImport` for `org.slf4j.Logger` and `org.slf4j.LoggerFactory` so the pattern cannot re-enter the codebase.
+- [x] **Imports & Instantiations:** All `org.slf4j.Logger` / `LoggerFactory` imports and `Logger.getLogger(...)` calls have been migrated to `org.jboss.logging.Logger`.
+- [ ] **Method Calls & Format Strings:** ~270 SLF4J-style logging calls remain to be converted. The codebase currently **does not compile** because JBoss Logging's `Logger` API lacks direct equivalents for SLF4J's `log.info("msg {}", arg)` signatures.
+
+**Blockers / Lessons Learned:**
+
+1. **Not all calls should simply get an `f` suffix.**
+   - JBoss Logging `*f` methods (e.g. `infof`, `debugf`) use `String.format` / `printf` style placeholders (`%s`, `%d`), **not** SLF4J's `{}`.
+   - JBoss Logging `*v` methods (e.g. `infov`, `debugv`) use `java.text.MessageFormat` style placeholders (`{0}`, `{1}`), also **not** `{}`.
+   - Therefore a naive search-and-replace of `.info(` → `.infof(` leaves broken `{}` format strings and causes `UnknownFormatConversionException` at runtime (or worse, silent mis-formatting).
+
+2. **Primitive arguments cause ambiguous overload errors with `*f`.**
+   - Example: `LOG.debug("... userId={}, count={}", userId, count)` with two `long`s becomes ambiguous between `debugf(String, long, long)` and `debugf(String, long, Object)`.
+   - Similar ambiguity hits `int` / `Object` / `Object` combinations.
+
+3. **Plain message calls (no placeholders) should stay as-is.**
+   - `LOG.info("Loading lessons")` should remain `LOG.info(...)`, **not** `LOG.infof(...)`.
+   - `LOG.error("msg", throwable)` maps cleanly to JBoss Logging's `error(Object, Throwable)` because `String` is an `Object`.
+
+**Remaining Work / Recommended Approach:**
+
+1. **Categorize every call:**
+   - *Plain messages* (1 arg, no `{}`) → keep `info` / `debug` / `warn` / `error` / `trace`.
+   - *Messages with `{}` placeholders* → convert to JBoss Logging `*f` with `%s` / `%d` / etc. style (the most common Quarkus idiom). (Do not use `*v` with `{0}` style.)
+   - *Messages with `Throwable` as the last arg* → map to `errorf(Throwable, String, ...)` / `warnf(Throwable, String, ...)` etc. when format args are present; keep `error(String, Throwable)` only when there are zero format args.
+
+2. **Automated migration script (suggested):**
+   - Write a script (e.g. Python + regex or IntelliJ structural search) that:
+     1. Skips single-argument calls.
+     2. Replaces `{}` with `%s` (or `%d`, ...) depending on the chosen convention.
+     3. Appends the appropriate level suffix (`f` or `v`).
+     4. Handles primitive ambiguity by inserting explicit casts or `Long.valueOf(...)` wrappers where needed.
+
+3. **Compile & test gate:**
+   - After conversion, add Checkstyle `IllegalImport` rules for `org.slf4j.Logger` and `org.slf4j.LoggerFactory` to prevent regressions. Also add Checkstyle rule to prevent usage of JBoss Logger's `*v` methods (`infov` / `debugv` / `warnv` / `errorv` / `tracev`) to enforce usage of `*f` methods.
+   - Then, run `make clean && make install && make test`.
 
 ---

@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiConfigDto;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
@@ -35,7 +34,7 @@ import jakarta.transaction.Transactional;
 @ApplicationScoped
 public class AiConfigService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiConfigService.class);
+    private static final Logger LOG = Logger.getLogger(AiConfigService.class);
 
     // Internal cache for configuration values to reduce database hits.
     private final Map<String, String> configCache = new ConcurrentHashMap<>();

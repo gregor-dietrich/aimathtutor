@@ -4,8 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
@@ -32,7 +31,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class OllamaService extends AbstractAiProviderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OllamaService.class);
+    private static final Logger LOG = Logger.getLogger(OllamaService.class);
     private static final String DEFAULT_MODEL = "llama3.2:3b";
     private static final String DEFAULT_API_URL = "http://ollama:11434";
 

@@ -1,10 +1,8 @@
 package de.vptr.aimathtutor.view.admin;
 
-
 import java.util.function.Predicate;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.Component;
@@ -49,7 +47,7 @@ import jakarta.ws.rs.WebApplicationException;
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
 public class AdminUserRanksView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserRanksView.class);
+    private static final Logger LOG = Logger.getLogger(AdminUserRanksView.class);
 
     @Inject
     private transient UserRankService rankService;

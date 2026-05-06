@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.view;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.Key;
@@ -27,7 +26,7 @@ import jakarta.inject.Inject;
 @PageTitle("AI Math Tutor - Login")
 public class LoginView extends VerticalLayout {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LoginView.class);
+    private static final Logger LOG = Logger.getLogger(LoginView.class);
 
     @Inject
     private transient AuthService authService;

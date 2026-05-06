@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.service.comment;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
@@ -25,7 +24,7 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class CommentFlaggingService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommentFlaggingService.class);
+    private static final Logger LOG = Logger.getLogger(CommentFlaggingService.class);
 
     @Inject
     CommentRepository commentRepository;
@@ -50,7 +49,8 @@ public class CommentFlaggingService {
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Flag comment failed: comment not found commentPublicId={}, flaggerId={}", commentPublicId, flaggerId);
+            LOG.warn("Flag comment failed: comment not found commentPublicId={}, flaggerId={}", commentPublicId,
+                    flaggerId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
@@ -73,7 +73,8 @@ public class CommentFlaggingService {
         // If flagged enough times, auto-hide
         if (comment.flagsCount >= AppConstants.COMMENT_AUTO_HIDE_THRESHOLD) {
             comment.status = CommentStatus.HIDDEN;
-            LOG.warn("Comment auto-hidden due to flags: commentPublicId={}, flagCount={}", commentPublicId, comment.flagsCount);
+            LOG.warn("Comment auto-hidden due to flags: commentPublicId={}, flagCount={}", commentPublicId,
+                    comment.flagsCount);
         }
 
         this.commentRepository.persist(comment);

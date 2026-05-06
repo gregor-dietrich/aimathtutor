@@ -6,8 +6,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
@@ -49,7 +48,7 @@ import jakarta.inject.Inject;
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
-    private static final Logger LOG = LoggerFactory.getLogger(ExerciseWorkspaceView.class);
+    private static final Logger LOG = Logger.getLogger(ExerciseWorkspaceView.class);
 
     @Inject
     private transient ExerciseService exerciseService;

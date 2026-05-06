@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -50,7 +49,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
 public class AdminUserGroupsView extends AbstractAdminView {
-    private static final Logger LOG = LoggerFactory.getLogger(AdminUserGroupsView.class);
+    private static final Logger LOG = Logger.getLogger(AdminUserGroupsView.class);
 
     @Inject
     private transient UserGroupService groupService;

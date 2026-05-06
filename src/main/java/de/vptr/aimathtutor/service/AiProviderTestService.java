@@ -7,8 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
@@ -22,7 +21,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class AiProviderTestService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AiProviderTestService.class);
+    private static final Logger LOG = Logger.getLogger(AiProviderTestService.class);
     private static final int TEST_TIMEOUT_SECONDS = 5;
 
     @Inject

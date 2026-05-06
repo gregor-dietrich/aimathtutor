@@ -5,8 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -43,7 +42,7 @@ import jakarta.inject.Inject;
 @PageTitle("AI Configuration - AI Math Tutor")
 public class AdminConfigView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminConfigView.class);
+    private static final Logger LOG = Logger.getLogger(AdminConfigView.class);
     private static final String TEMPERATURE_HELPER = "Temperature (0.0-2.0): Lower = more focused, Higher = more creative";
     private static final String MAX_TOKENS_HELPER = "Maximum tokens in response (1-8192)";
 
@@ -206,7 +205,8 @@ public class AdminConfigView extends AbstractAdminView {
             this.testGeminiConnection();
         });
 
-        panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField, this.buildSaveTestRow(saveBtn, testBtn));
+        panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField,
+                this.buildSaveTestRow(saveBtn, testBtn));
         return panel;
     }
 

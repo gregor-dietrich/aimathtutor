@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
@@ -26,7 +25,7 @@ import jakarta.transaction.Transactional;
 @ApplicationScoped
 public class GraspableMathService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GraspableMathService.class);
+    private static final Logger LOG = Logger.getLogger(GraspableMathService.class);
 
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 

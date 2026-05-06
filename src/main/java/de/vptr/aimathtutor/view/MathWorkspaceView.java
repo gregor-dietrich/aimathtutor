@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.view;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
@@ -45,7 +44,7 @@ import jakarta.inject.Inject;
 @Route(value = "graspable-math", layout = MainLayout.class)
 public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MathWorkspaceView.class);
+    private static final Logger LOG = Logger.getLogger(MathWorkspaceView.class);
 
     @Inject
     private transient AuthService authService;

@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -15,7 +14,7 @@ import jakarta.enterprise.event.Observes;
 @ApplicationScoped
 public class AppLifecycleBean {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleBean.class);
+    private static final Logger LOG = Logger.getLogger(AppLifecycleBean.class);
 
     /**
      * ASCII art for the application logo.
