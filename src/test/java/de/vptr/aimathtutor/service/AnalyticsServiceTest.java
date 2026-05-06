@@ -230,7 +230,9 @@ class AnalyticsServiceTest {
 
         final var interaction = new AiInteractionEntity();
         interaction.sessionId = sessionId;
-        interaction.user = this.userRepository.findById(studentId);
+        final var userForInteraction = this.userRepository.findById(studentId);
+        assertNotNull(userForInteraction, "Seeded student1 must exist");
+        interaction.user = userForInteraction;
         interaction.eventType = "test_event";
         interaction.feedbackType = "HINT";
         this.aiInteractionRepository.persist(interaction);
@@ -261,7 +263,9 @@ class AnalyticsServiceTest {
 
         final var interaction = new AiInteractionEntity();
         interaction.sessionId = sessionId;
-        interaction.user = this.userRepository.findById(studentId);
+        final var userForInteraction = this.userRepository.findById(studentId);
+        assertNotNull(userForInteraction, "Seeded student1 must exist");
+        interaction.user = userForInteraction;
         interaction.eventType = "test_event_user";
         interaction.feedbackType = "POSITIVE";
         this.aiInteractionRepository.persist(interaction);
@@ -299,13 +303,19 @@ class AnalyticsServiceTest {
     @DisplayName("getUserProgressSummary aggregates session data correctly")
     void testGetUserProgressSummary_withSession() {
         final Long studentId = this.studentId();
+        final StudentProgressSummaryDto baseline = this.analyticsService.getUserProgressSummary(studentId);
+        assertNotNull(baseline);
+        assertEquals("student1", baseline.username);
+        final int baselineTotal = baseline.totalSessions;
+
         final Long exerciseId = this.createExercise();
         this.graspableMathService.createSession(studentId, exerciseId);
 
         final StudentProgressSummaryDto summary = this.analyticsService.getUserProgressSummary(studentId);
         assertNotNull(summary);
         assertEquals("student1", summary.username);
-        assertTrue(summary.totalSessions >= 1);
+        assertEquals(baselineTotal + 1, summary.totalSessions,
+                "Creating one session should increase totalSessions by 1");
         assertNotNull(summary.getCompletionRatePercentage());
         assertNotNull(summary.getSuccessRatePercentage());
         assertNotNull(summary.getFormattedAverageActions());
@@ -328,9 +338,12 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getTotalSessionsCount();
         final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
         final var session = new StudentSessionEntity();
         session.sessionId = UUID.randomUUID().toString();
-        session.user = this.userRepository.findById(studentId);
+        session.user = user;
         session.exercise = exercise;
         this.studentSessionRepository.persist(session);
         final long after = this.analyticsService.getTotalSessionsCount();
@@ -345,9 +358,12 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getCompletedSessionsCount();
         final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
         final var session = new StudentSessionEntity();
         session.sessionId = UUID.randomUUID().toString();
-        session.user = this.userRepository.findById(studentId);
+        session.user = user;
         session.exercise = exercise;
         session.completed = true;
         this.studentSessionRepository.persist(session);
@@ -362,12 +378,18 @@ class AnalyticsServiceTest {
         final var admin = this.userRepository.findByUsername("admin");
         assertNotNull(admin, "Seeded admin must exist");
         final Long adminId = admin.id;
+        for (final var existing : this.studentSessionRepository.findByUserId(adminId)) {
+            this.studentSessionRepository.deleteById(existing.id);
+        }
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getActiveStudentsCount();
         final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(adminId);
+        assertNotNull(user, "Seeded admin must exist");
         final var session = new StudentSessionEntity();
         session.sessionId = UUID.randomUUID().toString();
-        session.user = this.userRepository.findById(adminId);
+        session.user = user;
         session.exercise = exercise;
         session.startTime = LocalDateTime.now();
         this.studentSessionRepository.persist(session);
@@ -383,9 +405,12 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getTodaySessionsCount();
         final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
         final var session = new StudentSessionEntity();
         session.sessionId = UUID.randomUUID().toString();
-        session.user = this.userRepository.findById(studentId);
+        session.user = user;
         session.exercise = exercise;
         session.startTime = LocalDateTime.now();
         this.studentSessionRepository.persist(session);
@@ -471,9 +496,12 @@ class AnalyticsServiceTest {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
         final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
         final var session = new StudentSessionEntity();
         session.sessionId = UUID.randomUUID().toString();
-        session.user = this.userRepository.findById(studentId);
+        session.user = user;
         session.exercise = exercise;
         session.completed = true;
         session.actionsCount = 5;
