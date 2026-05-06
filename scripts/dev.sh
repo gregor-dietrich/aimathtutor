@@ -5,7 +5,7 @@
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 ${MVN_CMD} quarkus:dev
 

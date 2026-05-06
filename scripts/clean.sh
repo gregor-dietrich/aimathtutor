@@ -5,10 +5,15 @@
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
-${MVN_CMD} test -Drevision=${REVISION}
+${MVN_CMD} clean -Drevision=${REVISION}
+
+rm -rf logs
+rm -rf node_modules
+rm -rf src/main/frontend/generated
+rm -rf target
 
 cd - > /dev/null

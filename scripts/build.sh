@@ -9,7 +9,7 @@ PLATFORMS="linux/amd64,linux/arm64"
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 # Run environment check first
 "$DIR/check.sh"
@@ -91,6 +91,6 @@ else
 	docker build -t "$TAG"-ubuntu -f "$DOCKERFILE_UBUNTU" .
 fi
 
-docker tag "$TAG"-ubuntu "$TAG"
+docker tag "$TAG"-alpine "$TAG"
 
 cd - > /dev/null

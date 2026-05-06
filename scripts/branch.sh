@@ -4,7 +4,7 @@
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 read -p "Enter the target branch to create/reset: " TARGET_BRANCH
 

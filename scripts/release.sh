@@ -48,7 +48,7 @@ if prompt_yes_no "Do you want to run tests" n; then
     RUN_TESTS=true
 fi
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 git switch main
 

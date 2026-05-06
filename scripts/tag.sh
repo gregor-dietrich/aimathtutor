@@ -4,7 +4,7 @@
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 git fetch
 

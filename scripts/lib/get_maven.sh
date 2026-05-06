@@ -10,7 +10,7 @@ else
     MVN_CMD="mvn"
 fi
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 if ! command -v ${MVN_CMD} &> /dev/null; then
     echo "ERROR: Maven not found. Exiting."

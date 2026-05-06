@@ -5,7 +5,7 @@
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 # Usage: ./password.sh [password]
 # If a password is provided as the first argument, use it non-interactively.

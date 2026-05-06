@@ -8,7 +8,7 @@ REQUIRED_MAVEN_VERSION="3.9.9"
 
 set -e
 
-cd "$DIR/../.."
+cd "$DIR/.."
 
 echo "Checking version of $(which java)..."
 

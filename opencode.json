@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    ".opencode/instructions/code-quality.md",
+    ".opencode/instructions/docker-conventions.md",
+    ".opencode/instructions/test-conventions.md"
+  ],
+  "agent": {
+    "backend-developer": {
+      "description": "Backend developer for AIMathTutor: services, entities, DTOs, AI providers, security, database operations, non-UI Java logic.",
+      "mode": "subagent",
+      "prompt": "{file:.opencode/agents/backend-developer.md}"
+    },
+    "frontend-developer": {
+      "description": "Vaadin UI developer for AIMathTutor: views, components, layouts, navigation, user-facing features.",
+      "mode": "subagent",
+      "prompt": "{file:.opencode/agents/frontend-developer.md}"
+    },
+    "code-reviewer": {
+      "description": "Code reviewer for AIMathTutor: style, test coverage, architecture, security, performance.",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny"
+      },
+      "prompt": "{file:.opencode/agents/code-reviewer.md}"
+    },
+    "software-architect": {
+      "description": "Software architect for AIMathTutor: module boundaries, component design, dependency management, project structure.",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny"
+      },
+      "prompt": "{file:.opencode/agents/software-architect.md}"
+    }
+  }
+}

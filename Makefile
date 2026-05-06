@@ -19,40 +19,40 @@ help:
 	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
 
 branch:
-	@scripts/sh/branch.sh
+	@scripts/branch.sh
  
 build:
-	@scripts/sh/build.sh
+	@scripts/build.sh
  
 check:
-	@scripts/sh/check.sh
+	@scripts/check.sh
  
 clean:
-	@scripts/sh/clean.sh
+	@scripts/clean.sh
  
 dev:
-	@scripts/sh/dev.sh
+	@scripts/dev.sh
  
 install:
-	@scripts/sh/install.sh
+	@scripts/install.sh
  
 kill:
-	@scripts/sh/kill.sh
+	@scripts/kill.sh
 
 password:
-	@scripts/sh/password.sh
+	@scripts/password.sh
  
 rebase:
-	@scripts/sh/rebase.sh
+	@scripts/rebase.sh
  
 release:
-	@scripts/sh/release.sh
+	@scripts/release.sh
  
 tag:
-	@scripts/sh/tag.sh
+	@scripts/tag.sh
  
 test:
-	@scripts/sh/test.sh
+	@scripts/test.sh
  
 untag:
-	@scripts/sh/untag.sh
+	@scripts/untag.sh
