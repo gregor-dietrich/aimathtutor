@@ -192,6 +192,8 @@ public class UserRankService {
      */
     @Transactional
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
+        this.permissionService.requireUserRankEdit();
+
         final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);

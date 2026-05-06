@@ -400,6 +400,9 @@ public class AdminUsersView extends AbstractAdminView {
             this.userService.patchUser(userPublicId, passwordUpdateDto);
             NotificationUtil.showSuccess("Password changed successfully");
             this.passwordDialog.close();
+        } catch (final PermissionDeniedException e) {
+            LOG.warn("Permission denied changing password: {}", e.getMessage());
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error changing password", e);
             NotificationUtil.showError("Unexpected error occurred");

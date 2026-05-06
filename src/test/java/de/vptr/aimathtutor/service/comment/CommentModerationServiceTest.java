@@ -140,6 +140,19 @@ class CommentModerationServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw BAD_REQUEST when moderator is not found")
+    @TestTransaction
+    void shouldThrowBadRequestWhenModeratorNotFound() {
+        final UserEntity author = this.userRepository.findById(3L);
+        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
+        final var comment = this.createComment(exercise, author);
+
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", 99999L, "reason"));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
+    }
+
+    @Test
     @DisplayName("Should throw ValidationException for reason exceeding 500 chars")
     @TestTransaction
     void shouldThrowForLongReason() {

@@ -171,6 +171,8 @@ public class LessonService {
      */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
+        this.permissionService.requireLessonEdit();
+
         final var existingLesson = this.lessonRepository.findByPublicId(lesson.publicId).orElse(null);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);

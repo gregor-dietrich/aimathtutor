@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 import java.util.UUID;
 
@@ -121,6 +123,7 @@ class CommentServiceTest {
         assertFalse(created.content.contains("<script>"),
                 "Sanitizer should strip <script>, got: " + created.content);
         assertTrue(created.content.contains("safe text"));
+        verify(this.permissionService).requireCommentAdd();
     }
 
     @Test
@@ -196,6 +199,8 @@ class CommentServiceTest {
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent(), "Soft-deleted comment should still be findable");
+        verify(this.permissionService).requireCommentAdd();
+        verify(this.permissionService, never()).requireCommentDelete();
     }
 
     @Test
@@ -217,5 +222,7 @@ class CommentServiceTest {
         assertTrue(found.isPresent());
         final var hidden = this.commentService.findByStatus(CommentStatus.HIDDEN);
         assertTrue(hidden.stream().anyMatch(c -> c.publicId.equals(created.publicId)));
+        verify(this.permissionService).requireCommentAdd();
+        verify(this.permissionService).requireCommentEdit();
     }
 }

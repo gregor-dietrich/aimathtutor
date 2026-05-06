@@ -2,9 +2,6 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.time.LocalTime;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -39,7 +36,6 @@ import jakarta.inject.Inject;
 @PageTitle("Student Sessions - AI Math Tutor")
 public class AdminSessionsView extends AbstractAdminView {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AdminSessionsView.class);
     @Inject
     private transient AnalyticsService analyticsService;
 

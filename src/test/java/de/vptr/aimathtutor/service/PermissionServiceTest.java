@@ -189,6 +189,194 @@ class PermissionServiceTest {
     }
 
     @Test
+    @DisplayName("requireLessonEdit throws when permission is false")
+    void requireLessonEditThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireLessonEdit());
+        assertEquals("You do not have permission to edit lessons", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireLessonEdit succeeds when permission is true")
+    void requireLessonEditSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireLessonEdit());
+    }
+
+    @Test
+    @DisplayName("requireLessonDelete throws when permission is false")
+    void requireLessonDeleteThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireLessonDelete());
+        assertEquals("You do not have permission to delete lessons", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireLessonDelete succeeds when permission is true")
+    void requireLessonDeleteSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireLessonDelete());
+    }
+
+    @Test
+    @DisplayName("requireCommentEdit throws when permission is false")
+    void requireCommentEditThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireCommentEdit());
+        assertEquals("You do not have permission to edit comments", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireCommentEdit succeeds when permission is true")
+    void requireCommentEditSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireCommentEdit());
+    }
+
+    @Test
+    @DisplayName("requireCommentDelete throws when permission is false")
+    void requireCommentDeleteThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireCommentDelete());
+        assertEquals("You do not have permission to delete comments", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireCommentDelete succeeds when permission is true")
+    void requireCommentDeleteSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireCommentDelete());
+    }
+
+    @Test
+    @DisplayName("requireUserEdit throws when permission is false")
+    void requireUserEditThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireUserEdit());
+        assertEquals("You do not have permission to edit users", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireUserEdit succeeds when permission is true")
+    void requireUserEditSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireUserEdit());
+    }
+
+    @Test
+    @DisplayName("requireUserDelete throws when permission is false")
+    void requireUserDeleteThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireUserDelete());
+        assertEquals("You do not have permission to delete users", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireUserDelete succeeds when permission is true")
+    void requireUserDeleteSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireUserDelete());
+    }
+
+    @Test
+    @DisplayName("requireUserGroupEdit throws when permission is false")
+    void requireUserGroupEditThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireUserGroupEdit());
+        assertEquals("You do not have permission to edit user groups", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireUserGroupEdit succeeds when permission is true")
+    void requireUserGroupEditSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireUserGroupEdit());
+    }
+
+    @Test
+    @DisplayName("requireUserGroupDelete throws when permission is false")
+    void requireUserGroupDeleteThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireUserGroupDelete());
+        assertEquals("You do not have permission to delete user groups", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireUserGroupDelete succeeds when permission is true")
+    void requireUserGroupDeleteSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireUserGroupDelete());
+    }
+
+    @Test
+    @DisplayName("requireUserRankEdit throws when permission is false")
+    void requireUserRankEditThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireUserRankEdit());
+        assertEquals("You do not have permission to edit user ranks", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireUserRankEdit succeeds when permission is true")
+    void requireUserRankEditSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireUserRankEdit());
+    }
+
+    @Test
+    @DisplayName("requireUserRankDelete throws when permission is false")
+    void requireUserRankDeleteThrowsWhenFalse() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireUserRankDelete());
+        assertEquals("You do not have permission to delete user ranks", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireUserRankDelete succeeds when permission is true")
+    void requireUserRankDeleteSucceedsWhenTrue() {
+        when(this.userRankService.getCurrentUserRank()).thenReturn(this.buildRank(
+                false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, true));
+        assertDoesNotThrow(() -> this.permissionService.requireUserRankDelete());
+    }
+
+    @Test
     @DisplayName("throws when user rank is null")
     void throwsWhenUserRankIsNull() {
         when(this.userRankService.getCurrentUserRank()).thenReturn(null);

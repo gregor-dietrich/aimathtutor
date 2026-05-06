@@ -297,6 +297,8 @@ public class UserService {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
 
+        this.permissionService.requireUserEdit();
+
         // Check for duplicate username if username is being updated
         if (userDto.username != null && !userDto.username.isBlank()
                 && !userDto.username.equals(existingUser.username)) {

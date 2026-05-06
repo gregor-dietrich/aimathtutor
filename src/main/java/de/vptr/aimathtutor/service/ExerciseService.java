@@ -333,6 +333,8 @@ public class ExerciseService {
      */
     @Transactional
     public ExerciseViewDto patchExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
+        this.permissionService.requireExerciseEdit();
+
         final ExerciseEntity existingExercise = this.exerciseRepository.findByPublicId(publicId).orElse(null);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
