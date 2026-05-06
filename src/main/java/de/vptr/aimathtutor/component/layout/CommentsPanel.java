@@ -28,6 +28,7 @@ import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.enterprise.inject.spi.CDI;
@@ -302,6 +303,8 @@ public class CommentsPanel extends VerticalLayout {
             this.submitButton.setText("Post Comment");
 
             NotificationUtil.showSuccess("Comment posted!");
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Failed to create comment", e);
             NotificationUtil.showError("Failed to post comment. Please try again.");
@@ -335,6 +338,8 @@ public class CommentsPanel extends VerticalLayout {
                 dialog.close();
                 this.loadComments();
                 NotificationUtil.showSuccess("Comment updated!");
+            } catch (final PermissionDeniedException ex) {
+                NotificationUtil.showError(ex.getMessage());
             } catch (final Exception ex) {
                 LOG.error("Failed to edit comment", ex);
                 NotificationUtil.showError("Failed to edit comment. Please try again.");
@@ -353,6 +358,8 @@ public class CommentsPanel extends VerticalLayout {
             this.getCommentService().deleteComment(commentPublicId, this.currentUserId, true); // soft delete
             this.loadComments();
             NotificationUtil.showSuccess("Comment deleted!");
+        } catch (final PermissionDeniedException ex) {
+            NotificationUtil.showError(ex.getMessage());
         } catch (final Exception ex) {
             LOG.error("Failed to delete comment", ex);
             NotificationUtil.showError("Failed to delete comment. Please try again.");

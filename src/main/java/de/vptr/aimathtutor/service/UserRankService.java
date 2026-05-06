@@ -32,6 +32,9 @@ public class UserRankService {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    PermissionService permissionService;
+
     private static final String USERNAME_KEY = "authenticated.username";
 
     /**
@@ -138,6 +141,8 @@ public class UserRankService {
      */
     @Transactional
     public UserRankViewDto createRank(final @Valid UserRankDto rankDto) {
+        this.permissionService.requireUserRankAdd();
+
         final UserRankEntity rank = new UserRankEntity();
 
         // Set properties from DTO
@@ -160,6 +165,8 @@ public class UserRankService {
      */
     @Transactional
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
+        this.permissionService.requireUserRankEdit();
+
         final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
@@ -185,6 +192,8 @@ public class UserRankService {
      */
     @Transactional
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
+        this.permissionService.requireUserRankEdit();
+
         final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
@@ -210,6 +219,8 @@ public class UserRankService {
      */
     @Transactional
     public boolean deleteRank(final String publicId) {
+        this.permissionService.requireUserRankDelete();
+
         final UserRankEntity rank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (rank == null) {
             return false;

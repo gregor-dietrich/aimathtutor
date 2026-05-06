@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.repository.UserRankRepository;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -33,6 +34,9 @@ class UserRankServiceTest {
 
     @Inject
     UserRankRepository userRankRepository;
+
+    @InjectMock
+    PermissionService permissionService;
 
     @BeforeEach
     @Transactional

@@ -16,6 +16,7 @@ import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -35,6 +36,9 @@ class UserGroupServiceTest {
 
     @Inject
     private UserRepository userRepository;
+
+    @InjectMock
+    private PermissionService permissionService;
 
     private UserGroupDto buildDto() {
         final var dto = new UserGroupDto();

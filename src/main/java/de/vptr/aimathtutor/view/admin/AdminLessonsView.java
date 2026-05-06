@@ -32,6 +32,7 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.LessonDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
@@ -385,6 +386,8 @@ public class AdminLessonsView extends AbstractAdminView {
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving lesson", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -409,6 +412,8 @@ public class AdminLessonsView extends AbstractAdminView {
             } else {
                 NotificationUtil.showError("Failed to delete lesson");
             }
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting lesson", e);
             NotificationUtil.showError("Unexpected error occurred");

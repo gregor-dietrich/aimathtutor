@@ -29,6 +29,9 @@ public class LessonService {
     @Inject
     ExerciseRepository exerciseRepository;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Retrieves all lessons in the system ordered by hierarchy.
      *
@@ -85,6 +88,8 @@ public class LessonService {
      */
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
+        this.permissionService.requireLessonAdd();
+
         // Validate name is provided for creation
         if (lesson.name == null || lesson.name.isBlank()) {
             throw new ValidationException("Name is required for creating a lesson");
@@ -116,6 +121,8 @@ public class LessonService {
      */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
+        this.permissionService.requireLessonEdit();
+
         final var existingLesson = this.lessonRepository.findByPublicId(lesson.publicId).orElse(null);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
@@ -164,6 +171,8 @@ public class LessonService {
      */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
+        this.permissionService.requireLessonEdit();
+
         final var existingLesson = this.lessonRepository.findByPublicId(lesson.publicId).orElse(null);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
@@ -220,6 +229,7 @@ public class LessonService {
      */
     @Transactional
     public boolean deleteLesson(final String publicId) {
+        this.permissionService.requireLessonDelete();
         final LessonEntity lesson = this.lessonRepository.findByPublicId(publicId).orElse(null);
         if (lesson == null) {
             return false;

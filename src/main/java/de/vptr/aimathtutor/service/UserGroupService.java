@@ -41,6 +41,9 @@ public class UserGroupService {
     @Inject
     UserGroupMetaRepository userGroupMetaRepository;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Retrieves all user groups.
      *
@@ -121,6 +124,8 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto createGroup(final @Valid UserGroupDto groupDto) {
+        this.permissionService.requireUserGroupAdd();
+
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
@@ -143,6 +148,8 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto updateGroup(final String publicId, final @Valid UserGroupDto groupDto) {
+        this.permissionService.requireUserGroupEdit();
+
         if (groupDto.name == null || groupDto.name.isBlank()) {
             throw new ValidationException("Name is required");
         }
@@ -171,6 +178,8 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupViewDto patchGroup(final Long id, final @Valid UserGroupDto groupDto) {
+        this.permissionService.requireUserGroupEdit();
+
         final UserGroupEntity existingGroup = this.userGroupRepository.findById(id);
         if (existingGroup == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);
@@ -193,6 +202,7 @@ public class UserGroupService {
      */
     @Transactional
     public boolean deleteGroup(final String publicId) {
+        this.permissionService.requireUserGroupDelete();
         return this.userGroupRepository.deleteByPublicId(publicId);
     }
 
@@ -208,6 +218,8 @@ public class UserGroupService {
      */
     @Transactional
     public UserGroupMetaEntity addUserToGroup(final String userPublicId, final String groupPublicId) {
+        this.permissionService.requireUserGroupEdit();
+
         final UserEntity user = this.userRepository.findByPublicId(userPublicId).orElse(null);
         final UserGroupEntity group = this.userGroupRepository.findByPublicId(groupPublicId).orElse(null);
 
@@ -245,6 +257,8 @@ public class UserGroupService {
      */
     @Transactional
     public boolean removeUserFromGroup(final String userPublicId, final String groupPublicId) {
+        this.permissionService.requireUserGroupEdit();
+
         final var meta = this.userGroupMetaRepository.findByUserPublicIdAndGroupPublicId(userPublicId, groupPublicId);
         if (meta == null) {
             return false;

@@ -287,7 +287,9 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 > **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
 
-### 6.3 OWASP Dependency-Check & Secret Scanning
+---
+
+### 6 OWASP Dependency-Check & Secret Scanning
 
 **Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
 
@@ -301,12 +303,16 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
-### 6.4 — Maven Cache in Security Job
+### 7. Replace SLF4J Logger with JBoss Logging
 
-**Issue:** The `security` CI job compiles the project (`./mvnw clean install package -DskipTests`) without caching Maven dependencies, while the `build` job already has `actions/cache@v4`.
+**Goal:** Replace all `org.slf4j.LoggerFactory.getLogger` / `org.slf4j.Logger` usages with `org.jboss.logging.Logger.getLogger` / `org.jboss.logging.Logger` throughout the codebase to align with Quarkus best practices.
 
-**Why implement:** Zero-risk improvement. Caching dependencies cuts CI time by minutes on every run.
+**Why:** Quarkus uses JBoss Logging as its logging facade. Using SLF4J directly bypasses Quarkus-managed log configuration, MDC context propagation, and structured logging support.
 
-**Action:** Add the same `actions/cache@v4` block (path `~/.m2/repository`, key `${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}`) to the `security` job before the compile step.
+**Action:**
+
+1. Search for all occurrences: `grep -rn "org.slf4j" src/`
+2. Replace each `LoggerFactory.getLogger(Foo.class)` with `Logger.getLogger(Foo.class)` and update the import from `org.slf4j.Logger` / `org.slf4j.LoggerFactory` to `org.jboss.logging.Logger`.
+3. Enforce via Checkstyle: add `IllegalImport` for `org.slf4j.Logger` and `org.slf4j.LoggerFactory` so the pattern cannot re-enter the codebase.
 
 ---

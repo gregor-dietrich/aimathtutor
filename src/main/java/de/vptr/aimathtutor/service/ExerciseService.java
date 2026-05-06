@@ -48,6 +48,9 @@ public class ExerciseService {
     @Inject
     LessonRepository lessonRepository;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Retrieves all exercises ordered by creation/modification date.
      *
@@ -184,6 +187,8 @@ public class ExerciseService {
      */
     @Transactional
     public ExerciseViewDto createExercise(final @Valid ExerciseDto exerciseDto) {
+        this.permissionService.requireExerciseAdd();
+
         if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for creating an exercise");
         }
@@ -251,6 +256,8 @@ public class ExerciseService {
      */
     @Transactional
     public ExerciseViewDto updateExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
+        this.permissionService.requireExerciseEdit();
+
         // Validate required fields for PUT
         if (exerciseDto.title == null || exerciseDto.title.isBlank()) {
             throw new ValidationException("Title is required for updating an exercise");
@@ -326,6 +333,8 @@ public class ExerciseService {
      */
     @Transactional
     public ExerciseViewDto patchExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
+        this.permissionService.requireExerciseEdit();
+
         final ExerciseEntity existingExercise = this.exerciseRepository.findByPublicId(publicId).orElse(null);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
@@ -393,6 +402,7 @@ public class ExerciseService {
      */
     @Transactional
     public boolean deleteExercise(final String publicId) {
+        this.permissionService.requireExerciseDelete();
         return this.exerciseRepository.deleteByPublicId(publicId);
     }
 

@@ -17,6 +17,8 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.PermissionService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -39,6 +41,9 @@ class CommentModerationServiceTest {
     @Inject
     ExerciseRepository exerciseRepository;
 
+    @InjectMock
+    PermissionService permissionService;
+
     @Test
     @DisplayName("Should throw NOT_FOUND for non-existent comment")
     @TestTransaction
@@ -47,19 +52,6 @@ class CommentModerationServiceTest {
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.moderationService.moderateComment("00000000000000000000000000", "HIDE", moderator.id, "reason"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
-    }
-
-    @Test
-    @DisplayName("Should throw FORBIDDEN for non-moderator")
-    @TestTransaction
-    void shouldThrowForbiddenForNonModerator() {
-        final UserEntity regularUser = this.userRepository.findById(3L); // Student rank
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, regularUser);
-
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", regularUser.id, "reason"));
-        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test
@@ -145,6 +137,19 @@ class CommentModerationServiceTest {
 
         assertThrows(ValidationException.class,
                 () -> this.moderationService.moderateComment(comment.publicId, "INVALID", moderator.id, "reason"));
+    }
+
+    @Test
+    @DisplayName("Should throw BAD_REQUEST when moderator is not found")
+    @TestTransaction
+    void shouldThrowBadRequestWhenModeratorNotFound() {
+        final UserEntity author = this.userRepository.findById(3L);
+        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
+        final var comment = this.createComment(exercise, author);
+
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", 99999L, "reason"));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test

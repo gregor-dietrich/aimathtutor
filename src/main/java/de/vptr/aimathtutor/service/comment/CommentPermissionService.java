@@ -2,68 +2,43 @@ package de.vptr.aimathtutor.service.comment;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.service.PermissionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response.Status;
 
 /**
- * Service for comment permission checks.
+ * Service for comment ownership checks.
+ * Rank-based permissions (e.g. commentEdit, commentDelete) are enforced
+ * by {@link PermissionService} in the service layer.
+ * This class only verifies that a user is the author of a comment.
  */
 @ApplicationScoped
 public class CommentPermissionService {
 
     /**
-     * Checks if a user has moderator privileges.
+     * Checks if the given user is the author of the comment.
      *
-     * @param user the user to check
-     * @return true if the user is a moderator or admin
+     * @param comment the comment to check
+     * @param user    the user to check
+     * @return true if the user authored the comment
      */
-    public boolean isModerator(final UserEntity user) {
-        return user != null && user.rank != null
-                && (Boolean.TRUE.equals(user.rank.exerciseEdit)
-                        || Boolean.TRUE.equals(user.rank.adminView));
+    public boolean isAuthor(final CommentEntity comment, final UserEntity user) {
+        return user != null && comment.user != null && comment.user.id.equals(user.id);
     }
 
     /**
-     * Verifies that the requester is allowed to delete a comment.
+     * Verifies that the requester is the author of the comment.
+     * Throws {@link WebApplicationException} with FORBIDDEN status if not.
      *
-     * @param comment    the comment to delete
-     * @param requester  the user requesting deletion
-     * @param softDelete true for soft delete, false for hard delete
-     * @throws WebApplicationException if not authorized
+     * @param comment   the comment to check
+     * @param requester the user requesting the action
+     * @throws WebApplicationException if the requester is not the author
      */
-    public void verifyCanDelete(final CommentEntity comment, final UserEntity requester, final boolean softDelete) {
-        if (requester == null) {
-            throw new WebApplicationException("Not authorized to delete this comment", Status.FORBIDDEN);
-        }
-        final boolean isAuthor = comment.user != null && comment.user.id.equals(requester.id);
-        final boolean isModerator = this.isModerator(requester);
-
-        if (!isAuthor && !isModerator) {
-            throw new WebApplicationException("Not authorized to delete this comment", Status.FORBIDDEN);
-        }
-
-        if (!softDelete && !isModerator) {
-            throw new WebApplicationException("Only moderators can permanently delete", Status.FORBIDDEN);
-        }
-    }
-
-    /**
-     * Verifies that the editor is allowed to edit a comment.
-     *
-     * @param comment the comment to edit
-     * @param editor  the user requesting the edit
-     * @throws WebApplicationException if not authorized
-     */
-    public void verifyCanEdit(final CommentEntity comment, final UserEntity editor) {
-        if (editor == null) {
-            throw new WebApplicationException("Not authorized to edit this comment", Status.FORBIDDEN);
-        }
-        final boolean isAuthor = comment.user != null && comment.user.id.equals(editor.id);
-        final boolean isModerator = this.isModerator(editor);
-
-        if (!isAuthor && !isModerator) {
-            throw new WebApplicationException("Not authorized to edit this comment", Status.FORBIDDEN);
+    public void verifyIsAuthorOrThrow(final CommentEntity comment, final UserEntity requester) {
+        if (!this.isAuthor(comment, requester)) {
+            throw new WebApplicationException("Not authorized: you are not the author of this comment",
+                    Status.FORBIDDEN);
         }
     }
 }

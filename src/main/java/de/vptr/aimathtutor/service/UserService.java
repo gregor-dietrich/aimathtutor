@@ -41,6 +41,9 @@ public class UserService {
     @Inject
     UserRankRepository userRankRepository;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Retrieves all users in the system.
      *
@@ -146,6 +149,8 @@ public class UserService {
      */
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
+        this.permissionService.requireUserAdd();
+
         // Validate required fields for POST
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for creating a user");
@@ -214,6 +219,8 @@ public class UserService {
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
+        this.permissionService.requireUserEdit();
+
         // Validate required fields for PUT
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for updating a user");
@@ -285,6 +292,8 @@ public class UserService {
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
+        this.permissionService.requireUserEdit();
+
         final UserEntity existingUser = this.userRepository.findByPublicId(publicId).orElse(null);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
@@ -353,6 +362,7 @@ public class UserService {
      */
     @Transactional
     public boolean deleteUser(final String publicId) {
+        this.permissionService.requireUserDelete();
         return this.userRepository.deleteByPublicId(publicId);
     }
 

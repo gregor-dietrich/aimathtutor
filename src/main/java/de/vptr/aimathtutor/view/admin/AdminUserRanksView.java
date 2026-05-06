@@ -35,6 +35,7 @@ import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
@@ -446,6 +447,8 @@ public class AdminUserRanksView extends AbstractAdminView {
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving rank", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -460,6 +463,8 @@ public class AdminUserRanksView extends AbstractAdminView {
             } else {
                 NotificationUtil.showError("Failed to delete rank");
             }
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final WebApplicationException e) {
             LOG.error("Error deleting rank", e);
             NotificationUtil.showError("Failed to delete rank. Please try again.");

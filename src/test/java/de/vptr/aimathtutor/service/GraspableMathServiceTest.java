@@ -16,6 +16,7 @@ import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.UserRepository;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -31,6 +32,9 @@ class GraspableMathServiceTest {
 
     @Inject
     private UserRepository userRepository;
+
+    @InjectMock
+    private PermissionService permissionService;
 
     private Long studentId() {
         final var user = this.userRepository.findByUsername("student1");

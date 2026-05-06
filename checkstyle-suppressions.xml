@@ -5,4 +5,6 @@
 <suppressions>
     <!-- IT suffix is the standard Maven convention for integration-test classes -->
     <suppress checks="AbbreviationAsWordInName" files=".*IT\.java$" />
+    <!-- UlidCreator may only be imported by UlidService itself -->
+    <suppress checks="IllegalImport" files="UlidService\.java$" />
 </suppressions>

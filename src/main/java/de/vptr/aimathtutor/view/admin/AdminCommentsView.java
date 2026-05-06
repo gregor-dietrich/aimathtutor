@@ -26,6 +26,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
+
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.HideButton;
@@ -39,8 +40,7 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
-import de.vptr.aimathtutor.entity.CommentEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
@@ -190,14 +190,11 @@ public class AdminCommentsView extends AbstractAdminView {
         this.flagsFilterField.setMin(0);
         this.flagsFilterField.setMax(1000);
         this.flagsFilterField.setValue(0);
-        this.flagsFilterField.setWidthFull();
+        this.flagsFilterField.setWidth("150px");
         this.flagsFilterField.addValueChangeListener(ignored -> this.filterByFlags());
 
-        final var flagsFilterLayout = new HorizontalLayout(this.flagsFilterField);
-        flagsFilterLayout.setWidthFull();
-
-        final var statusAndFlagsLayout = new HorizontalLayout(this.statusFilterSelect, flagsFilterLayout);
-        statusAndFlagsLayout.setWidthFull();
+        final var statusAndFlagsLayout = new HorizontalLayout(this.statusFilterSelect, this.flagsFilterField);
+        statusAndFlagsLayout.setAlignItems(Alignment.END);
         statusAndFlagsLayout.setSpacing(true);
 
         searchLayout.add(dateFilterLayout, userFilterLayout, exerciseFilterLayout, statusAndFlagsLayout);
@@ -303,11 +300,15 @@ public class AdminCommentsView extends AbstractAdminView {
 
     private void openCommentDialog(final CommentDto comment) {
         this.commentDialog.removeAll();
-        this.currentComment = comment != null ? comment : new CommentDto();
+        if (comment == null || comment.publicId == null) {
+            NotificationUtil.showError("Cannot create new comments from the admin panel");
+            return;
+        }
+        this.currentComment = comment;
 
         this.binder = new Binder<>(CommentDto.class);
 
-        final var title = new H3(comment != null ? "Edit Comment" : "Create Comment");
+        final var title = new H3("Edit Comment");
 
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
@@ -353,46 +354,21 @@ public class AdminCommentsView extends AbstractAdminView {
         try {
             this.binder.writeBean(this.currentComment);
 
-            // Sync exercise field
-            this.currentComment.syncExercise();
-
-            // Convert DTO to Entity for service call
-            final var commentEntity = new CommentEntity();
-            commentEntity.publicId = this.currentComment.publicId;
-            commentEntity.content = this.currentComment.content;
-
-            // Set exercise if specified
-            if (this.currentComment.exercisePublicId != null) {
-                final var exerciseEntity = new ExerciseEntity();
-                exerciseEntity.publicId = this.currentComment.exercisePublicId;
-                commentEntity.exercise = exerciseEntity;
+            final var editorId = this.authService.getUserId();
+            if (editorId == null) {
+                NotificationUtil.showError("You must be logged in to edit comments");
+                return;
             }
-
-            // Get current username from auth service
-            final var currentUsername = this.authService.getUsername();
-
-            if (this.currentComment.publicId == null) {
-                if (currentUsername == null) {
-                    NotificationUtil.showError("You must be logged in to manage comments");
-                    return;
-                }
-                this.commentService.createComment(commentEntity, currentUsername);
-                NotificationUtil.showSuccess("Comment created successfully");
-            } else {
-                final var editorId = this.authService.getUserId();
-                if (editorId == null) {
-                    NotificationUtil.showError("You must be logged in to edit comments");
-                    return;
-                }
-                this.commentService.editComment(this.currentComment.publicId, this.currentComment, editorId);
-                NotificationUtil.showSuccess("Comment updated successfully");
-            }
+            this.commentService.editComment(this.currentComment.publicId, this.currentComment, editorId);
+            NotificationUtil.showSuccess("Comment updated successfully");
 
             this.commentDialog.close();
             this.loadCommentsAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Error saving comment", e);
             NotificationUtil.showError("An error occurred while saving the comment. Please try again.");
@@ -409,6 +385,8 @@ public class AdminCommentsView extends AbstractAdminView {
             this.commentService.deleteComment(comment.publicId, requesterId, true);
             NotificationUtil.showSuccess("Comment deleted successfully");
             this.loadCommentsAsync();
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Error deleting comment", e);
             NotificationUtil.showError("An error occurred while deleting the comment. Please try again.");
@@ -520,6 +498,8 @@ public class AdminCommentsView extends AbstractAdminView {
                 this.commentService.moderateComment(comment.publicId, "HIDE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment hidden successfully");
                 this.loadCommentsAsync();
+            } catch (final PermissionDeniedException e) {
+                NotificationUtil.showError(e.getMessage());
             } catch (final Exception e) {
                 LOG.error("Error hiding comment", e);
                 NotificationUtil.showError("An error occurred while hiding the comment. Please try again.");
@@ -534,6 +514,8 @@ public class AdminCommentsView extends AbstractAdminView {
                 this.commentService.moderateComment(comment.publicId, "SHOW", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment shown successfully");
                 this.loadCommentsAsync();
+            } catch (final PermissionDeniedException e) {
+                NotificationUtil.showError(e.getMessage());
             } catch (final Exception e) {
                 LOG.error("Error showing comment", e);
                 NotificationUtil.showError("An error occurred while showing the comment. Please try again.");
@@ -548,6 +530,8 @@ public class AdminCommentsView extends AbstractAdminView {
                 this.commentService.moderateComment(comment.publicId, "RESTORE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment restored successfully");
                 this.loadCommentsAsync();
+            } catch (final PermissionDeniedException e) {
+                NotificationUtil.showError(e.getMessage());
             } catch (final Exception e) {
                 LOG.error("Error restoring comment", e);
                 NotificationUtil.showError("An error occurred while restoring the comment. Please try again.");

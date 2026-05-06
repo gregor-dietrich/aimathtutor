@@ -60,6 +60,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded strings cause state leakage between tests since the service is `@ApplicationScoped`.
 - **AdminConfigView save methods must null-check `authService.getUserId()` before use.** The `requireUserId()` helper enforces this; do not bypass it.
 - **Do NOT use FQCNs.** Always use proper imports instead of fully qualified class names.
+- **Security is session-based via `VaadinSession`, not Quarkus `SecurityIdentity`.** Permission checks are enforced in the service layer through `PermissionService`. Do **not** add `@RolesAllowed` or `@Authenticated` to Vaadin route views. `MainLayout` and `AdminMainLayout` enforce authentication centrally via `BeforeEnterObserver`.
 
 ## Code Quality Gates
 

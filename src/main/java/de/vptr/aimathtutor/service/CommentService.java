@@ -78,6 +78,9 @@ public class CommentService {
     @Inject
     CommentModerationService commentModerationService;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Retrieves all comments in the system with loaded relationships.
      *
@@ -172,79 +175,14 @@ public class CommentService {
     }
 
     /**
-     * Creates a new comment with minimal validation (basic overload).
-     * Assigns current user and sets created timestamp. Validates exercise exists,
-     * is published, and allows comments.
-     *
-     * @param comment         the comment entity with content, exercise, and
-     *                        optional parent
-     * @param currentUsername the username of the current user for auto-assignment
-     * @return the created {@link CommentViewDto}
-     * @throws ValidationException     if content is missing or empty
-     * @throws WebApplicationException if exercise not found or not commentable
-     *                                 (BAD_REQUEST)
-     */
-    @Transactional
-    public CommentViewDto createComment(final CommentEntity comment, final String currentUsername) {
-        // Validate content is provided for creation
-        if (comment.content == null || comment.content.isBlank()) {
-            throw new ValidationException("Content is required for creating a comment");
-        }
-
-        // Validate exercise exists
-        final ExerciseEntity existingExercise = this.exerciseRepository
-                .findById(comment.exercise != null ? comment.exercise.id : null);
-        if (existingExercise == null) {
-            throw new WebApplicationException(
-                    "Exercise with ID " + (comment.exercise != null ? comment.exercise.id : null) + " does not exist.",
-                    Response.Status.BAD_REQUEST);
-        }
-
-        // Validate exercise is published
-        if (!existingExercise.published) {
-            throw new WebApplicationException("Cannot add comment to an unpublished exercise.",
-                    Response.Status.BAD_REQUEST);
-        }
-
-        // Validate exercise allows comments
-        if (!existingExercise.commentable) {
-            throw new WebApplicationException("Comments are not allowed on this exercise.",
-                    Response.Status.BAD_REQUEST);
-        }
-
-        // Always assign the managed exercise entity
-        comment.exercise = existingExercise;
-
-        // Always derive the author from the trusted currentUsername; never honour
-        // a caller-supplied user, which would allow impersonation.
-        final UserEntity author = this.userRepository.findByUsernameOptional(currentUsername)
-                .orElseThrow(() -> new WebApplicationException("Authenticated user not found",
-                        Response.Status.UNAUTHORIZED));
-        comment.user = author;
-
-        // Defensively wipe the id so a caller cannot redirect the persist to an
-        // existing row.
-        comment.id = null;
-
-        comment.content = this.sanitizeCommentContent(comment.content);
-        this.commentRepository.persist(comment);
-
-        // Fire CDI event for real-time updates
-        if (comment.user != null) {
-            this.commentCreatedEvent.fire(new CommentCreatedEvent(
-                    comment.id, comment.exercise.id, comment.user.id, comment.user.username,
-                    comment.content, comment.created));
-        }
-
-        return new CommentViewDto(comment);
-    }
-
-    /**
-     * Create a new comment with rate limiting and validation
+     * Create a new comment with rate limiting and validation.
+     * Requires the {@code commentAdd} permission.
      */
     @Transactional
     public CommentViewDto createComment(final @Valid CommentDto dto, final Long authorId) {
         LOG.info("Creating comment for exercisePublicId={}, authorId={}", dto.exercisePublicId, authorId);
+
+        this.permissionService.requireCommentAdd();
 
         // 1. Validate input
         if (dto.content == null || dto.content.isBlank()) {
@@ -437,14 +375,18 @@ public class CommentService {
             throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
         }
 
-        this.commentPermissionService.verifyCanDelete(comment, requester, softDelete);
+        final boolean isAuthor = this.commentPermissionService.isAuthor(comment, requester);
 
         if (softDelete) {
+            if (!isAuthor) {
+                this.permissionService.requireCommentDelete();
+            }
             comment.status = CommentStatus.DELETED;
             comment.deletedAt = LocalDateTime.now();
             comment.deletedBy = requester;
             LOG.info("Comment soft-deleted: commentPublicId={}, requesterId={}", commentPublicId, requesterId);
         } else {
+            this.permissionService.requireCommentDelete();
             this.commentRepository.deleteByPublicId(commentPublicId);
             LOG.info("Comment hard-deleted: commentPublicId={}, requesterId={}", commentPublicId, requesterId);
         }
@@ -463,14 +405,16 @@ public class CommentService {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
-        // Check permission: only author or moderator/admin
         final UserEntity editor = this.userRepository.findById(editorId);
         if (editor == null) {
             LOG.warn("Edit comment failed: editor not found editorId={}", editorId);
             throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
-        this.commentPermissionService.verifyCanEdit(comment, editor);
+        // Authors can always edit their own comments; non-authors need explicit permission
+        if (!this.commentPermissionService.isAuthor(comment, editor)) {
+            this.permissionService.requireCommentEdit();
+        }
 
         // Update content
         if (dto.content != null && !dto.content.isBlank()) {
@@ -528,7 +472,8 @@ public class CommentService {
     }
 
     /**
-     * Moderate a comment (hide/unhide/delete)
+     * Moderate a comment (hide/unhide/delete).
+     * Requires the {@code commentEdit} permission.
      */
     @Transactional
     public void moderateComment(
@@ -536,6 +481,7 @@ public class CommentService {
             final String action,
             final Long moderatorId,
             final String reason) {
+        this.permissionService.requireCommentEdit();
         this.commentModerationService.moderateComment(commentPublicId, action, moderatorId, reason);
     }
 

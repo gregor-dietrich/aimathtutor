@@ -37,6 +37,7 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UlidService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
@@ -275,6 +276,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving group", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -289,6 +292,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
             } else {
                 NotificationUtil.showError("Failed to delete group");
             }
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting group", e);
             NotificationUtil.showError("Unexpected error occurred");

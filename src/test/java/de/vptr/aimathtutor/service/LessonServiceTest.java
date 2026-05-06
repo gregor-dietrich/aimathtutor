@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -30,6 +31,9 @@ class LessonServiceTest {
 
     @Inject
     private EntityManager em;
+
+    @InjectMock
+    private PermissionService permissionService;
 
     private Long getLessonNumericId(final String publicId) {
         return this.em.createQuery(
