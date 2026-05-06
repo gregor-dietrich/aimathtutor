@@ -2,14 +2,12 @@ package de.vptr.aimathtutor.service;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
 
 /**
  * Utility service for generating and validating ULID identifiers.
  */
-@ApplicationScoped
-public class UlidService {
+public final class UlidService {
 
     private static final String ULID_REGEX = "^[0-7][0-9A-HJKMNP-TV-Z]{25}$";
 
