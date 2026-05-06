@@ -9,7 +9,7 @@ cd "$DIR/.."
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
-${MVN_CMD} clean -Drevision=${REVISION}
+${MVN_CMD} -q clean -Drevision=${REVISION}
 
 rm -rf logs
 rm -rf node_modules

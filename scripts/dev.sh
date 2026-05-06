@@ -7,6 +7,6 @@ set -e
 
 cd "$DIR/.."
 
-${MVN_CMD} quarkus:dev
+${MVN_CMD} -q quarkus:dev
 
 cd - > /dev/null

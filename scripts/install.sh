@@ -11,6 +11,6 @@ make check
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
-${MVN_CMD} clean install -DskipTests -Drevision=${REVISION}
+${MVN_CMD} -q clean install -DskipTests -Drevision=${REVISION}
 
 cd - > /dev/null
