@@ -49,6 +49,7 @@
                 value="Use imports instead of Fully Qualified Class Names (FQCN)." />
         </module>
         <module name="IllegalImport">
+            <property name="id" value="IllegalImport.UlidCreator" />
             <property name="illegalClasses" value="com.github.f4b6a3.ulid.UlidCreator" />
             <message key="import.illegal"
                 value="Import UlidCreator directly is not allowed — use UlidUtil instead." />
