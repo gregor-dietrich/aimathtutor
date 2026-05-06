@@ -70,9 +70,10 @@ class CommentServiceTest {
     @DisplayName("Should throw ValidationException when creating comment with null content")
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithNullContent() {
+        final var exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = null;
-        dto.exerciseId = 1L;
+        dto.exerciseId = exercise.id;
 
         assertThrows(ValidationException.class, () -> {
             this.commentService.createComment(dto, 1L);
@@ -83,9 +84,10 @@ class CommentServiceTest {
     @DisplayName("Should throw ValidationException when creating comment with empty content")
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithEmptyContent() {
+        final var exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = "";
-        dto.exerciseId = 1L;
+        dto.exerciseId = exercise.id;
 
         assertThrows(ValidationException.class, () -> {
             this.commentService.createComment(dto, 1L);
@@ -96,9 +98,10 @@ class CommentServiceTest {
     @DisplayName("Should throw ValidationException when creating comment with whitespace content")
     @Transactional
     void shouldThrowValidationExceptionWhenCreatingCommentWithWhitespaceContent() {
+        final var exercise = this.createCommentableExercise();
         final var dto = new CommentDto();
         dto.content = "   ";
-        dto.exerciseId = 1L;
+        dto.exerciseId = exercise.id;
 
         assertThrows(ValidationException.class, () -> {
             this.commentService.createComment(dto, 1L);
