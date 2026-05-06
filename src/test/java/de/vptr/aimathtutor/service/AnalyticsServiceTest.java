@@ -168,13 +168,14 @@ class AnalyticsServiceTest {
     void testGetSessionsByDateRange_bothBounds() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
 
         final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
         final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(start, end);
         assertNotNull(sessions);
-        assertFalse(sessions.isEmpty(), "Session created moments ago should be within range");
+        assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Seeded session should be returned within the date range");
     }
 
     @Test
@@ -444,9 +445,17 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         this.graspableMathService.createSession(studentId, exerciseId);
 
+        final var otherStudent = this.userRepository.findByUsername("student2");
+        assertNotNull(otherStudent, "Seeded student2 must exist");
+        final Long otherStudentId = otherStudent.id;
+        final Long otherExerciseId = this.createExercise();
+        this.graspableMathService.createSession(otherStudentId, otherExerciseId);
+
         final List<StudentSessionViewDto> results = this.analyticsService.searchSessions("student1");
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Search by username should find student1 sessions");
+        assertTrue(results.stream().allMatch(s -> "student1".equals(s.username)),
+                "Results should only contain sessions for student1");
     }
 
     @Test
