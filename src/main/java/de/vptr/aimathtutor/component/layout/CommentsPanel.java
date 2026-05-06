@@ -47,6 +47,7 @@ public class CommentsPanel extends VerticalLayout {
     private static final Logger LOG = LoggerFactory.getLogger(CommentsPanel.class);
 
     private final Long exerciseId;
+    private final String exercisePublicId;
     private final String sessionId;
     private final Long currentUserId;
     private static final int pageSize = 50;
@@ -61,12 +62,15 @@ public class CommentsPanel extends VerticalLayout {
     /**
      * Create a comments panel for the specified exercise/session and user.
      *
-     * @param exerciseId    id of the exercise to display comments for
-     * @param sessionId     external session id (optional)
-     * @param currentUserId current user database id (may be null)
+     * @param exerciseId       id of the exercise to display comments for
+     * @param exercisePublicId public id of the exercise to display comments for
+     * @param sessionId        external session id (optional)
+     * @param currentUserId    current user database id (may be null)
      */
-    public CommentsPanel(final Long exerciseId, final String sessionId, final Long currentUserId) {
+    public CommentsPanel(final Long exerciseId, final String exercisePublicId, final String sessionId,
+            final Long currentUserId) {
         this.exerciseId = exerciseId;
+        this.exercisePublicId = exercisePublicId;
         this.sessionId = sessionId;
         this.currentUserId = currentUserId;
         this.buildUi();
@@ -284,19 +288,18 @@ public class CommentsPanel extends VerticalLayout {
             // Create DTO
             final CommentDto dto = new CommentDto();
             dto.content = text;
-            dto.exerciseId = this.exerciseId;
+            dto.exercisePublicId = this.exercisePublicId;
             dto.parentCommentPublicId = this.currentParentPublicId;
             dto.sessionId = this.sessionId;
 
             // Call service
             this.getCommentService().createComment(dto, this.currentUserId);
 
-            // Clear form
+            // Clear form and fully exit reply mode
             this.commentTextArea.clear();
-
-            // Reset pagination and reload
-            this.currentPage = 0;
-            this.loadComments();
+            this.refresh();
+            this.commentTextArea.setPlaceholder("Write a comment...");
+            this.submitButton.setText("Post Comment");
 
             NotificationUtil.showSuccess("Comment posted!");
         } catch (final Exception e) {

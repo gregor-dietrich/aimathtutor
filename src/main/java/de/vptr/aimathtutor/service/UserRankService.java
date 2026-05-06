@@ -12,6 +12,7 @@ import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.WebApplicationException;
@@ -153,7 +154,7 @@ public class UserRankService {
      * Performs complete replacement of all permissions (PUT semantics).
      *
      * @param publicId the public ID of the rank to update
-     * @param rankDto the new rank data with updated permissions
+     * @param rankDto  the new rank data with updated permissions
      * @return the updated {@link UserRankViewDto}
      * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
@@ -224,7 +225,15 @@ public class UserRankService {
                     Response.Status.CONFLICT);
         }
 
-        return this.userRankRepository.deleteByPublicId(publicId);
+        try {
+            final boolean deleted = this.userRankRepository.deleteByPublicId(publicId);
+            this.userRankRepository.flush();
+            return deleted;
+        } catch (final PersistenceException e) {
+            throw new WebApplicationException(
+                    "Cannot delete rank because users are assigned to this rank. Please reassign these users to a different rank before deleting.",
+                    Response.Status.CONFLICT);
+        }
     }
 
     /**

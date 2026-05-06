@@ -37,6 +37,7 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.service.UlidService;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
@@ -136,7 +137,17 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var userPublicIdInput = new TextField();
         userPublicIdInput.setPlaceholder("Enter User Public ID...");
         userPublicIdInput.setWidth("200px");
-        final var userFilterButton = new Button("Filter by User", ignored -> this.filterByUser());
+        userPublicIdInput.setPattern("^[0-7][0-9A-HJKMNP-TV-Z]{25}$");
+        userPublicIdInput.setErrorMessage("Invalid ULID format");
+        userPublicIdInput.addValueChangeListener(e -> userPublicIdInput.setInvalid(false));
+        final var userFilterButton = new Button("Filter by User", ignored -> {
+            final String value = userPublicIdInput.getValue();
+            if (value != null && !value.isBlank() && !UlidService.isValid(value)) {
+                userPublicIdInput.setInvalid(true);
+                return;
+            }
+            this.filterByUser();
+        });
         userFilterLayout.add(userPublicIdInput, userFilterButton);
         this.userPublicIdField = userPublicIdInput;
 

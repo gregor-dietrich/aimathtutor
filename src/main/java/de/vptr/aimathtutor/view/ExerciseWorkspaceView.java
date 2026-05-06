@@ -299,7 +299,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         if (this.exercise.commentable) {
             // Create comments panel (full width, below canvas)
-            this.commentsPanel = new CommentsPanel(this.exerciseId, this.currentSessionId,
+            this.commentsPanel = new CommentsPanel(this.exerciseId, this.exercise.publicId, this.currentSessionId,
                     this.authService.getUserId());
             this.commentsPanel.getStyle().set("margin-top", "1rem");
 

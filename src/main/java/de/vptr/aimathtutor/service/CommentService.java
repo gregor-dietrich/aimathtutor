@@ -296,6 +296,12 @@ public class CommentService {
                 throw new WebApplicationException("Cannot reply to deleted/hidden comment",
                         Response.Status.BAD_REQUEST);
             }
+            if (!parentComment.exercise.publicId.equals(dto.exercisePublicId)) {
+                LOG.warn("Comment creation failed: parent comment belongs to different exercise. parentPublicId={}, parentExercisePublicId={}, dto.exercisePublicId={}, authorId={}",
+                        dto.parentCommentPublicId, parentComment.exercise.publicId, dto.exercisePublicId, authorId);
+                throw new WebApplicationException("Parent comment belongs to a different exercise",
+                        Response.Status.BAD_REQUEST);
+            }
         }
 
         // 5. Get author
