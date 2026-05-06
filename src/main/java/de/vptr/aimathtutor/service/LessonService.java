@@ -116,7 +116,7 @@ public class LessonService {
      */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
-        final var existingLesson = this.lessonRepository.findById(lesson.id);
+        final var existingLesson = this.lessonRepository.findByPublicId(lesson.publicId).orElse(null);
         if (existingLesson == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
         }
@@ -130,8 +130,8 @@ public class LessonService {
         existingLesson.name = lesson.name;
 
         // Handle parent change - validate if parent is provided
-        if (lesson.parent != null && lesson.parent.id != null) {
-            final LessonEntity newParent = this.lessonRepository.findById(lesson.parent.id);
+        if (lesson.parent != null && lesson.parent.publicId != null) {
+            final LessonEntity newParent = this.lessonRepository.findByPublicId(lesson.parent.publicId).orElse(null);
             if (newParent == null) {
                 throw new WebApplicationException("Parent lesson not found", Response.Status.BAD_REQUEST);
             }
@@ -220,6 +220,14 @@ public class LessonService {
      */
     @Transactional
     public boolean deleteLesson(final String publicId) {
+        final LessonEntity lesson = this.lessonRepository.findByPublicId(publicId).orElse(null);
+        if (lesson == null) {
+            return false;
+        }
+        if (!this.lessonRepository.findByParentId(lesson.id).isEmpty()) {
+            throw new WebApplicationException("Cannot delete lesson with sub-lessons. Please delete or move sub-lessons first.",
+                    Response.Status.BAD_REQUEST);
+        }
         return this.lessonRepository.deleteByPublicId(publicId);
     }
 

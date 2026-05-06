@@ -318,15 +318,15 @@ public class ExerciseService {
      * Updates last edit timestamp. Validates user and lesson references if
      * provided.
      *
-     * @param id          the exercise ID to update
+     * @param publicId    the public ID of the exercise to update
      * @param exerciseDto the partial exercise data with selected fields to update
      * @return the updated {@link ExerciseViewDto}
      * @throws WebApplicationException if exercise not found (NOT_FOUND status)
      * @throws ValidationException     if provided references are invalid
      */
     @Transactional
-    public ExerciseViewDto patchExercise(final Long id, final @Valid ExerciseDto exerciseDto) {
-        final ExerciseEntity existingExercise = this.exerciseRepository.findById(id);
+    public ExerciseViewDto patchExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
+        final ExerciseEntity existingExercise = this.exerciseRepository.findByPublicId(publicId).orElse(null);
         if (existingExercise == null) {
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }

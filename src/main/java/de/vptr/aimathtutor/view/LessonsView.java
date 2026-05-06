@@ -108,8 +108,8 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
 
-        final Set<String> visited = new HashSet<>();
         for (final LessonViewDto lesson : rootLessons) {
+            final Set<String> visited = new HashSet<>();
             this.add(this.createLessonSection(lesson, 0, lessonByPublicId, payload.exercisesByLesson, visited));
         }
 
@@ -292,12 +292,12 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         startButton.addClickListener(ignored -> {
             // Navigate to ExerciseWorkspaceView for Graspable exercises
             // or to a generic ExerciseView for non-Graspable exercises
-            if (exercise.id == null) {
+            if (exercise.publicId == null) {
                 NotificationUtil.showError("Exercise ID is missing");
                 return;
             }
             UI.getCurrent().navigate(ExerciseWorkspaceView.class,
-                    new RouteParameters("exerciseId", exercise.id.toString()));
+                    new RouteParameters("exerciseId", exercise.publicId));
         });
 
         card.add(titleSpan, badgeLayout, startButton);

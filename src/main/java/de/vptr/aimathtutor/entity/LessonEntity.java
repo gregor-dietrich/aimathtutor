@@ -33,10 +33,10 @@ import jakarta.validation.constraints.NotBlank;
         @Index(name = "idx_lesson_parent", columnList = "parent_id")
 })
 @NamedQueries({
-        @NamedQuery(name = "Lesson.findAllOrdered", query = "FROM LessonEntity ORDER BY created DESC"),
+        @NamedQuery(name = "Lesson.findAllOrdered", query = "FROM LessonEntity ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "Lesson.findByPublicId", query = "FROM LessonEntity WHERE publicId = :p"),
-        @NamedQuery(name = "Lesson.findRootLessons", query = "FROM LessonEntity WHERE parent IS NULL ORDER BY created DESC"),
-        @NamedQuery(name = "Lesson.findByParentId", query = "FROM LessonEntity WHERE parent.id = :p ORDER BY created DESC"),
+        @NamedQuery(name = "Lesson.findRootLessons", query = "FROM LessonEntity WHERE parent IS NULL ORDER BY created DESC, id DESC"),
+        @NamedQuery(name = "Lesson.findByParentId", query = "FROM LessonEntity WHERE parent.id = :p ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "Lesson.searchByName", query = "FROM LessonEntity WHERE LOWER(name) LIKE :s")
 })
 public class LessonEntity extends PanacheEntityBase {

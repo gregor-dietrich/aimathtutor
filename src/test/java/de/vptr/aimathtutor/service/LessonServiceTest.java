@@ -155,13 +155,11 @@ class LessonServiceTest {
         childEntity.parent = parentRef;
         final LessonViewDto child = this.lessonService.createLesson(childEntity);
 
-        final Long parentNumericId = this.getLessonNumericId(parent.publicId);
-        final Long childNumericId = this.getLessonNumericId(child.publicId);
         final LessonEntity update = new LessonEntity();
-        update.id = parentNumericId;
+        update.publicId = parent.publicId;
         update.name = "renamed";
         final LessonEntity newParent = new LessonEntity();
-        newParent.id = childNumericId;
+        newParent.publicId = child.publicId;
         update.parent = newParent;
 
         final var thrown = assertThrows(WebApplicationException.class,

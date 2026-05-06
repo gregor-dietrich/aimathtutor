@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -380,13 +381,11 @@ public class AdminUserGroupsView extends AbstractAdminView {
                     if (allUsers == null) {
                         return List.<UserViewDto>of();
                     }
-                    final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
-                            .collect(Collectors.toList());
-                    final var currentUserIds = currentUsers.stream()
-                            .map(user -> user.publicId)
-                            .collect(Collectors.toSet());
+                    final var currentUsers = this.groupService.getUsersInGroup(this.selectedGroup.publicId);
+                    final var currentUserPublicIds = currentUsers == null ? Set.<String>of()
+                            : currentUsers.stream().map(user -> user.publicId).collect(Collectors.toSet());
                     return allUsers.stream()
-                            .filter(user -> !currentUserIds.contains(user.publicId))
+                            .filter(user -> !currentUserPublicIds.contains(user.publicId))
                             .collect(Collectors.toList());
                 },
                 this,

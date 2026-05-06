@@ -103,7 +103,7 @@ public class AdminSessionsView extends AbstractAdminView {
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
-            usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.publicId));
+            usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
         }).setHeader("Student")
                 .setFlexGrow(1);

@@ -165,7 +165,7 @@ public class CommentsPanel extends VerticalLayout {
             this.commentsContainer.add(commentDiv);
 
             // If this comment has replies, load and display them
-            if (Boolean.TRUE.equals(comment.parentPublicId == null)) {
+            if (comment.parentPublicId == null) {
                 try {
                     final List<CommentViewDto> replies = this.getCommentService().findReplies(comment.publicId);
                     if (!replies.isEmpty()) {

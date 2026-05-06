@@ -44,7 +44,7 @@ class JsonRepairServiceTest {
     @Test
     @DisplayName("stripQuotationMarks should remove normal double quotes")
     void stripQuotationMarksShouldRemoveNormalDoubleQuotes() {
-        assertEquals("Hello world", this.jsonRepairService.stripQuotationMarks("“Hello world”"));
+        assertEquals("Hello world", this.jsonRepairService.stripQuotationMarks("\"Hello world\""));
     }
 
     @Test

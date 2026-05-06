@@ -32,19 +32,19 @@ public class UserGroupMetaRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves user group memberships by the user's public identifier.
+     * Retrieves all user group memberships for a user by their public identifier.
      *
      * @param userPublicId the public ID of the user
-     * @return an {@link Optional} containing the membership if found, empty otherwise
+     * @return a list of all memberships for the given user, empty list if not found
      */
-    public Optional<UserGroupMetaEntity> findByUserPublicId(final String userPublicId) {
+    public List<UserGroupMetaEntity> findByUserPublicId(final String userPublicId) {
         if (userPublicId == null) {
-            return Optional.empty();
+            return List.of();
         }
         final var q = this.em.createQuery(
                 "FROM UserGroupMetaEntity m WHERE m.user.publicId = :p", UserGroupMetaEntity.class);
         q.setParameter("p", userPublicId);
-        return q.getResultStream().findFirst();
+        return q.getResultList();
     }
 
     /**

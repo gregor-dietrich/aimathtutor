@@ -157,6 +157,14 @@ public class ExerciseDto {
         public LessonField(final String publicId) {
             this.publicId = publicId;
         }
+
+        public void setPublicId(final String publicId) {
+            this.publicId = publicId;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
     }
 
     /**

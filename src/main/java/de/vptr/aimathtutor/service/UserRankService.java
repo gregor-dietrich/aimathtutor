@@ -177,14 +177,14 @@ public class UserRankService {
      * Only updates permissions that are explicitly provided in the DTO; null values
      * are ignored.
      *
-     * @param id      the ID of the rank to update
-     * @param rankDto the partial rank data with selected permissions to update
+     * @param publicId the public ID of the rank to update
+     * @param rankDto  the partial rank data with selected permissions to update
      * @return the updated {@link UserRankViewDto}
      * @throws WebApplicationException if rank is not found (NOT_FOUND status)
      */
     @Transactional
-    public UserRankViewDto patchRank(final Long id, final @Valid UserRankDto rankDto) {
-        final UserRankEntity existingRank = this.userRankRepository.findById(id);
+    public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
+        final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
         if (existingRank == null) {
             throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
         }

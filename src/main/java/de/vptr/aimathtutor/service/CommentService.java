@@ -493,15 +493,15 @@ public class CommentService {
             final Long exerciseId,
             final int page,
             final int pageSize,
-            final Long parentId) {
+            final String parentPublicId) {
 
         List<CommentEntity> comments;
-        if (parentId == null) {
+        if (parentPublicId == null) {
             // Top-level comments (these methods already fetch relations)
             comments = this.commentRepository.findTopLevelByExercise(exerciseId, page, pageSize);
         } else {
             // Replies to specific parent
-            comments = this.commentRepository.findRepliesPaged(parentId, page, pageSize);
+            comments = this.commentRepository.findRepliesPaged(parentPublicId, page, pageSize);
         }
 
         return comments.stream()

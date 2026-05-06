@@ -278,13 +278,16 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves all reply comments to a specific parent comment.
      *
-     * @param parentCommentId the ID of the parent comment to filter by
+     * @param parentPublicId the public ID of the parent comment to filter by
      * @return a list of {@link CommentEntity} objects that are replies to the
      *         parent
      */
-    public List<CommentEntity> findReplies(final Long parentCommentId) {
+    public List<CommentEntity> findReplies(final String parentPublicId) {
+        if (parentPublicId == null) {
+            return List.of();
+        }
         final var q = this.em.createNamedQuery("Comment.findReplies", CommentEntity.class);
-        q.setParameter("p", parentCommentId);
+        q.setParameter("p", parentPublicId);
         return q.getResultList();
     }
 
@@ -326,15 +329,18 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves reply comments with pagination.
      *
-     * @param parentId the ID of the parent comment to filter by
-     * @param page     the page number (0-indexed)
-     * @param pageSize the number of replies per page
+     * @param parentPublicId the public ID of the parent comment to filter by
+     * @param page           the page number (0-indexed)
+     * @param pageSize       the number of replies per page
      * @return a paginated list of {@link CommentEntity} objects that are replies to
      *         the parent
      */
-    public List<CommentEntity> findRepliesPaged(final Long parentId, final int page, final int pageSize) {
+    public List<CommentEntity> findRepliesPaged(final String parentPublicId, final int page, final int pageSize) {
+        if (parentPublicId == null) {
+            return List.of();
+        }
         final var q = this.em.createNamedQuery("Comment.findRepliesPaged", CommentEntity.class);
-        q.setParameter("p", parentId);
+        q.setParameter("p", parentPublicId);
         q.setFirstResult(page * pageSize);
         q.setMaxResults(pageSize);
         return q.getResultList();
