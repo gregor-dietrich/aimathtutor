@@ -217,4 +217,128 @@ class LessonServiceTest {
             assertTrue(lesson.exercisesCount >= 0);
         }
     }
+
+    @Test
+    @DisplayName("updateLesson replaces the lesson name")
+    @TestTransaction
+    void testUpdateLesson_replacesName() {
+        final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("update_src"));
+
+        final LessonEntity update = new LessonEntity();
+        update.publicId = created.publicId;
+        update.name = "Updated Lesson Name";
+
+        final LessonViewDto updated = this.lessonService.updateLesson(update);
+
+        assertEquals("Updated Lesson Name", updated.name);
+
+        this.em.flush();
+        this.em.clear();
+
+        final LessonEntity persisted = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", created.publicId)
+                .getSingleResult();
+        assertEquals("Updated Lesson Name", persisted.name,
+                "Updated name should be persisted in the database");
+    }
+
+    @Test
+    @DisplayName("patchLesson updates only the provided name")
+    @TestTransaction
+    void testPatchLesson_updatesName() {
+        final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("patch_src"));
+        final String originalPublicId = created.publicId;
+
+        final LessonEntity patch = new LessonEntity();
+        patch.publicId = created.publicId;
+        patch.name = "Patched Name";
+
+        final LessonViewDto patched = this.lessonService.patchLesson(patch);
+
+        assertEquals("Patched Name", patched.name);
+        assertEquals(originalPublicId, patched.publicId, "publicId should be unchanged after patch");
+
+        this.em.flush();
+        this.em.clear();
+
+        final LessonEntity persisted = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", originalPublicId)
+                .getSingleResult();
+        assertEquals("Patched Name", persisted.name,
+                "Patched name should be persisted in the database");
+    }
+
+    @Test
+    @DisplayName("findRootLessons returns only lessons without a parent")
+    @TestTransaction
+    void testFindRootLessons_returnsOnlyRoots() {
+        final LessonViewDto root = this.lessonService.createLesson(this.buildLesson("root"));
+        final LessonEntity child = this.buildLesson("child");
+        final LessonEntity parentRef = new LessonEntity();
+        parentRef.id = this.getLessonNumericId(root.publicId);
+        child.parent = parentRef;
+        final LessonViewDto childDto = this.lessonService.createLesson(child);
+
+        final var roots = this.lessonService.findRootLessons();
+
+        assertNotNull(roots);
+        assertFalse(roots.isEmpty(), "There should be at least one root lesson");
+        assertTrue(roots.stream().allMatch(l -> l.parentPublicId == null),
+                "Root lessons should have no parent");
+        assertFalse(roots.stream().anyMatch(l -> childDto.publicId.equals(l.publicId)),
+                "Child lesson should not appear in root lessons");
+    }
+
+    @Test
+    @DisplayName("searchLessons with blank query returns all lessons")
+    @TestTransaction
+    void testSearchLessons_blank() {
+        final LessonViewDto createdLesson = this.lessonService.createLesson(this.buildLesson("search_blank"));
+        final var results = this.lessonService.searchLessons("");
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Blank query should return all lessons");
+        assertTrue(results.stream().anyMatch(l -> createdLesson.publicId.equals(l.publicId)),
+                "Blank search should include the newly created lesson");
+    }
+
+    @Test
+    @DisplayName("searchLessons with matching term finds the lesson")
+    @TestTransaction
+    void testSearchLessons_match() {
+        final LessonEntity lesson = this.buildLesson("UniqueSearchable");
+        final String uniqueName = lesson.name;
+        this.lessonService.createLesson(lesson);
+
+        final var results = this.lessonService.searchLessons(uniqueName);
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Search should find the lesson by name");
+        assertTrue(results.stream().anyMatch(l -> uniqueName.equals(l.name)));
+    }
+
+    @Test
+    @DisplayName("searchLessons with non-matching term returns empty list")
+    @TestTransaction
+    void testSearchLessons_noMatch() {
+        final var results = this.lessonService.searchLessons("zzz_nobody_here_xyz_9999");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findById returns empty for unknown id")
+    @TestTransaction
+    void testFindById_notFound() {
+        final var result = this.lessonService.findById(-999L);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("deleteLesson returns false for unknown publicId")
+    @TestTransaction
+    void testDeleteLesson_notFound() {
+        final boolean deleted = this.lessonService.deleteLesson("00000000000000000000000000");
+        assertFalse(deleted);
+    }
 }

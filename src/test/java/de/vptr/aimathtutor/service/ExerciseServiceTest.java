@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -230,5 +232,177 @@ class ExerciseServiceTest {
 
         assertTrue(deleted);
         assertTrue(this.exerciseService.findById(created.id).isEmpty());
+    }
+
+    @Test
+    @DisplayName("updateExercise replaces all fields")
+    @TestTransaction
+    void testUpdateExercise_replacesFields() {
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), false));
+
+        final ExerciseDto update = new ExerciseDto();
+        update.title = "Updated Title";
+        update.content = "Updated content";
+        update.userPublicId = this.teacherPublicId();
+        update.published = true;
+        update.commentable = true;
+
+        final ExerciseViewDto updated = this.exerciseService.updateExercise(created.publicId, update);
+
+        assertEquals("Updated Title", updated.title);
+        assertEquals("Updated content", updated.content);
+        assertTrue(updated.published);
+        assertTrue(updated.commentable);
+    }
+
+    @Test
+    @DisplayName("patchExercise updates only the provided field")
+    @TestTransaction
+    void testPatchExercise_updatesProvidedField() {
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), false));
+
+        final ExerciseDto patch = new ExerciseDto();
+        patch.published = true;
+
+        final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
+
+        assertEquals(created.title, patched.title, "Title should be unchanged after patch");
+        assertTrue(patched.published);
+    }
+
+    @Test
+    @DisplayName("searchExercises with blank query returns all exercises")
+    @TestTransaction
+    void testSearchExercises_blank() {
+        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final var results = this.exerciseService.searchExercises("");
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Blank query should return all exercises");
+    }
+
+    @Test
+    @DisplayName("searchExercises with matching term returns results")
+    @TestTransaction
+    void testSearchExercises_match() {
+        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
+        final String uniqueTitle = "UniqueSearchableTitle_" + UUID.randomUUID().toString().substring(0, 8);
+        dto.title = uniqueTitle;
+        this.exerciseService.createExercise(dto);
+
+        final var results = this.exerciseService.searchExercises(uniqueTitle);
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().anyMatch(e -> uniqueTitle.equals(e.title)));
+    }
+
+    @Test
+    @DisplayName("searchExercises with non-matching term returns empty list")
+    @TestTransaction
+    void testSearchExercises_noMatch() {
+        final var results = this.exerciseService.searchExercises("zzz_nonexistent_xyz_9999");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findGraspableMathExercises returns only graspable exercises")
+    @TestTransaction
+    void testFindGraspableMathExercises() {
+        final ExerciseDto graspableDto = this.buildDto(this.teacherPublicId(), true);
+        graspableDto.graspableEnabled = Boolean.TRUE;
+        graspableDto.graspableTargetExpression = "x=1";
+        final ExerciseViewDto graspableExercise = this.exerciseService.createExercise(graspableDto);
+
+        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+
+        final var results = this.exerciseService.findGraspableMathExercises();
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Should find at least the seeded graspable exercise");
+        assertTrue(results.stream().anyMatch(e -> graspableExercise.publicId.equals(e.publicId)),
+                "Seeded graspable exercise should be in results");
+        assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
+                "All returned exercises should have graspableEnabled=true");
+    }
+
+    @Test
+    @DisplayName("findPublishedExercisesByLessonMap returns a non-null map")
+    @TestTransaction
+    void testFindPublishedExercisesByLessonMap() {
+        final var map = this.exerciseService.findPublishedExercisesByLessonMap();
+        assertNotNull(map);
+    }
+
+    @Test
+    @DisplayName("findByDateRange with null dates returns empty list")
+    @TestTransaction
+    void testFindByDateRange_nullDates() {
+        final var results = this.exerciseService.findByDateRange(null, null);
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByDateRange with today's range includes recently created exercise")
+    @TestTransaction
+    void testFindByDateRange_today() {
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        // DB stores CURRENT_TIMESTAMP in UTC; use UTC date to match
+        final String today = LocalDate.now(ZoneOffset.UTC).toString();
+        final var results = this.exerciseService.findByDateRange(today, today);
+        assertNotNull(results);
+        assertTrue(results.stream().anyMatch(e -> created.publicId.equals(e.publicId)),
+                "Exercise created today should be in today's date range");
+    }
+
+    @Test
+    @DisplayName("findByPublicId returns empty for unknown publicId")
+    @TestTransaction
+    void testFindByPublicId_notFound() {
+        final var result = this.exerciseService.findByPublicId("00000000000000000000000000");
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("findGraspableMathExercisesByLesson returns only GM exercises in that lesson")
+    @TestTransaction
+    void testFindGraspableMathExercisesByLesson() {
+        final var lessonEntity = new LessonEntity();
+        lessonEntity.name = "gm_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
+        final var lessonDb = this.em.createQuery(
+                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", lesson.publicId)
+                .getSingleResult();
+
+        final ExerciseDto gmDto = this.buildDto(this.teacherPublicId(), true);
+        gmDto.lessonPublicId = lesson.publicId;
+        gmDto.graspableEnabled = Boolean.TRUE;
+        gmDto.graspableTargetExpression = "x=1";
+        final ExerciseViewDto gmExercise = this.exerciseService.createExercise(gmDto);
+
+        final ExerciseDto nonGmDto = this.buildDto(this.teacherPublicId(), true);
+        nonGmDto.lessonPublicId = lesson.publicId;
+        this.exerciseService.createExercise(nonGmDto);
+
+        // Graspable exercise in a different lesson — must not appear in results
+        final var otherLessonEntity = new LessonEntity();
+        otherLessonEntity.name = "other_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto otherLesson = this.lessonService.createLesson(otherLessonEntity);
+        final ExerciseDto otherGmDto = this.buildDto(this.teacherPublicId(), true);
+        otherGmDto.lessonPublicId = otherLesson.publicId;
+        otherGmDto.graspableEnabled = Boolean.TRUE;
+        otherGmDto.graspableTargetExpression = "y=2";
+        final ExerciseViewDto otherGmExercise = this.exerciseService.createExercise(otherGmDto);
+
+        final var results = this.exerciseService.findGraspableMathExercisesByLesson(lessonDb.id);
+        assertNotNull(results);
+        assertTrue(results.stream().anyMatch(e -> gmExercise.publicId.equals(e.publicId)),
+                "GM exercise should be in results");
+        assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
+                "All returned exercises should have graspableEnabled=true");
+        assertFalse(results.stream().anyMatch(e -> otherGmExercise.publicId.equals(e.publicId)),
+                "GM exercise from a different lesson should not be in results");
     }
 }

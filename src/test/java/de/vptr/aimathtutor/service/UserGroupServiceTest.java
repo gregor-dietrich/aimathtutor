@@ -173,4 +173,79 @@ class UserGroupServiceTest {
         assertTrue(deleted);
         assertNull(groupEntity);
     }
+
+    @Test
+    @DisplayName("updateGroup replaces group name")
+    @TestTransaction
+    void testUpdateGroup_replacesName() {
+        final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
+
+        final UserGroupDto update = new UserGroupDto();
+        update.name = "Updated Group Name";
+
+        final UserGroupViewDto updated = this.userGroupService.updateGroup(created.publicId, update);
+
+        assertEquals("Updated Group Name", updated.name);
+    }
+
+    @Test
+    @DisplayName("patchGroup updates only provided fields")
+    @TestTransaction
+    void testPatchGroup_updatesName() {
+        final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
+        final var entity = this.userGroupRepository.findByPublicId(created.publicId).orElseThrow();
+
+        final UserGroupDto patch = new UserGroupDto();
+        patch.name = "Patched Group Name";
+
+        final UserGroupViewDto patched = this.userGroupService.patchGroup(entity.id, patch);
+
+        assertEquals("Patched Group Name", patched.name);
+    }
+
+    @Test
+    @DisplayName("searchGroups with blank query returns all groups")
+    @TestTransaction
+    void testSearchGroups_blank() {
+        this.userGroupService.createGroup(this.buildDto());
+        final var results = this.userGroupService.searchGroups("");
+        assertNotNull(results);
+        assertFalse(results.isEmpty(), "Blank query should return all groups");
+    }
+
+    @Test
+    @DisplayName("searchGroups with non-matching term returns empty list")
+    @TestTransaction
+    void testSearchGroups_noMatch() {
+        final var results = this.userGroupService.searchGroups("zzz_nonexistent_group_xyz");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getAllGroups returns non-null list that includes a newly created group")
+    @TestTransaction
+    void testGetAllGroups() {
+        final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
+
+        final var all = this.userGroupService.getAllGroups();
+        assertNotNull(all);
+        assertTrue(all.stream().anyMatch(g -> g.publicId.equals(created.publicId)),
+                "Newly created group should appear in getAllGroups");
+    }
+
+    @Test
+    @DisplayName("getGroupsForUser returns groups after adding user")
+    @TestTransaction
+    void testGetGroupsForUser_returnsMembership() {
+        final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student);
+        this.userGroupService.addUserToGroup(student.publicId, group.publicId);
+
+        final var groups = this.userGroupService.getGroupsForUser(student.publicId);
+        assertNotNull(groups);
+        assertTrue(groups.stream().anyMatch(g -> g.publicId.equals(group.publicId)),
+                "student1 should be in the newly created group");
+    }
 }
