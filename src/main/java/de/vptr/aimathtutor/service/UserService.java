@@ -292,12 +292,12 @@ public class UserService {
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
+        this.permissionService.requireUserEdit();
+
         final UserEntity existingUser = this.userRepository.findByPublicId(publicId).orElse(null);
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
-
-        this.permissionService.requireUserEdit();
 
         // Check for duplicate username if username is being updated
         if (userDto.username != null && !userDto.username.isBlank()

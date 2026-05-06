@@ -147,6 +147,7 @@ class CommentServiceTest {
         final var thrown = assertThrows(WebApplicationException.class,
                 () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
+        verify(this.permissionService).requireCommentAdd();
     }
 
     @Test

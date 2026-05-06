@@ -443,6 +443,7 @@ public class AdminUsersView extends AbstractAdminView {
                     .orElse("Invalid input");
             NotificationUtil.showError(messages);
         } catch (final PermissionDeniedException e) {
+            LOG.warn("Permission denied saving user", e);
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error saving user", e);
@@ -459,6 +460,7 @@ public class AdminUsersView extends AbstractAdminView {
                 NotificationUtil.showError("Failed to delete user");
             }
         } catch (final PermissionDeniedException e) {
+            LOG.warn("Permission denied deleting user", e);
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting user", e);
