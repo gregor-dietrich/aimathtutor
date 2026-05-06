@@ -67,7 +67,7 @@ public final class AsyncDataLoader {
                             onSuccess.accept(data);
                             return;
                         }
-                        LOG.error("Async load failed: {}", throwable.getMessage(), throwable);
+                        LOG.errorf(throwable, "Async load failed: %s",  throwable.getMessage());
                         NotificationUtil.showError(errorMessage);
                         if (onError == null) {
                             return;

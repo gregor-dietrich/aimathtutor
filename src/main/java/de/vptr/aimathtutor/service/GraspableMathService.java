@@ -50,13 +50,13 @@ public class GraspableMathService {
         final String sessionId = UUID.randomUUID().toString();
         final UserEntity user = this.userRepository.findById(userId);
         if (user == null) {
-            LOG.error("User not found: {}", userId);
+            LOG.errorf("User not found: %s",  userId);
             throw new IllegalArgumentException("User not found: " + userId);
         }
 
         final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
         if (exercise == null) {
-            LOG.error("Exercise not found: {}", exerciseId);
+            LOG.errorf("Exercise not found: %s",  exerciseId);
             throw new IllegalArgumentException("Exercise not found: " + exerciseId);
         }
 
@@ -71,7 +71,7 @@ public class GraspableMathService {
         session.hintsUsed = 0;
 
         this.studentSessionRepository.persist(session);
-        LOG.info("Created new session: {} for user {} on exercise {}", sessionId, userId, exerciseId);
+        LOG.infof("Created new session: %s for user %s on exercise %s",  sessionId,  userId,  exerciseId);
 
         return sessionId;
     }
@@ -93,11 +93,11 @@ public class GraspableMathService {
      */
     @Transactional
     public void processEvent(final GraspableEventDto event) {
-        LOG.debug("Processing Graspable Math event: {}", event);
+        LOG.debugf("Processing Graspable Math event: %s",  event);
 
         final var session = this.studentSessionRepository.findBySessionId(event.sessionId);
         if (session == null) {
-            LOG.warn("Session not found: {}", event.sessionId);
+            LOG.warnf("Session not found: %s",  event.sessionId);
             return;
         }
 
@@ -113,8 +113,8 @@ public class GraspableMathService {
         }
 
         this.studentSessionRepository.persist(session);
-        LOG.debug("Updated session {}: {} actions, {} correct",
-                event.sessionId, session.actionsCount, session.correctActions);
+        LOG.debugf("Updated session %s: %s actions, %s correct", 
+                event.sessionId,  session.actionsCount,  session.correctActions);
     }
 
     /**
@@ -125,7 +125,7 @@ public class GraspableMathService {
     @Transactional
     public void completeSession(final String sessionId) {
         if (this.doCompleteSession(sessionId)) {
-            LOG.info("Completed session: {}", sessionId);
+            LOG.infof("Completed session: %s",  sessionId);
         }
     }
 
@@ -140,7 +140,7 @@ public class GraspableMathService {
         if (session != null) {
             session.hintsUsed++;
             this.studentSessionRepository.persist(session);
-            LOG.debug("Hint used in session: {}", sessionId);
+            LOG.debugf("Hint used in session: %s",  sessionId);
         }
     }
 
@@ -197,7 +197,7 @@ public class GraspableMathService {
         final String normalizedCurrent = this.normalizeExpression(currentExpression);
         final String normalizedTarget = this.normalizeExpression(targetExpression);
 
-        LOG.debug("Checking completion: '{}' vs '{}'", normalizedCurrent, normalizedTarget);
+        LOG.debugf("Checking completion: '%s' vs '%s'",  normalizedCurrent,  normalizedTarget);
 
         // Direct string comparison after normalization
         return normalizedCurrent.equals(normalizedTarget);
@@ -251,9 +251,9 @@ public class GraspableMathService {
     @Transactional
     public void markSessionComplete(final String sessionId) {
         if (!this.doCompleteSession(sessionId)) {
-            LOG.debug("Session not marked complete (not found or already completed): {}", sessionId);
+            LOG.debugf("Session not marked complete (not found or already completed): %s",  sessionId);
         } else {
-            LOG.debug("Session marked complete: {}", sessionId);
+            LOG.debugf("Session marked complete: %s",  sessionId);
         }
     }
 

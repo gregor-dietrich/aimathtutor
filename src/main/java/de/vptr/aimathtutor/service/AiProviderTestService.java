@@ -82,7 +82,7 @@ public class AiProviderTestService {
             LOG.warn("Gemini connection test interrupted", e);
             return AiProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
-            LOG.warn("Gemini endpoint unreachable: {}", e.getMessage());
+            LOG.warnf("Gemini endpoint unreachable: %s",  e.getMessage());
             return AiProviderTestResultDto.fail("Cannot reach Gemini endpoint: " + e.getMessage());
         }
     }
@@ -122,7 +122,7 @@ public class AiProviderTestService {
             LOG.warn("OpenAI connection test interrupted", e);
             return AiProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
-            LOG.warn("OpenAI endpoint unreachable: {}", e.getMessage());
+            LOG.warnf("OpenAI endpoint unreachable: %s",  e.getMessage());
             return AiProviderTestResultDto.fail("Cannot reach OpenAI endpoint: " + e.getMessage());
         }
     }

@@ -317,7 +317,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      */
     @ClientCallable
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
-        LOG.debug("Math action: type={}, before={}, after={}", eventType, expressionBefore, expressionAfter);
+        LOG.debugf("Math action: type=%s, before=%s, after=%s",  eventType,  expressionBefore,  expressionAfter);
 
         // Update current expression
         this.currentExpression = expressionAfter;

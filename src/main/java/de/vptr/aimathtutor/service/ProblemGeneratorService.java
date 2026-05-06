@@ -45,7 +45,7 @@ public class ProblemGeneratorService {
      */
     public GraspableProblemDto generateProblem(final DifficultyLevel difficulty,
             final GraspableProblemDto.ProblemCategory category) {
-        LOG.debug("Generating problem: difficulty={}, category={}", difficulty, category);
+        LOG.debugf("Generating problem: difficulty=%s, category=%s",  difficulty,  category);
 
         final var problem = new GraspableProblemDto();
         problem.difficulty = difficulty;

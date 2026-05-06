@@ -43,7 +43,7 @@ public final class PasswordUtility {
         switch (cmd) {
             case "generate" -> handleGenerate(args);
             default -> {
-                LOG.error("Unknown command: {}", cmd);
+                LOG.errorf("Unknown command: %s",  cmd);
                 printUsage();
                 System.exit(2);
             }

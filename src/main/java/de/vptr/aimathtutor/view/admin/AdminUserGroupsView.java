@@ -307,7 +307,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.info("Starting async group search with query: {}", query);
+        LOG.infof("Starting async group search with query: %s",  query);
 
         AsyncDataLoader.load(
                 () -> this.groupService.searchGroups(query),

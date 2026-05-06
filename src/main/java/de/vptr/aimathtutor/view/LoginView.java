@@ -65,7 +65,7 @@ public class LoginView extends VerticalLayout {
 
                 final var result = this.authService.authenticate(username, password);
 
-                LOG.trace("Authentication result - Status: {}, Message: {}", result.getStatus(), result.getMessage());
+                LOG.tracef("Authentication result - Status: %s, Message: %s",  result.getStatus(),  result.getMessage());
 
                 switch (result.getStatus()) {
                     case SUCCESS -> {
@@ -87,7 +87,7 @@ public class LoginView extends VerticalLayout {
                         NotificationUtil.showWarning(result.getMessage());
                     }
                     default -> {
-                        LOG.error("Unknown authentication result status: {}", result.getStatus());
+                        LOG.errorf("Unknown authentication result status: %s",  result.getStatus());
                         NotificationUtil.showError("Unknown error occurred");
                     }
                 }

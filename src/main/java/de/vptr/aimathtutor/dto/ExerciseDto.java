@@ -181,9 +181,9 @@ public class ExerciseDto {
     public void syncNestedFields() {
         if (this.user != null && this.user.publicId != null) {
             if (this.userPublicId != null && !this.user.publicId.equals(this.userPublicId)) {
-                LOG.warn(
-                        "Conflict in syncNestedFields: user.publicId ({}) differs from userPublicId ({}). Using nested value.",
-                        this.user.publicId, this.userPublicId);
+                LOG.warnf(
+                        "Conflict in syncNestedFields: user.publicId (%s) differs from userPublicId (%s). Using nested value.", 
+                        this.user.publicId,  this.userPublicId);
             }
             this.userPublicId = this.user.publicId;
         } else if (this.userPublicId != null && this.user == null) {
@@ -192,9 +192,9 @@ public class ExerciseDto {
 
         if (this.lesson != null && this.lesson.publicId != null) {
             if (this.lessonPublicId != null && !this.lesson.publicId.equals(this.lessonPublicId)) {
-                LOG.warn(
-                        "Conflict in syncNestedFields: lesson.publicId ({}) differs from lessonPublicId ({}). Using nested value.",
-                        this.lesson.publicId, this.lessonPublicId);
+                LOG.warnf(
+                        "Conflict in syncNestedFields: lesson.publicId (%s) differs from lessonPublicId (%s). Using nested value.", 
+                        this.lesson.publicId,  this.lessonPublicId);
             }
             this.lessonPublicId = this.lesson.publicId;
         } else if (this.lessonPublicId != null && this.lesson == null) {

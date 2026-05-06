@@ -187,7 +187,7 @@ public class CommentsPanel extends VerticalLayout {
                         this.commentsContainer.add(repliesContainer);
                     }
                 } catch (final Exception e) {
-                    LOG.debug("Failed to load replies for comment {}", comment.publicId, e);
+                    LOG.debugf(e, "Failed to load replies for comment %s",  comment.publicId);
                 }
             }
         }

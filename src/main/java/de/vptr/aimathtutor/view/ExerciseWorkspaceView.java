@@ -374,7 +374,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private void initializeGraspableMath() {
         if (this.exercise.graspableInitialExpression == null
                 || this.exercise.graspableInitialExpression.isBlank()) {
-            LOG.warn("No initial expression configured for exercise {}", this.exerciseId);
+            LOG.warnf("No initial expression configured for exercise %s",  this.exerciseId);
             return;
         }
 
@@ -443,7 +443,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      */
     @ClientCallable
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
-        LOG.debug("Math action: type={}, before={}, after={}", eventType, expressionBefore, expressionAfter);
+        LOG.debugf("Math action: type=%s, before=%s, after=%s",  eventType,  expressionBefore,  expressionAfter);
 
         // Update current expression
         this.currentExpression = expressionAfter;

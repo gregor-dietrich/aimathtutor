@@ -48,7 +48,7 @@ public class ErrorMessageUtil {
                 }
             }
         } catch (final Exception e) {
-            LOG.warn("Failed to extract error message from {} response: {}", response.getStatus(), e.getMessage());
+            LOG.warnf(e.getMessage(), "Failed to extract error message from %s response: %s",  response.getStatus());
         }
 
         // Fall back to HTTP status

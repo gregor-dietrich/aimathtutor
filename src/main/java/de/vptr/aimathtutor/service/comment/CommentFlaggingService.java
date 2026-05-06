@@ -44,19 +44,19 @@ public class CommentFlaggingService {
      */
     @Transactional
     public void flagComment(final String commentPublicId, final Long flaggerId, final String reason) {
-        LOG.info("Flagging comment: commentPublicId={}, flaggerId={}, reasonProvided={}", commentPublicId, flaggerId,
+        LOG.infof("Flagging comment: commentPublicId=%s, flaggerId=%s, reasonProvided=%s",  commentPublicId,  flaggerId, 
                 reason != null && !reason.isBlank());
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warn("Flag comment failed: comment not found commentPublicId={}, flaggerId={}", commentPublicId,
+            LOG.warnf("Flag comment failed: comment not found commentPublicId=%s, flaggerId=%s",  commentPublicId, 
                     flaggerId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
         // Prevent self-flagging
         if (comment.user != null && comment.user.id.equals(flaggerId)) {
-            LOG.warn("Self-flag attempt: commentPublicId={}, flaggerId={}", commentPublicId, flaggerId);
+            LOG.warnf("Self-flag attempt: commentPublicId=%s, flaggerId=%s",  commentPublicId,  flaggerId);
             throw new WebApplicationException("Cannot flag your own comment", Response.Status.BAD_REQUEST);
         }
 
@@ -73,12 +73,12 @@ public class CommentFlaggingService {
         // If flagged enough times, auto-hide
         if (comment.flagsCount >= AppConstants.COMMENT_AUTO_HIDE_THRESHOLD) {
             comment.status = CommentStatus.HIDDEN;
-            LOG.warn("Comment auto-hidden due to flags: commentPublicId={}, flagCount={}", commentPublicId,
+            LOG.warnf("Comment auto-hidden due to flags: commentPublicId=%s, flagCount=%s",  commentPublicId, 
                     comment.flagsCount);
         }
 
         this.commentRepository.persist(comment);
-        LOG.info("Comment flagged: commentPublicId={}, flaggerId={}, newFlagCount={}", commentPublicId, flaggerId,
+        LOG.infof("Comment flagged: commentPublicId=%s, flaggerId=%s, newFlagCount=%s",  commentPublicId,  flaggerId, 
                 comment.flagsCount);
     }
 

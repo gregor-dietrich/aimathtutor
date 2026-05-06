@@ -38,7 +38,7 @@ public class AppLifecycleBean {
              > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <""";
 
     void onStart(@Observes final StartupEvent ev) {
-        LOG.info("\n\n{}\n", asciiArt);
+        LOG.infof("\n\n%s\n",  asciiArt);
     }
 
     void onStop(@Observes final ShutdownEvent ev) {

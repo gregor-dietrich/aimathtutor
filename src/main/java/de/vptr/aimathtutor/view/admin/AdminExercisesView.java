@@ -115,7 +115,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 () -> this.exerciseService.getAllExercises(),
                 this,
                 exercises -> {
-                    LOG.info("Successfully loaded {} exercises", exercises.size());
+                    LOG.infof("Successfully loaded %s exercises",  exercises.size());
                     this.grid.setItems(exercises);
                 },
                 "Failed to load exercises. Please try again.");
@@ -127,7 +127,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 () -> this.exerciseService.findPublishedExercises(),
                 this,
                 exercises -> {
-                    LOG.info("Successfully loaded {} published exercises", exercises.size());
+                    LOG.infof("Successfully loaded %s published exercises",  exercises.size());
                     this.grid.setItems(exercises);
                 },
                 "Failed to load published exercises. Please try again.");
@@ -140,7 +140,7 @@ public class AdminExercisesView extends AbstractAdminView {
                 this,
                 lessons -> {
                     this.availableLessons = lessons;
-                    LOG.info("Successfully loaded {} lessons", this.availableLessons.size());
+                    LOG.infof("Successfully loaded %s lessons",  this.availableLessons.size());
                 },
                 () -> {
                     this.availableLessons = List.of();

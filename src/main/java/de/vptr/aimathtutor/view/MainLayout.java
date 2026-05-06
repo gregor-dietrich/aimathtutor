@@ -86,7 +86,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
         final var targetView = event.getNavigationTarget();
 
-        LOG.trace("MainLayout.beforeEnter - Target: {}", targetView.getSimpleName());
+        LOG.tracef("MainLayout.beforeEnter - Target: %s",  targetView.getSimpleName());
 
         // No backend health check needed since we're using direct database access
         LOG.trace("User authenticated, building UI");
@@ -110,7 +110,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.addButtonsToTopBar();
         this.showNavigationTabs();
 
-        LOG.trace("All checks passed for {}", targetView.getSimpleName());
+        LOG.tracef("All checks passed for %s",  targetView.getSimpleName());
     }
 
     private void updateLogoutButtonVisibility() {

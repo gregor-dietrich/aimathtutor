@@ -61,7 +61,7 @@ public class ExerciseCompletionService {
         } catch (final RuntimeException e) {
             // Log the error but don't fail - this ensures we don't break the exercise
             // loading functionality
-            LOG.error("Error enriching exercise DTO with completion data for exercise ID: {}", dto.id, e);
+            LOG.errorf(e, "Error enriching exercise DTO with completion data for exercise ID: %s",  dto.id);
         }
 
         return dto;

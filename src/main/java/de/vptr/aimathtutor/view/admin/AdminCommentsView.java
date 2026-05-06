@@ -113,7 +113,7 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
             } catch (final Exception ex) {
-                LOG.warn("Invalid exerciseId parameter: {}", params.get("exerciseId"), ex);
+                LOG.warnf(ex, "Invalid exerciseId parameter: %s",  params.get("exerciseId"));
             }
         }
 
@@ -401,12 +401,12 @@ public class AdminCommentsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.info("Searching comments with query: {}", query);
+        LOG.infof("Searching comments with query: %s",  query);
         AsyncDataLoader.load(
                 () -> this.commentService.searchComments(query.trim()),
                 this,
                 comments -> {
-                    LOG.info("Successfully found {} comments", comments.size());
+                    LOG.infof("Successfully found %s comments",  comments.size());
                     this.grid.setItems(comments);
                     this.searchButton.setEnabled(true);
                 },

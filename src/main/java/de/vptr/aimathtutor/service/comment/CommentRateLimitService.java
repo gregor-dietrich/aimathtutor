@@ -38,7 +38,7 @@ public class CommentRateLimitService {
                 RATE_LIMIT_WINDOW_SECONDS + " seconds");
 
         if (recentCount > 0) {
-            LOG.debug("Rate limit exceeded (5-second window): userId={}, recentCount={}", userId, recentCount);
+            LOG.debugf("Rate limit exceeded (5-second window): userId=%s, recentCount=%s", userId, (Object) recentCount);
             throw new WebApplicationException("Please wait before posting another comment",
                     Response.Status.TOO_MANY_REQUESTS);
         }
@@ -47,7 +47,7 @@ public class CommentRateLimitService {
         final long dailyCount = this.commentRepository.countByUserSinceInterval(userId, "1 day");
 
         if (dailyCount >= RATE_LIMIT_DAILY) {
-            LOG.warn("Daily comment limit exceeded: userId={}, dailyCount={}, limit={}", userId, dailyCount,
+            LOG.warnf("Daily comment limit exceeded: userId=%s, dailyCount=%s, limit=%s",  userId,  dailyCount, 
                     RATE_LIMIT_DAILY);
             throw new WebApplicationException("Daily comment limit exceeded",
                     Response.Status.TOO_MANY_REQUESTS);

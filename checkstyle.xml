@@ -53,6 +53,19 @@
             <message key="import.illegal"
                 value="Import UlidCreator directly is not allowed — use UlidService instead." />
         </module>
+        <module name="IllegalImport">
+            <property name="illegalClasses"
+                value="org.slf4j.Logger, org.slf4j.LoggerFactory" />
+            <message key="import.illegal"
+                value="Use org.jboss.logging.Logger instead of SLF4J Logger/LoggerFactory." />
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format"
+                value="\bLOG\.(infov|debugv|warnv|errorv|tracev)\(" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="Use *f methods (infof, debugf, etc.) with printf-style %s placeholders instead of *v MessageFormat-style methods." />
+        </module>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL" />
             <property name="format"

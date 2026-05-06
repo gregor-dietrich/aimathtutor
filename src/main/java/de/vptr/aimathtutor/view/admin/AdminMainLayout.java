@@ -108,7 +108,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
         final var targetView = event.getNavigationTarget();
 
-        LOG.trace("MainLayout.beforeEnter - Target: {}", targetView.getSimpleName());
+        LOG.tracef("MainLayout.beforeEnter - Target: %s",  targetView.getSimpleName());
 
         // Skip auth check for the login view
         if (targetView == LoginView.class) {

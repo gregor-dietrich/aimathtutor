@@ -45,7 +45,7 @@ public class CommentCreatedEventBridge {
             try {
                 listener.accept(event);
             } catch (final Throwable t) {
-                LOG.error("Listener {} failed handling event {}", listener.getClass().getName(), event, t);
+                LOG.errorf(t, "Listener %s failed handling event %s",  listener.getClass().getName(),  event);
             }
         }
     }

@@ -81,7 +81,7 @@ public class AiInteractionLogger {
             }
 
             this.aiInteractionRepository.persist(interaction);
-            LOG.debug("Logged AI interaction: id={}", interaction.id);
+            LOG.debugf("Logged AI interaction: id=%s",  interaction.id);
         } catch (final RuntimeException e) {
             LOG.error("Failed to log AI interaction", e);
             // Don't fail the request if logging fails
@@ -103,10 +103,10 @@ public class AiInteractionLogger {
     public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
             final String studentQuestion, final String aiAnswer) {
         try {
-            LOG.info(
-                    "Logging question interaction: sessionId={}, userId={}, exerciseId={}, questionLen={}, answerLen={}",
-                    sessionId, userId, exerciseId,
-                    studentQuestion != null ? studentQuestion.length() : 0,
+            LOG.infof(
+                    "Logging question interaction: sessionId=%s, userId=%s, exerciseId=%s, questionLen=%s, answerLen=%s", 
+                    sessionId,  userId,  exerciseId, 
+                    studentQuestion != null ? studentQuestion.length() : 0, 
                     aiAnswer != null ? aiAnswer.length() : 0);
 
             // Create TWO separate records: one for student question, one for AI answer
@@ -135,7 +135,7 @@ public class AiInteractionLogger {
             if (userId != null) {
                 user = this.userRepository.findById(userId);
                 if (user == null) {
-                    LOG.warn("User not found for logging question interaction: userId={}", userId);
+                    LOG.warnf("User not found for logging question interaction: userId=%s",  userId);
                 } else {
                     studentQuestionRecord.user = user;
                 }
@@ -145,15 +145,15 @@ public class AiInteractionLogger {
             if (exerciseId != null) {
                 exercise = this.exerciseRepository.findById(exerciseId);
                 if (exercise == null) {
-                    LOG.warn("Exercise not found for logging question interaction: exerciseId={}", exerciseId);
+                    LOG.warnf("Exercise not found for logging question interaction: exerciseId=%s",  exerciseId);
                 } else {
                     studentQuestionRecord.exercise = exercise;
                 }
             }
 
             this.aiInteractionRepository.persist(studentQuestionRecord);
-            LOG.info("Successfully logged student question: id={}, msgLen={}",
-                    studentQuestionRecord.id,
+            LOG.infof("Successfully logged student question: id=%s, msgLen=%s", 
+                    studentQuestionRecord.id, 
                     studentQuestionRecord.studentMessage != null ? studentQuestionRecord.studentMessage.length() : 0);
 
             // 2. Log the AI answer as a separate record
@@ -168,8 +168,8 @@ public class AiInteractionLogger {
             aiAnswerRecord.exercise = exercise;
 
             this.aiInteractionRepository.persist(aiAnswerRecord);
-            LOG.info("Successfully logged AI answer: id={}, msgLen={}",
-                    aiAnswerRecord.id,
+            LOG.infof("Successfully logged AI answer: id=%s, msgLen=%s", 
+                    aiAnswerRecord.id, 
                     aiAnswerRecord.feedbackMessage != null ? aiAnswerRecord.feedbackMessage.length() : 0);
         } catch (final RuntimeException e) {
             LOG.error("Failed to log question interaction", e);

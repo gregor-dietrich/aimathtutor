@@ -372,12 +372,12 @@ public class AdminConfigView extends AbstractAdminView {
                 } else {
                     NotificationUtil.showError(result.message);
                 }
-                LOG.info("{} connection test: {}", providerName, result.message);
+                LOG.infof("%s connection test: %s",  providerName,  result.message);
             });
         }).exceptionally(ex -> {
             ui.access(() -> {
                 NotificationUtil.showError("Connection test failed: " + ex.getMessage());
-                LOG.error("{} connection test failed", providerName, ex);
+                LOG.errorf(ex, "%s connection test failed",  providerName);
             });
             return null;
         });
@@ -422,13 +422,13 @@ public class AdminConfigView extends AbstractAdminView {
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess(label + " configuration updated successfully");
-            LOG.info("{} config saved", label);
+            LOG.infof("%s config saved",  label);
         } catch (final IllegalArgumentException e) {
             NotificationUtil.showError("Validation error: " + e.getMessage());
-            LOG.error("Validation error saving {} config", label, e);
+            LOG.errorf(e, "Validation error saving %s config",  label);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
-            LOG.error("Error saving {} config", label, e);
+            LOG.errorf(e, "Error saving %s config",  label);
         }
     }
 

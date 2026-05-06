@@ -60,7 +60,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<StudentSessionViewDto> getSessionsByUser(final Long userId) {
-                LOG.trace("Getting sessions for user: {}", userId);
+                LOG.tracef("Getting sessions for user: %s",  userId);
                 final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByUserId(userId);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
@@ -72,7 +72,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<StudentSessionViewDto> getSessionsByExercise(final Long exerciseId) {
-                LOG.trace("Getting sessions for exercise: {}", exerciseId);
+                LOG.tracef("Getting sessions for exercise: %s",  exerciseId);
                 final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByExerciseId(exerciseId);
                 return sessions.stream()
                                 .map(StudentSessionViewDto::new)
@@ -86,7 +86,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<StudentSessionViewDto> getSessionsByUserAndExercise(final Long userId, final Long exerciseId) {
-                LOG.trace("Getting sessions for user: {} on exercise: {}", userId, exerciseId);
+                LOG.tracef("Getting sessions for user: %s on exercise: %s",  userId,  exerciseId);
                 // Use repository single-query filter
                 final List<StudentSessionEntity> sessions = this.studentSessionRepository
                                 .findByUserIdAndExerciseId(userId, exerciseId);
@@ -103,7 +103,7 @@ public class AnalyticsService {
                         final Long userId,
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
-                LOG.trace("Getting sessions for user: {} between {} and {}", userId, startDate, endDate);
+                LOG.tracef("Getting sessions for user: %s between %s and %s",  userId,  startDate,  endDate);
                 // repository can expose a date-range finder if needed; use filter here
                 final List<StudentSessionEntity> sessions = this.studentSessionRepository
                                 .findByUserIdAndDateRange(userId, startDate, endDate);
@@ -120,7 +120,7 @@ public class AnalyticsService {
                         final Long exerciseId,
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
-                LOG.trace("Getting sessions for exercise: {} between {} and {}", exerciseId, startDate, endDate);
+                LOG.tracef("Getting sessions for exercise: %s between %s and %s",  exerciseId,  startDate,  endDate);
                 final List<StudentSessionEntity> sessions = this.studentSessionRepository
                                 .findByExerciseIdAndDateRange(exerciseId, startDate, endDate);
                 return sessions.stream()
@@ -136,7 +136,7 @@ public class AnalyticsService {
         public List<StudentSessionViewDto> getSessionsByDateRange(
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
-                LOG.trace("Getting sessions between {} and {}", startDate, endDate);
+                LOG.tracef("Getting sessions between %s and %s",  startDate,  endDate);
                 final List<StudentSessionEntity> sessions;
                 if (startDate != null && endDate != null) {
                         sessions = this.studentSessionRepository.findByStartTimeBetween(startDate, endDate);
@@ -160,8 +160,8 @@ public class AnalyticsService {
                         final Boolean completed,
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
-                LOG.trace("Getting {} sessions between {} and {}",
-                                completed ? "completed" : "incomplete", startDate, endDate);
+                LOG.tracef("Getting %s sessions between %s and %s", 
+                                completed ? "completed" : "incomplete",  startDate,  endDate);
                 final List<StudentSessionEntity> sessions = this.studentSessionRepository
                                 .findByCompletedAndDateRange(completed, startDate, endDate);
                 return sessions.stream()
@@ -174,7 +174,7 @@ public class AnalyticsService {
          */
         @Transactional
         public StudentSessionViewDto getSessionById(final Long sessionId) {
-                LOG.trace("Getting session: {}", sessionId);
+                LOG.tracef("Getting session: %s",  sessionId);
                 final StudentSessionEntity session = this.studentSessionRepository.findById(sessionId);
                 return session != null ? new StudentSessionViewDto(session) : null;
         }
@@ -184,7 +184,7 @@ public class AnalyticsService {
          */
         @Transactional
         public StudentSessionViewDto getSessionBySessionId(final String sessionId) {
-                LOG.trace("Getting session by session ID: {}", sessionId);
+                LOG.tracef("Getting session by session ID: %s",  sessionId);
                 final StudentSessionEntity session = this.studentSessionRepository
                                 .findBySessionIdWithRelations(sessionId);
                 return session != null ? new StudentSessionViewDto(session) : null;
@@ -207,7 +207,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<AiInteractionViewDto> getAiInteractionsBySession(final String sessionId) {
-                LOG.trace("Getting AI interactions for session: {}", sessionId);
+                LOG.tracef("Getting AI interactions for session: %s",  sessionId);
                 final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findBySessionId(sessionId);
                 return interactions.stream()
                                 .map(AiInteractionViewDto::new)
@@ -219,7 +219,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<AiInteractionViewDto> getAiInteractionsByUser(final Long userId) {
-                LOG.trace("Getting AI interactions for user: {}", userId);
+                LOG.tracef("Getting AI interactions for user: %s",  userId);
                 final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findByUserId(userId);
                 return interactions.stream()
                                 .map(AiInteractionViewDto::new)
@@ -231,7 +231,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<AiInteractionViewDto> getAiInteractionsByExercise(final Long exerciseId) {
-                LOG.trace("Getting AI interactions for exercise: {}", exerciseId);
+                LOG.tracef("Getting AI interactions for exercise: %s",  exerciseId);
                 final List<AiInteractionEntity> interactions = this.aiInteractionRepository
                                 .findByExerciseId(exerciseId);
                 return interactions.stream()
@@ -244,7 +244,7 @@ public class AnalyticsService {
          */
         @Transactional
         public StudentProgressSummaryDto getUserProgressSummary(final Long userId) {
-                LOG.trace("Getting progress summary for user: {}", userId);
+                LOG.tracef("Getting progress summary for user: %s",  userId);
 
                 final UserEntity user = this.userRepository.findById(userId);
                 if (user == null) {
@@ -412,7 +412,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<StudentSessionViewDto> searchSessions(final String searchTerm) {
-                LOG.trace("Searching sessions for term: {}", searchTerm);
+                LOG.tracef("Searching sessions for term: %s",  searchTerm);
                 if (searchTerm == null || searchTerm.isBlank()) {
                         return List.of();
                 }
@@ -430,7 +430,7 @@ public class AnalyticsService {
          */
         @Transactional
         public Map<String, List<StudentSessionViewDto>> getSessionsByUserGroupedByExercise(final Long userId) {
-                LOG.trace("Getting sessions grouped by exercise for user: {}", userId);
+                LOG.tracef("Getting sessions grouped by exercise for user: %s",  userId);
                 if (userId == null) {
                         return Map.of();
                 }
@@ -450,7 +450,7 @@ public class AnalyticsService {
         public List<StudentProgressSummaryDto> getUsersProgressSummaryByDateRange(
                         final LocalDateTime startDate,
                         final LocalDateTime endDate) {
-                LOG.trace("Getting progress summaries between {} and {}", startDate, endDate);
+                LOG.tracef("Getting progress summaries between %s and %s",  startDate,  endDate);
 
                 final List<StudentSessionEntity> rangeSessions = this.studentSessionRepository
                                 .findByStartTimeBetween(startDate, endDate);
@@ -491,7 +491,7 @@ public class AnalyticsService {
          */
         @Transactional
         public List<StudentProgressSummaryDto> getUsersProgressSummaryByUsernameSearch(final String searchTerm) {
-                LOG.trace("Getting progress summaries for username search: {}", searchTerm);
+                LOG.tracef("Getting progress summaries for username search: %s",  searchTerm);
                 if (searchTerm == null || searchTerm.isBlank()) {
                         return this.getAllUsersProgressSummary();
                 }

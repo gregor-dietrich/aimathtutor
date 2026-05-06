@@ -480,7 +480,7 @@ public class AdminUserRanksView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.info("Starting async rank search with query: {}", query);
+        LOG.infof("Starting async rank search with query: %s",  query);
 
         AsyncDataLoader.load(
                 () -> this.rankService.searchRanks(query),
