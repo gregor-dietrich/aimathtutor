@@ -37,7 +37,6 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.service.UserService;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;

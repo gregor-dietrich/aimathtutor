@@ -6,6 +6,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,8 +25,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
-
-import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity representing comments on exercises.
@@ -71,7 +70,7 @@ public class CommentEntity extends PanacheEntityBase {
     @Version
     public Long version;
 
-    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
     public String publicId;
 
     /**

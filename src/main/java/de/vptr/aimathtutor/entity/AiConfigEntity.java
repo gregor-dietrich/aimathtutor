@@ -80,7 +80,7 @@ public class AiConfigEntity extends PanacheEntityBase {
     @JoinColumn(name = "last_updated_by")
     public UserEntity lastUpdatedBy;
 
-    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
     public String publicId;
 
     /**

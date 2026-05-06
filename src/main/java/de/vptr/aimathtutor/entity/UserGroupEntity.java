@@ -42,7 +42,7 @@ public class UserGroupEntity extends PanacheEntityBase {
     @Version
     public Long version;
 
-    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
     public String publicId;
 
     /**

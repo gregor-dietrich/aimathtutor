@@ -8,6 +8,7 @@ import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.vptr.aimathtutor.service.UlidService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,8 +22,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
-
-import de.vptr.aimathtutor.service.UlidService;
 
 /**
  * Entity representing user ranks in the system.
@@ -44,7 +43,7 @@ public class UserRankEntity extends PanacheEntityBase {
     @Version
     public Long version;
 
-    @Column(name = "public_id", nullable = false, unique = true, length = 26)
+    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
     public String publicId;
 
     /**
