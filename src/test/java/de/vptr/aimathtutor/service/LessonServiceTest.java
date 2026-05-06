@@ -252,12 +252,21 @@ class LessonServiceTest {
     @DisplayName("findRootLessons returns only lessons without a parent")
     @TestTransaction
     void testFindRootLessons_returnsOnlyRoots() {
-        this.lessonService.createLesson(this.buildLesson("root"));
+        final LessonViewDto root = this.lessonService.createLesson(this.buildLesson("root"));
+        final LessonEntity child = this.buildLesson("child");
+        final LessonEntity parentRef = new LessonEntity();
+        parentRef.id = this.getLessonNumericId(root.publicId);
+        child.parent = parentRef;
+        final LessonViewDto childDto = this.lessonService.createLesson(child);
+
         final var roots = this.lessonService.findRootLessons();
+
         assertNotNull(roots);
         assertFalse(roots.isEmpty(), "There should be at least one root lesson");
         assertTrue(roots.stream().allMatch(l -> l.parentPublicId == null),
                 "Root lessons should have no parent");
+        assertFalse(roots.stream().anyMatch(l -> childDto.publicId.equals(l.publicId)),
+                "Child lesson should not appear in root lessons");
     }
 
     @Test

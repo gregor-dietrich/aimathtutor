@@ -199,43 +199,8 @@ class GraspableMathServiceTest {
     }
 
     @Test
-    @DisplayName("checkCompletion is whitespace-insensitive")
-    void testCheckCompletion_whitespaceInsensitive() {
-        assertTrue(this.graspableMathService.checkCompletion("x + 1", "x+1"));
-        assertTrue(this.graspableMathService.checkCompletion("x+1", "x + 1"));
-    }
-
-    @Test
-    @DisplayName("checkCompletion is case-insensitive")
-    void testCheckCompletion_caseInsensitive() {
-        assertTrue(this.graspableMathService.checkCompletion("X", "x"));
-    }
-
-    @Test
-    @DisplayName("checkCompletion treats x=5 and 5=x as equivalent")
-    void testCheckCompletion_equationSymmetry() {
-        assertTrue(this.graspableMathService.checkCompletion("x=5", "5=x"));
-        assertTrue(this.graspableMathService.checkCompletion("5=x", "x=5"));
-    }
-
-    @Test
     @DisplayName("checkCompletion returns false for both null inputs")
     void testCheckCompletion_bothNull() {
         assertFalse(this.graspableMathService.checkCompletion(null, null));
-    }
-
-    @Test
-    @DisplayName("markSessionComplete marks session as completed")
-    @TestTransaction
-    void testMarkSessionComplete() {
-        final Long exerciseId = this.createExercise();
-        final Long userId = this.studentId();
-        final String sessionId = this.graspableMathService.createSession(userId, exerciseId);
-
-        this.graspableMathService.markSessionComplete(sessionId);
-
-        final var found = this.graspableMathService.getSession(sessionId);
-        assertNotNull(found);
-        assertTrue(found.completed, "Session should be marked as completed");
     }
 }

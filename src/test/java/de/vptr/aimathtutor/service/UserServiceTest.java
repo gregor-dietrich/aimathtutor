@@ -15,6 +15,7 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.security.PasswordHashingService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -32,6 +33,9 @@ class UserServiceTest {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private PasswordHashingService passwordHashingService;
 
     @InjectMock
     private PermissionService permissionService;
@@ -277,14 +281,17 @@ class UserServiceTest {
         final UserDto dto = this.buildValidDto();
         final UserViewDto created = this.userService.createUser(dto);
         final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        final String originalHash = entity.password;
         final String newPassword = "N3wP@ssword!";
 
         this.userService.changePassword(entity.id, VALID_PASSWORD, newPassword);
 
-        // Re-fetch and verify new hash works
         final var updated = this.userRepository.findById(entity.id);
         assertNotNull(updated);
         assertTrue(updated.password.startsWith("$2"), "Password should still be a bcrypt hash");
+        assertFalse(originalHash.equals(updated.password), "Password hash should have changed");
+        assertTrue(this.passwordHashingService.verifyPassword(newPassword, updated.password),
+                "New password should verify against stored hash");
     }
 
     @Test

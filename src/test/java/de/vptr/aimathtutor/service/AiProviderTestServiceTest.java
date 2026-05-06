@@ -36,14 +36,13 @@ class AiProviderTestServiceTest {
     }
 
     @Test
-    @DisplayName("testGemini returns failure when API key is not configured")
-    void testTestGemini_notConfigured() {
-        // In the test environment GEMINI_API_KEY is not set — expect a failure result
+    @DisplayName("testGemini returns a non-null result with a non-blank message")
+    void testTestGemini_returnsResult() {
+        // GEMINI_API_KEY may or may not be set — either success or failure is valid.
         final AiProviderTestResultDto result = this.aiProviderTestService.testGemini();
         assertNotNull(result);
         assertNotNull(result.message);
         assertFalse(result.message.isBlank());
-        // Either not configured (false) or endpoint reachable (true) — both valid, just not null
     }
 
     @Test

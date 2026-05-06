@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -140,9 +141,7 @@ class AbstractAiProviderServiceTest {
     @Test
     @DisplayName("isConfigured is callable and returns a boolean")
     void testIsConfigured_returnsBoolean() {
-        // Just verify the method is callable without throwing; the actual
-        // return value depends on whether an API key is configured in the environment.
-        final boolean result = this.geminiService.isConfigured();
-        assertTrue(result || !result, "isConfigured must return a boolean");
+        assertDoesNotThrow(() -> this.geminiService.isConfigured(),
+                "isConfigured must be callable without throwing");
     }
 }

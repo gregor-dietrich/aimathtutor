@@ -271,7 +271,6 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.commentService.createComment(dto, student1.id);
 
-        // Non-author edit should trigger the permission check — configure it to deny
         doThrow(new WebApplicationException("Forbidden", Response.Status.FORBIDDEN))
                 .when(this.permissionService).requireCommentEdit();
 
@@ -281,6 +280,12 @@ class CommentServiceTest {
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.commentService.editComment(created.publicId, editDto, student2.id));
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
+
+        final var reloaded = this.commentService.findById(this.getCommentNumericId(created.publicId));
+        assertTrue(reloaded.isPresent());
+        assertEquals(created.content, reloaded.get().content,
+                "Comment content should be unchanged after failed edit");
+        verify(this.permissionService).requireCommentEdit();
     }
 
     @Test
@@ -299,8 +304,18 @@ class CommentServiceTest {
 
         final var page1 = this.commentService.listCommentsByExercise(exercise.id, 0, 2, null);
         assertNotNull(page1);
-        assertFalse(page1.isEmpty(), "First page should have comments");
-        assertTrue(page1.size() <= 2, "Page size should be respected");
+        assertEquals(2, page1.size(), "First page should have exactly 2 comments");
+
+        final var page2 = this.commentService.listCommentsByExercise(exercise.id, 1, 2, null);
+        assertNotNull(page2);
+        assertEquals(1, page2.size(), "Second page should have the remaining 1 comment");
+
+        for (final CommentViewDto c1 : page1) {
+            for (final CommentViewDto c2 : page2) {
+                assertFalse(c1.publicId.equals(c2.publicId),
+                        "Pages should contain distinct comments");
+            }
+        }
     }
 
     @Test
@@ -311,14 +326,14 @@ class CommentServiceTest {
         final var student = this.userRepository.findByUsername("student1");
         for (int i = 0; i < 5; i++) {
             final var d = new CommentDto();
-            d.content = "comment " + i;
+            d.content = "recent " + i;
             d.exercisePublicId = exercise.publicId;
             this.commentService.createComment(d, student.id);
         }
 
         final var recent = this.commentService.findRecentComments(3);
         assertNotNull(recent);
-        assertTrue(recent.size() <= 3, "findRecentComments(3) should return at most 3");
+        assertEquals(3, recent.size(), "findRecentComments(3) should return exactly 3 comments");
     }
 
     @Test
