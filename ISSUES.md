@@ -289,7 +289,7 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
-### 6 OWASP Dependency-Check & Secret Scanning
+## 6. OWASP Dependency-Check & Secret Scanning
 
 **Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
 
@@ -300,5 +300,13 @@ Clickable spans are used extensively across views, especially admin views, howev
 1. Add the `NVD_API_KEY` as a GitHub repository secret.
 2. Uncomment the OWASP dependency-check and Gitleaks steps in the `security` job.
 3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break.
+
+---
+
+## 7. Vaadin Views — End-to-End Testing (Long-term)
+
+**Package:** `de.vptr.aimathtutor.view`
+**Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.
+**Approach:** Introduce [Vaadin TestBench](https://vaadin.com/docs/latest/testing/end-to-end) or [Playwright](https://playwright.dev/) for end-to-end tests. This is a multi-day investment and should be treated as a separate project initiative, not a quick fix.
 
 ---

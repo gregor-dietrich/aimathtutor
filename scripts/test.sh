@@ -9,6 +9,7 @@ cd "$DIR/.."
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
-${MVN_CMD} test -Drevision=${REVISION}
+${MVN_CMD} -q checkstyle:check spotbugs:check -Drevision=${REVISION}
+${MVN_CMD} -q test -Drevision=${REVISION}
 
 cd - > /dev/null
