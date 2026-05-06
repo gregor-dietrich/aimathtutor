@@ -202,7 +202,7 @@ public class OllamaService extends AbstractAiProviderService {
             }
 
         } catch (final RuntimeException e) {
-            LOG.debugf(e.getMessage(), "Ollama server not available at %s: %s",  apiUrl);
+            LOG.debugf(e, "Ollama server not available at %s: %s",  apiUrl,  e.getMessage());
             return false;
         }
     }
@@ -230,7 +230,7 @@ public class OllamaService extends AbstractAiProviderService {
             }
 
         } catch (final RuntimeException e) {
-            LOG.debugf(e.getMessage(), "Error checking if model %s is installed: %s",  modelName);
+            LOG.debugf("Error checking if model %s is installed: %s",  modelName,  e.getMessage());
             return false;
         }
     }

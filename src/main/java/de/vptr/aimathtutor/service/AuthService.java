@@ -132,7 +132,7 @@ public class AuthService {
             try {
                 this.userRepository.persist(user);
             } catch (final PersistenceException e) {
-                LOG.warnf(e.getMessage(), "Failed to persist user %s during login: %s",  user.username);
+                LOG.warnf(e, "Failed to persist user %s during login: %s",  user.username,  e.getMessage());
                 // continue with login even if persist failed
             }
 

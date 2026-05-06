@@ -139,7 +139,7 @@ public class AiConfigService {
         try {
             return Integer.parseInt(value);
         } catch (final NumberFormatException e) {
-            LOG.warnf(e.getMessage(), "Failed to parse integer config '%s' with value '%s': %s",  key,  value);
+            LOG.warnf(e, "Failed to parse integer config '%s' with value '%s'",  key,  value);
             return defaultValue;
         }
     }
@@ -160,7 +160,7 @@ public class AiConfigService {
         try {
             return Double.parseDouble(value);
         } catch (final NumberFormatException e) {
-            LOG.warnf(e.getMessage(), "Failed to parse double config '%s' with value '%s': %s",  key,  value);
+            LOG.warnf(e, "Failed to parse double config '%s' with value '%s'",  key,  value);
             return defaultValue;
         }
     }
