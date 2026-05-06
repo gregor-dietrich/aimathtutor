@@ -128,7 +128,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByUserAndExercise() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
 
         final var otherStudent = this.userRepository.findByUsername("student2");
         assertNotNull(otherStudent, "Seeded student2 must exist");
@@ -136,17 +136,30 @@ class AnalyticsServiceTest {
         final Long otherExerciseId = this.createExercise();
         final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
 
+        final Long differentExerciseId = this.createExercise();
+        final String sameUserDiffExerciseSessionId = this.graspableMathService.createSession(studentId,
+                differentExerciseId);
+
+        final String diffUserSameExerciseSessionId = this.graspableMathService.createSession(otherStudentId,
+                exerciseId);
+
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByUserAndExercise(studentId,
                 exerciseId);
         assertNotNull(sessions);
         assertFalse(sessions.isEmpty());
+        assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Expected session should be present");
         for (final StudentSessionViewDto s : sessions) {
             assertEquals("student1", s.username, "All sessions should belong to student1");
             assertEquals(this.exerciseService.findById(exerciseId).orElseThrow().publicId, s.exercisePublicId,
                     "All sessions should belong to the exercise");
-            assertFalse(otherSessionId.equals(s.sessionId),
-                    "Sessions from other student/exercise should not appear");
         }
+        assertFalse(sessions.stream().anyMatch(s -> sameUserDiffExerciseSessionId.equals(s.sessionId)),
+                "Session with same user but different exercise should be excluded");
+        assertFalse(sessions.stream().anyMatch(s -> diffUserSameExerciseSessionId.equals(s.sessionId)),
+                "Session with different user but same exercise should be excluded");
+        assertFalse(sessions.stream().anyMatch(s -> otherSessionId.equals(s.sessionId)),
+                "Session from other student/exercise should not appear");
     }
 
     @Test
@@ -309,30 +322,75 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
-    @DisplayName("getTotalSessionsCount returns a non-negative value")
+    @DisplayName("getTotalSessionsCount increases by 1 when adding a session")
     void testGetTotalSessionsCount() {
-        assertTrue(this.analyticsService.getTotalSessionsCount() >= 0);
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final long before = this.analyticsService.getTotalSessionsCount();
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = this.userRepository.findById(studentId);
+        session.exercise = exercise;
+        this.studentSessionRepository.persist(session);
+        final long after = this.analyticsService.getTotalSessionsCount();
+        assertEquals(before + 1, after, "Adding one session should increase total count by 1");
     }
 
     @Test
     @TestTransaction
-    @DisplayName("getCompletedSessionsCount is at most totalSessionsCount")
+    @DisplayName("getCompletedSessionsCount increases by 1 when adding a completed session")
     void testGetCompletedSessionsCount() {
-        assertTrue(this.analyticsService.getCompletedSessionsCount() <= this.analyticsService.getTotalSessionsCount());
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final long before = this.analyticsService.getCompletedSessionsCount();
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = this.userRepository.findById(studentId);
+        session.exercise = exercise;
+        session.completed = true;
+        this.studentSessionRepository.persist(session);
+        final long after = this.analyticsService.getCompletedSessionsCount();
+        assertEquals(before + 1, after, "Adding one completed session should increase completed count by 1");
     }
 
     @Test
     @TestTransaction
-    @DisplayName("getActiveStudentsCount returns a non-negative value")
+    @DisplayName("getActiveStudentsCount increases by 1 when adding a student with an active session")
     void testGetActiveStudentsCount() {
-        assertTrue(this.analyticsService.getActiveStudentsCount() >= 0);
+        final var admin = this.userRepository.findByUsername("admin");
+        assertNotNull(admin, "Seeded admin must exist");
+        final Long adminId = admin.id;
+        final Long exerciseId = this.createExercise();
+        final long before = this.analyticsService.getActiveStudentsCount();
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = this.userRepository.findById(adminId);
+        session.exercise = exercise;
+        session.startTime = LocalDateTime.now();
+        this.studentSessionRepository.persist(session);
+        final long after = this.analyticsService.getActiveStudentsCount();
+        assertEquals(before + 1, after, "Adding one active student should increase active count by 1");
     }
 
     @Test
     @TestTransaction
-    @DisplayName("getTodaySessionsCount is at most totalSessionsCount")
+    @DisplayName("getTodaySessionsCount increases by 1 when adding a session with today's date")
     void testGetTodaySessionsCount() {
-        assertTrue(this.analyticsService.getTodaySessionsCount() <= this.analyticsService.getTotalSessionsCount());
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final long before = this.analyticsService.getTodaySessionsCount();
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = this.userRepository.findById(studentId);
+        session.exercise = exercise;
+        session.startTime = LocalDateTime.now();
+        this.studentSessionRepository.persist(session);
+        final long after = this.analyticsService.getTodaySessionsCount();
+        assertEquals(before + 1, after, "Adding one session with today's date should increase today count by 1");
     }
 
     @Test
