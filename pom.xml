@@ -29,7 +29,7 @@
         <!-- Other Dependencies & Plugins -->
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
-        <dependency-check-plugin.version>12.2.1</dependency-check-plugin.version>
+        <dependency-check-plugin.version>12.2.2</dependency-check-plugin.version>
         <html-sanitizer.version>20260313.1</html-sanitizer.version>
         <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
         <license-plugin.version>2.7.1</license-plugin.version>
@@ -42,7 +42,7 @@
         <vaadin.version>25.1.5</vaadin.version>
 
         <!-- Pin transitive dependencies to fix CVEs -->
-        <netty.version>4.1.133.Final</netty.version>
+        <netty.version>4.2.13.Final</netty.version>
         <postgresql.version>42.7.11</postgresql.version>
     </properties>
 
