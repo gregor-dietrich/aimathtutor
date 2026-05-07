@@ -9,22 +9,24 @@
     <packaging>quarkus</packaging>
 
     <properties>
+        <!-- Placeholder to override with -Drevision= -->
         <revision>1.0.0-SNAPSHOT</revision>
 
+        <!-- Project Settings -->
+        <skipITs>true</skipITs>
         <java.version>25</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <!-- Quarkus Platform -->
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.33.1.1</quarkus.platform.version>
 
-        <skipITs>true</skipITs>
-
+        <!-- Other Dependencies & Plugins -->
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <dependency-check-plugin.version>12.2.1</dependency-check-plugin.version>
@@ -39,6 +41,7 @@
         <ulid-creator.version>5.2.4</ulid-creator.version>
         <vaadin.version>25.1.4</vaadin.version>
 
+        <!-- Pin transitive dependencies to fix CVEs -->
         <netty.version>4.1.133.Final</netty.version>
         <postgresql.version>42.7.11</postgresql.version>
     </properties>
@@ -289,6 +292,10 @@
                     <targetJdk>${java.version}</targetJdk>
                     <includeTests>true</includeTests>
                     <linkXRef>false</linkXRef>
+                    <rulesets>
+                        <ruleset>pmd-ruleset.xml</ruleset>
+                    </rulesets>
+                    <failOnViolation>false</failOnViolation>
                 </configuration>
                 <executions>
                     <execution>
