@@ -55,7 +55,7 @@ public class TopBar extends HorizontalLayout {
      */
     public void setLeftContent(final Component leftContent) {
         this.getChildren()
-                .filter(c -> !c.equals(this.rightSide))
+                .filter(c -> c != this.rightSide)
                 .toList()
                 .forEach(this::remove);
 

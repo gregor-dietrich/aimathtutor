@@ -447,9 +447,16 @@ public class ExerciseService {
     /**
      * Applies a lesson reference to an exercise.
      *
-     * @param exercise      the exercise to update
-     * @param lessonPublicId the lesson public ID (must not be null)
-     * @param clearIfMissing if true, sets lesson to null when not found; if false, throws
+     * <p>When {@code lessonPublicId} is null or blank, the lesson is cleared
+     * (set to null) only if {@code clearIfMissing} is true; otherwise the
+     * existing lesson is preserved. When {@code lessonPublicId} is non-blank
+     * and cannot be resolved, a {@link ValidationException} is thrown if
+     * {@code clearIfMissing} is false.
+     *
+     * @param exercise       the exercise to update
+     * @param lessonPublicId the lesson public ID (null/blank clears the lesson when clearIfMissing is true)
+     * @param clearIfMissing if true, clears the lesson when lessonPublicId is null/blank;
+     *                       if false, throws for unresolvable non-blank IDs and preserves existing for null/blank
      */
     private void applyLessonToExercise(final ExerciseEntity exercise, final String lessonPublicId,
             final boolean clearIfMissing) {

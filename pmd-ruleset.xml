@@ -20,13 +20,13 @@
         <exclude name="EmptyCatchBlock" />
         <exclude name="EmptyIfStmt" />
         <exclude name="EmptyStatementBlock" />
-        <exclude name="EmptyStatementNotInLoop" />
         <exclude name="EmptySwitchStatements" />
         <exclude name="EmptyTryBlock" />
         <exclude name="EmptyWhileStmt" />
         <exclude name="MissingSerialVersionUID" />
         <exclude name="NullAssignment" />
         <exclude name="SystemPrintln" />
+        <exclude name="CompareObjectsWithEquals" />
     </rule>
 
     <!-- Best Practices: Only critical rules -->

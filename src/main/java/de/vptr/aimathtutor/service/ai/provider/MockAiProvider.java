@@ -93,6 +93,9 @@ public class MockAiProvider implements AiProvider {
     public String answerQuestion(final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
+        if (question == null || question.isBlank()) {
+            return "I'm here to help! Can you be more specific about what you're stuck on?";
+        }
         final var lowerQuestion = question.toLowerCase(Locale.ROOT);
 
         // Provide context-aware answers based on keywords
