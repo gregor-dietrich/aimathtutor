@@ -1,5 +1,5 @@
 # Generated
-.coverage
+.coverage*
 src/main/bundles/*.bundle
 
 # gm-api

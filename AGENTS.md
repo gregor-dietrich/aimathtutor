@@ -4,6 +4,10 @@ applyTo: "**"
 
 # AIMathTutor — Agent Guide
 
+## Important Note
+
+You should challenge the user's request if it would result in implementing anti-patterns, security or performance issues, potential bugs, or if there are better alternatives, best practices, design choices, etc., that you recommend instead. You must follow the user's instructions if they disagree with you, however.
+
 ## Build & Development
 
 - **Primary interface:** `make` commands. Run `make help` for all targets.

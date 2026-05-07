@@ -63,14 +63,16 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Pin to fix CVE-2026-41417 (HTTP request smuggling via DefaultHttpRequest.setUri()); transitive via com.vaadin:vaadin-quarkus-extension -->
+            <!-- Pin to fix CVE-2026-41417 (HTTP request smuggling via DefaultHttpRequest.setUri());
+            transitive via com.vaadin:vaadin-quarkus-extension -->
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http</artifactId>
                 <version>${netty-codec-http.version}</version>
             </dependency>
 
-            <!-- Pin to fix CVE-2026-42198 (CPU exhaustion DoS via unbounded PBKDF2 iterations in SCRAM auth); transitive via io.quarkus:quarkus-jdbc-postgresql -->
+            <!-- Pin to fix CVE-2026-42198 (CPU exhaustion DoS via unbounded PBKDF2 iterations in
+            SCRAM auth); transitive via io.quarkus:quarkus-jdbc-postgresql -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
@@ -117,6 +119,12 @@
             <artifactId>quarkus-rest-jackson</artifactId>
         </dependency>
 
+        <!-- JSON-B API (for SpotBugs analysis of transitive dependencies) -->
+        <dependency>
+            <groupId>jakarta.json.bind</groupId>
+            <artifactId>jakarta.json.bind-api</artifactId>
+        </dependency>
+
         <!-- REST Client for AI API calls -->
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -127,6 +135,18 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+
+        <!-- MicroProfile Fault Tolerance for retry, timeout, fallback patterns -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+        </dependency>
+
+        <!-- Quarkus Elytron Security Common for bcrypt hashing utilities -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-elytron-security-common</artifactId>
         </dependency>
 
         <!-- JSON formatter for logging -->
@@ -163,23 +183,18 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Add JaCoCo coverage for Quarkus -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jacoco</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- SpotBugs annotations for suppressing specific warnings -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
             <version>${spotbugs-annotations.version}</version>
-        </dependency>
-
-        <!-- MicroProfile Fault Tolerance for retry, timeout, fallback patterns -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
-        </dependency>
-
-        <!-- Quarkus Elytron Security Common for bcrypt hashing utilities -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-elytron-security-common</artifactId>
         </dependency>
 
         <!-- OWASP Java HTML Sanitizer for safe stripping of HTML in user content -->
@@ -302,7 +317,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
                 <configuration>
-                    <argLine>@{argLine}</argLine>
+                    <argLine>-Xshare:off -XX:+EnableDynamicAgentLoading @{argLine}</argLine>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
