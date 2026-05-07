@@ -25,7 +25,6 @@
         <exclude name="EmptyWhileStmt" />
         <exclude name="MissingSerialVersionUID" />
         <exclude name="NullAssignment" />
-        <exclude name="SystemPrintln" />
         <exclude name="CompareObjectsWithEquals" />
     </rule>
 
@@ -97,7 +96,6 @@
     <!-- Code Style: Only critical rules -->
     <rule ref="category/java/codestyle.xml">
         <exclude name="AtLeastOneConstructor" />
-        <exclude name="AvoidDuplicateLiterals" />
         <exclude name="CallSuperInConstructor" />
         <exclude name="ClassNamingConventions" />
         <exclude name="CommentDefaultAccessModifier" />
@@ -112,7 +110,6 @@
         <exclude name="MethodNamingConventions" />
         <exclude name="OnlyOneReturn" />
         <exclude name="PrematureDeclaration" />
-        <exclude name="RedundantFieldInitializer" />
         <exclude name="ShortClassName" />
         <exclude name="ShortMethodName" />
         <exclude name="ShortVariable" />
@@ -128,7 +125,6 @@
         <exclude name="UseExplicitTypes" />
         <exclude name="UselessParentheses" />
         <exclude name="UselessQualifiedThis" />
-        <exclude name="UselessStringValueOf" />
     </rule>
 
     <!-- Performance: Only critical rules -->

@@ -487,19 +487,19 @@ public class AiConfigService {
      * and rejects localhost/loopback addresses.
      *
      * <p><b>TOCTOU DNS-rebinding gap:</b> When {@link UnknownHostException} is
-     * caught during hostname resolution (line ~537), the method allows the URL
-     * through rather than rejecting it. This permits unresolved hostnames such as
-     * Docker service names (e.g. {@code ollama}) but creates a time-of-check vs.
-     * time-of-use window: the hostname may later resolve to an RFC1918/private
-     * address at dispatch time. Residual risk: an attacker who controls DNS could
-     * cause a later request to reach an internal service.
+     * caught in the hostname resolution block of {@code validateUrlSafe}, the method
+     * allows the URL through rather than rejecting it. This permits unresolved
+     * hostnames such as Docker service names (e.g. {@code ollama}) but creates a
+     * time-of-check vs. time-of-use window: the hostname may later resolve to an
+     * RFC1918/private address at dispatch time. Residual risk: an attacker who
+     * controls DNS could cause a later request to reach an internal service.
      *
      * <p><b>Mitigation guidance:</b> For non-Ollama providers (Gemini, OpenAI),
      * require an application-level allow-list of permitted schemes/hosts, or
      * re-resolve the hostname at dispatch time before making the outbound call.
      * Ollama URLs are exempted since they commonly use Docker-internal hostnames.
-     * See the {@code UnknownHostException} catch block below and the private-range
-     * IP pattern checks (lines ~543-562) for where additional mitigation would go.
+     * See the {@code UnknownHostException} catch block and the plain-string
+     * private-range IPv4 prefix checks below for where additional mitigation would go.
      */
     private void validateUrlSafe(final String configKey, final String configValue) {
         final URI uri;
