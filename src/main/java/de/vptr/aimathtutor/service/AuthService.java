@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.service;
 
+import java.util.Locale;
+
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.server.VaadinRequest;
@@ -67,7 +69,7 @@ public class AuthService {
             return AuthResultDto.invalidInput();
         }
 
-        final String usernameKey = username.toLowerCase().trim();
+        final String usernameKey = username.toLowerCase(Locale.ROOT).trim();
         final String clientIp = this.extractClientIp();
 
         // Check login attempt throttling by username

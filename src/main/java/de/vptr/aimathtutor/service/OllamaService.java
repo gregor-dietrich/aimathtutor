@@ -222,11 +222,8 @@ public class OllamaService extends AbstractAiProviderService {
                 }
 
                 final var tagsResponse = response.readEntity(OllamaTagsResponseDto.class);
-                if (tagsResponse.models != null) {
-                    return tagsResponse.models.stream()
-                            .anyMatch(m -> modelName.equals(m.name) || modelName.equals(m.model));
-                }
-                return false;
+                return tagsResponse.models != null && tagsResponse.models.stream()
+                        .anyMatch(m -> modelName.equals(m.name) || modelName.equals(m.model));
             }
 
         } catch (final RuntimeException e) {

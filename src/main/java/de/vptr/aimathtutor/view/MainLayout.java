@@ -165,7 +165,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     private void addButtonsToTopBar() {
         // Avoid adding twice
         if (this.logoutButton != null
-                && this.topBar.getRightSide().getChildren().anyMatch(c -> c == this.logoutButton)) {
+                && this.topBar.getRightSide().getChildren().anyMatch(c -> c.equals(this.logoutButton))) {
             return;
         }
 

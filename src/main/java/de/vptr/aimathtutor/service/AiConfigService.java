@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -181,7 +182,7 @@ public class AiConfigService {
         if (value == null) {
             return defaultValue;
         }
-        final String lower = value.toLowerCase().trim();
+        final String lower = value.toLowerCase(Locale.ROOT).trim();
         if ("true".equals(lower) || "1".equals(lower)) {
             return true;
         }
@@ -466,7 +467,7 @@ public class AiConfigService {
             }
             case BOOLEAN -> {
                 @SuppressWarnings("null") // false positive
-                final var lower = configValue.toLowerCase().trim();
+                final var lower = configValue.toLowerCase(Locale.ROOT).trim();
                 if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
                     throw new IllegalArgumentException(
                             "Value must be boolean (true/false/1/0) for key '" + configKey + "', got: " + configValue);
@@ -490,14 +491,14 @@ public class AiConfigService {
         try {
             uri = URI.create(configValue);
         } catch (final IllegalArgumentException e) {
-            throw new IllegalArgumentException("Value must be a valid URL for key '" + configKey + "'");
+            throw new IllegalArgumentException("Value must be a valid URL for key '" + configKey + "'", e);
         }
 
         if (uri.getHost() == null || uri.getHost().isBlank()) {
             throw new IllegalArgumentException("URL must have a valid host for key '" + configKey + "'");
         }
 
-        final String host = uri.getHost().toLowerCase();
+        final String host = uri.getHost().toLowerCase(Locale.ROOT);
 
         // Enforce HTTPS for external providers (Gemini, OpenAI)
         if ((configKey.contains("gemini") || configKey.contains("openai"))

@@ -344,11 +344,7 @@ public class AdminLessonsView extends AbstractAdminView {
                 .findFirst()
                 .orElse(null);
 
-        if (parent != null) {
-            return this.isDescendantOf(parent, ancestor);
-        }
-
-        return false;
+        return parent != null && this.isDescendantOf(parent, ancestor);
     }
 
     private void saveLesson() {

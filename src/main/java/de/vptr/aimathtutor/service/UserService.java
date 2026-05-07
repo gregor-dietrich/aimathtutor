@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -360,7 +361,7 @@ public class UserService {
         if (query == null || query.isBlank()) {
             return this.getAllUsers();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
+        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final List<UserEntity> users = this.userRepository.search(searchTerm);
         return users.stream().map(UserViewDto::new).toList();
     }

@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.service.ai.provider;
 
+import java.util.Locale;
+
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
@@ -26,7 +28,7 @@ public class MockAiProvider implements AiProvider {
         final AiFeedbackDto feedback;
 
         // Analyze based on event type
-        switch (event.eventType != null ? event.eventType.toLowerCase() : "") {
+        switch (event.eventType != null ? event.eventType.toLowerCase(Locale.ROOT) : "") {
             case "simplify":
                 if (event.correct != null && event.correct) {
                     feedback = AiFeedbackDto.positive("Great job! You simplified correctly.");
@@ -91,7 +93,7 @@ public class MockAiProvider implements AiProvider {
     public String answerQuestion(final String question, final String currentExpression,
             final String initialExpression, final String targetExpression,
             final ConversationContextDto context) {
-        final var lowerQuestion = question.toLowerCase();
+        final var lowerQuestion = question.toLowerCase(Locale.ROOT);
 
         // Provide context-aware answers based on keywords
         if (lowerQuestion.contains("how") && lowerQuestion.contains("solve")) {

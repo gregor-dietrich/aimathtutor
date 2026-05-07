@@ -135,15 +135,15 @@ public class AdminConfigView extends AbstractAdminView {
         tabs.addSelectedChangeListener(event -> {
             contentContainer.removeAll();
             final Tab selected = event.getSelectedTab();
-            if (selected == generalTab) {
+            if (selected.equals(generalTab)) {
                 contentContainer.add(generalPanel);
-            } else if (selected == geminiTab) {
+            } else if (selected.equals(geminiTab)) {
                 contentContainer.add(geminiPanel);
-            } else if (selected == openaiTab) {
+            } else if (selected.equals(openaiTab)) {
                 contentContainer.add(openaiPanel);
-            } else if (selected == ollamaTab) {
+            } else if (selected.equals(ollamaTab)) {
                 contentContainer.add(ollamaPanel);
-            } else if (selected == promptsTab) {
+            } else if (selected.equals(promptsTab)) {
                 contentContainer.add(promptsPanel);
             }
         });
@@ -442,7 +442,7 @@ public class AdminConfigView extends AbstractAdminView {
         if (value == null) {
             return defaultValue;
         }
-        if (value.doubleValue() != value.intValue()) {
+        if (value % 1 != 0) {
             throw new IllegalArgumentException(
                     field.getLabel() + " must be a whole number, but got: " + value);
         }

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -290,7 +291,7 @@ public class UserGroupService {
         if (query == null || query.isBlank()) {
             return this.getAllGroups();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
+        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         return this.userGroupRepository.search(searchTerm).stream()
                 .map(UserGroupViewDto::new)
                 .toList();

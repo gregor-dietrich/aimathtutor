@@ -76,10 +76,6 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private transient CompletableFuture<?> pendingProblemFuture;
     private transient long problemRequestId = 0;
 
-    public MathWorkspaceView() {
-        // Constructor intentionally empty - initialization happens in buildUi()
-    }
-
     /**
      * Called before navigation occurs. Checks authentication and builds the
      * Graspable Math UI

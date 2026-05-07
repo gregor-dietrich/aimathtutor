@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -26,7 +27,7 @@ class OpenAiServiceTest {
 
         assertNotNull(model);
         // Default is "gpt-5-nano"; config service may override.
-        assertEquals(false, model.isBlank());
+        assertFalse(model.isBlank());
     }
 
     @Test

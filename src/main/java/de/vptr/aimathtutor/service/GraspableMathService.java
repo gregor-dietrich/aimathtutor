@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -221,7 +222,7 @@ public class GraspableMathService {
         String normalized = WHITESPACE_PATTERN.matcher(expression).replaceAll("");
 
         // Convert to lowercase
-        normalized = normalized.toLowerCase();
+        normalized = normalized.toLowerCase(Locale.ROOT);
 
         // Handle common equivalent forms
         // e.g., "x=5" is equivalent to "5=x"

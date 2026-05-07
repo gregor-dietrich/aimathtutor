@@ -336,10 +336,9 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.userGrid.addColumn(user -> user.email != null ? user.email : "no email").setHeader("Email").setFlexGrow(1);
 
         // Add remove button column
-        this.userGrid.addComponentColumn(user -> {
-            final var removeButton = new RemoveUserButton(ignored -> this.removeUserFromGroup(user));
-            return removeButton;
-        }).setHeader("Actions").setWidth("120px").setFlexGrow(0);
+        this.userGrid.addComponentColumn(user ->
+                new RemoveUserButton(ignored -> this.removeUserFromGroup(user)))
+                .setHeader("Actions").setWidth("120px").setFlexGrow(0);
 
         // Create add user section
         final var addUserLayout = new HorizontalLayout();

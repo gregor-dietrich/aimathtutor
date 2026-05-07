@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.LessonEntity;
@@ -104,7 +105,7 @@ public class LessonRepository extends AbstractRepository {
         if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAllOrdered();
         }
-        final var pattern = "%" + searchTerm.trim().toLowerCase() + "%";
+        final var pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
         final TypedQuery<LessonEntity> q = this.em.createQuery("FROM LessonEntity WHERE LOWER(name) LIKE :s",
                 LessonEntity.class);
         q.setParameter("s", pattern);

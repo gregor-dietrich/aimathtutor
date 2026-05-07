@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -522,7 +523,7 @@ public class CommentService {
         if (query == null || query.isBlank()) {
             return List.of();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
+        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final List<CommentEntity> comments = this.commentRepository.search(searchTerm);
         return comments.stream()
                 .map(CommentViewDto::new)
