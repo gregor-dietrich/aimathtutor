@@ -54,7 +54,8 @@ class AiConfigServiceTest {
                 "test.config1", "test.config2", "test.config3", "update.test",
                 "batch.config1", "batch.config2", "batch.config3",
                 "cache.test", "cache.clear.test", "test.integer", "test.boolean", "test.string",
-                "test.temperature", "test.max-tokens", "test.config3");
+                "test.temperature", "test.max-tokens", "test.config3",
+                "ollama.base-url", "gemini.base-url");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
@@ -390,6 +391,24 @@ class AiConfigServiceTest {
         // Too low
         assertThrows(IllegalArgumentException.class,
                 () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("URL validation - unresolvable hostname allowed for Ollama")
+    @Transactional
+    void testUrlValidationUnresolvableHostAllowedForOllama() {
+        // .invalid TLD is guaranteed never to resolve (RFC 2606)
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig(
+                "ollama.base-url", "http://nonexistent-ollama-host.invalid/", this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
+    @Transactional
+    void testUrlValidationUnresolvableHostRejectedForNonOllama() {
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig(
+                        "gemini.base-url", "https://nonexistent-gemini-host.invalid/", this.adminUser.id));
     }
 
     @Test

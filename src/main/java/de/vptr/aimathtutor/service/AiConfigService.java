@@ -488,16 +488,18 @@ public class AiConfigService {
      *
      * <p><b>TOCTOU DNS-rebinding gap:</b> When {@link UnknownHostException} is
      * caught in the hostname resolution block of {@code validateUrlSafe}, the method
-     * allows the URL through rather than rejecting it. This permits unresolved
-     * hostnames such as Docker service names (e.g. {@code ollama}) but creates a
-     * time-of-check vs. time-of-use window: the hostname may later resolve to an
-     * RFC1918/private address at dispatch time. Residual risk: an attacker who
-     * controls DNS could cause a later request to reach an internal service.
+     * allows the URL through only for Ollama (whose hostname may be a Docker service
+     * name). All other providers are rejected when the hostname cannot be resolved,
+     * eliminating the permissive fallback for external providers.
      *
-     * <p><b>Mitigation guidance:</b> For non-Ollama providers (Gemini, OpenAI),
-     * require an application-level allow-list of permitted schemes/hosts, or
-     * re-resolve the hostname at dispatch time before making the outbound call.
-     * Ollama URLs are exempted since they commonly use Docker-internal hostnames.
+     * <p><b>Residual TOCTOU risk (Ollama only):</b> An unresolved Ollama hostname
+     * creates a time-of-check vs. time-of-use window: the name may later resolve to
+     * an RFC1918/private address at dispatch time. An attacker who controls DNS could
+     * exploit this to reach an internal service via the Ollama endpoint.
+     *
+     * <p><b>Mitigation guidance:</b> For Ollama, consider re-resolving the hostname
+     * at dispatch time or maintaining an explicit allow-list of permitted Docker
+     * service names.
      * See the {@code UnknownHostException} catch block and the plain-string
      * private-range IPv4 prefix checks below for where additional mitigation would go.
      */
@@ -550,9 +552,12 @@ public class AiConfigService {
                 }
             }
         } catch (final UnknownHostException e) {
-            // Allow unresolved hostnames (they may be internal Docker hosts)
-            // but block obvious private patterns without DNS
-            LOG.debugf("Hostname resolution failed for %s, allowing unresolved hostname", host);
+            // Only allow unresolved Docker-style hostnames for Ollama.
+            LOG.debugf(e, "Hostname resolution failed for %s", host);
+            if (!configKey.contains("ollama")) {
+                throw new IllegalArgumentException(
+                        "URL host must resolve to a public address for key '" + configKey + "'");
+            }
         }
 
         // Block common private IPv4 patterns without DNS resolution
