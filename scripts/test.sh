@@ -10,6 +10,6 @@ cd "$DIR/.."
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
 ${MVN_CMD} -q checkstyle:check spotbugs:check -Drevision=${REVISION}
-${MVN_CMD} -q test -Drevision=${REVISION}
+${MVN_CMD} -q test -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision=${REVISION}
 
 cd - > /dev/null
