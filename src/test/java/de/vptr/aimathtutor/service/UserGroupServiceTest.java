@@ -26,7 +26,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("PMD.TooManyStaticImports")
 class UserGroupServiceTest {
 
     @Inject

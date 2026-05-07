@@ -21,6 +21,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -139,7 +140,7 @@ public class AiConfigService {
         try {
             return Integer.parseInt(value);
         } catch (final NumberFormatException e) {
-            LOG.warnf(e, "Failed to parse integer config '%s' with value '%s'",  key,  value);
+            LOG.warnf(e, "Failed to parse integer config '%s' with value '%s'", key, value);
             return defaultValue;
         }
     }
@@ -160,7 +161,7 @@ public class AiConfigService {
         try {
             return Double.parseDouble(value);
         } catch (final NumberFormatException e) {
-            LOG.warnf(e, "Failed to parse double config '%s' with value '%s'",  key,  value);
+            LOG.warnf(e, "Failed to parse double config '%s' with value '%s'", key, value);
             return defaultValue;
         }
     }
@@ -186,7 +187,7 @@ public class AiConfigService {
         if ("false".equals(lower) || "0".equals(lower)) {
             return false;
         }
-        LOG.warnf("Failed to parse boolean config '%s' with value '%s', using default",  key,  value);
+        LOG.warnf("Failed to parse boolean config '%s' with value '%s', using default", key, value);
         return defaultValue;
     }
 
@@ -324,7 +325,7 @@ public class AiConfigService {
         // Invalidate cache
         this.configCache.remove(configKey);
 
-        LOG.infof("Configuration updated: key='%s', updatedBy='%s'",  configKey,  user.username);
+        LOG.infof("Configuration updated: key='%s', updatedBy='%s'", configKey, user.username);
     }
 
     /**
@@ -396,7 +397,7 @@ public class AiConfigService {
             this.configCache.remove(update.configKey);
         }
 
-        LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'",  updates.size(),  user.username);
+        LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'", updates.size(), user.username);
     }
 
     /**
@@ -505,8 +506,12 @@ public class AiConfigService {
         }
 
         // Block localhost and loopback
-        if ("localhost".equals(host) || "127.0.0.1".equals(host) || host.startsWith("127.")
-                || "0.0.0.0".equals(host) || "::1".equals(host) || "0:0:0:0:0:0:0:1".equals(host)) {
+        if (AppConstants.BLOCKED_HOST_LOCALHOST.equals(host)
+                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(host)
+                || host.startsWith("127.")
+                || AppConstants.BLOCKED_HOST_ANY.equals(host)
+                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6.equals(host)
+                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED.equals(host)) {
             throw new IllegalArgumentException(
                     "Loopback addresses are not allowed for key '" + configKey + "'");
         }
@@ -567,7 +572,7 @@ public class AiConfigService {
                 .map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue()))
                 .toList();
         this.updateMultipleConfigs(updates, userId);
-        LOG.infof("All AI configurations reset to defaults by userId='%s'",  userId);
+        LOG.infof("All AI configurations reset to defaults by userId='%s'", userId);
     }
 
     /**

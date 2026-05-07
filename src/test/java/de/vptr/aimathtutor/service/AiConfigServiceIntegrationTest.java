@@ -14,7 +14,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("PMD.TooManyStaticImports")
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
+import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
+import de.vptr.aimathtutor.entity.AiConfigEntity;
+import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.AiConfigRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
 class AiConfigServiceIntegrationTest {
 
     @Inject

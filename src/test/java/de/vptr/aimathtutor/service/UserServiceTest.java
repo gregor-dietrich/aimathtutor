@@ -24,7 +24,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings("PMD.TooManyStaticImports")
 class UserServiceTest {
 
     private static final String VALID_PASSWORD = "P@ssw0rd1";

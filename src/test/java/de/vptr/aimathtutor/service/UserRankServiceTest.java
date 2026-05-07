@@ -32,7 +32,6 @@ import jakarta.ws.rs.core.Response;
  */
 @QuarkusTest
 @DisplayName("UserRankService Tests")
-@SuppressWarnings("PMD.TooManyStaticImports")
 class UserRankServiceTest {
 
     @Inject

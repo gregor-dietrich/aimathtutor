@@ -27,7 +27,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings("PMD.TooManyStaticImports")
 class ExerciseServiceTest {
 
     @Inject
@@ -348,7 +347,8 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with today's range includes recently created exercise")
     @TestTransaction
     void testFindByDateRange_today() {
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created = this.exerciseService
+                .createExercise(this.buildDto(this.teacherPublicId(), true));
         // DB stores CURRENT_TIMESTAMP in UTC; use UTC date to match
         final String today = LocalDate.now(ZoneOffset.UTC).toString();
         final var results = this.exerciseService.findByDateRange(today, today);

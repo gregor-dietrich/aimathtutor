@@ -24,7 +24,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("PMD.TooManyStaticImports")
 class LessonServiceTest {
 
     @Inject
@@ -40,8 +39,7 @@ class LessonServiceTest {
         return this.em.createQuery(
                 "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
                 .setParameter("p", publicId)
-                .getSingleResult()
-                .id;
+                .getSingleResult().id;
     }
 
     private LessonEntity buildLesson(final String prefix) {

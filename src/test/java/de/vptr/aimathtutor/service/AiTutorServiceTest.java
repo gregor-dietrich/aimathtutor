@@ -10,8 +10,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
+import de.vptr.aimathtutor.dto.ChatMessageDto;
+import de.vptr.aimathtutor.dto.ConversationContextDto;
+import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
+import de.vptr.aimathtutor.dto.GraspableEventDto;
+import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
-@SuppressWarnings("PMD.TooManyStaticImports")
 class AiTutorServiceTest {
 
     @Inject

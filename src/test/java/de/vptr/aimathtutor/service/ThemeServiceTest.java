@@ -14,7 +14,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("PMD.TooManyStaticImports")
 class ThemeServiceTest {
 
     @Inject
