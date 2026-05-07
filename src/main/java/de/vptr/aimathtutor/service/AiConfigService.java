@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -520,9 +521,17 @@ public class AiConfigService {
         try {
             final InetAddress address = InetAddress.getByName(host);
             if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
-                    || address.isMulticastAddress()) {
+                    || address.isMulticastAddress() || address.isAnyLocalAddress()) {
                 throw new IllegalArgumentException(
                         "Private IP addresses are not allowed for key '" + configKey + "'");
+            }
+            if (address instanceof Inet6Address) {
+                final byte[] bytes = address.getAddress();
+                // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
+                if ((bytes[0] & 0xFE) == 0xFC) {
+                    throw new IllegalArgumentException(
+                            "Private IP addresses are not allowed for key '" + configKey + "' host '" + host + "'");
+                }
             }
         } catch (final UnknownHostException e) {
             // Allow unresolved hostnames (they may be internal Docker hosts)

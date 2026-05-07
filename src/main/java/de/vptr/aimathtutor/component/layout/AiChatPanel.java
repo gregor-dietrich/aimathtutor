@@ -2,6 +2,8 @@ package de.vptr.aimathtutor.component.layout;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jboss.logging.Logger;
+
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -27,6 +29,8 @@ import de.vptr.aimathtutor.util.AppConstants;
  * Provides a chat-style interface with proper message alignment and styling.
  */
 public class AiChatPanel extends VerticalLayout {
+
+    private static final Logger LOGGER = Logger.getLogger(AiChatPanel.class);
 
     private final VerticalLayout chatHistoryPanel;
     private final TextField chatInput;
@@ -303,7 +307,6 @@ public class AiChatPanel extends VerticalLayout {
      * This method is synchronized to prevent race conditions when called from
      * multiple async callbacks.
      */
-    @SuppressWarnings("PMD.EmptyCatchBlock")
     public synchronized void hideTypingIndicator() {
         // Decrement counter (ensure it doesn't go negative)
         final var count = this.pendingRequestsCount.updateAndGet(c -> c > 0 ? c - 1 : 0);
@@ -319,8 +322,7 @@ public class AiChatPanel extends VerticalLayout {
                     try {
                         this.chatHistoryPanel.remove(indicatorToRemove);
                     } catch (final Exception e) {
-                        // Indicator might have already been removed, ignore
-                        // Intentional: not an error, just a race condition in async removal
+                        LOGGER.tracef("Typing indicator removal race: %s", indicatorToRemove);
                     }
                 });
             }

@@ -472,10 +472,15 @@ public class UserService {
 
     /**
      * Applies a rank to a user by public ID.
+     * When {@code rankPublicId} is null or not found and {@code resetToDefault} is
+     * {@code true}, falls back to the default rank ({@code userRankRepository.findById(1L)}).
+     * When {@code rankPublicId} is null or not found and {@code resetToDefault} is
+     * {@code false}, throws a {@link ValidationException}.
      *
-     * @param user         the user to update
-     * @param rankPublicId the rank public ID (must not be null)
-     * @param resetToDefault if true and rank not found, resets to default rank
+     * @param user           the user to update
+     * @param rankPublicId   the rank public ID; may be null (triggers default/error path)
+     * @param resetToDefault if {@code true} and rank lookup fails, assign default rank;
+     *                       if {@code false} and rank lookup fails, throw {@link ValidationException}
      */
     private void applyRankToUser(final UserEntity user, final String rankPublicId, final boolean resetToDefault) {
         final var rank = this.userRankRepository.findByPublicId(rankPublicId).orElse(null);

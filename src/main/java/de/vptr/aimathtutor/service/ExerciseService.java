@@ -453,15 +453,16 @@ public class ExerciseService {
      */
     private void applyLessonToExercise(final ExerciseEntity exercise, final String lessonPublicId,
             final boolean clearIfMissing) {
-        final LessonEntity lesson = this.lessonRepository.findByPublicId(lessonPublicId).orElse(null);
-        if (lesson == null) {
+        if (lessonPublicId == null || lessonPublicId.isBlank()) {
             if (clearIfMissing) {
                 exercise.lesson = null;
-            } else {
-                throw new ValidationException("Lesson with publicId " + lessonPublicId + " not found");
             }
-        } else {
-            exercise.lesson = lesson;
+            return;
         }
+        final LessonEntity lesson = this.lessonRepository.findByPublicId(lessonPublicId).orElse(null);
+        if (lesson == null) {
+            throw new ValidationException("Lesson with publicId " + lessonPublicId + " not found");
+        }
+        exercise.lesson = lesson;
     }
 }

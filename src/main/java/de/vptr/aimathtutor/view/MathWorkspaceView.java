@@ -233,7 +233,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
         this.generateProblemAsync((problem, requestId) -> {
             // Wait for canvas to be ready, then load the problem
-            this.getUI().orElseThrow().getPage().executeJs(
+            this.getUI().ifPresent(ui -> ui.getPage().executeJs(
                     """
                             window.currentProblemRequestId = $1;
                             setTimeout(function() {
@@ -253,7 +253,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                               loadProblemWhenReady();
                             }, 500);
                             """,
-                    problem.initialExpression, requestId);
+                    problem.initialExpression, requestId));
 
             // Store initial expression and target for completion checking
             this.currentExpression = problem.initialExpression;
@@ -547,7 +547,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
         this.generateProblemAsync((problem, requestId) -> {
             // Load problem into Graspable Math using the utility function
-            this.getUI().orElseThrow().getPage().executeJs(
+            this.getUI().ifPresent(ui -> ui.getPage().executeJs(
                     """
                             window.currentProblemRequestId = $1;
                             if (window.graspableMathUtils) {
@@ -555,7 +555,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                               window.graspableMathUtils.loadProblem($0, 100, 50);
                             }
                             """,
-                    problem.initialExpression, requestId);
+                    problem.initialExpression, requestId));
 
             // Store initial expression and target
             this.currentExpression = problem.initialExpression;

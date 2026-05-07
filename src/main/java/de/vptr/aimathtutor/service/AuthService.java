@@ -60,7 +60,7 @@ public class AuthService {
      */
     @Transactional
     public AuthResultDto authenticate(final String username, final String password) {
-        LOG.tracef("Starting authentication for user: %s", username);
+        LOG.trace("Starting authentication");
 
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             LOG.trace("Username or password is empty");
@@ -73,7 +73,7 @@ public class AuthService {
         // Check login attempt throttling by username
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
-            LOG.warnf("Authentication throttled for user: %s (%ss remaining)", username, remaining);
+            LOG.warnf("Authentication throttled by username (%ss remaining)", remaining);
             return AuthResultDto
                     .backendUnavailable("Too many failed attempts. Try again later.");
         }
@@ -81,7 +81,7 @@ public class AuthService {
         // Check login attempt throttling by IP
         if (clientIp != null && this.loginAttemptService.isLockedOut(clientIp)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientIp);
-            LOG.warnf("Authentication throttled for IP: %s (%ss remaining)", clientIp, remaining);
+            LOG.warnf("Authentication throttled by IP (%ss remaining)", remaining);
             return AuthResultDto
                     .backendUnavailable("Too many failed attempts. Try again later.");
         }
@@ -91,7 +91,7 @@ public class AuthService {
             final var user = this.userRepository.findByUsername(usernameKey);
 
             if (user == null) {
-                LOG.tracef("Authentication failed - user not found: %s", usernameKey);
+                LOG.trace("Authentication failed - user not found");
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -101,7 +101,7 @@ public class AuthService {
 
             // Check if user is banned
             if (user.banned) {
-                LOG.tracef("Authentication failed - user is banned: %s", usernameKey);
+                LOG.trace("Authentication failed - user is banned");
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -111,7 +111,7 @@ public class AuthService {
 
             // Check if user is activated
             if (!user.activated) {
-                LOG.tracef("Authentication failed - user is not activated: %s", usernameKey);
+                LOG.trace("Authentication failed - user is not activated");
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -121,7 +121,7 @@ public class AuthService {
 
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
-                LOG.tracef("Authentication failed - invalid password for user: %s", usernameKey);
+                LOG.trace("Authentication failed - invalid password");
                 this.loginAttemptService.recordFailedAttempt(usernameKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -133,7 +133,7 @@ public class AuthService {
             try {
                 this.userRepository.persist(user);
             } catch (final PersistenceException e) {
-                LOG.warnf(e, "Failed to persist user %s during login: %s", user.username, e.getMessage());
+                LOG.warnf(e, "Failed to persist user during login: %s", e.getMessage());
                 // continue with login even if persist failed
             }
 
@@ -155,16 +155,16 @@ public class AuthService {
                     session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
                 }
             } catch (final RuntimeException e) {
-                LOG.errorf(e, "Failed to complete login for user %s: %s", username, e.getMessage());
+                LOG.errorf(e, "Failed to complete login: %s", e.getMessage());
                 return AuthResultDto
                         .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
             }
 
-            LOG.tracef("User authenticated successfully: %s", username);
+            LOG.trace("User authenticated successfully");
             return AuthResultDto.success();
 
         } catch (final PersistenceException e) {
-            LOG.errorf(e, "Database error during authentication for user: %s", username);
+            LOG.errorf(e, "Database error during authentication");
             return AuthResultDto
                     .backendUnavailable("Authentication service temporarily unavailable. Please try again later.");
         }
