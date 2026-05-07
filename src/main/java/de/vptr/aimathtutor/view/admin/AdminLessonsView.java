@@ -278,15 +278,13 @@ public class AdminLessonsView extends AbstractAdminView {
                 .bind(
                         cat -> {
                             // Convert from DTO parent field
-                            if (cat.parent != null && cat.parent.publicId != null) {
+                            if (cat.parent != null && cat.parent.publicId != null && this.allLessons != null) {
                                 // Find the LessonDto from available parents
-                                if (this.allLessons != null) {
-                                    return this.allLessons.stream()
-                                            .map(LessonViewDto::toLessonDto)
-                                            .filter(c -> c.publicId.equals(cat.parent.publicId))
-                                            .findFirst()
-                                            .orElse(null);
-                                }
+                                return this.allLessons.stream()
+                                        .map(LessonViewDto::toLessonDto)
+                                        .filter(c -> c.publicId.equals(cat.parent.publicId))
+                                        .findFirst()
+                                        .orElse(null);
                             }
                             return null;
                         },

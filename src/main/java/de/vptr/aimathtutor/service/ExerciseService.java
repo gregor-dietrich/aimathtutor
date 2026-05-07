@@ -200,12 +200,11 @@ public class ExerciseService {
         }
 
         // Validate Graspable Math: if enabled, target expression is required
-        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
-            if (exerciseDto.graspableTargetExpression == null
-                    || exerciseDto.graspableTargetExpression.isBlank()) {
-                throw new ValidationException(
-                        "Graspable Math target expression is required when Graspable Math is enabled");
-            }
+        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled
+                && (exerciseDto.graspableTargetExpression == null
+                        || exerciseDto.graspableTargetExpression.isBlank())) {
+            throw new ValidationException(
+                    "Graspable Math target expression is required when Graspable Math is enabled");
         }
 
         final ExerciseEntity exercise = new ExerciseEntity();
@@ -272,12 +271,11 @@ public class ExerciseService {
         }
 
         // Validate Graspable Math: if enabled, target expression is required
-        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled) {
-            if (exerciseDto.graspableTargetExpression == null
-                    || exerciseDto.graspableTargetExpression.isBlank()) {
-                throw new ValidationException(
-                        "Graspable Math target expression is required when Graspable Math is enabled");
-            }
+        if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled
+                && (exerciseDto.graspableTargetExpression == null
+                        || exerciseDto.graspableTargetExpression.isBlank())) {
+            throw new ValidationException(
+                    "Graspable Math target expression is required when Graspable Math is enabled");
         }
 
         // Complete replacement (PUT semantics)

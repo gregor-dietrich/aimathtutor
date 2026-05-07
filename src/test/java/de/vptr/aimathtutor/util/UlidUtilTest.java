@@ -13,6 +13,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.BadRequestException;
 
 @QuarkusTest
+@SuppressWarnings("PMD.TooManyStaticImports")
 class UlidUtilTest {
 
     @Test

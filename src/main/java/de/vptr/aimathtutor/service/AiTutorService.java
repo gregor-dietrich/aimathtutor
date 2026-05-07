@@ -125,7 +125,7 @@ public class AiTutorService {
 
         // Apply per-user rate limiting for non-mock providers
         final var effectiveUserId = userIdStr != null ? userIdStr
-                : (event.studentId != null ? String.valueOf(event.studentId) : null);
+                : event.studentId != null ? String.valueOf(event.studentId) : null;
         if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
             return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
         }

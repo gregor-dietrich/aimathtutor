@@ -176,7 +176,7 @@ public class GraspableMathService {
             return null;
         }
 
-        return ((double) session.correctActions / session.actionsCount) * 100.0;
+        return (double) session.correctActions / session.actionsCount * 100.0;
     }
 
     /**

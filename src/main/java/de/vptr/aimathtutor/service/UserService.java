@@ -232,19 +232,17 @@ public class UserService {
         }
 
         // Check for duplicate username (only if username is different from current)
-        if (!userDto.username.equals(existingUser.username)) {
-            if (this.findByUsername(userDto.username).isPresent()) {
-                throw new ValidationException("Username '" + userDto.username + "' is already taken");
-            }
+        if (!userDto.username.equals(existingUser.username)
+                && this.findByUsername(userDto.username).isPresent()) {
+            throw new ValidationException("Username '" + userDto.username + "' is already taken");
         }
 
         // Normalize email and check for duplicate email (only if email is different
         // from current)
         final String normalizedEmail = this.normalizeEmail(userDto.email);
-        if (!Objects.equals(normalizedEmail, existingUser.email)) {
-            if (normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
-                throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
-            }
+        if (!Objects.equals(normalizedEmail, existingUser.email)
+                && normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
+            throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
         }
 
         // Complete replacement (PUT semantics)
@@ -301,19 +299,17 @@ public class UserService {
 
         // Check for duplicate username if username is being updated
         if (userDto.username != null && !userDto.username.isBlank()
-                && !userDto.username.equals(existingUser.username)) {
-            if (this.findByUsername(userDto.username).isPresent()) {
-                throw new ValidationException("Username '" + userDto.username + "' is already taken");
-            }
+                && !userDto.username.equals(existingUser.username)
+                && this.findByUsername(userDto.username).isPresent()) {
+            throw new ValidationException("Username '" + userDto.username + "' is already taken");
         }
 
         // Check for duplicate email if email is being updated
         if (userDto.email != null) {
             final String normalizedEmail = this.normalizeEmail(userDto.email);
-            if (!Objects.equals(normalizedEmail, existingUser.email)) {
-                if (normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
-                    throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
-                }
+            if (!Objects.equals(normalizedEmail, existingUser.email)
+                    && normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
+                throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
             }
         }
 

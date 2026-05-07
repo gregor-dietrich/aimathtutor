@@ -498,11 +498,10 @@ public class AiConfigService {
         final String host = uri.getHost().toLowerCase();
 
         // Enforce HTTPS for external providers (Gemini, OpenAI)
-        if (configKey.contains("gemini") || configKey.contains("openai")) {
-            if (!"https".equalsIgnoreCase(uri.getScheme())) {
-                throw new IllegalArgumentException(
-                        "External provider URLs must use HTTPS for key '" + configKey + "'");
-            }
+        if ((configKey.contains("gemini") || configKey.contains("openai"))
+                && !"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException(
+                    "External provider URLs must use HTTPS for key '" + configKey + "'");
         }
 
         // Block localhost and loopback
@@ -523,6 +522,7 @@ public class AiConfigService {
         } catch (final UnknownHostException e) {
             // Allow unresolved hostnames (they may be internal Docker hosts)
             // but block obvious private patterns without DNS
+            LOG.debugf("Hostname resolution failed for %s, allowing unresolved hostname", host);
         }
 
         // Block common private IPv4 patterns without DNS resolution
@@ -541,6 +541,7 @@ public class AiConfigService {
                     }
                 } catch (final NumberFormatException e) {
                     // Not a numeric octet, allow
+                    LOG.debugf("Invalid octet in IP check for %s, allowing", host);
                 }
             }
         }

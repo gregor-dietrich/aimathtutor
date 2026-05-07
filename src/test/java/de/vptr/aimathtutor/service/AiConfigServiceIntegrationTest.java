@@ -14,21 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
-import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
-import de.vptr.aimathtutor.entity.AiConfigEntity;
-import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.repository.AiConfigRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-
-/**
- * Integration tests for AiConfigService using real database and seeded data.
- */
-@QuarkusTest
-@DisplayName("AiConfigService Integration Tests")
+@SuppressWarnings("PMD.TooManyStaticImports")
 class AiConfigServiceIntegrationTest {
 
     @Inject
