@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -189,7 +190,7 @@ class UserServiceTest {
         assertNotNull(entity);
         assertNotNull(entity.password);
         assertTrue(entity.password.startsWith("$2"), "Password should be a bcrypt hash, was: " + entity.password);
-        assertFalse(VALID_PASSWORD.equals(entity.password));
+        assertNotEquals(VALID_PASSWORD, entity.password);
     }
 
     @Test

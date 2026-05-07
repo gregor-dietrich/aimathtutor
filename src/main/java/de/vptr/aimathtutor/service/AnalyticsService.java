@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -416,7 +417,7 @@ public class AnalyticsService {
         if (searchTerm == null || searchTerm.isBlank()) {
             return List.of();
         }
-        final String pattern = "%" + searchTerm.trim().toLowerCase() + "%";
+        final String pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
         final List<StudentSessionEntity> sessions = this.studentSessionRepository
                 .searchByUserOrExerciseTerm(pattern);
         return sessions.stream()
@@ -496,7 +497,7 @@ public class AnalyticsService {
             return this.getAllUsersProgressSummary();
         }
 
-        final String pattern = "%" + searchTerm.trim().toLowerCase() + "%";
+        final String pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
         final List<UserEntity> users = this.userRepository.search(pattern);
         if (users.isEmpty()) {
             return List.of();

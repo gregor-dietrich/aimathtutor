@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logging.Logger;
@@ -34,6 +35,7 @@ import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -73,10 +75,6 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     // requestId checks or pendingProblemFuture.cancel() calls.
     private transient CompletableFuture<?> pendingProblemFuture;
     private transient long problemRequestId = 0;
-
-    public MathWorkspaceView() {
-        // Constructor intentionally empty - initialization happens in buildUi()
-    }
 
     /**
      * Called before navigation occurs. Checks authentication and builds the
@@ -228,87 +226,48 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      * Loads an initial problem automatically when the view is first opened.
      */
     private void loadInitialProblem() {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
+        this.generateProblemAsync((problem, requestId) -> {
+            // Wait for canvas to be ready, then load the problem
+            this.getUI().ifPresent(ui -> ui.getPage().executeJs(
+                    """
+                            window.currentProblemRequestId = $1;
+                            setTimeout(function() {
+                              var loadProblemWhenReady = function() {
+                                if (window.currentProblemRequestId !== $1) {
+                                  console.log('[GM] Stale problem request skipped');
+                                  return;
+                                }
+                                if (window.graspableCanvas && window.graspableMathUtils) {
+                                  console.log('[GM] Canvas ready, loading initial problem');
+                                  window.graspableMathUtils.loadProblem($0, 100, 50);
+                                } else {
+                                  console.log('[GM] Waiting for canvas...');
+                                  setTimeout(loadProblemWhenReady, 200);
+                                }
+                              };
+                              loadProblemWhenReady();
+                            }, 500);
+                            """,
+                    problem.initialExpression, requestId));
 
-        // Cancel any previous pending generation
-        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
-            this.pendingProblemFuture.cancel(true);
-        }
+            // Store initial expression and target for completion checking
+            this.currentExpression = problem.initialExpression;
+            this.initialExpression = problem.initialExpression;
+            this.targetExpression = problem.targetExpression;
+            this.problemSolved = false;
 
-        final long requestId = ++this.problemRequestId;
-        final var rootFuture = CompletableFuture.supplyAsync(
-                () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
-                this.managedExecutor);
-        this.pendingProblemFuture = rootFuture;
-        rootFuture.thenAccept(problem -> {
-            ui.access(() -> {
-                if (requestId != this.problemRequestId) {
-                    return;
-                }
-                // Wait for canvas to be ready, then load the problem
-                ui.getPage().executeJs(
-                        """
-                                window.currentProblemRequestId = $1;
-                                setTimeout(function() {
-                                  var loadProblemWhenReady = function() {
-                                    if (window.currentProblemRequestId !== $1) {
-                                      console.log('[GM] Stale problem request skipped');
-                                      return;
-                                    }
-                                    if (window.graspableCanvas && window.graspableMathUtils) {
-                                      console.log('[GM] Canvas ready, loading initial problem');
-                                      window.graspableMathUtils.loadProblem($0, 100, 50);
-                                    } else {
-                                      console.log('[GM] Waiting for canvas...');
-                                      setTimeout(loadProblemWhenReady, 200);
-                                    }
-                                  };
-                                  loadProblemWhenReady();
-                                }, 500);
-                                """,
-                        problem.initialExpression, requestId);
-
-                // Store initial expression and target for completion checking
-                this.currentExpression = problem.initialExpression;
-                this.initialExpression = problem.initialExpression;
-                this.targetExpression = problem.targetExpression;
-                this.problemSolved = false;
-
-                // Add message about the loaded problem
-                this.chatPanel.addMessage(ChatMessageDto.system("Problem loaded: " + problem.title));
-            });
-        })
-                .exceptionally(ex -> {
-                    ui.access(() -> {
-                        if (requestId != this.problemRequestId) {
-                            return;
-                        }
-                        LOG.error("Error generating initial problem", ex);
-                        this.chatPanel
-                                .addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
-                    });
-                    return null;
-                });
+            // Add message about the loaded problem
+            this.chatPanel.addMessage(ChatMessageDto.system("Problem loaded: " + problem.title));
+        });
     }
 
     /**
      * Registers a server-side connector that JavaScript can call.
+     * Shared pattern for views embedding Graspable Math.
      */
     private void registerServerConnector() {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-        ui.getPage().executeJs(
-                "window.graspableViewConnector = { onMathAction: function(type, before, after) { "
-                        + "   $0.$server.onMathAction(type, before, after); "
-                        + "}}",
-                this.getElement());
+        GraspableMathConnector.register(this);
     }
 
     /**
@@ -581,12 +540,43 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     private void generateNewProblem() {
+        this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
+        this.generateProblemAsync((problem, requestId) -> {
+            // Load problem into Graspable Math using the utility function
+            this.getUI().ifPresent(ui -> ui.getPage().executeJs(
+                    """
+                            window.currentProblemRequestId = $1;
+                            if (window.graspableMathUtils) {
+                              window.graspableMathUtils.clearCanvas();
+                              window.graspableMathUtils.loadProblem($0, 100, 50);
+                            }
+                            """,
+                    problem.initialExpression, requestId));
+
+            // Store initial expression and target
+            this.currentExpression = problem.initialExpression;
+            this.initialExpression = problem.initialExpression;
+            this.targetExpression = problem.targetExpression;
+            this.problemSolved = false;
+
+            this.chatPanel.addMessage(ChatMessageDto.system("New problem loaded: " + problem.title));
+        });
+    }
+
+    /**
+     * Common async problem generation pattern: cancels pending requests,
+     * increments the request ID counter, calls the AI service, and handles
+     * staleness checks on success and error.
+     *
+     * @param onLoadProblem callback invoked on the UI thread with the generated
+     *                      problem and request ID
+     */
+    private void generateProblemAsync(
+            final BiConsumer<GraspableProblemDto, Long> onLoadProblem) {
         final var ui = this.getUI().orElse(null);
         if (ui == null) {
             return;
         }
-
-        this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
 
         // Cancel any previous pending generation
         if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
@@ -603,24 +593,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 if (requestId != this.problemRequestId) {
                     return;
                 }
-                // Load problem into Graspable Math using the utility function
-                ui.getPage().executeJs(
-                        """
-                                window.currentProblemRequestId = $1;
-                                if (window.graspableMathUtils) {
-                                  window.graspableMathUtils.clearCanvas();
-                                  window.graspableMathUtils.loadProblem($0, 100, 50);
-                                }
-                                """,
-                        problem.initialExpression, requestId);
-
-                // Store initial expression and target
-                this.currentExpression = problem.initialExpression;
-                this.initialExpression = problem.initialExpression;
-                this.targetExpression = problem.targetExpression;
-                this.problemSolved = false;
-
-                this.chatPanel.addMessage(ChatMessageDto.system("New problem loaded: " + problem.title));
+                onLoadProblem.accept(problem, requestId);
             });
         })
                 .exceptionally(ex -> {
@@ -628,7 +601,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                         if (requestId != this.problemRequestId) {
                             return;
                         }
-                        LOG.error("Error generating new problem", ex);
+                        LOG.error("Error generating problem", ex);
                         this.chatPanel
                                 .addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
                     });

@@ -34,4 +34,14 @@
     <Class name="~de\.vptr\.aimathtutor\.entity\..*Entity" />
     <Field name="publicId" />
   </Match>
+
+  <!--
+    EI_EXPOSE_REP:
+    SearchFilterBar intentionally exposes its UI components (DatePicker, Button) for parent
+    views to configure listeners and styling. This is the standard Vaadin component pattern.
+  -->
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP" />
+    <Class name="de.vptr.aimathtutor.component.layout.SearchFilterBar" />
+  </Match>
 </FindBugsFilter>

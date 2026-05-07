@@ -94,7 +94,7 @@ public final class AppConstants {
     public static final int EXERCISE_CONTENT_MIN_LENGTH = 1;
 
     /** Maximum exercise content length. */
-    public static final int EXERCISE_CONTENT_MAX_LENGTH = 50000;
+    public static final int EXERCISE_CONTENT_MAX_LENGTH = 50_000;
 
     /** Maximum exercise expression length. */
     public static final int EXERCISE_EXPRESSION_MAX_LENGTH = 1000;
@@ -107,4 +107,19 @@ public final class AppConstants {
 
     /** Maximum lesson name length. */
     public static final int LESSON_NAME_MAX_LENGTH = 255;
+
+    // IP addresses blocked from external AI provider URL configuration
+    public static final String BLOCKED_HOST_LOCALHOST = "localhost";
+
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+    public static final String BLOCKED_HOST_LOOPBACK_IPV4 = "127.0.0.1";
+
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+    public static final String BLOCKED_HOST_LOOPBACK_IPV6 = "::1";
+
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+    public static final String BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED = "0:0:0:0:0:0:0:1";
+
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+    public static final String BLOCKED_HOST_ANY = "0.0.0.0";
 }

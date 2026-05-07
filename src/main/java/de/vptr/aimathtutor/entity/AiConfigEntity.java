@@ -7,23 +7,16 @@ import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
-import de.vptr.aimathtutor.util.UlidUtil;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -39,14 +32,7 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "AiConfig.findByCategory", query = "FROM AiConfigEntity WHERE category = :category ORDER BY configKey"),
         @NamedQuery(name = "AiConfig.findAll", query = "FROM AiConfigEntity ORDER BY category, configKey"),
 })
-public class AiConfigEntity extends PanacheEntityBase {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-
-    @Version
-    public Long version;
+public class AiConfigEntity extends BaseEntity {
 
     @NotBlank
     @Column(name = "config_key", unique = true, nullable = false)
@@ -79,21 +65,6 @@ public class AiConfigEntity extends PanacheEntityBase {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_updated_by")
     public UserEntity lastUpdatedBy;
-
-    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
-    public String publicId;
-
-    /**
-     * Generates a ULID-based public identifier for this entity if not already set.
-     */
-    @PrePersist
-    public void generatePublicId() {
-        if (this.publicId == null || this.publicId.isBlank()) {
-            this.publicId = UlidUtil.generate();
-            return;
-        }
-        UlidUtil.requireValid(this.publicId);
-    }
 
     /**
      * Default constructor for Hibernate.

@@ -10,7 +10,10 @@ import jakarta.ws.rs.core.Response;
 /**
  * Utility class for extracting error messages from HTTP responses.
  */
-public class ErrorMessageUtil {
+public final class ErrorMessageUtil {
+
+    private ErrorMessageUtil() {
+    }
 
     private static final Logger LOG = Logger.getLogger(ErrorMessageUtil.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -36,6 +39,7 @@ public class ErrorMessageUtil {
                             }
                         } catch (final Exception e) {
                             // JSON parsing failed — fall through to regex/plain-text fallback
+                            LOG.debugf(e, "JSON parse failed for error response, trying regex fallback");
                         }
                         // Fallback for malformed JSON: try regex extraction
                         final String regexMsg = extractMessageWithRegex(trimmed);

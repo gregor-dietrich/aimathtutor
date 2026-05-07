@@ -37,6 +37,7 @@ import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
@@ -424,17 +425,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
     /**
      * Registers a server-side connector that JavaScript can call.
+     * Shared pattern for views embedding Graspable Math.
      */
     private void registerServerConnector() {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-        ui.getPage().executeJs(
-                "window.graspableViewConnector = { onMathAction: function(type, before, after) { "
-                        + "   $0.$server.onMathAction(type, before, after); "
-                        + "}}",
-                this.getElement());
+        GraspableMathConnector.register(this);
     }
 
     /**

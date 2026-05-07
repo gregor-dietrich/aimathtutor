@@ -48,4 +48,4 @@ You are a Backend Developer for AIMathTutor — a monolithic Quarkus 3.33 + Vaad
 3. Use existing patterns — check similar services/entities for consistency
 4. For AI features: extend `AbstractAiProviderService`, implement provider-specific DTOs
 5. Write or update tests following `@instructions/test-conventions.md`
-6. Run `./mvnw checkstyle:check spotbugs:check` to lint, and `./mvnw test` to validate
+6. Run `./mvnw checkstyle:check spotbugs:check pmd:check pmd:cpd-check` to lint, and `./mvnw test` to validate

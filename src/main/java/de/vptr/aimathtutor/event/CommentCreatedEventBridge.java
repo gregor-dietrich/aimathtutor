@@ -44,7 +44,7 @@ public class CommentCreatedEventBridge {
         for (final Consumer<CommentCreatedEvent> listener : this.listeners) {
             try {
                 listener.accept(event);
-            } catch (final Throwable t) {
+            } catch (final Exception t) {
                 LOG.errorf(t, "Listener %s failed handling event %s",  listener.getClass().getName(),  event);
             }
         }

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -25,7 +26,7 @@ class GeminiServiceTest {
         final String model = this.geminiService.getModel();
 
         assertNotNull(model);
-        assertEquals(false, model.isBlank());
+        assertFalse(model.isBlank());
     }
 
     @Test

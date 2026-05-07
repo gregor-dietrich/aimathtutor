@@ -90,7 +90,7 @@ public class StudentSessionViewDto {
 
         final long totalSeconds = this.durationSeconds;
         final long hours = totalSeconds / 3600;
-        final long minutes = (totalSeconds % 3600) / 60;
+        final long minutes = totalSeconds % 3600 / 60;
         final long seconds = totalSeconds % 60;
 
         if (hours > 0) {

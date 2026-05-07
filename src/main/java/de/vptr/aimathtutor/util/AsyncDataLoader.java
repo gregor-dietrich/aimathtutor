@@ -56,9 +56,9 @@ public final class AsyncDataLoader {
         CompletableFuture.supplyAsync(() -> {
             try {
                 return dataSupplier.get();
-            } catch (final Exception e) {
+            } catch (final RuntimeException e) {
                 LOG.error(errorMessage, e);
-                throw new RuntimeException(errorMessage, e);
+                throw e;
             }
         }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .whenComplete((data, throwable) -> {

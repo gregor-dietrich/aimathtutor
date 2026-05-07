@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Locale;
+
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +18,6 @@ import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
-import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
@@ -45,7 +47,7 @@ class AiTutorServiceTest {
         assertNotNull(feedback);
         assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, feedback.type);
         assertNotNull(feedback.message);
-        assertTrue(feedback.message.toLowerCase().contains("simplif"));
+        assertTrue(feedback.message.toLowerCase(Locale.ROOT).contains("simplif"));
         assertEquals("session-123", feedback.sessionId);
     }
 

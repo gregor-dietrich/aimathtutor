@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -232,19 +233,17 @@ public class UserService {
         }
 
         // Check for duplicate username (only if username is different from current)
-        if (!userDto.username.equals(existingUser.username)) {
-            if (this.findByUsername(userDto.username).isPresent()) {
-                throw new ValidationException("Username '" + userDto.username + "' is already taken");
-            }
+        if (!userDto.username.equals(existingUser.username)
+                && this.findByUsername(userDto.username).isPresent()) {
+            throw new ValidationException("Username '" + userDto.username + "' is already taken");
         }
 
         // Normalize email and check for duplicate email (only if email is different
         // from current)
         final String normalizedEmail = this.normalizeEmail(userDto.email);
-        if (!Objects.equals(normalizedEmail, existingUser.email)) {
-            if (normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
-                throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
-            }
+        if (!Objects.equals(normalizedEmail, existingUser.email)
+                && normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
+            throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
         }
 
         // Complete replacement (PUT semantics)
@@ -254,24 +253,9 @@ public class UserService {
         existingUser.activated = userDto.activated != null ? userDto.activated : false;
         existingUser.activationKey = userDto.activationKey;
 
-        // Handle password update if provided
-        if (userDto.password != null && !userDto.password.isBlank()) {
-            this.validatePassword(userDto.password);
-            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
-            existingUser.password = hashedPassword;
-        }
-
-        // Set rank if provided
-        if (userDto.rankPublicId != null) {
-            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
-            if (rank == null) {
-                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
-            }
-            existingUser.rank = rank;
-        } else {
-            // For PUT, null rank should reset to default
-            existingUser.rank = this.userRankRepository.findById(1L);
-        }
+        // Handle password and rank updates
+        this.applyPasswordToUser(existingUser, userDto.password);
+        this.applyRankToUser(existingUser, userDto.rankPublicId, true);
 
         this.userRepository.persist(existingUser);
         return new UserViewDto(existingUser);
@@ -301,19 +285,17 @@ public class UserService {
 
         // Check for duplicate username if username is being updated
         if (userDto.username != null && !userDto.username.isBlank()
-                && !userDto.username.equals(existingUser.username)) {
-            if (this.findByUsername(userDto.username).isPresent()) {
-                throw new ValidationException("Username '" + userDto.username + "' is already taken");
-            }
+                && !userDto.username.equals(existingUser.username)
+                && this.findByUsername(userDto.username).isPresent()) {
+            throw new ValidationException("Username '" + userDto.username + "' is already taken");
         }
 
         // Check for duplicate email if email is being updated
         if (userDto.email != null) {
             final String normalizedEmail = this.normalizeEmail(userDto.email);
-            if (!Objects.equals(normalizedEmail, existingUser.email)) {
-                if (normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
-                    throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
-                }
+            if (!Objects.equals(normalizedEmail, existingUser.email)
+                    && normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
+                throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
             }
         }
 
@@ -334,20 +316,10 @@ public class UserService {
             existingUser.activationKey = userDto.activationKey;
         }
 
-        // Handle password update if provided
-        if (userDto.password != null && !userDto.password.isBlank()) {
-            this.validatePassword(userDto.password);
-            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
-            existingUser.password = hashedPassword;
-        }
-
-        // Set rank if provided
+        // Handle password and rank updates (PATCH: only if provided)
+        this.applyPasswordToUser(existingUser, userDto.password);
         if (userDto.rankPublicId != null) {
-            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
-            if (rank == null) {
-                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
-            }
-            existingUser.rank = rank;
+            this.applyRankToUser(existingUser, userDto.rankPublicId, false);
         }
 
         this.userRepository.persist(existingUser);
@@ -389,7 +361,7 @@ public class UserService {
         if (query == null || query.isBlank()) {
             return this.getAllUsers();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
+        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final List<UserEntity> users = this.userRepository.search(searchTerm);
         return users.stream().map(UserViewDto::new).toList();
     }
@@ -487,5 +459,40 @@ public class UserService {
         return new UserSettingsDto(
                 user.userAvatarEmoji != null ? user.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER,
                 user.tutorAvatarEmoji != null ? user.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR);
+    }
+
+    /**
+     * Applies a new password to a user if provided and non-blank.
+     */
+    private void applyPasswordToUser(final UserEntity user, final String password) {
+        if (password != null && !password.isBlank()) {
+            this.validatePassword(password);
+            user.password = this.passwordHashingService.hashPassword(password);
+        }
+    }
+
+    /**
+     * Applies a rank to a user by public ID.
+     * When {@code rankPublicId} is null or not found and {@code resetToDefault} is
+     * {@code true}, falls back to the default rank ({@code userRankRepository.findById(1L)}).
+     * When {@code rankPublicId} is null or not found and {@code resetToDefault} is
+     * {@code false}, throws a {@link ValidationException}.
+     *
+     * @param user           the user to update
+     * @param rankPublicId   the rank public ID; may be null (triggers default/error path)
+     * @param resetToDefault if {@code true} and rank lookup fails, assign default rank;
+     *                       if {@code false} and rank lookup fails, throw {@link ValidationException}
+     */
+    private void applyRankToUser(final UserEntity user, final String rankPublicId, final boolean resetToDefault) {
+        final var rank = this.userRankRepository.findByPublicId(rankPublicId).orElse(null);
+        if (rank == null) {
+            if (resetToDefault) {
+                user.rank = this.userRankRepository.findById(1L);
+            } else {
+                throw new ValidationException("Rank with public ID " + rankPublicId + " not found");
+            }
+        } else {
+            user.rank = rank;
+        }
     }
 }

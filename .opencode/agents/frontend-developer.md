@@ -64,4 +64,4 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
    - Load data with `CompletableFuture.supplyAsync()`, update UI with `ui.access(...)`
 3. Use `Notification` or `NotificationUtil` for user-facing messages
 4. Write or update tests following `@instructions/test-conventions.md`
-5. Run `./mvnw checkstyle:check spotbugs:check` to lint, and `./mvnw test` to validate
+5. Run `./mvnw checkstyle:check spotbugs:check pmd:check pmd:cpd-check` to lint, and `./mvnw test` to validate
