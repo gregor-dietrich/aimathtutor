@@ -39,7 +39,7 @@
         <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
         <ulid-creator.version>5.2.4</ulid-creator.version>
-        <vaadin.version>25.1.4</vaadin.version>
+        <vaadin.version>25.1.5</vaadin.version>
 
         <!-- Pin transitive dependencies to fix CVEs -->
         <netty.version>4.1.133.Final</netty.version>
