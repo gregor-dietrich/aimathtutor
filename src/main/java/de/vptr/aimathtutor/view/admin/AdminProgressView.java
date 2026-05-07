@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -17,7 +16,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.RefreshButton;
-import de.vptr.aimathtutor.component.layout.DateFilterLayout;
+import de.vptr.aimathtutor.component.layout.SearchFilterBar;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
@@ -150,16 +149,12 @@ public class AdminProgressView extends AbstractAdminView {
 
         this.searchField = searchLayout.getTextfield();
 
-        // Add date range filter for last activity
-        final var dateFilterLayout = new DateFilterLayout(ignored -> this.filterByDateRange());
-        this.startDatePicker = dateFilterLayout.getStartDatePicker();
-        this.endDatePicker = dateFilterLayout.getEndDatePicker();
+        final var filterBar = new SearchFilterBar(searchLayout,
+                () -> this.filterByDateRange(), () -> this.resetFilters());
+        this.startDatePicker = filterBar.getStartDatePicker();
+        this.endDatePicker = filterBar.getEndDatePicker();
+        this.resetFiltersButton = filterBar.getResetButton();
 
-        // Add reset filters button
-        this.resetFiltersButton = new Button("Reset Filters", ignored -> this.resetFilters());
-        this.resetFiltersButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-
-        searchLayout.add(dateFilterLayout, this.resetFiltersButton);
         return searchLayout;
     }
 

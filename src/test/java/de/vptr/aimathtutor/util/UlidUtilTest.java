@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.util;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,7 +32,7 @@ class UlidUtilTest {
         final String ulid1 = UlidUtil.generate();
         final String ulid2 = UlidUtil.generate();
 
-        assertFalse(ulid1.equals(ulid2));
+        assertNotEquals(ulid1, ulid2);
     }
 
     @Test

@@ -148,7 +148,7 @@ class CommentModerationServiceTest {
         final var comment = this.createComment(exercise, author);
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", 99999L, "reason"));
+                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", 99_999L, "reason"));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 

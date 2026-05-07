@@ -26,7 +26,7 @@ class OllamaServiceTest {
         final String url = this.ollamaService.getApiUrl();
 
         assertNotNull(url);
-        assertEquals(false, url.isBlank());
+        assertFalse(url.isBlank());
     }
 
     @Test
@@ -35,7 +35,7 @@ class OllamaServiceTest {
         final String model = this.ollamaService.getModel();
 
         assertNotNull(model);
-        assertEquals(false, model.isBlank());
+        assertFalse(model.isBlank());
     }
 
     @Test

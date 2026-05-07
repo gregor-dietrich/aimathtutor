@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
@@ -177,7 +178,7 @@ public class ExerciseRepository extends AbstractRepository {
         if (query == null || query.isBlank()) {
             return this.findAllOrdered();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
+        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final var q = this.em.createNamedQuery("Exercise.searchByTerm", ExerciseEntity.class);
         q.setParameter("s", searchTerm);
         return q.getResultList();

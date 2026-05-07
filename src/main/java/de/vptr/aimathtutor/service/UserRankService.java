@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import com.vaadin.flow.server.VaadinSession;
@@ -123,7 +124,7 @@ public class UserRankService {
         if (query == null || query.isBlank()) {
             return this.getAllRanks();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase() + "%";
+        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final List<UserRankEntity> ranks = this.userRankRepository.search(searchTerm);
         return ranks.stream()
                 .map(UserRankViewDto::new)

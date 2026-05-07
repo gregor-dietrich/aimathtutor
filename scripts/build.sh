@@ -22,9 +22,9 @@ fi
 TAG="gregordietrich/aimathtutor:${REVISION}"
 
 # Clean before building to avoid corrupted workspace files
-${MVN_CMD} -q clean -Drevision=${REVISION}
+${MVN_CMD} -q clean -Drevision="${REVISION}"
 
-${MVN_CMD} -q package -DskipTests -Pproduction -Drevision=${REVISION}
+${MVN_CMD} -q package -DskipTests -Pproduction -Drevision="${REVISION}"
 
 # Try to use buildx with the 'default' builder which typically uses the local docker driver
 # This avoids starting a docker-container builder that may reference Docker Desktop/WSL bind mounts

@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.ai;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
@@ -184,7 +185,7 @@ public class JsonRepairService {
 
             AiFeedbackDto feedback;
             if (typeMatcher.find()) {
-                final String type = typeMatcher.group(1).toUpperCase();
+                final String type = typeMatcher.group(1).toUpperCase(Locale.ROOT);
                 feedback = switch (type) {
                     case "CORRECTIVE" -> AiFeedbackDto.corrective(extractedMessage);
                     case "HINT" -> AiFeedbackDto.hint(extractedMessage);

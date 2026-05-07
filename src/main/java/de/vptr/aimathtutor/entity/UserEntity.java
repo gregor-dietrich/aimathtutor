@@ -9,24 +9,17 @@ import org.hibernate.generator.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import de.vptr.aimathtutor.util.UlidUtil;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -48,28 +41,7 @@ import jakarta.validation.constraints.NotBlank;
         @Index(name = "idx_user_rank", columnList = "rank_id"),
         @Index(name = "idx_user_activated_banned", columnList = "activated, banned")
 })
-public class UserEntity extends PanacheEntityBase {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-
-    @Version
-    public Long version;
-
-    @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
-    public String publicId;
-
-    /**
-     * Generates a ULID-based public identifier for this entity if not already set.
-     */
-    @PrePersist
-    public void generatePublicId() {
-        if (this.publicId == null || this.publicId.isBlank()) {
-            this.publicId = UlidUtil.generate();
-            return;
-        }
-        UlidUtil.requireValid(this.publicId);
-    }
+public class UserEntity extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false, unique = true)

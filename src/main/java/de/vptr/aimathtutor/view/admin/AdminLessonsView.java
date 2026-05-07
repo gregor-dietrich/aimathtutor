@@ -278,15 +278,13 @@ public class AdminLessonsView extends AbstractAdminView {
                 .bind(
                         cat -> {
                             // Convert from DTO parent field
-                            if (cat.parent != null && cat.parent.publicId != null) {
+                            if (cat.parent != null && cat.parent.publicId != null && this.allLessons != null) {
                                 // Find the LessonDto from available parents
-                                if (this.allLessons != null) {
-                                    return this.allLessons.stream()
-                                            .map(LessonViewDto::toLessonDto)
-                                            .filter(c -> c.publicId.equals(cat.parent.publicId))
-                                            .findFirst()
-                                            .orElse(null);
-                                }
+                                return this.allLessons.stream()
+                                        .map(LessonViewDto::toLessonDto)
+                                        .filter(c -> c.publicId.equals(cat.parent.publicId))
+                                        .findFirst()
+                                        .orElse(null);
                             }
                             return null;
                         },
@@ -346,11 +344,7 @@ public class AdminLessonsView extends AbstractAdminView {
                 .findFirst()
                 .orElse(null);
 
-        if (parent != null) {
-            return this.isDescendantOf(parent, ancestor);
-        }
-
-        return false;
+        return parent != null && this.isDescendantOf(parent, ancestor);
     }
 
     private void saveLesson() {

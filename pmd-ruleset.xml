@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="AIMathTutor PMD Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>Minimal PMD rules for AIMathTutor. Focus on critical issues only.</description>
+
+    <!-- Error Prone: Only critical rules -->
+    <rule ref="category/java/errorprone.xml">
+        <exclude name="AvoidCatchingGenericException" />
+        <exclude name="AvoidDuplicateLiterals" />
+        <exclude name="AvoidFieldNameMatchingMethodName" />
+        <exclude name="AvoidLiteralsInIfCondition" />
+        <exclude name="CloseResource" />
+        <exclude name="AssignmentInOperand" />
+        <exclude name="ConstructorCallsOverridableMethod" />
+        <exclude name="DoNotTerminateVM" />
+        <exclude name="DataflowAnomalyAnalysis" />
+        <exclude name="TestClassWithoutTestCases" />
+        <exclude name="EmptyCatchBlock" />
+        <exclude name="EmptyIfStmt" />
+        <exclude name="EmptyStatementBlock" />
+        <exclude name="EmptySwitchStatements" />
+        <exclude name="EmptyTryBlock" />
+        <exclude name="EmptyWhileStmt" />
+        <exclude name="MissingSerialVersionUID" />
+        <exclude name="NullAssignment" />
+        <exclude name="CompareObjectsWithEquals" />
+    </rule>
+
+    <!-- Best Practices: Only critical rules -->
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="AbstractClassWithoutAbstractMethod" />
+        <exclude name="AccessorMethodGeneration" />
+        <exclude name="ArrayIsStoredDirectly" />
+        <exclude name="AvoidPrintStackTrace" />
+        <exclude name="AvoidReassigningParameters" />
+        <exclude name="ConstantsInInterface" />
+        <exclude name="ForLoopCanBeForeach" />
+        <exclude name="GuardLogStatement" />
+        <exclude name="JUnit5TestShouldBePackagePrivate" />
+        <exclude name="JUnitAssertionsShouldIncludeMessage" />
+        <exclude name="JUnitTestContainsTooManyAsserts" />
+        <exclude name="JUnitTestsShouldIncludeAssert" />
+        <exclude name="ExhaustiveSwitchHasDefault" />
+        <exclude name="JUnitUseless" />
+        <exclude name="SystemPrintln" />
+        <exclude name="UnitTestShouldUseTestAnnotation" />
+        <exclude name="LooseCoupling" />
+        <exclude name="MethodReturnsInternalArray" />
+        <exclude name="MissingOverride" />
+        <exclude name="OneDeclarationPerLine" />
+        <exclude name="PreserveStackTrace" />
+        <exclude name="ReplaceEnumerationWithIterator" />
+        <exclude name="ReplaceHashtableWithMap" />
+        <exclude name="ReplaceVectorWithList" />
+        <exclude name="SwitchStmtsShouldHaveDefault" />
+        <exclude name="UnitTestAssertionsShouldIncludeMessage" />
+        <exclude name="UnitTestContainsTooManyAsserts" />
+        <exclude name="UnusedAssignment" />
+        <exclude name="UnusedFormalParameter" />
+        <exclude name="UnusedLocalVariable" />
+        <exclude name="UnusedPrivateField" />
+        <exclude name="UnusedPrivateMethod" />
+        <exclude name="UseCollectionIsEmpty" />
+        <exclude name="UseVarargs" />
+    </rule>
+
+    <!-- Design: Only critical rules -->
+    <rule ref="category/java/design.xml">
+        <exclude name="AvoidCatchingGenericException" />
+        <exclude name="AvoidDeeplyNestedIfStmts" />
+        <exclude name="CognitiveComplexity" />
+        <exclude name="ExceptionAsFlowControl" />
+        <exclude name="LoosePackageCoupling" />
+        <exclude name="CouplingBetweenObjects" />
+        <exclude name="CyclomaticComplexity" />
+        <exclude name="DataClass" />
+        <exclude name="ExcessiveImports" />
+        <exclude name="ExcessiveMethodLength" />
+        <exclude name="ExcessiveParameterList" />
+        <exclude name="ExcessivePublicCount" />
+        <exclude name="GodClass" />
+        <exclude name="LawOfDemeter" />
+        <exclude name="NPathComplexity" />
+        <exclude name="NcssCount" />
+        <exclude name="SignatureDeclareThrowsException" />
+        <exclude name="SimplifiedTernary" />
+        <exclude name="SingularField" />
+        <exclude name="SwitchDensity" />
+        <exclude name="TooManyFields" />
+        <exclude name="TooManyMethods" />
+        <exclude name="UseObjectForClearerAPI" />
+    </rule>
+
+    <!-- Code Style: Only critical rules -->
+    <rule ref="category/java/codestyle.xml">
+        <exclude name="AtLeastOneConstructor" />
+        <exclude name="CallSuperInConstructor" />
+        <exclude name="ClassNamingConventions" />
+        <exclude name="CommentDefaultAccessModifier" />
+        <exclude name="ConfusingTernary" />
+        <exclude name="LambdaCanBeMethodReference" />
+        <exclude name="DefaultPackage" />
+        <exclude name="FieldDeclarationsShouldBeAtStartOfClass" />
+        <exclude name="ForLoopShouldBeWhileLoop" />
+        <exclude name="LocalVariableCouldBeFinal" />
+        <exclude name="LongVariable" />
+        <exclude name="MethodArgumentCouldBeFinal" />
+        <exclude name="MethodNamingConventions" />
+        <exclude name="OnlyOneReturn" />
+        <exclude name="PrematureDeclaration" />
+        <exclude name="ShortClassName" />
+        <exclude name="ShortMethodName" />
+        <exclude name="ShortVariable" />
+        <exclude name="TooManyStaticImports" />
+        <exclude name="UnnecessaryCast" />
+        <exclude name="UnnecessaryFullyQualifiedName" />
+        <exclude name="UnnecessaryImport" />
+        <exclude name="UnnecessaryLocalBeforeReturn" />
+        <exclude name="UnnecessaryModifier" />
+        <exclude name="UnnecessaryReturn" />
+        <exclude name="UnnecessarySemicolon" />
+        <exclude name="UseDiamondOperator" />
+        <exclude name="UseExplicitTypes" />
+        <exclude name="UselessParentheses" />
+        <exclude name="UselessQualifiedThis" />
+    </rule>
+
+    <!-- Performance: Only critical rules -->
+    <rule ref="category/java/performance.xml">
+        <exclude name="AddEmptyString" />
+        <exclude name="AppendCharacterWithChar" />
+        <exclude name="AvoidFileStream" />
+        <exclude name="AvoidInstantiatingObjectsInLoops" />
+        <exclude name="ConsecutiveAppendsShouldReuse" />
+        <exclude name="ConsecutiveLiteralAppends" />
+        <exclude name="InefficientEmptyStringCheck" />
+        <exclude name="InsufficientStringBufferDeclaration" />
+        <exclude name="OptimizableToArrayCall" />
+        <exclude name="RedundantFieldInitializer" />
+        <exclude name="SimplifyStartsWith" />
+        <exclude name="StringInstantiation" />
+        <exclude name="StringToString" />
+        <exclude name="TooFewBranchesForASwitchStatement" />
+        <exclude name="TooFewBranchesForSwitch" />
+        <exclude name="UseArrayListInsteadOfVector" />
+        <exclude name="UseArraysAsList" />
+        <exclude name="UseIndexOfChar" />
+        <exclude name="UseStringBufferForStringAppends" />
+        <exclude name="UseStringBufferLength" />
+        <exclude name="UselessStringValueOf" />
+    </rule>
+
+    <!-- Multithreading: Only critical rules -->
+    <rule ref="category/java/multithreading.xml">
+        <exclude name="AvoidSynchronizedAtMethodLevel" />
+        <exclude name="AvoidSynchronizedStatement" />
+        <exclude name="AvoidUsingVolatile" />
+        <exclude name="DoNotUseThreads" />
+        <exclude name="UseConcurrentHashMap" />
+    </rule>
+
+    <!-- Security: All rules enabled -->
+    <rule ref="category/java/security.xml" />
+</ruleset>

@@ -61,11 +61,11 @@ public class ExerciseRepositoryIT {
         this.exerciseRepository.persist(ex2);
 
         final List<ExerciseEntity> published = this.exerciseRepository.findPublished();
-        Assertions.assertTrue(published.stream().anyMatch(e -> e.title.equals("Quadratic")));
-        Assertions.assertFalse(published.stream().anyMatch(e -> e.title.equals("Linear")));
+        Assertions.assertTrue(published.stream().anyMatch(e -> "Quadratic".equals(e.title)));
+        Assertions.assertFalse(published.stream().anyMatch(e -> "Linear".equals(e.title)));
 
         final List<ExerciseEntity> search = this.exerciseRepository.search("quad");
-        Assertions.assertTrue(search.stream().anyMatch(e -> e.title.equals("Quadratic")));
+        Assertions.assertTrue(search.stream().anyMatch(e -> "Quadratic".equals(e.title)));
     }
 
     @Test

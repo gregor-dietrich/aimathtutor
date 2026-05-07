@@ -1,10 +1,12 @@
 package de.vptr.aimathtutor.service;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +23,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -139,7 +142,7 @@ public class AiConfigService {
         try {
             return Integer.parseInt(value);
         } catch (final NumberFormatException e) {
-            LOG.warnf(e, "Failed to parse integer config '%s' with value '%s'",  key,  value);
+            LOG.warnf(e, "Failed to parse integer config '%s' with value '%s'", key, value);
             return defaultValue;
         }
     }
@@ -160,7 +163,7 @@ public class AiConfigService {
         try {
             return Double.parseDouble(value);
         } catch (final NumberFormatException e) {
-            LOG.warnf(e, "Failed to parse double config '%s' with value '%s'",  key,  value);
+            LOG.warnf(e, "Failed to parse double config '%s' with value '%s'", key, value);
             return defaultValue;
         }
     }
@@ -179,14 +182,14 @@ public class AiConfigService {
         if (value == null) {
             return defaultValue;
         }
-        final String lower = value.toLowerCase().trim();
+        final String lower = value.toLowerCase(Locale.ROOT).trim();
         if ("true".equals(lower) || "1".equals(lower)) {
             return true;
         }
         if ("false".equals(lower) || "0".equals(lower)) {
             return false;
         }
-        LOG.warnf("Failed to parse boolean config '%s' with value '%s', using default",  key,  value);
+        LOG.warnf("Failed to parse boolean config '%s' with value '%s', using default", key, value);
         return defaultValue;
     }
 
@@ -324,7 +327,7 @@ public class AiConfigService {
         // Invalidate cache
         this.configCache.remove(configKey);
 
-        LOG.infof("Configuration updated: key='%s', updatedBy='%s'",  configKey,  user.username);
+        LOG.infof("Configuration updated: key='%s', updatedBy='%s'", configKey, user.username);
     }
 
     /**
@@ -396,7 +399,7 @@ public class AiConfigService {
             this.configCache.remove(update.configKey);
         }
 
-        LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'",  updates.size(),  user.username);
+        LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'", updates.size(), user.username);
     }
 
     /**
@@ -464,7 +467,7 @@ public class AiConfigService {
             }
             case BOOLEAN -> {
                 @SuppressWarnings("null") // false positive
-                final var lower = configValue.toLowerCase().trim();
+                final var lower = configValue.toLowerCase(Locale.ROOT).trim();
                 if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
                     throw new IllegalArgumentException(
                             "Value must be boolean (true/false/1/0) for key '" + configKey + "', got: " + configValue);
@@ -482,32 +485,52 @@ public class AiConfigService {
      * Validates that a URL is safe and does not enable SSRF attacks.
      * Enforces HTTPS for external providers, blocks private IP ranges,
      * and rejects localhost/loopback addresses.
+     *
+     * <p><b>TOCTOU DNS-rebinding gap:</b> When {@link UnknownHostException} is
+     * caught in the hostname resolution block of {@code validateUrlSafe}, the method
+     * allows the URL through only for Ollama (whose hostname may be a Docker service
+     * name). All other providers are rejected when the hostname cannot be resolved,
+     * eliminating the permissive fallback for external providers.
+     *
+     * <p><b>Residual TOCTOU risk (Ollama only):</b> An unresolved Ollama hostname
+     * creates a time-of-check vs. time-of-use window: the name may later resolve to
+     * an RFC1918/private address at dispatch time. An attacker who controls DNS could
+     * exploit this to reach an internal service via the Ollama endpoint.
+     *
+     * <p><b>Mitigation guidance:</b> For Ollama, consider re-resolving the hostname
+     * at dispatch time or maintaining an explicit allow-list of permitted Docker
+     * service names.
+     * See the {@code UnknownHostException} catch block and the plain-string
+     * private-range IPv4 prefix checks below for where additional mitigation would go.
      */
     private void validateUrlSafe(final String configKey, final String configValue) {
         final URI uri;
         try {
             uri = URI.create(configValue);
         } catch (final IllegalArgumentException e) {
-            throw new IllegalArgumentException("Value must be a valid URL for key '" + configKey + "'");
+            throw new IllegalArgumentException("Value must be a valid URL for key '" + configKey + "'", e);
         }
 
         if (uri.getHost() == null || uri.getHost().isBlank()) {
             throw new IllegalArgumentException("URL must have a valid host for key '" + configKey + "'");
         }
 
-        final String host = uri.getHost().toLowerCase();
+        final String host = uri.getHost().toLowerCase(Locale.ROOT);
 
         // Enforce HTTPS for external providers (Gemini, OpenAI)
-        if (configKey.contains("gemini") || configKey.contains("openai")) {
-            if (!"https".equalsIgnoreCase(uri.getScheme())) {
-                throw new IllegalArgumentException(
-                        "External provider URLs must use HTTPS for key '" + configKey + "'");
-            }
+        if ((configKey.contains("gemini") || configKey.contains("openai"))
+                && !"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException(
+                    "External provider URLs must use HTTPS for key '" + configKey + "'");
         }
 
         // Block localhost and loopback
-        if ("localhost".equals(host) || "127.0.0.1".equals(host) || host.startsWith("127.")
-                || "0.0.0.0".equals(host) || "::1".equals(host) || "0:0:0:0:0:0:0:1".equals(host)) {
+        if (AppConstants.BLOCKED_HOST_LOCALHOST.equals(host)
+                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(host)
+                || host.startsWith("127.")
+                || AppConstants.BLOCKED_HOST_ANY.equals(host)
+                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6.equals(host)
+                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED.equals(host)) {
             throw new IllegalArgumentException(
                     "Loopback addresses are not allowed for key '" + configKey + "'");
         }
@@ -516,13 +539,25 @@ public class AiConfigService {
         try {
             final InetAddress address = InetAddress.getByName(host);
             if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
-                    || address.isMulticastAddress()) {
+                    || address.isMulticastAddress() || address.isAnyLocalAddress()) {
                 throw new IllegalArgumentException(
                         "Private IP addresses are not allowed for key '" + configKey + "'");
             }
+            if (address instanceof Inet6Address) {
+                final byte[] bytes = address.getAddress();
+                // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
+                if ((bytes[0] & 0xFE) == 0xFC) {
+                    throw new IllegalArgumentException(
+                            "Private IP addresses are not allowed for key '" + configKey + "' host '" + host + "'");
+                }
+            }
         } catch (final UnknownHostException e) {
-            // Allow unresolved hostnames (they may be internal Docker hosts)
-            // but block obvious private patterns without DNS
+            // Only allow unresolved Docker-style hostnames for Ollama.
+            LOG.debugf(e, "Hostname resolution failed for %s", host);
+            if (!configKey.contains("ollama")) {
+                throw new IllegalArgumentException(
+                        "URL host must resolve to a public address for key '" + configKey + "'");
+            }
         }
 
         // Block common private IPv4 patterns without DNS resolution
@@ -541,6 +576,7 @@ public class AiConfigService {
                     }
                 } catch (final NumberFormatException e) {
                     // Not a numeric octet, allow
+                    LOG.debugf("Invalid octet in IP check for %s, allowing", host);
                 }
             }
         }
@@ -566,7 +602,7 @@ public class AiConfigService {
                 .map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue()))
                 .toList();
         this.updateMultipleConfigs(updates, userId);
-        LOG.infof("All AI configurations reset to defaults by userId='%s'",  userId);
+        LOG.infof("All AI configurations reset to defaults by userId='%s'", userId);
     }
 
     /**

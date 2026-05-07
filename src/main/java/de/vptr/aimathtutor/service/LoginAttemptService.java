@@ -24,7 +24,7 @@ public class LoginAttemptService {
     private static final int MAX_ATTEMPTS = 5;
     private static final long BASE_LOCKOUT_SECONDS = 30;
     private static final long MAX_LOCKOUT_SECONDS = 3600; // 1 hour
-    private static final int MAX_CACHE_SIZE = 10000;
+    private static final int MAX_CACHE_SIZE = 10_000;
     private static final long CLEANUP_INTERVAL_SECONDS = 300; // 5 minutes
 
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();

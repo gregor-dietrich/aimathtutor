@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Locale;
 
 import org.jboss.logging.Logger;
 
@@ -144,7 +145,7 @@ public class AiProviderTestService {
      */
     public AiProviderTestResultDto testCurrentProvider() {
         final String provider = this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
-        return switch (provider != null ? provider.toLowerCase() : "mock") {
+        return switch (provider != null ? provider.toLowerCase(Locale.ROOT) : "mock") {
             case "gemini" -> this.testGemini();
             case "openai" -> this.testOpenAi();
             case "ollama" -> this.testOllama();

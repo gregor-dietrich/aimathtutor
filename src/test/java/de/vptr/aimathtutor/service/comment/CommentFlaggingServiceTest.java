@@ -58,7 +58,7 @@ class CommentFlaggingServiceTest {
         final var comment = this.createComment(exercise, this.userRepository.findByUsername("admin"));
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.flaggingService.flagComment(comment.publicId, 99999L, "spam"));
+                () -> this.flaggingService.flagComment(comment.publicId, 99_999L, "spam"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 

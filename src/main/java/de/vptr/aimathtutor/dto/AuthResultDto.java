@@ -4,7 +4,7 @@ package de.vptr.aimathtutor.dto;
  * Result object returned by authentication operations. Encapsulates a status
  * and an optional user-facing message.
  */
-public class AuthResultDto {
+public final class AuthResultDto {
 
     /**
      * Status codes for authentication results.

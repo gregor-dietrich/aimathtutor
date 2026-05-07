@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -121,11 +122,11 @@ public class AiTutorService {
         LOG.infof("Action is significant, generating feedback with provider: %s",  aiProvider);
 
         // Use different AI provider based on configuration
-        final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+        final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT) : "mock";
 
         // Apply per-user rate limiting for non-mock providers
         final var effectiveUserId = userIdStr != null ? userIdStr
-                : (event.studentId != null ? String.valueOf(event.studentId) : null);
+                : event.studentId != null ? String.valueOf(event.studentId) : null;
         if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
             return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
         }
@@ -193,7 +194,7 @@ public class AiTutorService {
             return false;
         }
 
-        final var type = event.eventType.toLowerCase();
+        final var type = event.eventType.toLowerCase(Locale.ROOT);
 
         // Graspable Math specific action names (from the actual GM API)
         if (type.contains("addsubinvert") // Adding/subtracting to both sides
@@ -227,15 +228,11 @@ public class AiTutorService {
 
         // For generic "change" or "math_step" events, check if expression actually
         // changed
-        if ((type.contains("change") || type.contains("math_step"))
+        return (type.contains("change") || type.contains("math_step"))
                 && event.expressionBefore != null
                 && event.expressionAfter != null
                 && !event.expressionBefore.equals(event.expressionAfter)
-                && !event.expressionBefore.isEmpty()) {
-            return true;
-        }
-
-        return false;
+                && !event.expressionBefore.isEmpty();
     }
 
     /**
@@ -276,7 +273,7 @@ public class AiTutorService {
 
         // Use different AI provider based on configuration
         final var aiProvider = this.getConfigString(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
-        final var provider = (aiProvider != null) ? aiProvider.toLowerCase() : "mock";
+        final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT) : "mock";
 
         // Apply per-user rate limiting for non-mock providers
         final var effectiveUserId = userIdStr != null ? userIdStr : "ANONYMOUS";
