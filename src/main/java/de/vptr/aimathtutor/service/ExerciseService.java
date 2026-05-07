@@ -293,24 +293,12 @@ public class ExerciseService {
 
         // Set user if provided, otherwise keep existing user
         if (exerciseDto.userPublicId != null) {
-            final UserEntity user = this.userRepository.findByPublicId(exerciseDto.userPublicId).orElse(null);
-            if (user == null) {
-                throw new ValidationException("User with publicId " + exerciseDto.userPublicId + " not found");
-            }
-            existingExercise.user = user;
+            existingExercise.user = this.resolveUser(exerciseDto.userPublicId);
         }
         // Note: Do not set to null if userPublicId is not provided - preserve existing user
 
         // Set lesson if provided
-        if (exerciseDto.lessonPublicId != null) {
-            final LessonEntity lesson = this.lessonRepository.findByPublicId(exerciseDto.lessonPublicId).orElse(null);
-            if (lesson == null) {
-                throw new ValidationException("Lesson with publicId " + exerciseDto.lessonPublicId + " not found");
-            }
-            existingExercise.lesson = lesson;
-        } else {
-            existingExercise.lesson = null;
-        }
+        this.applyLessonToExercise(existingExercise, exerciseDto.lessonPublicId, true);
 
         this.exerciseRepository.persist(existingExercise);
         return new ExerciseViewDto(existingExercise);
@@ -371,20 +359,12 @@ public class ExerciseService {
 
         // Set user if provided
         if (exerciseDto.userPublicId != null) {
-            final UserEntity user = this.userRepository.findByPublicId(exerciseDto.userPublicId).orElse(null);
-            if (user == null) {
-                throw new ValidationException("User with publicId " + exerciseDto.userPublicId + " not found");
-            }
-            existingExercise.user = user;
+            existingExercise.user = this.resolveUser(exerciseDto.userPublicId);
         }
 
-        // Set lesson if provided
+        // Set lesson if provided (PATCH: null keeps existing)
         if (exerciseDto.lessonPublicId != null) {
-            final LessonEntity lesson = this.lessonRepository.findByPublicId(exerciseDto.lessonPublicId).orElse(null);
-            if (lesson == null) {
-                throw new ValidationException("Lesson with publicId " + exerciseDto.lessonPublicId + " not found");
-            }
-            existingExercise.lesson = lesson;
+            this.applyLessonToExercise(existingExercise, exerciseDto.lessonPublicId, false);
         }
 
         this.exerciseRepository.persist(existingExercise);
@@ -450,6 +430,38 @@ public class ExerciseService {
                     .toList();
         } catch (final DateTimeParseException e) {
             return List.of();
+        }
+    }
+
+    /**
+     * Resolves a user by public ID, throwing if not found.
+     */
+    private UserEntity resolveUser(final String userPublicId) {
+        final UserEntity user = this.userRepository.findByPublicId(userPublicId).orElse(null);
+        if (user == null) {
+            throw new ValidationException("User with publicId " + userPublicId + " not found");
+        }
+        return user;
+    }
+
+    /**
+     * Applies a lesson reference to an exercise.
+     *
+     * @param exercise      the exercise to update
+     * @param lessonPublicId the lesson public ID (must not be null)
+     * @param clearIfMissing if true, sets lesson to null when not found; if false, throws
+     */
+    private void applyLessonToExercise(final ExerciseEntity exercise, final String lessonPublicId,
+            final boolean clearIfMissing) {
+        final LessonEntity lesson = this.lessonRepository.findByPublicId(lessonPublicId).orElse(null);
+        if (lesson == null) {
+            if (clearIfMissing) {
+                exercise.lesson = null;
+            } else {
+                throw new ValidationException("Lesson with publicId " + lessonPublicId + " not found");
+            }
+        } else {
+            exercise.lesson = lesson;
         }
     }
 }

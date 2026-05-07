@@ -252,24 +252,9 @@ public class UserService {
         existingUser.activated = userDto.activated != null ? userDto.activated : false;
         existingUser.activationKey = userDto.activationKey;
 
-        // Handle password update if provided
-        if (userDto.password != null && !userDto.password.isBlank()) {
-            this.validatePassword(userDto.password);
-            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
-            existingUser.password = hashedPassword;
-        }
-
-        // Set rank if provided
-        if (userDto.rankPublicId != null) {
-            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
-            if (rank == null) {
-                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
-            }
-            existingUser.rank = rank;
-        } else {
-            // For PUT, null rank should reset to default
-            existingUser.rank = this.userRankRepository.findById(1L);
-        }
+        // Handle password and rank updates
+        this.applyPasswordToUser(existingUser, userDto.password);
+        this.applyRankToUser(existingUser, userDto.rankPublicId, true);
 
         this.userRepository.persist(existingUser);
         return new UserViewDto(existingUser);
@@ -330,20 +315,10 @@ public class UserService {
             existingUser.activationKey = userDto.activationKey;
         }
 
-        // Handle password update if provided
-        if (userDto.password != null && !userDto.password.isBlank()) {
-            this.validatePassword(userDto.password);
-            final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
-            existingUser.password = hashedPassword;
-        }
-
-        // Set rank if provided
+        // Handle password and rank updates (PATCH: only if provided)
+        this.applyPasswordToUser(existingUser, userDto.password);
         if (userDto.rankPublicId != null) {
-            final var rank = this.userRankRepository.findByPublicId(userDto.rankPublicId).orElse(null);
-            if (rank == null) {
-                throw new ValidationException("Rank with public ID " + userDto.rankPublicId + " not found");
-            }
-            existingUser.rank = rank;
+            this.applyRankToUser(existingUser, userDto.rankPublicId, false);
         }
 
         this.userRepository.persist(existingUser);
@@ -483,5 +458,35 @@ public class UserService {
         return new UserSettingsDto(
                 user.userAvatarEmoji != null ? user.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER,
                 user.tutorAvatarEmoji != null ? user.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR);
+    }
+
+    /**
+     * Applies a new password to a user if provided and non-blank.
+     */
+    private void applyPasswordToUser(final UserEntity user, final String password) {
+        if (password != null && !password.isBlank()) {
+            this.validatePassword(password);
+            user.password = this.passwordHashingService.hashPassword(password);
+        }
+    }
+
+    /**
+     * Applies a rank to a user by public ID.
+     *
+     * @param user         the user to update
+     * @param rankPublicId the rank public ID (must not be null)
+     * @param resetToDefault if true and rank not found, resets to default rank
+     */
+    private void applyRankToUser(final UserEntity user, final String rankPublicId, final boolean resetToDefault) {
+        final var rank = this.userRankRepository.findByPublicId(rankPublicId).orElse(null);
+        if (rank == null) {
+            if (resetToDefault) {
+                user.rank = this.userRankRepository.findById(1L);
+            } else {
+                throw new ValidationException("Rank with public ID " + rankPublicId + " not found");
+            }
+        } else {
+            user.rank = rank;
+        }
     }
 }

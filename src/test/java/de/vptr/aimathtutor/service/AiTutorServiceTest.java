@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+@QuarkusTest
 class AiTutorServiceTest {
 
     @Inject
