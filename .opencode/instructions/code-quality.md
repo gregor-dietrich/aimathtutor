@@ -17,11 +17,13 @@ Expected of all contributors. Before submitting, run quality gates. Reviewers ve
 make test                              # run tests
 ./mvnw checkstyle:check                # style check (Google Java Style)
 ./mvnw spotbugs:check                  # static analysis
+./mvnw pmd:check                       # unused code, complexity, style
+./mvnw pmd:cpd-check                   # code duplication (DRY)
 ./mvnw org.owasp:dependency-check-maven:check  # CVE scan (needs NVD_API_KEY)
 ./mvnw license:add-third-party         # license report (verify phase)
 ```
 
-CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Checkstyle).
+CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Checkstyle + PMD + CPD).
 
 ## Code Smell Checklist
 

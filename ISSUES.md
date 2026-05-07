@@ -271,7 +271,7 @@ Keep rules configurable via `AdminGamificationView`.
 - Target PII fields are stored encrypted at rest.
 - App starts with existing key or generates one when absent.
 - Compose/dev setup persists key material via mounted volume.
-- SpotBugs, CheckStyle and all Maven Tests passing.
+- SpotBugs, CheckStyle, PMD, PMD-CPD and all Maven Tests passing.
 
 ---
 

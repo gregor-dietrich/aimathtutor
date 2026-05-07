@@ -20,7 +20,7 @@ You are a Code Reviewer for AIMathTutor — a monolithic Quarkus 3.33 + Vaadin 2
 
 ### Style & Architecture
 
-1. **Style**: Google Java Style enforced via Checkstyle (`checkstyle.xml`, severity=error). 4-space indent, no tabs. SpotBugs clean (exclusions in `spotbugs-exclude.xml`).
+1. **Style**: Google Java Style enforced via Checkstyle (`checkstyle.xml`, severity=error). 4-space indent, no tabs. SpotBugs clean (exclusions in `spotbugs-exclude.xml`). PMD clean (unused code, complexity). CPD clean (no duplication ≥100 tokens).
 2. **No FQCNs**: Always use imports. Enforced by Checkstyle `RegexpSinglelineJava`.
 3. **Logging**: Must use `org.jboss.logging.Logger` (not SLF4J). Must use `*f` methods (`infof`, `debugf`) with `%s` placeholders — not `*v` MessageFormat methods. Both enforced by Checkstyle.
 4. **ULIDs**: Must use `UlidUtil` — never import `com.github.f4b6a3.ulid.UlidCreator` directly. Enforced by Checkstyle `IllegalImport`.
