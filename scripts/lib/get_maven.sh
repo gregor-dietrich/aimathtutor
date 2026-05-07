@@ -4,6 +4,15 @@
 
 REQUIRED_MAVEN_VERSION="3.9.9"
 
+# Inject JDK 24+ migration flags automatically if supported
+if command -v java &> /dev/null; then
+  JAVA_VER=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+  JAVA_MAJOR=$(echo "$JAVA_VER" | cut -d'.' -f1)
+  if [ "$JAVA_MAJOR" -ge 24 ] 2>/dev/null; then
+    export MAVEN_OPTS="--sun-misc-unsafe-memory-access=allow $MAVEN_OPTS"
+  fi
+fi
+
 if ! command -v mvn &> /dev/null; then
     MVN_CMD="./mvnw"
 else
