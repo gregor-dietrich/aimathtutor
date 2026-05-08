@@ -16,6 +16,7 @@ You should challenge the user's request if it would result in implementing anti-
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI: `http://localhost:9001/q/dev/`.
 - **Tests:** `make test` → `./mvnw test`. Uses `@QuarkusTest`, Mockito, Panache Mock. CI runs `./mvnw verify`.
 - **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`.
+- **Lint:** `make lint` → `scripts/lint.sh` — runs spotless:apply, checkstyle, spotbugs, PMD, and CPD checks.
 - **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` + `build-frontend`. CI: `./mvnw clean install package -DskipTests -Pproduction`.
 - **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED` and `-XX:+EnableDynamicAgentLoading` (in `quarkus-maven-plugin`).
 - **Versioning:** Maven property `${revision}` (default `1.0.0-SNAPSHOT`). Pass `-Drevision=X.Y.Z`.
@@ -66,6 +67,8 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 | Gate            | Command                                         | Notes                                         |
 | --------------- | ----------------------------------------------- | --------------------------------------------- |
+| Lint (all)      | `make lint`                                     | Runs spotless:apply + checkstyle + spotbugs + PMD + CPD |
+| Spotless        | `./mvnw spotless:apply`                         | Auto-formats code (included in `make lint`)   |
 | Tests           | `make test`                                     | CI runs `./mvnw verify`                       |
 | SpotBugs        | `./mvnw spotbugs:check`                         | Exclusions in `spotbugs-exclude.xml`          |
 | Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml` |
