@@ -12,10 +12,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.ExerciseDto;
-import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -43,17 +42,7 @@ class GraspableMathServiceTest {
     }
 
     private Long createExercise() {
-        final var teacher = this.userRepository.findByUsername("teacher");
-        assertNotNull(teacher, "seeded teacher must exist");
-        final var dto = new ExerciseDto();
-        final var suffix = UUID.randomUUID().toString().substring(0, 8);
-        dto.title = "ex_" + suffix;
-        dto.content = "content " + suffix;
-        dto.userPublicId = teacher.publicId;
-        dto.published = true;
-        dto.commentable = false;
-        final ExerciseViewDto created = this.exerciseService.createExercise(dto);
-        return created.id;
+        return TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
     }
 
     @Test

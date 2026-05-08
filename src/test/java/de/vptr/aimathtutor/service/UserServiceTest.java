@@ -299,9 +299,7 @@ class UserServiceTest {
     @DisplayName("changePassword throws ValidationException for wrong current password")
     @TestTransaction
     void testChangePassword_wrongCurrentPassword() {
-        final UserDto dto = this.buildValidDto();
-        final UserViewDto created = this.userService.createUser(dto);
-        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        final var entity = this.createAndFetchUser();
 
         assertThrows(ValidationException.class,
                 () -> this.userService.changePassword(entity.id, "WrongP@ss1", "N3wP@ssword!"));
@@ -327,9 +325,7 @@ class UserServiceTest {
     @DisplayName("updateAvatars throws ValidationException for blank user emoji")
     @TestTransaction
     void testUpdateAvatars_blankUserEmoji() {
-        final UserDto dto = this.buildValidDto();
-        final UserViewDto created = this.userService.createUser(dto);
-        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        final var entity = this.createAndFetchUser();
 
         assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "", "🤖"));
     }
@@ -397,5 +393,11 @@ class UserServiceTest {
         assertEquals(update.username, updated.username);
         assertEquals(update.email, updated.email);
         assertTrue(updated.activated);
+    }
+
+    private UserEntity createAndFetchUser() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+        return this.userRepository.findByPublicId(created.publicId).orElseThrow();
     }
 }

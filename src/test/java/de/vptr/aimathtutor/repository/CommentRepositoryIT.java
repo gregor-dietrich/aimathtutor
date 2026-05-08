@@ -9,7 +9,6 @@ import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -18,7 +17,7 @@ import jakarta.inject.Inject;
  * Integration tests for {@link CommentRepository}.
  */
 @QuarkusTest
-public class CommentRepositoryIT {
+public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
     CommentRepository commentRepository;
@@ -29,36 +28,26 @@ public class CommentRepositoryIT {
     @Inject
     UserRankRepository userRankRepository;
 
-    private UserEntity createUser(final String suffix) {
-        final UserRankEntity rank = new UserRankEntity();
-        rank.name = "CmtRank_" + suffix;
-        this.userRankRepository.persist(rank);
-
-        final UserEntity user = new UserEntity();
-        user.username = "cmtuser_" + suffix;
-        user.password = "pw";
-        user.email = "cmtuser_" + suffix + "@example.com";
-        user.activated = true;
-        user.rank = rank;
-        this.userRepository.persist(user);
-        return user;
+    @Override
+    protected UserRepository userRepository() {
+        return this.userRepository;
     }
 
-    private ExerciseEntity createExercise(final UserEntity user, final String title) {
-        final ExerciseEntity ex = new ExerciseEntity();
-        ex.title = title;
-        ex.content = "x + 1";
-        ex.user = user;
-        ex.published = true;
-        this.exerciseRepository.persist(ex);
-        return ex;
+    @Override
+    protected ExerciseRepository exerciseRepository() {
+        return this.exerciseRepository;
+    }
+
+    @Override
+    protected UserRankRepository userRankRepository() {
+        return this.userRankRepository;
     }
 
     @Test
     @TestTransaction
     public void testFindByExerciseIdWithRelations_eagerFetch() {
-        final UserEntity user = this.createUser("eager");
-        final ExerciseEntity ex = this.createExercise(user, "EagerExercise");
+        final UserEntity user = this.createUser("eager", "cmtuser_");
+        final ExerciseEntity ex = this.createExercise(user, "EagerExercise", "x + 1");
 
         final CommentEntity comment = new CommentEntity();
         comment.content = "Nice!";
@@ -78,8 +67,8 @@ public class CommentRepositoryIT {
     @Test
     @TestTransaction
     public void testFindByStatus_returnsOnlyVisible() {
-        final UserEntity user = this.createUser("status");
-        final ExerciseEntity ex = this.createExercise(user, "StatusExercise");
+        final UserEntity user = this.createUser("status", "cmtuser_");
+        final ExerciseEntity ex = this.createExercise(user, "StatusExercise", "x + 1");
 
         final CommentEntity visible = new CommentEntity();
         visible.content = "Visible comment";
@@ -105,8 +94,8 @@ public class CommentRepositoryIT {
     @Test
     @TestTransaction
     public void testFindFlaggedComments_returnsAboveThreshold() {
-        final UserEntity user = this.createUser("flag");
-        final ExerciseEntity ex = this.createExercise(user, "FlagExercise");
+        final UserEntity user = this.createUser("flag", "cmtuser_");
+        final ExerciseEntity ex = this.createExercise(user, "FlagExercise", "x + 1");
 
         final CommentEntity flagged = new CommentEntity();
         flagged.content = "Flagged comment";
@@ -132,8 +121,8 @@ public class CommentRepositoryIT {
     @Test
     @TestTransaction
     public void testSearch_returnsMatchingComments() {
-        final UserEntity user = this.createUser("srch");
-        final ExerciseEntity ex = this.createExercise(user, "SearchExercise");
+        final UserEntity user = this.createUser("srch", "cmtuser_");
+        final ExerciseEntity ex = this.createExercise(user, "SearchExercise", "x + 1");
 
         final CommentEntity comment = new CommentEntity();
         comment.content = "UniqueSearchableContent_XYZ";

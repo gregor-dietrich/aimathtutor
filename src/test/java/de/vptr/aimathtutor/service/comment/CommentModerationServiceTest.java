@@ -18,6 +18,7 @@ import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.PermissionService;
+import de.vptr.aimathtutor.util.TestCommentFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -58,72 +59,62 @@ class CommentModerationServiceTest {
     @DisplayName("Should hide comment and set moderation fields")
     @TestTransaction
     void shouldHideComment() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var fixture = this.createModerationFixture();
 
-        this.moderationService.moderateComment(comment.publicId, "HIDE", moderator.id, "Offensive content");
+        this.moderationService.moderateComment(fixture.comment().publicId, "HIDE", fixture.moderator().id,
+                "Offensive content");
 
-        assertEquals(CommentStatus.HIDDEN, comment.status);
-        assertEquals("Offensive content", comment.moderationReason);
-        assertEquals("HIDE", comment.moderationAction);
-        assertNotNull(comment.moderatedAt);
-        assertEquals(moderator.id, comment.moderator.id);
+        assertEquals(CommentStatus.HIDDEN, fixture.comment().status);
+        assertEquals("Offensive content", fixture.comment().moderationReason);
+        assertEquals("HIDE", fixture.comment().moderationAction);
+        assertNotNull(fixture.comment().moderatedAt);
+        assertEquals(fixture.moderator().id, fixture.comment().moderator.id);
     }
 
     @Test
     @DisplayName("Should show comment and clear flags")
     @TestTransaction
     void shouldShowComment() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
-        comment.flagsCount = 3;
-        comment.deletedBy = moderator;
-        comment.deletedAt = LocalDateTime.now();
+        final var fixture = this.createModerationFixture();
+        fixture.comment().flagsCount = 3;
+        fixture.comment().deletedBy = fixture.moderator();
+        fixture.comment().deletedAt = LocalDateTime.now();
 
-        this.moderationService.moderateComment(comment.publicId, "SHOW", moderator.id, "Approved");
+        this.moderationService.moderateComment(fixture.comment().publicId, "SHOW", fixture.moderator().id, "Approved");
 
-        assertEquals(CommentStatus.VISIBLE, comment.status);
-        assertEquals(0, comment.flagsCount);
-        assertNull(comment.deletedBy);
-        assertNull(comment.deletedAt);
+        assertEquals(CommentStatus.VISIBLE, fixture.comment().status);
+        assertEquals(0, fixture.comment().flagsCount);
+        assertNull(fixture.comment().deletedBy);
+        assertNull(fixture.comment().deletedAt);
     }
 
     @Test
     @DisplayName("Should restore deleted comment")
     @TestTransaction
     void shouldRestoreComment() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
-        comment.status = CommentStatus.DELETED;
+        final var fixture = this.createModerationFixture();
+        fixture.comment().status = CommentStatus.DELETED;
 
-        this.moderationService.moderateComment(comment.publicId, "RESTORE", moderator.id, "Restored");
+        this.moderationService.moderateComment(fixture.comment().publicId, "RESTORE", fixture.moderator().id,
+                "Restored");
 
-        assertEquals(CommentStatus.VISIBLE, comment.status);
-        assertEquals(0, comment.flagsCount);
-        assertEquals("RESTORE", comment.moderationAction);
+        assertEquals(CommentStatus.VISIBLE, fixture.comment().status);
+        assertEquals(0, fixture.comment().flagsCount);
+        assertEquals("RESTORE", fixture.comment().moderationAction);
     }
 
     @Test
     @DisplayName("Should delete comment and set deleted fields")
     @TestTransaction
     void shouldDeleteComment() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var fixture = this.createModerationFixture();
 
-        this.moderationService.moderateComment(comment.publicId, "DELETE", moderator.id, "Spam");
+        this.moderationService.moderateComment(fixture.comment().publicId, "DELETE", fixture.moderator().id, "Spam");
 
-        assertEquals(CommentStatus.DELETED, comment.status);
-        assertEquals("DELETE", comment.moderationAction);
-        assertNotNull(comment.deletedAt);
-        assertEquals(moderator.id, comment.deletedBy.id);
+        assertEquals(CommentStatus.DELETED, fixture.comment().status);
+        assertEquals("DELETE", fixture.comment().moderationAction);
+        assertNotNull(fixture.comment().deletedAt);
+        assertEquals(fixture.moderator().id, fixture.comment().deletedBy.id);
     }
 
     @Test
@@ -140,12 +131,10 @@ class CommentModerationServiceTest {
     @DisplayName("Should throw BAD_REQUEST when moderator is not found")
     @TestTransaction
     void shouldThrowBadRequestWhenModeratorNotFound() {
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var fixture = this.createModerationFixture();
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", 99_999L, "reason"));
+                () -> this.moderationService.moderateComment(fixture.comment().publicId, "HIDE", 99_999L, "reason"));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -153,14 +142,11 @@ class CommentModerationServiceTest {
     @DisplayName("Should throw ValidationException for reason exceeding 500 chars")
     @TestTransaction
     void shouldThrowForLongReason() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var fixture = this.createModerationFixture();
 
         final String longReason = "a".repeat(501);
-        assertThrows(ValidationException.class,
-                () -> this.moderationService.moderateComment(comment.publicId, "HIDE", moderator.id, longReason));
+        assertThrows(ValidationException.class, () -> this.moderationService.moderateComment(fixture.comment().publicId,
+                "HIDE", fixture.moderator().id, longReason));
     }
 
     @Test
@@ -190,7 +176,7 @@ class CommentModerationServiceTest {
         final UserEntity moderator = this.userRepository.findById(1L);
         final UserEntity author = this.userRepository.findById(3L);
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, author);
         return new ModerationFixture(moderator, comment);
     }
 }

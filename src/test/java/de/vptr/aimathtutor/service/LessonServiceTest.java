@@ -185,14 +185,7 @@ class LessonServiceTest {
     void shouldReturnDtoWithInitializedCollections() {
         this.lessonService.createLesson(this.buildLesson("init"));
 
-        final var lessons = this.lessonService.getAllLessons();
-
-        assertFalse(lessons.isEmpty());
-        for (final var lesson : lessons) {
-            assertNotNull(lesson.childrenPublicIds, "childrenPublicIds should never be null");
-            assertTrue(lesson.childrenCount >= 0);
-            assertTrue(lesson.exercisesCount >= 0);
-        }
+        assertAllLessonsHaveValidCollections();
     }
 
     @Test
@@ -203,8 +196,11 @@ class LessonServiceTest {
 
         this.em.clear();
 
-        final var lessons = this.lessonService.getAllLessons();
+        assertAllLessonsHaveValidCollections();
+    }
 
+    private void assertAllLessonsHaveValidCollections() {
+        final var lessons = this.lessonService.getAllLessons();
         assertFalse(lessons.isEmpty());
         for (final var lesson : lessons) {
             assertNotNull(lesson.childrenPublicIds, "childrenPublicIds should never be null");

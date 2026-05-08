@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -19,7 +18,7 @@ import jakarta.inject.Inject;
  * Integration tests for {@link StudentSessionRepository}.
  */
 @QuarkusTest
-public class StudentSessionRepositoryIT {
+public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
     StudentSessionRepository sessionRepository;
@@ -30,36 +29,26 @@ public class StudentSessionRepositoryIT {
     @Inject
     UserRankRepository userRankRepository;
 
-    private UserEntity createUser(final String suffix) {
-        final UserRankEntity rank = new UserRankEntity();
-        rank.name = "SessRank_" + suffix;
-        this.userRankRepository.persist(rank);
-
-        final UserEntity user = new UserEntity();
-        user.username = "sessuser_" + suffix;
-        user.password = "pw";
-        user.email = "sessuser_" + suffix + "@example.com";
-        user.activated = true;
-        user.rank = rank;
-        this.userRepository.persist(user);
-        return user;
+    @Override
+    protected UserRepository userRepository() {
+        return this.userRepository;
     }
 
-    private ExerciseEntity createExercise(final UserEntity user, final String title) {
-        final ExerciseEntity ex = new ExerciseEntity();
-        ex.title = title;
-        ex.content = "x + 2";
-        ex.user = user;
-        ex.published = true;
-        this.exerciseRepository.persist(ex);
-        return ex;
+    @Override
+    protected ExerciseRepository exerciseRepository() {
+        return this.exerciseRepository;
+    }
+
+    @Override
+    protected UserRankRepository userRankRepository() {
+        return this.userRankRepository;
     }
 
     @Test
     @TestTransaction
     public void testFindByUserAndDateRange() {
-        final UserEntity user = this.createUser("drng");
-        final ExerciseEntity ex = this.createExercise(user, "DateRangeExercise");
+        final UserEntity user = this.createUser("drng", "sessuser_");
+        final ExerciseEntity ex = this.createExercise(user, "DateRangeExercise", "x + 2");
 
         final StudentSessionEntity session = new StudentSessionEntity();
         session.sessionId = "sess-drng-" + UUID.randomUUID();
@@ -78,8 +67,8 @@ public class StudentSessionRepositoryIT {
     @Test
     @TestTransaction
     public void testSearchByUserOrExerciseTerm_returnsMatchingSession() {
-        final UserEntity user = this.createUser("srch");
-        final ExerciseEntity ex = this.createExercise(user, "SearchableExercise");
+        final UserEntity user = this.createUser("srch", "sessuser_");
+        final ExerciseEntity ex = this.createExercise(user, "SearchableExercise", "x + 2");
 
         final StudentSessionEntity session = new StudentSessionEntity();
         session.sessionId = "sess-srch-" + UUID.randomUUID();
@@ -96,8 +85,8 @@ public class StudentSessionRepositoryIT {
     @Test
     @TestTransaction
     public void testCountActiveStudentsSince_includesRecentSession() {
-        final UserEntity user = this.createUser("cnt");
-        final ExerciseEntity ex = this.createExercise(user, "CountExercise");
+        final UserEntity user = this.createUser("cnt", "sessuser_");
+        final ExerciseEntity ex = this.createExercise(user, "CountExercise", "x + 2");
 
         final StudentSessionEntity session = new StudentSessionEntity();
         session.sessionId = "sess-cnt-" + UUID.randomUUID();
@@ -113,8 +102,8 @@ public class StudentSessionRepositoryIT {
     @Test
     @TestTransaction
     public void testFindByUserId_returnsUserSessions() {
-        final UserEntity user = this.createUser("byuid");
-        final ExerciseEntity ex = this.createExercise(user, "ByUserExercise");
+        final UserEntity user = this.createUser("byuid", "sessuser_");
+        final ExerciseEntity ex = this.createExercise(user, "ByUserExercise", "x + 2");
 
         final StudentSessionEntity session = new StudentSessionEntity();
         session.sessionId = "sess-byuid-" + UUID.randomUUID();

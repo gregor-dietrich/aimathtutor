@@ -166,10 +166,7 @@ public class UserRankService {
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankEdit();
 
-        final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
-        if (existingRank == null) {
-            throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
-        }
+        final UserRankEntity existingRank = this.requireRankFound(publicId);
 
         // Complete replacement (PUT semantics)
         existingRank.name = rankDto.name;
@@ -195,10 +192,7 @@ public class UserRankService {
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankEdit();
 
-        final UserRankEntity existingRank = this.userRankRepository.findByPublicId(publicId).orElse(null);
-        if (existingRank == null) {
-            throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
-        }
+        final UserRankEntity existingRank = this.requireRankFound(publicId);
 
         // Partial update (PATCH semantics) - only update provided fields
         if (rankDto.name != null) {
@@ -346,5 +340,13 @@ public class UserRankService {
         if (source.userRankEdit != null) {
             target.userRankEdit = source.userRankEdit;
         }
+    }
+
+    private UserRankEntity requireRankFound(final String publicId) {
+        final var existing = this.userRankRepository.findByPublicId(publicId).orElse(null);
+        if (existing == null) {
+            throw new WebApplicationException("User rank not found", Response.Status.NOT_FOUND);
+        }
+        return existing;
     }
 }

@@ -458,6 +458,14 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         dialog.open();
     }
 
+    private void invalidatePendingGeneration() {
+        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
+            this.pendingProblemFuture.cancel(true);
+        }
+        this.pendingProblemFuture = null;
+        ++this.problemRequestId;
+    }
+
     /**
      * Loads a custom problem into the Graspable Math canvas.
      */
@@ -467,12 +475,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
             return;
         }
 
-        // Invalidate any in-flight generation
-        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
-            this.pendingProblemFuture.cancel(true);
-        }
-        this.pendingProblemFuture = null;
-        ++this.problemRequestId;
+        this.invalidatePendingGeneration();
 
         ui.getPage().executeJs("""
                 window.currentProblemRequestId = $1;
@@ -561,12 +564,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
             return;
         }
 
-        // Invalidate any in-flight generation
-        if (this.pendingProblemFuture != null && !this.pendingProblemFuture.isDone()) {
-            this.pendingProblemFuture.cancel(true);
-        }
-        this.pendingProblemFuture = null;
-        ++this.problemRequestId;
+        this.invalidatePendingGeneration();
 
         ui.getPage().executeJs("""
                 window.currentProblemRequestId = $0;
