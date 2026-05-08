@@ -13,7 +13,8 @@ import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
  */
 public final class RetryAnnotationVerifier {
 
-    private RetryAnnotationVerifier() {}
+    private RetryAnnotationVerifier() {
+    }
 
     /**
      * Verifies the retry annotation on the given method.

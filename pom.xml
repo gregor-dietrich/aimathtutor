@@ -38,6 +38,7 @@
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
         <spotless-plugin.version>3.4.0</spotless-plugin.version>
+        <eclipse-formatter.version>4.35</eclipse-formatter.version>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
         <ulid-creator.version>5.2.4</ulid-creator.version>
         <vaadin.version>25.1.5</vaadin.version>
@@ -462,6 +463,7 @@
                     <java>
                         <eclipse>
                             <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
+                            <version>${eclipse-formatter.version}</version>
                         </eclipse>
                         <importOrder>
                             <order>java,javax,org,com,#</order>

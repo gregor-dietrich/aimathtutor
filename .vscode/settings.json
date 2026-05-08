@@ -3,6 +3,8 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "redhat.java"
   },
+  "java.format.settings.url": "eclipse-formatter.xml",
+  "java.format.settings.profile": "AIMathTutor",
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

@@ -22,7 +22,8 @@ public final class PasswordUtility {
         }
     }
 
-    private PasswordUtility() {}
+    private PasswordUtility() {
+    }
 
     /**
      * Entry point for the password hashing utility CLI. Accepts command-line arguments to generate password hashes.

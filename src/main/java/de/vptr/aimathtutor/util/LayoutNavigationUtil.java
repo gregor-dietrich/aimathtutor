@@ -10,7 +10,8 @@ import com.vaadin.flow.component.UI;
  */
 public final class LayoutNavigationUtil {
 
-    private LayoutNavigationUtil() {}
+    private LayoutNavigationUtil() {
+    }
 
     /**
      * Updates button visibility based on the current route path.

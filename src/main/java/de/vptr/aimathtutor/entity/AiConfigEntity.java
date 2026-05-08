@@ -67,7 +67,8 @@ public class AiConfigEntity extends BaseEntity {
     /**
      * Default constructor for Hibernate.
      */
-    public AiConfigEntity() {}
+    public AiConfigEntity() {
+    }
 
     /**
      * Constructor with required fields.

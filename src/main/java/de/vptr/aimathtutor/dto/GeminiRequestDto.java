@@ -28,7 +28,8 @@ public class GeminiRequestDto {
         public List<Part> parts;
         public String role; // "user" or "model"
 
-        public Content() {}
+        public Content() {
+        }
 
         public Content(final String text) {
             this.parts = List.of(new Part(text));
@@ -42,7 +43,8 @@ public class GeminiRequestDto {
     public static class Part {
         public String text;
 
-        public Part() {}
+        public Part() {
+        }
 
         public Part(final String text) {
             this.text = text;
@@ -61,7 +63,8 @@ public class GeminiRequestDto {
         @JsonProperty("topK")
         public Integer topK;
 
-        public GenerationConfig() {}
+        public GenerationConfig() {
+        }
 
         public GenerationConfig(final Double temperature, final Integer maxOutputTokens) {
             this.temperature = temperature;
@@ -76,7 +79,8 @@ public class GeminiRequestDto {
         public String category;
         public String threshold;
 
-        public SafetySetting() {}
+        public SafetySetting() {
+        }
 
         public SafetySetting(final String category, final String threshold) {
             this.category = category;

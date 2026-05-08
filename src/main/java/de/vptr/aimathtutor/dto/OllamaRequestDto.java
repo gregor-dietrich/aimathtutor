@@ -28,7 +28,8 @@ public class OllamaRequestDto {
         @JsonProperty("top_k")
         public Integer topK;
 
-        public Options() {}
+        public Options() {
+        }
 
         public Options(final Double temperature, final Integer numPredict) {
             this.temperature = temperature;

@@ -15,7 +15,8 @@ import de.vptr.aimathtutor.service.ExerciseService;
  */
 public final class TestExerciseFactory {
 
-    private TestExerciseFactory() {}
+    private TestExerciseFactory() {
+    }
 
     /**
      * Creates a test exercise owned by the seeded teacher user.

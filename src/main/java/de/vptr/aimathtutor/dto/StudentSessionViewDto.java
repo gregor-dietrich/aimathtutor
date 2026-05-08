@@ -29,7 +29,8 @@ public class StudentSessionViewDto {
     public Long durationSeconds;
     public Double successRate;
 
-    public StudentSessionViewDto() {}
+    public StudentSessionViewDto() {
+    }
 
     /**
      * Constructs a StudentSessionViewDto from a StudentSessionEntity.

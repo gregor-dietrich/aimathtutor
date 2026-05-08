@@ -539,7 +539,7 @@
         <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_enum_declaration"
             value="do not insert" />
         <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_method_body"
-            value="do not insert" />
+            value="insert" />
         <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_type_declaration"
             value="do not insert" />
         <setting id="org.eclipse.jdt.core.formatter.join_lines_in_comments" value="true" />

@@ -19,7 +19,8 @@ public class StudentProgressSummaryDto {
     public Double successRate;
     public LocalDateTime lastActivity;
 
-    public StudentProgressSummaryDto() {}
+    public StudentProgressSummaryDto() {
+    }
 
     /**
      * Constructs a StudentProgressSummaryDto with the specified parameters.

@@ -98,7 +98,8 @@ public class CommentDto {
         /**
          * Default constructor for JSON mapping.
          */
-        public ExerciseField() {}
+        public ExerciseField() {
+        }
 
         /**
          * Constructs an ExerciseField with the given public ID.

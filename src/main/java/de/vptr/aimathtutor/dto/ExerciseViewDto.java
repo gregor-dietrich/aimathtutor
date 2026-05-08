@@ -35,7 +35,8 @@ public class ExerciseViewDto {
     public DifficultyLevel graspableDifficulty;
     public String graspableHints;
 
-    public ExerciseViewDto() {}
+    public ExerciseViewDto() {
+    }
 
     /**
      * Constructs an ExerciseViewDto from an ExerciseEntity.

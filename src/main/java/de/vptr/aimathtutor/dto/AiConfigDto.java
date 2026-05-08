@@ -122,7 +122,8 @@ public class AiConfigDto {
     /**
      * Default constructor for serialization.
      */
-    public AiConfigDto() {}
+    public AiConfigDto() {
+    }
 
     /**
      * Constructor with required fields.

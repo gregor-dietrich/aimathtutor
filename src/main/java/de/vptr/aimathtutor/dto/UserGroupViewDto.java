@@ -11,7 +11,8 @@ public class UserGroupViewDto {
     public String name;
     public Long userCount;
 
-    public UserGroupViewDto() {}
+    public UserGroupViewDto() {
+    }
 
     /**
      * Constructs a UserGroupViewDto from a UserGroupEntity.

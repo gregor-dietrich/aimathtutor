@@ -48,7 +48,8 @@ public class ChatMessageDto {
     @JsonProperty("related_action")
     public String relatedAction;
 
-    public ChatMessageDto() {}
+    public ChatMessageDto() {
+    }
 
     /**
      * Constructs a ChatMessageDto with the specified sender, type, and message.

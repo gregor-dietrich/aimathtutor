@@ -14,7 +14,8 @@ import de.vptr.aimathtutor.entity.UserEntity;
  */
 public final class AiChatUtil {
 
-    private AiChatUtil() {}
+    private AiChatUtil() {
+    }
 
     /**
      * Pair of user and tutor avatar strings.

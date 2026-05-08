@@ -8,7 +8,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class ExecutorShutdownUtil {
 
-    private ExecutorShutdownUtil() {}
+    private ExecutorShutdownUtil() {
+    }
 
     /**
      * Shuts down the given executor service, waiting up to the specified timeout for tasks to complete before forcing

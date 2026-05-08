@@ -13,7 +13,8 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
  */
 public final class AdminSearchLayoutFactory {
 
-    private AdminSearchLayoutFactory() {}
+    private AdminSearchLayoutFactory() {
+    }
 
     /**
      * Mutable holder for components created by the factory.

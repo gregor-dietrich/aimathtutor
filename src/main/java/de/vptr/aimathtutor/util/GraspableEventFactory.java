@@ -7,7 +7,8 @@ import de.vptr.aimathtutor.dto.GraspableEventDto;
  */
 public final class GraspableEventFactory {
 
-    private GraspableEventFactory() {}
+    private GraspableEventFactory() {
+    }
 
     /**
      * Creates a math action event with the given parameters.

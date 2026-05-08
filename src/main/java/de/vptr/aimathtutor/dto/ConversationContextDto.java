@@ -24,7 +24,8 @@ public class ConversationContextDto {
     @JsonProperty("recent_ai_messages")
     private final List<ChatMessageDto> recentAiMessages = new CopyOnWriteArrayList<>();
 
-    public ConversationContextDto() {}
+    public ConversationContextDto() {
+    }
 
     /**
      * Constructs a ConversationContextDto with the specified lists.

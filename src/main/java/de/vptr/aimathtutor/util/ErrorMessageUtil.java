@@ -12,7 +12,8 @@ import jakarta.ws.rs.core.Response;
  */
 public final class ErrorMessageUtil {
 
-    private ErrorMessageUtil() {}
+    private ErrorMessageUtil() {
+    }
 
     private static final Logger LOG = Logger.getLogger(ErrorMessageUtil.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
