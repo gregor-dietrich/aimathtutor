@@ -4,49 +4,12 @@ IMAGE_NAME=gregordietrich/aimathtutor
 
 . "$(dirname "$0")"/lib/get_dir.sh
 
-prompt_yes_no() {
-    local question="$1"
-    local default_answer="$2"
-
-    if [ -z "$question" ]; then
-        question="Proceed"
-    fi
-
-    if [ -z "$default_answer" ]; then
-        default_answer="n"
-    fi
-
-    case "$default_answer" in
-        [yYjJ])
-            question="${question}? [Y/n]: "
-            ;;
-        *)
-            question="${question}? [y/N]: "
-            ;;
-    esac
-
-    read -r -p "${question}" reply
-    case "$reply" in
-        [yYjJ])
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
 set -e
 
 read -p "Enter the new tag [1.0.0-SNAPSHOT]: " REVISION
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 TAG="${IMAGE_NAME}:${REVISION}"
 export REVISION=${REVISION}
-
-RUN_TESTS=false
-if prompt_yes_no "Do you want to run tests" n; then
-    RUN_TESTS=true
-fi
 
 cd "$DIR/.."
 
