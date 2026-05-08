@@ -110,8 +110,17 @@ public final class ErrorMessageUtil {
         if (messageStart >= responseBody.length() || responseBody.charAt(messageStart) != '"') {
             return null;
         }
-        final var messageEnd = responseBody.indexOf("\"", messageStart + 1);
-        if (messageEnd == -1) {
+        int messageEnd = messageStart + 1;
+        boolean escaped = false;
+        while (messageEnd < responseBody.length()) {
+            final char ch = responseBody.charAt(messageEnd);
+            if (ch == '"' && !escaped) {
+                break;
+            }
+            escaped = ch == '\\' && !escaped;
+            messageEnd++;
+        }
+        if (messageEnd >= responseBody.length()) {
             return null;
         }
         final var message = responseBody.substring(messageStart + 1, messageEnd);
