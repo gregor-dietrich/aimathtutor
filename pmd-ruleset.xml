@@ -57,11 +57,6 @@
         <exclude name="SwitchStmtsShouldHaveDefault" />
         <exclude name="UnitTestAssertionsShouldIncludeMessage" />
         <exclude name="UnitTestContainsTooManyAsserts" />
-        <exclude name="UnusedAssignment" />
-        <exclude name="UnusedFormalParameter" />
-        <exclude name="UnusedLocalVariable" />
-        <exclude name="UnusedPrivateField" />
-        <exclude name="UnusedPrivateMethod" />
         <exclude name="UseCollectionIsEmpty" />
         <exclude name="UseVarargs" />
     </rule>
@@ -70,26 +65,18 @@
     <rule ref="category/java/design.xml">
         <exclude name="AvoidCatchingGenericException" />
         <exclude name="AvoidDeeplyNestedIfStmts" />
-        <exclude name="CognitiveComplexity" />
         <exclude name="ExceptionAsFlowControl" />
         <exclude name="LoosePackageCoupling" />
         <exclude name="CouplingBetweenObjects" />
-        <exclude name="CyclomaticComplexity" />
         <exclude name="DataClass" />
         <exclude name="ExcessiveImports" />
-        <exclude name="ExcessiveMethodLength" />
         <exclude name="ExcessiveParameterList" />
-        <exclude name="ExcessivePublicCount" />
-        <exclude name="GodClass" />
         <exclude name="LawOfDemeter" />
-        <exclude name="NPathComplexity" />
         <exclude name="NcssCount" />
         <exclude name="SignatureDeclareThrowsException" />
         <exclude name="SimplifiedTernary" />
         <exclude name="SingularField" />
         <exclude name="SwitchDensity" />
-        <exclude name="TooManyFields" />
-        <exclude name="TooManyMethods" />
         <exclude name="UseObjectForClearerAPI" />
     </rule>
 
@@ -116,7 +103,6 @@
         <exclude name="TooManyStaticImports" />
         <exclude name="UnnecessaryCast" />
         <exclude name="UnnecessaryFullyQualifiedName" />
-        <exclude name="UnnecessaryImport" />
         <exclude name="UnnecessaryLocalBeforeReturn" />
         <exclude name="UnnecessaryModifier" />
         <exclude name="UnnecessaryReturn" />

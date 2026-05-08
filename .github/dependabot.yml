@@ -25,4 +25,5 @@ updates:
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    patterns: ["*"]
     multi-ecosystem-group: "infrastructure"
