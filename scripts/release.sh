@@ -19,17 +19,12 @@ git switch main
 
 git pull
 
-make clean
-
-make install
-
-make lint
-
-make test
-
-make build
-
-make tag
+. scripts/clean.sh
+. scripts/install.sh
+. scripts/lint.sh
+. scripts/test.sh
+. scripts/build.sh
+. scripts/tag.sh
 
 docker login
 
