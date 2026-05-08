@@ -54,6 +54,24 @@ public final class AdminSearchLayoutFactory {
     public static SearchLayout create(final Runnable onClear, final Runnable onSearch, final String placeholder,
             final String buttonLabel, final Runnable onDateFilter, final Runnable onReset, final Runnable onRefresh,
             final Components out) {
+        if (onClear == null) {
+            throw new IllegalArgumentException("onClear must not be null");
+        }
+        if (onSearch == null) {
+            throw new IllegalArgumentException("onSearch must not be null");
+        }
+        if (onDateFilter == null) {
+            throw new IllegalArgumentException("onDateFilter must not be null");
+        }
+        if (onReset == null) {
+            throw new IllegalArgumentException("onReset must not be null");
+        }
+        if (onRefresh == null) {
+            throw new IllegalArgumentException("onRefresh must not be null");
+        }
+        if (out == null) {
+            throw new IllegalArgumentException("out must not be null");
+        }
         final var searchLayout = new SearchLayout(e -> {
             if (e.getValue() == null || e.getValue().isBlank()) {
                 onClear.run();

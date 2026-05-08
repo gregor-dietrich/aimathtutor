@@ -22,11 +22,16 @@ public class DeleteButton extends Button {
      */
     public DeleteButton(final ComponentEventListener<ClickEvent<Button>> deleteAction, final String tooltipText) {
         super("");
+        if (deleteAction == null) {
+            throw new IllegalArgumentException("deleteAction must not be null");
+        }
         this.deleteAction = deleteAction;
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
         this.setIcon(LineAwesomeIcon.TRASH_ALT_SOLID.create());
-        this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
-        this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
+        final String label =
+                (tooltipText != null && !tooltipText.trim().isEmpty()) ? tooltipText.trim() : DEFAULT_TOOLTIP;
+        this.setTooltipText(label);
+        this.getElement().setAttribute("aria-label", label);
         this.addClickListener(this::showConfirmationDialog);
     }
 
@@ -35,11 +40,7 @@ public class DeleteButton extends Button {
     }
 
     private void showConfirmationDialog(final ClickEvent<Button> event) {
-        final var confirmDialog = new ConfirmationDialog(e -> {
-            if (this.deleteAction != null) {
-                this.deleteAction.onComponentEvent(event);
-            }
-        });
+        final var confirmDialog = new ConfirmationDialog(e -> this.deleteAction.onComponentEvent(event));
         confirmDialog.open();
     }
 }

@@ -23,13 +23,15 @@ public final class ErrorMessageUtil {
      * text.
      */
     public static String extractErrorMessage(final Response response) {
+        final int status = response != null ? response.getStatus() : -1;
         try {
-            // Try to read the response body as a structured error
-            if (response.hasEntity() && response.getStatus() >= 400) {
+            if (response == null) {
+                return "HTTP " + status;
+            }
+            if (response.hasEntity() && status >= 400) {
                 final String responseBody = response.readEntity(String.class);
                 if (responseBody != null && !responseBody.isBlank()) {
                     final String trimmed = responseBody.trim();
-                    // Try structured JSON first
                     if (trimmed.startsWith("{")) {
                         try {
                             final JsonNode root = OBJECT_MAPPER.readTree(trimmed);
@@ -38,25 +40,21 @@ public final class ErrorMessageUtil {
                                 return msg;
                             }
                         } catch (final Exception e) {
-                            // JSON parsing failed — fall through to regex/plain-text fallback
                             LOG.debugf(e, "JSON parse failed for error response, trying regex fallback");
                         }
-                        // Fallback for malformed JSON: try regex extraction
                         final String regexMsg = extractMessageWithRegex(trimmed);
-                        if (regexMsg != null) {
+                        if (regexMsg != null && !regexMsg.isEmpty()) {
                             return regexMsg;
                         }
                     }
-                    // If no structured message found, return the whole body (might be plain text)
                     return trimmed;
                 }
             }
         } catch (final Exception e) {
-            LOG.warnf(e, "Failed to extract error message from %s response", response.getStatus());
+            LOG.warnf(e, "Failed to extract error message from HTTP %s response", status);
         }
 
-        // Fall back to HTTP status
-        return "HTTP " + response.getStatus();
+        return "HTTP " + status;
     }
 
     private static String findMessageNode(final JsonNode root) {
@@ -76,6 +74,16 @@ public final class ErrorMessageUtil {
     }
 
     private static String extractMessageWithRegex(final String responseBody) {
+        try {
+            final JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+            final String msg = findMessageNode(root);
+            if (msg != null && !msg.isEmpty()) {
+                return msg;
+            }
+        } catch (final Exception e) {
+            // Not valid JSON, fall through to regex
+        }
+
         if (!responseBody.contains("\"message\"")) {
             return null;
         }
@@ -83,12 +91,23 @@ public final class ErrorMessageUtil {
         if (messageStart == -1) {
             return null;
         }
-        messageStart = responseBody.indexOf(":", messageStart) + 1;
+        final int colonPos = responseBody.indexOf(":", messageStart);
+        if (colonPos == -1) {
+            return null;
+        }
+        messageStart = colonPos + 1;
+        while (messageStart < responseBody.length() && Character.isWhitespace(responseBody.charAt(messageStart))) {
+            messageStart++;
+        }
+        if (messageStart >= responseBody.length() || responseBody.charAt(messageStart) != '"') {
+            return null;
+        }
         final var messageEnd = responseBody.indexOf("\"", messageStart + 1);
         if (messageEnd == -1) {
             return null;
         }
         final var message = responseBody.substring(messageStart + 1, messageEnd);
-        return message.trim();
+        final String trimmed = message.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

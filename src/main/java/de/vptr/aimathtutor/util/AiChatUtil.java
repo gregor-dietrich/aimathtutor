@@ -85,6 +85,9 @@ public final class AiChatUtil {
      */
     public static void handleAsyncAnswer(final UI ui, final ChatMessageDto answer, final AiChatPanel chatPanel,
             final ConversationContextDto conversationContext) {
+        if (ui == null || !ui.isAttached()) {
+            return;
+        }
         ui.access(() -> displayAiAnswer(answer, chatPanel, conversationContext));
     }
 
@@ -102,6 +105,9 @@ public final class AiChatUtil {
      */
     public static void handleAsyncError(final UI ui, final Throwable ex, final AiChatPanel chatPanel,
             final Logger log) {
+        if (ui == null || !ui.isAttached()) {
+            return;
+        }
         ui.access(() -> displayAiError(ex, chatPanel, log));
     }
 }

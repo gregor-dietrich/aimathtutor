@@ -25,6 +25,7 @@ import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -85,6 +86,9 @@ class AnalyticsServiceTest {
         final var userForInteraction = this.userRepository.findById(studentId);
         assertNotNull(userForInteraction, "Seeded student1 must exist");
         interaction.user = userForInteraction;
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        interaction.exercise = exercise;
         interaction.eventType = eventType;
         interaction.feedbackType = feedbackType;
         this.aiInteractionRepository.persist(interaction);
@@ -109,7 +113,7 @@ class AnalyticsServiceTest {
 
     private SessionFixture createSessionFixture() {
         final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
+        final Long exerciseId = TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
         final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
         return new SessionFixture(studentId, exerciseId, sessionId);
     }

@@ -154,11 +154,23 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     private void displayComments(final List<CommentViewDto> comments) {
-        this.commentsContainer.removeAll();
+        if (this.currentPage == 0) {
+            this.commentsContainer.removeAll();
+        }
 
-        if (comments.isEmpty()) {
+        if (comments.isEmpty() && this.currentPage == 0) {
             this.commentsContainer.add(new Span("No comments yet. Be the first to comment!"));
             return;
+        }
+
+        if (comments.isEmpty()) {
+            return;
+        }
+
+        if (this.currentPage > 0) {
+            this.commentsContainer.getChildren()
+                    .filter(c -> c instanceof Button && "Load More Comments".equals(((Button) c).getText())).findFirst()
+                    .ifPresent(this.commentsContainer::remove);
         }
 
         for (final CommentViewDto comment : comments) {

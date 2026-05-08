@@ -30,17 +30,23 @@ public final class LayoutNavigationUtil {
     public static void updateButtonVisibility(final Optional<UI> ui, final boolean authenticated,
             final Predicate<String> shouldShowButtons, final Runnable showButtons, final Runnable hideButtons) {
         if (authenticated) {
-            ui.ifPresent(currentUi -> {
-                final var location = currentUi.getInternals().getActiveViewLocation();
-                if (location != null) {
-                    final var path = location.getPath();
-                    if (shouldShowButtons.test(path)) {
-                        showButtons.run();
-                    } else {
+            if (ui.isEmpty()) {
+                hideButtons.run();
+            } else {
+                ui.ifPresent(currentUi -> {
+                    final var location = currentUi.getInternals().getActiveViewLocation();
+                    if (location == null) {
                         hideButtons.run();
+                    } else {
+                        final var path = location.getPath();
+                        if (shouldShowButtons.test(path)) {
+                            showButtons.run();
+                        } else {
+                            hideButtons.run();
+                        }
                     }
-                }
-            });
+                });
+            }
         } else {
             hideButtons.run();
         }
