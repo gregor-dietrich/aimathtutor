@@ -7,8 +7,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.Lumo;
 
 /**
- * Application shell configuration (theme, page title and push settings) for
- * the Vaadin application.
+ * Application shell configuration (theme, page title and push settings) for the Vaadin application.
  */
 @StyleSheet("/" + Lumo.STYLESHEET)
 @StyleSheet("/styles.css")

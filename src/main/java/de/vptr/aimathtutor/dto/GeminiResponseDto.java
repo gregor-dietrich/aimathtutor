@@ -3,12 +3,10 @@ package de.vptr.aimathtutor.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Response DTO for Google Gemini API
- * Based on Gemini REST API specification
+ * Response DTO for Google Gemini API Based on Gemini REST API specification
  */
 public class GeminiResponseDto {
 
@@ -21,11 +19,13 @@ public class GeminiResponseDto {
      * Represents a candidate in the Gemini response.
      */
     public static class Candidate {
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Populated by Jackson at runtime")
+        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "Populated by Jackson at runtime")
         public Content content;
         @JsonProperty("finishReason")
         public String finishReason;
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Index provided by Gemini but not used by the client")
+        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "Index provided by Gemini but not used by the client")
         public Integer index;
         @JsonProperty("safetyRatings")
         public List<SafetyRating> safetyRatings;
@@ -35,9 +35,11 @@ public class GeminiResponseDto {
      * Represents content in the Gemini response.
      */
     public static class Content {
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Populated by Jackson at runtime")
+        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "Populated by Jackson at runtime")
         public List<Part> parts;
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Role may be present in responses but not used by the client")
+        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "Role may be present in responses but not used by the client")
         public String role;
     }
 
@@ -45,7 +47,8 @@ public class GeminiResponseDto {
      * Represents a part in the Gemini response content.
      */
     public static class Part {
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "JSON mapping DTO fields are public and populated by Jackson")
+        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "JSON mapping DTO fields are public and populated by Jackson")
         public String text;
     }
 
@@ -53,9 +56,11 @@ public class GeminiResponseDto {
      * Represents a safety rating in the Gemini response.
      */
     public static class SafetyRating {
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Safety rating fields are optional in API responses")
+        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "Safety rating fields are optional in API responses")
         public String category;
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Probability may exist but is not used by the client")
+        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
+                justification = "Probability may exist but is not used by the client")
         public String probability;
     }
 
@@ -103,8 +108,8 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Check if the response was truncated due to the token limit
-     * (Gemini reports {@code "MAX_TOKENS"} as the finish reason).
+     * Check if the response was truncated due to the token limit (Gemini reports {@code "MAX_TOKENS"} as the finish
+     * reason).
      */
     public boolean isTruncated() {
         if (this.candidates == null || this.candidates.isEmpty()) {

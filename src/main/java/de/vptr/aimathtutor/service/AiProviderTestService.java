@@ -16,8 +16,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for testing connectivity to AI providers.
- * Performs lightweight health checks without consuming API quota.
+ * Service for testing connectivity to AI providers. Performs lightweight health checks without consuming API quota.
  */
 @ApplicationScoped
 public class AiProviderTestService {
@@ -37,9 +36,8 @@ public class AiProviderTestService {
     @Inject
     AiConfigService aiConfigService;
 
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS))
-            .build();
+    private final HttpClient httpClient =
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).build();
 
     /**
      * Tests connection to the mock provider (always succeeds).
@@ -49,26 +47,21 @@ public class AiProviderTestService {
     }
 
     /**
-     * Tests connection to Gemini.
-     * Verifies API key is configured and the endpoint is reachable.
+     * Tests connection to Gemini. Verifies API key is configured and the endpoint is reachable.
      */
     public AiProviderTestResultDto testGemini() {
         if (!this.geminiService.isConfigured()) {
-            return AiProviderTestResultDto.fail(
-                    "Gemini API key not configured. Set the GEMINI_API_KEY environment variable.");
+            return AiProviderTestResultDto
+                    .fail("Gemini API key not configured. Set the GEMINI_API_KEY environment variable.");
         }
 
         final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GEMINI_API_BASE_URL,
                 "https://generativelanguage.googleapis.com");
         try {
-            final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/v1beta/models"))
-                    .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS))
-                    .GET()
-                    .build();
+            final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + "/v1beta/models"))
+                    .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).GET().build();
 
-            final HttpResponse<String> response = this.httpClient.send(request,
-                    HttpResponse.BodyHandlers.ofString());
+            final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 401 || response.statusCode() == 403) {
                 return AiProviderTestResultDto.ok("Gemini endpoint is reachable (authentication required)");
@@ -76,39 +69,33 @@ public class AiProviderTestService {
             if (response.statusCode() == 200) {
                 return AiProviderTestResultDto.ok("Gemini connection successful");
             }
-            return AiProviderTestResultDto.fail(
-                    "Gemini returned unexpected status: " + response.statusCode());
+            return AiProviderTestResultDto.fail("Gemini returned unexpected status: " + response.statusCode());
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("Gemini connection test interrupted", e);
             return AiProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
-            LOG.warnf(e, "Gemini endpoint unreachable: %s",  e.getMessage());
+            LOG.warnf(e, "Gemini endpoint unreachable: %s", e.getMessage());
             return AiProviderTestResultDto.fail("Cannot reach Gemini endpoint: " + e.getMessage());
         }
     }
 
     /**
-     * Tests connection to OpenAI.
-     * Verifies API key is configured and the endpoint is reachable.
+     * Tests connection to OpenAI. Verifies API key is configured and the endpoint is reachable.
      */
     public AiProviderTestResultDto testOpenAi() {
         if (!this.openAiService.isConfigured()) {
-            return AiProviderTestResultDto.fail(
-                    "OpenAI API key not configured. Set the OPENAI_API_KEY environment variable.");
+            return AiProviderTestResultDto
+                    .fail("OpenAI API key not configured. Set the OPENAI_API_KEY environment variable.");
         }
 
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL,
-                "https://api.openai.com/v1");
+        final String baseUrl =
+                this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1");
         try {
-            final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(baseUrl + "/models"))
-                    .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS))
-                    .GET()
-                    .build();
+            final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + "/models"))
+                    .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).GET().build();
 
-            final HttpResponse<String> response = this.httpClient.send(request,
-                    HttpResponse.BodyHandlers.ofString());
+            final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 401) {
                 return AiProviderTestResultDto.ok("OpenAI endpoint is reachable (authentication required)");
@@ -116,26 +103,24 @@ public class AiProviderTestService {
             if (response.statusCode() == 200) {
                 return AiProviderTestResultDto.ok("OpenAI connection successful");
             }
-            return AiProviderTestResultDto.fail(
-                    "OpenAI returned unexpected status: " + response.statusCode());
+            return AiProviderTestResultDto.fail("OpenAI returned unexpected status: " + response.statusCode());
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("OpenAI connection test interrupted", e);
             return AiProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
-            LOG.warnf(e, "OpenAI endpoint unreachable: %s",  e.getMessage());
+            LOG.warnf(e, "OpenAI endpoint unreachable: %s", e.getMessage());
             return AiProviderTestResultDto.fail("Cannot reach OpenAI endpoint: " + e.getMessage());
         }
     }
 
     /**
-     * Tests connection to Ollama.
-     * Uses the Ollama /api/tags endpoint to verify the server is running.
+     * Tests connection to Ollama. Uses the Ollama /api/tags endpoint to verify the server is running.
      */
     public AiProviderTestResultDto testOllama() {
         if (!this.ollamaService.isAvailable()) {
-            return AiProviderTestResultDto.fail(
-                    "Ollama server is not available. Check that Ollama is running and the URL is correct.");
+            return AiProviderTestResultDto
+                    .fail("Ollama server is not available. Check that Ollama is running and the URL is correct.");
         }
         return AiProviderTestResultDto.ok("Ollama server is reachable");
     }

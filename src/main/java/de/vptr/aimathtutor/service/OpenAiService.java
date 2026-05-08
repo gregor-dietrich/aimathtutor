@@ -23,8 +23,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for interacting with OpenAI Chat Completions API
- * Supports GPT-4o, gpt-5-nano, GPT-3.5-turbo, etc.
+ * Service for interacting with OpenAI Chat Completions API Supports GPT-4o, gpt-5-nano, GPT-3.5-turbo, etc.
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
@@ -33,9 +32,11 @@ public class OpenAiService extends AbstractAiProviderService {
     private static final Logger LOG = Logger.getLogger(OpenAiService.class);
     private static final String DEFAULT_MODEL = "gpt-5-nano";
     private static final String DEFAULT_BASE_URL = "https://api.openai.com/v1";
-    private static final String CHAT_SYSTEM_PROMPT = "You are an encouraging AI math tutor helping students learn algebra. "
-            + "Provide clear, supportive feedback that guides students' thinking without giving away answers.";
-    private static final String JSON_SYSTEM_PROMPT = "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";
+    private static final String CHAT_SYSTEM_PROMPT =
+            "You are an encouraging AI math tutor helping students learn algebra. "
+                    + "Provide clear, supportive feedback that guides students' thinking without giving away answers.";
+    private static final String JSON_SYSTEM_PROMPT =
+            "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";
 
     @ConfigProperty(name = "openai.api.key", defaultValue = "")
     private String apiKey; // API key is always read from environment variable, never from database
@@ -71,10 +72,8 @@ public class OpenAiService extends AbstractAiProviderService {
             synchronized (this) {
                 localClient = this.client;
                 if (localClient == null) {
-                    this.client = localClient = ClientBuilder.newBuilder()
-                            .connectTimeout(10, TimeUnit.SECONDS)
-                            .readTimeout(60, TimeUnit.SECONDS)
-                            .build();
+                    this.client = localClient = ClientBuilder.newBuilder().connectTimeout(10, TimeUnit.SECONDS)
+                            .readTimeout(60, TimeUnit.SECONDS).build();
                     LOG.debug("Created OpenAI JAX-RS Client");
                 }
             }
@@ -102,10 +101,12 @@ public class OpenAiService extends AbstractAiProviderService {
     /**
      * Generate content using OpenAI Chat Completions API
      *
-     * @param prompt The user prompt
+     * @param prompt
+     *            The user prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
         return this.doGenerate(prompt, CHAT_SYSTEM_PROMPT, false);
     }
@@ -113,14 +114,15 @@ public class OpenAiService extends AbstractAiProviderService {
     /**
      * Generate content with JSON mode (guarantees valid JSON)
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateJsonContent(final String prompt) {
         return this.doGenerate(prompt, JSON_SYSTEM_PROMPT, true);
     }
 
     private String doGenerate(final String prompt, final String systemPrompt, final boolean jsonMode) {
-        LOG.debugf("Generating %s content with OpenAI for prompt length: %s", 
-                jsonMode ? "JSON" : "text",  prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating %s content with OpenAI for prompt length: %s", jsonMode ? "JSON" : "text",
+                prompt != null ? prompt.length() : 0);
 
         this.requireApiKey(this.apiKey, "OPENAI_API_KEY");
 
@@ -134,14 +136,13 @@ public class OpenAiService extends AbstractAiProviderService {
         this.requireConfigured(baseUrl, "OpenAI API URL");
 
         try {
-            final var request = jsonMode
-                    ? OpenAiRequestDto.createJsonRequest(systemPrompt, prompt, model, temperature, maxTokens)
-                    : OpenAiRequestDto.createChatRequest(systemPrompt, prompt, model, temperature, maxTokens);
+            final var request =
+                    jsonMode ? OpenAiRequestDto.createJsonRequest(systemPrompt, prompt, model, temperature, maxTokens)
+                            : OpenAiRequestDto.createChatRequest(systemPrompt, prompt, model, temperature, maxTokens);
 
             final String url = baseUrl + "/chat/completions";
 
-            Invocation.Builder requestBuilder = this.getClient().target(url)
-                    .request(MediaType.APPLICATION_JSON)
+            Invocation.Builder requestBuilder = this.getClient().target(url).request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);
 
             if (organizationId != null && !organizationId.isBlank()) {
@@ -152,7 +153,7 @@ public class OpenAiService extends AbstractAiProviderService {
 
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
-                    LOG.errorf("OpenAI API error (status %s): %s",  response.getStatus(),  errorBody);
+                    LOG.errorf("OpenAI API error (status %s): %s", response.getStatus(), errorBody);
                     throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
@@ -169,22 +170,20 @@ public class OpenAiService extends AbstractAiProviderService {
                 }
 
                 if (!openAiResponse.isComplete()) {
-                    LOG.warnf("OpenAI response not complete. Finish reason: %s", 
+                    LOG.warnf("OpenAI response not complete. Finish reason: %s",
                             openAiResponse.choices != null && !openAiResponse.choices.isEmpty()
-                                    ? openAiResponse.choices.get(0).finishReason
-                                    : "unknown");
+                                    ? openAiResponse.choices.get(0).finishReason : "unknown");
                 }
 
                 final String content = this.requireNonEmptyContent(openAiResponse.getTextContent());
 
                 if (openAiResponse.usage != null) {
-                    LOG.debugf("OpenAI usage - Prompt: %s tokens, Completion: %s tokens, Total: %s tokens", 
-                            openAiResponse.usage.promptTokens, 
-                            openAiResponse.usage.completionTokens, 
+                    LOG.debugf("OpenAI usage - Prompt: %s tokens, Completion: %s tokens, Total: %s tokens",
+                            openAiResponse.usage.promptTokens, openAiResponse.usage.completionTokens,
                             openAiResponse.usage.totalTokens);
                 }
 
-                LOG.debugf("Successfully generated content from OpenAI, length: %s",  content.length());
+                LOG.debugf("Successfully generated content from OpenAI, length: %s", content.length());
                 return content;
             }
 

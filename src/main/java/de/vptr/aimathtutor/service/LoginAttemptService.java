@@ -13,10 +13,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * In-memory service for tracking and throttling login attempts.
- * Implements per-username and per-IP exponential backoff to mitigate
- * brute-force attacks.
- * Uses bounded cache with automatic cleanup to prevent DoS via unbounded growth.
+ * In-memory service for tracking and throttling login attempts. Implements per-username and per-IP exponential backoff
+ * to mitigate brute-force attacks. Uses bounded cache with automatic cleanup to prevent DoS via unbounded growth.
  */
 @ApplicationScoped
 public class LoginAttemptService {
@@ -37,11 +35,8 @@ public class LoginAttemptService {
             t.setDaemon(true);
             return t;
         });
-        this.cleanupExecutor.scheduleAtFixedRate(
-                this::cleanupExpiredEntries,
-                CLEANUP_INTERVAL_SECONDS,
-                CLEANUP_INTERVAL_SECONDS,
-                TimeUnit.SECONDS);
+        this.cleanupExecutor.scheduleAtFixedRate(this::cleanupExpiredEntries, CLEANUP_INTERVAL_SECONDS,
+                CLEANUP_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     @PreDestroy
@@ -75,11 +70,11 @@ public class LoginAttemptService {
     }
 
     /**
-     * Records a failed login attempt for the given key (username or IP).
-     * Returns the number of seconds the client should wait before retrying.
-     * Enforces maximum cache size to prevent DoS attacks.
+     * Records a failed login attempt for the given key (username or IP). Returns the number of seconds the client
+     * should wait before retrying. Enforces maximum cache size to prevent DoS attacks.
      *
-     * @param key the username or IP address
+     * @param key
+     *            the username or IP address
      * @return lockout duration in seconds
      */
     public long recordFailedAttempt(final String key) {
@@ -101,17 +96,18 @@ public class LoginAttemptService {
     /**
      * Records a successful login, clearing any previous failed attempts.
      *
-     * @param key the username or IP address
+     * @param key
+     *            the username or IP address
      */
     public void recordSuccessfulLogin(final String key) {
         this.attempts.remove(key);
     }
 
     /**
-     * Checks whether the given key is currently locked out due to too many
-     * failed attempts.
+     * Checks whether the given key is currently locked out due to too many failed attempts.
      *
-     * @param key the username or IP address
+     * @param key
+     *            the username or IP address
      * @return true if the key is locked out
      */
     public boolean isLockedOut(final String key) {
@@ -129,7 +125,8 @@ public class LoginAttemptService {
     /**
      * Returns the remaining lockout duration in seconds for the given key.
      *
-     * @param key the username or IP address
+     * @param key
+     *            the username or IP address
      * @return remaining lockout seconds, or 0 if not locked out
      */
     public long getRemainingLockoutSeconds(final String key) {

@@ -10,8 +10,8 @@ import org.jboss.logging.Logger;
 import com.vaadin.flow.component.Component;
 
 /**
- * Utility for loading data asynchronously into Vaadin views with consistent
- * timeout, error handling, and UI access patterns.
+ * Utility for loading data asynchronously into Vaadin views with consistent timeout, error handling, and UI access
+ * patterns.
  */
 public final class AsyncDataLoader {
 
@@ -24,15 +24,18 @@ public final class AsyncDataLoader {
     /**
      * Loads data asynchronously and updates the UI on completion.
      *
-     * @param <T>          the type of data being loaded
-     * @param dataSupplier supplier that fetches the data
-     * @param component    Vaadin component used to access the UI thread
-     * @param onSuccess    callback invoked with the loaded data on success
-     * @param errorMessage user-facing message shown if loading fails
+     * @param <T>
+     *            the type of data being loaded
+     * @param dataSupplier
+     *            supplier that fetches the data
+     * @param component
+     *            Vaadin component used to access the UI thread
+     * @param onSuccess
+     *            callback invoked with the loaded data on success
+     * @param errorMessage
+     *            user-facing message shown if loading fails
      */
-    public static <T> void load(final Supplier<T> dataSupplier,
-            final Component component,
-            final Consumer<T> onSuccess,
+    public static <T> void load(final Supplier<T> dataSupplier, final Component component, final Consumer<T> onSuccess,
             final String errorMessage) {
         load(dataSupplier, component, onSuccess, null, errorMessage);
     }
@@ -40,19 +43,21 @@ public final class AsyncDataLoader {
     /**
      * Loads data asynchronously and updates the UI on completion.
      *
-     * @param <T>          the type of data being loaded
-     * @param dataSupplier supplier that fetches the data
-     * @param component    Vaadin component used to access the UI thread
-     * @param onSuccess    callback invoked with the loaded data on success
-     * @param onError      callback invoked on error (before the notification is
-     *                     shown)
-     * @param errorMessage user-facing message shown if loading fails
+     * @param <T>
+     *            the type of data being loaded
+     * @param dataSupplier
+     *            supplier that fetches the data
+     * @param component
+     *            Vaadin component used to access the UI thread
+     * @param onSuccess
+     *            callback invoked with the loaded data on success
+     * @param onError
+     *            callback invoked on error (before the notification is shown)
+     * @param errorMessage
+     *            user-facing message shown if loading fails
      */
-    public static <T> void load(final Supplier<T> dataSupplier,
-            final Component component,
-            final Consumer<T> onSuccess,
-            final Runnable onError,
-            final String errorMessage) {
+    public static <T> void load(final Supplier<T> dataSupplier, final Component component, final Consumer<T> onSuccess,
+            final Runnable onError, final String errorMessage) {
         CompletableFuture.supplyAsync(() -> {
             try {
                 return dataSupplier.get();
@@ -60,20 +65,19 @@ public final class AsyncDataLoader {
                 LOG.error(errorMessage, e);
                 throw e;
             }
-        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .whenComplete((data, throwable) -> {
-                    component.getUI().ifPresent(ui -> ui.access(() -> {
-                        if (throwable == null) {
-                            onSuccess.accept(data);
-                            return;
-                        }
-                        LOG.errorf(throwable, "Async load failed: %s",  throwable.getMessage());
-                        NotificationUtil.showError(errorMessage);
-                        if (onError == null) {
-                            return;
-                        }
-                        onError.run();
-                    }));
-                });
+        }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS).whenComplete((data, throwable) -> {
+            component.getUI().ifPresent(ui -> ui.access(() -> {
+                if (throwable == null) {
+                    onSuccess.accept(data);
+                    return;
+                }
+                LOG.errorf(throwable, "Async load failed: %s", throwable.getMessage());
+                NotificationUtil.showError(errorMessage);
+                if (onError == null) {
+                    return;
+                }
+                onError.run();
+            }));
+        });
     }
 }

@@ -10,9 +10,8 @@ import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing lesson entities.
- * Provides database access and query operations for lessons including
- * find by ID, hierarchical navigation, and search operations.
+ * Repository for managing lesson entities. Provides database access and query operations for lessons including find by
+ * ID, hierarchical navigation, and search operations.
  */
 @ApplicationScoped
 public class LessonRepository extends AbstractRepository {
@@ -20,7 +19,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Retrieves a lesson by its unique identifier.
      *
-     * @param id the lesson ID
+     * @param id
+     *            the lesson ID
      * @return the {@link LessonEntity} if found, null otherwise
      */
     public LessonEntity findById(final Long id) {
@@ -33,7 +33,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Retrieves an optional lesson by its unique identifier.
      *
-     * @param id the lesson ID
+     * @param id
+     *            the lesson ID
      * @return an {@link Optional} containing the lesson if found, empty otherwise
      */
     public Optional<LessonEntity> findByIdOptional(final Long id) {
@@ -43,7 +44,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Retrieves a lesson by its public identifier.
      *
-     * @param publicId the public ID of the lesson
+     * @param publicId
+     *            the public ID of the lesson
      * @return an {@link Optional} containing the lesson if found, empty otherwise
      */
     public Optional<LessonEntity> findByPublicId(final String publicId) {
@@ -57,14 +59,13 @@ public class LessonRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all lessons from the database in a defined order (descending by
-     * ID).
+     * Retrieves all lessons from the database in a defined order (descending by ID).
      *
      * @return a list of all {@link LessonEntity} objects ordered
      */
     public List<LessonEntity> findAllOrdered() {
-        final TypedQuery<LessonEntity> q = this.em.createQuery("FROM LessonEntity ORDER BY id DESC",
-                LessonEntity.class);
+        final TypedQuery<LessonEntity> q =
+                this.em.createQuery("FROM LessonEntity ORDER BY id DESC", LessonEntity.class);
         return q.getResultList();
     }
 
@@ -74,22 +75,21 @@ public class LessonRepository extends AbstractRepository {
      * @return a list of root {@link LessonEntity} objects ordered descending by ID
      */
     public List<LessonEntity> findRootLessons() {
-        final TypedQuery<LessonEntity> q = this.em.createQuery(
-                "FROM LessonEntity WHERE parent IS NULL ORDER BY id DESC",
-                LessonEntity.class);
+        final TypedQuery<LessonEntity> q =
+                this.em.createQuery("FROM LessonEntity WHERE parent IS NULL ORDER BY id DESC", LessonEntity.class);
         return q.getResultList();
     }
 
     /**
      * Retrieves all lessons that are children of a specific parent lesson.
      *
-     * @param parentId the ID of the parent lesson to filter by
+     * @param parentId
+     *            the ID of the parent lesson to filter by
      * @return a list of child {@link LessonEntity} objects ordered descending by ID
      */
     public List<LessonEntity> findByParentId(final Long parentId) {
-        final TypedQuery<LessonEntity> q = this.em.createQuery(
-                "FROM LessonEntity WHERE parent.id = :p ORDER BY id DESC",
-                LessonEntity.class);
+        final TypedQuery<LessonEntity> q =
+                this.em.createQuery("FROM LessonEntity WHERE parent.id = :p ORDER BY id DESC", LessonEntity.class);
         q.setParameter("p", parentId);
         return q.getResultList();
     }
@@ -97,8 +97,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Searches for lessons matching the given search term in their names.
      *
-     * @param searchTerm the search term to match against lesson names;
-     *                   if null or empty, returns all lessons ordered
+     * @param searchTerm
+     *            the search term to match against lesson names; if null or empty, returns all lessons ordered
      * @return a list of {@link LessonEntity} objects matching the search term
      */
     public List<LessonEntity> search(final String searchTerm) {
@@ -106,8 +106,8 @@ public class LessonRepository extends AbstractRepository {
             return this.findAllOrdered();
         }
         final var pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
-        final TypedQuery<LessonEntity> q = this.em.createQuery("FROM LessonEntity WHERE LOWER(name) LIKE :s",
-                LessonEntity.class);
+        final TypedQuery<LessonEntity> q =
+                this.em.createQuery("FROM LessonEntity WHERE LOWER(name) LIKE :s", LessonEntity.class);
         q.setParameter("s", pattern);
         return q.getResultList();
     }
@@ -115,7 +115,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Deletes a lesson by its unique identifier.
      *
-     * @param id the ID of the lesson to delete
+     * @param id
+     *            the ID of the lesson to delete
      * @return true if the lesson was successfully deleted, false if not found
      */
     @Transactional
@@ -131,7 +132,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Deletes the lesson with the given public ID.
      *
-     * @param publicId the public ID of the lesson to delete
+     * @param publicId
+     *            the public ID of the lesson to delete
      * @return true if the lesson was successfully deleted, false if not found
      */
     @Transactional
@@ -147,7 +149,8 @@ public class LessonRepository extends AbstractRepository {
     /**
      * Persists a lesson entity to the database.
      *
-     * @param lesson the lesson to persist; null values are ignored
+     * @param lesson
+     *            the lesson to persist; null values are ignored
      * @return the persisted {@link LessonEntity}, or null if the input was null
      */
     @Transactional

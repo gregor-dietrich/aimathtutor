@@ -7,7 +7,6 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -28,22 +27,27 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing math exercises in the system.
  */
 @Entity
-@Table(name = "exercises", indexes = {
-        @Index(name = "idx_exercise_lesson_published", columnList = "lesson_id, published"),
-        @Index(name = "idx_exercise_public_id", columnList = "public_id"),
-        @Index(name = "idx_exercise_user_id", columnList = "user_id, created DESC")
-})
-@NamedQueries({
-        @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity ORDER BY created DESC"),
+@Table(name = "exercises",
+        indexes = { @Index(name = "idx_exercise_lesson_published", columnList = "lesson_id, published"),
+                @Index(name = "idx_exercise_public_id", columnList = "public_id"),
+                @Index(name = "idx_exercise_user_id", columnList = "user_id, created DESC") })
+@NamedQueries({ @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity ORDER BY created DESC"),
         @NamedQuery(name = "Exercise.findByPublicId", query = "FROM ExerciseEntity WHERE publicId = :p"),
-        @NamedQuery(name = "Exercise.findPublished", query = "FROM ExerciseEntity WHERE published = true ORDER BY created DESC"),
-        @NamedQuery(name = "Exercise.findByUserId", query = "FROM ExerciseEntity WHERE user.id = :u ORDER BY created DESC"),
-        @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY created DESC"),
-        @NamedQuery(name = "Exercise.findGraspableEnabled", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY created DESC"),
-        @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true AND lesson.id = :l ORDER BY created DESC"),
-        @NamedQuery(name = "Exercise.searchByTerm", query = "FROM ExerciseEntity WHERE LOWER(title) LIKE :s OR LOWER(content) LIKE :s ORDER BY created DESC"),
-        @NamedQuery(name = "Exercise.findByDateRange", query = "FROM ExerciseEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
-})
+        @NamedQuery(name = "Exercise.findPublished",
+                query = "FROM ExerciseEntity WHERE published = true ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findByUserId",
+                query = "FROM ExerciseEntity WHERE user.id = :u ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findByLessonId",
+                query = "FROM ExerciseEntity WHERE lesson.id = :l ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findGraspableEnabled",
+                query = "FROM ExerciseEntity WHERE graspableEnabled = true AND published = true ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findGraspableByLesson", query = "FROM ExerciseEntity "
+                + "WHERE graspableEnabled = true AND published = true AND lesson.id = :l " + "ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.searchByTerm",
+                query = "FROM ExerciseEntity " + "WHERE LOWER(title) LIKE :s OR LOWER(content) LIKE :s "
+                        + "ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.findByDateRange",
+                query = "FROM ExerciseEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"), })
 public class ExerciseEntity extends BaseEntity {
 
     @NotBlank

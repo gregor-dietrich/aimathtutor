@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -25,9 +24,9 @@ import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import jakarta.inject.Inject;
 
 /**
- * Admin view for displaying student progress summaries.
- * Shows aggregate statistics for all students including completion rates,
- * success rates, and activity.
+ * Admin view for displaying student progress summaries. Shows aggregate
+ * statistics for all students including
+ * completion rates, success rates, and activity.
  */
 @Route(value = "admin/progress", layout = AdminMainLayout.class)
 @PageTitle("Student Progress - AI Math Tutor")
@@ -41,7 +40,6 @@ public class AdminProgressView extends AbstractAdminView {
 
     private Grid<StudentProgressSummaryDto> grid;
     private TextField searchField;
-    private Button resetFiltersButton;
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
 
@@ -55,8 +53,8 @@ public class AdminProgressView extends AbstractAdminView {
     }
 
     /**
-     * Perform authentication check and construct the progress dashboard before
-     * the view becomes visible.
+     * Perform authentication check and construct the progress dashboard before the
+     * view becomes visible.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -89,44 +87,30 @@ public class AdminProgressView extends AbstractAdminView {
         this.grid.setSizeFull();
 
         // Configure columns
-        this.grid.addColumn(progress -> progress.username)
-                .setHeader("Student")
-                .setFlexGrow(1);
+        this.grid.addColumn(progress -> progress.username).setHeader("Student").setFlexGrow(1);
 
-        this.grid.addColumn(progress -> progress.totalSessions)
-                .setHeader("Total Sessions")
-                .setFlexGrow(0);
+        this.grid.addColumn(progress -> progress.totalSessions).setHeader("Total Sessions").setFlexGrow(0);
 
-        this.grid.addColumn(progress -> progress.completedSessions)
-                .setHeader("Completed")
-                .setFlexGrow(0);
+        this.grid.addColumn(progress -> progress.completedSessions).setHeader("Completed").setFlexGrow(0);
 
         this.grid.addColumn(
                 (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getCompletionRatePercentage)
-                .setHeader("Completion Rate")
-                .setFlexGrow(1);
+                .setHeader("Completion Rate").setFlexGrow(1);
 
-        this.grid.addColumn(progress -> progress.totalProblems)
-                .setHeader("Total Problems")
-                .setFlexGrow(0);
+        this.grid.addColumn(progress -> progress.totalProblems).setHeader("Total Problems").setFlexGrow(0);
 
         this.grid.addColumn(
                 (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getSuccessRatePercentage)
-                .setHeader("Success Rate")
-                .setFlexGrow(1);
+                .setHeader("Success Rate").setFlexGrow(1);
 
-        this.grid.addColumn(progress -> progress.hintsUsed)
-                .setHeader("Hints Used")
-                .setFlexGrow(0);
+        this.grid.addColumn(progress -> progress.hintsUsed).setHeader("Hints Used").setFlexGrow(0);
 
         this.grid.addColumn(
                 (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getFormattedAverageActions)
-                .setHeader("Avg Actions/Problem")
-                .setFlexGrow(1);
+                .setHeader("Avg Actions/Problem").setFlexGrow(1);
 
         this.grid.addColumn(progress -> this.dateTimeFormatter.formatDateTime(progress.lastActivity))
-                .setHeader("Last Activity")
-                .setWidth("180px").setFlexGrow(0);
+                .setHeader("Last Activity").setWidth("180px").setFlexGrow(0);
 
         this.add(this.grid);
     }
@@ -137,23 +121,18 @@ public class AdminProgressView extends AbstractAdminView {
      * @return the constructed SearchLayout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadProgressData();
-                    }
-                },
-                ignored -> this.searchStudents(),
-                "Search by username...",
-                "Search Students");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadProgressData();
+            }
+        }, ignored -> this.searchStudents(), "Search by username...", "Search Students");
 
         this.searchField = searchLayout.getTextfield();
 
-        final var filterBar = new SearchFilterBar(searchLayout,
-                () -> this.filterByDateRange(), () -> this.resetFilters());
+        final var filterBar = new SearchFilterBar(searchLayout, this::filterByDateRange,
+                this::resetFilters);
         this.startDatePicker = filterBar.getStartDatePicker();
         this.endDatePicker = filterBar.getEndDatePicker();
-        this.resetFiltersButton = filterBar.getResetButton();
 
         return searchLayout;
     }
@@ -174,8 +153,8 @@ public class AdminProgressView extends AbstractAdminView {
     }
 
     /**
-     * Search for students by username and update the grid with results.
-     * Pushes username filtering to the database.
+     * Search for students by username and update the grid with results. Pushes
+     * username filtering to the database.
      */
     private void searchStudents() {
         final String searchTerm = this.searchField.getValue();
@@ -184,9 +163,7 @@ public class AdminProgressView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.analyticsService.getUsersProgressSummaryByUsernameSearch(searchTerm),
-                this,
+        AsyncDataLoader.load(() -> this.analyticsService.getUsersProgressSummaryByUsernameSearch(searchTerm), this,
                 progress -> this.grid.setItems(progress),
                 "An error occurred while searching students. Please try again.");
     }
@@ -195,18 +172,14 @@ public class AdminProgressView extends AbstractAdminView {
      * Load aggregated progress data asynchronously and populate the grid.
      */
     private void loadProgressData() {
-        AsyncDataLoader.load(
-                () -> this.analyticsService.getAllUsersProgressSummary(),
-                this,
-                progressData -> {
-                    this.grid.setItems(progressData);
-                },
-                "Failed to load progress data");
+        AsyncDataLoader.load(() -> this.analyticsService.getAllUsersProgressSummary(), this, progressData -> {
+            this.grid.setItems(progressData);
+        }, "Failed to load progress data");
     }
 
     /**
-     * Filter the progress data by the selected start and end date.
-     * Pushes date range filtering to the database.
+     * Filter the progress data by the selected start and end date. Pushes date
+     * range filtering to the database.
      */
     private void filterByDateRange() {
         final var startDate = this.startDatePicker.getValue();
@@ -217,15 +190,12 @@ public class AdminProgressView extends AbstractAdminView {
             return;
         }
 
-        final var startDateTime = startDate != null ? startDate.atStartOfDay()
-                : LocalDateTime.of(1970, 1, 1, 0, 0);
+        final var startDateTime = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(1970, 1, 1, 0, 0);
         final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX)
                 : LocalDateTime.of(2099, 12, 31, 23, 59, 59);
 
-        AsyncDataLoader.load(
-                () -> this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime),
-                this,
-                progress -> this.grid.setItems(progress),
+        AsyncDataLoader.load(() -> this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime),
+                this, progress -> this.grid.setItems(progress),
                 "An error occurred while filtering by date range. Please try again.");
     }
 

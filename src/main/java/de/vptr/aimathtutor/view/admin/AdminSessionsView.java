@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalTime;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -27,9 +26,8 @@ import jakarta.inject.Inject;
 
 /**
  * Admin view for displaying all student sessions with filtering and detail
- * options.
- * Shows session information including student, exercise, duration, and
- * completion status.
+ * options. Shows session information including
+ * student, exercise, duration, and completion status.
  */
 @Route(value = "admin/sessions", layout = AdminMainLayout.class)
 @PageTitle("Student Sessions - AI Math Tutor")
@@ -45,7 +43,6 @@ public class AdminSessionsView extends AbstractAdminView {
     private TextField searchField;
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
-    private Button resetFiltersButton;
 
     /**
      * Constructs the AdminSessionsView with full size and padding.
@@ -57,8 +54,7 @@ public class AdminSessionsView extends AbstractAdminView {
     }
 
     /**
-     * Ensure authentication and prepare session listing before entering the
-     * view.
+     * Ensure authentication and prepare session listing before entering the view.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -100,36 +96,22 @@ public class AdminSessionsView extends AbstractAdminView {
             usernameSpan.getStyle().set("display", "block");
             usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
-        }).setHeader("Student")
-                .setFlexGrow(1);
+        }).setHeader("Student").setFlexGrow(1);
 
-        this.grid.addColumn(session -> session.exerciseTitle)
-                .setHeader("Exercise")
-                .setFlexGrow(1);
+        this.grid.addColumn(session -> session.exerciseTitle).setHeader("Exercise").setFlexGrow(1);
 
-        this.grid.addColumn(session -> this.dateTimeFormatter.formatDateTime(session.startTime))
-                .setHeader("Start Time")
+        this.grid.addColumn(session -> this.dateTimeFormatter.formatDateTime(session.startTime)).setHeader("Start Time")
                 .setWidth("180px").setFlexGrow(0);
 
-        this.grid.addColumn(StudentSessionViewDto::getFormattedDuration)
-                .setHeader("Duration")
-                .setFlexGrow(0);
+        this.grid.addColumn(StudentSessionViewDto::getFormattedDuration).setHeader("Duration").setFlexGrow(0);
 
-        this.grid.addColumn(session -> session.actionsCount)
-                .setHeader("Actions")
-                .setFlexGrow(0);
+        this.grid.addColumn(session -> session.actionsCount).setHeader("Actions").setFlexGrow(0);
 
-        this.grid.addColumn(StudentSessionViewDto::getSuccessRatePercentage)
-                .setHeader("Success Rate")
-                .setFlexGrow(1);
+        this.grid.addColumn(StudentSessionViewDto::getSuccessRatePercentage).setHeader("Success Rate").setFlexGrow(1);
 
-        this.grid.addColumn(session -> session.hintsUsed)
-                .setHeader("Hints Used")
-                .setFlexGrow(0);
+        this.grid.addColumn(session -> session.hintsUsed).setHeader("Hints Used").setFlexGrow(0);
 
-        this.grid.addColumn(session -> session.completed ? "✓" : "✗")
-                .setHeader("Completed")
-                .setFlexGrow(0);
+        this.grid.addColumn(session -> session.completed ? "✓" : "✗").setHeader("Completed").setFlexGrow(0);
 
         this.add(this.grid);
     }
@@ -140,23 +122,18 @@ public class AdminSessionsView extends AbstractAdminView {
      * @return the search layout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadSessions();
-                    }
-                },
-                ignored -> this.searchSessions(),
-                "Search by student or exercise...",
-                "Search Sessions");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadSessions();
+            }
+        }, ignored -> this.searchSessions(), "Search by student or exercise...", "Search Sessions");
 
         this.searchField = searchLayout.getTextfield();
 
-        final var filterBar = new SearchFilterBar(searchLayout,
-                () -> this.filterByDateRange(), () -> this.resetFilters());
+        final var filterBar = new SearchFilterBar(searchLayout, this::filterByDateRange,
+                this::resetFilters);
         this.startDatePicker = filterBar.getStartDatePicker();
         this.endDatePicker = filterBar.getEndDatePicker();
-        this.resetFiltersButton = filterBar.getResetButton();
 
         return searchLayout;
     }
@@ -186,9 +163,7 @@ public class AdminSessionsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.analyticsService.searchSessions(searchTerm),
-                this,
+        AsyncDataLoader.load(() -> this.analyticsService.searchSessions(searchTerm), this,
                 sessions -> this.grid.setItems(sessions),
                 "An error occurred while searching sessions. Please try again.");
     }
@@ -197,18 +172,14 @@ public class AdminSessionsView extends AbstractAdminView {
      * Load all sessions asynchronously and populate the grid.
      */
     private void loadSessions() {
-        AsyncDataLoader.load(
-                () -> this.analyticsService.getAllSessions(),
-                this,
-                sessions -> {
-                    this.grid.setItems(sessions);
-                },
-                "Failed to load sessions");
+        AsyncDataLoader.load(() -> this.analyticsService.getAllSessions(), this, sessions -> {
+            this.grid.setItems(sessions);
+        }, "Failed to load sessions");
     }
 
     /**
-     * Filter sessions by the selected start and end dates.
-     * Pushes date range filtering to the database.
+     * Filter sessions by the selected start and end dates. Pushes date range
+     * filtering to the database.
      */
     private void filterByDateRange() {
         final var startDate = this.startDatePicker.getValue();
@@ -227,9 +198,7 @@ public class AdminSessionsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime),
-                this,
+        AsyncDataLoader.load(() -> this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime), this,
                 sessions -> this.grid.setItems(sessions),
                 "An error occurred while filtering by date range. Please try again.");
     }

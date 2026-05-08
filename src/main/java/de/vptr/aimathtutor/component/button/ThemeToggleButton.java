@@ -3,14 +3,14 @@ package de.vptr.aimathtutor.component.button;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.button.Button;
-
 import de.vptr.aimathtutor.service.ThemeService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Toggle between available UI themes. Renders an icon reflecting current theme.
  */
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Service reference is transient and intentionally stored for runtime behavior; not serialized")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+        justification = "Service reference is transient and intentionally stored for runtime behavior; not serialized")
 public class ThemeToggleButton extends Button {
     private final transient ThemeService themeService;
 

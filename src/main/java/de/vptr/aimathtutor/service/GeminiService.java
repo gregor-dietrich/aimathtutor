@@ -12,7 +12,6 @@ import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
 import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
@@ -25,9 +24,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for interacting with Google Gemini AI API
- * Handles REST API calls to Gemini 2.5 Flash-Lite
- * Configuration is loaded dynamically from AiConfigService.
+ * Service for interacting with Google Gemini AI API Handles REST API calls to Gemini 2.5 Flash-Lite Configuration is
+ * loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
 public class GeminiService extends AbstractAiProviderService {
@@ -67,10 +65,8 @@ public class GeminiService extends AbstractAiProviderService {
     @PostConstruct
     void init() {
         // Initialize HttpClient with appropriate settings
-        this.httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_2)
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
+        this.httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(10)).build();
 
         LOG.debug("Initialized Gemini HttpClient");
     }
@@ -78,12 +74,14 @@ public class GeminiService extends AbstractAiProviderService {
     /**
      * Generate content using Gemini API
      *
-     * @param prompt The input prompt
+     * @param prompt
+     *            The input prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
-        LOG.debugf("Generating content with Gemini for prompt length: %s",  prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating content with Gemini for prompt length: %s", prompt != null ? prompt.length() : 0);
 
         this.requireApiKey(this.apiKey, "GEMINI_API_KEY");
 
@@ -104,19 +102,14 @@ public class GeminiService extends AbstractAiProviderService {
             final String requestJson = this.objectMapper.writeValueAsString(requestDto);
 
             // Build API URL (key moved to header to avoid appearing in logs/proxies)
-            final String url = String.format("%s/v1beta/models/%s:generateContent",
-                    baseUrl, model);
+            final String url = String.format("%s/v1beta/models/%s:generateContent", baseUrl, model);
 
-            LOG.debugf("Calling Gemini API at: %s",  url);
+            LOG.debugf("Calling Gemini API at: %s", url);
 
             // Create HTTP request with API key in header instead of query param
-            final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .header("x-goog-api-key", this.apiKey)
-                    .timeout(Duration.ofSeconds(60))
-                    .POST(HttpRequest.BodyPublishers.ofString(requestJson))
-                    .build();
+            final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
+                    .header("Content-Type", "application/json").header("x-goog-api-key", this.apiKey)
+                    .timeout(Duration.ofSeconds(60)).POST(HttpRequest.BodyPublishers.ofString(requestJson)).build();
 
             // Make API call
             final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -125,7 +118,7 @@ public class GeminiService extends AbstractAiProviderService {
             final String responseBody = response.body();
 
             if (statusCode != 200) {
-                LOG.errorf("Gemini API error (status %s): %s",  statusCode,  responseBody);
+                LOG.errorf("Gemini API error (status %s): %s", statusCode, responseBody);
                 throw AiProviderException.httpFailure(this.getProviderName(), statusCode, responseBody);
             }
 
@@ -134,18 +127,17 @@ public class GeminiService extends AbstractAiProviderService {
 
             if (geminiResponse.isBlocked()) {
                 LOG.warn("Gemini response was blocked by safety filters");
-                throw new NonRetryableAiProviderException(this.getProviderName(),
-                        "Response blocked by safety filters");
+                throw new NonRetryableAiProviderException(this.getProviderName(), "Response blocked by safety filters");
             }
 
             if (geminiResponse.isTruncated()) {
-                LOG.warnf("Gemini response was truncated due to token limit (finishReason=%s)", 
+                LOG.warnf("Gemini response was truncated due to token limit (finishReason=%s)",
                         geminiResponse.getFinishReason());
             }
 
             final String content = this.requireNonEmptyContent(geminiResponse.getTextContent());
 
-            LOG.debugf("Successfully generated content from Gemini, length: %s",  content.length());
+            LOG.debugf("Successfully generated content from Gemini, length: %s", content.length());
             return content;
 
         } catch (final AiProviderException e) {

@@ -8,8 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * Button used to reply to a comment or message. Shows a reply icon and
- * delegates the click event to the supplied listener.
+ * Button used to reply to a comment or message. Shows a reply icon and delegates the click event to the supplied
+ * listener.
  */
 public class ReplyButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Reply";

@@ -8,8 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing user group entities.
- * Provides database access and query operations for user groups including
+ * Repository for managing user group entities. Provides database access and query operations for user groups including
  * find, search, persist, and delete operations.
  */
 @ApplicationScoped
@@ -27,9 +26,9 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Retrieves an optional user group by its unique identifier.
      *
-     * @param id the user group ID
-     * @return an {@link Optional} containing the user group if found, empty
-     *         otherwise
+     * @param id
+     *            the user group ID
+     * @return an {@link Optional} containing the user group if found, empty otherwise
      */
     public Optional<UserGroupEntity> findByIdOptional(final Long id) {
         return Optional.ofNullable(this.findById(id));
@@ -38,7 +37,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Retrieves a user group by its public identifier.
      *
-     * @param publicId the public ID of the group
+     * @param publicId
+     *            the public ID of the group
      * @return an {@link Optional} containing the group if found, empty otherwise
      */
     public Optional<UserGroupEntity> findByPublicId(final String publicId) {
@@ -54,7 +54,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Retrieves a user group by its unique identifier.
      *
-     * @param id the user group ID
+     * @param id
+     *            the user group ID
      * @return the {@link UserGroupEntity} if found, null otherwise
      */
     public UserGroupEntity findById(final Long id) {
@@ -67,7 +68,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Retrieves a user group by its name.
      *
-     * @param name the name of the user group to find
+     * @param name
+     *            the name of the user group to find
      * @return the {@link UserGroupEntity} if found, null otherwise
      */
     public UserGroupEntity findByName(final String name) {
@@ -80,7 +82,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Searches for user groups matching the given search term.
      *
-     * @param searchTerm the search term to match against user group names
+     * @param searchTerm
+     *            the search term to match against user group names
      * @return a list of {@link UserGroupEntity} objects matching the search term
      */
     public List<UserGroupEntity> search(final String searchTerm) {
@@ -92,7 +95,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Persists a user group entity to the database.
      *
-     * @param group the user group to persist; null values are ignored
+     * @param group
+     *            the user group to persist; null values are ignored
      */
     @Transactional
     public void persist(final UserGroupEntity group) {
@@ -105,7 +109,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Deletes a user group by its unique identifier.
      *
-     * @param id the ID of the user group to delete
+     * @param id
+     *            the ID of the user group to delete
      * @return true if the user group was successfully deleted, false if not found
      */
     @Transactional
@@ -121,7 +126,8 @@ public class UserGroupRepository extends AbstractRepository {
     /**
      * Deletes a user group by its public identifier.
      *
-     * @param publicId the public ID of the user group to delete
+     * @param publicId
+     *            the public ID of the user group to delete
      * @return true if the user group was successfully deleted, false if not found
      */
     @Transactional

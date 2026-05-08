@@ -20,8 +20,8 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
- * Service for managing Graspable Math workspace sessions and events.
- * Handles session creation, event processing, and state management.
+ * Service for managing Graspable Math workspace sessions and events. Handles session creation, event processing, and
+ * state management.
  */
 @ApplicationScoped
 public class GraspableMathService {
@@ -42,8 +42,10 @@ public class GraspableMathService {
     /**
      * Creates a new student session for working on an exercise.
      * 
-     * @param userId     The student's user ID
-     * @param exerciseId The exercise ID
+     * @param userId
+     *            The student's user ID
+     * @param exerciseId
+     *            The exercise ID
      * @return The session ID
      */
     @Transactional
@@ -51,13 +53,13 @@ public class GraspableMathService {
         final String sessionId = UUID.randomUUID().toString();
         final UserEntity user = this.userRepository.findById(userId);
         if (user == null) {
-            LOG.errorf("User not found: %s",  userId);
+            LOG.errorf("User not found: %s", userId);
             throw new IllegalArgumentException("User not found: " + userId);
         }
 
         final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
         if (exercise == null) {
-            LOG.errorf("Exercise not found: %s",  exerciseId);
+            LOG.errorf("Exercise not found: %s", exerciseId);
             throw new IllegalArgumentException("Exercise not found: " + exerciseId);
         }
 
@@ -72,7 +74,7 @@ public class GraspableMathService {
         session.hintsUsed = 0;
 
         this.studentSessionRepository.persist(session);
-        LOG.infof("Created new session: %s for user %s on exercise %s",  sessionId,  userId,  exerciseId);
+        LOG.infof("Created new session: %s for user %s on exercise %s", sessionId, userId, exerciseId);
 
         return sessionId;
     }
@@ -80,7 +82,8 @@ public class GraspableMathService {
     /**
      * Retrieves a session by its ID.
      * 
-     * @param sessionId The session ID
+     * @param sessionId
+     *            The session ID
      * @return The session entity, or null if not found
      */
     public StudentSessionEntity getSession(final String sessionId) {
@@ -90,15 +93,16 @@ public class GraspableMathService {
     /**
      * Processes a Graspable Math event and updates session statistics.
      * 
-     * @param event The event to process
+     * @param event
+     *            The event to process
      */
     @Transactional
     public void processEvent(final GraspableEventDto event) {
-        LOG.debugf("Processing Graspable Math event: %s",  event);
+        LOG.debugf("Processing Graspable Math event: %s", event);
 
         final var session = this.studentSessionRepository.findBySessionId(event.sessionId);
         if (session == null) {
-            LOG.warnf("Session not found: %s",  event.sessionId);
+            LOG.warnf("Session not found: %s", event.sessionId);
             return;
         }
 
@@ -114,26 +118,28 @@ public class GraspableMathService {
         }
 
         this.studentSessionRepository.persist(session);
-        LOG.debugf("Updated session %s: %s actions, %s correct", 
-                event.sessionId,  session.actionsCount,  session.correctActions);
+        LOG.debugf("Updated session %s: %s actions, %s correct", event.sessionId, session.actionsCount,
+                session.correctActions);
     }
 
     /**
      * Marks a session as completed.
      * 
-     * @param sessionId The session ID
+     * @param sessionId
+     *            The session ID
      */
     @Transactional
     public void completeSession(final String sessionId) {
         if (this.doCompleteSession(sessionId)) {
-            LOG.infof("Completed session: %s",  sessionId);
+            LOG.infof("Completed session: %s", sessionId);
         }
     }
 
     /**
      * Increments the hints used counter for a session.
      * 
-     * @param sessionId The session ID
+     * @param sessionId
+     *            The session ID
      */
     @Transactional
     public void recordHintUsed(final String sessionId) {
@@ -141,14 +147,15 @@ public class GraspableMathService {
         if (session != null) {
             session.hintsUsed++;
             this.studentSessionRepository.persist(session);
-            LOG.debugf("Hint used in session: %s",  sessionId);
+            LOG.debugf("Hint used in session: %s", sessionId);
         }
     }
 
     /**
      * Retrieves all sessions for a specific user.
      * 
-     * @param userId The user ID
+     * @param userId
+     *            The user ID
      * @return List of sessions
      */
     public List<StudentSessionEntity> getUserSessions(final Long userId) {
@@ -158,7 +165,8 @@ public class GraspableMathService {
     /**
      * Retrieves all sessions for a specific exercise.
      * 
-     * @param exerciseId The exercise ID
+     * @param exerciseId
+     *            The exercise ID
      * @return List of sessions
      */
     public List<StudentSessionEntity> getExerciseSessions(final Long exerciseId) {
@@ -168,7 +176,8 @@ public class GraspableMathService {
     /**
      * Calculates the accuracy rate for a session.
      * 
-     * @param sessionId The session ID
+     * @param sessionId
+     *            The session ID
      * @return Accuracy as a percentage (0-100), or null if session not found
      */
     public Double getSessionAccuracy(final String sessionId) {
@@ -181,12 +190,13 @@ public class GraspableMathService {
     }
 
     /**
-     * Checks if the current expression matches the target expression.
-     * Normalizes both expressions for comparison (handles whitespace, order of
-     * terms, etc.)
+     * Checks if the current expression matches the target expression. Normalizes both expressions for comparison
+     * (handles whitespace, order of terms, etc.)
      * 
-     * @param currentExpression The current mathematical expression
-     * @param targetExpression  The target/goal expression
+     * @param currentExpression
+     *            The current mathematical expression
+     * @param targetExpression
+     *            The target/goal expression
      * @return true if expressions are equivalent, false otherwise
      */
     public boolean checkCompletion(final String currentExpression, final String targetExpression) {
@@ -198,19 +208,18 @@ public class GraspableMathService {
         final String normalizedCurrent = this.normalizeExpression(currentExpression);
         final String normalizedTarget = this.normalizeExpression(targetExpression);
 
-        LOG.debugf("Checking completion: '%s' vs '%s'",  normalizedCurrent,  normalizedTarget);
+        LOG.debugf("Checking completion: '%s' vs '%s'", normalizedCurrent, normalizedTarget);
 
         // Direct string comparison after normalization
         return normalizedCurrent.equals(normalizedTarget);
     }
 
     /**
-     * Normalizes a mathematical expression for comparison.
-     * - Removes all whitespace
-     * - Converts to lowercase
-     * - Sorts terms in addition/subtraction (basic normalization)
+     * Normalizes a mathematical expression for comparison. - Removes all whitespace - Converts to lowercase - Sorts
+     * terms in addition/subtraction (basic normalization)
      * 
-     * @param expression The expression to normalize
+     * @param expression
+     *            The expression to normalize
      * @return Normalized expression
      */
     private String normalizeExpression(final String expression) {
@@ -247,14 +256,15 @@ public class GraspableMathService {
     /**
      * Marks a session as completed.
      * 
-     * @param sessionId The session ID to mark complete
+     * @param sessionId
+     *            The session ID to mark complete
      */
     @Transactional
     public void markSessionComplete(final String sessionId) {
         if (!this.doCompleteSession(sessionId)) {
-            LOG.debugf("Session not marked complete (not found or already completed): %s",  sessionId);
+            LOG.debugf("Session not marked complete (not found or already completed): %s", sessionId);
         } else {
-            LOG.debugf("Session marked complete: %s",  sessionId);
+            LOG.debugf("Session marked complete: %s", sessionId);
         }
     }
 

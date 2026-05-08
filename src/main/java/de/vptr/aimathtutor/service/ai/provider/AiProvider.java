@@ -5,8 +5,7 @@ import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 
 /**
- * Strategy interface for AI providers that analyze math actions and answer
- * student questions.
+ * Strategy interface for AI providers that analyze math actions and answer student questions.
  */
 public interface AiProvider {
 
@@ -20,8 +19,10 @@ public interface AiProvider {
     /**
      * Analyzes a student's math action and provides AI feedback.
      *
-     * @param event   the math action event
-     * @param context conversation context
+     * @param event
+     *            the math action event
+     * @param context
+     *            conversation context
      * @return AI-generated feedback
      */
     AiFeedbackDto analyzeMathAction(GraspableEventDto event, ConversationContextDto context);
@@ -29,13 +30,18 @@ public interface AiProvider {
     /**
      * Answers a direct question from the student.
      *
-     * @param question          the student's question
-     * @param currentExpression the current math expression
-     * @param initialExpression the original problem state
-     * @param targetExpression  the target solution state
-     * @param context           conversation context
+     * @param question
+     *            the student's question
+     * @param currentExpression
+     *            the current math expression
+     * @param initialExpression
+     *            the original problem state
+     * @param targetExpression
+     *            the target solution state
+     * @param context
+     *            conversation context
      * @return the AI's answer
      */
-    String answerQuestion(String question, String currentExpression, String initialExpression,
-            String targetExpression, ConversationContextDto context);
+    String answerQuestion(String question, String currentExpression, String initialExpression, String targetExpression,
+            ConversationContextDto context);
 }

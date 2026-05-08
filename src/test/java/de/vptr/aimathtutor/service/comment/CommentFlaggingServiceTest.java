@@ -96,11 +96,8 @@ class CommentFlaggingServiceTest {
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
         final var comment = this.createComment(exercise, author);
 
-        final Long[] flaggerIds = {
-                this.userRepository.findByUsername("teacher").id,
-                this.userRepository.findByUsername("student1").id,
-                this.userRepository.findByUsername("student2").id
-        };
+        final Long[] flaggerIds = { this.userRepository.findByUsername("teacher").id,
+                this.userRepository.findByUsername("student1").id, this.userRepository.findByUsername("student2").id };
         for (final Long flaggerId : flaggerIds) {
             this.flaggingService.flagComment(comment.publicId, flaggerId, "spam");
         }

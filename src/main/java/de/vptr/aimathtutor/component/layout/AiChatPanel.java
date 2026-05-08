@@ -17,16 +17,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
-
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.util.AppConstants;
 
 /**
- * Reusable AI chat panel component for displaying chat messages and handling
- * user input.
- * This component is designed to be used as a right-side panel (30% width) with
- * proper styling and layout that matches across all views.
- * Provides a chat-style interface with proper message alignment and styling.
+ * Reusable AI chat panel component for displaying chat messages and handling user input. This component is designed to
+ * be used as a right-side panel (30% width) with proper styling and layout that matches across all views. Provides a
+ * chat-style interface with proper message alignment and styling.
  */
 public class AiChatPanel extends VerticalLayout {
 
@@ -52,7 +49,8 @@ public class AiChatPanel extends VerticalLayout {
     /**
      * Creates a new AI chat panel.
      *
-     * @param messageSendListener Callback to invoke when user sends a message
+     * @param messageSendListener
+     *            Callback to invoke when user sends a message
      */
     public AiChatPanel(final MessageSendListener messageSendListener) {
         this(messageSendListener, AppConstants.AVATAR_DEFAULT_USER, AppConstants.AVATAR_DEFAULT_TUTOR);
@@ -61,12 +59,14 @@ public class AiChatPanel extends VerticalLayout {
     /**
      * Creates a new AI chat panel with custom avatars.
      *
-     * @param messageSendListener Callback to invoke when user sends a message
-     * @param userAvatarEmoji     The emoji to use for user messages
-     * @param tutorAvatarEmoji    The emoji to use for AI tutor messages
+     * @param messageSendListener
+     *            Callback to invoke when user sends a message
+     * @param userAvatarEmoji
+     *            The emoji to use for user messages
+     * @param tutorAvatarEmoji
+     *            The emoji to use for AI tutor messages
      */
-    public AiChatPanel(final MessageSendListener messageSendListener,
-            final String userAvatarEmoji,
+    public AiChatPanel(final MessageSendListener messageSendListener, final String userAvatarEmoji,
             final String tutorAvatarEmoji) {
         this.messageSendListener = messageSendListener;
         this.userAvatarEmoji = userAvatarEmoji != null ? userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
@@ -76,34 +76,26 @@ public class AiChatPanel extends VerticalLayout {
         this.setWidth("30%");
         this.setSpacing(true);
         this.setPadding(true);
-        this.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)")
-                .set("display", "flex")
-                .set("flex-direction", "column")
-                .set("position", "sticky")
-                .set("top", "0")
+        this.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
+                .set("border-left", "1px solid var(--lumo-contrast-10pct)").set("display", "flex")
+                .set("flex-direction", "column").set("position", "sticky").set("top", "0")
                 .set("height", "calc(100vh - 100px)") // Subtract approximate header height
                 .set("overflow", "hidden"); // Prevent the panel itself from scrolling
 
         // Chat header
         final var chatHeader = new H4("AI Tutor Chat");
-        chatHeader.getStyle()
-                .set("margin-top", "0")
-                .set("flex-shrink", "0");
+        chatHeader.getStyle().set("margin-top", "0").set("flex-shrink", "0");
 
         // Chat history panel
         this.chatHistoryPanel = new VerticalLayout();
         this.chatHistoryPanel.setSpacing(true);
         this.chatHistoryPanel.setPadding(false);
         this.chatHistoryPanel.setDefaultHorizontalComponentAlignment(Alignment.STRETCH);
-        this.chatHistoryPanel.getStyle()
-                .set("flex-grow", "1") // Grow to fill available space
+        this.chatHistoryPanel.getStyle().set("flex-grow", "1") // Grow to fill available space
                 .set("flex-shrink", "1") // Allow shrinking if needed
                 .set("overflow-y", "auto") // Only the history scrolls
                 .set("min-height", "0") // Important for flex shrinking
-                .set("padding", "var(--lumo-space-m)")
-                .set("background-color", "var(--lumo-contrast-5pct)")
+                .set("padding", "var(--lumo-space-m)").set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)");
 
@@ -161,7 +153,8 @@ public class AiChatPanel extends VerticalLayout {
     /**
      * Adds a chat message to the chat panel.
      *
-     * @param message The message to add
+     * @param message
+     *            The message to add
      */
     public void addMessage(final ChatMessageDto message) {
         UI.getCurrent().access(() -> {
@@ -174,17 +167,12 @@ public class AiChatPanel extends VerticalLayout {
 
             // Avatar label (outside bubble)
             final var avatarLabel = new Span();
-            avatarLabel.getStyle()
-                    .set("font-size", "1.5rem")
-                    .set("flex-shrink", "0")
-                    .set("align-self", "flex-end");
+            avatarLabel.getStyle().set("font-size", "1.5rem").set("flex-shrink", "0").set("align-self", "flex-end");
 
             // Message bubble
             final var messageDiv = new Div();
-            messageDiv.getStyle()
-                    .set("padding", "var(--lumo-space-s)")
-                    .set("border-radius", "var(--lumo-border-radius-l)")
-                    .set("max-width", "80%")
+            messageDiv.getStyle().set("padding", "var(--lumo-space-s)")
+                    .set("border-radius", "var(--lumo-border-radius-l)").set("max-width", "80%")
                     .set("word-wrap", "break-word");
 
             final var messagePara = new Paragraph(message.message);
@@ -196,36 +184,30 @@ public class AiChatPanel extends VerticalLayout {
                 // User messages: right-aligned, avatar on right
                 messageRow.setJustifyContentMode(JustifyContentMode.END);
                 avatarLabel.setText(this.userAvatarEmoji);
-                messageDiv.getStyle()
-                        .set("background-color", "var(--lumo-primary-color-10pct)")
-                        .set("border", "1px solid var(--lumo-primary-color-50pct)");
+                messageDiv.getStyle().set("background-color", "var(--lumo-primary-color-10pct)").set("border",
+                        "1px solid var(--lumo-primary-color-50pct)");
                 messageRow.add(messageDiv, avatarLabel);
             } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
                 // System messages: centered, no avatar
                 messageRow.setJustifyContentMode(JustifyContentMode.CENTER);
-                messageDiv.getStyle()
-                        .set("background-color", "var(--lumo-contrast-5pct)")
-                        .set("border", "1px solid var(--lumo-contrast-20pct)")
-                        .set("font-style", "italic")
-                        .set("text-align", "center")
-                        .set("color", "var(--lumo-secondary-text-color)")
+                messageDiv.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
+                        .set("border", "1px solid var(--lumo-contrast-20pct)").set("font-style", "italic")
+                        .set("text-align", "center").set("color", "var(--lumo-secondary-text-color)")
                         .set("max-width", "80%");
                 messageRow.add(messageDiv);
             } else {
                 // AI messages: left-aligned, avatar on left
                 messageRow.setJustifyContentMode(JustifyContentMode.START);
                 avatarLabel.setText(this.tutorAvatarEmoji);
-                messageDiv.getStyle()
-                        .set("background-color", "var(--lumo-contrast-10pct)")
-                        .set("border", "1px solid var(--lumo-contrast-20pct)");
+                messageDiv.getStyle().set("background-color", "var(--lumo-contrast-10pct)").set("border",
+                        "1px solid var(--lumo-contrast-20pct)");
                 messageRow.add(avatarLabel, messageDiv);
             }
 
             this.chatHistoryPanel.add(messageRow);
 
             // Auto-scroll to bottom
-            UI.getCurrent().getPage().executeJs(
-                    "const panel = $0; panel.scrollTop = panel.scrollHeight;",
+            UI.getCurrent().getPage().executeJs("const panel = $0; panel.scrollTop = panel.scrollHeight;",
                     this.chatHistoryPanel.getElement());
 
             // Limit chat history to 20 messages
@@ -236,12 +218,9 @@ public class AiChatPanel extends VerticalLayout {
     }
 
     /**
-     * Shows a typing indicator (simple version that doesn't require tracking the
-     * indicator).
-     * Increments the pending requests counter and only creates indicator if none
-     * exists.
-     * This method is synchronized to prevent race conditions when called from
-     * multiple async callbacks.
+     * Shows a typing indicator (simple version that doesn't require tracking the indicator). Increments the pending
+     * requests counter and only creates indicator if none exists. This method is synchronized to prevent race
+     * conditions when called from multiple async callbacks.
      */
     public synchronized void showTypingIndicator() {
         this.pendingRequestsCount.incrementAndGet();
@@ -267,23 +246,16 @@ public class AiChatPanel extends VerticalLayout {
 
         // Avatar
         final var avatarLabel = new Span(this.tutorAvatarEmoji);
-        avatarLabel.getStyle()
-                .set("font-size", "1.5rem")
-                .set("flex-shrink", "0")
-                .set("align-self", "flex-end");
+        avatarLabel.getStyle().set("font-size", "1.5rem").set("flex-shrink", "0").set("align-self", "flex-end");
 
         // Typing indicator
         final var typingDiv = new Div();
-        typingDiv.getStyle()
-                .set("padding", "var(--lumo-space-s)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
+        typingDiv.getStyle().set("padding", "var(--lumo-space-s)").set("border-radius", "var(--lumo-border-radius-l)")
                 .set("background-color", "var(--lumo-contrast-10pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)");
 
         final var typingText = new Span("typing...");
-        typingText.getStyle()
-                .set("font-style", "italic")
-                .set("color", "var(--lumo-secondary-text-color)")
+        typingText.getStyle().set("font-style", "italic").set("color", "var(--lumo-secondary-text-color)")
                 .set("animation", "pulse 1.5s ease-in-out infinite");
         typingDiv.add(typingText);
 
@@ -292,8 +264,7 @@ public class AiChatPanel extends VerticalLayout {
         UI.getCurrent().access(() -> {
             this.chatHistoryPanel.add(typingRow);
             // Auto-scroll to bottom
-            UI.getCurrent().getPage().executeJs(
-                    "const panel = $0; panel.scrollTop = panel.scrollHeight;",
+            UI.getCurrent().getPage().executeJs("const panel = $0; panel.scrollTop = panel.scrollHeight;",
                     this.chatHistoryPanel.getElement());
         });
 
@@ -301,11 +272,9 @@ public class AiChatPanel extends VerticalLayout {
     }
 
     /**
-     * Hides the typing indicator (simple version that uses tracked indicator).
-     * Decrements the pending requests counter and only removes indicator when
-     * counter reaches zero.
-     * This method is synchronized to prevent race conditions when called from
-     * multiple async callbacks.
+     * Hides the typing indicator (simple version that uses tracked indicator). Decrements the pending requests counter
+     * and only removes indicator when counter reaches zero. This method is synchronized to prevent race conditions when
+     * called from multiple async callbacks.
      */
     public synchronized void hideTypingIndicator() {
         // Decrement counter (ensure it doesn't go negative)
@@ -332,7 +301,8 @@ public class AiChatPanel extends VerticalLayout {
     /**
      * Removes a specific typing indicator.
      *
-     * @param indicator The indicator component to remove
+     * @param indicator
+     *            The indicator component to remove
      */
     public void hideTypingIndicator(final HorizontalLayout indicator) {
         if (indicator != null) {

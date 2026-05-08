@@ -14,9 +14,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Ollama AI provider for analyzing math actions and answering questions.
- * Uses MicroProfile Fault Tolerance {@code @Retry} for automatic retries with
- * jitter.
+ * Ollama AI provider for analyzing math actions and answering questions. Uses MicroProfile Fault Tolerance
+ * {@code @Retry} for automatic retries with jitter.
  */
 @ApplicationScoped
 public class OllamaAiProvider implements AiProvider {
@@ -38,7 +37,8 @@ public class OllamaAiProvider implements AiProvider {
     }
 
     @Override
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
+            jitter = AppConstants.RETRY_JITTER_MS)
     public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
         LOG.info("Analyzing math action with Ollama");
         final var prompt = this.promptBuilderService.buildMathTutoringPrompt(event, context);
@@ -47,10 +47,10 @@ public class OllamaAiProvider implements AiProvider {
     }
 
     @Override
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS)
-    public String answerQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
+            jitter = AppConstants.RETRY_JITTER_MS)
+    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
+            final String targetExpression, final ConversationContextDto context) {
         final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
                 initialExpression, targetExpression, context);
         return this.ollamaService.generateContent(prompt);

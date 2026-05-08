@@ -8,8 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * Button used to restore previously deleted items. Shows a restore icon
- * and delegates click handling to the supplied listener.
+ * Button used to restore previously deleted items. Shows a restore icon and delegates click handling to the supplied
+ * listener.
  */
 public class RestoreButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Restore";

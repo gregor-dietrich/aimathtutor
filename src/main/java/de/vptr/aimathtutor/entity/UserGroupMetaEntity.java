@@ -20,19 +20,17 @@ import jakarta.persistence.UniqueConstraint;
  * Entity representing metadata for user group memberships.
  */
 @Entity
-@Table(name = "user_groups_meta", indexes = {
-        @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id")
-}, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_ugm_group_user", columnNames = { "group_id", "user_id" })
-})
-@NamedQueries({
-        @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
+@Table(name = "user_groups_meta", indexes = { @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id") },
+        uniqueConstraints = { @UniqueConstraint(name = "uk_ugm_group_user", columnNames = { "group_id", "user_id" }) })
+@NamedQueries({ @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
         @NamedQuery(name = "UserGroupMeta.findByPublicId", query = "FROM UserGroupMetaEntity WHERE publicId = :p"),
-        @NamedQuery(name = "UserGroupMeta.findByUserAndGroup", query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.countByUserAndGroup", query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
+        @NamedQuery(name = "UserGroupMeta.findByUserAndGroup",
+                query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
+        @NamedQuery(name = "UserGroupMeta.countByUserAndGroup",
+                query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
         @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.findByGroupIdWithUsers", query = "SELECT m FROM UserGroupMetaEntity m LEFT JOIN FETCH m.user WHERE m.group.id = :g")
-})
+        @NamedQuery(name = "UserGroupMeta.findByGroupIdWithUsers",
+                query = "SELECT m FROM UserGroupMetaEntity m LEFT JOIN FETCH m.user WHERE m.group.id = :g") })
 public class UserGroupMetaEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,8 +54,10 @@ public class UserGroupMetaEntity extends BaseEntity {
     /**
      * Checks if a user is a member of a specific group.
      *
-     * @param userId  the ID of the user to check
-     * @param groupId the ID of the group to check
+     * @param userId
+     *            the ID of the user to check
+     * @param groupId
+     *            the ID of the group to check
      * @return true if the user is a member of the group, false otherwise
      */
     public static boolean isUserInGroup(final Long userId, final Long groupId) {

@@ -6,9 +6,8 @@ import de.vptr.aimathtutor.security.PasswordHashingService;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
- * Small CLI utility to generate a bcrypt hash for a password using the
- * project's PasswordHashingService. Intended for local/dev use to create
- * seeded passwords for `init.sql`.
+ * Small CLI utility to generate a bcrypt hash for a password using the project's PasswordHashingService. Intended for
+ * local/dev use to create seeded passwords for `init.sql`.
  */
 public final class PasswordUtility {
 
@@ -23,15 +22,14 @@ public final class PasswordUtility {
         }
     }
 
-    private PasswordUtility() {
-    }
+    private PasswordUtility() {}
 
     /**
-     * Entry point for the password hashing utility CLI.
-     * Accepts command-line arguments to generate password hashes.
+     * Entry point for the password hashing utility CLI. Accepts command-line arguments to generate password hashes.
      * Supports "generate" command with password as argument.
      *
-     * @param args command-line arguments (command name and parameters)
+     * @param args
+     *            command-line arguments (command name and parameters)
      */
     public static void main(final String[] args) {
         if (args.length < 2) {
@@ -43,7 +41,7 @@ public final class PasswordUtility {
         switch (cmd) {
             case "generate" -> handleGenerate(args);
             default -> {
-                LOG.errorf("Unknown command: %s",  cmd);
+                LOG.errorf("Unknown command: %s", cmd);
                 printUsage();
                 System.exit(2);
             }
@@ -58,8 +56,8 @@ public final class PasswordUtility {
             System.out.println("hash=" + hash);
             System.out.println();
             System.out.println("SQL snippet (example):");
-            System.out.println("INSERT INTO users (username, password, rank_id, activated) VALUES ('newuser', '"
-                    + hash + "', 3, TRUE);");
+            System.out.println("INSERT INTO users (username, password, rank_id, activated) VALUES ('newuser', '" + hash
+                    + "', 3, TRUE);");
         } catch (final Exception e) {
             LOG.error("Failed to generate hash", e);
             System.exit(3);

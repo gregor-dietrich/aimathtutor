@@ -8,8 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * Button used to open the manage users view. Shows an appropriate icon and
- * optional tooltip.
+ * Button used to open the manage users view. Shows an appropriate icon and optional tooltip.
  */
 public class ManageUsersButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Manage Users";

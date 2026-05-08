@@ -17,7 +17,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
-
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.ReplyButton;
@@ -33,14 +32,12 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
- * CommentsPanel: Reusable Vaadin component for displaying and creating
- * comments on exercises. Supports threading, permission-based UI, and
- * pagination. This component is not a CDI bean and performs a programmatic
- * lookup of {@link CommentService} when needed.
+ * CommentsPanel: Reusable Vaadin component for displaying and creating comments on exercises. Supports threading,
+ * permission-based UI, and pagination. This component is not a CDI bean and performs a programmatic lookup of
+ * {@link CommentService} when needed.
  *
- * NOTE: This class must NOT be @Vetoed and must NOT contain @Observes
- * methods. @Vetoed classes cannot have CDI observers. Real-time refresh
- * uses CommentCreatedEventBridge with a programmatic listener.
+ * NOTE: This class must NOT be @Vetoed and must NOT contain @Observes methods. @Vetoed classes cannot have CDI
+ * observers. Real-time refresh uses CommentCreatedEventBridge with a programmatic listener.
  */
 public class CommentsPanel extends VerticalLayout {
 
@@ -62,10 +59,14 @@ public class CommentsPanel extends VerticalLayout {
     /**
      * Create a comments panel for the specified exercise/session and user.
      *
-     * @param exerciseId       id of the exercise to display comments for
-     * @param exercisePublicId public id of the exercise to display comments for
-     * @param sessionId        external session id (optional)
-     * @param currentUserId    current user database id (may be null)
+     * @param exerciseId
+     *            id of the exercise to display comments for
+     * @param exercisePublicId
+     *            public id of the exercise to display comments for
+     * @param sessionId
+     *            external session id (optional)
+     * @param currentUserId
+     *            current user database id (may be null)
      */
     public CommentsPanel(final Long exerciseId, final String exercisePublicId, final String sessionId,
             final Long currentUserId) {
@@ -77,8 +78,8 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     /**
-     * Helper method to retrieve CommentService via CDI programmatic lookup.
-     * Used because CommentsPanel is not a CDI bean (instantiated with new()).
+     * Helper method to retrieve CommentService via CDI programmatic lookup. Used because CommentsPanel is not a CDI
+     * bean (instantiated with new()).
      */
     private CommentService getCommentService() {
         return CDI.current().select(CommentService.class).get();
@@ -119,20 +120,15 @@ public class CommentsPanel extends VerticalLayout {
     private Div createCommentForm() {
         final Div formContainer = new Div();
         formContainer.addClassName("comment-form");
-        formContainer.getStyle()
-                .set("width", "100%")
-                .set("border-left", "1px solid var(--lumo-primary-color-50pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("padding", "0 1rem 0 1rem");
+        formContainer.getStyle().set("width", "100%").set("border-left", "1px solid var(--lumo-primary-color-50pct)")
+                .set("border-radius", "var(--lumo-border-radius-m)").set("padding", "0 1rem 0 1rem");
 
         // Textarea
         this.commentTextArea = new TextArea();
         this.commentTextArea.setLabel("Your comment");
         this.commentTextArea.setPlaceholder("Write a comment...");
         this.commentTextArea.setMaxLength(1000);
-        this.commentTextArea.getStyle()
-                .set("width", "95%")
-                .set("background-color", "var(--lumo-base-color)");
+        this.commentTextArea.getStyle().set("width", "95%").set("background-color", "var(--lumo-base-color)");
 
         // Submit button
         this.submitButton = new Button("Post Comment");
@@ -147,8 +143,8 @@ public class CommentsPanel extends VerticalLayout {
     private void loadComments() {
         try {
             // Always load top-level comments
-            final List<CommentViewDto> comments = this.getCommentService()
-                    .listCommentsByExercise(this.exerciseId, this.currentPage, PAGE_SIZE, null);
+            final List<CommentViewDto> comments =
+                    this.getCommentService().listCommentsByExercise(this.exerciseId, this.currentPage, PAGE_SIZE, null);
             this.displayComments(comments);
         } catch (final Exception e) {
             LOG.error("Failed to load comments", e);
@@ -175,11 +171,8 @@ public class CommentsPanel extends VerticalLayout {
                     if (!replies.isEmpty()) {
                         final Div repliesContainer = new Div();
                         repliesContainer.addClassName("comment-replies");
-                        repliesContainer.getStyle()
-                                .set("margin-left", "2rem")
-                                .set("margin-top", "0.5rem")
-                                .set("padding-left", "1rem")
-                                .set("border-left", "2px solid var(--lumo-contrast-20pct)");
+                        repliesContainer.getStyle().set("margin-left", "2rem").set("margin-top", "0.5rem")
+                                .set("padding-left", "1rem").set("border-left", "2px solid var(--lumo-contrast-20pct)");
 
                         for (final CommentViewDto reply : replies) {
                             repliesContainer.add(this.createCommentElement(reply));
@@ -187,7 +180,7 @@ public class CommentsPanel extends VerticalLayout {
                         this.commentsContainer.add(repliesContainer);
                     }
                 } catch (final Exception e) {
-                    LOG.debugf(e, "Failed to load replies for comment %s",  comment.publicId);
+                    LOG.debugf(e, "Failed to load replies for comment %s", comment.publicId);
                 }
             }
         }
@@ -206,39 +199,27 @@ public class CommentsPanel extends VerticalLayout {
     private Div createCommentElement(final CommentViewDto comment) {
         final Div commentDiv = new Div();
         commentDiv.addClassName("comment-item");
-        commentDiv.getStyle()
-                .set("padding", "1rem")
-                .set("margin-bottom", "0.75rem")
-                .set("background-color", "var(--lumo-base-color)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
+        commentDiv.getStyle().set("padding", "1rem").set("margin-bottom", "0.75rem")
+                .set("background-color", "var(--lumo-base-color)").set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)");
 
         // Header with author and date - styled differently from content
         final String relativeDate = this.formatRelativeDate(comment.created);
         final Span header = new Span(comment.username + " · " + relativeDate);
         header.addClassName("comment-header");
-        header.getStyle()
-                .set("display", "block")
-                .set("font-weight", "600")
-                .set("font-size", "0.875rem")
-                .set("color", "var(--lumo-contrast-70pct)");
+        header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem").set("color",
+                "var(--lumo-contrast-70pct)");
 
         // Content with line break from header
         final String displayContent = CommentStatus.DELETED.equals(comment.status) ? "[deleted]" : comment.content;
         final Span content = new Span(displayContent != null ? displayContent : "");
         content.addClassName("comment-content");
-        content.getStyle()
-                .set("display", "block")
-                .set("word-wrap", "break-word")
-                .set("white-space", "pre-wrap");
+        content.getStyle().set("display", "block").set("word-wrap", "break-word").set("white-space", "pre-wrap");
 
         // Action buttons
         final Div actions = new Div();
         actions.addClassName("comment-actions");
-        actions.getStyle()
-                .set("display", "flex")
-                .set("gap", "0.5rem")
-                .set("margin-top", "0.75rem");
+        actions.getStyle().set("display", "flex").set("gap", "0.5rem").set("margin-top", "0.75rem");
 
         // Show/hide based on status
         if (!CommentStatus.DELETED.equals(comment.status)) {
@@ -266,9 +247,7 @@ public class CommentsPanel extends VerticalLayout {
         if (comment.lastEdit != null) {
             final Span editedNote = new Span("(edited)");
             editedNote.addClassName("comment-edited");
-            editedNote.getStyle()
-                    .set("font-size", "0.75rem")
-                    .set("color", "var(--lumo-contrast-50pct)");
+            editedNote.getStyle().set("font-size", "0.75rem").set("color", "var(--lumo-contrast-50pct)");
             commentDiv.add(editedNote);
         }
 
@@ -416,8 +395,7 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     /**
-     * Refresh the comments list by resetting pagination and reloading from the
-     * service. Safe to call from UI threads.
+     * Refresh the comments list by resetting pagination and reloading from the service. Safe to call from UI threads.
      */
     public void refresh() {
         this.currentPage = 0;

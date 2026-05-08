@@ -37,6 +37,7 @@
         <pmd-plugin.version>3.28.0</pmd-plugin.version>
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
+        <spotless-plugin.version>3.4.0</spotless-plugin.version>
         <surefire-plugin.version>3.5.5</surefire-plugin.version>
         <ulid-creator.version>5.2.4</ulid-creator.version>
         <vaadin.version>25.1.5</vaadin.version>
@@ -274,6 +275,8 @@
                 <version>${spotbugs-plugin.version}</version>
                 <configuration>
                     <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+                    <effort>Max</effort>
+                    <threshold>Low</threshold>
                 </configuration>
                 <executions>
                     <execution>
@@ -402,6 +405,32 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.65</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.50</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
                 </executions>
                 <configuration>
                     <excludes>
@@ -421,6 +450,29 @@
                         <phase>verify</phase>
                         <goals>
                             <goal>add-third-party</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless-plugin.version}</version>
+                <configuration>
+                    <java>
+                        <eclipse>
+                            <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
+                        </eclipse>
+                        <importOrder>
+                            <order>java,javax,org,#</order>
+                        </importOrder>
+                        <removeUnusedImports />
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>apply</goal>
                         </goals>
                     </execution>
                 </executions>

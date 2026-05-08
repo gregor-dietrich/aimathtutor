@@ -9,9 +9,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.jboss.logging.Logger;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
-import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
@@ -37,10 +37,8 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for managing comments: creation, editing, deletion, listing and
- * moderation.
- * Delegates specialized concerns to sub-services for rate limiting,
- * flagging, moderation, and permissions.
+ * Service for managing comments: creation, editing, deletion, listing and moderation. Delegates specialized concerns to
+ * sub-services for rate limiting, flagging, moderation, and permissions.
  */
 @ApplicationScoped
 public class CommentService {
@@ -84,23 +82,20 @@ public class CommentService {
     /**
      * Retrieves all comments in the system with loaded relationships.
      *
-     * @return a list of all {@link CommentViewDto}s with exercise, user, and parent
-     *         data
+     * @return a list of all {@link CommentViewDto}s with exercise, user, and parent data
      */
     @Transactional
     public List<CommentViewDto> getAllComments() {
         final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations();
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
      * Finds a single comment by ID with loaded relationships.
      *
-     * @param id the comment ID
-     * @return an {@link Optional} containing the {@link CommentViewDto} with
-     *         exercise/user data, or empty if not found
+     * @param id
+     *            the comment ID
+     * @return an {@link Optional} containing the {@link CommentViewDto} with exercise/user data, or empty if not found
      */
     @Transactional
     public Optional<CommentViewDto> findById(final Long id) {
@@ -115,9 +110,9 @@ public class CommentService {
     /**
      * Finds a single comment by its public ID with loaded relationships.
      *
-     * @param publicId the comment public ID
-     * @return an {@link Optional} containing the {@link CommentViewDto} with
-     *         exercise/user data, or empty if not found
+     * @param publicId
+     *            the comment public ID
+     * @return an {@link Optional} containing the {@link CommentViewDto} with exercise/user data, or empty if not found
      */
     @Transactional
     public Optional<CommentViewDto> findByPublicId(final String publicId) {
@@ -132,66 +127,59 @@ public class CommentService {
     /**
      * Retrieves all top-level and threaded comments for a specific exercise.
      *
-     * @param exerciseId the exercise ID
-     * @return a list of {@link CommentViewDto}s in the exercise with loaded
-     *         relationships
+     * @param exerciseId
+     *            the exercise ID
+     * @return a list of {@link CommentViewDto}s in the exercise with loaded relationships
      */
     @Transactional
     public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
         final List<CommentEntity> comments = this.commentRepository.findByExerciseIdWithRelations(exerciseId);
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
      * Retrieves all comments authored by a specific user.
      *
-     * @param userId the user ID
-     * @return a list of {@link CommentViewDto}s authored by the user with loaded
-     *         relationships
+     * @param userId
+     *            the user ID
+     * @return a list of {@link CommentViewDto}s authored by the user with loaded relationships
      */
     @Transactional
     public List<CommentViewDto> findByUserId(final Long userId) {
         final List<CommentEntity> comments = this.commentRepository.findByUserIdWithRelations(userId);
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
      * Retrieves the most recently created comments with a limit on count.
      *
-     * @param limit the maximum number of comments to return
-     * @return a list of up to {@code limit} recent {@link CommentViewDto}s with
-     *         loaded relationships
+     * @param limit
+     *            the maximum number of comments to return
+     * @return a list of up to {@code limit} recent {@link CommentViewDto}s with loaded relationships
      */
     @Transactional
     public List<CommentViewDto> findRecentComments(final int limit) {
         final List<CommentEntity> comments = this.commentRepository.findRecentCommentsWithRelations(limit);
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
-     * Create a new comment with rate limiting and validation.
-     * Requires the {@code commentAdd} permission.
+     * Create a new comment with rate limiting and validation. Requires the {@code commentAdd} permission.
      */
     @Transactional
     public CommentViewDto createComment(final @Valid CommentDto dto, final Long authorId) {
-        LOG.infof("Creating comment for exercisePublicId=%s, authorId=%s",  dto.exercisePublicId,  authorId);
+        LOG.infof("Creating comment for exercisePublicId=%s, authorId=%s", dto.exercisePublicId, authorId);
 
         this.permissionService.requireCommentAdd();
 
         // 1. Validate input
         if (dto.content == null || dto.content.isBlank()) {
-            LOG.warnf("Comment creation failed: empty content for exercisePublicId=%s, authorId=%s", 
-                    dto.exercisePublicId,  authorId);
+            LOG.warnf("Comment creation failed: empty content for exercisePublicId=%s, authorId=%s",
+                    dto.exercisePublicId, authorId);
             throw new ValidationException("Content is required");
         }
         if (dto.exercisePublicId == null) {
-            LOG.warnf("Comment creation failed: missing exercisePublicId for authorId=%s",  authorId);
+            LOG.warnf("Comment creation failed: missing exercisePublicId for authorId=%s", authorId);
             throw new ValidationException("Exercise ID is required");
         }
 
@@ -201,49 +189,43 @@ public class CommentService {
         // 3. Validate exercise exists and allows comments
         final ExerciseEntity exercise = this.exerciseRepository.findByPublicId(dto.exercisePublicId).orElse(null);
         if (exercise == null) {
-            LOG.warnf("Comment creation failed: exercise not found for exercisePublicId=%s, authorId=%s", 
-                    dto.exercisePublicId, 
-                    authorId);
+            LOG.warnf("Comment creation failed: exercise not found for exercisePublicId=%s, authorId=%s",
+                    dto.exercisePublicId, authorId);
             throw new WebApplicationException("Exercise not found", Response.Status.NOT_FOUND);
         }
         if (!exercise.published) {
-            LOG.warnf("Comment creation failed: exercise not published for exercisePublicId=%s, authorId=%s", 
-                    dto.exercisePublicId, 
-                    authorId);
-            throw new WebApplicationException("Cannot comment on unpublished exercise",
-                    Response.Status.BAD_REQUEST);
+            LOG.warnf("Comment creation failed: exercise not published for exercisePublicId=%s, authorId=%s",
+                    dto.exercisePublicId, authorId);
+            throw new WebApplicationException("Cannot comment on unpublished exercise", Response.Status.BAD_REQUEST);
         }
         if (!exercise.commentable) {
-            LOG.warnf("Comment creation failed: comments not allowed for exercisePublicId=%s, authorId=%s", 
-                    dto.exercisePublicId, 
-                    authorId);
-            throw new WebApplicationException("Comments not allowed on this exercise",
-                    Response.Status.BAD_REQUEST);
+            LOG.warnf("Comment creation failed: comments not allowed for exercisePublicId=%s, authorId=%s",
+                    dto.exercisePublicId, authorId);
+            throw new WebApplicationException("Comments not allowed on this exercise", Response.Status.BAD_REQUEST);
         }
 
         // 4. Validate parent comment if threading
         CommentEntity parentComment = null;
         if (dto.parentCommentPublicId != null) {
-            LOG.debugf("Creating reply comment: parentPublicId=%s for exercisePublicId=%s, authorId=%s", 
-                    dto.parentCommentPublicId, 
-                    dto.exercisePublicId,  authorId);
+            LOG.debugf("Creating reply comment: parentPublicId=%s for exercisePublicId=%s, authorId=%s",
+                    dto.parentCommentPublicId, dto.exercisePublicId, authorId);
             parentComment = this.commentRepository.findByPublicId(dto.parentCommentPublicId).orElse(null);
             if (parentComment == null) {
-                LOG.warnf("Comment creation failed: parent comment not found for parentPublicId=%s, authorId=%s", 
-                        dto.parentCommentPublicId,  authorId);
+                LOG.warnf("Comment creation failed: parent comment not found for parentPublicId=%s, authorId=%s",
+                        dto.parentCommentPublicId, authorId);
                 throw new WebApplicationException("Parent comment not found", Response.Status.BAD_REQUEST);
             }
             if (parentComment.status != CommentStatus.VISIBLE) {
-                LOG.warnf(
-                        "Comment creation failed: cannot reply to hidden/deleted comment parentPublicId=%s, authorId=%s", 
-                        dto.parentCommentPublicId,  authorId);
+                LOG.warnf("Comment creation failed: cannot reply to hidden/deleted comment "
+                        + "parentPublicId=%s, authorId=%s", dto.parentCommentPublicId, authorId);
                 throw new WebApplicationException("Cannot reply to deleted/hidden comment",
                         Response.Status.BAD_REQUEST);
             }
             if (!parentComment.exercise.publicId.equals(dto.exercisePublicId)) {
                 LOG.warnf(
-                        "Comment creation failed: parent comment belongs to different exercise. parentPublicId=%s, parentExercisePublicId=%s, dto.exercisePublicId=%s, authorId=%s", 
-                        dto.parentCommentPublicId,  parentComment.exercise.publicId,  dto.exercisePublicId,  authorId);
+                        "Comment creation failed: parent comment belongs to different exercise. "
+                                + "parentPublicId=%s, parentExercisePublicId=%s, dto.exercisePublicId=%s, authorId=%s",
+                        dto.parentCommentPublicId, parentComment.exercise.publicId, dto.exercisePublicId, authorId);
                 throw new WebApplicationException("Parent comment belongs to a different exercise",
                         Response.Status.BAD_REQUEST);
             }
@@ -252,7 +234,7 @@ public class CommentService {
         // 5. Get author
         final UserEntity author = this.userRepository.findById(authorId);
         if (author == null) {
-            LOG.warnf("Comment creation failed: user not found for authorId=%s",  authorId);
+            LOG.warnf("Comment creation failed: user not found for authorId=%s", authorId);
             throw new WebApplicationException("User not found", Response.Status.BAD_REQUEST);
         }
 
@@ -268,20 +250,19 @@ public class CommentService {
         this.commentRepository.persist(comment);
 
         // 7. Fire CDI event for real-time updates
-        this.commentCreatedEvent.fire(new CommentCreatedEvent(
-                comment.id, comment.exercise.id, comment.user.id, comment.user.username,
-                comment.content, comment.created));
+        this.commentCreatedEvent.fire(new CommentCreatedEvent(comment.id, comment.exercise.id, comment.user.id,
+                comment.user.username, comment.content, comment.created));
 
-        LOG.infof("Comment created successfully: commentId=%s, exercisePublicId=%s, authorId=%s",  comment.id, 
-                dto.exercisePublicId, 
-                authorId);
+        LOG.infof("Comment created successfully: commentId=%s, exercisePublicId=%s, authorId=%s", comment.id,
+                dto.exercisePublicId, authorId);
         return new CommentViewDto(comment);
     }
 
     /**
      * Sanitizes comment content by stripping HTML tags to prevent stored XSS.
      *
-     * @param content raw comment content
+     * @param content
+     *            raw comment content
      * @return sanitized content with HTML tags removed
      */
     private String sanitizeCommentContent(final String content) {
@@ -296,14 +277,16 @@ public class CommentService {
     }
 
     /**
-     * Completely replaces an existing comment (PUT semantics).
-     * Only content field is updated; exercise, user, and parent remain unchanged.
-     * Package-private to enforce permission checks through the public API.
+     * Completely replaces an existing comment (PUT semantics). Only content field is updated; exercise, user, and
+     * parent remain unchanged. Package-private to enforce permission checks through the public API.
      *
-     * @param comment the comment entity with id and updated content
+     * @param comment
+     *            the comment entity with id and updated content
      * @return the updated {@link CommentViewDto}
-     * @throws WebApplicationException if comment not found (NOT_FOUND status)
-     * @throws ValidationException     if content is missing or empty
+     * @throws WebApplicationException
+     *             if comment not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if content is missing or empty
      */
     @Transactional
     CommentViewDto updateComment(final CommentEntity comment) {
@@ -325,14 +308,15 @@ public class CommentService {
     }
 
     /**
-     * Partially updates an existing comment (PATCH semantics).
-     * Only updates comment properties that are explicitly provided in the entity;
-     * null values are ignored.
-     * Package-private to enforce permission checks through the public API.
+     * Partially updates an existing comment (PATCH semantics). Only updates comment properties that are explicitly
+     * provided in the entity; null values are ignored. Package-private to enforce permission checks through the public
+     * API.
      *
-     * @param comment the comment entity with id and partial fields to update
+     * @param comment
+     *            the comment entity with id and partial fields to update
      * @return the updated {@link CommentViewDto}
-     * @throws WebApplicationException if comment not found (NOT_FOUND status)
+     * @throws WebApplicationException
+     *             if comment not found (NOT_FOUND status)
      */
     @Transactional
     CommentViewDto patchComment(final CommentEntity comment) {
@@ -351,12 +335,11 @@ public class CommentService {
     }
 
     /**
-     * Deletes a comment by ID (basic overload).
-     * Package-private to enforce permission checks through the public API.
+     * Deletes a comment by ID (basic overload). Package-private to enforce permission checks through the public API.
      *
-     * @param id the comment ID to delete
-     * @return {@code true} if deletion succeeded, {@code false} if comment not
-     *         found
+     * @param id
+     *            the comment ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if comment not found
      */
     @Transactional
     boolean deleteComment(final Long id) {
@@ -368,20 +351,19 @@ public class CommentService {
      */
     @Transactional
     public void deleteComment(final String commentPublicId, final Long requesterId, final boolean softDelete) {
-        LOG.infof("Attempting to delete comment: commentPublicId=%s, requesterId=%s, softDelete=%s",  commentPublicId, 
-                requesterId, 
-                softDelete);
+        LOG.infof("Attempting to delete comment: commentPublicId=%s, requesterId=%s, softDelete=%s", commentPublicId,
+                requesterId, softDelete);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warnf("Delete comment failed: comment not found commentPublicId=%s, requesterId=%s",  commentPublicId, 
+            LOG.warnf("Delete comment failed: comment not found commentPublicId=%s, requesterId=%s", commentPublicId,
                     requesterId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
         final UserEntity requester = this.userRepository.findById(requesterId);
         if (requester == null) {
-            LOG.warnf("Delete comment failed: requester not found requesterId=%s",  requesterId);
+            LOG.warnf("Delete comment failed: requester not found requesterId=%s", requesterId);
             throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
         }
 
@@ -394,11 +376,11 @@ public class CommentService {
             comment.status = CommentStatus.DELETED;
             comment.deletedAt = LocalDateTime.now();
             comment.deletedBy = requester;
-            LOG.infof("Comment soft-deleted: commentPublicId=%s, requesterId=%s",  commentPublicId,  requesterId);
+            LOG.infof("Comment soft-deleted: commentPublicId=%s, requesterId=%s", commentPublicId, requesterId);
         } else {
             this.permissionService.requireCommentDelete();
             this.commentRepository.deleteByPublicId(commentPublicId);
-            LOG.infof("Comment hard-deleted: commentPublicId=%s, requesterId=%s",  commentPublicId,  requesterId);
+            LOG.infof("Comment hard-deleted: commentPublicId=%s, requesterId=%s", commentPublicId, requesterId);
         }
     }
 
@@ -407,18 +389,18 @@ public class CommentService {
      */
     @Transactional
     public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto, final Long editorId) {
-        LOG.infof("Attempting to edit comment: commentPublicId=%s, editorId=%s",  commentPublicId,  editorId);
+        LOG.infof("Attempting to edit comment: commentPublicId=%s, editorId=%s", commentPublicId, editorId);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warnf("Edit comment failed: comment not found commentPublicId=%s, editorId=%s",  commentPublicId, 
+            LOG.warnf("Edit comment failed: comment not found commentPublicId=%s, editorId=%s", commentPublicId,
                     editorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
         final UserEntity editor = this.userRepository.findById(editorId);
         if (editor == null) {
-            LOG.warnf("Edit comment failed: editor not found editorId=%s",  editorId);
+            LOG.warnf("Edit comment failed: editor not found editorId=%s", editorId);
             throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
@@ -432,9 +414,8 @@ public class CommentService {
         if (dto.content != null && !dto.content.isBlank()) {
             comment.content = this.sanitizeCommentContent(dto.content);
             this.commentRepository.persist(comment);
-            LOG.infof("Comment edited successfully: commentPublicId=%s, editorId=%s, isAuthor=%s",  commentPublicId, 
-                    editorId, 
-                    comment.user != null && comment.user.publicId.equals(editor.publicId));
+            LOG.infof("Comment edited successfully: commentPublicId=%s, editorId=%s, isAuthor=%s", commentPublicId,
+                    editorId, comment.user != null && comment.user.publicId.equals(editor.publicId));
         }
 
         return new CommentViewDto(comment);
@@ -452,10 +433,7 @@ public class CommentService {
      * List comments by exercise with pagination and threading
      */
     @Transactional
-    public List<CommentViewDto> listCommentsByExercise(
-            final Long exerciseId,
-            final int page,
-            final int pageSize,
+    public List<CommentViewDto> listCommentsByExercise(final Long exerciseId, final int page, final int pageSize,
             final String parentPublicId) {
 
         List<CommentEntity> comments;
@@ -467,9 +445,7 @@ public class CommentService {
             comments = this.commentRepository.findRepliesPaged(parentPublicId, page, pageSize);
         }
 
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
@@ -479,20 +455,14 @@ public class CommentService {
     public List<CommentViewDto> listCommentsBySession(final String sessionId) {
         final List<CommentEntity> comments = this.commentRepository.findBySessionIdWithRelations(sessionId);
 
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
-     * Moderate a comment (hide/unhide/delete).
-     * Requires the {@code commentEdit} permission.
+     * Moderate a comment (hide/unhide/delete). Requires the {@code commentEdit} permission.
      */
     @Transactional
-    public void moderateComment(
-            final String commentPublicId,
-            final String action,
-            final Long moderatorId,
+    public void moderateComment(final String commentPublicId, final String action, final Long moderatorId,
             final String reason) {
         this.permissionService.requireCommentEdit();
         this.commentModerationService.moderateComment(commentPublicId, action, moderatorId, reason);
@@ -505,18 +475,15 @@ public class CommentService {
     public List<CommentViewDto> findReplies(final String parentPublicId) {
         final List<CommentEntity> replies = this.commentRepository.findRepliesWithRelations(parentPublicId);
 
-        return replies.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return replies.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
-     * Searches comments by content using the provided query string
-     * (case-insensitive).
-     * Returns an empty list if query is null or empty to avoid loading full
-     * datasets.
+     * Searches comments by content using the provided query string (case-insensitive). Returns an empty list if query
+     * is null or empty to avoid loading full datasets.
      *
-     * @param query the search query string (content match)
+     * @param query
+     *            the search query string (content match)
      * @return a list of matching {@link CommentViewDto}s
      */
     public List<CommentViewDto> searchComments(final String query) {
@@ -525,18 +492,17 @@ public class CommentService {
         }
         final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final List<CommentEntity> comments = this.commentRepository.search(searchTerm);
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
-     * Finds comments created within a date range (inclusive).
-     * Date strings are parsed as ISO-8601 dates. Returns an empty list if parsing
-     * fails or dates are null.
+     * Finds comments created within a date range (inclusive). Date strings are parsed as ISO-8601 dates. Returns an
+     * empty list if parsing fails or dates are null.
      *
-     * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
-     * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
+     * @param startDate
+     *            the start date (ISO-8601 format: YYYY-MM-DD)
+     * @param endDate
+     *            the end date (ISO-8601 format: YYYY-MM-DD)
      * @return a list of {@link CommentViewDto}s created within the date range
      */
     @Transactional
@@ -553,11 +519,9 @@ public class CommentService {
             final LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
 
             final List<CommentEntity> comments = this.commentRepository.findByDateRange(startDateTime, endDateTime);
-            return comments.stream()
-                    .map(CommentViewDto::new)
-                    .collect(Collectors.toList());
+            return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
         } catch (final DateTimeParseException e) {
-            LOG.warnf(e, "Invalid date range provided: startDate='%s', endDate='%s'",  startDate,  endDate);
+            LOG.warnf(e, "Invalid date range provided: startDate='%s', endDate='%s'", startDate, endDate);
             return List.of();
         }
     }
@@ -568,9 +532,7 @@ public class CommentService {
     @Transactional
     public List<CommentViewDto> findByStatus(final CommentStatus status) {
         final List<CommentEntity> comments = this.commentRepository.findByStatus(status);
-        return comments.stream()
-                .map(CommentViewDto::new)
-                .collect(Collectors.toList());
+        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**

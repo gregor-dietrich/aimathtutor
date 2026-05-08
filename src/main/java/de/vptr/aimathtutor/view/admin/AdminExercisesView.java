@@ -29,7 +29,6 @@ import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.component.button.CommentButton;
 import de.vptr.aimathtutor.component.button.CreateButton;
 import de.vptr.aimathtutor.component.button.DeleteButton;
@@ -95,8 +94,7 @@ public class AdminExercisesView extends AbstractAdminView {
     }
 
     /**
-     * Verify authentication and set up the exercise management UI before the
-     * view is displayed.
+     * Verify authentication and set up the exercise management UI before the view is displayed.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -111,41 +109,28 @@ public class AdminExercisesView extends AbstractAdminView {
 
     private void loadExercises() {
         LOG.info("Loading exercises");
-        AsyncDataLoader.load(
-                () -> this.exerciseService.getAllExercises(),
-                this,
-                exercises -> {
-                    LOG.infof("Successfully loaded %s exercises",  exercises.size());
-                    this.grid.setItems(exercises);
-                },
-                "Failed to load exercises. Please try again.");
+        AsyncDataLoader.load(() -> this.exerciseService.getAllExercises(), this, exercises -> {
+            LOG.infof("Successfully loaded %s exercises", exercises.size());
+            this.grid.setItems(exercises);
+        }, "Failed to load exercises. Please try again.");
     }
 
     private void loadPublishedExercises() {
         LOG.info("Loading published exercises");
-        AsyncDataLoader.load(
-                () -> this.exerciseService.findPublishedExercises(),
-                this,
-                exercises -> {
-                    LOG.infof("Successfully loaded %s published exercises",  exercises.size());
-                    this.grid.setItems(exercises);
-                },
-                "Failed to load published exercises. Please try again.");
+        AsyncDataLoader.load(() -> this.exerciseService.findPublishedExercises(), this, exercises -> {
+            LOG.infof("Successfully loaded %s published exercises", exercises.size());
+            this.grid.setItems(exercises);
+        }, "Failed to load published exercises. Please try again.");
     }
 
     private void loadLessons() {
         LOG.info("Loading lessons");
-        AsyncDataLoader.load(
-                () -> this.lessonService.getAllLessons(),
-                this,
-                lessons -> {
-                    this.availableLessons = lessons;
-                    LOG.infof("Successfully loaded %s lessons",  this.availableLessons.size());
-                },
-                () -> {
-                    this.availableLessons = List.of();
-                },
-                "Failed to load lessons. Please try again.");
+        AsyncDataLoader.load(() -> this.lessonService.getAllLessons(), this, lessons -> {
+            this.availableLessons = lessons;
+            LOG.infof("Successfully loaded %s lessons", this.availableLessons.size());
+        }, () -> {
+            this.availableLessons = List.of();
+        }, "Failed to load lessons. Please try again.");
     }
 
     /**
@@ -169,15 +154,11 @@ public class AdminExercisesView extends AbstractAdminView {
      * @return the search layout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadExercises();
-                    }
-                },
-                ignored -> this.searchExercise(),
-                "Search by title or content...",
-                "Search Exercises");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadExercises();
+            }
+        }, ignored -> this.searchExercise(), "Search by title or content...", "Search Exercises");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -191,10 +172,8 @@ public class AdminExercisesView extends AbstractAdminView {
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // User ID filter
-        final var userFilterLayout = new IntegerFilterLayout(
-                ignored -> this.filterByUser(),
-                "Enter User ID...",
-                "Filter by User");
+        final var userFilterLayout =
+                new IntegerFilterLayout(ignored -> this.filterByUser(), "Enter User ID...", "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
 
         searchLayout.add(this.showPublishedButton, dateFilterLayout, userFilterLayout);
@@ -238,10 +217,8 @@ public class AdminExercisesView extends AbstractAdminView {
         }).setHeader("Title").setFlexGrow(2);
 
         this.grid.addColumn(exercise -> exercise.username != null ? exercise.username : "").setHeader("Author")
-                .setWidth("120px")
-                .setFlexGrow(0);
-        this.grid.addColumn(exercise -> exercise.lessonName != null ? exercise.lessonName : "")
-                .setHeader("Lesson")
+                .setWidth("120px").setFlexGrow(0);
+        this.grid.addColumn(exercise -> exercise.lessonName != null ? exercise.lessonName : "").setHeader("Lesson")
                 .setFlexGrow(1);
 
         this.grid.addComponentColumn(exercise -> {
@@ -278,7 +255,8 @@ public class AdminExercisesView extends AbstractAdminView {
     /**
      * Create action buttons (edit, delete, comment) for an exercise row.
      *
-     * @param exercise the exercise view dto
+     * @param exercise
+     *            the exercise view dto
      * @return a horizontal layout with action buttons
      */
     private HorizontalLayout createActionButtons(final ExerciseViewDto exercise) {
@@ -297,7 +275,8 @@ public class AdminExercisesView extends AbstractAdminView {
     /**
      * Open a dialog to edit or create an exercise.
      *
-     * @param exercise the exercise to edit or null to create a new one
+     * @param exercise
+     *            the exercise to edit or null to create a new one
      */
     private void openExerciseDialog(final ExerciseViewDto exercise) {
         this.exerciseDialog.removeAll();
@@ -353,8 +332,7 @@ public class AdminExercisesView extends AbstractAdminView {
         lessonField.setInvalid(false); // Clear any previous validation state
 
         // Bind fields
-        this.binder.forField(titleField)
-                .withValidator(value -> value != null && !value.isBlank(), "Title is required")
+        this.binder.forField(titleField).withValidator(value -> value != null && !value.isBlank(), "Title is required")
                 .bind(exercise1 -> exercise1.title, (exercise1, value) -> exercise1.title = value);
         this.binder.forField(contentField)
                 .withValidator(value -> value != null && !value.isBlank(), "Content is required")
@@ -365,30 +343,26 @@ public class AdminExercisesView extends AbstractAdminView {
                 (exercise1, value) -> exercise1.commentable = value);
 
         // Lesson binding - convert between LessonViewDto and lessonPublicId
-        this.binder.bind(lessonField,
-                exercise1 -> {
-                    if (exercise1.lessonPublicId != null && this.availableLessons != null) {
-                        return this.availableLessons.stream()
-                                .filter(cat -> cat.getPublicId().equals(exercise1.lessonPublicId))
-                                .findFirst()
-                                .orElse(null);
-                    }
-                    return null;
-                },
-                (exercise1, value) -> {
-                    if (value != null) {
-                        exercise1.lessonPublicId = value.getPublicId();
-                        // Also update the lesson object for consistency
-                        if (exercise1.lesson == null) {
-                            exercise1.lesson = new ExerciseDto.LessonField();
-                        }
-                        exercise1.lesson.publicId = value.getPublicId();
-                        exercise1.lesson.name = value.getName();
-                    } else {
-                        exercise1.lessonPublicId = null;
-                        exercise1.lesson = null;
-                    }
-                });
+        this.binder.bind(lessonField, exercise1 -> {
+            if (exercise1.lessonPublicId != null && this.availableLessons != null) {
+                return this.availableLessons.stream().filter(cat -> cat.getPublicId().equals(exercise1.lessonPublicId))
+                        .findFirst().orElse(null);
+            }
+            return null;
+        }, (exercise1, value) -> {
+            if (value != null) {
+                exercise1.lessonPublicId = value.getPublicId();
+                // Also update the lesson object for consistency
+                if (exercise1.lesson == null) {
+                    exercise1.lesson = new ExerciseDto.LessonField();
+                }
+                exercise1.lesson.publicId = value.getPublicId();
+                exercise1.lesson.name = value.getName();
+            } else {
+                exercise1.lessonPublicId = null;
+                exercise1.lesson = null;
+            }
+        });
 
         // Graspable Math fields
         final var graspableEnabledField = new Checkbox("Enable Graspable Math");
@@ -422,39 +396,31 @@ public class AdminExercisesView extends AbstractAdminView {
         this.binder.bind(graspableEnabledField,
                 exercise1 -> exercise1.graspableEnabled != null ? exercise1.graspableEnabled : false,
                 (exercise1, value) -> exercise1.graspableEnabled = value);
-        this.binder.forField(graspableInitialExpressionField)
-                .withValidator((value, ignored) -> {
-                    // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
-                        return ValidationResult.error("Initial Expression is required when Graspable Math is enabled");
-                    }
-                    return ValidationResult.ok();
-                })
-                .bind(exercise1 -> exercise1.graspableInitialExpression,
-                        (exercise1, value) -> exercise1.graspableInitialExpression = value);
-        this.binder.forField(graspableTargetExpressionField)
-                .withValidator((value, ignored) -> {
-                    // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
-                        return ValidationResult.error("Target Expression is required when Graspable Math is enabled");
-                    }
-                    return ValidationResult.ok();
-                })
-                .bind(exercise1 -> exercise1.graspableTargetExpression,
-                        (exercise1, value) -> exercise1.graspableTargetExpression = value);
-        this.binder.forField(graspableDifficultyField)
-                .withValidator((value, ignored) -> {
-                    // Only validate if Graspable Math is enabled
-                    if (graspableEnabledField.getValue() && value == null) {
-                        return ValidationResult
-                                .error("Difficulty is required when Graspable Math is enabled");
-                    }
-                    return ValidationResult.ok();
-                })
-                .bind(exercise1 -> exercise1.graspableDifficulty,
-                        (exercise1, value) -> exercise1.graspableDifficulty = value);
-        this.binder.bind(graspableHintsField,
-                exercise1 -> exercise1.graspableHints,
+        this.binder.forField(graspableInitialExpressionField).withValidator((value, ignored) -> {
+            // Only validate if Graspable Math is enabled
+            if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
+                return ValidationResult.error("Initial Expression is required when Graspable Math is enabled");
+            }
+            return ValidationResult.ok();
+        }).bind(exercise1 -> exercise1.graspableInitialExpression,
+                (exercise1, value) -> exercise1.graspableInitialExpression = value);
+        this.binder.forField(graspableTargetExpressionField).withValidator((value, ignored) -> {
+            // Only validate if Graspable Math is enabled
+            if (graspableEnabledField.getValue() && (value == null || value.isBlank())) {
+                return ValidationResult.error("Target Expression is required when Graspable Math is enabled");
+            }
+            return ValidationResult.ok();
+        }).bind(exercise1 -> exercise1.graspableTargetExpression,
+                (exercise1, value) -> exercise1.graspableTargetExpression = value);
+        this.binder.forField(graspableDifficultyField).withValidator((value, ignored) -> {
+            // Only validate if Graspable Math is enabled
+            if (graspableEnabledField.getValue() && value == null) {
+                return ValidationResult.error("Difficulty is required when Graspable Math is enabled");
+            }
+            return ValidationResult.ok();
+        }).bind(exercise1 -> exercise1.graspableDifficulty,
+                (exercise1, value) -> exercise1.graspableDifficulty = value);
+        this.binder.bind(graspableHintsField, exercise1 -> exercise1.graspableHints,
                 (exercise1, value) -> exercise1.graspableHints = value);
 
         // Show/hide Graspable Math fields based on checkbox
@@ -467,16 +433,16 @@ public class AdminExercisesView extends AbstractAdminView {
         });
 
         // Initially hide Graspable Math fields if not enabled
-        final boolean initiallyEnabled = this.currentExercise.graspableEnabled != null
-                && this.currentExercise.graspableEnabled;
+        final boolean initiallyEnabled =
+                this.currentExercise.graspableEnabled != null && this.currentExercise.graspableEnabled;
         graspableInitialExpressionField.setVisible(initiallyEnabled);
         graspableTargetExpressionField.setVisible(initiallyEnabled);
         graspableDifficultyField.setVisible(initiallyEnabled);
         graspableHintsField.setVisible(initiallyEnabled);
 
-        form.add(titleField, contentField, lessonField, publishedField, commentableField,
-                graspableEnabledField, graspableInitialExpressionField, graspableTargetExpressionField,
-                graspableDifficultyField, graspableHintsField);
+        form.add(titleField, contentField, lessonField, publishedField, commentableField, graspableEnabledField,
+                graspableInitialExpressionField, graspableTargetExpressionField, graspableDifficultyField,
+                graspableHintsField);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
@@ -547,7 +513,8 @@ public class AdminExercisesView extends AbstractAdminView {
     /**
      * Delete the provided exercise.
      *
-     * @param exercise the exercise to delete
+     * @param exercise
+     *            the exercise to delete
      */
     private void deleteExercise(final ExerciseViewDto exercise) {
         try {
@@ -577,19 +544,14 @@ public class AdminExercisesView extends AbstractAdminView {
         }
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        AsyncDataLoader.load(
-                () -> this.exerciseService.searchExercises(query.trim()),
-                this,
-                exercises -> {
-                    this.grid.setItems(exercises);
-                    this.searchButton.setEnabled(true);
-                    this.searchButton.setText("Search");
-                },
-                () -> {
-                    this.searchButton.setEnabled(true);
-                    this.searchButton.setText("Search");
-                },
-                "An error occurred while searching exercises. Please try again.");
+        AsyncDataLoader.load(() -> this.exerciseService.searchExercises(query.trim()), this, exercises -> {
+            this.grid.setItems(exercises);
+            this.searchButton.setEnabled(true);
+            this.searchButton.setText("Search");
+        }, () -> {
+            this.searchButton.setEnabled(true);
+            this.searchButton.setText("Search");
+        }, "An error occurred while searching exercises. Please try again.");
     }
 
     /**
@@ -609,9 +571,7 @@ public class AdminExercisesView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.exerciseService.findByDateRange(startDate.toString(), endDate.toString()),
-                this,
+        AsyncDataLoader.load(() -> this.exerciseService.findByDateRange(startDate.toString(), endDate.toString()), this,
                 exercises -> this.grid.setItems(exercises),
                 "An error occurred while filtering exercises. Please try again.");
     }
@@ -623,9 +583,7 @@ public class AdminExercisesView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.exerciseService.findByUserId(userId.longValue()),
-                this,
+        AsyncDataLoader.load(() -> this.exerciseService.findByUserId(userId.longValue()), this,
                 exercises -> this.grid.setItems(exercises),
                 "An error occurred while filtering exercises. Please try again.");
     }

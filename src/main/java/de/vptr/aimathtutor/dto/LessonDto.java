@@ -7,17 +7,17 @@ import jakarta.validation.constraints.Size;
 /**
  * DTO for lesson operations (POST, PUT, PATCH).
  * 
- * - POST: name required (validated by service), parentId optional
- * - PUT: name required (validated by service), parentId optional for parent
- * changes
- * - PATCH: name optional (allows null), parentId optional for parent changes
+ * - POST: name required (validated by service), parentId optional - PUT: name required (validated by service), parentId
+ * optional for parent changes - PATCH: name optional (allows null), parentId optional for parent changes
  */
-@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO public fields intentionally used for JSON mapping and convenience")
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        justification = "DTO public fields intentionally used for JSON mapping and convenience")
 public class LessonDto {
 
     public String publicId;
 
-    @Size(min = AppConstants.LESSON_NAME_MIN_LENGTH, max = AppConstants.LESSON_NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
+    @Size(min = AppConstants.LESSON_NAME_MIN_LENGTH, max = AppConstants.LESSON_NAME_MAX_LENGTH,
+            message = "Name must be between {min} and {max} characters")
     public String name;
 
     public String parentPublicId;
@@ -33,13 +33,13 @@ public class LessonDto {
         /**
          * Default constructor for JSON mapping.
          */
-        public ParentField() {
-        }
+        public ParentField() {}
 
         /**
          * Constructs a ParentField with the given public ID.
          *
-         * @param publicId the parent lesson's public identifier
+         * @param publicId
+         *            the parent lesson's public identifier
          */
         public ParentField(final String publicId) {
             this.publicId = publicId;

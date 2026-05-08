@@ -12,7 +12,6 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouterLayout;
-
 import de.vptr.aimathtutor.component.AdminNavigationTabs;
 import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.LogoutButton;
@@ -26,12 +25,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
 /**
- * Main layout for the admin panel providing navigation, top bar, and content
- * area.
- * Implements authentication checks, admin permission validation, and theme
- * application.
- * Routes child admin views through a sidebar navigation and content area
- * layout.
+ * Main layout for the admin panel providing navigation, top bar, and content area. Implements authentication checks,
+ * admin permission validation, and theme application. Routes child admin views through a sidebar navigation and content
+ * area layout.
  */
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
     private static final Logger LOG = Logger.getLogger(AdminMainLayout.class);
@@ -58,16 +54,18 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     /**
      * Get the shared top bar for views that need to add additional components
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intentionally exposed for child views to append components")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "Top bar is intentionally exposed for child views to append components")
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }
 
     /**
-     * Shows the router-managed content in the content area of the admin layout.
-     * Removes previous content and appends the new content element.
+     * Shows the router-managed content in the content area of the admin layout. Removes previous content and appends
+     * the new content element.
      *
-     * @param content the Vaadin component to display
+     * @param content
+     *            the Vaadin component to display
      */
     @Override
     public void showRouterLayoutContent(final HasElement content) {
@@ -81,10 +79,11 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     /**
-     * Attaches event listener when admin layout is added to the UI tree.
-     * Updates logout button visibility based on authentication state.
+     * Attaches event listener when admin layout is added to the UI tree. Updates logout button visibility based on
+     * authentication state.
      *
-     * @param attachEvent the attach event containing lifecycle information
+     * @param attachEvent
+     *            the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
@@ -93,13 +92,12 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     /**
-     * Called before navigation occurs. Initializes layout on first entry, applies
-     * theme,
-     * checks authentication and admin permissions, hides navigation for login view,
-     * and shows/hides tabs.
-     * Redirects to login or home if authentication/permission checks fail.
+     * Called before navigation occurs. Initializes layout on first entry, applies theme, checks authentication and
+     * admin permissions, hides navigation for login view, and shows/hides tabs. Redirects to login or home if
+     * authentication/permission checks fail.
      *
-     * @param event the before enter navigation event
+     * @param event
+     *            the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -108,7 +106,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
         final var targetView = event.getNavigationTarget();
 
-        LOG.tracef("MainLayout.beforeEnter - Target: %s",  targetView.getSimpleName());
+        LOG.tracef("MainLayout.beforeEnter - Target: %s", targetView.getSimpleName());
 
         // Skip auth check for the login view
         if (targetView == LoginView.class) {

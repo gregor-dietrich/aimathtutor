@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.util;
 
 import com.github.f4b6a3.ulid.UlidCreator;
-
 import jakarta.ws.rs.BadRequestException;
 
 /**
@@ -26,8 +25,10 @@ public final class UlidUtil {
     /**
      * Validates the given ULID and throws an exception if the format is invalid.
      *
-     * @param ulid the ULID string to validate
-     * @throws BadRequestException if the ULID format is invalid
+     * @param ulid
+     *            the ULID string to validate
+     * @throws BadRequestException
+     *             if the ULID format is invalid
      */
     public static void requireValid(final String ulid) {
         if (!isValid(ulid)) {

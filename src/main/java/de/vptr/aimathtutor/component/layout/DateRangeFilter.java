@@ -4,16 +4,17 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Reusable date-range filter component for admin views.
  *
- * <p>Provides start/end date pickers with a clear button. Useful for
- * search/filter operations that need date boundaries.</p>
+ * <p>
+ * Provides start/end date pickers with a clear button. Useful for search/filter operations that need date boundaries.
+ * </p>
  */
-@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Vaadin UI components intentionally exposed for data binding")
+@SuppressFBWarnings(value = "EI_EXPOSE_REP",
+        justification = "Vaadin UI components intentionally exposed for data binding")
 public class DateRangeFilter extends HorizontalLayout {
 
     private final DatePicker startDatePicker;

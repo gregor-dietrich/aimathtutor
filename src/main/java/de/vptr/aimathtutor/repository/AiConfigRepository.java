@@ -9,8 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing AI configuration entities.
- * Provides database access and query operations for AI configuration settings.
+ * Repository for managing AI configuration entities. Provides database access and query operations for AI configuration
+ * settings.
  */
 @ApplicationScoped
 public class AiConfigRepository extends AbstractRepository {
@@ -28,7 +28,8 @@ public class AiConfigRepository extends AbstractRepository {
     /**
      * Retrieves a configuration entry by its key.
      *
-     * @param configKey the configuration key to search for
+     * @param configKey
+     *            the configuration key to search for
      * @return an Optional containing the entity if found, empty otherwise
      */
     @Transactional
@@ -45,7 +46,8 @@ public class AiConfigRepository extends AbstractRepository {
     /**
      * Retrieves an AI configuration by its public identifier.
      *
-     * @param publicId the public ID of the configuration
+     * @param publicId
+     *            the public ID of the configuration
      * @return an {@link Optional} containing the configuration if found, empty otherwise
      */
     public Optional<AiConfigEntity> findByPublicId(final String publicId) {
@@ -61,7 +63,8 @@ public class AiConfigRepository extends AbstractRepository {
     /**
      * Retrieves all configuration entries in a specific category.
      *
-     * @param category the category to filter by
+     * @param category
+     *            the category to filter by
      * @return a list of {@link AiConfigEntity} objects in the category
      */
     @Transactional
@@ -77,7 +80,8 @@ public class AiConfigRepository extends AbstractRepository {
     /**
      * Persists a new AI configuration entity or updates an existing one.
      *
-     * @param entity the entity to persist or update
+     * @param entity
+     *            the entity to persist or update
      */
     @Transactional
     public void persist(final AiConfigEntity entity) {
@@ -87,7 +91,8 @@ public class AiConfigRepository extends AbstractRepository {
     /**
      * Updates an existing AI configuration entity.
      *
-     * @param entity the entity to update
+     * @param entity
+     *            the entity to update
      * @return the merged entity
      */
     @Transactional
@@ -98,7 +103,8 @@ public class AiConfigRepository extends AbstractRepository {
     /**
      * Removes an AI configuration entity by ID.
      *
-     * @param id the ID of the entity to delete
+     * @param id
+     *            the ID of the entity to delete
      */
     @Transactional
     public void deleteById(final Long id) {

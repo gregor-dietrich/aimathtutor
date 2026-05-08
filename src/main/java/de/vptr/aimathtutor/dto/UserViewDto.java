@@ -5,8 +5,7 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.UserEntity;
 
 /**
- * DTO used to present a user in list and detail views. Contains non-sensitive
- * fields intended for UI consumption.
+ * DTO used to present a user in list and detail views. Contains non-sensitive fields intended for UI consumption.
  */
 public class UserViewDto {
 
@@ -25,8 +24,7 @@ public class UserViewDto {
     public String userAvatarEmoji;
     public String tutorAvatarEmoji;
 
-    public UserViewDto() {
-    }
+    public UserViewDto() {}
 
     /**
      * Constructs a UserViewDto from a UserEntity.
@@ -51,9 +49,8 @@ public class UserViewDto {
     }
 
     /**
-     * Convert this view DTO to a minimal editable {@link UserDto} instance.
-     * Sensitive fields like password are not transferred and must be handled
-     * separately.
+     * Convert this view DTO to a minimal editable {@link UserDto} instance. Sensitive fields like password are not
+     * transferred and must be handled separately.
      *
      * @return a new UserDto populated from view fields
      */

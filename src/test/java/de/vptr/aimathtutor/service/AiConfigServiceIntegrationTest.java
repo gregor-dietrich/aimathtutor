@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
-import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +20,7 @@ import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
@@ -174,8 +174,7 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Validation accepts in-range temperature")
     @Transactional
     void testValidationAcceptsInRangeTemperature() {
-        assertDoesNotThrow(
-                () -> this.aiConfigService.updateConfig("gemini.temperature", "1.2", ADMIN_USER_ID));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("gemini.temperature", "1.2", ADMIN_USER_ID));
 
         // Restore
         this.aiConfigService.updateConfig("gemini.temperature", this.originalTemperature, ADMIN_USER_ID);

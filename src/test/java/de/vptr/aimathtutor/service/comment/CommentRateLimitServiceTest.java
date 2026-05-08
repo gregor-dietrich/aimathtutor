@@ -42,8 +42,7 @@ class CommentRateLimitServiceTest {
     @Test
     @DisplayName("Should reject null user ID")
     void shouldRejectNullUserId() {
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.rateLimitService.checkRateLimit(null));
+        final var ex = assertThrows(WebApplicationException.class, () -> this.rateLimitService.checkRateLimit(null));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -70,8 +69,7 @@ class CommentRateLimitServiceTest {
         this.commentRepository.persist(comment);
         this.em.flush();
 
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.rateLimitService.checkRateLimit(user.id));
+        final var ex = assertThrows(WebApplicationException.class, () -> this.rateLimitService.checkRateLimit(user.id));
         assertEquals(Response.Status.TOO_MANY_REQUESTS.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -95,12 +93,10 @@ class CommentRateLimitServiceTest {
         // Backdate all comments so the 5-second window does not trigger first
         this.em.createNativeQuery(
                 "UPDATE comments SET created = CURRENT_TIMESTAMP - interval '10 seconds' WHERE user_id = ?1")
-                .setParameter(1, user.id)
-                .executeUpdate();
+                .setParameter(1, user.id).executeUpdate();
         this.em.flush();
 
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.rateLimitService.checkRateLimit(user.id));
+        final var ex = assertThrows(WebApplicationException.class, () -> this.rateLimitService.checkRateLimit(user.id));
         assertEquals(Response.Status.TOO_MANY_REQUESTS.getStatusCode(), ex.getResponse().getStatus());
     }
 }

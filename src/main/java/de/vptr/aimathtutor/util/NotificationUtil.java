@@ -15,7 +15,8 @@ public final class NotificationUtil {
     /**
      * Shows a success notification
      * 
-     * @param message The message to display
+     * @param message
+     *            The message to display
      */
     public static void showSuccess(final String message) {
         showNotification(message, NotificationVariant.LUMO_SUCCESS, AppConstants.NOTIFICATION_DURATION_SUCCESS_MS);
@@ -24,7 +25,8 @@ public final class NotificationUtil {
     /**
      * Shows an error notification
      *
-     * @param message The message to display
+     * @param message
+     *            The message to display
      */
     public static void showError(final String message) {
         showNotification(message, NotificationVariant.LUMO_ERROR, AppConstants.NOTIFICATION_DURATION_ERROR_MS);
@@ -33,7 +35,8 @@ public final class NotificationUtil {
     /**
      * Shows a warning notification
      *
-     * @param message The message to display
+     * @param message
+     *            The message to display
      */
     public static void showWarning(final String message) {
         showNotification(message, NotificationVariant.LUMO_CONTRAST, AppConstants.NOTIFICATION_DURATION_WARNING_MS);
@@ -42,7 +45,8 @@ public final class NotificationUtil {
     /**
      * Shows an info notification
      *
-     * @param message The message to display
+     * @param message
+     *            The message to display
      */
     public static void showInfo(final String message) {
         showNotification(message, NotificationVariant.LUMO_PRIMARY, AppConstants.NOTIFICATION_DURATION_INFO_MS);
@@ -51,9 +55,12 @@ public final class NotificationUtil {
     /**
      * Shows a custom notification with specified duration
      * 
-     * @param message  The message to display
-     * @param variant  The notification variant
-     * @param duration Duration in milliseconds
+     * @param message
+     *            The message to display
+     * @param variant
+     *            The notification variant
+     * @param duration
+     *            Duration in milliseconds
      */
     public static void showNotification(final String message, final NotificationVariant variant, final int duration) {
         final var notification = new Notification();
@@ -67,13 +74,17 @@ public final class NotificationUtil {
     /**
      * Shows a notification with custom position
      * 
-     * @param message  The message to display
-     * @param variant  The notification variant
-     * @param duration Duration in milliseconds
-     * @param position The position of the notification
+     * @param message
+     *            The message to display
+     * @param variant
+     *            The notification variant
+     * @param duration
+     *            Duration in milliseconds
+     * @param position
+     *            The position of the notification
      */
-    public static void showNotification(final String message, final NotificationVariant variant,
-            final int duration, final Notification.Position position) {
+    public static void showNotification(final String message, final NotificationVariant variant, final int duration,
+            final Notification.Position position) {
         final var notification = new Notification();
         notification.addThemeVariants(variant);
         notification.setText(message);

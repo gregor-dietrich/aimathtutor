@@ -27,8 +27,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Integration tests for UserRankService.
- * Tests CRUD operations, searching, and permission management for user ranks.
+ * Integration tests for UserRankService. Tests CRUD operations, searching, and permission management for user ranks.
  */
 @QuarkusTest
 @DisplayName("UserRankService Tests")
@@ -50,8 +49,8 @@ class UserRankServiceTest {
     @Transactional
     void setUp() {
         // Clean up test ranks from previous runs
-        final List<String> testRankNames = List.of("TestRank", "TestRankToUpdate", "TestRankToDelete",
-                "TestAdminRank123", "TestUserRank456");
+        final List<String> testRankNames =
+                List.of("TestRank", "TestRankToUpdate", "TestRankToDelete", "TestAdminRank123", "TestUserRank456");
         for (final String name : testRankNames) {
             final var existing = this.userRankRepository.findByName(name);
             if (existing.isPresent()) {
@@ -294,8 +293,8 @@ class UserRankServiceTest {
         userDto.activated = true;
         this.userService.createUser(userDto);
 
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.userRankService.deleteRank(rank.publicId));
+        final var ex =
+                assertThrows(WebApplicationException.class, () -> this.userRankService.deleteRank(rank.publicId));
         assertEquals(Response.Status.CONFLICT.getStatusCode(), ex.getResponse().getStatus());
     }
 }

@@ -12,8 +12,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * OpenAI provider for analyzing math actions and answering questions.
- * Uses JSON mode for guaranteed valid JSON responses.
+ * OpenAI provider for analyzing math actions and answering questions. Uses JSON mode for guaranteed valid JSON
+ * responses.
  */
 @ApplicationScoped
 public class OpenAiProvider implements AiProvider {
@@ -44,9 +44,8 @@ public class OpenAiProvider implements AiProvider {
     }
 
     @Override
-    public String answerQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
+    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
+            final String targetExpression, final ConversationContextDto context) {
         final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
                 initialExpression, targetExpression, context);
         return this.openAiService.generateContent(prompt);

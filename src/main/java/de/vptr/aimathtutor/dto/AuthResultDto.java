@@ -1,8 +1,7 @@
 package de.vptr.aimathtutor.dto;
 
 /**
- * Result object returned by authentication operations. Encapsulates a status
- * and an optional user-facing message.
+ * Result object returned by authentication operations. Encapsulates a status and an optional user-facing message.
  */
 public final class AuthResultDto {
 
@@ -10,10 +9,7 @@ public final class AuthResultDto {
      * Status codes for authentication results.
      */
     public enum Status {
-        SUCCESS,
-        INVALID_CREDENTIALS,
-        BACKEND_UNAVAILABLE,
-        INVALID_INPUT
+        SUCCESS, INVALID_CREDENTIALS, BACKEND_UNAVAILABLE, INVALID_INPUT
     }
 
     private final Status status;
