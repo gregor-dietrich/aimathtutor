@@ -4,12 +4,11 @@
 
 REQUIRED_MAVEN_VERSION="3.9.9"
 
-# Inject JDK 24+ migration flags automatically if supported
+# Suppress sun.misc.Unsafe deprecation warnings on Java 23+ (e.g. Guava inside Maven itself)
 if command -v java &> /dev/null; then
-  JAVA_VER=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
-  JAVA_MAJOR=$(echo "$JAVA_VER" | cut -d'.' -f1)
-  if [ "$JAVA_MAJOR" -ge 24 ] 2>/dev/null; then
-    export MAVEN_OPTS="--sun-misc-unsafe-memory-access=allow $MAVEN_OPTS"
+  JAVA_MAJOR=$(java -version 2>&1 | awk -F '"' '/version/ {split($2,a,"."); print (a[1]=="1"?a[2]:a[1])}')
+  if [ "${JAVA_MAJOR:-0}" -ge 23 ] 2>/dev/null; then
+    export MAVEN_OPTS="--sun-misc-unsafe-memory-access=allow ${MAVEN_OPTS}"
   fi
 fi
 

@@ -18,7 +18,7 @@ You should challenge the user's request if it would result in implementing anti-
 - **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`.
 - **Lint:** `make lint` → `scripts/lint.sh` — runs spotless:apply, checkstyle, spotbugs, PMD, and CPD checks.
 - **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` + `build-frontend`. CI: `./mvnw clean install package -DskipTests -Pproduction`.
-- **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED` and `-XX:+EnableDynamicAgentLoading` (in `quarkus-maven-plugin`).
+- **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.ref=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.misc=ALL-UNNAMED`, `--add-opens java.base/java.nio=ALL-UNNAMED`, `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`, `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`, and `-XX:+EnableDynamicAgentLoading`. Set consistently in `pom.xml` (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and Docker `JAVA_OPTS_APPEND`.
 - **Versioning:** Maven property `${revision}` (default `1.0.0-SNAPSHOT`). Pass `-Drevision=X.Y.Z`.
 
 ## Architecture

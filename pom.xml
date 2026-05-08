@@ -346,7 +346,14 @@
                 <extensions>true</extensions>
                 <configuration>
                     <jvmArgs>--add-opens java.base/java.lang=ALL-UNNAMED
-                        -XX:+EnableDynamicAgentLoading</jvmArgs>
+                        --add-opens java.base/jdk.internal.ref=ALL-UNNAMED
+                        --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
+                        --add-opens java.base/java.nio=ALL-UNNAMED
+                        --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+                        --enable-native-access=ALL-UNNAMED
+                        --sun-misc-unsafe-memory-access=allow
+                        -XX:+EnableDynamicAgentLoading
+                        -Xshare:off</jvmArgs>
                 </configuration>
             </plugin>
             <plugin>
