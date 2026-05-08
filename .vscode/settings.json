@@ -32,7 +32,6 @@
   "java.codeGeneration.hashCodeEquals.useInstanceof": true, // Uses 'instanceof' instead of getClass() in hashCode() and equals() methods for better inheritance handling.
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.edit.validateAllOpenBuffersOnChanges": true, // Validates all open Java files when changes occur, ensuring real-time error detection.
-  "java.saveActions.organizeImports": true,
   "java.sources.organizeImports.starThreshold": 9999,
   "java.sources.organizeImports.staticStarThreshold": 9999,
   "microprofile.tools.validation.unknown.excluded": [

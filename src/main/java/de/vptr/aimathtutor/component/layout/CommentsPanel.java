@@ -17,6 +17,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
+
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.ReplyButton;

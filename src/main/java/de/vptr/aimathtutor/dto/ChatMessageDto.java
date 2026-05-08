@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.dto;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**

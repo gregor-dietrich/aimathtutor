@@ -58,9 +58,9 @@ make clean
 
 make install
 
-if [ "$RUN_TESTS" = true ]; then
-    make test
-fi
+make lint
+
+make test
 
 make build
 

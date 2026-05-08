@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.util;
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.UI;
+
 import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;

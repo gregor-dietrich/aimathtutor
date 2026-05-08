@@ -13,6 +13,7 @@ import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AdminSearchLayoutFactory;

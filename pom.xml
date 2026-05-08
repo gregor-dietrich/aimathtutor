@@ -464,7 +464,7 @@
                             <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
                         </eclipse>
                         <importOrder>
-                            <order>java,javax,org,#</order>
+                            <order>java,javax,org,com,#</order>
                         </importOrder>
                         <removeUnusedImports />
                     </java>
