@@ -37,7 +37,7 @@ public final class ErrorMessageUtil {
                         try {
                             root = OBJECT_MAPPER.readTree(trimmed);
                             final String msg = findMessageNode(root);
-                            if (msg != null && !msg.isEmpty()) {
+                            if (msg != null) {
                                 return msg;
                             }
                         } catch (final Exception e) {
