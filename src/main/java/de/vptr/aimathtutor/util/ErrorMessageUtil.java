@@ -33,8 +33,9 @@ public final class ErrorMessageUtil {
                 if (responseBody != null && !responseBody.isBlank()) {
                     final String trimmed = responseBody.trim();
                     if (trimmed.startsWith("{")) {
+                        JsonNode root = null;
                         try {
-                            final JsonNode root = OBJECT_MAPPER.readTree(trimmed);
+                            root = OBJECT_MAPPER.readTree(trimmed);
                             final String msg = findMessageNode(root);
                             if (msg != null && !msg.isEmpty()) {
                                 return msg;
@@ -42,7 +43,7 @@ public final class ErrorMessageUtil {
                         } catch (final Exception e) {
                             LOG.debugf(e, "JSON parse failed for error response, trying regex fallback");
                         }
-                        final String regexMsg = extractMessageWithRegex(trimmed);
+                        final String regexMsg = extractMessageWithRegex(trimmed, root);
                         if (regexMsg != null) {
                             return regexMsg;
                         }
@@ -73,15 +74,22 @@ public final class ErrorMessageUtil {
         return null;
     }
 
-    private static String extractMessageWithRegex(final String responseBody) {
-        try {
-            final JsonNode root = OBJECT_MAPPER.readTree(responseBody);
-            final String msg = findMessageNode(root);
+    private static String extractMessageWithRegex(final String responseBody, final JsonNode alreadyParsed) {
+        if (alreadyParsed != null) {
+            final String msg = findMessageNode(alreadyParsed);
             if (msg != null && !msg.isEmpty()) {
                 return msg;
             }
-        } catch (final Exception e) {
-            // Not valid JSON, fall through to regex
+        } else {
+            try {
+                final JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+                final String msg = findMessageNode(root);
+                if (msg != null && !msg.isEmpty()) {
+                    return msg;
+                }
+            } catch (final Exception e) {
+                // Not valid JSON, fall through to regex
+            }
         }
 
         if (!responseBody.contains("\"message\"")) {
