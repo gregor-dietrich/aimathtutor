@@ -36,14 +36,14 @@ public final class ErrorMessageUtil {
                         try {
                             final JsonNode root = OBJECT_MAPPER.readTree(trimmed);
                             final String msg = findMessageNode(root);
-                            if (msg != null && !msg.isEmpty()) {
+                            if (msg != null) {
                                 return msg;
                             }
                         } catch (final Exception e) {
                             LOG.debugf(e, "JSON parse failed for error response, trying regex fallback");
                         }
                         final String regexMsg = extractMessageWithRegex(trimmed);
-                        if (regexMsg != null && !regexMsg.isEmpty()) {
+                        if (regexMsg != null) {
                             return regexMsg;
                         }
                     }
