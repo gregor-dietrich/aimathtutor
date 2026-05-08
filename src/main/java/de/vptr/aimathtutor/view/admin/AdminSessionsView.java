@@ -13,11 +13,9 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import de.vptr.aimathtutor.component.button.RefreshButton;
-import de.vptr.aimathtutor.component.layout.SearchFilterBar;
-import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
+import de.vptr.aimathtutor.util.AdminSearchLayoutFactory;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -41,6 +39,7 @@ public class AdminSessionsView extends AbstractAdminView {
     private TextField searchField;
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
+    private HorizontalLayout buttonLayout;
 
     /**
      * Constructs the AdminSessionsView with full size and padding.
@@ -76,8 +75,7 @@ public class AdminSessionsView extends AbstractAdminView {
         this.add(searchLayout);
 
         // Button layout
-        final var buttonLayout = this.createButtonLayout();
-        this.add(buttonLayout);
+        this.add(this.buttonLayout);
 
         // Create grid
         this.grid = new Grid<>(StudentSessionViewDto.class, false);
@@ -120,34 +118,15 @@ public class AdminSessionsView extends AbstractAdminView {
      * @return the search layout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(e -> {
-            if (e.getValue() == null || e.getValue().isBlank()) {
-                this.loadSessions();
-            }
-        }, ignored -> this.searchSessions(), "Search by student or exercise...", "Search Sessions");
-
-        this.searchField = searchLayout.getTextfield();
-
-        final var filterBar = new SearchFilterBar(searchLayout, this::filterByDateRange, this::resetFilters);
-        this.startDatePicker = filterBar.getStartDatePicker();
-        this.endDatePicker = filterBar.getEndDatePicker();
-
+        final var components = new AdminSearchLayoutFactory.Components();
+        final var searchLayout = AdminSearchLayoutFactory.create(this::loadSessions, this::searchSessions,
+                "Search by student or exercise...", "Search Sessions", this::filterByDateRange, this::resetFilters,
+                this::loadSessions, components);
+        this.searchField = components.searchField;
+        this.startDatePicker = components.startDatePicker;
+        this.endDatePicker = components.endDatePicker;
+        this.buttonLayout = components.buttonLayout;
         return searchLayout;
-    }
-
-    /**
-     * Create the layout that contains action buttons for the sessions view.
-     *
-     * @return a horizontal layout with action buttons
-     */
-    private HorizontalLayout createButtonLayout() {
-        final var layout = new HorizontalLayout();
-        layout.setSpacing(true);
-
-        final var refreshButton = new RefreshButton(ignored -> this.loadSessions());
-
-        layout.add(refreshButton);
-        return layout;
     }
 
     /**

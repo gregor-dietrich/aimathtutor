@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.component.button.UserViewButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.LayoutNavigationUtil;
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.LoginView;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -144,26 +145,14 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     private void updateLogoutButtonVisibility() {
-        if (this.authService.isAuthenticated()) {
-            // Check current route to determine if logout button should be shown
-            this.getUI().ifPresent(ui -> {
-                final var location = ui.getInternals().getActiveViewLocation();
-                if (location != null) {
-                    final var path = location.getPath();
-                    // Don't show logout button on login or error views
-                    if (!"login".equals(path) && !"backend-error".equals(path)) {
-                        this.addButtonsToTopBar();
-                        this.showNavigationTabs();
-                    } else {
-                        this.removeButtonsFromTopBar();
-                        this.hideNavigationTabs();
-                    }
-                }
-            });
-        } else {
-            this.removeButtonsFromTopBar();
-            this.hideNavigationTabs();
-        }
+        LayoutNavigationUtil.updateButtonVisibility(this.getUI(), this.authService.isAuthenticated(),
+                path -> !"login".equals(path) && !"backend-error".equals(path), () -> {
+                    this.addButtonsToTopBar();
+                    this.showNavigationTabs();
+                }, () -> {
+                    this.removeButtonsFromTopBar();
+                    this.hideNavigationTabs();
+                });
     }
 
     private void initializeLayout() {

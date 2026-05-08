@@ -291,7 +291,7 @@
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>${pmd-plugin.version}</version>
                 <configuration>
-                    <minimumTokens>100</minimumTokens>
+                    <minimumTokens>70</minimumTokens>
                     <targetJdk>${java.version}</targetJdk>
                     <includeTests>true</includeTests>
                     <linkXRef>false</linkXRef>

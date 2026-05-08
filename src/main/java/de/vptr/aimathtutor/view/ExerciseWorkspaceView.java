@@ -30,12 +30,13 @@ import de.vptr.aimathtutor.component.layout.CommentsPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
-import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.GraspableMathService;
+import de.vptr.aimathtutor.util.AiChatUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -296,13 +297,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         // Right side: AI Chat panel with built-in styling (30%)
-        // Get user's avatar settings
-        final var currentUserEntity = this.authService.getCurrentUserEntity();
-        final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
-                ? currentUserEntity.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
-        final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
-                ? currentUserEntity.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR;
-        this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
+        final var avatars = AiChatUtil.getAvatars(this.authService.getCurrentUserEntity());
+        this.chatPanel = new AiChatPanel(this::handleUserQuestion, avatars.userAvatar(), avatars.tutorAvatar());
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto
@@ -402,14 +398,6 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 checkAndInitialize();
                 """, this.exercise.graspableInitialExpression);
 
-        // Register server-side connector
-        this.registerServerConnector();
-    }
-
-    /**
-     * Registers a server-side connector that JavaScript can call. Shared pattern for views embedding Graspable Math.
-     */
-    private void registerServerConnector() {
         GraspableMathConnector.register(this);
     }
 
@@ -421,26 +409,13 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
         LOG.debugf("Math action: type=%s, before=%s, after=%s", eventType, expressionBefore, expressionAfter);
 
-        // Update current expression
         this.currentExpression = expressionAfter;
 
-        // Create event DTO
-        final var event = new GraspableEventDto();
-        event.eventType = eventType;
-        event.expressionBefore = expressionBefore;
-        event.expressionAfter = expressionAfter;
-        event.studentId = this.authService.getUserId();
+        final var event = GraspableEventFactory.createMathActionEvent(eventType, expressionBefore, expressionAfter,
+                this.authService.getUserId());
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
         event.timestamp = LocalDateTime.now();
-        // By default, assume all student actions are correct (they're performing valid
-        // math operations)
-        // TODO: Implement validation logic to determine if the action is correct.
-        // The current design correctly handles completion checking via
-        // `checkCompletion()` which compares against the target expression.
-        // Without a robust math validation library, setting `event.correct = true`
-        // for valid math operations (which Graspable Math already validates on the
-        // frontend) is a reasonable interim approach
         event.correct = true;
 
         // Add event to conversation context
@@ -554,8 +529,6 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
         rootFuture.thenAccept(answer -> {
-            // Log the question and answer interaction BEFORE UI access (to ensure proper
-            // transaction context)
             if (sessionId != null) {
                 try {
                     this.aiTutorService.logQuestionInteraction(sessionId, userId, exerciseId, question, answer.message);
@@ -564,22 +537,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 }
             }
 
-            ui.access(() -> {
-                // Hide typing indicator
-                this.chatPanel.hideTypingIndicator();
-
-                // Add AI answer to conversation context
-                this.conversationContext.addAiMessage(answer);
-
-                // Display AI answer
-                this.chatPanel.addMessage(answer);
-            });
+            AiChatUtil.handleAsyncAnswer(ui, answer, this.chatPanel, this.conversationContext);
         }).exceptionally(ex -> {
-            ui.access(() -> {
-                this.chatPanel.hideTypingIndicator();
-                LOG.error("Error getting AI answer", ex);
-                this.chatPanel.addMessage(ChatMessageDto.aiAnswer("Sorry, I encountered an error. Please try again."));
-            });
+            AiChatUtil.handleAsyncError(ui, ex, this.chatPanel, LOG);
             return null;
         }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }
