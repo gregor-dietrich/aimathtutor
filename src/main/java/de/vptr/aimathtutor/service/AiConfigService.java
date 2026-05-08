@@ -280,18 +280,7 @@ public class AiConfigService {
 
     @Transactional
     void persistConfigUpdate(final String configKey, final String configValue, final Long userId) {
-        // Verify permission - user must have exercise or lesson management permissions
-        final var user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null) {
-            throw new IllegalStateException("User not found or has no rank assigned");
-        }
-
-        final var userRank = new UserRankViewDto(user.rank);
-        final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
-        if (!hasPermission) {
-            throw new IllegalStateException(
-                    "Only users with exercise or lesson management permissions can update configuration");
-        }
+        final UserEntity user = this.requireConfigEditPermission(userId);
 
         // Find existing or create new
         final var existing = this.aiConfigRepository.findByConfigKey(configKey);
@@ -352,18 +341,7 @@ public class AiConfigService {
 
     @Transactional
     void persistMultipleConfigUpdates(final List<AiConfigUpdateDto> updates, final Long userId) {
-        // Verify permission once
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null) {
-            throw new IllegalStateException("User not found or has no rank assigned");
-        }
-
-        final var userRank = new UserRankViewDto(user.rank);
-        final var hasPermission = userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission();
-        if (!hasPermission) {
-            throw new IllegalStateException(
-                    "Only users with exercise or lesson management permissions can update configuration");
-        }
+        final UserEntity user = this.requireConfigEditPermission(userId);
 
         // Persist all updates
         for (final AiConfigUpdateDto update : updates) {
@@ -599,5 +577,18 @@ public class AiConfigService {
         final String lastUpdatedByName = entity.lastUpdatedBy != null ? entity.lastUpdatedBy.username : "system";
         return new AiConfigDto(entity.publicId, entity.configKey, entity.configValue, entity.configType,
                 entity.category, entity.description, entity.lastEdit, lastUpdatedByName);
+    }
+
+    private UserEntity requireConfigEditPermission(final Long userId) {
+        final UserEntity user = this.userRepository.findById(userId);
+        if (user == null || user.rank == null) {
+            throw new IllegalStateException("User not found or has no rank assigned");
+        }
+        final var userRank = new UserRankViewDto(user.rank);
+        if (!userRank.hasAnyExercisePermission() && !userRank.hasAnyLessonPermission()) {
+            throw new IllegalStateException(
+                    "Only users with exercise or lesson management permissions can update configuration");
+        }
+        return user;
     }
 }

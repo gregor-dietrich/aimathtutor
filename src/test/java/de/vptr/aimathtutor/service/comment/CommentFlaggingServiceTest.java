@@ -7,7 +7,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
-import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
@@ -16,6 +15,7 @@ import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestCommentFactory;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -55,7 +55,8 @@ class CommentFlaggingServiceTest {
     @TestTransaction
     void shouldThrowNotFoundForNonExistentFlagger() {
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, this.userRepository.findByUsername("admin"));
+        final var comment = TestCommentFactory.createComment(this.commentRepository, exercise,
+                this.userRepository.findByUsername("admin"));
 
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.flaggingService.flagComment(comment.publicId, 99_999L, "spam"));
@@ -68,7 +69,7 @@ class CommentFlaggingServiceTest {
     void shouldPreventSelfFlagging() {
         final UserEntity author = this.userRepository.findByUsername("admin");
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, author);
 
         final var ex = assertThrows(WebApplicationException.class,
                 () -> this.flaggingService.flagComment(comment.publicId, author.id, "spam"));
@@ -82,7 +83,7 @@ class CommentFlaggingServiceTest {
         final UserEntity author = this.userRepository.findByUsername("admin");
         final UserEntity flagger = this.userRepository.findByUsername("teacher");
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, author);
 
         this.flaggingService.flagComment(comment.publicId, flagger.id, "inappropriate");
         assertEquals(1, comment.flagsCount);
@@ -94,7 +95,7 @@ class CommentFlaggingServiceTest {
     void shouldAutoHideWhenFlagsReachThreshold() {
         final UserEntity author = this.userRepository.findByUsername("admin");
         final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, author);
 
         final Long[] flaggerIds = { this.userRepository.findByUsername("teacher").id,
                 this.userRepository.findByUsername("student1").id, this.userRepository.findByUsername("student2").id };
@@ -117,15 +118,5 @@ class CommentFlaggingServiceTest {
 
         assertEquals(AppConstants.COMMENT_AUTO_HIDE_THRESHOLD, comment.flagsCount);
         assertEquals(CommentStatus.HIDDEN, comment.status);
-    }
-
-    private CommentEntity createComment(final ExerciseEntity exercise, final UserEntity user) {
-        final var comment = new CommentEntity();
-        comment.content = "Test comment";
-        comment.exercise = exercise;
-        comment.user = user;
-        comment.status = CommentStatus.VISIBLE;
-        this.commentRepository.persist(comment);
-        return comment;
     }
 }

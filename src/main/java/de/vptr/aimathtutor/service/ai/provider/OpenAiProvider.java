@@ -6,8 +6,6 @@ import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.service.OpenAiService;
-import de.vptr.aimathtutor.service.ai.JsonRepairService;
-import de.vptr.aimathtutor.service.ai.PromptBuilderService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -16,18 +14,12 @@ import jakarta.inject.Inject;
  * responses.
  */
 @ApplicationScoped
-public class OpenAiProvider implements AiProvider {
+public class OpenAiProvider extends AbstractAiProvider {
 
     private static final Logger LOG = Logger.getLogger(OpenAiProvider.class);
 
     @Inject
     OpenAiService openAiService;
-
-    @Inject
-    PromptBuilderService promptBuilderService;
-
-    @Inject
-    JsonRepairService jsonRepairService;
 
     @Override
     public boolean isAvailable() {
@@ -44,10 +36,7 @@ public class OpenAiProvider implements AiProvider {
     }
 
     @Override
-    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
-            final String targetExpression, final ConversationContextDto context) {
-        final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
-                initialExpression, targetExpression, context);
+    protected String generateContent(final String prompt) {
         return this.openAiService.generateContent(prompt);
     }
 }

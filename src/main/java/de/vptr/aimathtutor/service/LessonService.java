@@ -124,10 +124,7 @@ public class LessonService {
     public LessonViewDto updateLesson(final LessonEntity lesson) {
         this.permissionService.requireLessonEdit();
 
-        final var existingLesson = this.lessonRepository.findByPublicId(lesson.publicId).orElse(null);
-        if (existingLesson == null) {
-            throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
-        }
+        final var existingLesson = this.requireLessonFound(lesson.publicId);
 
         // Validate name is provided for complete replacement (PUT)
         if (lesson.name == null || lesson.name.isBlank()) {
@@ -172,10 +169,7 @@ public class LessonService {
     public LessonViewDto patchLesson(final LessonEntity lesson) {
         this.permissionService.requireLessonEdit();
 
-        final var existingLesson = this.lessonRepository.findByPublicId(lesson.publicId).orElse(null);
-        if (existingLesson == null) {
-            throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
-        }
+        final var existingLesson = this.requireLessonFound(lesson.publicId);
 
         // Partial update (PATCH semantics) - only update provided fields
         if (lesson.name != null) {
@@ -256,5 +250,13 @@ public class LessonService {
         }
         final List<LessonEntity> lessons = this.lessonRepository.search(query);
         return lessons.stream().map(LessonViewDto::new).toList();
+    }
+
+    private LessonEntity requireLessonFound(final String publicId) {
+        final var existing = this.lessonRepository.findByPublicId(publicId).orElse(null);
+        if (existing == null) {
+            throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);
+        }
+        return existing;
     }
 }

@@ -70,7 +70,7 @@ class CommentRateLimitServiceTest {
         this.em.flush();
 
         final var ex = assertThrows(WebApplicationException.class, () -> this.rateLimitService.checkRateLimit(user.id));
-        assertEquals(Response.Status.TOO_MANY_REQUESTS.getStatusCode(), ex.getResponse().getStatus());
+        assertRateLimited(ex);
     }
 
     @Test
@@ -97,6 +97,10 @@ class CommentRateLimitServiceTest {
         this.em.flush();
 
         final var ex = assertThrows(WebApplicationException.class, () -> this.rateLimitService.checkRateLimit(user.id));
+        assertRateLimited(ex);
+    }
+
+    private void assertRateLimited(final WebApplicationException ex) {
         assertEquals(Response.Status.TOO_MANY_REQUESTS.getStatusCode(), ex.getResponse().getStatus());
     }
 }

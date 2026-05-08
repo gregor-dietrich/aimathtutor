@@ -65,17 +65,17 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 ## Code Quality Gates
 
-| Gate            | Command                                         | Notes                                         |
-| --------------- | ----------------------------------------------- | --------------------------------------------- |
-| Lint (all)      | `make lint`                                     | Runs spotless:apply + checkstyle + spotbugs + PMD + CPD |
-| Spotless        | `./mvnw spotless:apply`                         | Auto-formats code (included in `make lint`)   |
-| Tests           | `make test`                                     | CI runs `./mvnw verify`                       |
-| SpotBugs        | `./mvnw spotbugs:check`                         | Exclusions in `spotbugs-exclude.xml`          |
-| Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml` |
-| PMD             | `./mvnw pmd:check`                              | Unused code, complexity, style rules          |
-| CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY)              |
-| OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Requires `NVD_API_KEY`; `failBuildOnCVSS=7`   |
-| License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                        |
+| Gate            | Command                                         | Notes                                                                                                                                                 |
+| --------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lint (all)      | `make lint`                                     | Runs spotless:apply + checkstyle + spotbugs + PMD + CPD                                                                                               |
+| Spotless        | `./mvnw spotless:apply`                         | Auto-formats code (included in `make lint`)                                                                                                           |
+| Tests           | `make test`                                     | CI runs `./mvnw verify`                                                                                                                               |
+| SpotBugs        | `./mvnw spotbugs:check`                         | Exclusions in `spotbugs-exclude.xml`                                                                                                                  |
+| Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml`                                                                                                         |
+| PMD             | `./mvnw pmd:check`                              | Unused code, complexity, style rules                                                                                                                  |
+| CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY). Property `pmd-cpd.minTokens` in `pom.xml` (default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
+| OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Requires `NVD_API_KEY`; `failBuildOnCVSS=7`                                                                                                           |
+| License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                                                                                                                                |
 
 CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Checkstyle + PMD + CPD).
 

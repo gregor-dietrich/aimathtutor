@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.time.LocalDate;
 import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
@@ -41,6 +40,7 @@ import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.CommentService;
+import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
@@ -396,21 +396,14 @@ public class AdminCommentsView extends AbstractAdminView {
     }
 
     private void filterByDateRange() {
-        final LocalDate startDate = this.startDatePicker.getValue();
-        final LocalDate endDate = this.endDatePicker.getValue();
-
-        if (startDate == null || endDate == null) {
-            NotificationUtil.showWarning("Please select both start and end dates");
+        final var range = AdminFilterUtil.validateDateRange(this.startDatePicker, this.endDatePicker);
+        if (range.isEmpty()) {
             return;
         }
 
-        if (startDate.isAfter(endDate)) {
-            NotificationUtil.showWarning("Start date must be before end date");
-            return;
-        }
-
-        AsyncDataLoader.load(() -> this.commentService.findByDateRange(startDate.toString(), endDate.toString()), this,
-                comments -> this.grid.setItems(comments),
+        AsyncDataLoader.load(
+                () -> this.commentService.findByDateRange(range.get().start().toString(), range.get().end().toString()),
+                this, comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
 
