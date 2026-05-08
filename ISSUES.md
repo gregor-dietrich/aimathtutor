@@ -325,22 +325,6 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ---
 
-## 7. CPD Duplicate Detection — Gradual Threshold Reduction
-
-**Issue:** CPD `minimumTokens` is set to 100, which only catches very large code duplications. Smaller duplications (3-5 line blocks) slip through.
-
-**Why reduce:** Catches more subtle copy-paste errors and encourages DRY compliance.
-
-**Phased approach:**
-
-- **Phase A:** Lower `minimumTokens` from 100 to 75 in `pom.xml`. Run `./mvnw pmd:cpd-check`, fix all violations, commit.
-- **Phase B:** Lower from 75 to 50. Run, fix, commit.
-- **Phase C (optional):** Evaluate gradually lowering to 40 or less. May produce diminishing returns / false positives.
-
-**Tracking:** Each phase should be a separate PR to keep review manageable. Do not attempt all phases in one PR.
-
----
-
 ## 8. Miscellaneous Fixes
 
 ### 8.1 Admin Dashboard Enhancement
@@ -389,30 +373,30 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 1. Add `.git-hooks/pre-commit` to project root (executable shell script):
 
-    ```shell
-    #!/usr/bin/env bash
-    set -e
-    echo "Running Checkstyle..."
-    ./mvnw checkstyle:check -q
-    echo "Running SpotBugs..."
-    ./mvnw spotbugs:check -q
-    echo "Pre-commit checks passed."
-    ```
+   ```shell
+   #!/usr/bin/env bash
+   set -e
+   echo "Running Checkstyle..."
+   ./mvnw checkstyle:check -q
+   echo "Running SpotBugs..."
+   ./mvnw spotbugs:check -q
+   echo "Pre-commit checks passed."
+   ```
 
 2. Configure git to use the project hooks directory by default. Add to `.gitconfig` template or document:
 
-    ```shell
+   ```shell
+   git config core.hooksPath .git-hooks
+   ```
+
+   Or add a `Makefile` target and call it from a post-checkout hook so it runs automatically:
+
+   ```makefile
+   .PHONY: install-hooks
+   install-hooks:
+    chmod +x .git-hooks/pre-commit
     git config core.hooksPath .git-hooks
-    ```
-
-    Or add a `Makefile` target and call it from a post-checkout hook so it runs automatically:
-
-    ```makefile
-    .PHONY: install-hooks
-    install-hooks:
-     chmod +x .git-hooks/pre-commit
-     git config core.hooksPath .git-hooks
-    ```
+   ```
 
 **Estimated effort:** 1 hour.
 
@@ -438,12 +422,12 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 1. Add `category/java/bestpractices.xml` to PMD rulesets in `pom.xml`:
 
-    ```xml
-    <rulesets>
-        <ruleset>pmd-ruleset.xml</ruleset>
-        <ruleset>category/java/bestpractices.xml</ruleset>
-    </rulesets>
-    ```
+   ```xml
+   <rulesets>
+       <ruleset>pmd-ruleset.xml</ruleset>
+       <ruleset>category/java/bestpractices.xml</ruleset>
+   </rulesets>
+   ```
 
 2. Run `./mvnw pmd:check` and fix all violations (expect unused imports, private fields, helper methods).
 
