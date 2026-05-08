@@ -33,7 +33,8 @@ public class LessonDto {
         /**
          * Default constructor for JSON mapping.
          */
-        public ParentField() {}
+        public ParentField() {
+        }
 
         /**
          * Constructs a ParentField with the given public ID.

@@ -9,11 +9,15 @@ cd "$DIR/.."
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
+echo "Cleaning build artifacts..."
+
 ${MVN_CMD} -q clean -Drevision="${REVISION}"
 
 rm -rf logs
 rm -rf node_modules
 rm -rf src/main/frontend/generated
 rm -rf target
+
+echo "Clean completed."
 
 cd - > /dev/null

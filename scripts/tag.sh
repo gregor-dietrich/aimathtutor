@@ -6,6 +6,8 @@ set -e
 
 cd "$DIR/.."
 
+echo "Starting tag operation..."
+
 git fetch
 
 LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
@@ -58,5 +60,8 @@ if [ $? -ne 0 ]; then
     echo "Failed to push tag. Exiting."
     exit 3
 fi
+
+echo "Tag ${VERSION} pushed successfully."
+echo "Tag operation completed."
 
 cd - > /dev/null

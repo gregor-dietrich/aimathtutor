@@ -7,6 +7,8 @@ set -e
 
 cd "$DIR/.."
 
+echo "Starting Quarkus in dev mode..."
+
 ${MVN_CMD} -q quarkus:dev
 
 cd - > /dev/null

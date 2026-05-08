@@ -11,6 +11,7 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouterLayout;
+
 import de.vptr.aimathtutor.component.NavigationTabs;
 import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.AdminViewButton;
@@ -19,6 +20,7 @@ import de.vptr.aimathtutor.component.button.SettingsViewButton;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.LayoutNavigationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.inject.Inject;
 
@@ -115,30 +117,14 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     private void updateLogoutButtonVisibility() {
-        if (this.authService.isAuthenticated()) {
-            // Check current route to determine if logout button should be shown
-            this.getUI().ifPresent(ui -> {
-                final var location = ui.getInternals().getActiveViewLocation();
-                if (location != null) {
-                    final var path = location.getPath();
-                    // Don't show logout button on login or error views
-                    if (!"login".equals(path) && !"backend-error".equals(path)) {
-                        // Skip adding buttons if this is an admin route (AdminMainLayout will handle
-                        // it)
-                        if (!path.startsWith("admin")) {
-                            this.addButtonsToTopBar();
-                            this.showNavigationTabs();
-                        }
-                    } else {
-                        this.removeButtonsFromTopBar();
-                        this.hideNavigationTabs();
-                    }
-                }
-            });
-        } else {
-            this.removeButtonsFromTopBar();
-            this.hideNavigationTabs();
-        }
+        LayoutNavigationUtil.updateButtonVisibility(this.getUI(), this.authService.isAuthenticated(),
+                path -> !"login".equals(path) && !"backend-error".equals(path) && !path.startsWith("admin"), () -> {
+                    this.addButtonsToTopBar();
+                    this.showNavigationTabs();
+                }, () -> {
+                    this.removeButtonsFromTopBar();
+                    this.hideNavigationTabs();
+                });
     }
 
     private void initializeLayout() {

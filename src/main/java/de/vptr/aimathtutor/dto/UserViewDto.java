@@ -24,7 +24,8 @@ public class UserViewDto {
     public String userAvatarEmoji;
     public String tutorAvatarEmoji;
 
-    public UserViewDto() {}
+    public UserViewDto() {
+    }
 
     /**
      * Constructs a UserViewDto from a UserEntity.

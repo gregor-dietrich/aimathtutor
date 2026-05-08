@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -40,7 +41,8 @@ public class OpenAiRequestDto {
         public String role; // "system", "user", "assistant"
         public String content;
 
-        public Message() {}
+        public Message() {
+        }
 
         public Message(final String role, final String content) {
             this.role = role;
@@ -54,7 +56,8 @@ public class OpenAiRequestDto {
     public static class ResponseFormat {
         public String type; // "text" or "json_object"
 
-        public ResponseFormat() {}
+        public ResponseFormat() {
+        }
 
         public ResponseFormat(final String type) {
             this.type = type;

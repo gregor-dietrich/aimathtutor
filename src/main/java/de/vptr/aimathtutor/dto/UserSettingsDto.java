@@ -23,7 +23,8 @@ public class UserSettingsDto {
     @Size(max = 10, message = "Tutor avatar emoji must not exceed 10 characters")
     public String tutorAvatarEmoji;
 
-    public UserSettingsDto() {}
+    public UserSettingsDto() {
+    }
 
     public UserSettingsDto(final String userAvatarEmoji, final String tutorAvatarEmoji) {
         this.userAvatarEmoji = userAvatarEmoji;

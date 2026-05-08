@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.dto;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -47,7 +48,8 @@ public class ChatMessageDto {
     @JsonProperty("related_action")
     public String relatedAction;
 
-    public ChatMessageDto() {}
+    public ChatMessageDto() {
+    }
 
     /**
      * Constructs a ChatMessageDto with the specified sender, type, and message.

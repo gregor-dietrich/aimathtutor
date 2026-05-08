@@ -130,4 +130,15 @@
   <Match>
     <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION" />
   </Match>
+
+  <!--
+    CT_CONSTRUCTOR_THROW:
+    Vaadin components commonly throw from constructors during initialization
+    (e.g., setIcon, addThemeVariants). The object is fully initialized before
+    any throwable call, and these classes are not designed for subclassing.
+  -->
+  <Match>
+    <Bug pattern="CT_CONSTRUCTOR_THROW" />
+    <Class name="de.vptr.aimathtutor.component.button.DeleteButton" />
+  </Match>
 </FindBugsFilter>

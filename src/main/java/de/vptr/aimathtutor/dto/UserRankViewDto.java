@@ -46,7 +46,8 @@ public class UserRankViewDto {
     // Computed fields
     public Long usersCount;
 
-    public UserRankViewDto() {}
+    public UserRankViewDto() {
+    }
 
     /**
      * Constructs a UserRankViewDto from a UserRankEntity.

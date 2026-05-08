@@ -7,14 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -42,16 +41,7 @@ class ExerciseCompletionServiceTest {
     PermissionService permissionService;
 
     private ExerciseViewDto createExercise() {
-        final var teacher = this.userRepository.findByUsername("teacher");
-        assertNotNull(teacher, "Seeded teacher must exist");
-        final var dto = new ExerciseDto();
-        final var suffix = UUID.randomUUID().toString().substring(0, 8);
-        dto.title = "ex_" + suffix;
-        dto.content = "content " + suffix;
-        dto.userPublicId = teacher.publicId;
-        dto.published = true;
-        dto.commentable = false;
-        return this.exerciseService.createExercise(dto);
+        return TestExerciseFactory.createExercise(this.userRepository, this.exerciseService);
     }
 
     @Test

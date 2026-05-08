@@ -26,7 +26,8 @@ public class AiInteractionViewDto {
     public Boolean actionCorrect;
     public LocalDateTime created;
 
-    public AiInteractionViewDto() {}
+    public AiInteractionViewDto() {
+    }
 
     /**
      * Constructs an AiInteractionViewDto from an AiInteractionEntity.

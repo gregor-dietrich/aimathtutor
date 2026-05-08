@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import de.vptr.aimathtutor.util.ExecutorShutdownUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -41,17 +42,7 @@ public class LoginAttemptService {
 
     @PreDestroy
     void destroy() {
-        if (this.cleanupExecutor != null) {
-            this.cleanupExecutor.shutdown();
-            try {
-                if (!this.cleanupExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    this.cleanupExecutor.shutdownNow();
-                }
-            } catch (final InterruptedException e) {
-                this.cleanupExecutor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
+        ExecutorShutdownUtil.shutdownGracefully(this.cleanupExecutor, 5);
     }
 
     /**

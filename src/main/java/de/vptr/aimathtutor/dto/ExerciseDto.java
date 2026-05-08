@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+
 import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
@@ -86,7 +87,8 @@ public class ExerciseDto {
     /**
      * Default constructor for JSON mapping.
      */
-    public ExerciseDto() {}
+    public ExerciseDto() {
+    }
 
     /**
      * Constructs an ExerciseDto with the given exercise details.
@@ -124,7 +126,8 @@ public class ExerciseDto {
         /**
          * Default constructor for JSON mapping.
          */
-        public UserField() {}
+        public UserField() {
+        }
 
         /**
          * Constructs a UserField with the given public ID.
@@ -155,7 +158,8 @@ public class ExerciseDto {
         /**
          * Default constructor for JSON mapping.
          */
-        public LessonField() {}
+        public LessonField() {
+        }
 
         /**
          * Constructs a LessonField with the given public ID.

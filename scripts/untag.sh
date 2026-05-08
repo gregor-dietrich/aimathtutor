@@ -6,6 +6,8 @@ set -e
 
 cd "$DIR/.."
 
+echo "Starting tag deletion..."
+
 git fetch
 
 LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
@@ -34,5 +36,7 @@ if git ls-remote --tags origin | grep -q "refs/tags/${VERSION}$"; then
 else
     echo "Tag ${VERSION} not found on remote."
 fi
+
+echo "Tag deletion completed."
 
 cd - > /dev/null

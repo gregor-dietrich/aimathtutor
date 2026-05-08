@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -121,7 +122,8 @@ public class AiConfigDto {
     /**
      * Default constructor for serialization.
      */
-    public AiConfigDto() {}
+    public AiConfigDto() {
+    }
 
     /**
      * Constructor with required fields.

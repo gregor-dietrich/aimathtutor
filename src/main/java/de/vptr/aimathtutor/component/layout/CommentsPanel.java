@@ -17,6 +17,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
+
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.ReplyButton;
@@ -153,10 +154,22 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     private void displayComments(final List<CommentViewDto> comments) {
-        this.commentsContainer.removeAll();
+        if (this.currentPage == 0) {
+            this.commentsContainer.removeAll();
+        }
+
+        if (comments.isEmpty() && this.currentPage == 0) {
+            this.commentsContainer.add(new Span("No comments yet. Be the first to comment!"));
+            return;
+        }
+
+        if (this.currentPage > 0) {
+            this.commentsContainer.getChildren()
+                    .filter(c -> c instanceof Button && "Load More Comments".equals(((Button) c).getText())).findFirst()
+                    .ifPresent(this.commentsContainer::remove);
+        }
 
         if (comments.isEmpty()) {
-            this.commentsContainer.add(new Span("No comments yet. Be the first to comment!"));
             return;
         }
 

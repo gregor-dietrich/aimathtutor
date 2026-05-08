@@ -31,7 +31,8 @@ public class UserDto {
 
     public String activationKey;
 
-    public UserDto() {}
+    public UserDto() {
+    }
 
     /**
      * Constructs a UserDto with the specified parameters.

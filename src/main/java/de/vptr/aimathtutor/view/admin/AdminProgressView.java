@@ -13,11 +13,10 @@ import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import de.vptr.aimathtutor.component.button.RefreshButton;
-import de.vptr.aimathtutor.component.layout.SearchFilterBar;
-import de.vptr.aimathtutor.component.layout.SearchLayout;
+
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
+import de.vptr.aimathtutor.util.AdminSearchLayoutFactory;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import jakarta.inject.Inject;
@@ -40,6 +39,7 @@ public class AdminProgressView extends AbstractAdminView {
     private TextField searchField;
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
+    private HorizontalLayout buttonLayout;
 
     /**
      * Constructs the AdminProgressView with full size and padding.
@@ -75,8 +75,7 @@ public class AdminProgressView extends AbstractAdminView {
         this.add(searchLayout);
 
         // Button layout
-        final var buttonLayout = this.createButtonLayout();
-        this.add(buttonLayout);
+        this.add(this.buttonLayout);
 
         // Create grid
         this.grid = new Grid<>(StudentProgressSummaryDto.class, false);
@@ -118,34 +117,15 @@ public class AdminProgressView extends AbstractAdminView {
      * @return the constructed SearchLayout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(e -> {
-            if (e.getValue() == null || e.getValue().isBlank()) {
-                this.loadProgressData();
-            }
-        }, ignored -> this.searchStudents(), "Search by username...", "Search Students");
-
-        this.searchField = searchLayout.getTextfield();
-
-        final var filterBar = new SearchFilterBar(searchLayout, this::filterByDateRange, this::resetFilters);
-        this.startDatePicker = filterBar.getStartDatePicker();
-        this.endDatePicker = filterBar.getEndDatePicker();
-
+        final var components = new AdminSearchLayoutFactory.Components();
+        final var searchLayout = AdminSearchLayoutFactory.create(this::loadProgressData, this::searchStudents,
+                "Search by username...", "Search Students", this::filterByDateRange, this::resetFilters,
+                this::loadProgressData, components);
+        this.searchField = components.searchField;
+        this.startDatePicker = components.startDatePicker;
+        this.endDatePicker = components.endDatePicker;
+        this.buttonLayout = components.buttonLayout;
         return searchLayout;
-    }
-
-    /**
-     * Create the button layout for the progress view.
-     *
-     * @return a horizontal layout containing action buttons
-     */
-    private HorizontalLayout createButtonLayout() {
-        final var layout = new HorizontalLayout();
-        layout.setSpacing(true);
-
-        final var refreshButton = new RefreshButton(ignored -> this.loadProgressData());
-
-        layout.add(refreshButton);
-        return layout;
     }
 
     /**
