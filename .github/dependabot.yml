@@ -22,3 +22,7 @@ updates:
         versions: [">=3.34.0"]
       - dependency-name: "io.quarkus.platform:*"
         versions: [">=3.34.0"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    multi-ecosystem-group: "infrastructure"
