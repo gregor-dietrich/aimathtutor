@@ -48,7 +48,8 @@ public class UserRankDto {
     public Boolean userRankDelete;
     public Boolean userRankEdit;
 
-    public UserRankDto() {}
+    public UserRankDto() {
+    }
 
     public UserRankDto(final String name) {
         this.name = name;

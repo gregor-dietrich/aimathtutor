@@ -10,12 +10,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
-import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.PermissionService;
+import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -46,16 +46,7 @@ class AiInteractionLoggerTest {
     }
 
     private Long createExerciseId() {
-        final var teacher = this.userRepository.findByUsername("teacher");
-        assertNotNull(teacher, "Seeded teacher must exist");
-        final var dto = new ExerciseDto();
-        final var suffix = UUID.randomUUID().toString().substring(0, 8);
-        dto.title = "ex_" + suffix;
-        dto.content = "content " + suffix;
-        dto.userPublicId = teacher.publicId;
-        dto.published = true;
-        dto.commentable = false;
-        return this.exerciseService.createExercise(dto).id;
+        return TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
     }
 
     @Test

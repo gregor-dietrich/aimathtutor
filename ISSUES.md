@@ -389,33 +389,68 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 1. Add `.git-hooks/pre-commit` to project root (executable shell script):
 
-   ```shell
-   #!/usr/bin/env bash
-   set -e
-   echo "Running Checkstyle..."
-   ./mvnw checkstyle:check -q
-   echo "Running SpotBugs..."
-   ./mvnw spotbugs:check -q
-   echo "Pre-commit checks passed."
-   ```
+    ```shell
+    #!/usr/bin/env bash
+    set -e
+    echo "Running Checkstyle..."
+    ./mvnw checkstyle:check -q
+    echo "Running SpotBugs..."
+    ./mvnw spotbugs:check -q
+    echo "Pre-commit checks passed."
+    ```
 
 2. Configure git to use the project hooks directory by default. Add to `.gitconfig` template or document:
 
-   ```shell
-   git config core.hooksPath .git-hooks
-   ```
-
-   Or add a `Makefile` target and call it from a post-checkout hook so it runs automatically:
-
-   ```makefile
-   .PHONY: install-hooks
-   install-hooks:
-    chmod +x .git-hooks/pre-commit
+    ```shell
     git config core.hooksPath .git-hooks
-   ```
+    ```
+
+    Or add a `Makefile` target and call it from a post-checkout hook so it runs automatically:
+
+    ```makefile
+    .PHONY: install-hooks
+    install-hooks:
+     chmod +x .git-hooks/pre-commit
+     git config core.hooksPath .git-hooks
+    ```
 
 **Estimated effort:** 1 hour.
 
 **Note:** Pre-commit hooks are enabled by default. CI remains the authoritative gate for PRs that bypass local hooks.
+
+---
+
+## 11. Dead Code Detection
+
+**Issue:** No automated detection of dead code (unused methods, fields, classes, or private members). Quality gates cover style (Checkstyle), bugs (SpotBugs), complexity/duplication (PMD/CPD), and security (OWASP), but unused code accumulates silently.
+
+**Why implement:** Dead code increases maintenance burden, confuses developers, and inflates binary size. Early detection keeps the codebase lean.
+
+**Options:**
+
+1. **PMD `UnusedCode` ruleset** (recommended): PMD already runs in CI. Add the `category/java/bestpractices.xml` ruleset which includes `UnusedFormalParameter`, `UnusedLocalVariable`, `UnusedPrivateField`, `UnusedPrivateMethod`, and `UnusedImports`. This integrates with existing `pmd:check` with zero new dependencies.
+
+2. **Error Prone + NullAway** (see TODO #6): Error Prone includes `UnusedMethod` and `UnusedVariable` checks. If Error Prone is adopted, dead code detection comes free.
+
+3. **SpotBugs `UMAC_UNCALLED_METHOD`**: SpotBugs already runs in CI. The `UMAC_UNCALLED_METHOD` bug pattern detects private methods that are never called. Limited scope (private methods only) but zero config.
+
+**Recommended implementation:**
+
+1. Add `category/java/bestpractices.xml` to PMD rulesets in `pom.xml`:
+
+    ```xml
+    <rulesets>
+        <ruleset>pmd-ruleset.xml</ruleset>
+        <ruleset>category/java/bestpractices.xml</ruleset>
+    </rulesets>
+    ```
+
+2. Run `./mvnw pmd:check` and fix all violations (expect unused imports, private fields, helper methods).
+
+3. Optionally suppress known false positives via `@SuppressWarnings("PMD.UnusedPrivateMethod")` or PMD exclusion rules.
+
+**Estimated effort:** 2-4 hours for setup + 1-2 days for fixing existing violations.
+
+**Risks:** PMD's unused code detection may flag legitimate patterns (e.g., methods called only via reflection, CDI injection points, event observers). These should be suppressed with `@SuppressWarnings` or documented exclusions.
 
 ---

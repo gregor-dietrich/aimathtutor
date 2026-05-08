@@ -24,16 +24,18 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+
 import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
-import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.AiTutorService;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
+import de.vptr.aimathtutor.util.AiChatUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -142,13 +144,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         leftPanel.add(header, this.graspableCanvas, controls);
 
         // Right side: AI Chat panel with built-in styling (30%)
-        // Get user's avatar settings
-        final var currentUserEntity = this.authService.getCurrentUserEntity();
-        final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
-                ? currentUserEntity.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
-        final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
-                ? currentUserEntity.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR;
-        this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
+        final var avatars = AiChatUtil.getAvatars(this.authService.getCurrentUserEntity());
+        this.chatPanel = new AiChatPanel(this::handleUserQuestion, avatars.userAvatar(), avatars.tutorAvatar());
 
         // Add welcome message
         this.chatPanel.addMessage(ChatMessageDto
@@ -210,8 +207,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                     }, 100);
                 """);
 
-        // Register server-side connector
-        this.registerServerConnector();
+        GraspableMathConnector.register(this);
 
         // Auto-load a problem after canvas initialization
         this.loadInitialProblem();
@@ -256,13 +252,6 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
-     * Registers a server-side connector that JavaScript can call. Shared pattern for views embedding Graspable Math.
-     */
-    private void registerServerConnector() {
-        GraspableMathConnector.register(this);
-    }
-
-    /**
      * Called from JavaScript when a math action occurs. This is the bridge between Graspable Math events and our
      * backend.
      */
@@ -270,17 +259,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
         LOG.debugf("Math action: type=%s, before=%s, after=%s", eventType, expressionBefore, expressionAfter);
 
-        // Update current expression
         this.currentExpression = expressionAfter;
 
-        // Create event DTO
-        final var event = new GraspableEventDto();
-        event.eventType = eventType;
-        event.expressionBefore = expressionBefore;
-        event.expressionAfter = expressionAfter;
-        event.studentId = this.authService.getUserId();
+        final var event = GraspableEventFactory.createMathActionEvent(eventType, expressionBefore, expressionAfter,
+                this.authService.getUserId());
         event.sessionId = this.sessionId;
-        // No exercise needed for standalone workspace
 
         // Add action to conversation context
         this.conversationContext.addAction(event);
@@ -375,25 +358,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
         this.aiTutorService.answerQuestionAsync(question, this.currentExpression, this.initialExpression,
                 this.targetExpression, this.sessionId, this.conversationContext, userIdStr).thenAccept(answer -> {
-                    ui.access(() -> {
-                        // Hide typing indicator
-                        this.chatPanel.hideTypingIndicator();
-
-                        // Add AI answer to context
-                        this.conversationContext.addAiMessage(answer);
-
-                        // Display AI answer
-                        this.chatPanel.addMessage(answer);
-
-                        // Disabled, only log interactions in exercises for now
-                    });
+                    AiChatUtil.handleAsyncAnswer(ui, answer, this.chatPanel, this.conversationContext);
                 }).exceptionally(ex -> {
-                    ui.access(() -> {
-                        this.chatPanel.hideTypingIndicator();
-                        LOG.error("Error getting AI answer", ex);
-                        this.chatPanel.addMessage(
-                                ChatMessageDto.aiAnswer("Sorry, I encountered an error. Please try again."));
-                    });
+                    AiChatUtil.handleAsyncError(ui, ex, this.chatPanel, LOG);
                     return null;
                 });
     }

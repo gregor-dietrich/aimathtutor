@@ -25,6 +25,7 @@ import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -75,6 +76,56 @@ class AnalyticsServiceTest {
         dto.commentable = false;
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
         return created.id;
+    }
+
+    private String createSessionWithInteraction(final Long studentId, final Long exerciseId, final String eventType,
+            final String feedbackType) {
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final var interaction = new AiInteractionEntity();
+        interaction.sessionId = sessionId;
+        final var userForInteraction = this.userRepository.findById(studentId);
+        assertNotNull(userForInteraction, "Seeded student1 must exist");
+        interaction.user = userForInteraction;
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        interaction.exercise = exercise;
+        interaction.eventType = eventType;
+        interaction.feedbackType = feedbackType;
+        this.aiInteractionRepository.persist(interaction);
+        return sessionId;
+    }
+
+    private StudentSessionEntity createAndPersistSession(final Long studentId, final Long exerciseId) {
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
+        final var session = new StudentSessionEntity();
+        session.sessionId = UUID.randomUUID().toString();
+        session.user = user;
+        session.exercise = exercise;
+        this.studentSessionRepository.persist(session);
+        return session;
+    }
+
+    private record SessionFixture(Long studentId, Long exerciseId, String sessionId) {
+    }
+
+    private SessionFixture createSessionFixture() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        return new SessionFixture(studentId, exerciseId, sessionId);
+    }
+
+    private void assertDateRangeFilter(final String sessionId, final List<? extends StudentSessionViewDto> within,
+            final List<? extends StudentSessionViewDto> outside) {
+        assertNotNull(within);
+        assertTrue(within.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should appear within the date range");
+        assertNotNull(outside);
+        assertFalse(outside.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should not appear in a future range");
     }
 
     @Test
@@ -228,16 +279,7 @@ class AnalyticsServiceTest {
     void testGetAllAiInteractions() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
-
-        final var interaction = new AiInteractionEntity();
-        interaction.sessionId = sessionId;
-        final var userForInteraction = this.userRepository.findById(studentId);
-        assertNotNull(userForInteraction, "Seeded student1 must exist");
-        interaction.user = userForInteraction;
-        interaction.eventType = "test_event";
-        interaction.feedbackType = "HINT";
-        this.aiInteractionRepository.persist(interaction);
+        final String sessionId = this.createSessionWithInteraction(studentId, exerciseId, "test_event", "HINT");
 
         final List<AiInteractionViewDto> interactions = this.analyticsService.getAllAiInteractions();
         assertNotNull(interactions);
@@ -261,16 +303,8 @@ class AnalyticsServiceTest {
     void testGetAiInteractionsByUser() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
-
-        final var interaction = new AiInteractionEntity();
-        interaction.sessionId = sessionId;
-        final var userForInteraction = this.userRepository.findById(studentId);
-        assertNotNull(userForInteraction, "Seeded student1 must exist");
-        interaction.user = userForInteraction;
-        interaction.eventType = "test_event_user";
-        interaction.feedbackType = "POSITIVE";
-        this.aiInteractionRepository.persist(interaction);
+        final String sessionId =
+                this.createSessionWithInteraction(studentId, exerciseId, "test_event_user", "POSITIVE");
 
         final List<AiInteractionViewDto> interactions = this.analyticsService.getAiInteractionsByUser(studentId);
         assertNotNull(interactions);
@@ -284,16 +318,8 @@ class AnalyticsServiceTest {
     void testGetAiInteractionsByUser_filtersByUser() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
-
-        final var interaction = new AiInteractionEntity();
-        interaction.sessionId = sessionId;
-        final var userForInteraction = this.userRepository.findById(studentId);
-        assertNotNull(userForInteraction, "Seeded student1 must exist");
-        interaction.user = userForInteraction;
-        interaction.eventType = "test_event_user_filter";
-        interaction.feedbackType = "NEGATIVE";
-        this.aiInteractionRepository.persist(interaction);
+        final String sessionId =
+                this.createSessionWithInteraction(studentId, exerciseId, "test_event_user_filter", "NEGATIVE");
 
         final var otherStudent = this.userRepository.findByUsername("student2");
         assertNotNull(otherStudent, "Seeded student2 must exist");
@@ -377,15 +403,7 @@ class AnalyticsServiceTest {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getTotalSessionsCount();
-        final var exercise = this.exerciseRepository.findById(exerciseId);
-        assertNotNull(exercise, "Created exercise must exist");
-        final var user = this.userRepository.findById(studentId);
-        assertNotNull(user, "Seeded student1 must exist");
-        final var session = new StudentSessionEntity();
-        session.sessionId = UUID.randomUUID().toString();
-        session.user = user;
-        session.exercise = exercise;
-        this.studentSessionRepository.persist(session);
+        this.createAndPersistSession(studentId, exerciseId);
         final long after = this.analyticsService.getTotalSessionsCount();
         assertEquals(before + 1, after, "Adding one session should increase total count by 1");
     }
@@ -397,16 +415,8 @@ class AnalyticsServiceTest {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getCompletedSessionsCount();
-        final var exercise = this.exerciseRepository.findById(exerciseId);
-        assertNotNull(exercise, "Created exercise must exist");
-        final var user = this.userRepository.findById(studentId);
-        assertNotNull(user, "Seeded student1 must exist");
-        final var session = new StudentSessionEntity();
-        session.sessionId = UUID.randomUUID().toString();
-        session.user = user;
-        session.exercise = exercise;
+        final var session = this.createAndPersistSession(studentId, exerciseId);
         session.completed = true;
-        this.studentSessionRepository.persist(session);
         final long after = this.analyticsService.getCompletedSessionsCount();
         assertEquals(before + 1, after, "Adding one completed session should increase completed count by 1");
     }
@@ -444,16 +454,8 @@ class AnalyticsServiceTest {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getTodaySessionsCount();
-        final var exercise = this.exerciseRepository.findById(exerciseId);
-        assertNotNull(exercise, "Created exercise must exist");
-        final var user = this.userRepository.findById(studentId);
-        assertNotNull(user, "Seeded student1 must exist");
-        final var session = new StudentSessionEntity();
-        session.sessionId = UUID.randomUUID().toString();
-        session.user = user;
-        session.exercise = exercise;
+        final var session = this.createAndPersistSession(studentId, exerciseId);
         session.startTime = LocalDateTime.now();
-        this.studentSessionRepository.persist(session);
         final long after = this.analyticsService.getTodaySessionsCount();
         assertEquals(before + 1, after, "Adding one session with today's date should increase today count by 1");
     }
@@ -541,46 +543,34 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getSessionsByUserAndDateRange returns session within range and excludes it outside")
     void testGetSessionsByUserAndDateRange() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final var fixture = this.createSessionFixture();
 
         final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
         final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
-        final var within = this.analyticsService.getSessionsByUserAndDateRange(studentId, start, end);
-        assertNotNull(within);
-        assertTrue(within.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Session should appear within the date range");
+        final var within = this.analyticsService.getSessionsByUserAndDateRange(fixture.studentId(), start, end);
 
         final LocalDateTime futureStart = LocalDateTime.now().plusHours(1);
         final LocalDateTime futureEnd = LocalDateTime.now().plusHours(2);
-        final var outside = this.analyticsService.getSessionsByUserAndDateRange(studentId, futureStart, futureEnd);
-        assertNotNull(outside);
-        assertFalse(outside.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Session should not appear in a future range");
+        final var outside =
+                this.analyticsService.getSessionsByUserAndDateRange(fixture.studentId(), futureStart, futureEnd);
+        this.assertDateRangeFilter(fixture.sessionId(), within, outside);
     }
 
     @Test
     @TestTransaction
     @DisplayName("getSessionsByExerciseAndDateRange returns session within range and excludes it outside")
     void testGetSessionsByExerciseAndDateRange() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final var fixture = this.createSessionFixture();
 
         final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
         final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
-        final var within = this.analyticsService.getSessionsByExerciseAndDateRange(exerciseId, start, end);
-        assertNotNull(within);
-        assertTrue(within.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Session should appear within the date range");
+        final var within = this.analyticsService.getSessionsByExerciseAndDateRange(fixture.exerciseId(), start, end);
 
         final LocalDateTime futureStart = LocalDateTime.now().plusHours(1);
         final LocalDateTime futureEnd = LocalDateTime.now().plusHours(2);
-        final var outside = this.analyticsService.getSessionsByExerciseAndDateRange(exerciseId, futureStart, futureEnd);
-        assertNotNull(outside);
-        assertFalse(outside.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Session should not appear in a future range");
+        final var outside =
+                this.analyticsService.getSessionsByExerciseAndDateRange(fixture.exerciseId(), futureStart, futureEnd);
+        this.assertDateRangeFilter(fixture.sessionId(), within, outside);
     }
 
     @Test
@@ -652,17 +642,8 @@ class AnalyticsServiceTest {
     void testGetUsersProgressSummaryByDateRange() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final var exercise = this.exerciseRepository.findById(exerciseId);
-        assertNotNull(exercise, "Created exercise must exist");
-        final var user = this.userRepository.findById(studentId);
-        assertNotNull(user, "Seeded student1 must exist");
-
-        final var session = new StudentSessionEntity();
-        session.sessionId = UUID.randomUUID().toString();
-        session.user = user;
-        session.exercise = exercise;
+        final var session = this.createAndPersistSession(studentId, exerciseId);
         session.startTime = LocalDateTime.now();
-        this.studentSessionRepository.persist(session);
 
         final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
         final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
@@ -687,16 +668,10 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
         assertNotNull(exercise, "Created exercise must exist");
-        final var user = this.userRepository.findById(studentId);
-        assertNotNull(user, "Seeded student1 must exist");
-        final var session = new StudentSessionEntity();
-        session.sessionId = UUID.randomUUID().toString();
-        session.user = user;
-        session.exercise = exercise;
+        final var session = this.createAndPersistSession(studentId, exerciseId);
         session.completed = true;
         session.actionsCount = 5;
         session.correctActions = 4;
-        this.studentSessionRepository.persist(session);
 
         final var stats = this.analyticsService.getProblemCategoryStats();
         assertNotNull(stats);

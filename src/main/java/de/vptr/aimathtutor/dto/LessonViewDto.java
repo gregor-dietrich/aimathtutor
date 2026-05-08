@@ -20,7 +20,8 @@ public class LessonViewDto {
     /**
      * Default constructor for JSON mapping.
      */
-    public LessonViewDto() {}
+    public LessonViewDto() {
+    }
 
     /**
      * Constructs a LessonViewDto from a lesson entity.

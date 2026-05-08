@@ -37,7 +37,8 @@ public class GraspableEventDto {
 
     public Boolean isComplete; // Whether this action resulted in problem completion
 
-    public GraspableEventDto() {}
+    public GraspableEventDto() {
+    }
 
     /**
      * Constructs a GraspableEventDto with the specified parameters.

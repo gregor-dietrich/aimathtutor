@@ -4,6 +4,8 @@
 
 set -e
 
+echo "Starting branch operation..."
+
 cd "$DIR/.."
 
 read -p "Enter the target branch to create/reset: " TARGET_BRANCH
@@ -57,5 +59,8 @@ if [ $? -ne 0 ]; then
     echo "Failed to push ${TARGET_BRANCH} branch. Exiting."
     exit 7
 fi
+
+echo "Branch ${TARGET_BRANCH} pushed successfully."
+echo "Branch operation completed."
 
 cd - > /dev/null

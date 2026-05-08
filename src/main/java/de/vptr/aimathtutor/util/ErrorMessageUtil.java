@@ -4,6 +4,7 @@ import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -11,7 +12,8 @@ import jakarta.ws.rs.core.Response;
  */
 public final class ErrorMessageUtil {
 
-    private ErrorMessageUtil() {}
+    private ErrorMessageUtil() {
+    }
 
     private static final Logger LOG = Logger.getLogger(ErrorMessageUtil.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -21,40 +23,39 @@ public final class ErrorMessageUtil {
      * text.
      */
     public static String extractErrorMessage(final Response response) {
+        final int status = response != null ? response.getStatus() : -1;
         try {
-            // Try to read the response body as a structured error
-            if (response.hasEntity() && response.getStatus() >= 400) {
+            if (response == null) {
+                return "HTTP " + status;
+            }
+            if (response.hasEntity() && status >= 400) {
                 final String responseBody = response.readEntity(String.class);
                 if (responseBody != null && !responseBody.isBlank()) {
                     final String trimmed = responseBody.trim();
-                    // Try structured JSON first
                     if (trimmed.startsWith("{")) {
+                        JsonNode root = null;
                         try {
-                            final JsonNode root = OBJECT_MAPPER.readTree(trimmed);
+                            root = OBJECT_MAPPER.readTree(trimmed);
                             final String msg = findMessageNode(root);
                             if (msg != null && !msg.isEmpty()) {
                                 return msg;
                             }
                         } catch (final Exception e) {
-                            // JSON parsing failed — fall through to regex/plain-text fallback
                             LOG.debugf(e, "JSON parse failed for error response, trying regex fallback");
                         }
-                        // Fallback for malformed JSON: try regex extraction
-                        final String regexMsg = extractMessageWithRegex(trimmed);
+                        final String regexMsg = extractMessageWithRegex(trimmed, root);
                         if (regexMsg != null) {
                             return regexMsg;
                         }
                     }
-                    // If no structured message found, return the whole body (might be plain text)
                     return trimmed;
                 }
             }
         } catch (final Exception e) {
-            LOG.warnf(e, "Failed to extract error message from %s response", response.getStatus());
+            LOG.warnf(e, "Failed to extract error message from HTTP %s response", status);
         }
 
-        // Fall back to HTTP status
-        return "HTTP " + response.getStatus();
+        return "HTTP " + status;
     }
 
     private static String findMessageNode(final JsonNode root) {
@@ -73,7 +74,24 @@ public final class ErrorMessageUtil {
         return null;
     }
 
-    private static String extractMessageWithRegex(final String responseBody) {
+    private static String extractMessageWithRegex(final String responseBody, final JsonNode alreadyParsed) {
+        if (alreadyParsed != null) {
+            final String msg = findMessageNode(alreadyParsed);
+            if (msg != null && !msg.isEmpty()) {
+                return msg;
+            }
+        } else {
+            try {
+                final JsonNode root = OBJECT_MAPPER.readTree(responseBody);
+                final String msg = findMessageNode(root);
+                if (msg != null && !msg.isEmpty()) {
+                    return msg;
+                }
+            } catch (final Exception e) {
+                // Not valid JSON, fall through to regex
+            }
+        }
+
         if (!responseBody.contains("\"message\"")) {
             return null;
         }
@@ -81,12 +99,32 @@ public final class ErrorMessageUtil {
         if (messageStart == -1) {
             return null;
         }
-        messageStart = responseBody.indexOf(":", messageStart) + 1;
-        final var messageEnd = responseBody.indexOf("\"", messageStart + 1);
-        if (messageEnd == -1) {
+        final int colonPos = responseBody.indexOf(":", messageStart);
+        if (colonPos == -1) {
+            return null;
+        }
+        messageStart = colonPos + 1;
+        while (messageStart < responseBody.length() && Character.isWhitespace(responseBody.charAt(messageStart))) {
+            messageStart++;
+        }
+        if (messageStart >= responseBody.length() || responseBody.charAt(messageStart) != '"') {
+            return null;
+        }
+        int messageEnd = messageStart + 1;
+        boolean escaped = false;
+        while (messageEnd < responseBody.length()) {
+            final char ch = responseBody.charAt(messageEnd);
+            if (ch == '"' && !escaped) {
+                break;
+            }
+            escaped = ch == '\\' && !escaped;
+            messageEnd++;
+        }
+        if (messageEnd >= responseBody.length()) {
             return null;
         }
         final var message = responseBody.substring(messageStart + 1, messageEnd);
-        return message.trim();
+        final String trimmed = message.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

@@ -17,7 +17,8 @@ public class AiConfigUpdateDto {
     /**
      * Default constructor for deserialization.
      */
-    public AiConfigUpdateDto() {}
+    public AiConfigUpdateDto() {
+    }
 
     /**
      * Constructor with key and value.

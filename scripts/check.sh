@@ -8,6 +8,8 @@ REQUIRED_MAVEN_VERSION="3.9.9"
 
 set -e
 
+echo "Running environment checks..."
+
 cd "$DIR/.."
 
 echo "Checking version of $(which java)..."
@@ -62,5 +64,6 @@ if [[ $versions != "$(sort -V <<< "$versions")" ]]; then
     exit 7
 fi
 echo "Maven version check passed. (>= ${REQUIRED_MAVEN_VERSION})"
+echo "Environment checks completed."
 
 cd - > /dev/null

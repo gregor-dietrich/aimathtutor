@@ -89,13 +89,7 @@
         <module name="NoLineWrap">
             <property name="tokens" value="PACKAGE_DEF, IMPORT, STATIC_IMPORT" />
         </module>
-        <module name="ImportOrder">
-            <property name="groups" value="java,javax,org" />
-            <property name="ordered" value="true" />
-            <property name="separated" value="true" />
-            <property name="option" value="top" />
-            <property name="sortStaticImportsAlphabetically" value="true" />
-        </module>
+        <!-- Import ordering handled by Spotless/Eclipse formatter -->
         <module name="EmptyBlock">
             <property name="option" value="TEXT" />
             <property name="tokens"

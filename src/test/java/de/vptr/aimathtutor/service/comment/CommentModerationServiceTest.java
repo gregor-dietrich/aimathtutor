@@ -130,13 +130,10 @@ class CommentModerationServiceTest {
     @DisplayName("Should throw ValidationException for invalid action")
     @TestTransaction
     void shouldThrowForInvalidAction() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var fixture = this.createModerationFixture();
 
-        assertThrows(ValidationException.class,
-                () -> this.moderationService.moderateComment(comment.publicId, "INVALID", moderator.id, "reason"));
+        assertThrows(ValidationException.class, () -> this.moderationService.moderateComment(fixture.comment().publicId,
+                "INVALID", fixture.moderator().id, "reason"));
     }
 
     @Test
@@ -170,13 +167,10 @@ class CommentModerationServiceTest {
     @DisplayName("Should throw ValidationException for null action")
     @TestTransaction
     void shouldThrowForNullAction() {
-        final UserEntity moderator = this.userRepository.findById(1L);
-        final UserEntity author = this.userRepository.findById(3L);
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        final var comment = this.createComment(exercise, author);
+        final var fixture = this.createModerationFixture();
 
-        assertThrows(ValidationException.class,
-                () -> this.moderationService.moderateComment(comment.publicId, null, moderator.id, "reason"));
+        assertThrows(ValidationException.class, () -> this.moderationService.moderateComment(fixture.comment().publicId,
+                null, fixture.moderator().id, "reason"));
     }
 
     private CommentEntity createComment(final ExerciseEntity exercise, final UserEntity user) {
@@ -187,5 +181,16 @@ class CommentModerationServiceTest {
         comment.status = CommentStatus.VISIBLE;
         this.commentRepository.persist(comment);
         return comment;
+    }
+
+    private record ModerationFixture(UserEntity moderator, CommentEntity comment) {
+    }
+
+    private ModerationFixture createModerationFixture() {
+        final UserEntity moderator = this.userRepository.findById(1L);
+        final UserEntity author = this.userRepository.findById(3L);
+        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
+        final var comment = this.createComment(exercise, author);
+        return new ModerationFixture(moderator, comment);
     }
 }

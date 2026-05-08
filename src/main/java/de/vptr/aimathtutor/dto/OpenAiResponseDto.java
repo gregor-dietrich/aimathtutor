@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**

@@ -11,6 +11,8 @@ set -e
 
 cd "$DIR/.."
 
+echo "Starting build..."
+
 # Run environment check first
 "$DIR/check.sh"
 
@@ -92,5 +94,7 @@ else
 fi
 
 docker tag "$TAG"-alpine "$TAG"
+
+echo "Build completed."
 
 cd - > /dev/null
