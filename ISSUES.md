@@ -13,7 +13,128 @@
 
 ---
 
-## 1. Graspable Math Action Validation (isValidAction)
+## 1. Gamification
+
+**Goal:** Increase student motivation and engagement by adding gamification elements such as achievements/badges, progress levels, experience points (XP), streaks, leaderboards, and rewards tied to problem solving within the Graspable Math workspace and overall course progress.
+
+This feature should be opt-in per user (privacy-friendly), configurable by admins, and designed to be low-friction so it does not interfere with learning objectives.
+
+### 1.1 High-level features
+
+- Achievements/Badges: award for specific milestones (e.g., "First Solution", "10 Problems Solved", "Perfect Session", "Fast Solver", "Hint Avoider").
+- Experience points (XP): reward XP for solved problems, streaks, and completing exercises. XP contributes to user Level.
+- Levels & Progress Bar: users level up based on XP thresholds; show a progress bar on dashboard and exercise view.
+- Daily Streaks: consecutive days with activity—rewards and streak badges.
+- Leaderboards: global and class/group leaderboards showing top XP or most problems solved. Respect privacy settings (opt-in/opt-out, show anonymized handles).
+- Challenges & Quests: time-limited or teacher-assigned challenges (e.g., "Solve 5 linear equations this week") with rewards.
+- Rewards & Unlocks: unlock cosmetic rewards (avatars, themes), extra practice problems, or hints currency that can be spent.
+- Notifications & Activity Feed: notify users when they earn badges, level up, or climb the leaderboard.
+
+### 1.2 Backend changes
+
+1. New Entities (Hibernate/Panache style):
+   - `BadgeEntity` - id, code, name, description, iconPath, criteriaJson, createdAt
+   - `UserBadgeEntity` - id, userId, badgeId, awardedAt, source (auto/manual)
+   - `UserXpEntity` - id, userId, totalXp, level, nextLevelXp, lastUpdated
+   - `UserStreakEntity` - id, userId, currentStreakDays, lastActiveDate
+   - `ChallengeEntity` - id, title, description, startDate, endDate, rewardXp, rewardBadgeId, createdBy
+   - `UserChallengeEntity` - id, userId, challengeId, progressJson, completedAt
+   - `LeaderboardSnapshotEntity` (optional) - snapshotDate, rankingJson (for caching)
+
+2. Service classes:
+   - `GamificationService` (@ApplicationScoped)
+     - awardBadge(userId, badgeCode, source)
+     - addXp(userId, amount, reason)
+     - incrementStreak(userId, date)
+     - getUserBadges(userId)
+     - getUserXpAndLevel(userId)
+     - getLeaderboards(scope, groupId, limit)
+     - evaluateAndAwardOnProblemSolved(sessionId, eventDto) — called from GraspableMathService or AITutorService when problems are solved
+   - `ChallengeService` - create/manage challenges, track user progress
+
+3. DTOs
+   - `BadgeDto`, `UserBadgeDto`, `UserXpDto`, `ChallengeDto`, `LeaderboardDto`
+
+4. DB migrations / schema updates
+   - Add tables for each new entity. As per project style, add fields to existing init scripts (do NOT add separate scripts).
+   - Add indexes on `userId` and `badgeCode` where helpful.
+
+5. Integration points
+   - Call `GamificationService.evaluateAndAwardOnProblemSolved(...)` from `GraspableMathService` whenever a problem is marked complete.
+   - Call `addXp(...)` when user actions qualify (fast solve bonus, no-hint bonus, perfect session).
+   - Update `StudentSessionEntity` to optionally record `xpEarned` for the session and `badgesAwardedJson` (or rely on `UserBadgeEntity`).
+
+### 1.3 Frontend changes (Vaadin views)
+
+1. New Views/Components
+   - `GamificationPanel` component: compact widget to show current level, XP progress bar, recent badges, and quick action to view full gamification profile.
+   - `BadgesView` (@Route "badges") - list of all badges with filters (earned/not earned), and badge details.
+   - `LeaderboardView` (@Route "leaderboard") - toggle between global, class/group, and friends.
+   - `ChallengesView` (@Route "challenges") - list active/past challenges and allow users to join (if allowed).
+   - Integrate small toast/notification UI in `ExerciseWorkspaceView` for immediate feedback when a badge is earned or XP awarded.
+
+2. UI behavior
+   - Show XP progress bar in the main user dashboard and in `ExerciseWorkspaceView` (top-right corner) so users can see immediate progress.
+   - When a badge is earned, show a celebratory modal/toast with badge icon and description; include an unobtrusive "share" option (copy link or classroom share).
+   - Leaderboard toggles to respect privacy: anonymize names if user opted out of public rankings.
+   - Provide settings in `UserProfileView` for gamification opt-in/out and visibility preferences.
+
+3. Admin Controls
+   - Extend `AdminConfigView` (or new `AdminGamificationView`) to manage badges, XP rules, level thresholds, challenge creation, and leaderboard settings.
+   - Allow admins/teachers to award badges manually.
+
+### 1.4 XP, Levels, and Rules (example policy)
+
+- Base XP per solved problem: 10 XP
+- Bonus: +5 XP for solving without hints
+- Speed bonus: up to +10 XP proportional to time under expected time
+- Streak bonus: +2 XP per consecutive day active (capped)
+- Challenge completion: rewardXp per challenge config
+- Level thresholds: exponential or pre-configured table (e.g., Level 1: 0 XP, Level 2: 100 XP, Level 3: 300 XP, Level 4: 700 XP)
+
+Keep rules configurable via `AdminGamificationView`.
+
+### 1.5 Privacy & Accessibility
+
+- Gamification must be opt-in for students; default can be enabled but provide a clear toggle in profile.
+- Allow students to hide their name from leaderboards (opt-out) and to use an alias.
+- Ensure badges and colors are accessible (contrast, screen-reader friendly alt text for icons).
+- **Data deletion and retention policies:**
+  - **Right to Deletion:** When a student opts out of gamification or their account is deleted, all personally identifiable gamification data must be removed or anonymized. Specifically:
+    - `UserBadgeEntity`, `UserXpEntity`, `UserStreakEntity`, `UserChallengeEntity` — implement cascade delete or soft-delete/anonymization (replace user reference with a synthetic anonymized ID) so that aggregate statistics remain valid while individual identity is removed.
+  - **Retention periods:**
+    - Leaderboard snapshots: retain current + 12 months, then archive or fully anonymize (strip names/aliases, keep only rank and score distributions).
+    - Challenge participation history: retain for the lifetime of the challenge + 6 months, then anonymize or purge.
+    - Badge-award audit trails: retain for 24 months for abuse investigation, then purge.
+  - **Implementation note:** Add soft-deletion/anonymization support in the relevant entities and services. Provide admin tools or API endpoints to process deletion requests and to export/delete user data on demand.
+
+### 1.6 Testing
+
+- Unit tests for `GamificationService` (award logic, XP calculations, level progression).
+- Integration tests for DB writes (badge awards, XP updates, streak increments).
+- UI tests for badge modal display and leaderboard filtering.
+- Load testing/benchmarks for leaderboard queries (cache snapshots if needed).
+
+### 1.7 Metrics & Analytics
+
+- Track gamification engagement metrics: percent of users opting in, average XP earned per session, badge earn rates, churn/retention impact.
+- Add events to existing logging/analytics pipeline (e.g., `GAMIFICATION_BADGE_AWARDED`, `GAMIFICATION_XP_ADDED`).
+
+### 1.8 Phased rollout and migration
+
+- Phase 1 (MVP): XP, badges for a small default set (First Solution, 10 Problems, No Hints), user opt-in, basic UI panel, and admin config for enabling/disabling.
+- Phase 2: Add leaderboards, challenges, rewards/unlocks, and teacher tools.
+- Phase 3: Advanced features like seasonal events, classroom competitions, and integration with external LMS.
+
+### 1.9 Risks and mitigations
+
+- Reward focus over learning: design badges to align tightly with learning goals (e.g., accuracy, explanation, reflection), not just speed.
+- Privacy concerns: defaults and opt-outs must be clear and honored.
+- Cheating via repeated trivial tasks: weight XP and badges to discourage grinding (e.g., cap repeatable XP per day for the same exercise).
+
+---
+
+## 2. Graspable Math Action Validation (isValidAction)
 
 Goal: Implement server-side validation of student math actions coming from the Graspable Math workspace so that session metrics (correctActions, success rate) reflect true mathematical correctness rather than relying solely on the frontend or marking every action as correct.
 
@@ -72,13 +193,48 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ---
 
-## 2. Multiple Problems Per Exercise with Sequential Unlocking
+## 3. Encrypt-at-Rest
+
+**Goal:** encrypt PII at rest with file-backed key management.
+
+**Plan:**
+
+1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
+2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
+3. Add blind-index/hash companion columns for fields requiring equality search.
+4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
+   - load key from file on startup
+   - generate and persist key if missing
+   - enforce restrictive file permissions
+5. Add shared crypto service + entity converters/mappers so encryption/decryption is centralized and plaintext is never logged.
+6. Add migrations to create encrypted/blind-index columns, backfill legacy plaintext, and remove plaintext columns after cutover.
+7. Update `application.properties` with sensible local default key path and `docker-compose.yml` with env var + persistent volume mount.
+8. Add unit/integration tests for crypto behavior, startup key generation, CRUD, and searchable encrypted fields.
+
+**Done when:**
+
+- Target PII fields are stored encrypted at rest.
+- App starts with existing key or generates one when absent.
+- Compose/dev setup persists key material via mounted volume.
+- SpotBugs, Checkstyle, PMD, PMD-CPD and all Maven Tests passing.
+
+---
+
+## 4. Vaadin Views — End-to-End Testing (Long-term)
+
+**Package:** `de.vptr.aimathtutor.view`
+**Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.
+**Approach:** Introduce [Vaadin TestBench](https://vaadin.com/docs/latest/testing/end-to-end) or [Playwright](https://playwright.dev/) for end-to-end tests. This is a multi-day investment and should be treated as a separate project initiative, not a quick fix.
+
+---
+
+## 5. Multiple Problems Per Exercise with Sequential Unlocking
 
 **Goal:** Allow exercises to have multiple problems (like hints), unlock "Next Problem" button when current is complete.
 
 **Implementation Plan:**
 
-### 2.1 Backend Changes
+### 5.1 Backend Changes
 
 1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
    - `graspableInitialExpression` -> Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
@@ -96,7 +252,7 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
    - Add them to the existing init script - do NOT create separate scripts
 
-### 2.2 Frontend Changes
+### 5.2 Frontend Changes
 
 1. **ExerciseWorkspaceView** - Add UI components:
    - Field: `int currentProblemIndex = 0`
@@ -127,161 +283,71 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ---
 
-## 3. Gamification
+## 6. Error Prone + NullAway Integration
 
-**Goal:** Increase student motivation and engagement by adding gamification elements such as achievements/badges, progress levels, experience points (XP), streaks, leaderboards, and rewards tied to problem solving within the Graspable Math workspace and overall course progress.
+**Issue:** No compile-time bug pattern detection beyond standard `javac` warnings. Null safety is not enforced.
 
-This feature should be opt-in per user (privacy-friendly), configurable by admins, and designed to be low-friction so it does not interfere with learning objectives.
+**Why implement:** Error Prone (Google) catches real bugs at compile time: null dereferences, resource leaks, equality bugs, thread safety issues, and more. NullAway adds null-safety enforcement via `@Nullable`/`@NonNull` annotations.
 
-### 3.1 High-level features
+**Implementation plan:**
 
-- Achievements/Badges: award for specific milestones (e.g., "First Solution", "10 Problems Solved", "Perfect Session", "Fast Solver", "Hint Avoider").
-- Experience points (XP): reward XP for solved problems, streaks, and completing exercises. XP contributes to user Level.
-- Levels & Progress Bar: users level up based on XP thresholds; show a progress bar on dashboard and exercise view.
-- Daily Streaks: consecutive days with activity—rewards and streak badges.
-- Leaderboards: global and class/group leaderboards showing top XP or most problems solved. Respect privacy settings (opt-in/opt-out, show anonymized handles).
-- Challenges & Quests: time-limited or teacher-assigned challenges (e.g., "Solve 5 linear equations this week") with rewards.
-- Rewards & Unlocks: unlock cosmetic rewards (avatars, themes), extra practice problems, or hints currency that can be spent.
-- Notifications & Activity Feed: notify users when they earn badges, level up, or climb the leaderboard.
+1. Add `error-prone` compiler plugin to `pom.xml` via `maven-compiler-plugin` configuration (Note: Version must be extracted as a variable as per convention in `pom.xml`):
 
-### 3.2 Backend changes
+   ```xml
+   <compilerArgs>
+       <arg>-XDcompilePolicy=simple</arg>
+       <arg>-Xplugin:ErrorProne</arg>
+   </compilerArgs>
+   <annotationProcessorPaths>
+       <path>
+           <groupId>com.google.errorprone</groupId>
+           <artifactId>error_prone_core</artifactId>
+           <version>2.49.0</version>
+       </path>
+   </annotationProcessorPaths>
+   ```
 
-1. New Entities (Hibernate/Panache style):
-   - `BadgeEntity` - id, code, name, description, iconPath, criteriaJson, createdAt
-   - `UserBadgeEntity` - id, userId, badgeId, awardedAt, source (auto/manual)
-   - `UserXpEntity` - id, userId, totalXp, level, nextLevelXp, lastUpdated
-   - `UserStreakEntity` - id, userId, currentStreakDays, lastActiveDate
-   - `ChallengeEntity` - id, title, description, startDate, endDate, rewardXp, rewardBadgeId, createdBy
-   - `UserChallengeEntity` - id, userId, challengeId, progressJson, completedAt
-   - `LeaderboardSnapshotEntity` (optional) - snapshotDate, rankingJson (for caching)
+2. Add NullAway as Error Prone plugin:
 
-2. Service classes:
-   - `GamificationService` (@ApplicationScoped)
-     - awardBadge(userId, badgeCode, source)
-     - addXp(userId, amount, reason)
-     - incrementStreak(userId, date)
-     - getUserBadges(userId)
-     - getUserXpAndLevel(userId)
-     - getLeaderboards(scope, groupId, limit)
-     - evaluateAndAwardOnProblemSolved(sessionId, eventDto) — called from GraspableMathService or AITutorService when problems are solved
-   - `ChallengeService` - create/manage challenges, track user progress
+   ```xml
+   <compilerArgs>
+       <arg>-Xplugin:ErrorProne -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor</arg>
+   </compilerArgs>
+   ```
 
-3. DTOs
-   - `BadgeDto`, `UserBadgeDto`, `UserXpDto`, `ChallengeDto`, `LeaderboardDto`
+3. Start with `WARN` severity for all Error Prone checks. Fix existing violations.
+4. After clean build, graduate to `ERROR` severity.
+5. For NullAway: annotate package boundaries with `@NonNull` by default, use `@Nullable` for nullable returns/params.
 
-4. DB migrations / schema updates
-   - Add tables for each new entity. As per project style, add fields to existing init scripts (do NOT add separate scripts).
-   - Add indexes on `userId` and `badgeCode` where helpful.
+**Estimated effort:** 2-4 person-days for initial setup and fixing existing violations.
 
-5. Integration points
-   - Call `GamificationService.evaluateAndAwardOnProblemSolved(...)` from `GraspableMathService` whenever a problem is marked complete.
-   - Call `addXp(...)` when user actions qualify (fast solve bonus, no-hint bonus, perfect session).
-   - Update `StudentSessionEntity` to optionally record `xpEarned` for the session and `badgesAwardedJson` (or rely on `UserBadgeEntity`).
-
-### 3.3 Frontend changes (Vaadin views)
-
-1. New Views/Components
-   - `GamificationPanel` component: compact widget to show current level, XP progress bar, recent badges, and quick action to view full gamification profile.
-   - `BadgesView` (@Route "badges") - list of all badges with filters (earned/not earned), and badge details.
-   - `LeaderboardView` (@Route "leaderboard") - toggle between global, class/group, and friends.
-   - `ChallengesView` (@Route "challenges") - list active/past challenges and allow users to join (if allowed).
-   - Integrate small toast/notification UI in `ExerciseWorkspaceView` for immediate feedback when a badge is earned or XP awarded.
-
-2. UI behavior
-   - Show XP progress bar in the main user dashboard and in `ExerciseWorkspaceView` (top-right corner) so users can see immediate progress.
-   - When a badge is earned, show a celebratory modal/toast with badge icon and description; include an unobtrusive "share" option (copy link or classroom share).
-   - Leaderboard toggles to respect privacy: anonymize names if user opted out of public rankings.
-   - Provide settings in `UserProfileView` for gamification opt-in/out and visibility preferences.
-
-3. Admin Controls
-   - Extend `AdminConfigView` (or new `AdminGamificationView`) to manage badges, XP rules, level thresholds, challenge creation, and leaderboard settings.
-   - Allow admins/teachers to award badges manually.
-
-### 3.4 XP, Levels, and Rules (example policy)
-
-- Base XP per solved problem: 10 XP
-- Bonus: +5 XP for solving without hints
-- Speed bonus: up to +10 XP proportional to time under expected time
-- Streak bonus: +2 XP per consecutive day active (capped)
-- Challenge completion: rewardXp per challenge config
-- Level thresholds: exponential or pre-configured table (e.g., Level 1: 0 XP, Level 2: 100 XP, Level 3: 300 XP, Level 4: 700 XP)
-
-Keep rules configurable via `AdminGamificationView`.
-
-### 3.5 Privacy & Accessibility
-
-- Gamification must be opt-in for students; default can be enabled but provide a clear toggle in profile.
-- Allow students to hide their name from leaderboards (opt-out) and to use an alias.
-- Ensure badges and colors are accessible (contrast, screen-reader friendly alt text for icons).
-- **Data deletion and retention policies:**
-  - **Right to Deletion:** When a student opts out of gamification or their account is deleted, all personally identifiable gamification data must be removed or anonymized. Specifically:
-    - `UserBadgeEntity`, `UserXpEntity`, `UserStreakEntity`, `UserChallengeEntity` — implement cascade delete or soft-delete/anonymization (replace user reference with a synthetic anonymized ID) so that aggregate statistics remain valid while individual identity is removed.
-  - **Retention periods:**
-    - Leaderboard snapshots: retain current + 12 months, then archive or fully anonymize (strip names/aliases, keep only rank and score distributions).
-    - Challenge participation history: retain for the lifetime of the challenge + 6 months, then anonymize or purge.
-    - Badge-award audit trails: retain for 24 months for abuse investigation, then purge.
-  - **Implementation note:** Add soft-deletion/anonymization support in the relevant entities and services. Provide admin tools or API endpoints to process deletion requests and to export/delete user data on demand.
-
-### 3.6 Testing
-
-- Unit tests for `GamificationService` (award logic, XP calculations, level progression).
-- Integration tests for DB writes (badge awards, XP updates, streak increments).
-- UI tests for badge modal display and leaderboard filtering.
-- Load testing/benchmarks for leaderboard queries (cache snapshots if needed).
-
-### 3.7 Metrics & Analytics
-
-- Track gamification engagement metrics: percent of users opting in, average XP earned per session, badge earn rates, churn/retention impact.
-- Add events to existing logging/analytics pipeline (e.g., `GAMIFICATION_BADGE_AWARDED`, `GAMIFICATION_XP_ADDED`).
-
-### 3.8 Phased rollout and migration
-
-- Phase 1 (MVP): XP, badges for a small default set (First Solution, 10 Problems, No Hints), user opt-in, basic UI panel, and admin config for enabling/disabling.
-- Phase 2: Add leaderboards, challenges, rewards/unlocks, and teacher tools.
-- Phase 3: Advanced features like seasonal events, classroom competitions, and integration with external LMS.
-
-### 3.9 Risks and mitigations
-
-- Reward focus over learning: design badges to align tightly with learning goals (e.g., accuracy, explanation, reflection), not just speed.
-- Privacy concerns: defaults and opt-outs must be clear and honored.
-- Cheating via repeated trivial tasks: weight XP and badges to discourage grinding (e.g., cap repeatable XP per day for the same exercise).
+**Risks:** Error Prone may flag legitimate patterns in Quarkus/Vaadin code. May need selective suppressions via `@SuppressWarnings`.
 
 ---
 
-### 4. Encrypt-at-Rest
+## 7. CPD Duplicate Detection — Gradual Threshold Reduction
 
-**Goal:** encrypt PII at rest with file-backed key management.
+**Issue:** CPD `minimumTokens` is set to 100, which only catches very large code duplications. Smaller duplications (3-5 line blocks) slip through.
 
-**Plan:**
+**Why reduce:** Catches more subtle copy-paste errors and encourages DRY compliance.
 
-1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
-2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
-3. Add blind-index/hash companion columns for fields requiring equality search.
-4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
-   - load key from file on startup
-   - generate and persist key if missing
-   - enforce restrictive file permissions
-5. Add shared crypto service + entity converters/mappers so encryption/decryption is centralized and plaintext is never logged.
-6. Add migrations to create encrypted/blind-index columns, backfill legacy plaintext, and remove plaintext columns after cutover.
-7. Update `application.properties` with sensible local default key path and `docker-compose.yml` with env var + persistent volume mount.
-8. Add unit/integration tests for crypto behavior, startup key generation, CRUD, and searchable encrypted fields.
+**Phased approach:**
 
-**Done when:**
+- **Phase A:** Lower `minimumTokens` from 100 to 75 in `pom.xml`. Run `./mvnw pmd:cpd-check`, fix all violations, commit.
+- **Phase B:** Lower from 75 to 50. Run, fix, commit.
+- **Phase C (optional):** Evaluate gradually lowering to 40 or less. May produce diminishing returns / false positives.
 
-- Target PII fields are stored encrypted at rest.
-- App starts with existing key or generates one when absent.
-- Compose/dev setup persists key material via mounted volume.
-- SpotBugs, Checkstyle, PMD, PMD-CPD and all Maven Tests passing.
+**Tracking:** Each phase should be a separate PR to keep review manageable. Do not attempt all phases in one PR.
 
 ---
 
-## 5. Miscellaneous Fixes
+## 8. Miscellaneous Fixes
 
-### 5.1 Admin Dashboard Enhancement
+### 8.1 Admin Dashboard Enhancement
 
 The admin dashboard could use some further enhancement, such as diagrams.
 
-### 5.2 Keyboard accessibility
+### 8.2 Keyboard accessibility
 
 Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
 
@@ -289,7 +355,7 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
-## 6. OWASP Dependency-Check & Secret Scanning
+## 9. OWASP Dependency-Check & Secret Scanning
 
 **Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
 
@@ -313,65 +379,7 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
-## 7. CPD Duplicate Detection — Gradual Threshold Reduction
-
-**Issue:** CPD `minimumTokens` is set to 100, which only catches very large code duplications. Smaller duplications (3-5 line blocks) slip through.
-
-**Why reduce:** Catches more subtle copy-paste errors and encourages DRY compliance.
-
-**Phased approach:**
-
-- **Phase A:** Lower `minimumTokens` from 100 to 75 in `pom.xml`. Run `./mvnw pmd:cpd-check`, fix all violations, commit.
-- **Phase B:** Lower from 75 to 50. Run, fix, commit.
-- **Phase C (optional):** Evaluate gradually lowering to 40 or less. May produce diminishing returns / false positives.
-
-**Tracking:** Each phase should be a separate PR to keep review manageable. Do not attempt all phases in one PR.
-
----
-
-## 8. Error Prone + NullAway Integration
-
-**Issue:** No compile-time bug pattern detection beyond standard `javac` warnings. Null safety is not enforced.
-
-**Why implement:** Error Prone (Google) catches real bugs at compile time: null dereferences, resource leaks, equality bugs, thread safety issues, and more. NullAway adds null-safety enforcement via `@Nullable`/`@NonNull` annotations.
-
-**Implementation plan:**
-
-1. Add `error-prone` compiler plugin to `pom.xml` via `maven-compiler-plugin` configuration:
-
-   ```xml
-   <compilerArgs>
-       <arg>-XDcompilePolicy=simple</arg>
-       <arg>-Xplugin:ErrorProne</arg>
-   </compilerArgs>
-   <annotationProcessorPaths>
-       <path>
-           <groupId>com.google.errorprone</groupId>
-           <artifactId>error_prone_core</artifactId>
-           <version>2.36.0</version>
-       </path>
-   </annotationProcessorPaths>
-   ```
-
-2. Add NullAway as Error Prone plugin:
-
-   ```xml
-   <compilerArgs>
-       <arg>-Xplugin:ErrorProne -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor</arg>
-   </compilerArgs>
-   ```
-
-3. Start with `WARN` severity for all Error Prone checks. Fix existing violations.
-4. After clean build, graduate to `ERROR` severity.
-5. For NullAway: annotate package boundaries with `@NonNull` by default, use `@Nullable` for nullable returns/params.
-
-**Estimated effort:** 2-4 person-days for initial setup and fixing existing violations.
-
-**Risks:** Error Prone may flag legitimate patterns in Quarkus/Vaadin code. May need selective suppressions via `@SuppressWarnings`.
-
----
-
-## 9. Pre-commit Hooks
+## 10. Pre-commit Hooks
 
 **Issue:** No local enforcement of code quality before commits. Developers discover style/lint failures only in CI.
 
@@ -379,53 +387,35 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 **Implementation plan:**
 
-1. Add `.pre-commit-config.yaml` to project root:
-
-   ```yaml
-   repos:
-     - repo: https://github.com/pre-commit/pre-commit-hooks
-       rev: v5.0.0
-       hooks:
-         - id: trailing-whitespace
-         - id: end-of-file-fixer
-         - id: check-yaml
-         - id: check-added-large-files
-     - repo: local
-       hooks:
-         - id: checkstyle
-           name: Checkstyle
-           entry: ./mvnw checkstyle:check
-           language: system
-           pass_filenames: false
-           types: [java]
-         - id: spotbugs
-           name: SpotBugs
-           entry: ./mvnw spotbugs:check
-           language: system
-           pass_filenames: false
-           types: [java]
-   ```
-
-2. Add install instructions to developer docs / AGENTS.md:
+1. Add `.git-hooks/pre-commit` to project root (executable shell script):
 
    ```shell
-   pip install pre-commit  # or brew install pre-commit
-   pre-commit install
+   #!/usr/bin/env bash
+   set -e
+   echo "Running Checkstyle..."
+   ./mvnw checkstyle:check -q
+   echo "Running SpotBugs..."
+   ./mvnw spotbugs:check -q
+   echo "Pre-commit checks passed."
    ```
 
-3. Optional: Add commit message linting via `commitlint` or `pre-commit` hook for conventional commits.
-4. Run `pre-commit run --all-files` to validate existing code.
+2. Configure git to use the project hooks directory by default. Add to `.gitconfig` template or document:
 
-**Estimated effort:** 1-2 hours.
+   ```shell
+   git config core.hooksPath .git-hooks
+   ```
 
-**Note:** Pre-commit hooks are opt-in for developers. CI remains the authoritative gate.
+   Or add a `Makefile` target and call it from a post-checkout hook so it runs automatically:
 
----
+   ```makefile
+   .PHONY: install-hooks
+   install-hooks:
+    chmod +x .git-hooks/pre-commit
+    git config core.hooksPath .git-hooks
+   ```
 
-## 10. Vaadin Views — End-to-End Testing (Long-term)
+**Estimated effort:** 1 hour.
 
-**Package:** `de.vptr.aimathtutor.view`
-**Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.
-**Approach:** Introduce [Vaadin TestBench](https://vaadin.com/docs/latest/testing/end-to-end) or [Playwright](https://playwright.dev/) for end-to-end tests. This is a multi-day investment and should be treated as a separate project initiative, not a quick fix.
+**Note:** Pre-commit hooks are enabled by default. CI remains the authoritative gate for PRs that bypass local hooks.
 
 ---

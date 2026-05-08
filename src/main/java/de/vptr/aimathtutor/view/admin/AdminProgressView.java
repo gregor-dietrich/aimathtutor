@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -14,6 +13,7 @@ import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.layout.SearchFilterBar;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
@@ -24,7 +24,8 @@ import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import jakarta.inject.Inject;
 
 /**
- * Admin view for displaying student progress summaries. Shows aggregate statistics for all students including
+ * Admin view for displaying student progress summaries. Shows aggregate
+ * statistics for all students including
  * completion rates, success rates, and activity.
  */
 @Route(value = "admin/progress", layout = AdminMainLayout.class)
@@ -39,7 +40,6 @@ public class AdminProgressView extends AbstractAdminView {
 
     private Grid<StudentProgressSummaryDto> grid;
     private TextField searchField;
-    private Button resetFiltersButton;
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
 
@@ -53,7 +53,8 @@ public class AdminProgressView extends AbstractAdminView {
     }
 
     /**
-     * Perform authentication check and construct the progress dashboard before the view becomes visible.
+     * Perform authentication check and construct the progress dashboard before the
+     * view becomes visible.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -128,11 +129,10 @@ public class AdminProgressView extends AbstractAdminView {
 
         this.searchField = searchLayout.getTextfield();
 
-        final var filterBar =
-                new SearchFilterBar(searchLayout, () -> this.filterByDateRange(), () -> this.resetFilters());
+        final var filterBar = new SearchFilterBar(searchLayout, this::filterByDateRange,
+                this::resetFilters);
         this.startDatePicker = filterBar.getStartDatePicker();
         this.endDatePicker = filterBar.getEndDatePicker();
-        this.resetFiltersButton = filterBar.getResetButton();
 
         return searchLayout;
     }
@@ -153,7 +153,8 @@ public class AdminProgressView extends AbstractAdminView {
     }
 
     /**
-     * Search for students by username and update the grid with results. Pushes username filtering to the database.
+     * Search for students by username and update the grid with results. Pushes
+     * username filtering to the database.
      */
     private void searchStudents() {
         final String searchTerm = this.searchField.getValue();
@@ -177,7 +178,8 @@ public class AdminProgressView extends AbstractAdminView {
     }
 
     /**
-     * Filter the progress data by the selected start and end date. Pushes date range filtering to the database.
+     * Filter the progress data by the selected start and end date. Pushes date
+     * range filtering to the database.
      */
     private void filterByDateRange() {
         final var startDate = this.startDatePicker.getValue();
@@ -189,8 +191,8 @@ public class AdminProgressView extends AbstractAdminView {
         }
 
         final var startDateTime = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(1970, 1, 1, 0, 0);
-        final var endDateTime =
-                endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.of(2099, 12, 31, 23, 59, 59);
+        final var endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX)
+                : LocalDateTime.of(2099, 12, 31, 23, 59, 59);
 
         AsyncDataLoader.load(() -> this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime),
                 this, progress -> this.grid.setItems(progress),

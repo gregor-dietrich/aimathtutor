@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalTime;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -14,6 +13,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.layout.SearchFilterBar;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
@@ -25,7 +25,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Admin view for displaying all student sessions with filtering and detail options. Shows session information including
+ * Admin view for displaying all student sessions with filtering and detail
+ * options. Shows session information including
  * student, exercise, duration, and completion status.
  */
 @Route(value = "admin/sessions", layout = AdminMainLayout.class)
@@ -42,7 +43,6 @@ public class AdminSessionsView extends AbstractAdminView {
     private TextField searchField;
     private DatePicker startDatePicker;
     private DatePicker endDatePicker;
-    private Button resetFiltersButton;
 
     /**
      * Constructs the AdminSessionsView with full size and padding.
@@ -130,11 +130,10 @@ public class AdminSessionsView extends AbstractAdminView {
 
         this.searchField = searchLayout.getTextfield();
 
-        final var filterBar =
-                new SearchFilterBar(searchLayout, () -> this.filterByDateRange(), () -> this.resetFilters());
+        final var filterBar = new SearchFilterBar(searchLayout, this::filterByDateRange,
+                this::resetFilters);
         this.startDatePicker = filterBar.getStartDatePicker();
         this.endDatePicker = filterBar.getEndDatePicker();
-        this.resetFiltersButton = filterBar.getResetButton();
 
         return searchLayout;
     }
@@ -179,7 +178,8 @@ public class AdminSessionsView extends AbstractAdminView {
     }
 
     /**
-     * Filter sessions by the selected start and end dates. Pushes date range filtering to the database.
+     * Filter sessions by the selected start and end dates. Pushes date range
+     * filtering to the database.
      */
     private void filterByDateRange() {
         final var startDate = this.startDatePicker.getValue();
