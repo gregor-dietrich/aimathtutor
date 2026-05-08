@@ -4,6 +4,14 @@
 
 REQUIRED_MAVEN_VERSION="3.9.9"
 
+# Suppress sun.misc.Unsafe deprecation warnings on Java 23+ (e.g. Guava inside Maven itself)
+if command -v java &> /dev/null; then
+  JAVA_MAJOR=$(java -version 2>&1 | awk -F '"' '/version/ {split($2,a,"."); print (a[1]=="1"?a[2]:a[1])}')
+  if [ "${JAVA_MAJOR:-0}" -ge 23 ] 2>/dev/null; then
+    export MAVEN_OPTS="--sun-misc-unsafe-memory-access=allow ${MAVEN_OPTS}"
+  fi
+fi
+
 if ! command -v mvn &> /dev/null; then
     MVN_CMD="./mvnw"
 else
