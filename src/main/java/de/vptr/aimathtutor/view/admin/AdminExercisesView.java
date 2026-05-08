@@ -47,6 +47,7 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
@@ -559,21 +560,15 @@ public class AdminExercisesView extends AbstractAdminView {
      * Filter the exercises by the selected date range.
      */
     private void filterByDateRange() {
-        final var startDate = this.startDatePicker.getValue();
-        final var endDate = this.endDatePicker.getValue();
-
-        if (startDate == null || endDate == null) {
-            NotificationUtil.showWarning("Please select both start and end dates");
+        final var range = AdminFilterUtil.validateDateRange(this.startDatePicker, this.endDatePicker);
+        if (range.isEmpty()) {
             return;
         }
 
-        if (startDate.isAfter(endDate)) {
-            NotificationUtil.showWarning("Start date must be before end date");
-            return;
-        }
-
-        AsyncDataLoader.load(() -> this.exerciseService.findByDateRange(startDate.toString(), endDate.toString()), this,
-                exercises -> this.grid.setItems(exercises),
+        AsyncDataLoader.load(
+                () -> this.exerciseService.findByDateRange(range.get().start().toString(),
+                        range.get().end().toString()),
+                this, exercises -> this.grid.setItems(exercises),
                 "An error occurred while filtering exercises. Please try again.");
     }
 

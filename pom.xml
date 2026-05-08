@@ -20,6 +20,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <pmd-cpd.minTokens>65</pmd-cpd.minTokens>
 
         <!-- Quarkus Platform -->
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -292,7 +293,7 @@
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>${pmd-plugin.version}</version>
                 <configuration>
-                    <minimumTokens>70</minimumTokens>
+                    <minimumTokens>${pmd-cpd.minTokens}</minimumTokens>
                     <targetJdk>${java.version}</targetJdk>
                     <includeTests>true</includeTests>
                     <linkXRef>false</linkXRef>
