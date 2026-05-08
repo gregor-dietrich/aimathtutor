@@ -6,9 +6,8 @@ import io.quarkus.elytron.security.common.BcryptUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Service for secure password hashing and verification using bcrypt.
- * Delegates to the official Quarkus {@link BcryptUtil} for constant-time
- * hashing and verification.
+ * Service for secure password hashing and verification using bcrypt. Delegates to the official Quarkus
+ * {@link BcryptUtil} for constant-time hashing and verification.
  */
 @ApplicationScoped
 public class PasswordHashingService {
@@ -16,9 +15,11 @@ public class PasswordHashingService {
     /**
      * Hashes a plain-text password using bcrypt with a random salt.
      *
-     * @param password the plain text password
+     * @param password
+     *            the plain text password
      * @return the bcrypt hash (includes embedded salt and cost factor)
-     * @throws IllegalArgumentException if password is null or empty
+     * @throws IllegalArgumentException
+     *             if password is null or empty
      */
     public String hashPassword(final String password) {
         if (password == null || password.isBlank()) {
@@ -34,8 +35,10 @@ public class PasswordHashingService {
     /**
      * Verifies a plain-text password against a stored bcrypt hash.
      *
-     * @param password   the plain text password to verify
-     * @param storedHash the stored bcrypt password hash
+     * @param password
+     *            the plain text password to verify
+     * @param storedHash
+     *            the stored bcrypt password hash
      * @return true if the password matches, false otherwise
      */
     public boolean verifyPassword(final String password, final String storedHash) {

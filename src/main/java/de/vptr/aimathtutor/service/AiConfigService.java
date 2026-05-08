@@ -29,10 +29,8 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
- * Service for managing AI configuration at runtime.
- * Provides methods to retrieve, validate, and update AI settings from the
- * database.
- * Supports caching to avoid frequent database hits.
+ * Service for managing AI configuration at runtime. Provides methods to retrieve, validate, and update AI settings from
+ * the database. Supports caching to avoid frequent database hits.
  */
 @ApplicationScoped
 public class AiConfigService {
@@ -44,51 +42,37 @@ public class AiConfigService {
 
     // Default values for runtime reset to factory defaults.
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
-            Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"),
-            Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
+            Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"), Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
             Map.entry(AiConfigKeys.GEMINI_MODEL, "gemma-3-27b-it"),
             Map.entry(AiConfigKeys.GEMINI_API_BASE_URL, "https://generativelanguage.googleapis.com"),
-            Map.entry(AiConfigKeys.GEMINI_TEMPERATURE, "0.7"),
-            Map.entry(AiConfigKeys.GEMINI_MAX_TOKENS, "2000"),
-            Map.entry(AiConfigKeys.OPENAI_MODEL, "gpt-5-nano"),
-            Map.entry(AiConfigKeys.OPENAI_ORGANIZATION_ID, ""),
+            Map.entry(AiConfigKeys.GEMINI_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.GEMINI_MAX_TOKENS, "2000"),
+            Map.entry(AiConfigKeys.OPENAI_MODEL, "gpt-5-nano"), Map.entry(AiConfigKeys.OPENAI_ORGANIZATION_ID, ""),
             Map.entry(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1"),
-            Map.entry(AiConfigKeys.OPENAI_TEMPERATURE, "0.7"),
-            Map.entry(AiConfigKeys.OPENAI_MAX_TOKENS, "2000"),
+            Map.entry(AiConfigKeys.OPENAI_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.OPENAI_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.OLLAMA_API_URL, "http://ollama:11434"),
-            Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"),
-            Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
-            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"),
-            Map.entry(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, "30"),
+            Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"), Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
+            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"), Map.entry(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, "30"),
             Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
-                    "You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question."),
-            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX,
-                    "Provide a helpful, encouraging answer that:\n"
-                            + "- Guides the student's thinking without solving it for them\n"
-                            + "- Is concise (2-3 sentences max)\n"
-                            + "- Relates to their current problem if possible\n"
-                            + "- Uses clear, simple language\n"
-                            + "- Encourages them to try the next step\n\nYour answer:"),
+                    "You are a helpful AI math tutor. "
+                            + "A student is working on an algebra problem and has asked you a question."),
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, "Provide a helpful, encouraging answer that:\n"
+                    + "- Guides the student's thinking without solving it for them\n"
+                    + "- Is concise (2-3 sentences max)\n" + "- Relates to their current problem if possible\n"
+                    + "- Uses clear, simple language\n" + "- Encourages them to try the next step\n\nYour answer:"),
             Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX,
-                    "You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student's action and provide brief, helpful feedback."),
-            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX,
-                    "Provide feedback in the following JSON format:\n"
-                            + "{\n"
-                            + "  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n"
-                            + "  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n"
-                            + "  \"hints\": [],\n"
-                            + "  \"suggestedNextSteps\": [],\n"
-                            + "  \"confidence\": 0.0 to 1.0\n"
-                            + "}\n\n"
-                            + "IMPORTANT Guidelines:\n"
-                            + "- Keep message to ONE SHORT sentence (max 15 words)\n"
-                            + "- Be encouraging but not overly enthusiastic\n"
-                            + "- If the action is correct, give brief praise\n"
-                            + "- If incorrect, point out the error gently\n"
-                            + "- Only provide hints array if student made a mistake (max 1-2 hints)\n"
-                            + "- Do NOT provide hints for correct actions\n"
-                            + "- Leave suggestedNextSteps empty unless specifically needed\n"
-                            + "- Be specific about what they did, not generic"));
+                    "You are an encouraging but concise AI math tutor helping a student learn algebra. "
+                            + "Analyze the student's action and provide brief, helpful feedback."),
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, "Provide feedback in the following JSON format:\n" + "{\n"
+                    + "  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n"
+                    + "  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n"
+                    + "  \"hints\": [],\n" + "  \"suggestedNextSteps\": [],\n" + "  \"confidence\": 0.0 to 1.0\n"
+                    + "}\n\n" + "IMPORTANT Guidelines:\n" + "- Keep message to ONE SHORT sentence (max 15 words)\n"
+                    + "- Be encouraging but not overly enthusiastic\n"
+                    + "- If the action is correct, give brief praise\n" + "- If incorrect, point out the error gently\n"
+                    + "- Only provide hints array if student made a mistake (max 1-2 hints)\n"
+                    + "- Do NOT provide hints for correct actions\n"
+                    + "- Leave suggestedNextSteps empty unless specifically needed\n"
+                    + "- Be specific about what they did, not generic"));
 
     @Inject
     private AiConfigRepository aiConfigRepository;
@@ -97,11 +81,12 @@ public class AiConfigService {
     private UserRepository userRepository;
 
     /**
-     * Retrieves a configuration value as a String.
-     * Falls back to defaultValue if not found.
+     * Retrieves a configuration value as a String. Falls back to defaultValue if not found.
      *
-     * @param key          the configuration key
-     * @param defaultValue the default value if not found
+     * @param key
+     *            the configuration key
+     * @param defaultValue
+     *            the default value if not found
      * @return the configuration value or default
      */
     public String getConfigValue(final String key, final String defaultValue) {
@@ -114,24 +99,23 @@ public class AiConfigService {
             return cached;
         }
 
-        return this.aiConfigRepository.findByConfigKey(key)
-                .map(entity -> {
-                    if (entity.configValue != null) {
-                        this.configCache.put(entity.configKey, entity.configValue);
-                    } else {
-                        this.configCache.remove(entity.configKey);
-                    }
-                    return entity.configValue;
-                })
-                .orElse(defaultValue);
+        return this.aiConfigRepository.findByConfigKey(key).map(entity -> {
+            if (entity.configValue != null) {
+                this.configCache.put(entity.configKey, entity.configValue);
+            } else {
+                this.configCache.remove(entity.configKey);
+            }
+            return entity.configValue;
+        }).orElse(defaultValue);
     }
 
     /**
-     * Retrieves a configuration value as an Integer.
-     * Falls back to defaultValue if not found or if parsing fails.
+     * Retrieves a configuration value as an Integer. Falls back to defaultValue if not found or if parsing fails.
      *
-     * @param key          the configuration key
-     * @param defaultValue the default value if not found or parsing fails
+     * @param key
+     *            the configuration key
+     * @param defaultValue
+     *            the default value if not found or parsing fails
      * @return the configuration value or default
      */
     public Integer getConfigValueAsInt(final String key, final Integer defaultValue) {
@@ -148,11 +132,12 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a configuration value as a Double.
-     * Falls back to defaultValue if not found or if parsing fails.
+     * Retrieves a configuration value as a Double. Falls back to defaultValue if not found or if parsing fails.
      *
-     * @param key          the configuration key
-     * @param defaultValue the default value if not found or parsing fails
+     * @param key
+     *            the configuration key
+     * @param defaultValue
+     *            the default value if not found or parsing fails
      * @return the configuration value or default
      */
     public Double getConfigValueAsDouble(final String key, final Double defaultValue) {
@@ -169,12 +154,13 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a configuration value as a Boolean.
-     * Falls back to defaultValue if not found.
-     * Accepts "true", "false" (case-insensitive) and "1", "0".
+     * Retrieves a configuration value as a Boolean. Falls back to defaultValue if not found. Accepts "true", "false"
+     * (case-insensitive) and "1", "0".
      *
-     * @param key          the configuration key
-     * @param defaultValue the default value if not found
+     * @param key
+     *            the configuration key
+     * @param defaultValue
+     *            the default value if not found
      * @return the configuration value or default
      */
     public Boolean getConfigValueAsBoolean(final String key, final Boolean defaultValue) {
@@ -194,11 +180,12 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a temperature configuration value clamped to the valid range
-     * [0.0, 2.0].
+     * Retrieves a temperature configuration value clamped to the valid range [0.0, 2.0].
      *
-     * @param key          the configuration key
-     * @param defaultValue the default value if not found or parsing fails
+     * @param key
+     *            the configuration key
+     * @param defaultValue
+     *            the default value if not found or parsing fails
      * @return the clamped temperature value
      */
     public double getClampedTemperature(final String key, final double defaultValue) {
@@ -207,11 +194,12 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a max-tokens configuration value clamped to the valid range
-     * [1, 8192].
+     * Retrieves a max-tokens configuration value clamped to the valid range [1, 8192].
      *
-     * @param key          the configuration key
-     * @param defaultValue the default value if not found or parsing fails
+     * @param key
+     *            the configuration key
+     * @param defaultValue
+     *            the default value if not found or parsing fails
      * @return the clamped token limit
      */
     public int getClampedTokens(final String key, final int defaultValue) {
@@ -220,11 +208,10 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves all configuration entries in a specific category as a key-value
-     * map.
-     * Useful for populating UI forms.
+     * Retrieves all configuration entries in a specific category as a key-value map. Useful for populating UI forms.
      *
-     * @param category the category to retrieve
+     * @param category
+     *            the category to retrieve
      * @return a map of all config keys and values in the category
      */
     public Map<String, String> getAllConfigsByCategory(final ConfigCategory category) {
@@ -245,32 +232,33 @@ public class AiConfigService {
      * @return a list of all {@link AiConfigDto} objects
      */
     public List<AiConfigDto> getAllConfigs() {
-        return this.aiConfigRepository.findAll().stream()
-                .map(this::entityToDto)
-                .toList();
+        return this.aiConfigRepository.findAll().stream().map(this::entityToDto).toList();
     }
 
     /**
      * Retrieves all configuration entries in a category as DTOs.
      *
-     * @param category the category to retrieve
+     * @param category
+     *            the category to retrieve
      * @return a list of {@link AiConfigDto} objects in the category
      */
     public List<AiConfigDto> getConfigsByCategory(final ConfigCategory category) {
-        return this.aiConfigRepository.findByCategory(category).stream()
-                .map(this::entityToDto)
-                .toList();
+        return this.aiConfigRepository.findByCategory(category).stream().map(this::entityToDto).toList();
     }
 
     /**
-     * Updates a single configuration value.
-     * Validates the input before persisting.
+     * Updates a single configuration value. Validates the input before persisting.
      *
-     * @param configKey   the configuration key to update
-     * @param configValue the new value
-     * @param userId      the ID of the user making the update (for audit trail)
-     * @throws IllegalArgumentException if validation fails
-     * @throws IllegalStateException    if user is not an admin
+     * @param configKey
+     *            the configuration key to update
+     * @param configValue
+     *            the new value
+     * @param userId
+     *            the ID of the user making the update (for audit trail)
+     * @throws IllegalArgumentException
+     *             if validation fails
+     * @throws IllegalStateException
+     *             if user is not an admin
      */
     public void updateConfig(final String configKey, final String configValue, final Long userId) {
         // Only require configKey to be non-null. Values can be null or empty
@@ -331,14 +319,16 @@ public class AiConfigService {
     }
 
     /**
-     * Updates multiple configuration values at once.
-     * All updates are validated before any are persisted.
+     * Updates multiple configuration values at once. All updates are validated before any are persisted.
      *
-     * @param updates a list of {@link AiConfigUpdateDto} objects containing
-     *                key-value pairs
-     * @param userId  the ID of the user making the updates
-     * @throws IllegalArgumentException if any validation fails
-     * @throws IllegalStateException    if user is not an admin
+     * @param updates
+     *            a list of {@link AiConfigUpdateDto} objects containing key-value pairs
+     * @param userId
+     *            the ID of the user making the updates
+     * @throws IllegalArgumentException
+     *             if any validation fails
+     * @throws IllegalStateException
+     *             if user is not an admin
      */
     public void updateMultipleConfigs(final List<AiConfigUpdateDto> updates, final Long userId) {
         if (updates == null || updates.isEmpty()) {
@@ -403,13 +393,15 @@ public class AiConfigService {
     }
 
     /**
-     * Validates a configuration value based on its type and optionality.
-     * Type validation is determined by the entity's configType field.
-     * Optionality is determined by the entity's isOptional flag.
+     * Validates a configuration value based on its type and optionality. Type validation is determined by the entity's
+     * configType field. Optionality is determined by the entity's isOptional flag.
      *
-     * @param configKey   the configuration key
-     * @param configValue the value to validate
-     * @throws IllegalArgumentException if validation fails
+     * @param configKey
+     *            the configuration key
+     * @param configValue
+     *            the value to validate
+     * @throws IllegalArgumentException
+     *             if validation fails
      */
     private void validateConfigValue(final String configKey, final String configValue) {
         // Fetch the entity to get its declared type and optionality
@@ -482,26 +474,24 @@ public class AiConfigService {
     }
 
     /**
-     * Validates that a URL is safe and does not enable SSRF attacks.
-     * Enforces HTTPS for external providers, blocks private IP ranges,
-     * and rejects localhost/loopback addresses.
+     * Validates that a URL is safe and does not enable SSRF attacks. Enforces HTTPS for external providers, blocks
+     * private IP ranges, and rejects localhost/loopback addresses.
      *
-     * <p><b>TOCTOU DNS-rebinding gap:</b> When {@link UnknownHostException} is
-     * caught in the hostname resolution block of {@code validateUrlSafe}, the method
-     * allows the URL through only for Ollama (whose hostname may be a Docker service
-     * name). All other providers are rejected when the hostname cannot be resolved,
-     * eliminating the permissive fallback for external providers.
+     * <p>
+     * <b>TOCTOU DNS-rebinding gap:</b> When {@link UnknownHostException} is caught in the hostname resolution block of
+     * {@code validateUrlSafe}, the method allows the URL through only for Ollama (whose hostname may be a Docker
+     * service name). All other providers are rejected when the hostname cannot be resolved, eliminating the permissive
+     * fallback for external providers.
      *
-     * <p><b>Residual TOCTOU risk (Ollama only):</b> An unresolved Ollama hostname
-     * creates a time-of-check vs. time-of-use window: the name may later resolve to
-     * an RFC1918/private address at dispatch time. An attacker who controls DNS could
-     * exploit this to reach an internal service via the Ollama endpoint.
+     * <p>
+     * <b>Residual TOCTOU risk (Ollama only):</b> An unresolved Ollama hostname creates a time-of-check vs. time-of-use
+     * window: the name may later resolve to an RFC1918/private address at dispatch time. An attacker who controls DNS
+     * could exploit this to reach an internal service via the Ollama endpoint.
      *
-     * <p><b>Mitigation guidance:</b> For Ollama, consider re-resolving the hostname
-     * at dispatch time or maintaining an explicit allow-list of permitted Docker
-     * service names.
-     * See the {@code UnknownHostException} catch block and the plain-string
-     * private-range IPv4 prefix checks below for where additional mitigation would go.
+     * <p>
+     * <b>Mitigation guidance:</b> For Ollama, consider re-resolving the hostname at dispatch time or maintaining an
+     * explicit allow-list of permitted Docker service names. See the {@code UnknownHostException} catch block and the
+     * plain-string private-range IPv4 prefix checks below for where additional mitigation would go.
      */
     private void validateUrlSafe(final String configKey, final String configValue) {
         final URI uri;
@@ -520,19 +510,15 @@ public class AiConfigService {
         // Enforce HTTPS for external providers (Gemini, OpenAI)
         if ((configKey.contains("gemini") || configKey.contains("openai"))
                 && !"https".equalsIgnoreCase(uri.getScheme())) {
-            throw new IllegalArgumentException(
-                    "External provider URLs must use HTTPS for key '" + configKey + "'");
+            throw new IllegalArgumentException("External provider URLs must use HTTPS for key '" + configKey + "'");
         }
 
         // Block localhost and loopback
-        if (AppConstants.BLOCKED_HOST_LOCALHOST.equals(host)
-                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(host)
-                || host.startsWith("127.")
-                || AppConstants.BLOCKED_HOST_ANY.equals(host)
+        if (AppConstants.BLOCKED_HOST_LOCALHOST.equals(host) || AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(host)
+                || host.startsWith("127.") || AppConstants.BLOCKED_HOST_ANY.equals(host)
                 || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6.equals(host)
                 || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED.equals(host)) {
-            throw new IllegalArgumentException(
-                    "Loopback addresses are not allowed for key '" + configKey + "'");
+            throw new IllegalArgumentException("Loopback addresses are not allowed for key '" + configKey + "'");
         }
 
         // Block private IP ranges by resolving the host
@@ -540,8 +526,7 @@ public class AiConfigService {
             final InetAddress address = InetAddress.getByName(host);
             if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
                     || address.isMulticastAddress() || address.isAnyLocalAddress()) {
-                throw new IllegalArgumentException(
-                        "Private IP addresses are not allowed for key '" + configKey + "'");
+                throw new IllegalArgumentException("Private IP addresses are not allowed for key '" + configKey + "'");
             }
             if (address instanceof Inet6Address) {
                 final byte[] bytes = address.getAddress();
@@ -562,8 +547,7 @@ public class AiConfigService {
 
         // Block common private IPv4 patterns without DNS resolution
         if (host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("169.254.")) {
-            throw new IllegalArgumentException(
-                    "Private IP addresses are not allowed for key '" + configKey + "'");
+            throw new IllegalArgumentException("Private IP addresses are not allowed for key '" + configKey + "'");
         }
         if (host.startsWith("172.")) {
             final String[] parts = host.split("\\.");
@@ -583,8 +567,7 @@ public class AiConfigService {
     }
 
     /**
-     * Clears the configuration cache.
-     * Called when configurations are updated or when cache needs to be refreshed.
+     * Clears the configuration cache. Called when configurations are updated or when cache needs to be refreshed.
      */
     public void clearCache() {
         this.configCache.clear();
@@ -594,13 +577,13 @@ public class AiConfigService {
     /**
      * Resets all known AI configuration values to their factory defaults.
      *
-     * @param userId the ID of the user performing the reset
+     * @param userId
+     *            the ID of the user performing the reset
      */
     @Transactional
     public void resetToDefaults(final Long userId) {
-        final var updates = DEFAULT_VALUES.entrySet().stream()
-                .map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue()))
-                .toList();
+        final var updates =
+                DEFAULT_VALUES.entrySet().stream().map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue())).toList();
         this.updateMultipleConfigs(updates, userId);
         LOG.infof("All AI configurations reset to defaults by userId='%s'", userId);
     }
@@ -608,7 +591,8 @@ public class AiConfigService {
     /**
      * Converts an AiConfigEntity to an AiConfigDto.
      *
-     * @param entity the entity to convert
+     * @param entity
+     *            the entity to convert
      * @return the corresponding DTO
      */
     private AiConfigDto entityToDto(final AiConfigEntity entity) {

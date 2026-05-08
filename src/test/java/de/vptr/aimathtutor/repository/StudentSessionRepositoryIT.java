@@ -88,8 +88,7 @@ public class StudentSessionRepositoryIT {
         session.startTime = LocalDateTime.now();
         this.sessionRepository.persist(session);
 
-        final List<StudentSessionEntity> found = this.sessionRepository
-                .searchByUserOrExerciseTerm("sessuser_srch");
+        final List<StudentSessionEntity> found = this.sessionRepository.searchByUserOrExerciseTerm("sessuser_srch");
         Assertions.assertFalse(found.isEmpty());
         Assertions.assertTrue(found.stream().anyMatch(s -> s.sessionId.equals(session.sessionId)));
     }

@@ -16,18 +16,18 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 /**
- * CommentFlagEntity: Tracks which users have flagged which comments.
- * Prevents users from flagging the same comment multiple times.
+ * CommentFlagEntity: Tracks which users have flagged which comments. Prevents users from flagging the same comment
+ * multiple times.
  */
 @Entity
-@Table(name = "comment_flags", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "comment_id", "flagger_id" }, name = "uk_comment_flags_unique")
-})
+@Table(name = "comment_flags",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = { "comment_id", "flagger_id" }, name = "uk_comment_flags_unique") })
 @NamedQueries({
-        @NamedQuery(name = "CommentFlag.countByCommentAndFlagger", query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u"),
+        @NamedQuery(name = "CommentFlag.countByCommentAndFlagger",
+                query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u"),
         @NamedQuery(name = "CommentFlag.findByComment", query = "FROM CommentFlagEntity WHERE comment.id = :c"),
-        @NamedQuery(name = "CommentFlag.findByPublicId", query = "FROM CommentFlagEntity WHERE publicId = :p")
-})
+        @NamedQuery(name = "CommentFlag.findByPublicId", query = "FROM CommentFlagEntity WHERE publicId = :p") })
 public class CommentFlagEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

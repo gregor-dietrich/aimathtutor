@@ -66,8 +66,7 @@ class CommentServiceTest {
     }
 
     private Long getCommentNumericId(final String publicId) {
-        return this.commentRepository.findByPublicId(publicId)
-                .map(c -> c.id)
+        return this.commentRepository.findByPublicId(publicId).map(c -> c.id)
                 .orElseThrow(() -> new AssertionError("Comment not found: " + publicId));
     }
 
@@ -129,13 +128,12 @@ class CommentServiceTest {
         dto.content = "<script>alert(1)</script>safe text";
         dto.exercisePublicId = exercise.publicId;
 
-        final CommentViewDto created = this.commentService.createComment(dto,
-                this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created =
+                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
 
         assertNotNull(created);
         assertNotNull(created.content);
-        assertFalse(created.content.contains("<script>"),
-                "Sanitizer should strip <script>, got: " + created.content);
+        assertFalse(created.content.contains("<script>"), "Sanitizer should strip <script>, got: " + created.content);
         assertTrue(created.content.contains("safe text"));
         verify(this.permissionService).requireCommentAdd();
     }
@@ -172,8 +170,8 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "hello world";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto,
-                this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created =
+                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
 
@@ -205,8 +203,8 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "to delete";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto,
-                this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created =
+                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "student1 fixture must exist");
 
@@ -226,8 +224,8 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "needs hiding";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto,
-                this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created =
+                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
         final var admin = this.userRepository.findByUsername("admin");
         assertNotNull(admin);
 
@@ -260,8 +258,7 @@ class CommentServiceTest {
 
         final var persisted = this.commentRepository.findByPublicId(created.publicId);
         assertTrue(persisted.isPresent());
-        assertEquals("edited content", persisted.get().content,
-                "Edited content should be persisted in the database");
+        assertEquals("edited content", persisted.get().content, "Edited content should be persisted in the database");
         verify(this.permissionService, never()).requireCommentEdit();
     }
 
@@ -277,8 +274,8 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.commentService.createComment(dto, student1.id);
 
-        doThrow(new WebApplicationException("Forbidden", Response.Status.FORBIDDEN))
-                .when(this.permissionService).requireCommentEdit();
+        doThrow(new WebApplicationException("Forbidden", Response.Status.FORBIDDEN)).when(this.permissionService)
+                .requireCommentEdit();
 
         final var editDto = new CommentDto();
         editDto.content = "student2 sneaking in";
@@ -289,8 +286,7 @@ class CommentServiceTest {
 
         final var reloaded = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(reloaded.isPresent());
-        assertEquals(created.content, reloaded.get().content,
-                "Comment content should be unchanged after failed edit");
+        assertEquals(created.content, reloaded.get().content, "Comment content should be unchanged after failed edit");
         verify(this.permissionService).requireCommentEdit();
     }
 
@@ -318,8 +314,7 @@ class CommentServiceTest {
 
         for (final CommentViewDto c1 : page1) {
             for (final CommentViewDto c2 : page2) {
-                assertFalse(c1.publicId.equals(c2.publicId),
-                        "Pages should contain distinct comments");
+                assertFalse(c1.publicId.equals(c2.publicId), "Pages should contain distinct comments");
             }
         }
     }

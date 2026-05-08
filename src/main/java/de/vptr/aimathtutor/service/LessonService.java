@@ -15,10 +15,8 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for managing hierarchical lesson structures.
- * Provides CRUD operations and parent-child relationship management.
- * Prevents circular references in lesson hierarchies and validates parent
- * changes.
+ * Service for managing hierarchical lesson structures. Provides CRUD operations and parent-child relationship
+ * management. Prevents circular references in lesson hierarchies and validates parent changes.
  */
 @ApplicationScoped
 public class LessonService {
@@ -45,9 +43,9 @@ public class LessonService {
     /**
      * Finds a lesson by ID.
      *
-     * @param id the lesson ID
-     * @return an {@link Optional} containing the {@link LessonViewDto}, or empty if
-     *         not found
+     * @param id
+     *            the lesson ID
+     * @return an {@link Optional} containing the {@link LessonViewDto}, or empty if not found
      */
     @Transactional
     public Optional<LessonViewDto> findById(final Long id) {
@@ -67,7 +65,8 @@ public class LessonService {
     /**
      * Retrieves all lessons that are direct children of a parent lesson.
      *
-     * @param parentId the parent lesson ID
+     * @param parentId
+     *            the parent lesson ID
      * @return a list of child {@link LessonViewDto}s
      */
     @Transactional
@@ -76,15 +75,16 @@ public class LessonService {
     }
 
     /**
-     * Creates a new lesson with provided information.
-     * Validates name is provided, verifies parent exists if specified, and prevents
-     * circular references.
+     * Creates a new lesson with provided information. Validates name is provided, verifies parent exists if specified,
+     * and prevents circular references.
      *
-     * @param lesson the lesson entity with creation details
+     * @param lesson
+     *            the lesson entity with creation details
      * @return the created {@link LessonViewDto}
-     * @throws ValidationException     if name is missing or empty
-     * @throws WebApplicationException if parent lesson not found or circular
-     *                                 reference detected (BAD_REQUEST)
+     * @throws ValidationException
+     *             if name is missing or empty
+     * @throws WebApplicationException
+     *             if parent lesson not found or circular reference detected (BAD_REQUEST)
      */
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
@@ -109,15 +109,16 @@ public class LessonService {
     }
 
     /**
-     * Completely replaces an existing lesson (PUT semantics).
-     * Updates name and parent relationship, validates parent exists, and prevents
-     * circular references.
+     * Completely replaces an existing lesson (PUT semantics). Updates name and parent relationship, validates parent
+     * exists, and prevents circular references.
      *
-     * @param lesson the lesson entity with replacement details (must have id set)
+     * @param lesson
+     *            the lesson entity with replacement details (must have id set)
      * @return the updated {@link LessonViewDto}
-     * @throws WebApplicationException if lesson/parent not found or circular
-     *                                 reference (NOT_FOUND/BAD_REQUEST)
-     * @throws ValidationException     if name is missing or empty
+     * @throws WebApplicationException
+     *             if lesson/parent not found or circular reference (NOT_FOUND/BAD_REQUEST)
+     * @throws ValidationException
+     *             if name is missing or empty
      */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
@@ -158,16 +159,14 @@ public class LessonService {
     }
 
     /**
-     * Partially updates an existing lesson (PATCH semantics).
-     * Only updates lesson properties that are explicitly provided; null values are
-     * ignored.
-     * Validates parent if being changed and prevents circular references.
+     * Partially updates an existing lesson (PATCH semantics). Only updates lesson properties that are explicitly
+     * provided; null values are ignored. Validates parent if being changed and prevents circular references.
      *
-     * @param lesson the lesson entity with partial update details (must have id
-     *               set)
+     * @param lesson
+     *            the lesson entity with partial update details (must have id set)
      * @return the updated {@link LessonViewDto}
-     * @throws WebApplicationException if lesson/parent not found or circular
-     *                                 reference (NOT_FOUND/BAD_REQUEST)
+     * @throws WebApplicationException
+     *             if lesson/parent not found or circular reference (NOT_FOUND/BAD_REQUEST)
      */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
@@ -207,8 +206,7 @@ public class LessonService {
     }
 
     /**
-     * Check if potential parent is a descendant of the lesson (to prevent
-     * circular references)
+     * Check if potential parent is a descendant of the lesson (to prevent circular references)
      */
     private boolean isDescendantOf(final LessonEntity potentialParent, final LessonEntity lesson) {
         var current = potentialParent.parent;
@@ -224,7 +222,8 @@ public class LessonService {
     /**
      * Deletes a lesson by ID.
      *
-     * @param publicId the lesson ID to delete
+     * @param publicId
+     *            the lesson ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if lesson not found
      */
     @Transactional
@@ -235,17 +234,19 @@ public class LessonService {
             return false;
         }
         if (!this.lessonRepository.findByParentId(lesson.id).isEmpty()) {
-            throw new WebApplicationException("Cannot delete lesson with sub-lessons. Please delete or move sub-lessons first.",
+            throw new WebApplicationException(
+                    "Cannot delete lesson with sub-lessons. Please delete or move sub-lessons first.",
                     Response.Status.BAD_REQUEST);
         }
         return this.lessonRepository.deleteByPublicId(publicId);
     }
 
     /**
-     * Searches lessons by name using the provided query string (case-insensitive).
-     * Returns all lessons if query is null or empty.
+     * Searches lessons by name using the provided query string (case-insensitive). Returns all lessons if query is null
+     * or empty.
      *
-     * @param query the search query string (lesson name match)
+     * @param query
+     *            the search query string (lesson name match)
      * @return a list of matching {@link LessonViewDto}s
      */
     @Transactional

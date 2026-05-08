@@ -46,8 +46,7 @@ public class UserRankViewDto {
     // Computed fields
     public Long usersCount;
 
-    public UserRankViewDto() {
-    }
+    public UserRankViewDto() {}
 
     /**
      * Constructs a UserRankViewDto from a UserRankEntity.
@@ -153,8 +152,7 @@ public class UserRankViewDto {
     }
 
     /**
-     * Convert this view into a mutable {@link UserRankDto} used for editing
-     * and persistence.
+     * Convert this view into a mutable {@link UserRankDto} used for editing and persistence.
      */
     public UserRankDto toUserRankDto() {
         final var dto = new UserRankDto();

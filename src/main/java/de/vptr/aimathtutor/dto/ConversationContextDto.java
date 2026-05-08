@@ -7,8 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Holds the conversation context for AI requests.
- * Includes recent actions, user questions, and AI messages.
+ * Holds the conversation context for AI requests. Includes recent actions, user questions, and AI messages.
  */
 public class ConversationContextDto {
 
@@ -25,15 +24,13 @@ public class ConversationContextDto {
     @JsonProperty("recent_ai_messages")
     private final List<ChatMessageDto> recentAiMessages = new CopyOnWriteArrayList<>();
 
-    public ConversationContextDto() {
-    }
+    public ConversationContextDto() {}
 
     /**
      * Constructs a ConversationContextDto with the specified lists.
      */
     public ConversationContextDto(final List<GraspableEventDto> recentActions,
-            final List<ChatMessageDto> recentQuestions,
-            final List<ChatMessageDto> recentAiMessages) {
+            final List<ChatMessageDto> recentQuestions, final List<ChatMessageDto> recentAiMessages) {
         if (recentActions != null) {
             final int start = Math.max(0, recentActions.size() - MAX_CONTEXT_ITEMS);
             this.recentActions.addAll(recentActions.subList(start, recentActions.size()));
@@ -104,10 +101,7 @@ public class ConversationContextDto {
      */
     @Override
     public String toString() {
-        return "ConversationContextDto{"
-                + "recentActions=" + this.recentActions.size()
-                + ", recentQuestions=" + this.recentQuestions.size()
-                + ", recentAIMessages=" + this.recentAiMessages.size()
-                + '}';
+        return "ConversationContextDto{" + "recentActions=" + this.recentActions.size() + ", recentQuestions="
+                + this.recentQuestions.size() + ", recentAIMessages=" + this.recentAiMessages.size() + '}';
     }
 }

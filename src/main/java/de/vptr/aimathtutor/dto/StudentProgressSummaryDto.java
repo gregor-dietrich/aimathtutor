@@ -3,8 +3,8 @@ package de.vptr.aimathtutor.dto;
 import java.time.LocalDateTime;
 
 /**
- * DTO for displaying a student's overall progress summary.
- * Used in admin views to show aggregate statistics per student.
+ * DTO for displaying a student's overall progress summary. Used in admin views to show aggregate statistics per
+ * student.
  */
 public class StudentProgressSummaryDto {
 
@@ -19,22 +19,14 @@ public class StudentProgressSummaryDto {
     public Double successRate;
     public LocalDateTime lastActivity;
 
-    public StudentProgressSummaryDto() {
-    }
+    public StudentProgressSummaryDto() {}
 
     /**
      * Constructs a StudentProgressSummaryDto with the specified parameters.
      */
-    public StudentProgressSummaryDto(
-            final String userPublicId,
-            final String username,
-            final Integer totalSessions,
-            final Integer completedSessions,
-            final Integer totalProblems,
-            final Integer completedProblems,
-            final Integer hintsUsed,
-            final Double averageActionsPerProblem,
-            final Double successRate,
+    public StudentProgressSummaryDto(final String userPublicId, final String username, final Integer totalSessions,
+            final Integer completedSessions, final Integer totalProblems, final Integer completedProblems,
+            final Integer hintsUsed, final Double averageActionsPerProblem, final Double successRate,
             final LocalDateTime lastActivity) {
         this.userPublicId = userPublicId;
         this.username = username;

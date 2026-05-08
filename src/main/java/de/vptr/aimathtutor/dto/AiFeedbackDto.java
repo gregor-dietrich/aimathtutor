@@ -8,15 +8,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Represents AI-generated feedback for a student's math action.
- * Contains hints, encouragement, corrections, and next steps.
+ * Represents AI-generated feedback for a student's math action. Contains hints, encouragement, corrections, and next
+ * steps.
  */
-@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "Public fields used for Jackson JSON mapping and Panache-style DTOs")
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        justification = "Public fields used for Jackson JSON mapping and Panache-style DTOs")
 public class AiFeedbackDto {
 
     /**
-     * Enumeration of feedback types for AI responses.
-     * Indicates the nature and intent of the feedback provided to the student.
+     * Enumeration of feedback types for AI responses. Indicates the nature and intent of the feedback provided to the
+     * student.
      */
     public enum FeedbackType {
         POSITIVE, // Encouragement for correct action
@@ -76,10 +77,11 @@ public class AiFeedbackDto {
     }
 
     /**
-     * Creates a corrective feedback DTO with the specified message.
-     * Used when the student has made an error that needs correction.
+     * Creates a corrective feedback DTO with the specified message. Used when the student has made an error that needs
+     * correction.
      *
-     * @param message the corrective feedback message
+     * @param message
+     *            the corrective feedback message
      * @return an AiFeedbackDto with corrective feedback type
      */
     public static AiFeedbackDto corrective(final String message) {
@@ -87,10 +89,11 @@ public class AiFeedbackDto {
     }
 
     /**
-     * Creates a hint feedback DTO with the specified message.
-     * Used when the student needs guidance without giving away the complete answer.
+     * Creates a hint feedback DTO with the specified message. Used when the student needs guidance without giving away
+     * the complete answer.
      *
-     * @param message the hint message
+     * @param message
+     *            the hint message
      * @return an AiFeedbackDto with hint feedback type
      */
     public static AiFeedbackDto hint(final String message) {
@@ -98,10 +101,11 @@ public class AiFeedbackDto {
     }
 
     /**
-     * Creates a suggestion feedback DTO with the specified message.
-     * Used when offering alternative approaches or improvements.
+     * Creates a suggestion feedback DTO with the specified message. Used when offering alternative approaches or
+     * improvements.
      *
-     * @param message the suggestion message
+     * @param message
+     *            the suggestion message
      * @return an AiFeedbackDto with suggestion feedback type
      */
     public static AiFeedbackDto suggestion(final String message) {
@@ -109,10 +113,11 @@ public class AiFeedbackDto {
     }
 
     /**
-     * Creates a neutral feedback DTO with the specified message.
-     * Used for informational feedback that is neither positive nor corrective.
+     * Creates a neutral feedback DTO with the specified message. Used for informational feedback that is neither
+     * positive nor corrective.
      *
-     * @param message the neutral feedback message
+     * @param message
+     *            the neutral feedback message
      * @return an AiFeedbackDto with neutral feedback type
      */
     public static AiFeedbackDto neutral(final String message) {
@@ -120,10 +125,11 @@ public class AiFeedbackDto {
     }
 
     /**
-     * Creates an error feedback DTO with the specified message.
-     * Convenience method that creates corrective feedback for error scenarios.
+     * Creates an error feedback DTO with the specified message. Convenience method that creates corrective feedback for
+     * error scenarios.
      *
-     * @param message the error feedback message
+     * @param message
+     *            the error feedback message
      * @return an AiFeedbackDto with corrective feedback type
      */
     public static AiFeedbackDto error(final String message) {
@@ -142,17 +148,11 @@ public class AiFeedbackDto {
     /**
      * Returns a string representation of the AiFeedbackDto.
      *
-     * @return a string containing the feedback type, message, confidence,
-     *         timestamp, and session ID
+     * @return a string containing the feedback type, message, confidence, timestamp, and session ID
      */
     @Override
     public String toString() {
-        return "AIFeedbackDto{"
-                + "type=" + this.type
-                + ", message='" + this.message + '\''
-                + ", confidence=" + this.confidence
-                + ", timestamp=" + this.timestamp
-                + ", sessionId='" + this.sessionId + '\''
-                + '}';
+        return "AIFeedbackDto{" + "type=" + this.type + ", message='" + this.message + '\'' + ", confidence="
+                + this.confidence + ", timestamp=" + this.timestamp + ", sessionId='" + this.sessionId + '\'' + '}';
     }
 }

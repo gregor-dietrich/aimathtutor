@@ -33,13 +33,13 @@ public class CommentViewDto {
     /**
      * Default constructor for JSON mapping.
      */
-    public CommentViewDto() {
-    }
+    public CommentViewDto() {}
 
     /**
      * Constructs a CommentViewDto from a comment entity.
      *
-     * @param entity the comment entity to convert
+     * @param entity
+     *            the comment entity to convert
      */
     public CommentViewDto(final CommentEntity entity) {
         this.publicId = entity.publicId;

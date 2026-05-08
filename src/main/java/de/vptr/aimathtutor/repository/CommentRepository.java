@@ -10,10 +10,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing comment entities.
- * Provides database access and query operations for comments including
- * find by various criteria, threaded replies, pagination, and search
- * operations.
+ * Repository for managing comment entities. Provides database access and query operations for comments including find
+ * by various criteria, threaded replies, pagination, and search operations.
  */
 @ApplicationScoped
 public class CommentRepository extends AbstractRepository {
@@ -28,8 +26,7 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Fetch comments with related user, exercise and parentComment eagerly to avoid
-     * lazy-loading in service layer.
+     * Fetch comments with related user, exercise and parentComment eagerly to avoid lazy-loading in service layer.
      */
     public List<CommentEntity> findAllOrderedWithRelations() {
         return this.listNamed("Comment.findAllWithRelations", CommentEntity.class);
@@ -38,7 +35,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves an optional comment by its unique identifier.
      *
-     * @param id the comment ID
+     * @param id
+     *            the comment ID
      * @return an {@link Optional} containing the comment if found, empty otherwise
      */
     public Optional<CommentEntity> findByIdOptional(final Long id) {
@@ -51,7 +49,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves a comment by its public identifier.
      *
-     * @param publicId the public ID of the comment
+     * @param publicId
+     *            the public ID of the comment
      * @return an {@link Optional} containing the comment if found, empty otherwise
      */
     public Optional<CommentEntity> findByPublicId(final String publicId) {
@@ -67,7 +66,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves a comment by its public identifier with related entities eagerly loaded.
      *
-     * @param publicId the public ID of the comment
+     * @param publicId
+     *            the public ID of the comment
      * @return an {@link Optional} containing the comment with relations if found, empty otherwise
      */
     public Optional<CommentEntity> findByPublicIdWithRelations(final String publicId) {
@@ -83,14 +83,12 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves an optional comment by its unique identifier with related entities
-     * eagerly loaded.
-     * This prevents lazy-loading issues by fetching user, exercise, and parent
-     * comment in one query.
+     * Retrieves an optional comment by its unique identifier with related entities eagerly loaded. This prevents
+     * lazy-loading issues by fetching user, exercise, and parent comment in one query.
      *
-     * @param id the comment ID
-     * @return an {@link Optional} containing the comment with relations if found,
-     *         empty otherwise
+     * @param id
+     *            the comment ID
+     * @return an {@link Optional} containing the comment with relations if found, empty otherwise
      */
     public Optional<CommentEntity> findByIdOptionalWithRelations(final Long id) {
         if (id == null) {
@@ -105,7 +103,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves a comment by its unique identifier.
      *
-     * @param id the comment ID
+     * @param id
+     *            the comment ID
      * @return the {@link CommentEntity} if found, null otherwise
      */
     public CommentEntity findById(final Long id) {
@@ -115,7 +114,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves all comments for a specific exercise.
      *
-     * @param exerciseId the exercise ID to filter by
+     * @param exerciseId
+     *            the exercise ID to filter by
      * @return a list of {@link CommentEntity} objects for the exercise
      */
     public List<CommentEntity> findByExerciseId(final Long exerciseId) {
@@ -125,12 +125,11 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all comments for a specific exercise with related entities eagerly
-     * loaded.
+     * Retrieves all comments for a specific exercise with related entities eagerly loaded.
      *
-     * @param exerciseId the exercise ID to filter by
-     * @return a list of {@link CommentEntity} objects with relations for the
-     *         exercise
+     * @param exerciseId
+     *            the exercise ID to filter by
+     * @return a list of {@link CommentEntity} objects with relations for the exercise
      */
     public List<CommentEntity> findByExerciseIdWithRelations(final Long exerciseId) {
         if (exerciseId == null) {
@@ -144,7 +143,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves all comments created by a specific user.
      *
-     * @param userId the user ID to filter by
+     * @param userId
+     *            the user ID to filter by
      * @return a list of {@link CommentEntity} objects created by the user
      */
     public List<CommentEntity> findByUserId(final Long userId) {
@@ -154,12 +154,11 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all comments created by a specific user with related entities
-     * eagerly loaded.
+     * Retrieves all comments created by a specific user with related entities eagerly loaded.
      *
-     * @param userId the user ID to filter by
-     * @return a list of {@link CommentEntity} objects with relations created by the
-     *         user
+     * @param userId
+     *            the user ID to filter by
+     * @return a list of {@link CommentEntity} objects with relations created by the user
      */
     public List<CommentEntity> findByUserIdWithRelations(final Long userId) {
         if (userId == null) {
@@ -171,11 +170,10 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves the most recent comments from the database, up to a specified
-     * limit.
+     * Retrieves the most recent comments from the database, up to a specified limit.
      *
-     * @param limit the maximum number of comments to retrieve (0 or negative
-     *              returns empty list)
+     * @param limit
+     *            the maximum number of comments to retrieve (0 or negative returns empty list)
      * @return a list of recent {@link CommentEntity} objects
      */
     public List<CommentEntity> findRecentComments(final int limit) {
@@ -187,8 +185,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves the most recent comments with related entities eagerly loaded.
      *
-     * @param limit the maximum number of comments to retrieve (0 or negative
-     *              returns empty list)
+     * @param limit
+     *            the maximum number of comments to retrieve (0 or negative returns empty list)
      * @return a list of recent {@link CommentEntity} objects with relations
      */
     public List<CommentEntity> findRecentCommentsWithRelations(final int limit) {
@@ -203,7 +201,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Persists a comment entity to the database.
      *
-     * @param comment the comment to persist; null values are ignored
+     * @param comment
+     *            the comment to persist; null values are ignored
      * @return the persisted {@link CommentEntity}, or null if the input was null
      */
     @Transactional
@@ -218,7 +217,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Deletes a comment by its unique identifier.
      *
-     * @param id the ID of the comment to delete
+     * @param id
+     *            the ID of the comment to delete
      * @return true if the comment was successfully deleted, false if not found
      */
     @Transactional
@@ -234,7 +234,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Deletes a comment by its public identifier.
      *
-     * @param publicId the public ID of the comment to delete
+     * @param publicId
+     *            the public ID of the comment to delete
      * @return true if the comment was successfully deleted, false if not found
      */
     @Transactional
@@ -250,7 +251,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves all comments associated with a specific student session.
      *
-     * @param sessionId the session ID to filter by
+     * @param sessionId
+     *            the session ID to filter by
      * @return a list of {@link CommentEntity} objects in the session
      */
     public List<CommentEntity> findBySessionId(final String sessionId) {
@@ -260,10 +262,10 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all comments associated with a specific student session with
-     * related entities eagerly loaded.
+     * Retrieves all comments associated with a specific student session with related entities eagerly loaded.
      *
-     * @param sessionId the session ID to filter by
+     * @param sessionId
+     *            the session ID to filter by
      * @return a list of {@link CommentEntity} objects with relations in the session
      */
     public List<CommentEntity> findBySessionIdWithRelations(final String sessionId) {
@@ -278,9 +280,9 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves all reply comments to a specific parent comment.
      *
-     * @param parentPublicId the public ID of the parent comment to filter by
-     * @return a list of {@link CommentEntity} objects that are replies to the
-     *         parent
+     * @param parentPublicId
+     *            the public ID of the parent comment to filter by
+     * @return a list of {@link CommentEntity} objects that are replies to the parent
      */
     public List<CommentEntity> findReplies(final String parentPublicId) {
         if (parentPublicId == null) {
@@ -292,12 +294,11 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all reply comments to a specific parent comment with related
-     * entities eagerly loaded.
+     * Retrieves all reply comments to a specific parent comment with related entities eagerly loaded.
      *
-     * @param parentPublicId the public ID of the parent comment to filter by
-     * @return a list of {@link CommentEntity} objects with relations that are
-     *         replies to the parent
+     * @param parentPublicId
+     *            the public ID of the parent comment to filter by
+     * @return a list of {@link CommentEntity} objects with relations that are replies to the parent
      */
     public List<CommentEntity> findRepliesWithRelations(final String parentPublicId) {
         if (parentPublicId == null) {
@@ -309,14 +310,15 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves top-level (non-reply) comments for a specific exercise with
-     * pagination.
+     * Retrieves top-level (non-reply) comments for a specific exercise with pagination.
      *
-     * @param exerciseId the exercise ID to filter by
-     * @param page       the page number (0-indexed)
-     * @param pageSize   the number of comments per page
-     * @return a paginated list of top-level {@link CommentEntity} objects for the
-     *         exercise
+     * @param exerciseId
+     *            the exercise ID to filter by
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of comments per page
+     * @return a paginated list of top-level {@link CommentEntity} objects for the exercise
      */
     public List<CommentEntity> findTopLevelByExercise(final Long exerciseId, final int page, final int pageSize) {
         final var q = this.em.createNamedQuery("Comment.findTopLevelByExercise", CommentEntity.class);
@@ -329,11 +331,13 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves reply comments with pagination.
      *
-     * @param parentPublicId the public ID of the parent comment to filter by
-     * @param page           the page number (0-indexed)
-     * @param pageSize       the number of replies per page
-     * @return a paginated list of {@link CommentEntity} objects that are replies to
-     *         the parent
+     * @param parentPublicId
+     *            the public ID of the parent comment to filter by
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of replies per page
+     * @return a paginated list of {@link CommentEntity} objects that are replies to the parent
      */
     public List<CommentEntity> findRepliesPaged(final String parentPublicId, final int page, final int pageSize) {
         if (parentPublicId == null) {
@@ -349,8 +353,10 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Counts comments created by a specific user since a given date and time.
      *
-     * @param userId the user ID to filter by
-     * @param since  the date and time threshold (inclusive)
+     * @param userId
+     *            the user ID to filter by
+     * @param since
+     *            the date and time threshold (inclusive)
      * @return the count of comments created by the user since the given date
      */
     public long countByUserSince(final Long userId, final LocalDateTime since) {
@@ -361,13 +367,13 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Counts comments created by a specific user within a database interval.
-     * Uses {@code CURRENT_TIMESTAMP} from the database to avoid JVM/DB timezone
-     * mismatches.
+     * Counts comments created by a specific user within a database interval. Uses {@code CURRENT_TIMESTAMP} from the
+     * database to avoid JVM/DB timezone mismatches.
      *
-     * @param userId   the user ID to filter by
-     * @param interval a PostgreSQL interval literal (e.g. {@code "5 seconds"},
-     *                 {@code "1 day"})
+     * @param userId
+     *            the user ID to filter by
+     * @param interval
+     *            a PostgreSQL interval literal (e.g. {@code "5 seconds"}, {@code "1 day"})
      * @return the count of comments created by the user within the interval
      */
     public long countByUserSinceInterval(final Long userId, final String interval) {
@@ -381,7 +387,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Searches for comments matching the given search term.
      *
-     * @param searchTerm the search term to match against comment properties
+     * @param searchTerm
+     *            the search term to match against comment properties
      * @return a list of {@link CommentEntity} objects matching the search term
      */
     public List<CommentEntity> search(final String searchTerm) {
@@ -393,8 +400,10 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves comments within a specified date range.
      *
-     * @param start the start date and time (inclusive)
-     * @param end   the end date and time (inclusive)
+     * @param start
+     *            the start date and time (inclusive)
+     * @param end
+     *            the end date and time (inclusive)
      * @return a list of {@link CommentEntity} objects created within the date range
      */
     public List<CommentEntity> findByDateRange(final LocalDateTime start, final LocalDateTime end) {
@@ -407,7 +416,8 @@ public class CommentRepository extends AbstractRepository {
     /**
      * Retrieves comments with a specific status.
      *
-     * @param status the status to filter by
+     * @param status
+     *            the status to filter by
      * @return a list of {@link CommentEntity} objects with the specified status
      */
     public List<CommentEntity> findByStatus(final CommentStatus status) {
@@ -417,13 +427,11 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves comments that have been flagged by users, meeting a minimum flag
-     * count threshold.
+     * Retrieves comments that have been flagged by users, meeting a minimum flag count threshold.
      *
-     * @param minFlags the minimum number of flags a comment must have to be
-     *                 included in results
-     * @return a list of {@link CommentEntity} objects with at least the specified
-     *         number of flags
+     * @param minFlags
+     *            the minimum number of flags a comment must have to be included in results
+     * @return a list of {@link CommentEntity} objects with at least the specified number of flags
      */
     public List<CommentEntity> findFlaggedComments(final Integer minFlags) {
         final var q = this.em.createNamedQuery("Comment.findFlaggedComments", CommentEntity.class);

@@ -9,9 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for StudentSessionEntity access. Provides common queries used by
- * the admin and analytics services. Null-safe and returns empty lists when
- * parameters are missing.
+ * Repository for StudentSessionEntity access. Provides common queries used by the admin and analytics services.
+ * Null-safe and returns empty lists when parameters are missing.
  */
 @ApplicationScoped
 public class StudentSessionRepository extends AbstractRepository {
@@ -19,9 +18,9 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Find a student session by its external session id.
      *
-     * @param sessionId external session identifier
-     * @return matching StudentSessionEntity or null if none found or sessionId
-     *         is null
+     * @param sessionId
+     *            external session identifier
+     * @return matching StudentSessionEntity or null if none found or sessionId is null
      */
     public StudentSessionEntity findBySessionId(final String sessionId) {
         if (sessionId == null) {
@@ -36,7 +35,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Retrieves a student session by its public identifier.
      *
-     * @param publicId the public ID of the session
+     * @param publicId
+     *            the public ID of the session
      * @return an {@link Optional} containing the session if found, empty otherwise
      */
     public Optional<StudentSessionEntity> findByPublicId(final String publicId) {
@@ -50,12 +50,11 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find a student session by its external session id with relations eagerly
-     * loaded.
+     * Find a student session by its external session id with relations eagerly loaded.
      *
-     * @param sessionId external session identifier
-     * @return matching StudentSessionEntity or null if none found or sessionId
-     *         is null
+     * @param sessionId
+     *            external session identifier
+     * @return matching StudentSessionEntity or null if none found or sessionId is null
      */
     public StudentSessionEntity findBySessionIdWithRelations(final String sessionId) {
         if (sessionId == null) {
@@ -72,7 +71,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Find all sessions for a given user id with relations eagerly loaded.
      *
-     * @param userId database id of the user
+     * @param userId
+     *            database id of the user
      * @return list of sessions, empty list if userId is null or none found
      */
     public List<StudentSessionEntity> findByUserId(final Long userId) {
@@ -87,22 +87,22 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Find all sessions for a given exercise id with relations eagerly loaded.
      *
-     * @param exerciseId database id of the exercise
+     * @param exerciseId
+     *            database id of the exercise
      * @return list of sessions, empty list if exerciseId is null or none found
      */
     public List<StudentSessionEntity> findByExerciseId(final Long exerciseId) {
         if (exerciseId == null) {
             return List.of();
         }
-        final var q = this.em.createNamedQuery("StudentSession.findByExerciseIdWithRelations",
-                StudentSessionEntity.class);
+        final var q =
+                this.em.createNamedQuery("StudentSession.findByExerciseIdWithRelations", StudentSessionEntity.class);
         q.setParameter("e", exerciseId);
         return q.getResultList();
     }
 
     /**
-     * List all student sessions ordered by id descending with relations eagerly
-     * loaded.
+     * List all student sessions ordered by id descending with relations eagerly loaded.
      *
      * @return list of all student sessions
      */
@@ -113,7 +113,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Find a session by database id.
      *
-     * @param id primary key of the session
+     * @param id
+     *            primary key of the session
      * @return session entity or null if id is null or not found
      */
     public StudentSessionEntity findById(final Long id) {
@@ -129,8 +130,7 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find sessions by user and exercise in a single DB query with relations
-     * eagerly loaded.
+     * Find sessions by user and exercise in a single DB query with relations eagerly loaded.
      */
     public List<StudentSessionEntity> findByUserIdAndExerciseId(final Long userId, final Long exerciseId) {
         if (userId == null || exerciseId == null) {
@@ -144,8 +144,7 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Finds student sessions by user ID and date range with relations eagerly
-     * loaded.
+     * Finds student sessions by user ID and date range with relations eagerly loaded.
      */
     public List<StudentSessionEntity> findByUserIdAndDateRange(final Long userId, final LocalDateTime start,
             final LocalDateTime end) {
@@ -161,8 +160,7 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Finds student sessions by exercise ID and date range with relations eagerly
-     * loaded.
+     * Finds student sessions by exercise ID and date range with relations eagerly loaded.
      */
     public List<StudentSessionEntity> findByExerciseIdAndDateRange(final Long exerciseId, final LocalDateTime start,
             final LocalDateTime end) {
@@ -178,8 +176,7 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Finds student sessions by completion status and date range with relations
-     * eagerly loaded.
+     * Finds student sessions by completion status and date range with relations eagerly loaded.
      */
     public List<StudentSessionEntity> findByCompletedAndDateRange(final Boolean completed, final LocalDateTime start,
             final LocalDateTime end) {
@@ -195,13 +192,11 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find sessions that started at or after the provided time with relations
-     * eagerly
-     * loaded.
+     * Find sessions that started at or after the provided time with relations eagerly loaded.
      *
-     * @param time lower bound start time (inclusive)
-     * @return list of sessions starting at or after time, or empty list on null
-     *         input
+     * @param time
+     *            lower bound start time (inclusive)
+     * @return list of sessions starting at or after time, or empty list on null input
      */
     public List<StudentSessionEntity> findByStartTimeAfter(final LocalDateTime time) {
         if (time == null) {
@@ -214,12 +209,11 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find sessions that started before or at the provided time with relations
-     * eagerly loaded.
+     * Find sessions that started before or at the provided time with relations eagerly loaded.
      *
-     * @param time upper bound start time (inclusive)
-     * @return list of sessions starting before or at time, or empty list on null
-     *         input
+     * @param time
+     *            upper bound start time (inclusive)
+     * @return list of sessions starting before or at time, or empty list on null input
      */
     public List<StudentSessionEntity> findByStartTimeBefore(final LocalDateTime time) {
         if (time == null) {
@@ -234,25 +228,27 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Find sessions for a collection of user IDs with relations eagerly loaded.
      *
-     * @param userIds list of user database ids
+     * @param userIds
+     *            list of user database ids
      * @return list of sessions, empty list if userIds is null or empty
      */
     public List<StudentSessionEntity> findByUserIdIn(final List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return List.of();
         }
-        final var q = this.em.createNamedQuery("StudentSession.findByUserIdInWithRelations",
-                StudentSessionEntity.class);
+        final var q =
+                this.em.createNamedQuery("StudentSession.findByUserIdInWithRelations", StudentSessionEntity.class);
         q.setParameter("ids", userIds);
         return q.getResultList();
     }
 
     /**
-     * Find sessions with start times between the provided range with relations
-     * eagerly loaded.
+     * Find sessions with start times between the provided range with relations eagerly loaded.
      *
-     * @param start inclusive range start
-     * @param end   inclusive range end
+     * @param start
+     *            inclusive range start
+     * @param end
+     *            inclusive range end
      * @return list of sessions in range or empty list on null inputs
      */
     public List<StudentSessionEntity> findByStartTimeBetween(final LocalDateTime start, final LocalDateTime end) {
@@ -269,7 +265,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Count sessions by completion flag.
      *
-     * @param completed true to count completed sessions, false otherwise
+     * @param completed
+     *            true to count completed sessions, false otherwise
      * @return count of matching sessions or 0 if completed is null
      */
     public long countByCompleted(final Boolean completed) {
@@ -292,10 +289,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Search sessions by a lower-cased term matching user or exercise fields with
-     * relations eagerly loaded.
+     * Search sessions by a lower-cased term matching user or exercise fields with relations eagerly loaded.
      *
-     * @param lowerPattern lower-cased search pattern (e.g. "%term%")
+     * @param lowerPattern
+     *            lower-cased search pattern (e.g. "%term%")
      * @return matching sessions or empty list if pattern is null/empty
      */
     public List<StudentSessionEntity> searchByUserOrExerciseTerm(final String lowerPattern) {
@@ -309,10 +306,10 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Count distinct active students (users with sessions) since the provided
-     * time.
+     * Count distinct active students (users with sessions) since the provided time.
      *
-     * @param time lower bound start time (inclusive)
+     * @param time
+     *            lower bound start time (inclusive)
      * @return count of distinct users with sessions starting at or after time
      */
     public long countActiveStudentsSince(final LocalDateTime time) {
@@ -327,8 +324,10 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Count sessions with start times between the provided range.
      *
-     * @param start inclusive range start
-     * @param end   inclusive range end
+     * @param start
+     *            inclusive range start
+     * @param end
+     *            inclusive range end
      * @return count of sessions in range
      */
     public long countByStartTimeBetween(final LocalDateTime start, final LocalDateTime end) {
@@ -344,8 +343,10 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Count sessions with start times in a half-open range [start, end).
      *
-     * @param start inclusive range start
-     * @param end   exclusive range end
+     * @param start
+     *            inclusive range start
+     * @param end
+     *            exclusive range end
      * @return count of sessions in range
      */
     public long countByStartTimeGreaterThanEqualAndStartTimeLessThan(final LocalDateTime start,
@@ -372,7 +373,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Persist a new student session entity.
      *
-     * @param session entity to persist; ignored if null
+     * @param session
+     *            entity to persist; ignored if null
      */
     @Transactional
     public void persist(final StudentSessionEntity session) {
@@ -385,7 +387,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Delete a session by id.
      *
-     * @param id primary key of session to remove
+     * @param id
+     *            primary key of session to remove
      * @return true if removed, false if id was null or entity not found
      */
     @Transactional

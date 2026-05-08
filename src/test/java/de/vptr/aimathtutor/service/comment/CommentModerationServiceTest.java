@@ -49,8 +49,8 @@ class CommentModerationServiceTest {
     @TestTransaction
     void shouldThrowNotFoundForNonExistentComment() {
         final UserEntity moderator = this.userRepository.findById(1L);
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment("00000000000000000000000000", "HIDE", moderator.id, "reason"));
+        final var ex = assertThrows(WebApplicationException.class, () -> this.moderationService
+                .moderateComment("00000000000000000000000000", "HIDE", moderator.id, "reason"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 

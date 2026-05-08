@@ -4,8 +4,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 
 /**
- * Simple confirm dialog wrapper with sensible defaults used across the UI.
- * Allows callers to provide confirm action and override texts.
+ * Simple confirm dialog wrapper with sensible defaults used across the UI. Allows callers to provide confirm action and
+ * override texts.
  */
 public class ConfirmationDialog extends ConfirmDialog {
     private static final String DEFAULT_CANCEL_BUTTON_TEXT = "Cancel";
@@ -16,11 +16,16 @@ public class ConfirmationDialog extends ConfirmDialog {
     /**
      * Constructs a ConfirmationDialog with the specified parameters.
      *
-     * @param confirmAction     the action to perform on confirmation
-     * @param dialogTitle       the title of the dialog
-     * @param dialogText        the text of the dialog
-     * @param confirmButtonText the text for the confirm button
-     * @param cancelButtonText  the text for the cancel button
+     * @param confirmAction
+     *            the action to perform on confirmation
+     * @param dialogTitle
+     *            the title of the dialog
+     * @param dialogText
+     *            the text of the dialog
+     * @param confirmButtonText
+     *            the text for the confirm button
+     * @param cancelButtonText
+     *            the text for the cancel button
      */
     public ConfirmationDialog(final ComponentEventListener<ConfirmDialog.ConfirmEvent> confirmAction,
             final String dialogTitle, final String dialogText, final String confirmButtonText,

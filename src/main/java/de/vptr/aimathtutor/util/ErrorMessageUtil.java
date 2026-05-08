@@ -11,15 +11,14 @@ import jakarta.ws.rs.core.Response;
  */
 public final class ErrorMessageUtil {
 
-    private ErrorMessageUtil() {
-    }
+    private ErrorMessageUtil() {}
 
     private static final Logger LOG = Logger.getLogger(ErrorMessageUtil.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
-     * Extracts error message from HTTP response body.
-     * Attempts to parse structured error response, falls back to status text.
+     * Extracts error message from HTTP response body. Attempts to parse structured error response, falls back to status
+     * text.
      */
     public static String extractErrorMessage(final Response response) {
         try {
@@ -51,7 +50,7 @@ public final class ErrorMessageUtil {
                 }
             }
         } catch (final Exception e) {
-            LOG.warnf(e, "Failed to extract error message from %s response",  response.getStatus());
+            LOG.warnf(e, "Failed to extract error message from %s response", response.getStatus());
         }
 
         // Fall back to HTTP status
@@ -67,8 +66,7 @@ public final class ErrorMessageUtil {
             return root.get("message").asText().trim();
         }
         // Check nested error.message
-        if (root.has("error") && root.get("error").isObject()
-                && root.get("error").has("message")
+        if (root.has("error") && root.get("error").isObject() && root.get("error").has("message")
                 && root.get("error").get("message").isTextual()) {
             return root.get("error").get("message").asText().trim();
         }

@@ -3,8 +3,8 @@ package de.vptr.aimathtutor.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Data Transfer Object for updating AI configuration.
- * Minimal DTO used when submitting configuration updates from the frontend.
+ * Data Transfer Object for updating AI configuration. Minimal DTO used when submitting configuration updates from the
+ * frontend.
  */
 public class AiConfigUpdateDto {
 
@@ -17,8 +17,7 @@ public class AiConfigUpdateDto {
     /**
      * Default constructor for deserialization.
      */
-    public AiConfigUpdateDto() {
-    }
+    public AiConfigUpdateDto() {}
 
     /**
      * Constructor with key and value.

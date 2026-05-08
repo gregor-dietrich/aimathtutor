@@ -8,16 +8,14 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * Button that triggers a filter action. Displays a filter icon and applies
- * any provided theme variants. Parent layouts can use this button to start
- * search or filter operations.
+ * Button that triggers a filter action. Displays a filter icon and applies any provided theme variants. Parent layouts
+ * can use this button to start search or filter operations.
  */
 public class FilterButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Search";
 
     /**
-     * Constructs a FilterButton with the specified action, tooltip, and button
-     * variants.
+     * Constructs a FilterButton with the specified action, tooltip, and button variants.
      */
     public FilterButton(final ComponentEventListener<ClickEvent<Button>> filterAction, final String tooltipText,
             final ButtonVariant... variants) {

@@ -174,8 +174,7 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Validation accepts in-range temperature")
     @Transactional
     void testValidationAcceptsInRangeTemperature() {
-        assertDoesNotThrow(
-                () -> this.aiConfigService.updateConfig("gemini.temperature", "1.2", ADMIN_USER_ID));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("gemini.temperature", "1.2", ADMIN_USER_ID));
 
         // Restore
         this.aiConfigService.updateConfig("gemini.temperature", this.originalTemperature, ADMIN_USER_ID);

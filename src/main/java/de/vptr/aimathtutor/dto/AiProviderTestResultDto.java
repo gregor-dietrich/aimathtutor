@@ -11,8 +11,7 @@ public class AiProviderTestResultDto {
     /**
      * Default constructor for serialization.
      */
-    public AiProviderTestResultDto() {
-    }
+    public AiProviderTestResultDto() {}
 
     /**
      * Constructor with all fields.

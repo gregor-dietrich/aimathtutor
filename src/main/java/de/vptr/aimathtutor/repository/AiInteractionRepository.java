@@ -8,9 +8,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing AI interaction entities.
- * Provides database access and query operations for AI interactions including
- * find by session, user, and exercise ID operations.
+ * Repository for managing AI interaction entities. Provides database access and query operations for AI interactions
+ * including find by session, user, and exercise ID operations.
  */
 @ApplicationScoped
 public class AiInteractionRepository extends AbstractRepository {
@@ -27,7 +26,8 @@ public class AiInteractionRepository extends AbstractRepository {
     /**
      * Retrieves an AI interaction by its public identifier.
      *
-     * @param publicId the public ID of the interaction
+     * @param publicId
+     *            the public ID of the interaction
      * @return an {@link Optional} containing the interaction if found, empty otherwise
      */
     public Optional<AiInteractionEntity> findByPublicId(final String publicId) {
@@ -43,7 +43,8 @@ public class AiInteractionRepository extends AbstractRepository {
     /**
      * Retrieves all AI interactions for a specific student session.
      *
-     * @param sessionId the session ID to filter by; null values return empty list
+     * @param sessionId
+     *            the session ID to filter by; null values return empty list
      * @return a list of {@link AiInteractionEntity} objects for the session
      */
     public List<AiInteractionEntity> findBySessionId(final String sessionId) {
@@ -58,7 +59,8 @@ public class AiInteractionRepository extends AbstractRepository {
     /**
      * Retrieves all AI interactions initiated by a specific user.
      *
-     * @param userId the user ID to filter by; null values return empty list
+     * @param userId
+     *            the user ID to filter by; null values return empty list
      * @return a list of {@link AiInteractionEntity} objects created by the user
      */
     public List<AiInteractionEntity> findByUserId(final Long userId) {
@@ -73,7 +75,8 @@ public class AiInteractionRepository extends AbstractRepository {
     /**
      * Retrieves all AI interactions related to a specific exercise.
      *
-     * @param exerciseId the exercise ID to filter by; null values return empty list
+     * @param exerciseId
+     *            the exercise ID to filter by; null values return empty list
      * @return a list of {@link AiInteractionEntity} objects for the exercise
      */
     public List<AiInteractionEntity> findByExerciseId(final Long exerciseId) {
@@ -88,9 +91,9 @@ public class AiInteractionRepository extends AbstractRepository {
     /**
      * Persists an AI interaction entity to the database.
      *
-     * @param interaction the AI interaction to persist; null values are ignored
-     * @return the persisted {@link AiInteractionEntity}, or null if the input was
-     *         null
+     * @param interaction
+     *            the AI interaction to persist; null values are ignored
+     * @return the persisted {@link AiInteractionEntity}, or null if the input was null
      */
     @Transactional
     public AiInteractionEntity persist(final AiInteractionEntity interaction) {

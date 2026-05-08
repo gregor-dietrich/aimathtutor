@@ -41,9 +41,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * ExerciseWorkspaceView - Student-facing view for working on specific exercises
- * with integrated Graspable Math workspace and AI tutor feedback.
- * Uses the updated Graspable Math API with external JavaScript.
+ * ExerciseWorkspaceView - Student-facing view for working on specific exercises with integrated Graspable Math
+ * workspace and AI tutor feedback. Uses the updated Graspable Math API with external JavaScript.
  */
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
@@ -77,16 +76,16 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient Button requestHintButton;
     private transient Button backButton;
     private transient String currentExpression;
-    private final transient ConcurrentHashMap<String, CompletableFuture<?>> pendingAsyncFutures = new ConcurrentHashMap<>();
+    private final transient ConcurrentHashMap<String, CompletableFuture<?>> pendingAsyncFutures =
+            new ConcurrentHashMap<>();
 
     /**
-     * Called before navigation occurs. Extracts exercise ID from route, loads
-     * exercise data,
-     * initializes session ID, validates exercise is published/commentable, and
-     * builds workspace UI.
-     * Redirects to lessons view if exercise not found or invalid.
+     * Called before navigation occurs. Extracts exercise ID from route, loads exercise data, initializes session ID,
+     * validates exercise is published/commentable, and builds workspace UI. Redirects to lessons view if exercise not
+     * found or invalid.
      *
-     * @param event the before enter navigation event
+     * @param event
+     *            the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -210,17 +209,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Completion status indicator (if applicable)
         if (Boolean.TRUE.equals(this.exercise.userCompleted)) {
             final var completionInfo = new Paragraph();
-            completionInfo.getStyle()
-                    .set("color", "var(--lumo-success-color)")
-                    .set("font-weight", "500")
-                    .set("margin", "0.5rem 0 0 0");
-            final String pluralSuffix = this.exercise.userCompletionCount != null
-                    && this.exercise.userCompletionCount > 1
-                            ? "times"
+            completionInfo.getStyle().set("color", "var(--lumo-success-color)").set("font-weight", "500").set("margin",
+                    "0.5rem 0 0 0");
+            final String pluralSuffix =
+                    this.exercise.userCompletionCount != null && this.exercise.userCompletionCount > 1 ? "times"
                             : "time";
             completionInfo.setText("✓ You have completed this exercise "
-                    + (this.exercise.userCompletionCount != null ? this.exercise.userCompletionCount : 1)
-                    + " " + pluralSuffix);
+                    + (this.exercise.userCompletionCount != null ? this.exercise.userCompletionCount : 1) + " "
+                    + pluralSuffix);
             header.add(completionInfo);
         }
 
@@ -229,11 +225,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             final var contentSection = new VerticalLayout();
             contentSection.setPadding(true);
             contentSection.setSpacing(true);
-            contentSection.getStyle()
-                    .set("background-color", "var(--lumo-contrast-5pct)")
+            contentSection.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
                     .set("border", "1px solid var(--lumo-contrast-10pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("margin-top", "1rem");
+                    .set("border-radius", "var(--lumo-border-radius-m)").set("margin-top", "1rem");
 
             final var instructionsHeader = new H4("Instructions");
             instructionsHeader.getStyle().set("margin-top", "0");
@@ -252,11 +246,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.hintsPanel = new VerticalLayout();
         this.hintsPanel.setSpacing(true);
         this.hintsPanel.setPadding(true);
-        this.hintsPanel.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
+        this.hintsPanel.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("padding", "var(--lumo-space-m)");
+                .set("border-radius", "var(--lumo-border-radius-m)").set("padding", "var(--lumo-space-m)");
 
         this.requestHintButton = new Button("Request Hint", ignored -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -270,13 +262,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
             this.graspableCanvas = new Div();
             this.graspableCanvas.setId("graspable-canvas"); // Fixed ID expected by JavaScript
-            this.graspableCanvas.getStyle()
-                    .set("width", "100%")
-                    .set("height", AppConstants.CANVAS_HEIGHT_WORKSPACE)
+            this.graspableCanvas.getStyle().set("width", "100%").set("height", AppConstants.CANVAS_HEIGHT_WORKSPACE)
                     .set("border", "1px solid var(--lumo-contrast-20pct)")
                     .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("background-color", "var(--lumo-base-color)")
-                    .set("margin-top", "1rem");
+                    .set("background-color", "var(--lumo-base-color)").set("margin-top", "1rem");
 
             leftPanel.add(header, this.graspableCanvas, hintsSection);
         } else {
@@ -285,14 +274,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             // Add a notice that this is a non-interactive exercise
             final var noticeDiv = new Div();
-            noticeDiv.getStyle()
-                    .set("padding", "1rem")
-                    .set("background-color", "var(--lumo-contrast-5pct)")
+            noticeDiv.getStyle().set("padding", "1rem").set("background-color", "var(--lumo-contrast-5pct)")
                     .set("border", "1px solid var(--lumo-contrast-20pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("margin-top", "1rem");
-            noticeDiv.add(new Paragraph(
-                    "This is a reading/study exercise. Review the content above and use the AI tutor if you have questions."));
+                    .set("border-radius", "var(--lumo-border-radius-m)").set("margin-top", "1rem");
+            noticeDiv.add(
+                    new Paragraph("This is a reading/study exercise. Review the content above and use the AI tutor "
+                            + "if you have questions."));
             leftPanel.add(noticeDiv, hintsSection);
         }
 
@@ -312,16 +299,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Get user's avatar settings
         final var currentUserEntity = this.authService.getCurrentUserEntity();
         final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
-                ? currentUserEntity.userAvatarEmoji
-                : AppConstants.AVATAR_DEFAULT_USER;
+                ? currentUserEntity.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
-                ? currentUserEntity.tutorAvatarEmoji
-                : AppConstants.AVATAR_DEFAULT_TUTOR;
+                ? currentUserEntity.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR;
         this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
-        this.chatPanel.addMessage(ChatMessageDto.system(
-                "Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
+        this.chatPanel.addMessage(ChatMessageDto
+                .system("Work on the problem and I'll provide feedback. Feel free to ask questions anytime!"));
 
         // Main layout: 70% for exercise + graspable + comments, 30% for chat
         final var mainContentLayout = new HorizontalLayout();
@@ -335,10 +320,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     /**
-     * Attaches event listener when view is added to the UI tree.
-     * Initializes Graspable Math JavaScript widget if enabled for the exercise.
+     * Attaches event listener when view is added to the UI tree. Initializes Graspable Math JavaScript widget if
+     * enabled for the exercise.
      *
-     * @param attachEvent the attach event containing lifecycle information
+     * @param attachEvent
+     *            the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
@@ -368,13 +354,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     /**
-     * Initializes the Graspable Math JavaScript widget using the external file.
-     * This loads the problem from the exercise configuration.
+     * Initializes the Graspable Math JavaScript widget using the external file. This loads the problem from the
+     * exercise configuration.
      */
     private void initializeGraspableMath() {
-        if (this.exercise.graspableInitialExpression == null
-                || this.exercise.graspableInitialExpression.isBlank()) {
-            LOG.warnf("No initial expression configured for exercise %s",  this.exerciseId);
+        if (this.exercise.graspableInitialExpression == null || this.exercise.graspableInitialExpression.isBlank()) {
+            LOG.warnf("No initial expression configured for exercise %s", this.exerciseId);
             return;
         }
 
@@ -387,56 +372,54 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         ui.getPage().addJavaScript("/js/graspable-math-init.js");
 
         // Initialize canvas and load problem once ready
-        ui.getPage().executeJs(
-                """
-                        var initAttempts = 0;
-                        var maxInitAttempts = 50;
-                        var checkAndInitialize = function() {
-                          if (window.initializeGraspableMath) {
-                            window.initializeGraspableMath();
-                            var loadProblemWhenReady = function() {
-                              if (window.graspableCanvas && window.graspableMathUtils) {
-                                console.log('[Exercise] Canvas ready, loading problem');
-                                window.graspableMathUtils.loadProblem($0, 100, 50);
-                              } else {
-                                console.log('[Exercise] Waiting for canvas...');
-                                setTimeout(loadProblemWhenReady, 200);
-                              }
-                            };
-                            setTimeout(loadProblemWhenReady, 500);
-                          } else {
-                            initAttempts++;
-                            if (initAttempts < maxInitAttempts) {
-                              console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
-                              setTimeout(checkAndInitialize, 100);
-                            } else {
-                              console.error('[Exercise] Graspable Math initialization function not found after ' + maxInitAttempts + ' attempts');
-                            }
-                          }
-                        };
-                        checkAndInitialize();
-                        """,
-                this.exercise.graspableInitialExpression);
+        ui.getPage().executeJs("""
+                var initAttempts = 0;
+                var maxInitAttempts = 50;
+                var checkAndInitialize = function() {
+                  if (window.initializeGraspableMath) {
+                    window.initializeGraspableMath();
+                    var loadProblemWhenReady = function() {
+                      if (window.graspableCanvas && window.graspableMathUtils) {
+                        console.log('[Exercise] Canvas ready, loading problem');
+                        window.graspableMathUtils.loadProblem($0, 100, 50);
+                      } else {
+                        console.log('[Exercise] Waiting for canvas...');
+                        setTimeout(loadProblemWhenReady, 200);
+                      }
+                    };
+                    setTimeout(loadProblemWhenReady, 500);
+                  } else {
+                    initAttempts++;
+                    if (initAttempts < maxInitAttempts) {
+                      console.log('[Exercise] Waiting for initializeGraspableMath... attempt ' + initAttempts);
+                      setTimeout(checkAndInitialize, 100);
+                    } else {
+                      console.error('[Exercise] Graspable Math initialization function not found '
+                        + 'after ' + maxInitAttempts + ' attempts');
+                    }
+                  }
+                };
+                checkAndInitialize();
+                """, this.exercise.graspableInitialExpression);
 
         // Register server-side connector
         this.registerServerConnector();
     }
 
     /**
-     * Registers a server-side connector that JavaScript can call.
-     * Shared pattern for views embedding Graspable Math.
+     * Registers a server-side connector that JavaScript can call. Shared pattern for views embedding Graspable Math.
      */
     private void registerServerConnector() {
         GraspableMathConnector.register(this);
     }
 
     /**
-     * Called from JavaScript when student performs an action in Graspable Math.
-     * Updated to match the new event signature from graspable-math-init.js
+     * Called from JavaScript when student performs an action in Graspable Math. Updated to match the new event
+     * signature from graspable-math-init.js
      */
     @ClientCallable
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
-        LOG.debugf("Math action: type=%s, before=%s, after=%s",  eventType,  expressionBefore,  expressionAfter);
+        LOG.debugf("Math action: type=%s, before=%s, after=%s", eventType, expressionBefore, expressionAfter);
 
         // Update current expression
         this.currentExpression = expressionAfter;
@@ -468,9 +451,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Check if problem is completed (only if target expression is defined)
         if (!wasAlreadySolved && this.exercise.graspableTargetExpression != null
                 && !this.exercise.graspableTargetExpression.isBlank()) {
-            final boolean isComplete = this.graspableMathService.checkCompletion(
-                    expressionAfter,
-                    this.exercise.graspableTargetExpression);
+            final boolean isComplete =
+                    this.graspableMathService.checkCompletion(expressionAfter, this.exercise.graspableTargetExpression);
 
             if (isComplete) {
                 event.isComplete = true;
@@ -505,8 +487,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        final var rootFuture = this.aiTutorService
-                .analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit);
+        final var rootFuture =
+                this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit);
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
         rootFuture.thenAccept(feedback -> {
@@ -565,11 +547,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             this.chatPanel.hideTypingIndicator();
             return;
         }
-        final var rootFuture = this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression,
-                        this.exercise != null ? this.exercise.graspableInitialExpression : null,
-                        this.exercise != null ? this.exercise.graspableTargetExpression : null,
-                        this.currentSessionId, this.conversationContext, userIdStr);
+        final var rootFuture = this.aiTutorService.answerQuestionAsync(question, this.currentExpression,
+                this.exercise != null ? this.exercise.graspableInitialExpression : null,
+                this.exercise != null ? this.exercise.graspableTargetExpression : null, this.currentSessionId,
+                this.conversationContext, userIdStr);
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
         rootFuture.thenAccept(answer -> {
@@ -577,12 +558,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             // transaction context)
             if (sessionId != null) {
                 try {
-                    this.aiTutorService.logQuestionInteraction(
-                            sessionId,
-                            userId,
-                            exerciseId,
-                            question,
-                            answer.message);
+                    this.aiTutorService.logQuestionInteraction(sessionId, userId, exerciseId, question, answer.message);
                 } catch (final Exception e) {
                     LOG.warn("Failed to log question interaction", e);
                 }
@@ -598,16 +574,14 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 // Display AI answer
                 this.chatPanel.addMessage(answer);
             });
-        })
-                .exceptionally(ex -> {
-                    ui.access(() -> {
-                        this.chatPanel.hideTypingIndicator();
-                        LOG.error("Error getting AI answer", ex);
-                        this.chatPanel.addMessage(ChatMessageDto.aiAnswer(
-                                "Sorry, I encountered an error. Please try again."));
-                    });
-                    return null;
-                }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
+        }).exceptionally(ex -> {
+            ui.access(() -> {
+                this.chatPanel.hideTypingIndicator();
+                LOG.error("Error getting AI answer", ex);
+                this.chatPanel.addMessage(ChatMessageDto.aiAnswer("Sorry, I encountered an error. Please try again."));
+            });
+            return null;
+        }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }
 
     private void showNextHint() {
@@ -638,9 +612,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Display hint
         final var hintDiv = new Div();
-        hintDiv.getStyle()
-                .set("padding", "0.5rem")
-                .set("margin-bottom", "0.5rem")
+        hintDiv.getStyle().set("padding", "0.5rem").set("margin-bottom", "0.5rem")
                 .set("background-color", "var(--lumo-primary-color-10pct)")
                 .set("border-left", "3px solid var(--lumo-primary-color)")
                 .set("border-radius", "var(--lumo-border-radius-s)");

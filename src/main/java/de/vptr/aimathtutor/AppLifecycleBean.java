@@ -8,8 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
 /**
- * Application lifecycle bean used for startup/shutdown hooks and initialization
- * tasks.
+ * Application lifecycle bean used for startup/shutdown hooks and initialization tasks.
  */
 @ApplicationScoped
 public class AppLifecycleBean {
@@ -17,11 +16,9 @@ public class AppLifecycleBean {
     private static final Logger LOG = Logger.getLogger(AppLifecycleBean.class);
 
     /**
-     * ASCII art for the application logo.
-     * This is displayed in the console when the application starts.
+     * ASCII art for the application logo. This is displayed in the console when the application starts.
      * 
-     * https://www.asciiart.eu/text-to-ascii-art
-     * Font: Standard, Horizontal Layout: Squeezed, Border: Cats
+     * https://www.asciiart.eu/text-to-ascii-art Font: Standard, Horizontal Layout: Squeezed, Border: Cats
      */
     private static final String ASCII_ART = """
              /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\
@@ -38,7 +35,7 @@ public class AppLifecycleBean {
              > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <""";
 
     void onStart(@Observes final StartupEvent ev) {
-        LOG.infof("\n\n%s\n",  ASCII_ART);
+        LOG.infof("\n\n%s\n", ASCII_ART);
     }
 
     void onStop(@Observes final ShutdownEvent ev) {

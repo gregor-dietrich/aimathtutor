@@ -34,46 +34,45 @@ public class CommentModerationService {
     /**
      * Moderate a comment (hide/unhide/restore/delete).
      *
-     * @param commentPublicId the comment public ID
-     * @param action          the moderation action: "HIDE", "SHOW", "RESTORE",
-     *                        "DELETE"
-     * @param moderatorId     the moderator user ID
-     * @param reason          the reason for moderation
+     * @param commentPublicId
+     *            the comment public ID
+     * @param action
+     *            the moderation action: "HIDE", "SHOW", "RESTORE", "DELETE"
+     * @param moderatorId
+     *            the moderator user ID
+     * @param reason
+     *            the reason for moderation
      */
     @Transactional
-    public void moderateComment(
-            final String commentPublicId,
-            final String action,
-            final Long moderatorId,
+    public void moderateComment(final String commentPublicId, final String action, final Long moderatorId,
             final String reason) {
         if (reason != null && reason.length() > 500) {
             throw new ValidationException("Moderation reason must be <= 500 characters");
         }
-        LOG.infof("Moderating comment: commentPublicId=%s, action=%s, moderatorId=%s, reasonLength=%s",  commentPublicId, 
-                action, 
-                moderatorId,  reason != null ? reason.length() : 0);
+        LOG.infof("Moderating comment: commentPublicId=%s, action=%s, moderatorId=%s, reasonLength=%s", commentPublicId,
+                action, moderatorId, reason != null ? reason.length() : 0);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
         if (comment == null) {
-            LOG.warnf("Moderate comment failed: comment not found commentPublicId=%s, moderatorId=%s",  commentPublicId, 
+            LOG.warnf("Moderate comment failed: comment not found commentPublicId=%s, moderatorId=%s", commentPublicId,
                     moderatorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
 
         if (moderatorId == null) {
-            LOG.warnf("Moderate comment failed: moderatorId is null commentPublicId=%s",  commentPublicId);
+            LOG.warnf("Moderate comment failed: moderatorId is null commentPublicId=%s", commentPublicId);
             throw new WebApplicationException("Moderator ID is required", Response.Status.BAD_REQUEST);
         }
 
         final UserEntity moderator = this.userRepository.findById(moderatorId);
         if (moderator == null) {
-            LOG.warnf("Moderate comment failed: moderator not found commentPublicId=%s, moderatorId=%s",  commentPublicId,
-                    moderatorId);
+            LOG.warnf("Moderate comment failed: moderator not found commentPublicId=%s, moderatorId=%s",
+                    commentPublicId, moderatorId);
             throw new WebApplicationException("Moderator not found", Response.Status.BAD_REQUEST);
         }
 
         if (action == null) {
-            LOG.warnf("Null moderation action: commentPublicId=%s, moderatorId=%s",  commentPublicId,  moderatorId);
+            LOG.warnf("Null moderation action: commentPublicId=%s, moderatorId=%s", commentPublicId, moderatorId);
             throw new ValidationException("Moderation action is required");
         }
 
@@ -85,7 +84,7 @@ public class CommentModerationService {
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment hidden by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
+                LOG.infof("Comment hidden by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
                 break;
             case "SHOW":
@@ -97,7 +96,7 @@ public class CommentModerationService {
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment shown by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
+                LOG.infof("Comment shown by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
                 break;
             case "RESTORE":
@@ -110,7 +109,7 @@ public class CommentModerationService {
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment restored by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
+                LOG.infof("Comment restored by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
                 break;
             case "DELETE":
@@ -121,13 +120,12 @@ public class CommentModerationService {
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
                 comment.moderatedAt = LocalDateTime.now();
-                LOG.infof("Comment deleted by moderator: commentPublicId=%s, moderatorId=%s",  commentPublicId,
+                LOG.infof("Comment deleted by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
                 break;
             default:
-                LOG.warnf("Invalid moderation action: action=%s, commentPublicId=%s, moderatorId=%s",  action,
-                        commentPublicId,
-                        moderatorId);
+                LOG.warnf("Invalid moderation action: action=%s, commentPublicId=%s, moderatorId=%s", action,
+                        commentPublicId, moderatorId);
                 throw new ValidationException("Invalid moderation action: " + action);
         }
 

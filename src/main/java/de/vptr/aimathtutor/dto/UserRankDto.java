@@ -4,15 +4,15 @@ import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.validation.constraints.Size;
 
 /**
- * Data transfer object for user ranks.
- * Contains role information and permission flags for different operations
- * on exercises, lessons, comments, and administrative functions.
+ * Data transfer object for user ranks. Contains role information and permission flags for different operations on
+ * exercises, lessons, comments, and administrative functions.
  */
 public class UserRankDto {
 
     public String publicId;
 
-    @Size(min = AppConstants.USERRANK_NAME_MIN_LENGTH, max = AppConstants.USERRANK_NAME_MAX_LENGTH, message = "Name must be between {min} and {max} characters")
+    @Size(min = AppConstants.USERRANK_NAME_MIN_LENGTH, max = AppConstants.USERRANK_NAME_MAX_LENGTH,
+            message = "Name must be between {min} and {max} characters")
     public String name;
 
     // View permissions
@@ -48,8 +48,7 @@ public class UserRankDto {
     public Boolean userRankDelete;
     public Boolean userRankEdit;
 
-    public UserRankDto() {
-    }
+    public UserRankDto() {}
 
     public UserRankDto(final String name) {
         this.name = name;

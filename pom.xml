@@ -460,6 +460,9 @@
                 <version>${spotless-plugin.version}</version>
                 <configuration>
                     <java>
+                        <eclipse>
+                            <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
+                        </eclipse>
                         <importOrder>
                             <order>java,javax,org,#</order>
                         </importOrder>

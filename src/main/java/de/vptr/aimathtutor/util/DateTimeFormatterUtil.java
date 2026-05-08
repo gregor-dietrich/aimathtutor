@@ -10,8 +10,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Utility class for formatting dates and datetimes according to application
- * configuration. Configurable via application.properties properties.
+ * Utility class for formatting dates and datetimes according to application configuration. Configurable via
+ * application.properties properties.
  */
 @ApplicationScoped
 public class DateTimeFormatterUtil {
@@ -34,7 +34,8 @@ public class DateTimeFormatterUtil {
     /**
      * Format a LocalDate using the configured date format
      *
-     * @param date the LocalDate to format (may be null)
+     * @param date
+     *            the LocalDate to format (may be null)
      * @return formatted date string, or null if input is null
      */
     public String formatDate(final LocalDate date) {
@@ -47,7 +48,8 @@ public class DateTimeFormatterUtil {
     /**
      * Format a LocalDateTime using the configured datetime format
      *
-     * @param dateTime the LocalDateTime to format (may be null)
+     * @param dateTime
+     *            the LocalDateTime to format (may be null)
      * @return formatted datetime string, or null if input is null
      */
     public String formatDateTime(final LocalDateTime dateTime) {

@@ -6,9 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for checking user permissions based on their rank.
- * All permission checks are enforced against the currently authenticated user's rank.
- * Throws {@link PermissionDeniedException} when the permission is missing or false.
+ * Service for checking user permissions based on their rank. All permission checks are enforced against the currently
+ * authenticated user's rank. Throws {@link PermissionDeniedException} when the permission is missing or false.
  */
 @ApplicationScoped
 public class PermissionService {

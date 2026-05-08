@@ -19,9 +19,8 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for managing user ranks and their associated permissions.
- * Provides operations for querying, creating, updating, and deleting user
- * ranks.
+ * Service for managing user ranks and their associated permissions. Provides operations for querying, creating,
+ * updating, and deleting user ranks.
  */
 @ApplicationScoped
 public class UserRankService {
@@ -40,8 +39,7 @@ public class UserRankService {
     /**
      * Retrieves the rank of the currently authenticated user.
      *
-     * @return a {@link UserRankViewDto} of the current user's rank, or null if not
-     *         authenticated
+     * @return a {@link UserRankViewDto} of the current user's rank, or null if not authenticated
      */
     @Transactional
     public UserRankViewDto getCurrentUserRank() {
@@ -70,52 +68,50 @@ public class UserRankService {
      */
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
-        return this.userRankRepository.findAll().stream()
-                .map(UserRankViewDto::new)
-                .toList();
+        return this.userRankRepository.findAll().stream().map(UserRankViewDto::new).toList();
     }
 
     /**
      * Retrieves a user rank by its unique public identifier.
      *
-     * @param publicId the rank public ID to search for
+     * @param publicId
+     *            the rank public ID to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     @Transactional
     public Optional<UserRankViewDto> findByPublicId(final String publicId) {
-        return this.userRankRepository.findByPublicId(publicId)
-                .map(UserRankViewDto::new);
+        return this.userRankRepository.findByPublicId(publicId).map(UserRankViewDto::new);
     }
 
     /**
      * Retrieves a user rank by its unique identifier.
      *
-     * @param id the rank ID to search for
+     * @param id
+     *            the rank ID to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     @Transactional
     public Optional<UserRankViewDto> findById(final Long id) {
-        return this.userRankRepository.findByIdOptional(id)
-                .map(UserRankViewDto::new);
+        return this.userRankRepository.findByIdOptional(id).map(UserRankViewDto::new);
     }
 
     /**
      * Retrieves a user rank by its name.
      *
-     * @param name the name of the rank to search for
+     * @param name
+     *            the name of the rank to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     @Transactional
     public Optional<UserRankViewDto> findByName(final String name) {
-        return this.userRankRepository.findByName(name)
-                .map(UserRankViewDto::new);
+        return this.userRankRepository.findByName(name).map(UserRankViewDto::new);
     }
 
     /**
      * Searches for user ranks matching the given query term.
      *
-     * @param query the search term to match against rank names;
-     *              if null or empty, returns all ranks
+     * @param query
+     *            the search term to match against rank names; if null or empty, returns all ranks
      * @return a list of matching {@link UserRankViewDto} objects
      */
     @Transactional
@@ -125,19 +121,18 @@ public class UserRankService {
         }
         final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
         final List<UserRankEntity> ranks = this.userRankRepository.search(searchTerm);
-        return ranks.stream()
-                .map(UserRankViewDto::new)
-                .toList();
+        return ranks.stream().map(UserRankViewDto::new).toList();
     }
 
     /**
-     * Creates a new user rank with the provided permissions.
-     * Initializes all permissions from the DTO with false defaults for unspecified
-     * values.
+     * Creates a new user rank with the provided permissions. Initializes all permissions from the DTO with false
+     * defaults for unspecified values.
      *
-     * @param rankDto the rank data including name and permissions
+     * @param rankDto
+     *            the rank data including name and permissions
      * @return the newly created {@link UserRankViewDto}
-     * @throws IllegalArgumentException if rank name is invalid
+     * @throws IllegalArgumentException
+     *             if rank name is invalid
      */
     @Transactional
     public UserRankViewDto createRank(final @Valid UserRankDto rankDto) {
@@ -155,13 +150,16 @@ public class UserRankService {
     }
 
     /**
-     * Updates an existing user rank with new permission values.
-     * Performs complete replacement of all permissions (PUT semantics).
+     * Updates an existing user rank with new permission values. Performs complete replacement of all permissions (PUT
+     * semantics).
      *
-     * @param publicId the public ID of the rank to update
-     * @param rankDto  the new rank data with updated permissions
+     * @param publicId
+     *            the public ID of the rank to update
+     * @param rankDto
+     *            the new rank data with updated permissions
      * @return the updated {@link UserRankViewDto}
-     * @throws WebApplicationException if rank is not found (NOT_FOUND status)
+     * @throws WebApplicationException
+     *             if rank is not found (NOT_FOUND status)
      */
     @Transactional
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
@@ -181,14 +179,16 @@ public class UserRankService {
     }
 
     /**
-     * Partially updates an existing user rank (PATCH semantics).
-     * Only updates permissions that are explicitly provided in the DTO; null values
-     * are ignored.
+     * Partially updates an existing user rank (PATCH semantics). Only updates permissions that are explicitly provided
+     * in the DTO; null values are ignored.
      *
-     * @param publicId the public ID of the rank to update
-     * @param rankDto  the partial rank data with selected permissions to update
+     * @param publicId
+     *            the public ID of the rank to update
+     * @param rankDto
+     *            the partial rank data with selected permissions to update
      * @return the updated {@link UserRankViewDto}
-     * @throws WebApplicationException if rank is not found (NOT_FOUND status)
+     * @throws WebApplicationException
+     *             if rank is not found (NOT_FOUND status)
      */
     @Transactional
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
@@ -210,12 +210,13 @@ public class UserRankService {
     }
 
     /**
-     * Deletes a user rank by public ID.
-     * Prevents deletion if users are currently assigned to this rank.
+     * Deletes a user rank by public ID. Prevents deletion if users are currently assigned to this rank.
      *
-     * @param publicId the public ID of the rank to delete
+     * @param publicId
+     *            the public ID of the rank to delete
      * @return {@code true} if deletion succeeded, {@code false} if rank not found
-     * @throws WebApplicationException if rank has assigned users (CONFLICT status)
+     * @throws WebApplicationException
+     *             if rank has assigned users (CONFLICT status)
      */
     @Transactional
     public boolean deleteRank(final String publicId) {
@@ -230,9 +231,8 @@ public class UserRankService {
         final long userCount = this.userRepository.countByRankPublicId(publicId);
         if (userCount > 0) {
             throw new WebApplicationException(
-                    "Cannot delete rank because "
-                            + userCount
-                            + " user(s) are assigned to this rank. Please reassign these users to a different rank before deleting.",
+                    "Cannot delete rank because " + userCount + " user(s) are assigned to this rank. "
+                            + "Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
         }
 
@@ -242,17 +242,19 @@ public class UserRankService {
             return deleted;
         } catch (final PersistenceException e) {
             throw new WebApplicationException(
-                    "Cannot delete rank because users are assigned to this rank. Please reassign these users to a different rank before deleting.",
+                    "Cannot delete rank because users are assigned to this rank. "
+                            + "Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
         }
     }
 
     /**
-     * Applies all permission booleans from the DTO to the entity,
-     * treating null DTO values as false.
+     * Applies all permission booleans from the DTO to the entity, treating null DTO values as false.
      *
-     * @param target the entity to update
-     * @param source the DTO to read from
+     * @param target
+     *            the entity to update
+     * @param source
+     *            the DTO to read from
      */
     private void applyAllPermissions(final UserRankEntity target, final UserRankDto source) {
         target.adminView = source.adminView != null ? source.adminView : false;
@@ -277,11 +279,13 @@ public class UserRankService {
     }
 
     /**
-     * Applies only the permission booleans that are explicitly provided
-     * (non-null) in the DTO to the entity. Used for PATCH semantics.
+     * Applies only the permission booleans that are explicitly provided (non-null) in the DTO to the entity. Used for
+     * PATCH semantics.
      *
-     * @param target the entity to update
-     * @param source the DTO to read from
+     * @param target
+     *            the entity to update
+     * @param source
+     *            the DTO to read from
      */
     private void applyProvidedPermissions(final UserRankEntity target, final UserRankDto source) {
         if (source.adminView != null) {

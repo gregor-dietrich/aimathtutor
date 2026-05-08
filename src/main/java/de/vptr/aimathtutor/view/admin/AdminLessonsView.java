@@ -65,8 +65,7 @@ public class AdminLessonsView extends AbstractAdminView {
     }
 
     /**
-     * Ensure user authorization and initialize lesson management components
-     * before the view becomes visible.
+     * Ensure user authorization and initialize lesson management components before the view becomes visible.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -80,14 +79,10 @@ public class AdminLessonsView extends AbstractAdminView {
 
     private void loadLessonsAsync() {
         LOG.info("Loading lessons");
-        AsyncDataLoader.load(
-                () -> this.lessonService.getAllLessons(),
-                this,
-                lessons -> {
-                    this.allLessons = lessons;
-                    this.updateTreeGrid();
-                },
-                "Failed to load lessons. Please try again.");
+        AsyncDataLoader.load(() -> this.lessonService.getAllLessons(), this, lessons -> {
+            this.allLessons = lessons;
+            this.updateTreeGrid();
+        }, "Failed to load lessons. Please try again.");
     }
 
     /**
@@ -95,9 +90,7 @@ public class AdminLessonsView extends AbstractAdminView {
      */
     private void updateTreeGrid() {
         // Find root lessons (lessons without parent)
-        final var rootLessons = this.allLessons.stream()
-                .filter(LessonViewDto::isRootLesson)
-                .toList();
+        final var rootLessons = this.allLessons.stream().filter(LessonViewDto::isRootLesson).toList();
 
         this.treeGrid.setItems(rootLessons, this::getChildrenOfLesson);
         this.treeGrid.expandRecursively(rootLessons, 2); // Expand up to 2 levels
@@ -106,7 +99,8 @@ public class AdminLessonsView extends AbstractAdminView {
     /**
      * Update the tree grid to show only the lessons returned by a search.
      *
-     * @param searchResults list of lessons matching the search
+     * @param searchResults
+     *            list of lessons matching the search
      */
     private void updateSearchTreeGrid(final List<LessonViewDto> searchResults) {
         // For search results, we want to show all matching lessons
@@ -114,9 +108,8 @@ public class AdminLessonsView extends AbstractAdminView {
         // we show it as a top-level item for better visibility
 
         // Get all lesson publicIds that exist in the search results
-        final var lessonPublicIdsInResults = searchResults.stream()
-                .map(cat -> cat.publicId)
-                .collect(Collectors.toSet());
+        final var lessonPublicIdsInResults =
+                searchResults.stream().map(cat -> cat.publicId).collect(Collectors.toSet());
 
         // Find lessons to show at the top level:
         // 1. Root lessons (no parent)
@@ -127,8 +120,7 @@ public class AdminLessonsView extends AbstractAdminView {
                 .toList();
 
         this.treeGrid.setItems(topLevelLessons, lesson -> searchResults.stream()
-                .filter(cat -> cat.parentPublicId != null && cat.parentPublicId.equals(lesson.publicId))
-                .toList());
+                .filter(cat -> cat.parentPublicId != null && cat.parentPublicId.equals(lesson.publicId)).toList());
 
         // Expand all search results for better visibility
         this.treeGrid.expandRecursively(topLevelLessons, 10);
@@ -137,7 +129,8 @@ public class AdminLessonsView extends AbstractAdminView {
     /**
      * Return the children of the provided parent lesson.
      *
-     * @param parent the parent lesson view dto
+     * @param parent
+     *            the parent lesson view dto
      * @return list of child lessons
      */
     private List<LessonViewDto> getChildrenOfLesson(final LessonViewDto parent) {
@@ -167,15 +160,11 @@ public class AdminLessonsView extends AbstractAdminView {
      * @return the search layout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.updateTreeGrid();
-                    }
-                },
-                ignored -> this.searchLessons(),
-                "Search by name...",
-                "Search Lessons");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.updateTreeGrid();
+            }
+        }, ignored -> this.searchLessons(), "Search by name...", "Search Lessons");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -201,27 +190,18 @@ public class AdminLessonsView extends AbstractAdminView {
         this.treeGrid.removeAllColumns();
 
         // Configure columns
-        this.treeGrid.addHierarchyColumn(lesson -> lesson.name)
-                .setHeader("Lesson Name")
-                .setFlexGrow(3);
+        this.treeGrid.addHierarchyColumn(lesson -> lesson.name).setHeader("Lesson Name").setFlexGrow(3);
 
-        this.treeGrid.addColumn(lesson -> lesson.parentName != null ? lesson.parentName : "N/A")
-                .setHeader("Parent")
+        this.treeGrid.addColumn(lesson -> lesson.parentName != null ? lesson.parentName : "N/A").setHeader("Parent")
                 .setFlexGrow(2);
 
-        this.treeGrid.addColumn(lesson -> lesson.childrenCount)
-                .setHeader("Children")
-                .setFlexGrow(0);
+        this.treeGrid.addColumn(lesson -> lesson.childrenCount).setHeader("Children").setFlexGrow(0);
 
-        this.treeGrid.addColumn(lesson -> lesson.exercisesCount)
-                .setHeader("Exercises")
-                .setFlexGrow(0);
+        this.treeGrid.addColumn(lesson -> lesson.exercisesCount).setHeader("Exercises").setFlexGrow(0);
 
         // Add action column
-        this.treeGrid.addComponentColumn(this::createActionButtons)
-                .setHeader("Actions")
-                .setWidth(AppConstants.GRID_ACTION_WIDTH)
-                .setFlexGrow(0);
+        this.treeGrid.addComponentColumn(this::createActionButtons).setHeader("Actions")
+                .setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
     }
 
     private HorizontalLayout createActionButtons(final LessonViewDto lesson) {
@@ -259,47 +239,38 @@ public class AdminLessonsView extends AbstractAdminView {
         parentField.setInvalid(false); // Clear any previous validation state
         if (this.allLessons != null) {
             // Only show lessons that are not descendants of the current lesson
-            final var availableParents = this.allLessons.stream()
-                    .map(LessonViewDto::toLessonDto)
+            final var availableParents = this.allLessons.stream().map(LessonViewDto::toLessonDto)
                     .filter(cat -> lesson == null || !this.isDescendantOf(cat, lesson))
-                    .filter(cat -> lesson == null || !cat.publicId.equals(lesson.publicId))
-                    .toList();
+                    .filter(cat -> lesson == null || !cat.publicId.equals(lesson.publicId)).toList();
             parentField.setItems(availableParents);
         }
         // Allow clearing the selection to make it a root lesson
         parentField.setClearButtonVisible(true);
 
         // Bind fields
-        this.binder.forField(nameField)
-                .withValidator(name -> name != null && !name.isBlank(), "Name is required")
+        this.binder.forField(nameField).withValidator(name -> name != null && !name.isBlank(), "Name is required")
                 .bind(cat -> cat.name, (cat, value) -> cat.name = value);
-        this.binder.forField(parentField)
-                .bind(
-                        cat -> {
-                            // Convert from DTO parent field
-                            if (cat.parent != null && cat.parent.publicId != null && this.allLessons != null) {
-                                // Find the LessonDto from available parents
-                                return this.allLessons.stream()
-                                        .map(LessonViewDto::toLessonDto)
-                                        .filter(c -> c.publicId.equals(cat.parent.publicId))
-                                        .findFirst()
-                                        .orElse(null);
-                            }
-                            return null;
-                        },
-                        (cat, value) -> {
-                            // Convert back to DTO parent field
-                            if (value != null && value.publicId != null) {
-                                cat.parentPublicId = value.publicId;
-                                if (cat.parent == null) {
-                                    cat.parent = new LessonDto.ParentField();
-                                }
-                                cat.parent.publicId = value.publicId;
-                            } else {
-                                cat.parentPublicId = null;
-                                cat.parent = null;
-                            }
-                        });
+        this.binder.forField(parentField).bind(cat -> {
+            // Convert from DTO parent field
+            if (cat.parent != null && cat.parent.publicId != null && this.allLessons != null) {
+                // Find the LessonDto from available parents
+                return this.allLessons.stream().map(LessonViewDto::toLessonDto)
+                        .filter(c -> c.publicId.equals(cat.parent.publicId)).findFirst().orElse(null);
+            }
+            return null;
+        }, (cat, value) -> {
+            // Convert back to DTO parent field
+            if (value != null && value.publicId != null) {
+                cat.parentPublicId = value.publicId;
+                if (cat.parent == null) {
+                    cat.parent = new LessonDto.ParentField();
+                }
+                cat.parent.publicId = value.publicId;
+            } else {
+                cat.parentPublicId = null;
+                cat.parent = null;
+            }
+        });
 
         form.add(nameField, parentField);
 
@@ -337,11 +308,8 @@ public class AdminLessonsView extends AbstractAdminView {
         }
 
         // Find the parent in the list and check recursively
-        final var parent = this.allLessons.stream()
-                .filter(cat -> cat.publicId.equals(potential.parent.publicId))
-                .map(LessonViewDto::toLessonDto)
-                .findFirst()
-                .orElse(null);
+        final var parent = this.allLessons.stream().filter(cat -> cat.publicId.equals(potential.parent.publicId))
+                .map(LessonViewDto::toLessonDto).findFirst().orElse(null);
 
         return parent != null && this.isDescendantOf(parent, ancestor);
     }
@@ -422,18 +390,13 @@ public class AdminLessonsView extends AbstractAdminView {
 
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        AsyncDataLoader.load(
-                () -> this.lessonService.searchLessons(query.trim()),
-                this,
-                lessons -> {
-                    this.searchButton.setEnabled(true);
-                    this.searchButton.setText("Search");
-                    this.updateSearchTreeGrid(lessons);
-                },
-                () -> {
-                    this.searchButton.setEnabled(true);
-                    this.searchButton.setText("Search");
-                },
-                "An error occurred while searching lessons. Please try again.");
+        AsyncDataLoader.load(() -> this.lessonService.searchLessons(query.trim()), this, lessons -> {
+            this.searchButton.setEnabled(true);
+            this.searchButton.setText("Search");
+            this.updateSearchTreeGrid(lessons);
+        }, () -> {
+            this.searchButton.setEnabled(true);
+            this.searchButton.setText("Search");
+        }, "An error occurred while searching lessons. Please try again.");
     }
 }

@@ -39,8 +39,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Vaadin view that embeds Graspable Math workspace with AI tutor integration.
- * Students can work on math problems and receive real-time AI feedback.
+ * Vaadin view that embeds Graspable Math workspace with AI tutor integration. Students can work on math problems and
+ * receive real-time AI feedback.
  */
 @Route(value = "graspable-math", layout = MainLayout.class)
 public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
@@ -76,11 +76,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private transient long problemRequestId = 0;
 
     /**
-     * Called before navigation occurs. Checks authentication and builds the
-     * Graspable Math UI
-     * once on first entry. Redirects to login if not authenticated.
+     * Called before navigation occurs. Checks authentication and builds the Graspable Math UI once on first entry.
+     * Redirects to login if not authenticated.
      *
-     * @param event the before enter navigation event
+     * @param event
+     *            the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -121,12 +121,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Graspable Math canvas container
         this.graspableCanvas = new Div();
         this.graspableCanvas.setId("graspable-canvas");
-        this.graspableCanvas.getStyle()
-                .set("width", "100%")
-                .set("height", AppConstants.CANVAS_HEIGHT_MATH)
+        this.graspableCanvas.getStyle().set("width", "100%").set("height", AppConstants.CANVAS_HEIGHT_MATH)
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("background-color", "var(--lumo-base-color)")
+                .set("border-radius", "var(--lumo-border-radius-m)").set("background-color", "var(--lumo-base-color)")
                 .set("margin-top", "1rem");
 
         // Controls
@@ -148,26 +145,25 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Get user's avatar settings
         final var currentUserEntity = this.authService.getCurrentUserEntity();
         final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
-                ? currentUserEntity.userAvatarEmoji
-                : AppConstants.AVATAR_DEFAULT_USER;
+                ? currentUserEntity.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null
-                ? currentUserEntity.tutorAvatarEmoji
-                : AppConstants.AVATAR_DEFAULT_TUTOR;
+                ? currentUserEntity.tutorAvatarEmoji : AppConstants.AVATAR_DEFAULT_TUTOR;
         this.chatPanel = new AiChatPanel(this::handleUserQuestion, userAvatar, tutorAvatar);
 
         // Add welcome message
-        this.chatPanel.addMessage(ChatMessageDto.system(
-                "Welcome! I'm your AI math tutor. Work on problems and I'll help you along the way. Feel free to ask me questions anytime!"));
+        this.chatPanel.addMessage(ChatMessageDto
+                .system("Welcome! I'm your AI math tutor. Work on problems and I'll help you along the way. "
+                        + "Feel free to ask me questions anytime!"));
 
         this.add(leftPanel, this.chatPanel);
     }
 
     /**
-     * Attaches event listener when view is added to the UI tree.
-     * Initializes the Graspable Math JavaScript widget for math expression
-     * manipulation.
+     * Attaches event listener when view is added to the UI tree. Initializes the Graspable Math JavaScript widget for
+     * math expression manipulation.
      *
-     * @param attachEvent the attach event containing lifecycle information
+     * @param attachEvent
+     *            the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
@@ -192,8 +188,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
-     * Initializes the Graspable Math JavaScript widget.
-     * This method loads the external JavaScript file and initializes the canvas.
+     * Initializes the Graspable Math JavaScript widget. This method loads the external JavaScript file and initializes
+     * the canvas.
      */
     private void initializeGraspableMath() {
         final var ui = this.getUI().orElse(null);
@@ -228,27 +224,25 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
         this.generateProblemAsync((problem, requestId) -> {
             // Wait for canvas to be ready, then load the problem
-            this.getUI().ifPresent(ui -> ui.getPage().executeJs(
-                    """
-                            window.currentProblemRequestId = $1;
-                            setTimeout(function() {
-                              var loadProblemWhenReady = function() {
-                                if (window.currentProblemRequestId !== $1) {
-                                  console.log('[GM] Stale problem request skipped');
-                                  return;
-                                }
-                                if (window.graspableCanvas && window.graspableMathUtils) {
-                                  console.log('[GM] Canvas ready, loading initial problem');
-                                  window.graspableMathUtils.loadProblem($0, 100, 50);
-                                } else {
-                                  console.log('[GM] Waiting for canvas...');
-                                  setTimeout(loadProblemWhenReady, 200);
-                                }
-                              };
-                              loadProblemWhenReady();
-                            }, 500);
-                            """,
-                    problem.initialExpression, requestId));
+            this.getUI().ifPresent(ui -> ui.getPage().executeJs("""
+                    window.currentProblemRequestId = $1;
+                    setTimeout(function() {
+                      var loadProblemWhenReady = function() {
+                        if (window.currentProblemRequestId !== $1) {
+                          console.log('[GM] Stale problem request skipped');
+                          return;
+                        }
+                        if (window.graspableCanvas && window.graspableMathUtils) {
+                          console.log('[GM] Canvas ready, loading initial problem');
+                          window.graspableMathUtils.loadProblem($0, 100, 50);
+                        } else {
+                          console.log('[GM] Waiting for canvas...');
+                          setTimeout(loadProblemWhenReady, 200);
+                        }
+                      };
+                      loadProblemWhenReady();
+                    }, 500);
+                    """, problem.initialExpression, requestId));
 
             // Store initial expression and target for completion checking
             this.currentExpression = problem.initialExpression;
@@ -262,20 +256,19 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
-     * Registers a server-side connector that JavaScript can call.
-     * Shared pattern for views embedding Graspable Math.
+     * Registers a server-side connector that JavaScript can call. Shared pattern for views embedding Graspable Math.
      */
     private void registerServerConnector() {
         GraspableMathConnector.register(this);
     }
 
     /**
-     * Called from JavaScript when a math action occurs.
-     * This is the bridge between Graspable Math events and our backend.
+     * Called from JavaScript when a math action occurs. This is the bridge between Graspable Math events and our
+     * backend.
      */
     @ClientCallable
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
-        LOG.debugf("Math action: type=%s, before=%s, after=%s",  eventType,  expressionBefore,  expressionAfter);
+        LOG.debugf("Math action: type=%s, before=%s, after=%s", eventType, expressionBefore, expressionAfter);
 
         // Update current expression
         this.currentExpression = expressionAfter;
@@ -296,9 +289,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         // Check if problem is completed (if target is set)
         if (!wasAlreadySolved && this.targetExpression != null && !this.targetExpression.isBlank()) {
-            final boolean isComplete = this.graspableMathService.checkCompletion(
-                    expressionAfter,
-                    this.targetExpression);
+            final boolean isComplete =
+                    this.graspableMathService.checkCompletion(expressionAfter, this.targetExpression);
 
             if (isComplete) {
                 event.isComplete = true;
@@ -381,10 +373,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         }
         final var userId = this.authService.getUserId();
         final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
-        this.aiTutorService
-                .answerQuestionAsync(question, this.currentExpression, this.initialExpression, this.targetExpression,
-                        this.sessionId, this.conversationContext, userIdStr)
-                .thenAccept(answer -> {
+        this.aiTutorService.answerQuestionAsync(question, this.currentExpression, this.initialExpression,
+                this.targetExpression, this.sessionId, this.conversationContext, userIdStr).thenAccept(answer -> {
                     ui.access(() -> {
                         // Hide typing indicator
                         this.chatPanel.hideTypingIndicator();
@@ -397,13 +387,12 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
                         // Disabled, only log interactions in exercises for now
                     });
-                })
-                .exceptionally(ex -> {
+                }).exceptionally(ex -> {
                     ui.access(() -> {
                         this.chatPanel.hideTypingIndicator();
                         LOG.error("Error getting AI answer", ex);
-                        this.chatPanel.addMessage(ChatMessageDto.aiAnswer(
-                                "Sorry, I encountered an error. Please try again."));
+                        this.chatPanel.addMessage(
+                                ChatMessageDto.aiAnswer("Sorry, I encountered an error. Please try again."));
                     });
                     return null;
                 });
@@ -421,8 +410,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         layout.setSpacing(true);
         layout.setPadding(false);
 
-        final var instructions = new Paragraph(
-                "Choose the type of math problem you want to practice:");
+        final var instructions = new Paragraph("Choose the type of math problem you want to practice:");
         instructions.getStyle().set("color", "var(--lumo-secondary-text-color)");
 
         // Category selector
@@ -462,8 +450,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         layout.setSpacing(true);
         layout.setPadding(false);
 
-        final var instructions = new Paragraph(
-                "Enter a mathematical expression to work with. Examples: 2x+5=15, x^2-4=0, (x+3)(x-2)");
+        final var instructions =
+                new Paragraph("Enter a mathematical expression to work with. Examples: 2x+5=15, x^2-4=0, (x+3)(x-2)");
         instructions.getStyle().set("color", "var(--lumo-secondary-text-color)");
 
         final var expressionField = new TextField("Expression");
@@ -519,15 +507,13 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.pendingProblemFuture = null;
         ++this.problemRequestId;
 
-        ui.getPage().executeJs(
-                """
-                        window.currentProblemRequestId = $1;
-                        if (window.graspableMathUtils) {
-                          window.graspableMathUtils.clearCanvas();
-                          window.graspableMathUtils.loadProblem($0, 100, 50);
-                        }
-                        """,
-                expression, this.problemRequestId);
+        ui.getPage().executeJs("""
+                window.currentProblemRequestId = $1;
+                if (window.graspableMathUtils) {
+                  window.graspableMathUtils.clearCanvas();
+                  window.graspableMathUtils.loadProblem($0, 100, 50);
+                }
+                """, expression, this.problemRequestId);
 
         // Store expression
         this.currentExpression = expression;
@@ -542,15 +528,13 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.chatPanel.addMessage(ChatMessageDto.system("Generating problem..."));
         this.generateProblemAsync((problem, requestId) -> {
             // Load problem into Graspable Math using the utility function
-            this.getUI().ifPresent(ui -> ui.getPage().executeJs(
-                    """
-                            window.currentProblemRequestId = $1;
-                            if (window.graspableMathUtils) {
-                              window.graspableMathUtils.clearCanvas();
-                              window.graspableMathUtils.loadProblem($0, 100, 50);
-                            }
-                            """,
-                    problem.initialExpression, requestId));
+            this.getUI().ifPresent(ui -> ui.getPage().executeJs("""
+                    window.currentProblemRequestId = $1;
+                    if (window.graspableMathUtils) {
+                      window.graspableMathUtils.clearCanvas();
+                      window.graspableMathUtils.loadProblem($0, 100, 50);
+                    }
+                    """, problem.initialExpression, requestId));
 
             // Store initial expression and target
             this.currentExpression = problem.initialExpression;
@@ -563,15 +547,13 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     }
 
     /**
-     * Common async problem generation pattern: cancels pending requests,
-     * increments the request ID counter, calls the AI service, and handles
-     * staleness checks on success and error.
+     * Common async problem generation pattern: cancels pending requests, increments the request ID counter, calls the
+     * AI service, and handles staleness checks on success and error.
      *
-     * @param onLoadProblem callback invoked on the UI thread with the generated
-     *                      problem and request ID
+     * @param onLoadProblem
+     *            callback invoked on the UI thread with the generated problem and request ID
      */
-    private void generateProblemAsync(
-            final BiConsumer<GraspableProblemDto, Long> onLoadProblem) {
+    private void generateProblemAsync(final BiConsumer<GraspableProblemDto, Long> onLoadProblem) {
         final var ui = this.getUI().orElse(null);
         if (ui == null) {
             return;
@@ -594,18 +576,16 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 }
                 onLoadProblem.accept(problem, requestId);
             });
-        })
-                .exceptionally(ex -> {
-                    ui.access(() -> {
-                        if (requestId != this.problemRequestId) {
-                            return;
-                        }
-                        LOG.error("Error generating problem", ex);
-                        this.chatPanel
-                                .addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
-                    });
-                    return null;
-                });
+        }).exceptionally(ex -> {
+            ui.access(() -> {
+                if (requestId != this.problemRequestId) {
+                    return;
+                }
+                LOG.error("Error generating problem", ex);
+                this.chatPanel.addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
+            });
+            return null;
+        });
     }
 
     private void resetCanvas() {
@@ -621,14 +601,12 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         this.pendingProblemFuture = null;
         ++this.problemRequestId;
 
-        ui.getPage().executeJs(
-                """
-                        window.currentProblemRequestId = $0;
-                        if (window.graspableMathUtils) {
-                            window.graspableMathUtils.clearCanvas();
-                        }
-                        """,
-                this.problemRequestId);
+        ui.getPage().executeJs("""
+                window.currentProblemRequestId = $0;
+                if (window.graspableMathUtils) {
+                    window.graspableMathUtils.clearCanvas();
+                }
+                """, this.problemRequestId);
 
         this.currentExpression = null;
         this.initialExpression = null;

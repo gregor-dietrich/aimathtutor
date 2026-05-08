@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ruleset name="AIMathTutor PMD Rules"
-         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
     <description>Minimal PMD rules for AIMathTutor. Focus on critical issues only.</description>
 
     <!-- Error Prone: Only critical rules -->
     <rule ref="category/java/errorprone.xml">
-        <exclude name="AvoidCatchingGenericException" />
         <exclude name="AvoidDuplicateLiterals" />
         <exclude name="AvoidFieldNameMatchingMethodName" />
         <exclude name="AvoidLiteralsInIfCondition" />
@@ -15,14 +14,8 @@
         <exclude name="AssignmentInOperand" />
         <exclude name="ConstructorCallsOverridableMethod" />
         <exclude name="DoNotTerminateVM" />
-        <exclude name="DataflowAnomalyAnalysis" />
         <exclude name="TestClassWithoutTestCases" />
         <exclude name="EmptyCatchBlock" />
-        <exclude name="EmptyIfStmt" />
-        <exclude name="EmptyStatementBlock" />
-        <exclude name="EmptySwitchStatements" />
-        <exclude name="EmptyTryBlock" />
-        <exclude name="EmptyWhileStmt" />
         <exclude name="MissingSerialVersionUID" />
         <exclude name="NullAssignment" />
         <exclude name="CompareObjectsWithEquals" />
@@ -38,14 +31,11 @@
         <exclude name="ConstantsInInterface" />
         <exclude name="ForLoopCanBeForeach" />
         <exclude name="GuardLogStatement" />
-        <exclude name="JUnit5TestShouldBePackagePrivate" />
-        <exclude name="JUnitAssertionsShouldIncludeMessage" />
-        <exclude name="JUnitTestContainsTooManyAsserts" />
-        <exclude name="JUnitTestsShouldIncludeAssert" />
         <exclude name="ExhaustiveSwitchHasDefault" />
-        <exclude name="JUnitUseless" />
+        <exclude name="JUnit5TestShouldBePackagePrivate" />
         <exclude name="SystemPrintln" />
         <exclude name="UnitTestShouldUseTestAnnotation" />
+        <exclude name="UnitTestContainsTooManyAsserts" />
         <exclude name="LooseCoupling" />
         <exclude name="MethodReturnsInternalArray" />
         <exclude name="MissingOverride" />
@@ -54,9 +44,7 @@
         <exclude name="ReplaceEnumerationWithIterator" />
         <exclude name="ReplaceHashtableWithMap" />
         <exclude name="ReplaceVectorWithList" />
-        <exclude name="SwitchStmtsShouldHaveDefault" />
         <exclude name="UnitTestAssertionsShouldIncludeMessage" />
-        <exclude name="UnitTestContainsTooManyAsserts" />
         <exclude name="UseCollectionIsEmpty" />
         <exclude name="UseVarargs" />
     </rule>
@@ -117,7 +105,6 @@
         <exclude name="CommentDefaultAccessModifier" />
         <exclude name="ConfusingTernary" />
         <exclude name="LambdaCanBeMethodReference" />
-        <exclude name="DefaultPackage" />
         <exclude name="FieldDeclarationsShouldBeAtStartOfClass" />
         <exclude name="ForLoopShouldBeWhileLoop" />
         <exclude name="LocalVariableCouldBeFinal" />
@@ -154,10 +141,8 @@
         <exclude name="InsufficientStringBufferDeclaration" />
         <exclude name="OptimizableToArrayCall" />
         <exclude name="RedundantFieldInitializer" />
-        <exclude name="SimplifyStartsWith" />
         <exclude name="StringInstantiation" />
         <exclude name="StringToString" />
-        <exclude name="TooFewBranchesForASwitchStatement" />
         <exclude name="TooFewBranchesForSwitch" />
         <exclude name="UseArrayListInsteadOfVector" />
         <exclude name="UseArraysAsList" />

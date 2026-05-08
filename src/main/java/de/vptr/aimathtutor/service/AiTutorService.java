@@ -26,13 +26,11 @@ import jakarta.inject.Inject;
 /**
  * AI Tutor Service - Analyzes student math actions and provides feedback.
  *
- * Configuration is loaded dynamically from AiConfigService, including:
- * - Whether AI is enabled
- * - Which AI provider to use (mock, gemini, openai, ollama)
- * - Prompt templates for question answering and math tutoring
+ * Configuration is loaded dynamically from AiConfigService, including: - Whether AI is enabled - Which AI provider to
+ * use (mock, gemini, openai, ollama) - Prompt templates for question answering and math tutoring
  *
- * This service acts as an orchestrator, delegating actual AI provider calls to
- * strategy implementations and logging to AiInteractionLogger.
+ * This service acts as an orchestrator, delegating actual AI provider calls to strategy implementations and logging to
+ * AiInteractionLogger.
  */
 @ApplicationScoped
 public class AiTutorService {
@@ -73,17 +71,18 @@ public class AiTutorService {
     AuthService authService;
 
     /**
-     * Analyzes a student's math action and provides AI feedback.
-     * Only provides feedback for significant actions to reduce spam.
+     * Analyzes a student's math action and provides AI feedback. Only provides feedback for significant actions to
+     * reduce spam.
      *
-     * Note: Not @Transactional because it calls long-running AI services.
-     * DB operations are handled in separate transactional methods (logInteraction).
+     * Note: Not @Transactional because it calls long-running AI services. DB operations are handled in separate
+     * transactional methods (logInteraction).
      *
-     * @param event     The Graspable Math event containing the student's action
-     * @param context   Conversation context with recent actions, questions, and AI
-     *                  messages
-     * @param userIdStr the user ID (as string) for rate limiting; if null, uses
-     *                  event.studentId
+     * @param event
+     *            The Graspable Math event containing the student's action
+     * @param context
+     *            Conversation context with recent actions, questions, and AI messages
+     * @param userIdStr
+     *            the user ID (as string) for rate limiting; if null, uses event.studentId
      * @return AI-generated feedback, or null if no feedback needed
      */
     AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context,
@@ -91,10 +90,9 @@ public class AiTutorService {
         if (event == null) {
             throw new IllegalArgumentException("event cannot be null");
         }
-        LOG.infof("Analyzing math action: eventType='%s', beforeLen=%s, afterLen=%s, contextActions=%s", 
-                event.eventType, 
-                event.expressionBefore != null ? event.expressionBefore.length() : 0, 
-                event.expressionAfter != null ? event.expressionAfter.length() : 0, 
+        LOG.infof("Analyzing math action: eventType='%s', beforeLen=%s, afterLen=%s, contextActions=%s",
+                event.eventType, event.expressionBefore != null ? event.expressionBefore.length() : 0,
+                event.expressionAfter != null ? event.expressionAfter.length() : 0,
                 context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
@@ -112,21 +110,20 @@ public class AiTutorService {
 
         // Filter out insignificant actions to reduce spam
         if (!this.isSignificantAction(event)) {
-            LOG.infof("Skipping feedback for insignificant action: eventType='%s'", 
-                    event.eventType);
+            LOG.infof("Skipping feedback for insignificant action: eventType='%s'", event.eventType);
             return null;
         }
 
         // Load dynamic provider configuration
         final var aiProvider = this.getConfigString(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
-        LOG.infof("Action is significant, generating feedback with provider: %s",  aiProvider);
+        LOG.infof("Action is significant, generating feedback with provider: %s", aiProvider);
 
         // Use different AI provider based on configuration
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT) : "mock";
 
         // Apply per-user rate limiting for non-mock providers
-        final var effectiveUserId = userIdStr != null ? userIdStr
-                : event.studentId != null ? String.valueOf(event.studentId) : null;
+        final var effectiveUserId =
+                userIdStr != null ? userIdStr : event.studentId != null ? String.valueOf(event.studentId) : null;
         if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
             return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
         }
@@ -142,23 +139,18 @@ public class AiTutorService {
     /**
      * Generates congratulatory feedback when a problem is completed.
      *
-     * @param event The completion event
+     * @param event
+     *            The completion event
      * @return Congratulatory feedback message
      */
     private AiFeedbackDto generateCompletionFeedback(final GraspableEventDto event) {
-        final String[] congratulatoryMessages = {
-                "🎉 Excellent work! You've solved it correctly!",
+        final String[] congratulatoryMessages = { "🎉 Excellent work! You've solved it correctly!",
                 "🌟 Perfect! You reached the solution: " + event.expressionAfter,
                 "👏 Outstanding! You've successfully completed the problem!",
-                "✨ Great job! You've mastered this problem!",
-                "🎯 Fantastic! You solved it: " + event.expressionAfter,
-                "💯 Well done! You've reached the correct solution!",
-                "🏆 Amazing work! Problem solved successfully!",
-                "💪 Strong work! You crushed this problem!",
-                "👍 Awesome! You got it right!",
-                "🏅 Champion! You conquered this challenge!",
-                "🎊 Congratulations! You nailed it!"
-        };
+                "✨ Great job! You've mastered this problem!", "🎯 Fantastic! You solved it: " + event.expressionAfter,
+                "💯 Well done! You've reached the correct solution!", "🏆 Amazing work! Problem solved successfully!",
+                "💪 Strong work! You crushed this problem!", "👍 Awesome! You got it right!",
+                "🏅 Champion! You conquered this challenge!", "🎊 Congratulations! You nailed it!" };
 
         // Pick a random congratulatory message
         final int index = (int) (Math.random() * congratulatoryMessages.length);
@@ -168,10 +160,10 @@ public class AiTutorService {
     }
 
     /**
-     * Checks per-user rate limiting for AI tutor calls.
-     * Atomically checks and records the call if allowed.
+     * Checks per-user rate limiting for AI tutor calls. Atomically checks and records the call if allowed.
      *
-     * @param userIdStr the user ID as a string
+     * @param userIdStr
+     *            the user ID as a string
      * @return true if the call is within the rate limit and was recorded
      */
     private boolean checkAiRateLimit(final String userIdStr) {
@@ -179,15 +171,15 @@ public class AiTutorService {
             return false;
         }
         if (!this.rateLimitService.tryConsume(userIdStr)) {
-            LOG.warnf("AI tutor rate limit exceeded for user: %s",  userIdStr);
+            LOG.warnf("AI tutor rate limit exceeded for user: %s", userIdStr);
             return false;
         }
         return true;
     }
 
     /**
-     * Determines if an action is significant enough to warrant feedback.
-     * Helps reduce spammy feedback on every minor change.
+     * Determines if an action is significant enough to warrant feedback. Helps reduce spammy feedback on every minor
+     * change.
      */
     private boolean isSignificantAction(final GraspableEventDto event) {
         if (event.eventType == null) {
@@ -209,60 +201,56 @@ public class AiTutorService {
         }
 
         // Generic action keywords (might be used by other math tools or custom actions)
-        if (type.contains("simplify")
-                || type.contains("expand")
-                || type.contains("solve")
-                || type.contains("combine")
-                || type.contains("isolate")
-                || type.contains("substitute")) {
+        if (type.contains("simplify") || type.contains("expand") || type.contains("solve") || type.contains("combine")
+                || type.contains("isolate") || type.contains("substitute")) {
             return true;
         }
 
         // Skip automatic simplification actions to reduce noise
-        if (type.contains("postinteraction")
-                || type.contains("addsubnumbers") // Automatic number combining
+        if (type.contains("postinteraction") || type.contains("addsubnumbers") // Automatic number combining
                 || type.contains("autosimp")) {
-            LOG.debugf("Skipping automatic simplification: %s",  type);
+            LOG.debugf("Skipping automatic simplification: %s", type);
             return false;
         }
 
         // For generic "change" or "math_step" events, check if expression actually
         // changed
-        return (type.contains("change") || type.contains("math_step"))
-                && event.expressionBefore != null
-                && event.expressionAfter != null
-                && !event.expressionBefore.equals(event.expressionAfter)
+        return (type.contains("change") || type.contains("math_step")) && event.expressionBefore != null
+                && event.expressionAfter != null && !event.expressionBefore.equals(event.expressionAfter)
                 && !event.expressionBefore.isEmpty();
     }
 
     /**
-     * Answers a direct question from the student.
-     * Uses AI to provide contextual help based on the current problem state.
+     * Answers a direct question from the student. Uses AI to provide contextual help based on the current problem
+     * state.
      *
-     * Note: Not @Transactional because it calls long-running AI services.
-     * DB operations are handled in separate transactional methods
-     * (logQuestionInteraction).
+     * Note: Not @Transactional because it calls long-running AI services. DB operations are handled in separate
+     * transactional methods (logQuestionInteraction).
      *
-     * @param question          The student's question
-     * @param currentExpression The current state of the problem (optional)
-     * @param initialExpression The original problem state (optional)
-     * @param targetExpression  The target solution state (optional)
-     * @param sessionId         The session ID (optional)
-     * @param context           Conversation context with recent actions, questions,
-     *                          and AI messages
-     * @param userIdStr         the user ID (as string) for rate limiting
+     * @param question
+     *            The student's question
+     * @param currentExpression
+     *            The current state of the problem (optional)
+     * @param initialExpression
+     *            The original problem state (optional)
+     * @param targetExpression
+     *            The target solution state (optional)
+     * @param sessionId
+     *            The session ID (optional)
+     * @param context
+     *            Conversation context with recent actions, questions, and AI messages
+     * @param userIdStr
+     *            the user ID (as string) for rate limiting
      * @return AI-generated answer
      */
-    ChatMessageDto answerQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final String sessionId, final ConversationContextDto context, final String userIdStr) {
+    ChatMessageDto answerQuestion(final String question, final String currentExpression, final String initialExpression,
+            final String targetExpression, final String sessionId, final ConversationContextDto context,
+            final String userIdStr) {
         if (question == null) {
             throw new IllegalArgumentException("question cannot be null");
         }
-        LOG.debugf("Answering question (session: %s, questionLen: %s, contextActions: %s)", 
-                sessionId, 
-                question.length(), 
-                context != null ? context.getRecentActions().size() : 0);
+        LOG.debugf("Answering question (session: %s, questionLen: %s, contextActions: %s)", sessionId,
+                question.length(), context != null ? context.getRecentActions().size() : 0);
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true);
@@ -278,23 +266,19 @@ public class AiTutorService {
         // Apply per-user rate limiting for non-mock providers
         final var effectiveUserId = userIdStr != null ? userIdStr : "ANONYMOUS";
         if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
-            return ChatMessageDto.aiAnswer(
-                    "I'm receiving too many requests right now. Please wait a moment before asking again.");
+            return ChatMessageDto
+                    .aiAnswer("I'm receiving too many requests right now. Please wait a moment before asking again.");
         }
 
         var answer = switch (provider) {
-            case "gemini" ->
-                this.safeAnswer(this.geminiAiProvider, question, currentExpression, initialExpression, targetExpression,
-                        context);
-            case "openai" ->
-                this.safeAnswer(this.openAiProvider, question, currentExpression, initialExpression, targetExpression,
-                        context);
-            case "ollama" ->
-                this.safeAnswer(this.ollamaAiProvider, question, currentExpression, initialExpression, targetExpression,
-                        context);
-            default ->
-                this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
-                        context);
+            case "gemini" -> this.safeAnswer(this.geminiAiProvider, question, currentExpression, initialExpression,
+                    targetExpression, context);
+            case "openai" -> this.safeAnswer(this.openAiProvider, question, currentExpression, initialExpression,
+                    targetExpression, context);
+            case "ollama" -> this.safeAnswer(this.ollamaAiProvider, question, currentExpression, initialExpression,
+                    targetExpression, context);
+            default -> this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression,
+                    targetExpression, context);
         };
 
         // Strip leading and trailing quotation marks from AI response
@@ -306,23 +290,19 @@ public class AiTutorService {
     }
 
     /**
-     * Async version of answerQuestion that returns a CompletableFuture.
-     * This allows the UI to show a typing indicator while waiting for the response.
-     * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
+     * Async version of answerQuestion that returns a CompletableFuture. This allows the UI to show a typing indicator
+     * while waiting for the response. Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      */
-    public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
-            final String currentExpression, final String initialExpression, final String targetExpression,
-            final String sessionId, final ConversationContextDto context, final String userIdStr) {
-        return CompletableFuture.supplyAsync(
-                () -> this.answerQuestion(question, currentExpression, initialExpression, targetExpression, sessionId,
-                        context, userIdStr),
-                this.managedExecutor);
+    public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question, final String currentExpression,
+            final String initialExpression, final String targetExpression, final String sessionId,
+            final ConversationContextDto context, final String userIdStr) {
+        return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, initialExpression,
+                targetExpression, sessionId, context, userIdStr), this.managedExecutor);
     }
 
     /**
-     * Async version of analyzeMathAction that returns a CompletableFuture.
-     * This allows the UI to show a typing indicator while waiting for the response.
-     * Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
+     * Async version of analyzeMathAction that returns a CompletableFuture. This allows the UI to show a typing
+     * indicator while waiting for the response. Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      */
     public CompletableFuture<AiFeedbackDto> analyzeMathActionAsync(final GraspableEventDto event,
             final ConversationContextDto context, final String userIdStr) {
@@ -333,8 +313,10 @@ public class AiTutorService {
     /**
      * Generates a new math problem based on student performance.
      *
-     * @param difficulty The difficulty level
-     * @param category   The problem category (type of math problem)
+     * @param difficulty
+     *            The difficulty level
+     * @param category
+     *            The problem category (type of math problem)
      * @return A new Graspable Math problem
      */
     public GraspableProblemDto generateProblem(final DifficultyLevel difficulty,
@@ -345,16 +327,18 @@ public class AiTutorService {
     /**
      * Logs an AI interaction to the database for analytics.
      *
-     * @param event    The student's action
-     * @param feedback The AI's feedback
+     * @param event
+     *            The student's action
+     * @param feedback
+     *            The AI's feedback
      */
     public void logInteraction(final GraspableEventDto event, final AiFeedbackDto feedback) {
         this.aiInteractionLogger.logInteraction(event, feedback);
     }
 
     /**
-     * Log a student question and AI answer as an interaction.
-     * Used for recording conversational interactions in the SessionDetailsView.
+     * Log a student question and AI answer as an interaction. Used for recording conversational interactions in the
+     * SessionDetailsView.
      */
     public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
             final String studentQuestion, final String aiAnswer) {
@@ -366,29 +350,28 @@ public class AiTutorService {
     private AiFeedbackDto safeAnalyze(final AiProvider provider, final GraspableEventDto event,
             final ConversationContextDto context) {
         if (!provider.isAvailable()) {
-            LOG.warnf("%s not configured, falling back to mock AI",  provider.getClass().getSimpleName());
+            LOG.warnf("%s not configured, falling back to mock AI", provider.getClass().getSimpleName());
             return this.mockAiProvider.analyzeMathAction(event, context);
         }
         try {
             return provider.analyzeMathAction(event, context);
         } catch (final RuntimeException e) {
-            LOG.errorf(e, "Error using %s, falling back to mock",  provider.getClass().getSimpleName());
+            LOG.errorf(e, "Error using %s, falling back to mock", provider.getClass().getSimpleName());
             return this.mockAiProvider.analyzeMathAction(event, context);
         }
     }
 
     private String safeAnswer(final AiProvider provider, final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
+            final String initialExpression, final String targetExpression, final ConversationContextDto context) {
         if (!provider.isAvailable()) {
-            LOG.warnf("%s not configured, falling back to mock AI",  provider.getClass().getSimpleName());
+            LOG.warnf("%s not configured, falling back to mock AI", provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                     context);
         }
         try {
             return provider.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
         } catch (final RuntimeException e) {
-            LOG.errorf(e, "Error using %s, falling back to mock",  provider.getClass().getSimpleName());
+            LOG.errorf(e, "Error using %s, falling back to mock", provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
                     context);
         }
@@ -396,7 +379,7 @@ public class AiTutorService {
 
     private String getConfigString(final String key, final String defaultValue) {
         if (this.aiConfigService == null) {
-            LOG.debugf("AiConfigService not injected, using default for key=%s",  key);
+            LOG.debugf("AiConfigService not injected, using default for key=%s", key);
             return defaultValue;
         }
         return this.aiConfigService.getConfigValue(key, defaultValue);
@@ -404,7 +387,7 @@ public class AiTutorService {
 
     private Boolean getConfigBoolean(final String key, final Boolean defaultValue) {
         if (this.aiConfigService == null) {
-            LOG.debugf("AiConfigService not injected, using default for key=%s",  key);
+            LOG.debugf("AiConfigService not injected, using default for key=%s", key);
             return defaultValue;
         }
         return this.aiConfigService.getConfigValueAsBoolean(key, defaultValue);

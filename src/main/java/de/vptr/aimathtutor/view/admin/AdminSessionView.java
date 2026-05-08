@@ -23,9 +23,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Admin view for displaying detailed information about a specific student
- * session.
- * Shows session timeline, AI feedback, and actions taken.
+ * Admin view for displaying detailed information about a specific student session. Shows session timeline, AI feedback,
+ * and actions taken.
  */
 @Route(value = "admin/session/:sessionId", layout = AdminMainLayout.class)
 @PageTitle("Session Details - AI Math Tutor")
@@ -52,8 +51,8 @@ public class AdminSessionView extends AbstractAdminView {
     }
 
     /**
-     * Lifecycle method executed before entering the session detail view; it
-     * enforces authentication and prepares view data.
+     * Lifecycle method executed before entering the session detail view; it enforces authentication and prepares view
+     * data.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -108,9 +107,7 @@ public class AdminSessionView extends AbstractAdminView {
 
         // Configure columns to show conversational interaction
         this.interactionsGrid.addColumn(interaction -> this.dateTimeFormatter.formatDateTime(interaction.created))
-                .setHeader("Time")
-                .setFlexGrow(0)
-                .setWidth(AppConstants.GRID_ACTION_WIDTH);
+                .setHeader("Time").setFlexGrow(0).setWidth(AppConstants.GRID_ACTION_WIDTH);
 
         this.interactionsGrid.addColumn(interaction -> {
             // Identify if this is a student message or AI response
@@ -120,9 +117,7 @@ public class AdminSessionView extends AbstractAdminView {
                 return "AI Tutor";
             }
             return "Event";
-        }).setHeader("Source")
-                .setFlexGrow(0)
-                .setWidth("100px");
+        }).setHeader("Source").setFlexGrow(0).setWidth("100px");
 
         // Show message content (student message or AI feedback)
         this.interactionsGrid.addColumn(interaction -> {
@@ -134,14 +129,11 @@ public class AdminSessionView extends AbstractAdminView {
                 return interaction.expressionBefore + " → " + interaction.expressionAfter;
             }
             return "";
-        }).setHeader("Message")
-                .setFlexGrow(2);
+        }).setHeader("Message").setFlexGrow(2);
 
         // Show feedback type if available
         this.interactionsGrid.addColumn(interaction -> interaction.feedbackType != null ? interaction.feedbackType : "")
-                .setHeader("Feedback Type")
-                .setFlexGrow(0)
-                .setWidth("100px");
+                .setHeader("Feedback Type").setFlexGrow(0).setWidth("100px");
 
         this.add(this.interactionsGrid);
     }
@@ -150,25 +142,21 @@ public class AdminSessionView extends AbstractAdminView {
      * Load details for the session and its AI interactions asynchronously.
      */
     private void loadSessionDetails() {
-        AsyncDataLoader.load(
-                () -> {
-                    this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
-                    if (this.session == null) {
-                        return null;
-                    }
-                    return this.analyticsService.getAiInteractionsBySession(this.sessionId);
-                },
-                this,
-                interactions -> {
-                    if (interactions == null) {
-                        NotificationUtil.showError("Session not found");
-                        this.getUI().ifPresent(ui -> ui.navigate(AdminSessionsView.class));
-                        return;
-                    }
-                    this.updateSessionInfo();
-                    this.updateInteractionsGrid(interactions);
-                },
-                "Failed to load session details");
+        AsyncDataLoader.load(() -> {
+            this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
+            if (this.session == null) {
+                return null;
+            }
+            return this.analyticsService.getAiInteractionsBySession(this.sessionId);
+        }, this, interactions -> {
+            if (interactions == null) {
+                NotificationUtil.showError("Session not found");
+                this.getUI().ifPresent(ui -> ui.navigate(AdminSessionsView.class));
+                return;
+            }
+            this.updateSessionInfo();
+            this.updateInteractionsGrid(interactions);
+        }, "Failed to load session details");
     }
 
     /**
@@ -186,9 +174,7 @@ public class AdminSessionView extends AbstractAdminView {
         final var mainCard = new VerticalLayout();
         mainCard.setPadding(true);
         mainCard.setSpacing(true);
-        mainCard.getStyle()
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("border-radius", "4px")
+        mainCard.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "4px")
                 .set("background-color", "var(--lumo-contrast-5pct)");
 
         // Header with student and exercise info
@@ -212,10 +198,8 @@ public class AdminSessionView extends AbstractAdminView {
 
         infoGrid.add(new Paragraph("Session ID: " + this.session.sessionId));
         infoGrid.add(new Paragraph("Start Time: " + this.dateTimeFormatter.formatDateTime(this.session.startTime)));
-        infoGrid.add(new Paragraph(
-                "End Time: "
-                        + (this.session.endTime != null ? this.dateTimeFormatter.formatDateTime(this.session.endTime)
-                                : "Not yet completed")));
+        infoGrid.add(new Paragraph("End Time: " + (this.session.endTime != null
+                ? this.dateTimeFormatter.formatDateTime(this.session.endTime) : "Not yet completed")));
         if (this.session.getFormattedDuration() != null) {
             infoGrid.add(new Paragraph("Duration: " + this.session.getFormattedDuration()));
         } else {
@@ -228,9 +212,7 @@ public class AdminSessionView extends AbstractAdminView {
         final var metricsCard = new VerticalLayout();
         metricsCard.setPadding(true);
         metricsCard.setSpacing(true);
-        metricsCard.getStyle()
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("border-radius", "4px")
+        metricsCard.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "4px")
                 .set("background-color", "var(--lumo-contrast-5pct)");
 
         metricsCard.add(new H3("Performance Metrics"));
@@ -244,8 +226,7 @@ public class AdminSessionView extends AbstractAdminView {
         metricsGrid.add(new Paragraph("Success Rate: " + this.session.getSuccessRatePercentage()));
         metricsGrid.add(new Paragraph("Hints Used: " + this.session.hintsUsed));
         metricsGrid.add(new Paragraph(
-                "Final Expression: "
-                        + (this.session.finalExpression != null ? this.session.finalExpression : "N/A")));
+                "Final Expression: " + (this.session.finalExpression != null ? this.session.finalExpression : "N/A")));
 
         metricsCard.add(metricsGrid);
 
@@ -255,7 +236,8 @@ public class AdminSessionView extends AbstractAdminView {
     /**
      * Update the interactions grid with the provided list of AI interactions.
      *
-     * @param interactions the interactions to display
+     * @param interactions
+     *            the interactions to display
      */
     private void updateInteractionsGrid(final List<AiInteractionViewDto> interactions) {
         // Direct update using stored grid reference

@@ -9,13 +9,12 @@ import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
 /**
- * Abstract base class for admin views providing standardized authentication
- * and authorization checks.
+ * Abstract base class for admin views providing standardized authentication and authorization checks.
  *
- * <p>Subclasses should call {@code super.beforeEnter(event)} at the start of
- * their own {@code beforeEnter} override, or rely on the default behaviour
- * which verifies the user is authenticated and authorised before initialising
- * the view.</p>
+ * <p>
+ * Subclasses should call {@code super.beforeEnter(event)} at the start of their own {@code beforeEnter} override, or
+ * rely on the default behaviour which verifies the user is authenticated and authorised before initialising the view.
+ * </p>
  */
 public abstract class AbstractAdminView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -26,11 +25,11 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
     protected transient UserRankService userRankService;
 
     /**
-     * Performs authentication and authorization checks before the view is shown.
-     * Redirects unauthenticated users to the login page and unauthorised users
-     * to the home page.
+     * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
+     * login page and unauthorised users to the home page.
      *
-     * @param event the before-enter navigation event
+     * @param event
+     *            the before-enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -38,11 +37,12 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
     }
 
     /**
-     * Checks authentication and authorization. Returns {@code true} if the user
-     * may proceed, otherwise forwards the navigation and returns {@code false}.
+     * Checks authentication and authorization. Returns {@code true} if the user may proceed, otherwise forwards the
+     * navigation and returns {@code false}.
      *
-     * <p>Subclasses overriding {@code beforeEnter} should call this method and
-     * return early when it yields {@code false}:</p>
+     * <p>
+     * Subclasses overriding {@code beforeEnter} should call this method and return early when it yields {@code false}:
+     * </p>
      *
      * <pre>
      * if (!isAuthOk(event)) {
@@ -50,7 +50,8 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      * }
      * </pre>
      *
-     * @param event the before-enter navigation event
+     * @param event
+     *            the before-enter navigation event
      * @return true if the user is authenticated and authorised
      */
     protected boolean isAuthOk(final BeforeEnterEvent event) {
@@ -66,11 +67,12 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
     }
 
     /**
-     * Determines whether the current user is authorised to access this admin view.
-     * The default implementation requires {@code canAdminView()} on the user's rank.
+     * Determines whether the current user is authorised to access this admin view. The default implementation requires
+     * {@code canAdminView()} on the user's rank.
      *
-     * <p>Subclasses with different permission requirements (e.g.
-     * {@link AdminConfigView}) can override this method.</p>
+     * <p>
+     * Subclasses with different permission requirements (e.g. {@link AdminConfigView}) can override this method.
+     * </p>
      *
      * @return true if the user is authorised, false otherwise
      */

@@ -3,17 +3,15 @@ package de.vptr.aimathtutor.service.ai;
 import java.io.IOException;
 
 /**
- * Unified runtime exception thrown by AI provider services
- * (OpenAI, Gemini, Ollama). Carries the provider name and an optional HTTP
- * status code so callers can react uniformly without depending on
- * provider-specific exception hierarchies.
+ * Unified runtime exception thrown by AI provider services (OpenAI, Gemini, Ollama). Carries the provider name and an
+ * optional HTTP status code so callers can react uniformly without depending on provider-specific exception
+ * hierarchies.
  *
  * <p>
- * This base type represents a transient failure and is eligible for retry.
- * Permanent failures (missing API key, blocked content, misconfiguration)
- * are signalled with {@link NonRetryableAiProviderException}; the
- * {@code @Retry(abortOn = NonRetryableAiProviderException.class)} annotation
- * on the calling methods skips retries in those cases.
+ * This base type represents a transient failure and is eligible for retry. Permanent failures (missing API key, blocked
+ * content, misconfiguration) are signalled with {@link NonRetryableAiProviderException}; the
+ * {@code @Retry(abortOn = NonRetryableAiProviderException.class)} annotation on the calling methods skips retries in
+ * those cases.
  */
 public class AiProviderException extends RuntimeException {
 
@@ -34,8 +32,7 @@ public class AiProviderException extends RuntimeException {
     }
 
     /**
-     * Build an exception wrapping a transport-level cause
-     * (e.g. {@link IOException}).
+     * Build an exception wrapping a transport-level cause (e.g. {@link IOException}).
      */
     public static AiProviderException transportFailure(final String providerName, final String message,
             final Throwable cause) {
@@ -63,8 +60,7 @@ public class AiProviderException extends RuntimeException {
     /**
      * Returns the HTTP status carried by this failure.
      *
-     * @return the HTTP status, or {@link #NO_HTTP_STATUS} if the failure did not
-     *         originate from an HTTP response.
+     * @return the HTTP status, or {@link #NO_HTTP_STATUS} if the failure did not originate from an HTTP response.
      */
     public int getHttpStatus() {
         return this.httpStatus;

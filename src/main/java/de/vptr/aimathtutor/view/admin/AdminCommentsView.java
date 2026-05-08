@@ -47,8 +47,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Administrative view for managing comments. Provides search, filtering,
- * editing and moderation tools for administrators.
+ * Administrative view for managing comments. Provides search, filtering, editing and moderation tools for
+ * administrators.
  */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
 public class AdminCommentsView extends AbstractAdminView {
@@ -84,8 +84,8 @@ public class AdminCommentsView extends AbstractAdminView {
     }
 
     /**
-     * Lifecycle callback invoked before entering the view. Ensures the user is
-     * authenticated and initializes the UI and data loading.
+     * Lifecycle callback invoked before entering the view. Ensures the user is authenticated and initializes the UI and
+     * data loading.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -104,15 +104,12 @@ public class AdminCommentsView extends AbstractAdminView {
                     LOG.warn("Invalid exerciseId parameter: not a positive number");
                 } else {
                     // Load comments for that exercise only
-                    AsyncDataLoader.load(
-                            () -> this.commentService.findByExerciseId(exerciseId),
-                            this,
-                            comments -> this.grid.setItems(comments),
-                            "Failed to load comments. Please try again.");
+                    AsyncDataLoader.load(() -> this.commentService.findByExerciseId(exerciseId), this,
+                            comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
                     return;
                 }
             } catch (final Exception ex) {
-                LOG.warnf(ex, "Invalid exerciseId parameter: %s",  params.get("exerciseId"));
+                LOG.warnf(ex, "Invalid exerciseId parameter: %s", params.get("exerciseId"));
             }
         }
 
@@ -122,10 +119,7 @@ public class AdminCommentsView extends AbstractAdminView {
     private void loadCommentsAsync() {
         LOG.info("Loading comments");
 
-        AsyncDataLoader.load(
-                () -> this.commentService.getAllComments(),
-                this,
-                data -> this.grid.setItems(data),
+        AsyncDataLoader.load(() -> this.commentService.getAllComments(), this, data -> this.grid.setItems(data),
                 "Failed to load comments. Please try again.");
     }
 
@@ -142,15 +136,11 @@ public class AdminCommentsView extends AbstractAdminView {
     }
 
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadCommentsAsync();
-                    }
-                },
-                ignored -> this.searchComments(),
-                "Search by author or content...",
-                "Search Comments");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadCommentsAsync();
+            }
+        }, ignored -> this.searchComments(), "Search by author or content...", "Search Comments");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -161,17 +151,13 @@ public class AdminCommentsView extends AbstractAdminView {
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         // User ID filter
-        final var userFilterLayout = new IntegerFilterLayout(
-                ignored -> this.filterByUser(),
-                "Enter User ID...",
-                "Filter by User");
+        final var userFilterLayout =
+                new IntegerFilterLayout(ignored -> this.filterByUser(), "Enter User ID...", "Filter by User");
         this.userIdField = userFilterLayout.getIntegerField();
 
         // Exercise ID filter
-        final var exerciseFilterLayout = new IntegerFilterLayout(
-                ignored -> this.filterByExerciseId(),
-                "Enter Exercise ID...",
-                "Filter by Exercise");
+        final var exerciseFilterLayout = new IntegerFilterLayout(ignored -> this.filterByExerciseId(),
+                "Enter Exercise ID...", "Filter by Exercise");
         this.exerciseIdField = exerciseFilterLayout.getIntegerField();
 
         // Status filter (VISIBLE, HIDDEN, DELETED)
@@ -228,8 +214,8 @@ public class AdminCommentsView extends AbstractAdminView {
         }).setHeader("Exercise").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(1);
 
         // Author column
-        this.grid.addColumn(comment -> comment.username != null ? comment.username : "(Unknown)")
-                .setHeader("Author").setWidth("120px").setFlexGrow(0);
+        this.grid.addColumn(comment -> comment.username != null ? comment.username : "(Unknown)").setHeader("Author")
+                .setWidth("120px").setFlexGrow(0);
 
         // Content column with limited display
         this.grid.addComponentColumn(comment -> {
@@ -264,8 +250,8 @@ public class AdminCommentsView extends AbstractAdminView {
         }).setHeader("Status").setWidth("100px").setFlexGrow(0);
 
         // Flags column
-        this.grid.addColumn(comment -> String.valueOf(comment.flagsCount))
-                .setHeader("Flags").setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
+        this.grid.addColumn(comment -> String.valueOf(comment.flagsCount)).setHeader("Flags")
+                .setWidth(AppConstants.GRID_ID_WIDTH).setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
@@ -400,17 +386,12 @@ public class AdminCommentsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.infof("Searching comments with query: %s",  query);
-        AsyncDataLoader.load(
-                () -> this.commentService.searchComments(query.trim()),
-                this,
-                comments -> {
-                    LOG.infof("Successfully found %s comments",  comments.size());
-                    this.grid.setItems(comments);
-                    this.searchButton.setEnabled(true);
-                },
-                () -> this.searchButton.setEnabled(true),
-                "An error occurred while searching comments. Please try again.");
+        LOG.infof("Searching comments with query: %s", query);
+        AsyncDataLoader.load(() -> this.commentService.searchComments(query.trim()), this, comments -> {
+            LOG.infof("Successfully found %s comments", comments.size());
+            this.grid.setItems(comments);
+            this.searchButton.setEnabled(true);
+        }, () -> this.searchButton.setEnabled(true), "An error occurred while searching comments. Please try again.");
     }
 
     private void filterByDateRange() {
@@ -427,9 +408,7 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.commentService.findByDateRange(startDate.toString(), endDate.toString()),
-                this,
+        AsyncDataLoader.load(() -> this.commentService.findByDateRange(startDate.toString(), endDate.toString()), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -441,9 +420,7 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.commentService.findByUserId(userId.longValue()),
-                this,
+        AsyncDataLoader.load(() -> this.commentService.findByUserId(userId.longValue()), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -455,9 +432,7 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.commentService.findByExerciseId(exerciseId.longValue()),
-                this,
+        AsyncDataLoader.load(() -> this.commentService.findByExerciseId(exerciseId.longValue()), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -469,9 +444,7 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.commentService.findByStatus(CommentStatus.fromString(status)),
-                this,
+        AsyncDataLoader.load(() -> this.commentService.findByStatus(CommentStatus.fromString(status)), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -483,9 +456,7 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.commentService.findFlaggedComments(minFlags),
-                this,
+        AsyncDataLoader.load(() -> this.commentService.findFlaggedComments(minFlags), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }

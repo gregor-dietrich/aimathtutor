@@ -119,8 +119,7 @@ class ExerciseCompletionServiceTest {
         final var result = this.exerciseCompletionService.enrichListWithCompletionData(dtos);
 
         assertNotNull(result);
-        result.forEach(dto -> assertNull(dto.userCompleted,
-                "userCompleted should remain null when not authenticated"));
+        result.forEach(dto -> assertNull(dto.userCompleted, "userCompleted should remain null when not authenticated"));
     }
 
     @Test

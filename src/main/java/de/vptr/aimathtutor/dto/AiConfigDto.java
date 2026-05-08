@@ -7,22 +7,17 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Data Transfer Object for AI configuration.
- * Used for transferring AI configuration data between backend and frontend.
+ * Data Transfer Object for AI configuration. Used for transferring AI configuration data between backend and frontend.
  */
-@SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
+@SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD",
+        justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class AiConfigDto {
 
     /**
-     * Enumeration of configuration value types.
-     * Maps to string values stored in the database and used in UI components.
+     * Enumeration of configuration value types. Maps to string values stored in the database and used in UI components.
      */
     public enum ConfigType {
-        STRING("STRING"),
-        INTEGER("INTEGER"),
-        DOUBLE("DOUBLE"),
-        BOOLEAN("BOOLEAN"),
-        TEXT("TEXT");
+        STRING("STRING"), INTEGER("INTEGER"), DOUBLE("DOUBLE"), BOOLEAN("BOOLEAN"), TEXT("TEXT");
 
         private final String value;
 
@@ -43,7 +38,8 @@ public class AiConfigDto {
         /**
          * Converts a string value to the corresponding ConfigType enum.
          *
-         * @param value the string value to convert
+         * @param value
+         *            the string value to convert
          * @return the matching ConfigType, or null if no match
          */
         public static ConfigType fromString(final String value) {
@@ -60,15 +56,10 @@ public class AiConfigDto {
     }
 
     /**
-     * Enumeration of configuration categories.
-     * Maps to string values stored in the database and used in UI components.
+     * Enumeration of configuration categories. Maps to string values stored in the database and used in UI components.
      */
     public enum ConfigCategory {
-        GENERAL("GENERAL"),
-        GEMINI("GEMINI"),
-        OPENAI("OPENAI"),
-        OLLAMA("OLLAMA"),
-        PROMPTS("PROMPTS");
+        GENERAL("GENERAL"), GEMINI("GEMINI"), OPENAI("OPENAI"), OLLAMA("OLLAMA"), PROMPTS("PROMPTS");
 
         private final String value;
 
@@ -89,7 +80,8 @@ public class AiConfigDto {
         /**
          * Converts a string value to the corresponding ConfigCategory enum.
          *
-         * @param value the string value to convert
+         * @param value
+         *            the string value to convert
          * @return the matching ConfigCategory, or null if no match
          */
         public static ConfigCategory fromString(final String value) {
@@ -129,8 +121,7 @@ public class AiConfigDto {
     /**
      * Default constructor for serialization.
      */
-    public AiConfigDto() {
-    }
+    public AiConfigDto() {}
 
     /**
      * Constructor with required fields.

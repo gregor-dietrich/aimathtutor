@@ -8,8 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * Button used to create a new resource. Shows a + icon and applies a success
- * theme. Callers provide a click listener to handle the creation action.
+ * Button used to create a new resource. Shows a + icon and applies a success theme. Callers provide a click listener to
+ * handle the creation action.
  */
 public class CreateButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Create";

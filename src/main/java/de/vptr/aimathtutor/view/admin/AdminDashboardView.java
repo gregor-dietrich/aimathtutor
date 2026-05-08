@@ -15,9 +15,8 @@ import de.vptr.aimathtutor.util.AsyncDataLoader;
 import jakarta.inject.Inject;
 
 /**
- * Admin dashboard for displaying high-level analytics and overview statistics.
- * Shows total sessions, active students, completed sessions, and recent
- * activity.
+ * Admin dashboard for displaying high-level analytics and overview statistics. Shows total sessions, active students,
+ * completed sessions, and recent activity.
  */
 @Route(value = "admin/dashboard", layout = AdminMainLayout.class)
 @PageTitle("Admin Dashboard - AI Math Tutor")
@@ -40,8 +39,7 @@ public class AdminDashboardView extends AbstractAdminView {
     }
 
     /**
-     * Called before the view is shown. Ensures authentication and triggers UI
-     * construction and data loading.
+     * Called before the view is shown. Ensures authentication and triggers UI construction and data loading.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -79,46 +77,33 @@ public class AdminDashboardView extends AbstractAdminView {
     }
 
     private void loadDashboardData() {
-        AsyncDataLoader.load(
-                () -> {
-                    final var totalSessions = this.analyticsService.getTotalSessionsCount();
-                    final var completedSessions = this.analyticsService.getCompletedSessionsCount();
-                    final var activeStudents = this.analyticsService.getActiveStudentsCount();
-                    final var todaySessions = this.analyticsService.getTodaySessionsCount();
-                    return Map.of(
-                            "Total Sessions", String.valueOf(totalSessions),
-                            "Completed Sessions", String.valueOf(completedSessions),
-                            "Active Students (Last 7 Days)", String.valueOf(activeStudents),
-                            "Today's Sessions", String.valueOf(todaySessions));
-                },
-                this,
-                stats -> {
-                    stats.forEach(this::updateStatCard);
-                },
-                "Failed to load dashboard data");
+        AsyncDataLoader.load(() -> {
+            final var totalSessions = this.analyticsService.getTotalSessionsCount();
+            final var completedSessions = this.analyticsService.getCompletedSessionsCount();
+            final var activeStudents = this.analyticsService.getActiveStudentsCount();
+            final var todaySessions = this.analyticsService.getTodaySessionsCount();
+            return Map.of("Total Sessions", String.valueOf(totalSessions), "Completed Sessions",
+                    String.valueOf(completedSessions), "Active Students (Last 7 Days)", String.valueOf(activeStudents),
+                    "Today's Sessions", String.valueOf(todaySessions));
+        }, this, stats -> {
+            stats.forEach(this::updateStatCard);
+        }, "Failed to load dashboard data");
     }
 
     private VerticalLayout createStatCard(final String title, final String value) {
         final var card = new VerticalLayout();
         card.setPadding(true);
         card.setSpacing(false);
-        card.getStyle()
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("border-radius", "4px")
+        card.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "4px")
                 .set("background-color", "var(--lumo-contrast-5pct)");
 
         final var titleLabel = new Span(title);
-        titleLabel.getStyle()
-                .set("font-size", "12px")
-                .set("color", "var(--lumo-secondary-text-color)")
-                .set("text-transform", "uppercase")
-                .set("font-weight", "500");
+        titleLabel.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)")
+                .set("text-transform", "uppercase").set("font-weight", "500");
 
         final var valueLabel = new Span(value);
-        valueLabel.getStyle()
-                .set("font-size", "28px")
-                .set("font-weight", "700")
-                .set("color", "var(--lumo-primary-text-color)");
+        valueLabel.getStyle().set("font-size", "28px").set("font-weight", "700").set("color",
+                "var(--lumo-primary-text-color)");
 
         // Store reference to value label for efficient updates
         this.statCardValues.put(title, valueLabel);

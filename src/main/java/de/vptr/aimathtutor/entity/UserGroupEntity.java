@@ -20,12 +20,11 @@ import jakarta.validation.constraints.NotBlank;
  */
 @Entity
 @Table(name = "user_groups")
-@NamedQueries({
-        @NamedQuery(name = "UserGroup.findAll", query = "FROM UserGroupEntity ORDER BY created DESC"),
+@NamedQueries({ @NamedQuery(name = "UserGroup.findAll", query = "FROM UserGroupEntity ORDER BY created DESC"),
         @NamedQuery(name = "UserGroup.findByPublicId", query = "FROM UserGroupEntity WHERE publicId = :p"),
         @NamedQuery(name = "UserGroup.findByName", query = "FROM UserGroupEntity WHERE name = :n"),
-        @NamedQuery(name = "UserGroup.searchByName", query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY created DESC")
-})
+        @NamedQuery(name = "UserGroup.searchByName",
+                query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY created DESC") })
 public class UserGroupEntity extends BaseEntity {
 
     @NotBlank
@@ -50,9 +49,7 @@ public class UserGroupEntity extends BaseEntity {
      * @return a list of {@link UserEntity} objects that are members of this group
      */
     public List<UserEntity> getUsers() {
-        return this.userGroupMetas.stream()
-                .map(meta -> meta.user)
-                .toList();
+        return this.userGroupMetas.stream().map(meta -> meta.user).toList();
     }
 
     // Helper method to get user count in this group
@@ -60,8 +57,7 @@ public class UserGroupEntity extends BaseEntity {
     /**
      * Counts the number of users that are members of this group.
      *
-     * @return the number of members in this group, or 0 if no members or metadata
-     *         is null
+     * @return the number of members in this group, or 0 if no members or metadata is null
      */
     public long getUserCount() {
         return this.userGroupMetas != null ? this.userGroupMetas.size() : 0;

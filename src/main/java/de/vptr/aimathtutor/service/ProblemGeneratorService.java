@@ -16,8 +16,7 @@ import jakarta.enterprise.context.ApplicationScoped;
  * Service for generating random math problems for the Graspable Math workspace.
  *
  * <p>
- * Extracted from {@link AiTutorService} to separate problem generation from
- * AI tutoring orchestration.
+ * Extracted from {@link AiTutorService} to separate problem generation from AI tutoring orchestration.
  * </p>
  */
 @ApplicationScoped
@@ -39,13 +38,15 @@ public class ProblemGeneratorService {
     /**
      * Generates a new math problem based on the given category.
      *
-     * @param difficulty The difficulty level
-     * @param category   The problem category (type of math problem)
+     * @param difficulty
+     *            The difficulty level
+     * @param category
+     *            The problem category (type of math problem)
      * @return A new Graspable Math problem
      */
     public GraspableProblemDto generateProblem(final DifficultyLevel difficulty,
             final GraspableProblemDto.ProblemCategory category) {
-        LOG.debugf("Generating problem: difficulty=%s, category=%s",  difficulty,  category);
+        LOG.debugf("Generating problem: difficulty=%s, category=%s", difficulty, category);
 
         final var problem = new GraspableProblemDto();
         problem.difficulty = difficulty;
@@ -88,11 +89,7 @@ public class ProblemGeneratorService {
                 final int c = a * x + b;
                 problem.title = "Solve for x";
                 final String coefStr = a == 1 ? "x" : a + "x";
-                problem.initialExpression = String.format("%s %s %d = %d",
-                        coefStr,
-                        b >= 0 ? "+" : "-",
-                        Math.abs(b),
-                        c);
+                problem.initialExpression = String.format("%s %s %d = %d", coefStr, b >= 0 ? "+" : "-", Math.abs(b), c);
                 problem.targetExpression = "x = " + x;
                 problem.allowedOperations.addAll(Arrays.asList("simplify", "move", "divide"));
                 problem.hints.add("First, isolate the term with x");
@@ -205,15 +202,11 @@ public class ProblemGeneratorService {
                 final int bIneq = random.nextInt(constMax * 2 + 1) - constMax;
                 final int cIneq = random.nextInt(constMax * 4);
                 problem.title = "Solve the inequality";
-                problem.initialExpression = String.format("%dx %s %d < %d",
-                        aIneq,
-                        bIneq >= 0 ? "+" : "-",
-                        Math.abs(bIneq),
-                        cIneq);
+                problem.initialExpression =
+                        String.format("%dx %s %d < %d", aIneq, bIneq >= 0 ? "+" : "-", Math.abs(bIneq), cIneq);
                 final int numerator = cIneq - bIneq;
                 final int denominator = aIneq;
-                final int gcd = BigInteger.valueOf(numerator)
-                        .gcd(BigInteger.valueOf(denominator)).intValueExact();
+                final int gcd = BigInteger.valueOf(numerator).gcd(BigInteger.valueOf(denominator)).intValueExact();
                 final int reducedNum = numerator / gcd;
                 final int reducedDen = denominator / gcd;
                 final String targetValue;

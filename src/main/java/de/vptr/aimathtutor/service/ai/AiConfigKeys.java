@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.service.ai;
 import de.vptr.aimathtutor.service.AiConfigService;
 
 /**
- * Constants for the {@code ai_config} configuration keys persisted via
- * {@link AiConfigService}. Centralised here so
+ * Constants for the {@code ai_config} configuration keys persisted via {@link AiConfigService}. Centralised here so
  * services, the admin UI, and seed data all reference identical strings.
  */
 public final class AiConfigKeys {

@@ -23,22 +23,24 @@ public class CommentRateLimitService {
     CommentRepository commentRepository;
 
     /**
-     * Checks rate limiting for a user. Enforces a 5-second window between
-     * comments and a daily limit of 200 comments.
+     * Checks rate limiting for a user. Enforces a 5-second window between comments and a daily limit of 200 comments.
      *
-     * @param userId the user ID
-     * @throws WebApplicationException if rate limit is exceeded
+     * @param userId
+     *            the user ID
+     * @throws WebApplicationException
+     *             if rate limit is exceeded
      */
     public void checkRateLimit(final Long userId) {
         if (userId == null) {
             throw new WebApplicationException("User ID is required", Response.Status.BAD_REQUEST);
         }
         // Check 5-second window using DB time to avoid timezone mismatches
-        final long recentCount = this.commentRepository.countByUserSinceInterval(userId,
-                RATE_LIMIT_WINDOW_SECONDS + " seconds");
+        final long recentCount =
+                this.commentRepository.countByUserSinceInterval(userId, RATE_LIMIT_WINDOW_SECONDS + " seconds");
 
         if (recentCount > 0) {
-            LOG.debugf("Rate limit exceeded (5-second window): userId=%s, recentCount=%s", userId, (Object) recentCount);
+            LOG.debugf("Rate limit exceeded (5-second window): userId=%s, recentCount=%s", userId,
+                    (Object) recentCount);
             throw new WebApplicationException("Please wait before posting another comment",
                     Response.Status.TOO_MANY_REQUESTS);
         }
@@ -47,10 +49,9 @@ public class CommentRateLimitService {
         final long dailyCount = this.commentRepository.countByUserSinceInterval(userId, "1 day");
 
         if (dailyCount >= RATE_LIMIT_DAILY) {
-            LOG.warnf("Daily comment limit exceeded: userId=%s, dailyCount=%s, limit=%s",  userId,  dailyCount, 
+            LOG.warnf("Daily comment limit exceeded: userId=%s, dailyCount=%s, limit=%s", userId, dailyCount,
                     RATE_LIMIT_DAILY);
-            throw new WebApplicationException("Daily comment limit exceeded",
-                    Response.Status.TOO_MANY_REQUESTS);
+            throw new WebApplicationException("Daily comment limit exceeded", Response.Status.TOO_MANY_REQUESTS);
         }
     }
 }

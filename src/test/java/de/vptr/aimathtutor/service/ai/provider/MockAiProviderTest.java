@@ -31,8 +31,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("analyzeMathAction throws for null event")
     void testAnalyzeMathAction_nullEvent() {
-        assertThrows(IllegalArgumentException.class,
-                () -> this.provider.analyzeMathAction(null, null));
+        assertThrows(IllegalArgumentException.class, () -> this.provider.analyzeMathAction(null, null));
     }
 
     @Test
@@ -177,8 +176,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("answerQuestion returns non-blank response for how-to-solve question")
     void testAnswerQuestion_howToSolve() {
-        final String answer = this.provider.answerQuestion(
-                "How do I solve this?", "x+1=3", "x+1=3", "x=2", null);
+        final String answer = this.provider.answerQuestion("How do I solve this?", "x+1=3", "x+1=3", "x=2", null);
         assertNotNull(answer);
         assertFalse(answer.isBlank());
     }
@@ -186,8 +184,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("answerQuestion returns non-blank response for what-next question")
     void testAnswerQuestion_whatNext() {
-        final String answer = this.provider.answerQuestion(
-                "What should I do next?", "x+1=3", "x+1=3", "x=2", null);
+        final String answer = this.provider.answerQuestion("What should I do next?", "x+1=3", "x+1=3", "x=2", null);
         assertNotNull(answer);
         assertFalse(answer.isBlank());
     }
@@ -195,8 +192,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("answerQuestion returns non-blank response for why question")
     void testAnswerQuestion_why() {
-        final String answer = this.provider.answerQuestion(
-                "Why do we do that?", "x=2", "x+1=3", "x=2", null);
+        final String answer = this.provider.answerQuestion("Why do we do that?", "x=2", "x+1=3", "x=2", null);
         assertNotNull(answer);
         assertFalse(answer.isBlank());
     }
@@ -204,8 +200,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("answerQuestion returns non-blank response for stuck question")
     void testAnswerQuestion_stuck() {
-        final String answer = this.provider.answerQuestion(
-                "I'm stuck, help!", "x+1=3", "x+1=3", "x=2", null);
+        final String answer = this.provider.answerQuestion("I'm stuck, help!", "x+1=3", "x+1=3", "x=2", null);
         assertNotNull(answer);
         assertFalse(answer.isBlank());
     }
@@ -213,8 +208,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("answerQuestion returns non-blank response for hint request")
     void testAnswerQuestion_hint() {
-        final String answer = this.provider.answerQuestion(
-                "Can I get a hint?", "x+1=3", "x+1=3", "x=2", null);
+        final String answer = this.provider.answerQuestion("Can I get a hint?", "x+1=3", "x+1=3", "x=2", null);
         assertNotNull(answer);
         assertFalse(answer.isBlank());
     }
@@ -222,8 +216,7 @@ class MockAiProviderTest {
     @Test
     @DisplayName("answerQuestion returns non-blank fallback for unrecognized question")
     void testAnswerQuestion_fallback() {
-        final String answer = this.provider.answerQuestion(
-                "zzz random question xyz", "x+1=3", "x+1=3", "x=2", null);
+        final String answer = this.provider.answerQuestion("zzz random question xyz", "x+1=3", "x+1=3", "x=2", null);
         assertNotNull(answer);
         assertFalse(answer.isBlank());
     }

@@ -49,16 +49,18 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     /**
      * Get the shared top bar for views that need to add additional components
      */
-    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Top bar is intended to be shared and extended by child views")
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "Top bar is intended to be shared and extended by child views")
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }
 
     /**
-     * Attaches event listener when layout is added to the UI tree.
-     * Updates logout button visibility based on authentication state.
+     * Attaches event listener when layout is added to the UI tree. Updates logout button visibility based on
+     * authentication state.
      *
-     * @param attachEvent the attach event containing lifecycle information
+     * @param attachEvent
+     *            the attach event containing lifecycle information
      */
     @Override
     protected void onAttach(final AttachEvent attachEvent) {
@@ -67,11 +69,11 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     /**
-     * Called before navigation occurs. Initializes layout on first entry, applies
-     * theme,
-     * checks authentication, and shows/hides navigation tabs based on target view.
+     * Called before navigation occurs. Initializes layout on first entry, applies theme, checks authentication, and
+     * shows/hides navigation tabs based on target view.
      *
-     * @param event the before enter navigation event
+     * @param event
+     *            the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -85,7 +87,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
         final var targetView = event.getNavigationTarget();
 
-        LOG.tracef("MainLayout.beforeEnter - Target: %s",  targetView.getSimpleName());
+        LOG.tracef("MainLayout.beforeEnter - Target: %s", targetView.getSimpleName());
 
         // No backend health check needed since we're using direct database access
         LOG.trace("User authenticated, building UI");
@@ -109,7 +111,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.addButtonsToTopBar();
         this.showNavigationTabs();
 
-        LOG.tracef("All checks passed for %s",  targetView.getSimpleName());
+        LOG.tracef("All checks passed for %s", targetView.getSimpleName());
     }
 
     private void updateLogoutButtonVisibility() {
@@ -171,8 +173,8 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         // Only create admin button if user has admin:view permission
         final var userRank = this.userRankService.getCurrentUserRank();
         if (userRank != null && userRank.canAdminView()) {
-            this.adminViewButton = new AdminViewButton(
-                    e -> this.getUI().ifPresent(ui -> ui.navigate("admin/dashboard")));
+            this.adminViewButton =
+                    new AdminViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate("admin/dashboard")));
         } else {
             this.adminViewButton = null;
         }

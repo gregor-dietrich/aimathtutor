@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.event;
 import java.time.LocalDateTime;
 
 /**
- * CDI Event fired when a comment is created.
- * Used for real-time updates via Vaadin Push.
+ * CDI Event fired when a comment is created. Used for real-time updates via Vaadin Push.
  */
 public class CommentCreatedEvent {
 
@@ -18,8 +17,8 @@ public class CommentCreatedEvent {
     /**
      * Constructs a CommentCreatedEvent with the specified parameters.
      */
-    public CommentCreatedEvent(final Long commentId, final Long exerciseId, final Long userId,
-            final String username, final String content, final LocalDateTime createdAt) {
+    public CommentCreatedEvent(final Long commentId, final Long exerciseId, final Long userId, final String username,
+            final String content, final LocalDateTime createdAt) {
         this.commentId = commentId;
         this.exerciseId = exerciseId;
         this.userId = userId;

@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Represents a message in the chat interface between student and AI tutor.
- * Can be either a user question or an AI response.
+ * Represents a message in the chat interface between student and AI tutor. Can be either a user question or an AI
+ * response.
  */
 public class ChatMessageDto {
 
@@ -20,8 +20,7 @@ public class ChatMessageDto {
     }
 
     /**
-     * Type of the chat message used to differentiate UI rendering and
-     * handling.
+     * Type of the chat message used to differentiate UI rendering and handling.
      */
     public enum MessageType {
         QUESTION, // User asking a question
@@ -40,23 +39,25 @@ public class ChatMessageDto {
     @JsonProperty("session_id")
     public String sessionId;
 
-    @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Set by caller or Jackson at runtime")
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
+            justification = "Set by caller or Jackson at runtime")
     public LocalDateTime timestamp;
 
     // Optional: Reference to the action that triggered this message (for feedback)
     @JsonProperty("related_action")
     public String relatedAction;
 
-    public ChatMessageDto() {
-    }
+    public ChatMessageDto() {}
 
     /**
      * Constructs a ChatMessageDto with the specified sender, type, and message.
      *
-     * @param sender      the sender of the message (USER or AI)
-     * @param messageType the type of the message (QUESTION, FEEDBACK, ANSWER,
-     *                    SYSTEM)
-     * @param message     the content of the message
+     * @param sender
+     *            the sender of the message (USER or AI)
+     * @param messageType
+     *            the type of the message (QUESTION, FEEDBACK, ANSWER, SYSTEM)
+     * @param message
+     *            the content of the message
      */
     public ChatMessageDto(final Sender sender, final MessageType messageType, final String message) {
         this();
@@ -68,7 +69,8 @@ public class ChatMessageDto {
     /**
      * Create a user question message.
      *
-     * @param message question text
+     * @param message
+     *            question text
      * @return ChatMessageDto instance for a user question
      */
     public static ChatMessageDto userQuestion(final String message) {
@@ -78,7 +80,8 @@ public class ChatMessageDto {
     /**
      * Create an AI feedback message.
      *
-     * @param message feedback text
+     * @param message
+     *            feedback text
      * @return ChatMessageDto instance for AI feedback
      */
     public static ChatMessageDto aiFeedback(final String message) {
@@ -88,7 +91,8 @@ public class ChatMessageDto {
     /**
      * Create an AI answer message (response to a question).
      *
-     * @param message answer text
+     * @param message
+     *            answer text
      * @return ChatMessageDto instance for an AI answer
      */
     public static ChatMessageDto aiAnswer(final String message) {
@@ -98,7 +102,8 @@ public class ChatMessageDto {
     /**
      * Create a system message.
      *
-     * @param message system text
+     * @param message
+     *            system text
      * @return ChatMessageDto instance for system messages
      */
     public static ChatMessageDto system(final String message) {
@@ -110,12 +115,7 @@ public class ChatMessageDto {
      */
     @Override
     public String toString() {
-        return "ChatMessageDto{"
-                + "sender=" + this.sender
-                + ", messageType=" + this.messageType
-                + ", message='" + this.message + '\''
-                + ", timestamp=" + this.timestamp
-                + ", sessionId='" + this.sessionId + '\''
-                + '}';
+        return "ChatMessageDto{" + "sender=" + this.sender + ", messageType=" + this.messageType + ", message='"
+                + this.message + '\'' + ", timestamp=" + this.timestamp + ", sessionId='" + this.sessionId + '\'' + '}';
     }
 }

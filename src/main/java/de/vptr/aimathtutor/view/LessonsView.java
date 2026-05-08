@@ -73,16 +73,12 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
         this.add(welcomeLabel);
 
-        AsyncDataLoader.load(
-                () -> {
-                    final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
-                    final Map<String, List<ExerciseViewDto>> exercisesByLesson = this.exerciseService
-                            .findPublishedExercisesByLessonMap();
-                    return new LessonsPayload(lessons, exercisesByLesson);
-                },
-                this,
-                this::renderLessons,
-                "Failed to load lessons. Please try again.");
+        AsyncDataLoader.load(() -> {
+            final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
+            final Map<String, List<ExerciseViewDto>> exercisesByLesson =
+                    this.exerciseService.findPublishedExercisesByLessonMap();
+            return new LessonsPayload(lessons, exercisesByLesson);
+        }, this, this::renderLessons, "Failed to load lessons. Please try again.");
     }
 
     private void renderLessons(final LessonsPayload payload) {
@@ -96,9 +92,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         // Only root lessons are rendered at the top level
-        final List<LessonViewDto> rootLessons = payload.lessons.stream()
-                .filter(l -> l.isRootLesson())
-                .toList();
+        final List<LessonViewDto> rootLessons = payload.lessons.stream().filter(l -> l.isRootLesson()).toList();
 
         if (rootLessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
@@ -134,30 +128,23 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         }
     }
 
-    private record LessonsPayload(List<LessonViewDto> lessons,
-            Map<String, List<ExerciseViewDto>> exercisesByLesson) {
+    private record LessonsPayload(List<LessonViewDto> lessons, Map<String, List<ExerciseViewDto>> exercisesByLesson) {
     }
 
-    private VerticalLayout createLessonSection(
-            final LessonViewDto lesson,
-            final int depth,
+    private VerticalLayout createLessonSection(final LessonViewDto lesson, final int depth,
             final Map<String, LessonViewDto> lessonByPublicId,
-            final Map<String, List<ExerciseViewDto>> exercisesByLesson,
-            final Set<String> visited) {
+            final Map<String, List<ExerciseViewDto>> exercisesByLesson, final Set<String> visited) {
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(depth == 0);
         section.setWidthFull();
 
         if (depth == 0) {
-            section.getStyle()
-                    .set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("margin-bottom", "var(--lumo-space-m)");
+            section.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
+                    .set("border-radius", "var(--lumo-border-radius-m)").set("margin-bottom", "var(--lumo-space-m)");
         } else {
-            section.getStyle()
-                    .set("border-left", "3px solid var(--lumo-primary-color)")
-                    .set("padding-left", "var(--lumo-space-m)");
+            section.getStyle().set("border-left", "3px solid var(--lumo-primary-color)").set("padding-left",
+                    "var(--lumo-space-m)");
         }
 
         if (depth == 0) {
@@ -170,10 +157,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             section.add(h);
         } else {
             final var s = new Span(lesson.getName());
-            s.getStyle()
-                    .set("font-weight", "600")
-                    .set("font-size", "var(--lumo-font-size-s)")
-                    .set("display", "block");
+            s.getStyle().set("font-weight", "600").set("font-size", "var(--lumo-font-size-s)").set("display", "block");
             section.add(s);
         }
 
@@ -200,9 +184,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             section.add(exerciseGrid);
         } else if (lesson.childrenPublicIds.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");
-            noExercisesMsg.getStyle()
-                    .set("color", "var(--lumo-secondary-text-color)")
-                    .set("font-style", "italic");
+            noExercisesMsg.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-style", "italic");
             section.add(noExercisesMsg);
         }
 
@@ -211,35 +193,24 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     private Div createExerciseCard(final ExerciseViewDto exercise) {
         final var card = new Div();
-        card.getStyle()
-                .set("width", "300px")
-                .set("padding", "1rem")
+        card.getStyle().set("width", "300px").set("padding", "1rem")
                 .set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("cursor", "pointer")
-                .set("transition", "all 0.2s ease")
-                .set("display", "flex")
-                .set("flex-direction", "column")
+                .set("border-radius", "var(--lumo-border-radius-m)").set("cursor", "pointer")
+                .set("transition", "all 0.2s ease").set("display", "flex").set("flex-direction", "column")
                 .set("gap", "0.5rem");
 
         // Hover effect
         card.getElement().addEventListener("mouseenter", ignored -> {
-            card.getStyle()
-                    .set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
-                    .set("transform", "translateY(-2px)");
+            card.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)").set("transform", "translateY(-2px)");
         });
         card.getElement().addEventListener("mouseleave", ignored -> {
-            card.getStyle()
-                    .set("box-shadow", "none")
-                    .set("transform", "translateY(0)");
+            card.getStyle().set("box-shadow", "none").set("transform", "translateY(0)");
         });
 
         // Title
         final var titleSpan = new Span(exercise.title);
-        titleSpan.getStyle()
-                .set("font-weight", "600")
-                .set("font-size", "var(--lumo-font-size-m)");
+        titleSpan.getStyle().set("font-weight", "600").set("font-size", "var(--lumo-font-size-m)");
 
         // Badges
         final var badgeLayout = new HorizontalLayout();
@@ -295,8 +266,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 NotificationUtil.showError("Exercise ID is missing");
                 return;
             }
-            UI.getCurrent().navigate(ExerciseWorkspaceView.class,
-                    new RouteParameters("exerciseId", exercise.publicId));
+            UI.getCurrent().navigate(ExerciseWorkspaceView.class, new RouteParameters("exerciseId", exercise.publicId));
         });
 
         card.add(titleSpan, badgeLayout, startButton);

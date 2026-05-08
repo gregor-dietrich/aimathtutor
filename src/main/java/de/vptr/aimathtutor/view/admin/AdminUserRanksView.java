@@ -68,8 +68,7 @@ public class AdminUserRanksView extends AbstractAdminView {
     }
 
     /**
-     * Ensure the current user is authenticated and initialize the UI and
-     * asynchronous data loading for ranks.
+     * Ensure the current user is authenticated and initialize the UI and asynchronous data loading for ranks.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -83,10 +82,7 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void loadRanksAsync() {
         LOG.info("Starting async rank loading");
-        AsyncDataLoader.load(
-                () -> this.rankService.getAllRanks(),
-                this,
-                ranks -> this.grid.setItems(ranks),
+        AsyncDataLoader.load(() -> this.rankService.getAllRanks(), this, ranks -> this.grid.setItems(ranks),
                 "Failed to load ranks. Please try again.");
     }
 
@@ -111,15 +107,11 @@ public class AdminUserRanksView extends AbstractAdminView {
      * @return the created search layout
      */
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadRanksAsync();
-                    }
-                },
-                e -> this.searchRanks(),
-                "Search by name...",
-                "Search Ranks");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadRanksAsync();
+            }
+        }, e -> this.searchRanks(), "Search by name...", "Search Ranks");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -167,40 +159,39 @@ public class AdminUserRanksView extends AbstractAdminView {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
-            layout.add(this.permissionIcon(
-                    rank.adminView ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
+            layout.add(this.permissionIcon(rank.adminView ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
                     "Admin View"));
             return layout;
         }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
 
         // CRUD permission columns share the same add/edit/delete icon pattern
-        this.addCrudPermissionColumn("Exercises", "Exercises",
-                rank -> rank.exerciseAdd, rank -> rank.exerciseEdit, rank -> rank.exerciseDelete);
-        this.addCrudPermissionColumn("Lessons", "Lessons",
-                rank -> rank.lessonAdd, rank -> rank.lessonEdit, rank -> rank.lessonDelete);
-        this.addCrudPermissionColumn("Comments", "Comments",
-                rank -> rank.commentAdd, rank -> rank.commentEdit, rank -> rank.commentDelete);
-        this.addCrudPermissionColumn("Users", "Users",
-                rank -> rank.userAdd, rank -> rank.userEdit, rank -> rank.userDelete);
-        this.addCrudPermissionColumn("User Groups", "User Groups",
-                rank -> rank.userGroupAdd, rank -> rank.userGroupEdit, rank -> rank.userGroupDelete);
-        this.addCrudPermissionColumn("User Ranks", "Ranks",
-                rank -> rank.userRankAdd, rank -> rank.userRankEdit, rank -> rank.userRankDelete);
+        this.addCrudPermissionColumn("Exercises", "Exercises", rank -> rank.exerciseAdd, rank -> rank.exerciseEdit,
+                rank -> rank.exerciseDelete);
+        this.addCrudPermissionColumn("Lessons", "Lessons", rank -> rank.lessonAdd, rank -> rank.lessonEdit,
+                rank -> rank.lessonDelete);
+        this.addCrudPermissionColumn("Comments", "Comments", rank -> rank.commentAdd, rank -> rank.commentEdit,
+                rank -> rank.commentDelete);
+        this.addCrudPermissionColumn("Users", "Users", rank -> rank.userAdd, rank -> rank.userEdit,
+                rank -> rank.userDelete);
+        this.addCrudPermissionColumn("User Groups", "User Groups", rank -> rank.userGroupAdd,
+                rank -> rank.userGroupEdit, rank -> rank.userGroupDelete);
+        this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> rank.userRankAdd, rank -> rank.userRankEdit,
+                rank -> rank.userRankDelete);
 
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
                 .setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
     }
 
     /**
-     * Append a CRUD permission column showing add/edit/delete icons whose
-     * visibility is driven by per-rank booleans.
+     * Append a CRUD permission column showing add/edit/delete icons whose visibility is driven by per-rank booleans.
      *
-     * @param header     column header text (e.g. "Exercises")
-     * @param entityName entity noun used in tooltips (e.g. "Exercises", "Ranks")
+     * @param header
+     *            column header text (e.g. "Exercises")
+     * @param entityName
+     *            entity noun used in tooltips (e.g. "Exercises", "Ranks")
      */
     private void addCrudPermissionColumn(final String header, final String entityName,
-            final Predicate<UserRankViewDto> canAdd,
-            final Predicate<UserRankViewDto> canEdit,
+            final Predicate<UserRankViewDto> canAdd, final Predicate<UserRankViewDto> canEdit,
             final Predicate<UserRankViewDto> canDelete) {
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
@@ -239,7 +230,8 @@ public class AdminUserRanksView extends AbstractAdminView {
     /**
      * Create action buttons for a rank row (edit/delete).
      *
-     * @param rank the rank dto
+     * @param rank
+     *            the rank dto
      * @return a horizontal layout with action buttons
      */
     private HorizontalLayout createActionButtons(final UserRankViewDto rank) {
@@ -256,7 +248,8 @@ public class AdminUserRanksView extends AbstractAdminView {
     /**
      * Open a dialog to edit or create a user rank.
      *
-     * @param rank the rank to edit or null to create a new one
+     * @param rank
+     *            the rank to edit or null to create a new one
      */
     private void openRankDialog(final UserRankViewDto rank) {
         this.rankDialog.removeAll();
@@ -308,62 +301,44 @@ public class AdminUserRanksView extends AbstractAdminView {
         final var userRankDeleteField = new Checkbox("Can Delete User Ranks");
 
         // Bind fields
-        this.binder.forField(nameField)
-                .withValidator(value -> value != null && !value.isBlank(), "Name is required")
+        this.binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
                 .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
 
         // View permissions bindings
-        this.binder.bind(adminViewField, rank1 -> rank1.adminView,
-                (rank1, value) -> rank1.adminView = value);
+        this.binder.bind(adminViewField, rank1 -> rank1.adminView, (rank1, value) -> rank1.adminView = value);
 
         // Exercise permissions bindings
-        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd,
-                (rank1, value) -> rank1.exerciseAdd = value);
-        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit,
-                (rank1, value) -> rank1.exerciseEdit = value);
+        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd, (rank1, value) -> rank1.exerciseAdd = value);
+        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit, (rank1, value) -> rank1.exerciseEdit = value);
         this.binder.bind(exerciseDeleteField, rank1 -> rank1.exerciseDelete,
                 (rank1, value) -> rank1.exerciseDelete = value);
 
         // Lesson permissions bindings
-        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd,
-                (rank1, value) -> rank1.lessonAdd = value);
-        this.binder.bind(lessonEditField,
-                rank1 -> rank1.lessonEdit,
-                (rank1, value) -> rank1.lessonEdit = value);
-        this.binder.bind(lessonDeleteField,
-                rank1 -> rank1.lessonDelete,
-                (rank1, value) -> rank1.lessonDelete = value);
+        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd, (rank1, value) -> rank1.lessonAdd = value);
+        this.binder.bind(lessonEditField, rank1 -> rank1.lessonEdit, (rank1, value) -> rank1.lessonEdit = value);
+        this.binder.bind(lessonDeleteField, rank1 -> rank1.lessonDelete, (rank1, value) -> rank1.lessonDelete = value);
 
         // Comment permissions bindings
-        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd,
-                (rank1, value) -> rank1.commentAdd = value);
-        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit,
-                (rank1, value) -> rank1.commentEdit = value);
-        this.binder.bind(commentDeleteField,
-                rank1 -> rank1.commentDelete,
+        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd, (rank1, value) -> rank1.commentAdd = value);
+        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit, (rank1, value) -> rank1.commentEdit = value);
+        this.binder.bind(commentDeleteField, rank1 -> rank1.commentDelete,
                 (rank1, value) -> rank1.commentDelete = value);
 
         // User permissions bindings
-        this.binder.bind(userAddField, rank1 -> rank1.userAdd,
-                (rank1, value) -> rank1.userAdd = value);
-        this.binder.bind(userEditField, rank1 -> rank1.userEdit,
-                (rank1, value) -> rank1.userEdit = value);
-        this.binder.bind(userDeleteField, rank1 -> rank1.userDelete,
-                (rank1, value) -> rank1.userDelete = value);
+        this.binder.bind(userAddField, rank1 -> rank1.userAdd, (rank1, value) -> rank1.userAdd = value);
+        this.binder.bind(userEditField, rank1 -> rank1.userEdit, (rank1, value) -> rank1.userEdit = value);
+        this.binder.bind(userDeleteField, rank1 -> rank1.userDelete, (rank1, value) -> rank1.userDelete = value);
 
         // User group permissions bindings
-        this.binder.bind(userGroupAddField, rank1 -> rank1.userGroupAdd,
-                (rank1, value) -> rank1.userGroupAdd = value);
+        this.binder.bind(userGroupAddField, rank1 -> rank1.userGroupAdd, (rank1, value) -> rank1.userGroupAdd = value);
         this.binder.bind(userGroupEditField, rank1 -> rank1.userGroupEdit,
                 (rank1, value) -> rank1.userGroupEdit = value);
         this.binder.bind(userGroupDeleteField, rank1 -> rank1.userGroupDelete,
                 (rank1, value) -> rank1.userGroupDelete = value);
 
         // User rank permissions bindings
-        this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd,
-                (rank1, value) -> rank1.userRankAdd = value);
-        this.binder.bind(userRankEditField, rank1 -> rank1.userRankEdit,
-                (rank1, value) -> rank1.userRankEdit = value);
+        this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd, (rank1, value) -> rank1.userRankAdd = value);
+        this.binder.bind(userRankEditField, rank1 -> rank1.userRankEdit, (rank1, value) -> rank1.userRankEdit = value);
         this.binder.bind(userRankDeleteField, rank1 -> rank1.userRankDelete,
                 (rank1, value) -> rank1.userRankDelete = value);
 
@@ -479,16 +454,11 @@ public class AdminUserRanksView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.infof("Starting async rank search with query: %s",  query);
+        LOG.infof("Starting async rank search with query: %s", query);
 
-        AsyncDataLoader.load(
-                () -> this.rankService.searchRanks(query),
-                this,
-                ranks -> {
-                    this.searchButton.setEnabled(true);
-                    this.grid.setItems(ranks);
-                },
-                () -> this.searchButton.setEnabled(true),
-                "Failed to search ranks. Please try again.");
+        AsyncDataLoader.load(() -> this.rankService.searchRanks(query), this, ranks -> {
+            this.searchButton.setEnabled(true);
+            this.grid.setItems(ranks);
+        }, () -> this.searchButton.setEnabled(true), "Failed to search ranks. Please try again.");
     }
 }

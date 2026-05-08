@@ -31,10 +31,10 @@ public class JsonRepairService {
     ObjectMapper objectMapper;
 
     /**
-     * Parses AI provider's JSON response into AIFeedbackDto.
-     * Falls back to extracting message if JSON parsing fails.
+     * Parses AI provider's JSON response into AIFeedbackDto. Falls back to extracting message if JSON parsing fails.
      *
-     * @param jsonResponse the raw JSON response from the AI provider
+     * @param jsonResponse
+     *            the raw JSON response from the AI provider
      * @return parsed feedback DTO
      */
     public AiFeedbackDto parseFeedbackFromJson(final String jsonResponse) {
@@ -81,11 +81,11 @@ public class JsonRepairService {
     }
 
     /**
-     * Attempts to repair truncated JSON by adding missing closing braces and
-     * brackets.
-     * This handles cases where Ollama runs out of tokens mid-response.
+     * Attempts to repair truncated JSON by adding missing closing braces and brackets. This handles cases where Ollama
+     * runs out of tokens mid-response.
      *
-     * @param json the potentially truncated JSON string
+     * @param json
+     *            the potentially truncated JSON string
      * @return repaired JSON string
      */
     public String repairTruncatedJson(final String json) {
@@ -124,8 +124,8 @@ public class JsonRepairService {
 
         // If unbalanced, try to repair
         if (openBraces > 0 || openBrackets > 0) {
-            LOG.debugf("Attempting to repair truncated JSON: %s open braces, %s open brackets", 
-                    openBraces,  openBrackets);
+            LOG.debugf("Attempting to repair truncated JSON: %s open braces, %s open brackets", openBraces,
+                    openBrackets);
 
             final var repaired = new StringBuilder(json);
 
@@ -151,10 +151,10 @@ public class JsonRepairService {
     }
 
     /**
-     * Extracts feedback from a truncated or malformed AI response.
-     * Tries to salvage the message field if present.
+     * Extracts feedback from a truncated or malformed AI response. Tries to salvage the message field if present.
      *
-     * @param response the raw AI response string
+     * @param response
+     *            the raw AI response string
      * @return feedback DTO extracted from the response
      */
     public AiFeedbackDto extractFeedbackFromTruncatedResponse(final String response) {
@@ -165,21 +165,19 @@ public class JsonRepairService {
         // Try to extract the "message" field using regex
         // Pattern handles escaped quotes within the value: matches
         // non-quote/non-backslash chars OR escape sequences
-        final var messagePattern = Pattern.compile(
-                "\"message\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"",
-                Pattern.CASE_INSENSITIVE);
+        final var messagePattern =
+                Pattern.compile("\"message\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"", Pattern.CASE_INSENSITIVE);
         final var matcher = messagePattern.matcher(response);
 
         if (matcher.find()) {
             final String extractedMessage = this.unescapeJsonString(matcher.group(1));
-            LOG.debugf("Extracted message from truncated response: %s",  extractedMessage);
+            LOG.debugf("Extracted message from truncated response: %s", extractedMessage);
 
             // Try to determine the type
             // Pattern handles escaped quotes within the value: matches
             // non-quote/non-backslash chars OR escape sequences
-            final var typePattern = Pattern.compile(
-                    "\"type\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"",
-                    Pattern.CASE_INSENSITIVE);
+            final var typePattern =
+                    Pattern.compile("\"type\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"", Pattern.CASE_INSENSITIVE);
             final var typeMatcher = typePattern.matcher(response);
 
             AiFeedbackDto feedback;
@@ -206,27 +204,24 @@ public class JsonRepairService {
     /**
      * Unescapes common JSON string escape sequences.
      *
-     * @param text The JSON-escaped text
+     * @param text
+     *            The JSON-escaped text
      * @return The text with escape sequences replaced by actual characters
      */
     private String unescapeJsonString(final String text) {
         if (text == null) {
             return null;
         }
-        return text.replace("\\\"", "\"")
-                .replace("\\\\", "\\")
-                .replace("\\n", "\n")
-                .replace("\\r", "\r")
-                .replace("\\t", "\t");
+        return text.replace("\\\"", "\"").replace("\\\\", "\\").replace("\\n", "\n").replace("\\r", "\r").replace("\\t",
+                "\t");
     }
 
     /**
-     * Strips matching leading and trailing quotation marks from a string.
-     * Only removes quotes if they wrap the entire string (both start and end
-     * match).
-     * Handles both double quotes (") and smart quotes.
+     * Strips matching leading and trailing quotation marks from a string. Only removes quotes if they wrap the entire
+     * string (both start and end match). Handles both double quotes (") and smart quotes.
      *
-     * @param text The text to process
+     * @param text
+     *            The text to process
      * @return The text with quotation marks removed, or the original text if null
      */
     public String stripQuotationMarks(String text) {

@@ -9,8 +9,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 
 /**
- * Button used to delete an item. Applies a destructive theme and invokes the
- * provided click listener when activated.
+ * Button used to delete an item. Applies a destructive theme and invokes the provided click listener when activated.
  */
 public class DeleteButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Delete";

@@ -75,8 +75,8 @@ public class AdminUsersView extends AbstractAdminView {
     }
 
     /**
-     * Lifecycle callback executed before the view is entered. Verifies the
-     * user is authenticated and triggers UI construction and data loading.
+     * Lifecycle callback executed before the view is entered. Verifies the user is authenticated and triggers UI
+     * construction and data loading.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -90,26 +90,18 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void loadUsersAsync() {
         LOG.info("Starting async user loading");
-        AsyncDataLoader.load(
-                () -> this.userService.getAllUsers(),
-                this,
-                users -> {
-                    LOG.infof("Successfully loaded %s users",  users.size());
-                    this.grid.setItems(users);
-                },
-                "Failed to load users. Please try again.");
+        AsyncDataLoader.load(() -> this.userService.getAllUsers(), this, users -> {
+            LOG.infof("Successfully loaded %s users", users.size());
+            this.grid.setItems(users);
+        }, "Failed to load users. Please try again.");
     }
 
     private void loadRanksAsync() {
         LOG.info("Starting async rank loading");
-        AsyncDataLoader.load(
-                () -> this.userRankService.getAllRanks(),
-                this,
-                ranks -> {
-                    LOG.infof("Successfully loaded %s ranks",  ranks.size());
-                    this.availableRanks = ranks;
-                },
-                "Failed to load ranks. Please try again.");
+        AsyncDataLoader.load(() -> this.userRankService.getAllRanks(), this, ranks -> {
+            LOG.infof("Successfully loaded %s ranks", ranks.size());
+            this.availableRanks = ranks;
+        }, "Failed to load ranks. Please try again.");
     }
 
     private void buildUi() {
@@ -126,15 +118,11 @@ public class AdminUsersView extends AbstractAdminView {
     }
 
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadUsersAsync();
-                    }
-                },
-                e -> this.searchUsers(),
-                "Search by username or email...",
-                "Search Users");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadUsersAsync();
+            }
+        }, e -> this.searchUsers(), "Search by username or email...", "Search Users");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -240,9 +228,8 @@ public class AdminUsersView extends AbstractAdminView {
             passwordField.setRequired(true);
             passwordField.setInvalid(false);
             form.add(passwordField);
-            this.binder.forField(passwordField)
-                    .asRequired("Password is required")
-                    .bind(user1 -> user1.password, (user1, value) -> user1.password = value);
+            this.binder.forField(passwordField).asRequired("Password is required").bind(user1 -> user1.password,
+                    (user1, value) -> user1.password = value);
         } else {
             // Create a vertical layout to match the text field styling
             final var passwordLayout = new VerticalLayout();
@@ -280,36 +267,25 @@ public class AdminUsersView extends AbstractAdminView {
         form.add(rankField, activatedField, bannedField);
 
         // Bind fields with proper validation
-        this.binder.forField(usernameField)
-                .asRequired("Username is required")
-                .bind(user1 -> user1.username, (user1, value) -> user1.username = value);
+        this.binder.forField(usernameField).asRequired("Username is required").bind(user1 -> user1.username,
+                (user1, value) -> user1.username = value);
 
-        this.binder.forField(emailField)
-                .bind(user1 -> user1.email,
-                        (user1, value) -> user1.email = (value == null || value.isBlank()) ? null
-                                : value.trim());
+        this.binder.forField(emailField).bind(user1 -> user1.email,
+                (user1, value) -> user1.email = (value == null || value.isBlank()) ? null : value.trim());
 
-        this.binder.bind(activatedField, user1 -> user1.activated,
-                (user1, value) -> user1.activated = value);
-        this.binder.bind(bannedField, user1 -> user1.banned,
-                (user1, value) -> user1.banned = value);
+        this.binder.bind(activatedField, user1 -> user1.activated, (user1, value) -> user1.activated = value);
+        this.binder.bind(bannedField, user1 -> user1.banned, (user1, value) -> user1.banned = value);
 
         // Rank binding - convert between UserRankViewDto and rankPublicId
-        this.binder.forField(rankField)
-                .asRequired("Rank is required")
-                .bind(
-                        user1 -> {
-                            if (user1.rankPublicId != null && this.availableRanks != null) {
-                                return this.availableRanks.stream()
-                                        .filter(rank -> rank.publicId.equals(user1.rankPublicId))
-                                        .findFirst()
-                                        .orElse(null);
-                            }
-                            return null;
-                        },
-                        (user1, value) -> {
-                            user1.rankPublicId = value != null ? value.publicId : null;
-                        });
+        this.binder.forField(rankField).asRequired("Rank is required").bind(user1 -> {
+            if (user1.rankPublicId != null && this.availableRanks != null) {
+                return this.availableRanks.stream().filter(rank -> rank.publicId.equals(user1.rankPublicId)).findFirst()
+                        .orElse(null);
+            }
+            return null;
+        }, (user1, value) -> {
+            user1.rankPublicId = value != null ? value.publicId : null;
+        });
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
@@ -399,7 +375,7 @@ public class AdminUsersView extends AbstractAdminView {
             NotificationUtil.showSuccess("Password changed successfully");
             this.passwordDialog.close();
         } catch (final PermissionDeniedException e) {
-            LOG.warnf("Permission denied changing password: %s",  e.getMessage());
+            LOG.warnf("Permission denied changing password: %s", e.getMessage());
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error changing password", e);
@@ -429,16 +405,13 @@ public class AdminUsersView extends AbstractAdminView {
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
         } catch (final ConstraintViolationException e) {
-            final var messages = e.getConstraintViolations().stream()
-                    .map(v -> {
-                        String fieldName = null;
-                        for (final var node : v.getPropertyPath()) {
-                            fieldName = node.getName();
-                        }
-                        return (fieldName != null ? fieldName : "field") + ": " + v.getMessage();
-                    })
-                    .reduce((a, b) -> a + "; " + b)
-                    .orElse("Invalid input");
+            final var messages = e.getConstraintViolations().stream().map(v -> {
+                String fieldName = null;
+                for (final var node : v.getPropertyPath()) {
+                    fieldName = node.getName();
+                }
+                return (fieldName != null ? fieldName : "field") + ": " + v.getMessage();
+            }).reduce((a, b) -> a + "; " + b).orElse("Invalid input");
             NotificationUtil.showError(messages);
         } catch (final PermissionDeniedException e) {
             LOG.warn("Permission denied saving user", e);
@@ -474,18 +447,13 @@ public class AdminUsersView extends AbstractAdminView {
         }
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        AsyncDataLoader.load(
-                () -> this.userService.searchUsers(query.trim()),
-                this,
-                users -> {
-                    this.searchButton.setEnabled(true);
-                    this.searchButton.setText("Search");
-                    this.grid.setItems(users);
-                },
-                () -> {
-                    this.searchButton.setEnabled(true);
-                    this.searchButton.setText("Search");
-                },
-                "An error occurred while searching users. Please try again.");
+        AsyncDataLoader.load(() -> this.userService.searchUsers(query.trim()), this, users -> {
+            this.searchButton.setEnabled(true);
+            this.searchButton.setText("Search");
+            this.grid.setItems(users);
+        }, () -> {
+            this.searchButton.setEnabled(true);
+            this.searchButton.setText("Search");
+        }, "An error occurred while searching users. Please try again.");
     }
 }
