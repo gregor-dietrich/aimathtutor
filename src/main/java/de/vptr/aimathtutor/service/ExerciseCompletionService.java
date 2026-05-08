@@ -9,12 +9,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service responsible for enriching exercise DTOs with user-specific completion
- * data.
+ * Service responsible for enriching exercise DTOs with user-specific completion data.
  *
  * <p>
- * Decoupled from {@link ExerciseService} to keep exercise CRUD separate from
- * analytics/read-model concerns.
+ * Decoupled from {@link ExerciseService} to keep exercise CRUD separate from analytics/read-model concerns.
  * </p>
  */
 @ApplicationScoped
@@ -29,10 +27,11 @@ public class ExerciseCompletionService {
     AnalyticsService analyticsService;
 
     /**
-     * Enriches an ExerciseViewDto with completion data for the current user.
-     * If the user is not authenticated, completion fields remain null.
+     * Enriches an ExerciseViewDto with completion data for the current user. If the user is not authenticated,
+     * completion fields remain null.
      *
-     * @param dto The exercise DTO to enrich
+     * @param dto
+     *            The exercise DTO to enrich
      * @return The enriched DTO
      */
     public ExerciseViewDto enrichWithCompletionData(final ExerciseViewDto dto) {
@@ -51,9 +50,7 @@ public class ExerciseCompletionService {
             final var userSessions = this.analyticsService.getSessionsByUserAndExercise(currentUserId, dto.id);
 
             // Check if any session was completed
-            final var completedSessions = userSessions.stream()
-                    .filter(s -> Boolean.TRUE.equals(s.completed))
-                    .toList();
+            final var completedSessions = userSessions.stream().filter(s -> Boolean.TRUE.equals(s.completed)).toList();
 
             dto.userCompleted = !completedSessions.isEmpty();
             dto.userCompletionCount = completedSessions.size();
@@ -61,18 +58,18 @@ public class ExerciseCompletionService {
         } catch (final RuntimeException e) {
             // Log the error but don't fail - this ensures we don't break the exercise
             // loading functionality
-            LOG.errorf(e, "Error enriching exercise DTO with completion data for exercise ID: %s",  dto.id);
+            LOG.errorf(e, "Error enriching exercise DTO with completion data for exercise ID: %s", dto.id);
         }
 
         return dto;
     }
 
     /**
-     * Batch-enriches a list of ExerciseViewDtos with completion data for the
-     * current user. Uses a single query to load all user sessions and avoid N+1
-     * patterns.
+     * Batch-enriches a list of ExerciseViewDtos with completion data for the current user. Uses a single query to load
+     * all user sessions and avoid N+1 patterns.
      *
-     * @param dtos The exercise DTOs to enrich
+     * @param dtos
+     *            The exercise DTOs to enrich
      * @return The enriched DTOs
      */
     public List<ExerciseViewDto> enrichListWithCompletionData(final List<ExerciseViewDto> dtos) {
@@ -87,14 +84,12 @@ public class ExerciseCompletionService {
             }
 
             // Batch-load all sessions for this user grouped by exercise (single query)
-            final var sessionsByExercise = this.analyticsService
-                    .getSessionsByUserGroupedByExercise(currentUserId);
+            final var sessionsByExercise = this.analyticsService.getSessionsByUserGroupedByExercise(currentUserId);
 
             for (final ExerciseViewDto dto : dtos) {
                 final var userSessions = sessionsByExercise.getOrDefault(dto.publicId, List.of());
-                final var completedSessions = userSessions.stream()
-                        .filter(s -> Boolean.TRUE.equals(s.completed))
-                        .toList();
+                final var completedSessions =
+                        userSessions.stream().filter(s -> Boolean.TRUE.equals(s.completed)).toList();
                 dto.userCompleted = !completedSessions.isEmpty();
                 dto.userCompletionCount = completedSessions.size();
             }

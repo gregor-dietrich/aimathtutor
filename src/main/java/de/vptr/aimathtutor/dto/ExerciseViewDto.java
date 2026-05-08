@@ -6,8 +6,7 @@ import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 
 /**
- * View DTO representing an exercise with denormalized user and lesson fields
- * suitable for display in the UI.
+ * View DTO representing an exercise with denormalized user and lesson fields suitable for display in the UI.
  */
 public class ExerciseViewDto {
 
@@ -36,8 +35,7 @@ public class ExerciseViewDto {
     public DifficultyLevel graspableDifficulty;
     public String graspableHints;
 
-    public ExerciseViewDto() {
-    }
+    public ExerciseViewDto() {}
 
     /**
      * Constructs an ExerciseViewDto from an ExerciseEntity.

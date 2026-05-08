@@ -47,7 +47,6 @@ class GeminiServiceTest {
         assertEquals(AppConstants.RETRY_DELAY_MS, retry.delay());
         assertEquals(AppConstants.RETRY_JITTER_MS, retry.jitter());
         assertEquals(1, retry.abortOn().length);
-        assertSame(NonRetryableAiProviderException.class, retry.abortOn()[0],
-                "Permanent failures must abort retry");
+        assertSame(NonRetryableAiProviderException.class, retry.abortOn()[0], "Permanent failures must abort retry");
     }
 }

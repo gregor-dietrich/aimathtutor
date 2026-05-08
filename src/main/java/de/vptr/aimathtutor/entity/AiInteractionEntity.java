@@ -17,22 +17,20 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Entity to log AI interactions and feedback.
- * Useful for analytics, improving AI responses, and debugging.
+ * Entity to log AI interactions and feedback. Useful for analytics, improving AI responses, and debugging.
  */
 @Entity
-@Table(name = "ai_interactions", indexes = {
-        @Index(name = "idx_ai_session", columnList = "session_id"),
-        @Index(name = "idx_ai_user", columnList = "user_id"),
-        @Index(name = "idx_ai_exercise", columnList = "exercise_id")
-})
+@Table(name = "ai_interactions",
+        indexes = { @Index(name = "idx_ai_session", columnList = "session_id"),
+                @Index(name = "idx_ai_user", columnList = "user_id"),
+                @Index(name = "idx_ai_exercise", columnList = "exercise_id") })
 @NamedQueries({
         @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "AiInteraction.findByPublicId", query = "FROM AiInteractionEntity WHERE publicId = :p"),
         @NamedQuery(name = "AiInteraction.findBySessionId", query = "FROM AiInteractionEntity WHERE sessionId = :s"),
         @NamedQuery(name = "AiInteraction.findByUserId", query = "FROM AiInteractionEntity WHERE user.id = :u"),
-        @NamedQuery(name = "AiInteraction.findByExerciseId", query = "FROM AiInteractionEntity WHERE exercise.id = :e")
-})
+        @NamedQuery(name = "AiInteraction.findByExerciseId",
+                query = "FROM AiInteractionEntity WHERE exercise.id = :e") })
 public class AiInteractionEntity extends BaseEntity {
 
     @Column(name = "session_id")

@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
 
 /**
- * DTO for displaying AI interaction information in admin views.
- * Used for analyzing AI feedback and student interactions.
+ * DTO for displaying AI interaction information in admin views. Used for analyzing AI feedback and student
+ * interactions.
  */
 public class AiInteractionViewDto {
 
@@ -26,8 +26,7 @@ public class AiInteractionViewDto {
     public Boolean actionCorrect;
     public LocalDateTime created;
 
-    public AiInteractionViewDto() {
-    }
+    public AiInteractionViewDto() {}
 
     /**
      * Constructs an AiInteractionViewDto from an AiInteractionEntity.

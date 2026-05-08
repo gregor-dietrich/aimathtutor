@@ -8,8 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing user rank entities.
- * Provides database access and query operations for user ranks including
+ * Repository for managing user rank entities. Provides database access and query operations for user ranks including
  * find, search, persist, and delete operations.
  */
 @ApplicationScoped
@@ -27,7 +26,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Retrieves an optional user rank by its unique identifier.
      *
-     * @param id the user rank ID
+     * @param id
+     *            the user rank ID
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     public Optional<UserRankEntity> findByIdOptional(final Long id) {
@@ -37,7 +37,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Retrieves a user rank by its public identifier.
      *
-     * @param publicId the public ID of the rank
+     * @param publicId
+     *            the public ID of the rank
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     public Optional<UserRankEntity> findByPublicId(final String publicId) {
@@ -53,7 +54,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Retrieves a user rank by its unique identifier.
      *
-     * @param id the user rank ID
+     * @param id
+     *            the user rank ID
      * @return the {@link UserRankEntity} if found, null otherwise
      */
     public UserRankEntity findById(final Long id) {
@@ -66,7 +68,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Retrieves an optional user rank by its name.
      *
-     * @param name the name of the user rank to find
+     * @param name
+     *            the name of the user rank to find
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     public Optional<UserRankEntity> findByName(final String name) {
@@ -79,7 +82,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Searches for user ranks matching the given search term.
      *
-     * @param searchTerm the search term to match against user rank names
+     * @param searchTerm
+     *            the search term to match against user rank names
      * @return a list of {@link UserRankEntity} objects matching the search term
      */
     public List<UserRankEntity> search(final String searchTerm) {
@@ -91,7 +95,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Persists a user rank entity to the database.
      *
-     * @param rank the user rank to persist; null values are ignored
+     * @param rank
+     *            the user rank to persist; null values are ignored
      */
     @Transactional
     public void persist(final UserRankEntity rank) {
@@ -104,7 +109,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Deletes a user rank by its unique identifier.
      *
-     * @param id the ID of the user rank to delete
+     * @param id
+     *            the ID of the user rank to delete
      * @return true if the rank was successfully deleted, false if not found
      */
     @Transactional
@@ -120,7 +126,8 @@ public class UserRankRepository extends AbstractRepository {
     /**
      * Deletes a user rank by its public identifier.
      *
-     * @param publicId the public ID of the user rank to delete
+     * @param publicId
+     *            the public ID of the user rank to delete
      * @return true if the rank was successfully deleted, false if not found
      */
     @Transactional

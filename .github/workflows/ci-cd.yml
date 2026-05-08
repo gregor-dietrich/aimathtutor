@@ -43,7 +43,7 @@ jobs:
       - name: SAST (CodeQL)
         uses: github/codeql-action/init@v4
         with:
-          languages: java
+          languages: java, javascript
       - name: Compile project
         run: ./mvnw clean install package -DskipTests
       - name: Perform CodeQL Analysis

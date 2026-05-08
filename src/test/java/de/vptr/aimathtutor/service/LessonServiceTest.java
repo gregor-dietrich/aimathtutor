@@ -36,10 +36,8 @@ class LessonServiceTest {
     private PermissionService permissionService;
 
     private Long getLessonNumericId(final String publicId) {
-        return this.em.createQuery(
-                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                .setParameter("p", publicId)
-                .getSingleResult().id;
+        return this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                .setParameter("p", publicId).getSingleResult().id;
     }
 
     private LessonEntity buildLesson(final String prefix) {
@@ -125,8 +123,7 @@ class LessonServiceTest {
         parentRef.id = 999_999L;
         child.parent = parentRef;
 
-        final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.lessonService.createLesson(child));
+        final var thrown = assertThrows(WebApplicationException.class, () -> this.lessonService.createLesson(child));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
@@ -165,8 +162,7 @@ class LessonServiceTest {
         newParent.publicId = child.publicId;
         update.parent = newParent;
 
-        final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.lessonService.updateLesson(update));
+        final var thrown = assertThrows(WebApplicationException.class, () -> this.lessonService.updateLesson(update));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
@@ -234,12 +230,10 @@ class LessonServiceTest {
         this.em.flush();
         this.em.clear();
 
-        final LessonEntity persisted = this.em.createQuery(
-                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                .setParameter("p", created.publicId)
-                .getSingleResult();
-        assertEquals("Updated Lesson Name", persisted.name,
-                "Updated name should be persisted in the database");
+        final LessonEntity persisted =
+                this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                        .setParameter("p", created.publicId).getSingleResult();
+        assertEquals("Updated Lesson Name", persisted.name, "Updated name should be persisted in the database");
     }
 
     @Test
@@ -261,12 +255,10 @@ class LessonServiceTest {
         this.em.flush();
         this.em.clear();
 
-        final LessonEntity persisted = this.em.createQuery(
-                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                .setParameter("p", originalPublicId)
-                .getSingleResult();
-        assertEquals("Patched Name", persisted.name,
-                "Patched name should be persisted in the database");
+        final LessonEntity persisted =
+                this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                        .setParameter("p", originalPublicId).getSingleResult();
+        assertEquals("Patched Name", persisted.name, "Patched name should be persisted in the database");
     }
 
     @Test
@@ -284,8 +276,7 @@ class LessonServiceTest {
 
         assertNotNull(roots);
         assertFalse(roots.isEmpty(), "There should be at least one root lesson");
-        assertTrue(roots.stream().allMatch(l -> l.parentPublicId == null),
-                "Root lessons should have no parent");
+        assertTrue(roots.stream().allMatch(l -> l.parentPublicId == null), "Root lessons should have no parent");
         assertFalse(roots.stream().anyMatch(l -> childDto.publicId.equals(l.publicId)),
                 "Child lesson should not appear in root lessons");
     }

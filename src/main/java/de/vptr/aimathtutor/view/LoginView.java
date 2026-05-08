@@ -12,14 +12,12 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Login view for the application. Provides username/password fields and
- * handles user authentication via the
+ * Login view for the application. Provides username/password fields and handles user authentication via the
  * {@link AuthService}.
  */
 @Route(value = "login", layout = MainLayout.class)
@@ -32,8 +30,7 @@ public class LoginView extends VerticalLayout {
     private transient AuthService authService;
 
     /**
-     * Construct the login view with username/password fields and a login
-     * handler.
+     * Construct the login view with username/password fields and a login handler.
      */
     public LoginView() {
         this.setSizeFull();
@@ -65,7 +62,7 @@ public class LoginView extends VerticalLayout {
 
                 final var result = this.authService.authenticate(username, password);
 
-                LOG.tracef("Authentication result - Status: %s, Message: %s",  result.getStatus(),  result.getMessage());
+                LOG.tracef("Authentication result - Status: %s, Message: %s", result.getStatus(), result.getMessage());
 
                 switch (result.getStatus()) {
                     case SUCCESS -> {
@@ -87,7 +84,7 @@ public class LoginView extends VerticalLayout {
                         NotificationUtil.showWarning(result.getMessage());
                     }
                     default -> {
-                        LOG.errorf("Unknown authentication result status: %s",  result.getStatus());
+                        LOG.errorf("Unknown authentication result status: %s", result.getStatus());
                         NotificationUtil.showError("Unknown error occurred");
                     }
                 }

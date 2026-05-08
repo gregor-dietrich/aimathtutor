@@ -331,8 +331,7 @@ class UserServiceTest {
         final UserViewDto created = this.userService.createUser(dto);
         final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
 
-        assertThrows(ValidationException.class,
-                () -> this.userService.updateAvatars(entity.id, "", "🤖"));
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "", "🤖"));
     }
 
     @Test

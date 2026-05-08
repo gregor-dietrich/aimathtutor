@@ -23,7 +23,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.AiConfigService;
@@ -33,17 +32,16 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
 
 /**
- * Admin view for managing AI tutor configuration at runtime.
- * Allows admins to change AI provider, model, temperature, prompts, and other
- * settings
- * without restarting the application.
+ * Admin view for managing AI tutor configuration at runtime. Allows admins to change AI provider, model, temperature,
+ * prompts, and other settings without restarting the application.
  */
 @Route(value = "admin/config", layout = AdminMainLayout.class)
 @PageTitle("AI Configuration - AI Math Tutor")
 public class AdminConfigView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminConfigView.class);
-    private static final String TEMPERATURE_HELPER = "Temperature (0.0-2.0): Lower = more focused, Higher = more creative";
+    private static final String TEMPERATURE_HELPER =
+            "Temperature (0.0-2.0): Lower = more focused, Higher = more creative";
     private static final String MAX_TOKENS_HELPER = "Maximum tokens in response (1-8192)";
 
     @Inject
@@ -58,8 +56,7 @@ public class AdminConfigView extends AbstractAdminView {
     @Override
     protected boolean isAuthorized() {
         final var userRank = this.userRankService.getCurrentUserRank();
-        return userRank != null && (userRank.canAdminView()
-                || userRank.hasAnyExercisePermission()
+        return userRank != null && (userRank.canAdminView() || userRank.hasAnyExercisePermission()
                 || userRank.hasAnyLessonPermission());
     }
 
@@ -73,10 +70,8 @@ public class AdminConfigView extends AbstractAdminView {
     }
 
     /**
-     * Called before the view is shown. Ensures authentication and proper
-     * permissions.
-     * Configuration can only be managed by users with exercise or lesson
-     * permissions.
+     * Called before the view is shown. Ensures authentication and proper permissions. Configuration can only be managed
+     * by users with exercise or lesson permissions.
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -186,8 +181,8 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        final var apiKeyField = this.createReadOnlyApiKeyField("GEMINI_API_KEY",
-                "https://aistudio.google.com/app/apikey");
+        final var apiKeyField =
+                this.createReadOnlyApiKeyField("GEMINI_API_KEY", "https://aistudio.google.com/app/apikey");
 
         final var modelField = this.createTextConfigField("Model", AiConfigKeys.GEMINI_MODEL, "gemma-3-27b-it",
                 "Gemini model name (e.g., gemma-3-27b-it)");
@@ -198,8 +193,8 @@ public class AdminConfigView extends AbstractAdminView {
         final var tempField = this.createTemperatureField(AiConfigKeys.GEMINI_PREFIX);
         final var maxTokensField = this.createMaxTokensField(AiConfigKeys.GEMINI_PREFIX);
 
-        final var saveBtn = new Button("Save",
-                ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+        final var saveBtn =
+                new Button("Save", ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
         final var testBtn = new Button("Test Connection", ignored -> {
             this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField);
             this.testGeminiConnection();
@@ -215,11 +210,11 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        final var apiKeyField = this.createReadOnlyApiKeyField("OPENAI_API_KEY",
-                "https://platform.openai.com/api-keys");
+        final var apiKeyField =
+                this.createReadOnlyApiKeyField("OPENAI_API_KEY", "https://platform.openai.com/api-keys");
 
-        final var orgIdField = this.createTextConfigField("Organization ID (Optional)",
-                AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
+        final var orgIdField =
+                this.createTextConfigField("Organization ID (Optional)", AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
 
         final var modelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-5-nano",
                 "OpenAI model name (e.g., gpt-5-nano)");
@@ -259,8 +254,8 @@ public class AdminConfigView extends AbstractAdminView {
         maxTokensField.setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
 
         final var timeoutField = new NumberField("Timeout (seconds)");
-        timeoutField.setValue(this.aiConfigService.getConfigValueAsInt(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, 30)
-                .doubleValue());
+        timeoutField.setValue(
+                this.aiConfigService.getConfigValueAsInt(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, 30).doubleValue());
         timeoutField.setMin(1);
         timeoutField.setMax(300);
         timeoutField.setStep(1);
@@ -283,18 +278,18 @@ public class AdminConfigView extends AbstractAdminView {
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        final var qaPrefix = this.createPromptArea("Question Answering Prefix",
-                AiConfigKeys.PROMPT_QUESTION_PREFIX, "Prefix for question answering prompts");
-        final var qaPostfix = this.createPromptArea("Question Answering Postfix",
-                AiConfigKeys.PROMPT_QUESTION_POSTFIX, "Postfix for question answering prompts");
-        final var mtPrefix = this.createPromptArea("Math Tutoring Prefix",
-                AiConfigKeys.PROMPT_TUTORING_PREFIX, "Prefix for math tutoring prompts");
-        final var mtPostfix = this.createPromptArea("Math Tutoring Postfix",
-                AiConfigKeys.PROMPT_TUTORING_POSTFIX, "Postfix for math tutoring prompts");
+        final var qaPrefix = this.createPromptArea("Question Answering Prefix", AiConfigKeys.PROMPT_QUESTION_PREFIX,
+                "Prefix for question answering prompts");
+        final var qaPostfix = this.createPromptArea("Question Answering Postfix", AiConfigKeys.PROMPT_QUESTION_POSTFIX,
+                "Postfix for question answering prompts");
+        final var mtPrefix = this.createPromptArea("Math Tutoring Prefix", AiConfigKeys.PROMPT_TUTORING_PREFIX,
+                "Prefix for math tutoring prompts");
+        final var mtPostfix = this.createPromptArea("Math Tutoring Postfix", AiConfigKeys.PROMPT_TUTORING_POSTFIX,
+                "Postfix for math tutoring prompts");
 
         // Save button
-        final var saveBtn = new Button("Save",
-                ignored -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+        final var saveBtn =
+                new Button("Save", ignored -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
         return panel;
@@ -359,8 +354,7 @@ public class AdminConfigView extends AbstractAdminView {
 
     // --- Connection tests ---------------------------------------------------
 
-    private void testConnection(final Supplier<AiProviderTestResultDto> testCall,
-            final String providerName) {
+    private void testConnection(final Supplier<AiProviderTestResultDto> testCall, final String providerName) {
         final var ui = getUI().orElse(null);
         if (ui == null) {
             return;
@@ -372,12 +366,12 @@ public class AdminConfigView extends AbstractAdminView {
                 } else {
                     NotificationUtil.showError(result.message);
                 }
-                LOG.infof("%s connection test: %s",  providerName,  result.message);
+                LOG.infof("%s connection test: %s", providerName, result.message);
             });
         }).exceptionally(ex -> {
             ui.access(() -> {
                 NotificationUtil.showError("Connection test failed: " + ex.getMessage());
-                LOG.errorf(ex, "%s connection test failed",  providerName);
+                LOG.errorf(ex, "%s connection test failed", providerName);
             });
             return null;
         });
@@ -409,8 +403,8 @@ public class AdminConfigView extends AbstractAdminView {
     }
 
     /**
-     * Persist a list of config updates with standard error handling and
-     * a "{label} configuration updated successfully" notification on success.
+     * Persist a list of config updates with standard error handling and a "{label} configuration updated successfully"
+     * notification on success.
      */
     private void saveProviderConfig(final String label, final List<AiConfigUpdateDto> updates) {
         try {
@@ -422,13 +416,13 @@ public class AdminConfigView extends AbstractAdminView {
             this.aiConfigService.updateMultipleConfigs(updates, userId);
 
             NotificationUtil.showSuccess(label + " configuration updated successfully");
-            LOG.infof("%s config saved",  label);
+            LOG.infof("%s config saved", label);
         } catch (final IllegalArgumentException e) {
             NotificationUtil.showError("Validation error: " + e.getMessage());
-            LOG.errorf(e, "Validation error saving %s config",  label);
+            LOG.errorf(e, "Validation error saving %s config", label);
         } catch (final Exception e) {
             NotificationUtil.showError("Error saving configuration. Please try again later.");
-            LOG.errorf(e, "Error saving %s config",  label);
+            LOG.errorf(e, "Error saving %s config", label);
         }
     }
 
@@ -443,8 +437,7 @@ public class AdminConfigView extends AbstractAdminView {
             return defaultValue;
         }
         if (value % 1 != 0) {
-            throw new IllegalArgumentException(
-                    field.getLabel() + " must be a whole number, but got: " + value);
+            throw new IllegalArgumentException(field.getLabel() + " must be a whole number, but got: " + value);
         }
         return Integer.toString(value.intValue());
     }
@@ -468,48 +461,48 @@ public class AdminConfigView extends AbstractAdminView {
         }
     }
 
-    private void saveGeneralConfig(final Checkbox enabledCheckbox,
-            final ComboBox<String> providerCombo) {
-        this.saveProviderConfig("AI", List.of(
-                new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED, enabledCheckbox.getValue() ? "true" : "false"),
-                new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, providerCombo.getValue())));
+    private void saveGeneralConfig(final Checkbox enabledCheckbox, final ComboBox<String> providerCombo) {
+        this.saveProviderConfig("AI",
+                List.of(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED,
+                        enabledCheckbox.getValue() ? "true" : "false"),
+                        new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, providerCombo.getValue())));
     }
 
-    private void saveGeminiConfig(final TextField modelField, final TextField urlField,
-            final NumberField tempField, final NumberField maxTokensField) {
-        this.saveProviderConfig("Gemini", List.of(
-                new AiConfigUpdateDto(AiConfigKeys.GEMINI_MODEL, modelField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.GEMINI_API_BASE_URL, urlField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.GEMINI_TEMPERATURE, temperatureOrDefault(tempField)),
-                new AiConfigUpdateDto(AiConfigKeys.GEMINI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
+    private void saveGeminiConfig(final TextField modelField, final TextField urlField, final NumberField tempField,
+            final NumberField maxTokensField) {
+        this.saveProviderConfig("Gemini",
+                List.of(new AiConfigUpdateDto(AiConfigKeys.GEMINI_MODEL, modelField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.GEMINI_API_BASE_URL, urlField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.GEMINI_TEMPERATURE, temperatureOrDefault(tempField)),
+                        new AiConfigUpdateDto(AiConfigKeys.GEMINI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
     }
 
     private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,
             final NumberField tempField, final NumberField maxTokensField) {
-        this.saveProviderConfig("OpenAI", List.of(
-                new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, orgIdField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, modelField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, urlField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE, temperatureOrDefault(tempField)),
-                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
+        this.saveProviderConfig("OpenAI",
+                List.of(new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, orgIdField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, modelField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, urlField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE, temperatureOrDefault(tempField)),
+                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
     }
 
-    private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField,
-            final NumberField tempField, final NumberField maxTokensField, final NumberField timeoutField) {
-        this.saveProviderConfig("Ollama", List.of(
-                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, apiUrlField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, modelField.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE, temperatureOrDefault(tempField)),
-                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS, intOrDefault(maxTokensField, "2000")),
-                new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, intOrDefault(timeoutField, "30"))));
+    private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField, final NumberField tempField,
+            final NumberField maxTokensField, final NumberField timeoutField) {
+        this.saveProviderConfig("Ollama",
+                List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, apiUrlField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, modelField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE, temperatureOrDefault(tempField)),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS, intOrDefault(maxTokensField, "2000")),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, intOrDefault(timeoutField, "30"))));
     }
 
     private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
             final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
-        this.saveProviderConfig("Prompts", List.of(
-                new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_PREFIX, questionPrefixArea.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_POSTFIX, questionPostfixArea.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_PREFIX, tutoringPrefixArea.getValue()),
-                new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_POSTFIX, tutoringPostfixArea.getValue())));
+        this.saveProviderConfig("Prompts",
+                List.of(new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_PREFIX, questionPrefixArea.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_POSTFIX, questionPostfixArea.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_PREFIX, tutoringPrefixArea.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_POSTFIX, tutoringPostfixArea.getValue())));
     }
 }

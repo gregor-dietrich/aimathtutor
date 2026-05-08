@@ -8,9 +8,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 /**
- * Repository for managing user entities.
- * Provides database access and query operations for users including
- * find by ID, username, email, and search operations.
+ * Repository for managing user entities. Provides database access and query operations for users including find by ID,
+ * username, email, and search operations.
  */
 @ApplicationScoped
 public class UserRepository extends AbstractRepository {
@@ -18,7 +17,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves a user by its unique identifier.
      *
-     * @param id the user ID
+     * @param id
+     *            the user ID
      * @return the {@link UserEntity} if found, null otherwise
      */
     public UserEntity findById(final Long id) {
@@ -31,7 +31,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves an optional user by its unique identifier.
      *
-     * @param id the user ID
+     * @param id
+     *            the user ID
      * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByIdOptional(final Long id) {
@@ -41,7 +42,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves a user by their public identifier.
      *
-     * @param publicId the public ID of the user
+     * @param publicId
+     *            the public ID of the user
      * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByPublicId(final String publicId) {
@@ -57,7 +59,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves an optional user by its username.
      *
-     * @param username the username to search for
+     * @param username
+     *            the username to search for
      * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByUsernameOptional(final String username) {
@@ -73,7 +76,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves a user by its username.
      *
-     * @param username the username to search for
+     * @param username
+     *            the username to search for
      * @return the {@link UserEntity} if found, null otherwise
      */
     public UserEntity findByUsername(final String username) {
@@ -83,7 +87,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves an optional user by its email address.
      *
-     * @param email the email address to search for
+     * @param email
+     *            the email address to search for
      * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByEmailOptional(final String email) {
@@ -99,7 +104,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Persists a user entity to the database.
      *
-     * @param user the user to persist; null values are ignored
+     * @param user
+     *            the user to persist; null values are ignored
      * @return the persisted {@link UserEntity}, or null if the input was null
      */
     @Transactional
@@ -132,7 +138,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Retrieves all users with a specific rank.
      *
-     * @param rankId the rank ID to filter by
+     * @param rankId
+     *            the rank ID to filter by
      * @return a list of {@link UserEntity} objects with the specified rank
      */
     public List<UserEntity> findByRankId(final Long rankId) {
@@ -144,7 +151,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Counts users with a specific rank.
      *
-     * @param rankId the rank ID to filter by
+     * @param rankId
+     *            the rank ID to filter by
      * @return the count of users with the specified rank
      */
     public long countByRankId(final Long rankId) {
@@ -159,15 +167,15 @@ public class UserRepository extends AbstractRepository {
     /**
      * Counts users with a specific rank by public ID.
      *
-     * @param rankPublicId the rank public ID to filter by
+     * @param rankPublicId
+     *            the rank public ID to filter by
      * @return the count of users with the specified rank
      */
     public long countByRankPublicId(final String rankPublicId) {
         if (rankPublicId == null) {
             return 0L;
         }
-        final var q = this.em.createQuery(
-                "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.publicId = :r", Long.class);
+        final var q = this.em.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.rank.publicId = :r", Long.class);
         q.setParameter("r", rankPublicId);
         return q.getSingleResult();
     }
@@ -175,8 +183,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Searches for users matching the given search term.
      *
-     * @param searchTerm the search term to match against user properties;
-     *                   if null or empty, returns all users
+     * @param searchTerm
+     *            the search term to match against user properties; if null or empty, returns all users
      * @return a list of {@link UserEntity} objects matching the search term
      */
     public List<UserEntity> search(final String searchTerm) {
@@ -191,7 +199,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Deletes a user by its unique identifier.
      *
-     * @param id the ID of the user to delete
+     * @param id
+     *            the ID of the user to delete
      * @return true if the user was successfully deleted, false if not found
      */
     @Transactional
@@ -207,7 +216,8 @@ public class UserRepository extends AbstractRepository {
     /**
      * Deletes a user by its public identifier.
      *
-     * @param publicId the public ID of the user to delete
+     * @param publicId
+     *            the public ID of the user to delete
      * @return true if the user was successfully deleted, false if not found
      */
     @Transactional

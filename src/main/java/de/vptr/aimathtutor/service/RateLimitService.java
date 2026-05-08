@@ -13,9 +13,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * In-memory per-user rate limiting service using a sliding window.
- * Tracks timestamps of user actions and enforces maximum calls per time window.
- * Periodically evicts stale user entries to prevent unbounded memory growth.
+ * In-memory per-user rate limiting service using a sliding window. Tracks timestamps of user actions and enforces
+ * maximum calls per time window. Periodically evicts stale user entries to prevent unbounded memory growth.
  */
 @ApplicationScoped
 public class RateLimitService {
@@ -37,16 +36,13 @@ public class RateLimitService {
             return t;
         });
         // Schedule periodic cleanup of stale user entries
-        this.cleanupExecutor.scheduleAtFixedRate(
-                this::cleanupStaleEntries,
-                CLEANUP_INTERVAL_SECONDS,
-                CLEANUP_INTERVAL_SECONDS,
-                TimeUnit.SECONDS);
+        this.cleanupExecutor.scheduleAtFixedRate(this::cleanupStaleEntries, CLEANUP_INTERVAL_SECONDS,
+                CLEANUP_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
-     * Removes user entries where all timestamps are older than the rate window.
-     * This prevents unbounded memory growth from one-off user IDs.
+     * Removes user entries where all timestamps are older than the rate window. This prevents unbounded memory growth
+     * from one-off user IDs.
      */
     private void cleanupStaleEntries() {
         final Instant cutoff = Instant.now().minusSeconds(WINDOW_SECONDS);
@@ -79,12 +75,11 @@ public class RateLimitService {
     }
 
     /**
-     * Atomically checks if the user is allowed to make another AI tutor call,
-     * and if so, records it. This prevents race conditions between check and
-     * record.
-     * Uses map.compute to ensure no orphaned list writes can occur.
+     * Atomically checks if the user is allowed to make another AI tutor call, and if so, records it. This prevents race
+     * conditions between check and record. Uses map.compute to ensure no orphaned list writes can occur.
      *
-     * @param userId the user identifier
+     * @param userId
+     *            the user identifier
      * @return true if the call was allowed and recorded, false if rate-limited
      */
     public boolean tryConsume(final String userId) {
@@ -120,11 +115,11 @@ public class RateLimitService {
     }
 
     /**
-     * Returns the number of seconds until the next call is allowed,
-     * or 0 if calls are currently allowed.
-     * Uses map.compute to avoid race conditions with list modifications.
+     * Returns the number of seconds until the next call is allowed, or 0 if calls are currently allowed. Uses
+     * map.compute to avoid race conditions with list modifications.
      *
-     * @param userId the user identifier
+     * @param userId
+     *            the user identifier
      * @return remaining cooldown in seconds
      */
     public long getRemainingCooldownSeconds(final String userId) {

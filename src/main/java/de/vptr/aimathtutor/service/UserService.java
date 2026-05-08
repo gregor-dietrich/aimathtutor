@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.vaadin.flow.server.VaadinSession;
-
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -25,10 +24,8 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for managing user accounts and authentication.
- * Provides CRUD operations with password hashing, email normalization, and rank
- * assignment.
- * Handles username/email uniqueness validation and password verification.
+ * Service for managing user accounts and authentication. Provides CRUD operations with password hashing, email
+ * normalization, and rank assignment. Handles username/email uniqueness validation and password verification.
  */
 @ApplicationScoped
 public class UserService {
@@ -58,9 +55,9 @@ public class UserService {
     /**
      * Finds a user by username.
      *
-     * @param username the username to search for
-     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
-     *         not found
+     * @param username
+     *            the username to search for
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
      */
     @Transactional
     public Optional<UserViewDto> findByUsername(final String username) {
@@ -70,9 +67,9 @@ public class UserService {
     /**
      * Finds a user by public ID.
      *
-     * @param publicId the user public ID
-     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
-     *         not found
+     * @param publicId
+     *            the user public ID
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
      */
     @Transactional
     public Optional<UserViewDto> findByPublicId(final String publicId) {
@@ -82,9 +79,9 @@ public class UserService {
     /**
      * Finds a user by ID.
      *
-     * @param id the user ID
-     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
-     *         not found
+     * @param id
+     *            the user ID
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
      */
     @Transactional
     public Optional<UserViewDto> findById(final Long id) {
@@ -94,9 +91,9 @@ public class UserService {
     /**
      * Finds a user by email address.
      *
-     * @param email the email address to search for
-     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if
-     *         not found
+     * @param email
+     *            the email address to search for
+     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
      */
     @Transactional
     public Optional<UserViewDto> findByEmail(final String email) {
@@ -106,8 +103,7 @@ public class UserService {
     private static final int PASSWORD_MAX_LENGTH = 100;
 
     /**
-     * Validates password strength: minimum length, and complexity
-     * (uppercase, lowercase, digit, symbol).
+     * Validates password strength: minimum length, and complexity (uppercase, lowercase, digit, symbol).
      */
     private void validatePassword(final String password) {
         if (password == null || password.isBlank()) {
@@ -118,16 +114,14 @@ public class UserService {
                     + PASSWORD_MAX_LENGTH + " characters");
         }
         if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).+$")) {
-            throw new ValidationException(
-                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+            throw new ValidationException("Password must contain at least one uppercase letter, one lowercase letter, "
+                    + "one digit, and one special character");
         }
     }
 
     /**
-     * Normalizes email field by converting empty/blank strings to null.
-     * This ensures that only null or valid email addresses are stored in the
-     * database,
-     * preventing unique constraint violations from multiple empty strings.
+     * Normalizes email field by converting empty/blank strings to null. This ensures that only null or valid email
+     * addresses are stored in the database, preventing unique constraint violations from multiple empty strings.
      */
     private String normalizeEmail(final String email) {
         if (email == null || email.isBlank()) {
@@ -137,16 +131,16 @@ public class UserService {
     }
 
     /**
-     * Creates a new user account with provided information.
-     * Validates required fields (username, password), checks for duplicate
-     * username/email,
-     * hashes password with bcrypt, and assigns default rank if not specified.
+     * Creates a new user account with provided information. Validates required fields (username, password), checks for
+     * duplicate username/email, hashes password with bcrypt, and assigns default rank if not specified.
      *
-     * @param userDto the user data transfer object with creation details
+     * @param userDto
+     *            the user data transfer object with creation details
      * @return the created {@link UserViewDto}
-     * @throws ValidationException     if username/email is duplicate or required
-     *                                 fields are missing
-     * @throws WebApplicationException if password hashing fails
+     * @throws ValidationException
+     *             if username/email is duplicate or required fields are missing
+     * @throws WebApplicationException
+     *             if password hashing fails
      */
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
@@ -174,8 +168,7 @@ public class UserService {
         user.email = normalizedEmail;
         user.banned = userDto.banned != null ? userDto.banned : false;
         user.activated = userDto.activated != null ? userDto.activated : false;
-        user.activationKey = userDto.activationKey != null ? userDto.activationKey
-                : UUID.randomUUID().toString();
+        user.activationKey = userDto.activationKey != null ? userDto.activationKey : UUID.randomUUID().toString();
 
         // Hash password with bcrypt
         final var hashedPassword = this.passwordHashingService.hashPassword(userDto.password);
@@ -205,18 +198,19 @@ public class UserService {
     }
 
     /**
-     * Completely replaces an existing user account (PUT semantics).
-     * Updates username, email, banned/activated status, rank, and password if
-     * provided.
-     * Validates duplicate username/email (skipping current values) and hashes new
+     * Completely replaces an existing user account (PUT semantics). Updates username, email, banned/activated status,
+     * rank, and password if provided. Validates duplicate username/email (skipping current values) and hashes new
      * passwords.
      *
-     * @param publicId the user public ID to update
-     * @param userDto the new user data
+     * @param publicId
+     *            the user public ID to update
+     * @param userDto
+     *            the new user data
      * @return the updated {@link UserViewDto}
-     * @throws WebApplicationException if user not found (NOT_FOUND status)
-     * @throws ValidationException     if username/email is duplicate or required
-     *                                 fields missing
+     * @throws WebApplicationException
+     *             if user not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if username/email is duplicate or required fields missing
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
@@ -233,16 +227,15 @@ public class UserService {
         }
 
         // Check for duplicate username (only if username is different from current)
-        if (!userDto.username.equals(existingUser.username)
-                && this.findByUsername(userDto.username).isPresent()) {
+        if (!userDto.username.equals(existingUser.username) && this.findByUsername(userDto.username).isPresent()) {
             throw new ValidationException("Username '" + userDto.username + "' is already taken");
         }
 
         // Normalize email and check for duplicate email (only if email is different
         // from current)
         final String normalizedEmail = this.normalizeEmail(userDto.email);
-        if (!Objects.equals(normalizedEmail, existingUser.email)
-                && normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
+        if (!Objects.equals(normalizedEmail, existingUser.email) && normalizedEmail != null
+                && this.findByEmail(normalizedEmail).isPresent()) {
             throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
         }
 
@@ -262,17 +255,19 @@ public class UserService {
     }
 
     /**
-     * Partially updates an existing user account (PATCH semantics).
-     * Only updates user properties that are explicitly provided in the DTO; null
-     * values are ignored.
-     * Validates duplicate username/email if being changed, and hashes new passwords
-     * if provided.
+     * Partially updates an existing user account (PATCH semantics). Only updates user properties that are explicitly
+     * provided in the DTO; null values are ignored. Validates duplicate username/email if being changed, and hashes new
+     * passwords if provided.
      *
-     * @param publicId the user public ID to update
-     * @param userDto the partial user data with selected fields to update
+     * @param publicId
+     *            the user public ID to update
+     * @param userDto
+     *            the partial user data with selected fields to update
      * @return the updated {@link UserViewDto}
-     * @throws WebApplicationException if user not found (NOT_FOUND status)
-     * @throws ValidationException     if username/email is duplicate
+     * @throws WebApplicationException
+     *             if user not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if username/email is duplicate
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
@@ -284,8 +279,7 @@ public class UserService {
         }
 
         // Check for duplicate username if username is being updated
-        if (userDto.username != null && !userDto.username.isBlank()
-                && !userDto.username.equals(existingUser.username)
+        if (userDto.username != null && !userDto.username.isBlank() && !userDto.username.equals(existingUser.username)
                 && this.findByUsername(userDto.username).isPresent()) {
             throw new ValidationException("Username '" + userDto.username + "' is already taken");
         }
@@ -293,8 +287,8 @@ public class UserService {
         // Check for duplicate email if email is being updated
         if (userDto.email != null) {
             final String normalizedEmail = this.normalizeEmail(userDto.email);
-            if (!Objects.equals(normalizedEmail, existingUser.email)
-                    && normalizedEmail != null && this.findByEmail(normalizedEmail).isPresent()) {
+            if (!Objects.equals(normalizedEmail, existingUser.email) && normalizedEmail != null
+                    && this.findByEmail(normalizedEmail).isPresent()) {
                 throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
             }
         }
@@ -329,7 +323,8 @@ public class UserService {
     /**
      * Deletes a user account by public ID.
      *
-     * @param publicId the user public ID to delete
+     * @param publicId
+     *            the user public ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if user not found
      */
     @Transactional
@@ -349,11 +344,11 @@ public class UserService {
     }
 
     /**
-     * Searches users by username or email using the provided query string
-     * (case-insensitive).
-     * Returns all users if query is null or empty.
+     * Searches users by username or email using the provided query string (case-insensitive). Returns all users if
+     * query is null or empty.
      *
-     * @param query the search query string (username/email match)
+     * @param query
+     *            the search query string (username/email match)
      * @return a list of matching {@link UserViewDto}s
      */
     @Transactional
@@ -385,9 +380,12 @@ public class UserService {
     /**
      * Change user password after verifying current password.
      * 
-     * @param userId          The user ID
-     * @param currentPassword The current password for verification
-     * @param newPassword     The new password to set
+     * @param userId
+     *            The user ID
+     * @param currentPassword
+     *            The current password for verification
+     * @param newPassword
+     *            The new password to set
      */
     @Transactional
     public void changePassword(final Long userId, final String currentPassword, final String newPassword) {
@@ -413,9 +411,12 @@ public class UserService {
     /**
      * Update user avatar emojis.
      * 
-     * @param userId     The user ID
-     * @param userEmoji  The emoji for the user
-     * @param tutorEmoji The emoji for the AI tutor
+     * @param userId
+     *            The user ID
+     * @param userEmoji
+     *            The emoji for the user
+     * @param tutorEmoji
+     *            The emoji for the AI tutor
      */
     @Transactional
     public void updateAvatars(final Long userId, final String userEmoji, final String tutorEmoji) {
@@ -446,7 +447,8 @@ public class UserService {
     /**
      * Get user settings (avatars only, no passwords).
      * 
-     * @param userId The user ID
+     * @param userId
+     *            The user ID
      * @return UserSettingsDto with avatar settings
      */
     @Transactional
@@ -472,16 +474,18 @@ public class UserService {
     }
 
     /**
-     * Applies a rank to a user by public ID.
-     * When {@code rankPublicId} is null or not found and {@code resetToDefault} is
-     * {@code true}, falls back to the default rank ({@code userRankRepository.findById(1L)}).
-     * When {@code rankPublicId} is null or not found and {@code resetToDefault} is
-     * {@code false}, throws a {@link ValidationException}.
+     * Applies a rank to a user by public ID. When {@code rankPublicId} is null or not found and {@code resetToDefault}
+     * is {@code true}, falls back to the default rank ({@code userRankRepository.findById(1L)}). When
+     * {@code rankPublicId} is null or not found and {@code resetToDefault} is {@code false}, throws a
+     * {@link ValidationException}.
      *
-     * @param user           the user to update
-     * @param rankPublicId   the rank public ID; may be null (triggers default/error path)
-     * @param resetToDefault if {@code true} and rank lookup fails, assign default rank;
-     *                       if {@code false} and rank lookup fails, throw {@link ValidationException}
+     * @param user
+     *            the user to update
+     * @param rankPublicId
+     *            the rank public ID; may be null (triggers default/error path)
+     * @param resetToDefault
+     *            if {@code true} and rank lookup fails, assign default rank; if {@code false} and rank lookup fails,
+     *            throw {@link ValidationException}
      */
     private void applyRankToUser(final UserEntity user, final String rankPublicId, final boolean resetToDefault) {
         final var rank = this.userRankRepository.findByPublicId(rankPublicId).orElse(null);

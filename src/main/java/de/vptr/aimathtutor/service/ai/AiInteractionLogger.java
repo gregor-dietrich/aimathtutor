@@ -6,7 +6,6 @@ import java.util.HashMap;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
@@ -42,8 +41,10 @@ public class AiInteractionLogger {
     /**
      * Logs an AI interaction to the database for analytics.
      *
-     * @param event    the student's action
-     * @param feedback the AI's feedback
+     * @param event
+     *            the student's action
+     * @param feedback
+     *            the AI's feedback
      */
     @Transactional
     public void logInteraction(final GraspableEventDto event, final AiFeedbackDto feedback) {
@@ -69,10 +70,8 @@ public class AiInteractionLogger {
             try {
                 final var contextMap = new HashMap<String, Object>();
                 contextMap.put("eventType", event.eventType);
-                contextMap.put("exprBeforeLen",
-                        event.expressionBefore != null ? event.expressionBefore.length() : 0);
-                contextMap.put("exprAfterLen",
-                        event.expressionAfter != null ? event.expressionAfter.length() : 0);
+                contextMap.put("exprBeforeLen", event.expressionBefore != null ? event.expressionBefore.length() : 0);
+                contextMap.put("exprAfterLen", event.expressionAfter != null ? event.expressionAfter.length() : 0);
                 contextMap.put("actionCorrect", event.correct);
                 interaction.conversationContext = this.objectMapper.writeValueAsString(contextMap);
             } catch (final IOException e) {
@@ -81,7 +80,7 @@ public class AiInteractionLogger {
             }
 
             this.aiInteractionRepository.persist(interaction);
-            LOG.debugf("Logged AI interaction: id=%s",  interaction.id);
+            LOG.debugf("Logged AI interaction: id=%s", interaction.id);
         } catch (final RuntimeException e) {
             LOG.error("Failed to log AI interaction", e);
             // Don't fail the request if logging fails
@@ -89,30 +88,34 @@ public class AiInteractionLogger {
     }
 
     /**
-     * Log a student question and AI answer as an interaction.
-     * Used for recording conversational interactions in the SessionDetailsView.
-     * Marked as @Transactional to ensure proper persistence in async contexts.
+     * Log a student question and AI answer as an interaction. Used for recording conversational interactions in the
+     * SessionDetailsView. Marked as @Transactional to ensure proper persistence in async contexts.
      *
-     * @param sessionId       the session identifier
-     * @param userId          the user ID
-     * @param exerciseId      the exercise ID
-     * @param studentQuestion the student's question
-     * @param aiAnswer        the AI's answer
+     * @param sessionId
+     *            the session identifier
+     * @param userId
+     *            the user ID
+     * @param exerciseId
+     *            the exercise ID
+     * @param studentQuestion
+     *            the student's question
+     * @param aiAnswer
+     *            the AI's answer
      */
     @Transactional
     public void logQuestionInteraction(final String sessionId, final Long userId, final Long exerciseId,
             final String studentQuestion, final String aiAnswer) {
         try {
             LOG.infof(
-                    "Logging question interaction: sessionId=%s, userId=%s, exerciseId=%s, questionLen=%s, answerLen=%s", 
-                    sessionId,  userId,  exerciseId, 
-                    studentQuestion != null ? studentQuestion.length() : 0, 
+                    "Logging question interaction: sessionId=%s, userId=%s, exerciseId=%s, "
+                            + "questionLen=%s, answerLen=%s",
+                    sessionId, userId, exerciseId, studentQuestion != null ? studentQuestion.length() : 0,
                     aiAnswer != null ? aiAnswer.length() : 0);
 
             // Create TWO separate records: one for student question, one for AI answer
             // This ensures they appear as separate rows in the SessionDetailView grid
 
-            String contextJson = null;
+            String contextJson;
             try {
                 final var contextMap = new HashMap<String, Object>();
                 contextMap.put("questionLength", studentQuestion != null ? studentQuestion.length() : 0);
@@ -135,7 +138,7 @@ public class AiInteractionLogger {
             if (userId != null) {
                 user = this.userRepository.findById(userId);
                 if (user == null) {
-                    LOG.warnf("User not found for logging question interaction: userId=%s",  userId);
+                    LOG.warnf("User not found for logging question interaction: userId=%s", userId);
                 } else {
                     studentQuestionRecord.user = user;
                 }
@@ -145,15 +148,14 @@ public class AiInteractionLogger {
             if (exerciseId != null) {
                 exercise = this.exerciseRepository.findById(exerciseId);
                 if (exercise == null) {
-                    LOG.warnf("Exercise not found for logging question interaction: exerciseId=%s",  exerciseId);
+                    LOG.warnf("Exercise not found for logging question interaction: exerciseId=%s", exerciseId);
                 } else {
                     studentQuestionRecord.exercise = exercise;
                 }
             }
 
             this.aiInteractionRepository.persist(studentQuestionRecord);
-            LOG.infof("Successfully logged student question: id=%s, msgLen=%s", 
-                    studentQuestionRecord.id, 
+            LOG.infof("Successfully logged student question: id=%s, msgLen=%s", studentQuestionRecord.id,
                     studentQuestionRecord.studentMessage != null ? studentQuestionRecord.studentMessage.length() : 0);
 
             // 2. Log the AI answer as a separate record
@@ -168,8 +170,7 @@ public class AiInteractionLogger {
             aiAnswerRecord.exercise = exercise;
 
             this.aiInteractionRepository.persist(aiAnswerRecord);
-            LOG.infof("Successfully logged AI answer: id=%s, msgLen=%s", 
-                    aiAnswerRecord.id, 
+            LOG.infof("Successfully logged AI answer: id=%s, msgLen=%s", aiAnswerRecord.id,
                     aiAnswerRecord.feedbackMessage != null ? aiAnswerRecord.feedbackMessage.length() : 0);
         } catch (final RuntimeException e) {
             LOG.error("Failed to log question interaction", e);

@@ -299,11 +299,130 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 1. Add the `NVD_API_KEY` as a GitHub repository secret.
 2. Uncomment the OWASP dependency-check and Gitleaks steps in the `security` job.
-3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break.
+3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break:
+
+   ```yaml
+   - name: Run OWASP Dependency-Check
+     if: env.NVD_API_KEY != ''
+     run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+     env:
+       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+   ```
+
+4. Gitleaks can run unconditionally (no secrets required).
 
 ---
 
-## 7. Vaadin Views — End-to-End Testing (Long-term)
+## 7. CPD Duplicate Detection — Gradual Threshold Reduction
+
+**Issue:** CPD `minimumTokens` is set to 100, which only catches very large code duplications. Smaller duplications (3-5 line blocks) slip through.
+
+**Why reduce:** Catches more subtle copy-paste errors and encourages DRY compliance.
+
+**Phased approach:**
+
+- **Phase A:** Lower `minimumTokens` from 100 to 75 in `pom.xml`. Run `./mvnw pmd:cpd-check`, fix all violations, commit.
+- **Phase B:** Lower from 75 to 50. Run, fix, commit.
+- **Phase C (optional):** Evaluate gradually lowering to 40 or less. May produce diminishing returns / false positives.
+
+**Tracking:** Each phase should be a separate PR to keep review manageable. Do not attempt all phases in one PR.
+
+---
+
+## 8. Error Prone + NullAway Integration
+
+**Issue:** No compile-time bug pattern detection beyond standard `javac` warnings. Null safety is not enforced.
+
+**Why implement:** Error Prone (Google) catches real bugs at compile time: null dereferences, resource leaks, equality bugs, thread safety issues, and more. NullAway adds null-safety enforcement via `@Nullable`/`@NonNull` annotations.
+
+**Implementation plan:**
+
+1. Add `error-prone` compiler plugin to `pom.xml` via `maven-compiler-plugin` configuration:
+
+   ```xml
+   <compilerArgs>
+       <arg>-XDcompilePolicy=simple</arg>
+       <arg>-Xplugin:ErrorProne</arg>
+   </compilerArgs>
+   <annotationProcessorPaths>
+       <path>
+           <groupId>com.google.errorprone</groupId>
+           <artifactId>error_prone_core</artifactId>
+           <version>2.36.0</version>
+       </path>
+   </annotationProcessorPaths>
+   ```
+
+2. Add NullAway as Error Prone plugin:
+
+   ```xml
+   <compilerArgs>
+       <arg>-Xplugin:ErrorProne -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor</arg>
+   </compilerArgs>
+   ```
+
+3. Start with `WARN` severity for all Error Prone checks. Fix existing violations.
+4. After clean build, graduate to `ERROR` severity.
+5. For NullAway: annotate package boundaries with `@NonNull` by default, use `@Nullable` for nullable returns/params.
+
+**Estimated effort:** 2-4 person-days for initial setup and fixing existing violations.
+
+**Risks:** Error Prone may flag legitimate patterns in Quarkus/Vaadin code. May need selective suppressions via `@SuppressWarnings`.
+
+---
+
+## 9. Pre-commit Hooks
+
+**Issue:** No local enforcement of code quality before commits. Developers discover style/lint failures only in CI.
+
+**Why implement:** Catches issues before they reach the repository, reducing CI feedback loops and keeping `main` clean.
+
+**Implementation plan:**
+
+1. Add `.pre-commit-config.yaml` to project root:
+
+   ```yaml
+   repos:
+     - repo: https://github.com/pre-commit/pre-commit-hooks
+       rev: v5.0.0
+       hooks:
+         - id: trailing-whitespace
+         - id: end-of-file-fixer
+         - id: check-yaml
+         - id: check-added-large-files
+     - repo: local
+       hooks:
+         - id: checkstyle
+           name: Checkstyle
+           entry: ./mvnw checkstyle:check
+           language: system
+           pass_filenames: false
+           types: [java]
+         - id: spotbugs
+           name: SpotBugs
+           entry: ./mvnw spotbugs:check
+           language: system
+           pass_filenames: false
+           types: [java]
+   ```
+
+2. Add install instructions to developer docs / AGENTS.md:
+
+   ```shell
+   pip install pre-commit  # or brew install pre-commit
+   pre-commit install
+   ```
+
+3. Optional: Add commit message linting via `commitlint` or `pre-commit` hook for conventional commits.
+4. Run `pre-commit run --all-files` to validate existing code.
+
+**Estimated effort:** 1-2 hours.
+
+**Note:** Pre-commit hooks are opt-in for developers. CI remains the authoritative gate.
+
+---
+
+## 10. Vaadin Views — End-to-End Testing (Long-term)
 
 **Package:** `de.vptr.aimathtutor.view`
 **Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.

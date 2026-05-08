@@ -67,8 +67,8 @@ class PromptBuilderServiceTest {
     @Test
     @DisplayName("buildQuestionAnsweringPrompt with all null expressions omits XML sections")
     void buildQuestionAnsweringPrompt_allNullExpressions() {
-        final String prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(
-                "What is x?", null, null, null, null);
+        final String prompt =
+                this.promptBuilderService.buildQuestionAnsweringPrompt("What is x?", null, null, null, null);
         assertNotNull(prompt);
         assertFalse(prompt.contains("<current_problem_state>"));
         assertFalse(prompt.contains("<original_problem>"));
@@ -79,8 +79,8 @@ class PromptBuilderServiceTest {
     @Test
     @DisplayName("buildQuestionAnsweringPrompt with all expressions includes all XML sections")
     void buildQuestionAnsweringPrompt_withExpressions() {
-        final String prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(
-                "What is x?", "2x+1", "x+1=3", "x=1", null);
+        final String prompt =
+                this.promptBuilderService.buildQuestionAnsweringPrompt("What is x?", "2x+1", "x+1=3", "x=1", null);
         assertNotNull(prompt);
         assertTrue(prompt.contains("<current_problem_state>"));
         assertTrue(prompt.contains("<original_problem>"));
@@ -96,13 +96,11 @@ class PromptBuilderServiceTest {
         action.expressionBefore = "2x";
         action.expressionAfter = "x";
 
-        final ConversationContextDto context = new ConversationContextDto(
-                List.of(action),
-                List.of(ChatMessageDto.userQuestion("How do I simplify?")),
-                List.of(ChatMessageDto.aiAnswer("Try factoring first.")));
+        final ConversationContextDto context =
+                new ConversationContextDto(List.of(action), List.of(ChatMessageDto.userQuestion("How do I simplify?")),
+                        List.of(ChatMessageDto.aiAnswer("Try factoring first.")));
 
-        final String prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(
-                "How?", null, null, null, context);
+        final String prompt = this.promptBuilderService.buildQuestionAnsweringPrompt("How?", null, null, null, context);
         assertNotNull(prompt);
         assertTrue(prompt.contains("<conversation_context>"));
         assertTrue(prompt.contains("<recent_questions>"));
@@ -112,8 +110,8 @@ class PromptBuilderServiceTest {
     @Test
     @DisplayName("buildQuestionAnsweringPrompt with null context does not throw")
     void buildQuestionAnsweringPrompt_nullContext() {
-        final String prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(
-                "What next?", "x=2", null, null, null);
+        final String prompt =
+                this.promptBuilderService.buildQuestionAnsweringPrompt("What next?", "x=2", null, null, null);
         assertNotNull(prompt);
         assertFalse(prompt.contains("<conversation_context>"));
         assertFalse(prompt.contains("<recent_questions>"));
@@ -159,10 +157,9 @@ class PromptBuilderServiceTest {
         prevAction.expressionBefore = "x^2";
         prevAction.expressionAfter = "x*x";
 
-        final ConversationContextDto context = new ConversationContextDto(
-                List.of(prevAction),
-                List.of(ChatMessageDto.userQuestion("Why factor?")),
-                List.of(ChatMessageDto.aiFeedback("Good progress!")));
+        final ConversationContextDto context =
+                new ConversationContextDto(List.of(prevAction), List.of(ChatMessageDto.userQuestion("Why factor?")),
+                        List.of(ChatMessageDto.aiFeedback("Good progress!")));
 
         final String prompt = this.promptBuilderService.buildMathTutoringPrompt(event, context);
         assertNotNull(prompt);

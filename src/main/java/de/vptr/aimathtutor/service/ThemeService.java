@@ -3,24 +3,20 @@ package de.vptr.aimathtutor.service;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.Lumo;
-
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Service for managing application theme preferences.
- * Handles theme selection, persistence, and application across the UI.
+ * Service for managing application theme preferences. Handles theme selection, persistence, and application across the
+ * UI.
  */
 @ApplicationScoped
 public class ThemeService {
 
     /**
-     * Enumeration of available application themes.
-     * Supports light, dark, and system-default theme modes.
+     * Enumeration of available application themes. Supports light, dark, and system-default theme modes.
      */
     public enum Theme {
-        LIGHT("Light", null),
-        DARK("Dark", Lumo.DARK),
-        SYSTEM("System", null);
+        LIGHT("Light", null), DARK("Dark", Lumo.DARK), SYSTEM("System", null);
 
         private final String displayName;
         private final String themeVariant;
@@ -68,7 +64,8 @@ public class ThemeService {
     /**
      * Sets the theme for the current session and applies it to the UI.
      *
-     * @param theme the {@link Theme} to set as current
+     * @param theme
+     *            the {@link Theme} to set as current
      */
     public void setTheme(final Theme theme) {
         final var session = VaadinSession.getCurrent();
@@ -79,11 +76,11 @@ public class ThemeService {
     }
 
     /**
-     * Applies the specified theme to the current UI.
-     * Handles theme application via Vaadin's UI theme list and JavaScript for
-     * system-default themes.
+     * Applies the specified theme to the current UI. Handles theme application via Vaadin's UI theme list and
+     * JavaScript for system-default themes.
      *
-     * @param theme the {@link Theme} to apply
+     * @param theme
+     *            the {@link Theme} to apply
      */
     public void applyTheme(final Theme theme) {
         final var ui = UI.getCurrent();
@@ -108,10 +105,8 @@ public class ThemeService {
                     themeList.clear();
                     ui.getPage().executeJs(
                             "if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {"
-                                    + "  document.documentElement.setAttribute('theme', 'dark');"
-                                    + "} else {"
-                                    + "  document.documentElement.removeAttribute('theme');"
-                                    + "}");
+                                    + "  document.documentElement.setAttribute('theme', 'dark');" + "} else {"
+                                    + "  document.documentElement.removeAttribute('theme');" + "}");
                     break;
                 default:
                     // Unknown theme - fall back to system and log

@@ -77,8 +77,8 @@ class ProblemGeneratorServiceTest {
         final ProblemGeneratorService testService = new ProblemGeneratorService(deterministicRandom);
         final Set<String> expressions = new HashSet<>();
         for (int i = 0; i < 20; i++) {
-            final GraspableProblemDto p = testService.generateProblem(DifficultyLevel.INTERMEDIATE,
-                    ProblemCategory.LINEAR_EQUATIONS);
+            final GraspableProblemDto p =
+                    testService.generateProblem(DifficultyLevel.INTERMEDIATE, ProblemCategory.LINEAR_EQUATIONS);
             expressions.add(p.initialExpression);
         }
         assertTrue(expressions.size() > 1, "Expected randomized expressions, got " + expressions.size());
@@ -87,8 +87,8 @@ class ProblemGeneratorServiceTest {
     @Test
     @DisplayName("Should produce factorable quadratic with matching factored form")
     void shouldGenerateFactorableQuadratic() {
-        final GraspableProblemDto problem = this.service.generateProblem(DifficultyLevel.BEGINNER,
-                ProblemCategory.FACTORING);
+        final GraspableProblemDto problem =
+                this.service.generateProblem(DifficultyLevel.BEGINNER, ProblemCategory.FACTORING);
 
         assertTrue(problem.initialExpression.startsWith("x^2"));
         assertTrue(problem.targetExpression.startsWith("(x + "));
@@ -98,8 +98,8 @@ class ProblemGeneratorServiceTest {
     @Test
     @DisplayName("Should always set sensible operations and hints for exponents")
     void shouldGenerateExponentsProblem() {
-        final GraspableProblemDto problem = this.service.generateProblem(DifficultyLevel.ADVANCED,
-                ProblemCategory.EXPONENTS);
+        final GraspableProblemDto problem =
+                this.service.generateProblem(DifficultyLevel.ADVANCED, ProblemCategory.EXPONENTS);
 
         assertTrue(problem.initialExpression.contains("x^"));
         assertTrue(problem.targetExpression.startsWith("x^"));

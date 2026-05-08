@@ -161,8 +161,8 @@ class ExerciseServiceTest {
     @DisplayName("Should find exercise by id and route through completion enrichment")
     @TestTransaction
     void shouldFindExerciseById() {
-        final ExerciseViewDto created = this.exerciseService
-                .createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created =
+                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
 
         final var found = this.exerciseService.findById(created.id);
 
@@ -199,10 +199,9 @@ class ExerciseServiceTest {
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
 
         assertEquals(lesson.publicId, created.lessonPublicId);
-        final var lessonEntityForLookup = this.em.createQuery(
-                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                .setParameter("p", lesson.publicId)
-                .getSingleResult();
+        final var lessonEntityForLookup =
+                this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                        .setParameter("p", lesson.publicId).getSingleResult();
         final var exercises = this.exerciseService.findByLessonId(lessonEntityForLookup.id);
         assertEquals(1, exercises.size());
         assertEquals(created.publicId, exercises.get(0).publicId);
@@ -225,8 +224,8 @@ class ExerciseServiceTest {
     @DisplayName("Should delete exercise by id")
     @TestTransaction
     void shouldDeleteExercise() {
-        final ExerciseViewDto created = this.exerciseService
-                .createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created =
+                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
 
         final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
@@ -238,8 +237,8 @@ class ExerciseServiceTest {
     @DisplayName("updateExercise replaces all fields")
     @TestTransaction
     void testUpdateExercise_replacesFields() {
-        final ExerciseViewDto created = this.exerciseService
-                .createExercise(this.buildDto(this.teacherPublicId(), false));
+        final ExerciseViewDto created =
+                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), false));
 
         final ExerciseDto update = new ExerciseDto();
         update.title = "Updated Title";
@@ -260,8 +259,8 @@ class ExerciseServiceTest {
     @DisplayName("patchExercise updates only the provided field")
     @TestTransaction
     void testPatchExercise_updatesProvidedField() {
-        final ExerciseViewDto created = this.exerciseService
-                .createExercise(this.buildDto(this.teacherPublicId(), false));
+        final ExerciseViewDto created =
+                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), false));
 
         final ExerciseDto patch = new ExerciseDto();
         patch.published = true;
@@ -347,8 +346,8 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with today's range includes recently created exercise")
     @TestTransaction
     void testFindByDateRange_today() {
-        final ExerciseViewDto created = this.exerciseService
-                .createExercise(this.buildDto(this.teacherPublicId(), true));
+        final ExerciseViewDto created =
+                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
         // DB stores CURRENT_TIMESTAMP in UTC; use UTC date to match
         final String today = LocalDate.now(ZoneOffset.UTC).toString();
         final var results = this.exerciseService.findByDateRange(today, today);
@@ -372,10 +371,9 @@ class ExerciseServiceTest {
         final var lessonEntity = new LessonEntity();
         lessonEntity.name = "gm_lesson_" + UUID.randomUUID().toString().substring(0, 8);
         final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
-        final var lessonDb = this.em.createQuery(
-                "SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                .setParameter("p", lesson.publicId)
-                .getSingleResult();
+        final var lessonDb =
+                this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
+                        .setParameter("p", lesson.publicId).getSingleResult();
 
         final ExerciseDto gmDto = this.buildDto(this.teacherPublicId(), true);
         gmDto.lessonPublicId = lesson.publicId;

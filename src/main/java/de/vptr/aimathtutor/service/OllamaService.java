@@ -24,8 +24,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for interacting with Ollama local LLM API
- * Supports phi4, qwen3, deepseek, and other Ollama models
+ * Service for interacting with Ollama local LLM API Supports phi4, qwen3, deepseek, and other Ollama models
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
@@ -69,26 +68,23 @@ public class OllamaService extends AbstractAiProviderService {
     }
 
     /**
-     * Get or create the JAX-RS client with thread-safe lazy initialization.
-     * This avoids creating the client if Ollama is not the active AI provider.
+     * Get or create the JAX-RS client with thread-safe lazy initialization. This avoids creating the client if Ollama
+     * is not the active AI provider.
      *
      * @return The configured JAX-RS Client instance
      */
     private synchronized Client getClient() {
         if (this.client == null) {
-            this.client = ClientBuilder.newBuilder()
-                    .connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
-                    .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS)
-                    .build();
-            LOG.debugf("Initialized Ollama JAX-RS Client (connectTimeout=%ss, readTimeout=%ss)", 
-                    this.connectTimeoutSeconds,  this.readTimeoutSeconds);
+            this.client = ClientBuilder.newBuilder().connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
+                    .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS).build();
+            LOG.debugf("Initialized Ollama JAX-RS Client (connectTimeout=%ss, readTimeout=%ss)",
+                    this.connectTimeoutSeconds, this.readTimeoutSeconds);
         }
         return this.client;
     }
 
     /**
-     * Clean up resources when the bean is destroyed.
-     * Synchronized to ensure consistent access to the client field.
+     * Clean up resources when the bean is destroyed. Synchronized to ensure consistent access to the client field.
      */
     @PreDestroy
     synchronized void cleanup() {
@@ -102,12 +98,14 @@ public class OllamaService extends AbstractAiProviderService {
     /**
      * Generate content using Ollama Generate API
      *
-     * @param prompt The input prompt
+     * @param prompt
+     *            The input prompt
      * @return The generated text response
      */
-    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS, jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+    @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
     public String generateContent(final String prompt) {
-        LOG.debugf("Generating content with Ollama for prompt length: %s",  prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating content with Ollama for prompt length: %s", prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
         final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
@@ -128,15 +126,14 @@ public class OllamaService extends AbstractAiProviderService {
 
             // Make API call
             final long startTime = System.currentTimeMillis();
-            try (Response response = this.getClient().target(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(request))) {
+            try (Response response =
+                    this.getClient().target(url).request(MediaType.APPLICATION_JSON).post(Entity.json(request))) {
 
                 final long duration = System.currentTimeMillis() - startTime;
 
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
-                    LOG.errorf("Ollama API error (status %s): %s",  response.getStatus(),  errorBody);
+                    LOG.errorf("Ollama API error (status %s): %s", response.getStatus(), errorBody);
                     throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
@@ -148,7 +145,7 @@ public class OllamaService extends AbstractAiProviderService {
                 }
 
                 if (ollamaResponse.isTruncated()) {
-                    LOG.warnf("Ollama response was truncated due to max-tokens limit (done_reason=%s)", 
+                    LOG.warnf("Ollama response was truncated due to max-tokens limit (done_reason=%s)",
                             ollamaResponse.doneReason);
                 }
 
@@ -158,11 +155,9 @@ public class OllamaService extends AbstractAiProviderService {
                 final Double tokensPerSecond = ollamaResponse.getTokensPerSecond();
                 if (tokensPerSecond != null) {
                     LOG.debugf("Ollama generated %s tokens at %s tokens/second in %sms",
-                            (Object) ollamaResponse.evalCount,
-                            String.format("%.2f", tokensPerSecond),
-                            duration);
+                            (Object) ollamaResponse.evalCount, String.format("%.2f", tokensPerSecond), duration);
                 } else {
-                    LOG.debugf("Successfully generated content from Ollama in %sms, length: %s",  duration, 
+                    LOG.debugf("Successfully generated content from Ollama in %sms, length: %s", duration,
                             content.length());
                 }
 
@@ -186,23 +181,22 @@ public class OllamaService extends AbstractAiProviderService {
         final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
         try {
             // Check /api/tags endpoint (lists installed models)
-            try (Response response = this.getClient().target(apiUrl + "/api/tags")
-                    .request(MediaType.APPLICATION_JSON)
-                    .get()) {
+            try (Response response =
+                    this.getClient().target(apiUrl + "/api/tags").request(MediaType.APPLICATION_JSON).get()) {
 
                 final boolean available = response.getStatus() == Response.Status.OK.getStatusCode();
 
                 if (available) {
-                    LOG.debugf("Ollama server is available at %s",  apiUrl);
+                    LOG.debugf("Ollama server is available at %s", apiUrl);
                 } else {
-                    LOG.debugf("Ollama server not available at %s (status: %s)",  apiUrl,  response.getStatus());
+                    LOG.debugf("Ollama server not available at %s (status: %s)", apiUrl, response.getStatus());
                 }
 
                 return available;
             }
 
         } catch (final RuntimeException e) {
-            LOG.debugf(e, "Ollama server not available at %s: %s",  apiUrl,  e.getMessage());
+            LOG.debugf(e, "Ollama server not available at %s: %s", apiUrl, e.getMessage());
             return false;
         }
     }
@@ -213,9 +207,8 @@ public class OllamaService extends AbstractAiProviderService {
     public boolean isModelInstalled(final String modelName) {
         final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
         try {
-            try (Response response = this.getClient().target(apiUrl + "/api/tags")
-                    .request(MediaType.APPLICATION_JSON)
-                    .get()) {
+            try (Response response =
+                    this.getClient().target(apiUrl + "/api/tags").request(MediaType.APPLICATION_JSON).get()) {
 
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     return false;
@@ -227,7 +220,7 @@ public class OllamaService extends AbstractAiProviderService {
             }
 
         } catch (final RuntimeException e) {
-            LOG.debugf("Error checking if model %s is installed: %s",  modelName,  e.getMessage());
+            LOG.debugf("Error checking if model %s is installed: %s", modelName, e.getMessage());
             return false;
         }
     }

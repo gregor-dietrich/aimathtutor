@@ -3,13 +3,12 @@ package de.vptr.aimathtutor.component;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.RouterLink;
-
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.MathWorkspaceView;
 
 /**
- * A custom tab navigation component for the application.
- * Provides tabs for navigation to Lessons and Math Workspace views.
+ * A custom tab navigation component for the application. Provides tabs for navigation to Lessons and Math Workspace
+ * views.
  */
 public class NavigationTabs extends Tabs {
 

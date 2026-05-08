@@ -130,16 +130,11 @@ class AiInteractionLoggerTest {
         final long countBefore = this.aiInteractionRepository.findAll().size();
         final String sessionId = "q-session-" + UUID.randomUUID();
 
-        this.aiInteractionLogger.logQuestionInteraction(
-                sessionId,
-                this.teacherId(),
-                this.createExerciseId(),
-                "What is the next step?",
-                "Try factoring the expression.");
+        this.aiInteractionLogger.logQuestionInteraction(sessionId, this.teacherId(), this.createExerciseId(),
+                "What is the next step?", "Try factoring the expression.");
 
         final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 2, countAfter,
-                "logQuestionInteraction should persist exactly two records");
+        assertEquals(countBefore + 2, countAfter, "logQuestionInteraction should persist exactly two records");
     }
 
     @Test
@@ -149,12 +144,7 @@ class AiInteractionLoggerTest {
         final long countBefore = this.aiInteractionRepository.findAll().size();
         final String sessionId = "q-anon-session-" + UUID.randomUUID();
 
-        this.aiInteractionLogger.logQuestionInteraction(
-                sessionId,
-                null,
-                null,
-                "Help me.",
-                "Sure, here is help.");
+        this.aiInteractionLogger.logQuestionInteraction(sessionId, null, null, "Help me.", "Sure, here is help.");
 
         final long countAfter = this.aiInteractionRepository.findAll().size();
         assertEquals(countBefore + 2, countAfter, "Two records should be persisted even without ids");
@@ -166,8 +156,7 @@ class AiInteractionLoggerTest {
     void testLogQuestionInteraction_eventTypes() {
         final String sessionId = "evt-session-" + UUID.randomUUID();
 
-        this.aiInteractionLogger.logQuestionInteraction(
-                sessionId, null, null, "My question.", "My answer.");
+        this.aiInteractionLogger.logQuestionInteraction(sessionId, null, null, "My question.", "My answer.");
 
         final var records = this.aiInteractionRepository.findBySessionId(sessionId);
         assertNotNull(records);

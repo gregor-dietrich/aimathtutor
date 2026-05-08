@@ -1,5 +1,6 @@
 # Generated
 .coverage*
+.opencode/plans
 src/main/bundles/*.bundle
 
 # gm-api

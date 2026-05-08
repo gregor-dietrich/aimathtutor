@@ -3,8 +3,7 @@ package de.vptr.aimathtutor.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Response DTO for Ollama Generate API
- * Based on Ollama REST API specification
+ * Response DTO for Ollama Generate API Based on Ollama REST API specification
  */
 public class OllamaResponseDto {
 
@@ -41,9 +40,8 @@ public class OllamaResponseDto {
     }
 
     /**
-     * Check if the response was truncated due to the max-tokens limit.
-     * Ollama reports {@code "length"} as the {@code done_reason} when
-     * generation was cut off by {@code num_predict}.
+     * Check if the response was truncated due to the max-tokens limit. Ollama reports {@code "length"} as the
+     * {@code done_reason} when generation was cut off by {@code num_predict}.
      */
     public boolean isTruncated() {
         return "length".equalsIgnoreCase(this.doneReason);

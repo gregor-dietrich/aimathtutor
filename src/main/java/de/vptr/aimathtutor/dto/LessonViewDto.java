@@ -5,8 +5,7 @@ import java.util.List;
 import de.vptr.aimathtutor.entity.LessonEntity;
 
 /**
- * Response DTO for lesson operations.
- * Contains computed fields and safe data for client responses.
+ * Response DTO for lesson operations. Contains computed fields and safe data for client responses.
  */
 public class LessonViewDto {
     public String publicId;
@@ -21,13 +20,13 @@ public class LessonViewDto {
     /**
      * Default constructor for JSON mapping.
      */
-    public LessonViewDto() {
-    }
+    public LessonViewDto() {}
 
     /**
      * Constructs a LessonViewDto from a lesson entity.
      *
-     * @param entity the lesson entity to convert
+     * @param entity
+     *            the lesson entity to convert
      */
     public LessonViewDto(final LessonEntity entity) {
         this.publicId = entity.publicId;
@@ -41,18 +40,15 @@ public class LessonViewDto {
 
         if (entity.children != null && !entity.children.isEmpty()) {
             this.childrenCount = entity.children.size();
-            this.childrenPublicIds = entity.children.stream()
-                    .map(child -> child.publicId)
-                    .toList();
+            this.childrenPublicIds = entity.children.stream().map(child -> child.publicId).toList();
         } else {
             this.childrenCount = 0;
             this.childrenPublicIds = List.of();
         }
 
         if (entity.exercises != null) {
-            this.exercisesCount = (int) entity.exercises.stream()
-                    .filter(ex -> Boolean.TRUE.equals(ex.published))
-                    .count();
+            this.exercisesCount =
+                    (int) entity.exercises.stream().filter(ex -> Boolean.TRUE.equals(ex.published)).count();
         } else {
             this.exercisesCount = 0;
         }

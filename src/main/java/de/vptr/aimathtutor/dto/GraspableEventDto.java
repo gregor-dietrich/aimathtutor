@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents a student action in the Graspable Math workspace.
- * This DTO captures events like simplify, expand, factor, move, etc.
+ * Represents a student action in the Graspable Math workspace. This DTO captures events like simplify, expand, factor,
+ * move, etc.
  */
 public class GraspableEventDto {
 
@@ -37,15 +37,13 @@ public class GraspableEventDto {
 
     public Boolean isComplete; // Whether this action resulted in problem completion
 
-    public GraspableEventDto() {
-    }
+    public GraspableEventDto() {}
 
     /**
      * Constructs a GraspableEventDto with the specified parameters.
      */
-    public GraspableEventDto(final String eventType, final String expressionBefore,
-            final String expressionAfter, final Long studentId,
-            final Long exerciseId, final String sessionId) {
+    public GraspableEventDto(final String eventType, final String expressionBefore, final String expressionAfter,
+            final Long studentId, final Long exerciseId, final String sessionId) {
         this();
         this.eventType = eventType;
         this.expressionBefore = expressionBefore;
@@ -57,15 +55,9 @@ public class GraspableEventDto {
 
     @Override
     public String toString() {
-        return "GraspableEventDto{"
-                + "eventType='" + this.eventType + '\''
-                + ", expressionBefore='" + this.expressionBefore + '\''
-                + ", expressionAfter='" + this.expressionAfter + '\''
-                + ", studentId=" + this.studentId
-                + ", exerciseId=" + this.exerciseId
-                + ", sessionId='" + this.sessionId + '\''
-                + ", timestamp=" + this.timestamp
-                + ", correct=" + this.correct
-                + '}';
+        return "GraspableEventDto{" + "eventType='" + this.eventType + '\'' + ", expressionBefore='"
+                + this.expressionBefore + '\'' + ", expressionAfter='" + this.expressionAfter + '\'' + ", studentId="
+                + this.studentId + ", exerciseId=" + this.exerciseId + ", sessionId='" + this.sessionId + '\''
+                + ", timestamp=" + this.timestamp + ", correct=" + this.correct + '}';
     }
 }

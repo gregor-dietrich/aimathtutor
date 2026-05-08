@@ -8,8 +8,7 @@ import de.vptr.aimathtutor.dto.GraspableEventDto;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * Mock AI provider using rule-based logic.
- * Provides reasonable feedback based on action type without calling external
+ * Mock AI provider using rule-based logic. Provides reasonable feedback based on action type without calling external
  * services.
  */
 @ApplicationScoped
@@ -90,9 +89,8 @@ public class MockAiProvider implements AiProvider {
     }
 
     @Override
-    public String answerQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
+    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
+            final String targetExpression, final ConversationContextDto context) {
         if (question == null || question.isBlank()) {
             return "I'm here to help! Can you be more specific about what you're stuck on?";
         }
@@ -100,22 +98,26 @@ public class MockAiProvider implements AiProvider {
 
         // Provide context-aware answers based on keywords
         if (lowerQuestion.contains("how") && lowerQuestion.contains("solve")) {
-            return "To solve an equation, try to isolate the variable on one side. Work step by step, performing the same operation on both sides.";
+            return "To solve an equation, try to isolate the variable on one side. "
+                    + "Work step by step, performing the same operation on both sides.";
         }
 
         if (lowerQuestion.contains("what") && (lowerQuestion.contains("next") || lowerQuestion.contains("do"))) {
             if (currentExpression != null && currentExpression.contains("+")) {
                 return "Try combining like terms or moving terms to isolate the variable.";
             }
-            return "Look at what you have now and think about what operation would help simplify or isolate the variable.";
+            return "Look at what you have now and think about what operation would help "
+                    + "simplify or isolate the variable.";
         }
 
         if (lowerQuestion.contains("why") || lowerQuestion.contains("explain")) {
-            return "That's a great question! In algebra, we maintain balance by doing the same operation on both sides. This keeps the equation true.";
+            return "That's a great question! In algebra, we maintain balance by doing the same "
+                    + "operation on both sides. This keeps the equation true.";
         }
 
         if (lowerQuestion.contains("stuck") || lowerQuestion.contains("help")) {
-            return "No worries! Try breaking it down into smaller steps. What's the first thing you can simplify or isolate?";
+            return "No worries! Try breaking it down into smaller steps. "
+                    + "What's the first thing you can simplify or isolate?";
         }
 
         if (lowerQuestion.contains("hint")) {

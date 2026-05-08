@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Represents a Graspable Math problem definition.
- * This DTO is used to initialize the Graspable Math canvas with a specific
- * problem.
+ * Represents a Graspable Math problem definition. This DTO is used to initialize the Graspable Math canvas with a
+ * specific problem.
  */
 public class GraspableProblemDto {
 
@@ -20,14 +18,10 @@ public class GraspableProblemDto {
      * Enum for different math problem categories.
      */
     public enum ProblemCategory {
-        LINEAR_EQUATIONS("Linear Equations", "algebra"),
-        QUADRATIC_EQUATIONS("Quadratic Equations", "algebra"),
-        POLYNOMIAL_SIMPLIFICATION("Polynomial Simplification", "algebra"),
-        FACTORING("Factoring", "algebra"),
-        FRACTIONS("Fraction Operations", "arithmetic"),
-        EXPONENTS("Exponent Rules", "algebra"),
-        SYSTEMS_OF_EQUATIONS("Systems of Equations", "algebra"),
-        INEQUALITIES("Inequalities", "algebra");
+        LINEAR_EQUATIONS("Linear Equations", "algebra"), QUADRATIC_EQUATIONS("Quadratic Equations", "algebra"),
+        POLYNOMIAL_SIMPLIFICATION("Polynomial Simplification", "algebra"), FACTORING("Factoring", "algebra"),
+        FRACTIONS("Fraction Operations", "arithmetic"), EXPONENTS("Exponent Rules", "algebra"),
+        SYSTEMS_OF_EQUATIONS("Systems of Equations", "algebra"), INEQUALITIES("Inequalities", "algebra");
 
         private final String displayName;
         private final String topic;
@@ -66,7 +60,8 @@ public class GraspableProblemDto {
 
     public String title;
 
-    @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD", justification = "Description is optional and used by front-end; public for JSON mapping")
+    @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
+            justification = "Description is optional and used by front-end; public for JSON mapping")
     public String description;
 
     @JsonProperty("initial_expression")
@@ -94,8 +89,7 @@ public class GraspableProblemDto {
     }
 
     /**
-     * Constructs a GraspableProblemDto with the specified title and initial
-     * expression.
+     * Constructs a GraspableProblemDto with the specified title and initial expression.
      */
     public GraspableProblemDto(final String title, final String initialExpression) {
         this();
@@ -110,11 +104,8 @@ public class GraspableProblemDto {
      */
     @Override
     public String toString() {
-        return "GraspableProblemDto{"
-                + "title='" + this.title + '\''
-                + ", initialExpression='" + this.initialExpression + '\''
-                + ", targetExpression='" + this.targetExpression + '\''
-                + ", difficulty='" + this.difficulty + '\''
-                + '}';
+        return "GraspableProblemDto{" + "title='" + this.title + '\'' + ", initialExpression='" + this.initialExpression
+                + '\'' + ", targetExpression='" + this.targetExpression + '\'' + ", difficulty='" + this.difficulty
+                + '\'' + '}';
     }
 }

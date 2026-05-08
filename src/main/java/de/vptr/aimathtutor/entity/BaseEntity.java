@@ -11,9 +11,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Version;
 
 /**
- * Base entity providing common fields for all JPA entities:
- * auto-generated primary key, optimistic locking version,
- * and a ULID-based public identifier.
+ * Base entity providing common fields for all JPA entities: auto-generated primary key, optimistic locking version, and
+ * a ULID-based public identifier.
  */
 @MappedSuperclass
 public abstract class BaseEntity extends PanacheEntityBase {
@@ -29,8 +28,8 @@ public abstract class BaseEntity extends PanacheEntityBase {
     public String publicId;
 
     /**
-     * Generates a ULID-based public identifier for this entity if not already set.
-     * Validates existing publicId values on persist.
+     * Generates a ULID-based public identifier for this entity if not already set. Validates existing publicId values
+     * on persist.
      */
     @PrePersist
     public void generatePublicId() {

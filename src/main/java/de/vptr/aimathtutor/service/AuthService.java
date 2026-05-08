@@ -7,7 +7,6 @@ import org.jboss.logging.Logger;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
-
 import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -42,22 +41,20 @@ public class AuthService {
     private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
 
     /**
-     * How long an {@link #isAuthenticated()} result may be served from the session
-     * without re-validating against the database. Keeps {@code beforeEnter}
-     * navigation
-     * checks off the DB while still picking up bans/deactivations within a short
-     * window.
+     * How long an {@link #isAuthenticated()} result may be served from the session without re-validating against the
+     * database. Keeps {@code beforeEnter} navigation checks off the DB while still picking up bans/deactivations within
+     * a short window.
      */
     private static final long AUTH_CACHE_TTL_MILLIS = 30_000L;
 
     /**
-     * Authenticates a user with the provided credentials.
-     * Validates username and password, checks user activation and ban status,
-     * updates last login time, and stores authentication information in the
-     * session.
+     * Authenticates a user with the provided credentials. Validates username and password, checks user activation and
+     * ban status, updates last login time, and stores authentication information in the session.
      *
-     * @param username the username to authenticate
-     * @param password the plaintext password to verify
+     * @param username
+     *            the username to authenticate
+     * @param password
+     *            the plaintext password to verify
      * @return an {@link AuthResultDto} indicating success or the reason for failure
      */
     @Transactional
@@ -76,16 +73,14 @@ public class AuthService {
         if (this.loginAttemptService.isLockedOut(usernameKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
             LOG.warnf("Authentication throttled by username (%ss remaining)", remaining);
-            return AuthResultDto
-                    .backendUnavailable("Too many failed attempts. Try again later.");
+            return AuthResultDto.backendUnavailable("Too many failed attempts. Try again later.");
         }
 
         // Check login attempt throttling by IP
         if (clientIp != null && this.loginAttemptService.isLockedOut(clientIp)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientIp);
             LOG.warnf("Authentication throttled by IP (%ss remaining)", remaining);
-            return AuthResultDto
-                    .backendUnavailable("Too many failed attempts. Try again later.");
+            return AuthResultDto.backendUnavailable("Too many failed attempts. Try again later.");
         }
 
         try {
@@ -192,9 +187,8 @@ public class AuthService {
     }
 
     /**
-     * Clears the current user's authentication session.
-     * Removes stored username, password, and authentication status from the
-     * session.
+     * Clears the current user's authentication session. Removes stored username, password, and authentication status
+     * from the session.
      */
     public void logout() {
         final var username = this.getUsername();
@@ -276,8 +270,7 @@ public class AuthService {
     /**
      * Retrieves the user ID of the currently authenticated user.
      *
-     * @return the ID of the current user, or null if not authenticated or user not
-     *         found
+     * @return the ID of the current user, or null if not authenticated or user not found
      */
     public Long getUserId() {
         final String username = this.getUsername();
@@ -289,8 +282,7 @@ public class AuthService {
     }
 
     /**
-     * Get the current authenticated user entity (for accessing avatar settings,
-     * etc.)
+     * Get the current authenticated user entity (for accessing avatar settings, etc.)
      * 
      * @return UserEntity or null if not authenticated
      */

@@ -24,7 +24,6 @@ import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.component.button.CreateButton;
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;
@@ -96,10 +95,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
     private void loadGroupsAsync() {
         LOG.info("Starting async group loading");
 
-        AsyncDataLoader.load(
-                () -> this.groupService.getAllGroups(),
-                this,
-                data -> this.grid.setItems(data),
+        AsyncDataLoader.load(() -> this.groupService.getAllGroups(), this, data -> this.grid.setItems(data),
                 "Failed to load groups. Please try again.");
     }
 
@@ -117,15 +113,11 @@ public class AdminUserGroupsView extends AbstractAdminView {
     }
 
     private HorizontalLayout createSearchLayout() {
-        final var searchLayout = new SearchLayout(
-                e -> {
-                    if (e.getValue() == null || e.getValue().isBlank()) {
-                        this.loadGroupsAsync();
-                    }
-                },
-                ignored -> this.searchGroups(),
-                "Search by name...",
-                "Search Groups");
+        final var searchLayout = new SearchLayout(e -> {
+            if (e.getValue() == null || e.getValue().isBlank()) {
+                this.loadGroupsAsync();
+            }
+        }, ignored -> this.searchGroups(), "Search by name...", "Search Groups");
 
         this.searchButton = searchLayout.getButton();
         this.searchField = searchLayout.getTextfield();
@@ -221,8 +213,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         nameField.setInvalid(false); // Clear any previous validation state
 
         // Bind fields
-        this.binder.forField(nameField)
-                .withValidator(value -> value != null && !value.isBlank(), "Name is required")
+        this.binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
                 .bind(group1 -> group1.name, (group1, value) -> group1.name = value);
 
         form.add(nameField);
@@ -309,15 +300,10 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.searchButton.setEnabled(false);
         LOG.debugf("Starting async group search with query length: %s", query.length());
 
-        AsyncDataLoader.load(
-                () -> this.groupService.searchGroups(query),
-                this,
-                groups -> {
-                    this.searchButton.setEnabled(true);
-                    this.grid.setItems(groups);
-                },
-                () -> this.searchButton.setEnabled(true),
-                "Failed to search groups. Please try again.");
+        AsyncDataLoader.load(() -> this.groupService.searchGroups(query), this, groups -> {
+            this.searchButton.setEnabled(true);
+            this.grid.setItems(groups);
+        }, () -> this.searchButton.setEnabled(true), "Failed to search groups. Please try again.");
     }
 
     private void openUserManagementDialog(final UserGroupViewDto group) {
@@ -336,8 +322,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.userGrid.addColumn(user -> user.email != null ? user.email : "no email").setHeader("Email").setFlexGrow(1);
 
         // Add remove button column
-        this.userGrid.addComponentColumn(user ->
-                new RemoveUserButton(ignored -> this.removeUserFromGroup(user)))
+        this.userGrid.addComponentColumn(user -> new RemoveUserButton(ignored -> this.removeUserFromGroup(user)))
                 .setHeader("Actions").setWidth("120px").setFlexGrow(0);
 
         // Create add user section
@@ -381,30 +366,22 @@ public class AdminUserGroupsView extends AbstractAdminView {
     }
 
     private void loadGroupUsers() {
-        AsyncDataLoader.load(
-                () -> this.groupService.getUsersInGroup(this.selectedGroup.publicId),
-                this,
-                users -> this.userGrid.setItems(users),
-                "Unexpected error occurred");
+        AsyncDataLoader.load(() -> this.groupService.getUsersInGroup(this.selectedGroup.publicId), this,
+                users -> this.userGrid.setItems(users), "Unexpected error occurred");
     }
 
     private void loadAvailableUsers() {
-        AsyncDataLoader.load(
-                () -> {
-                    final var allUsers = this.userService.getAllUsers();
-                    if (allUsers == null) {
-                        return List.<UserViewDto>of();
-                    }
-                    final var currentUsers = this.groupService.getUsersInGroup(this.selectedGroup.publicId);
-                    final var currentUserPublicIds = currentUsers == null ? Set.<String>of()
-                            : currentUsers.stream().map(user -> user.publicId).collect(Collectors.toSet());
-                    return allUsers.stream()
-                            .filter(user -> !currentUserPublicIds.contains(user.publicId))
-                            .collect(Collectors.toList());
-                },
-                this,
-                availableUsers -> this.availableUsersCombo.setItems(availableUsers),
-                "Error loading available users");
+        AsyncDataLoader.load(() -> {
+            final var allUsers = this.userService.getAllUsers();
+            if (allUsers == null) {
+                return List.<UserViewDto>of();
+            }
+            final var currentUsers = this.groupService.getUsersInGroup(this.selectedGroup.publicId);
+            final var currentUserPublicIds = currentUsers == null ? Set.<String>of()
+                    : currentUsers.stream().map(user -> user.publicId).collect(Collectors.toSet());
+            return allUsers.stream().filter(user -> !currentUserPublicIds.contains(user.publicId))
+                    .collect(Collectors.toList());
+        }, this, availableUsers -> this.availableUsersCombo.setItems(availableUsers), "Error loading available users");
     }
 
     private void addUserToGroup() {
@@ -415,10 +392,9 @@ public class AdminUserGroupsView extends AbstractAdminView {
         }
 
         // Check if user is already in the group
-        final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>())
-                .collect(Collectors.toList());
-        final boolean alreadyInGroup = currentUsers.stream()
-                .anyMatch(user -> user.publicId.equals(selectedUser.publicId));
+        final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
+        final boolean alreadyInGroup =
+                currentUsers.stream().anyMatch(user -> user.publicId.equals(selectedUser.publicId));
 
         if (alreadyInGroup) {
             NotificationUtil.showWarning("User is already a member of this group");
@@ -466,10 +442,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(
-                () -> this.groupService.getGroupsForUser(userPublicId),
-                this,
-                groups -> this.grid.setItems(groups),
-                "Failed to filter groups");
+        AsyncDataLoader.load(() -> this.groupService.getGroupsForUser(userPublicId), this,
+                groups -> this.grid.setItems(groups), "Failed to filter groups");
     }
 }

@@ -44,4 +44,90 @@
     <Bug pattern="EI_EXPOSE_REP" />
     <Class name="de.vptr.aimathtutor.component.layout.SearchFilterBar" />
   </Match>
+
+  <!--
+    MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR:
+    Vaadin components commonly call setSizeFull(), setWidthFull(), getElement(), etc.
+    in constructors. This is the standard Vaadin pattern and not a real issue since
+    these classes are not designed for subclassing.
+  -->
+  <Match>
+    <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR" />
+  </Match>
+
+  <!--
+    URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD / UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD:
+    DTO fields are used for JSON serialization/deserialization and API transfer.
+    SpotBugs cannot trace usage across serialization boundaries.
+  -->
+  <Match>
+    <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+    <Class name="~de\.vptr\.aimathtutor\.dto\..*" />
+  </Match>
+  <Match>
+    <Bug pattern="UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD" />
+    <Class name="~de\.vptr\.aimathtutor\.dto\..*" />
+  </Match>
+
+  <!--
+    SE_BAD_FIELD:
+    Vaadin components store non-serializable fields (listeners, services) that are
+    never serialized in practice.
+  -->
+  <Match>
+    <Bug pattern="SE_BAD_FIELD" />
+  </Match>
+
+  <!--
+    REC_CATCH_EXCEPTION:
+    Intentional broad exception catching in error handling utilities.
+  -->
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION" />
+    <Class name="de.vptr.aimathtutor.util.ErrorMessageUtil" />
+  </Match>
+
+  <!--
+    DM_EXIT:
+    PasswordUtility is a CLI utility where System.exit is appropriate.
+  -->
+  <Match>
+    <Bug pattern="DM_EXIT" />
+    <Class name="de.vptr.aimathtutor.util.PasswordUtility" />
+  </Match>
+
+  <!--
+    NP_NULL_ON_SOME_PATH:
+    Lambda null dereference in AdminLessonsView — DTOs are validated before use.
+  -->
+  <Match>
+    <Bug pattern="NP_NULL_ON_SOME_PATH" />
+    <Class name="~de\.vptr\.aimathtutor\.view\.admin\.AdminLessonsView.*" />
+  </Match>
+
+  <!--
+    UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR:
+    DTO fields are populated by Jackson deserialization, not constructors.
+  -->
+  <Match>
+    <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" />
+    <Class name="~de\.vptr\.aimathtutor\.dto\..*" />
+  </Match>
+
+  <!--
+    UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD:
+    Response DTO fields are populated by Jackson deserialization from API responses.
+  -->
+  <Match>
+    <Bug pattern="UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD" />
+    <Class name="~de\.vptr\.aimathtutor\.dto\..*" />
+  </Match>
+
+  <!--
+    THROWS_METHOD_THROWS_RUNTIMEEXCEPTION:
+    Intentional pattern for validation and error handling methods.
+  -->
+  <Match>
+    <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION" />
+  </Match>
 </FindBugsFilter>

@@ -43,9 +43,8 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     @Override
-    public String answerQuestion(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression,
-            final ConversationContextDto context) {
+    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
+            final String targetExpression, final ConversationContextDto context) {
         final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
                 initialExpression, targetExpression, context);
         return this.geminiService.generateContent(prompt);

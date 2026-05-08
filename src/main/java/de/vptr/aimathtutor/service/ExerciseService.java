@@ -26,12 +26,9 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
- * Service for managing exercises and their Graspable Math integration.
- * Provides CRUD operations, search, and filtering with user-specific completion
- * tracking.
- * Works with {@link ExerciseEntity}, {@link LessonEntity}, and
- * {@link UserEntity} to
- * maintain exercise-lesson hierarchies and user-exercise relationships.
+ * Service for managing exercises and their Graspable Math integration. Provides CRUD operations, search, and filtering
+ * with user-specific completion tracking. Works with {@link ExerciseEntity}, {@link LessonEntity}, and
+ * {@link UserEntity} to maintain exercise-lesson hierarchies and user-exercise relationships.
  */
 @ApplicationScoped
 public class ExerciseService {
@@ -58,17 +55,15 @@ public class ExerciseService {
      */
     @Transactional
     public List<ExerciseViewDto> getAllExercises() {
-        return this.exerciseRepository.findAllOrdered().stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        return this.exerciseRepository.findAllOrdered().stream().map(ExerciseViewDto::new).toList();
     }
 
     /**
      * Retrieves a single exercise by ID with user completion tracking.
      *
-     * @param id the exercise ID
-     * @return an {@link Optional} containing the {@link ExerciseViewDto} with
-     *         completion data, or empty if not found
+     * @param id
+     *            the exercise ID
+     * @return an {@link Optional} containing the {@link ExerciseViewDto} with completion data, or empty if not found
      */
     @Transactional
     public Optional<ExerciseViewDto> findById(final Long id) {
@@ -79,9 +74,9 @@ public class ExerciseService {
     /**
      * Retrieves a single exercise by its public ID with user completion tracking.
      *
-     * @param publicId the exercise public ID
-     * @return an {@link Optional} containing the {@link ExerciseViewDto} with
-     *         completion data, or empty if not found
+     * @param publicId
+     *            the exercise public ID
+     * @return an {@link Optional} containing the {@link ExerciseViewDto} with completion data, or empty if not found
      */
     @Transactional
     public Optional<ExerciseViewDto> findByPublicId(final String publicId) {
@@ -92,59 +87,54 @@ public class ExerciseService {
     /**
      * Retrieves all published exercises with user completion tracking.
      *
-     * @return a list of published {@link ExerciseViewDto}s with enriched completion
-     *         data
+     * @return a list of published {@link ExerciseViewDto}s with enriched completion data
      */
     @Transactional
     public List<ExerciseViewDto> findPublishedExercises() {
-        final List<ExerciseViewDto> dtos = this.exerciseRepository.findPublished().stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        final List<ExerciseViewDto> dtos =
+                this.exerciseRepository.findPublished().stream().map(ExerciseViewDto::new).toList();
         return this.exerciseCompletionService.enrichListWithCompletionData(dtos);
     }
 
     /**
      * Retrieves all exercises created by a specific user.
      *
-     * @param userId the user ID
+     * @param userId
+     *            the user ID
      * @return a list of {@link ExerciseViewDto}s authored by the user
      */
     @Transactional
     public List<ExerciseViewDto> findByUserId(final Long userId) {
-        return this.exerciseRepository.findByUserId(userId).stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        return this.exerciseRepository.findByUserId(userId).stream().map(ExerciseViewDto::new).toList();
     }
 
     /**
      * Retrieves all exercises in a specific lesson with user completion tracking.
      *
-     * @param lessonId the lesson ID
-     * @return a list of {@link ExerciseViewDto}s in the lesson with enriched
-     *         completion data
+     * @param lessonId
+     *            the lesson ID
+     * @return a list of {@link ExerciseViewDto}s in the lesson with enriched completion data
      */
     @Transactional
     public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
-        final List<ExerciseViewDto> dtos = this.exerciseRepository.findByLessonId(lessonId).stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        final List<ExerciseViewDto> dtos =
+                this.exerciseRepository.findByLessonId(lessonId).stream().map(ExerciseViewDto::new).toList();
         return this.exerciseCompletionService.enrichListWithCompletionData(dtos);
     }
 
     /**
-     * Retrieves all published exercises grouped by lesson ID.
-     * Used to avoid N+1 queries when loading lesson cards.
+     * Retrieves all published exercises grouped by lesson ID. Used to avoid N+1 queries when loading lesson cards.
      *
      * @return a map of lesson ID to list of published {@link ExerciseViewDto}s
      */
     @Transactional
     public Map<String, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
-        final List<ExerciseViewDto> dtos = this.exerciseRepository.findPublished().stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        final List<ExerciseViewDto> dtos =
+                this.exerciseRepository.findPublished().stream().map(ExerciseViewDto::new).toList();
         final List<ExerciseViewDto> enriched = this.exerciseCompletionService.enrichListWithCompletionData(dtos);
         return enriched.stream().collect(HashMap::new,
-                (map, dto) -> map.computeIfAbsent(dto.lessonPublicId, ignored -> new ArrayList<>()).add(dto), Map::putAll);
+                (map, dto) -> map.computeIfAbsent(dto.lessonPublicId, ignored -> new ArrayList<>()).add(dto),
+                Map::putAll);
     }
 
     /**
@@ -154,36 +144,32 @@ public class ExerciseService {
      */
     @Transactional
     public List<ExerciseViewDto> findGraspableMathExercises() {
-        return this.exerciseRepository.findGraspableMathExercises().stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        return this.exerciseRepository.findGraspableMathExercises().stream().map(ExerciseViewDto::new).toList();
     }
 
     /**
      * Retrieves all Graspable Math exercises within a specific lesson.
      *
-     * @param lessonId the lesson ID
-     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s in the
-     *         lesson
+     * @param lessonId
+     *            the lesson ID
+     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s in the lesson
      */
     @Transactional
     public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
-        return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream()
-                .map(ExerciseViewDto::new)
+        return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream().map(ExerciseViewDto::new)
                 .toList();
     }
 
     /**
-     * Creates a new exercise with provided information.
-     * Validates required fields (title, content, userId) and Graspable Math
-     * configuration if enabled.
-     * Sets creation/last edit timestamps and associates with user and optional
+     * Creates a new exercise with provided information. Validates required fields (title, content, userId) and
+     * Graspable Math configuration if enabled. Sets creation/last edit timestamps and associates with user and optional
      * lesson.
      *
-     * @param exerciseDto the exercise data transfer object with creation details
+     * @param exerciseDto
+     *            the exercise data transfer object with creation details
      * @return the created {@link ExerciseViewDto}
-     * @throws ValidationException if required fields are missing or references are
-     *                             invalid
+     * @throws ValidationException
+     *             if required fields are missing or references are invalid
      */
     @Transactional
     public ExerciseViewDto createExercise(final @Valid ExerciseDto exerciseDto) {
@@ -201,8 +187,7 @@ public class ExerciseService {
 
         // Validate Graspable Math: if enabled, target expression is required
         if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled
-                && (exerciseDto.graspableTargetExpression == null
-                        || exerciseDto.graspableTargetExpression.isBlank())) {
+                && (exerciseDto.graspableTargetExpression == null || exerciseDto.graspableTargetExpression.isBlank())) {
             throw new ValidationException(
                     "Graspable Math target expression is required when Graspable Math is enabled");
         }
@@ -241,17 +226,19 @@ public class ExerciseService {
     }
 
     /**
-     * Completely replaces an existing exercise (PUT semantics).
-     * Validates required fields and updates all exercise properties including
-     * Graspable Math configuration.
-     * Updates last edit timestamp. Preserves existing user if userId not provided.
+     * Completely replaces an existing exercise (PUT semantics). Validates required fields and updates all exercise
+     * properties including Graspable Math configuration. Updates last edit timestamp. Preserves existing user if userId
+     * not provided.
      *
-     * @param publicId    the exercise ID to update
-     * @param exerciseDto the new exercise data
+     * @param publicId
+     *            the exercise ID to update
+     * @param exerciseDto
+     *            the new exercise data
      * @return the updated {@link ExerciseViewDto}
-     * @throws WebApplicationException if exercise not found (NOT_FOUND status)
-     * @throws ValidationException     if required fields are missing or references
-     *                                 are invalid
+     * @throws WebApplicationException
+     *             if exercise not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if required fields are missing or references are invalid
      */
     @Transactional
     public ExerciseViewDto updateExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
@@ -272,8 +259,7 @@ public class ExerciseService {
 
         // Validate Graspable Math: if enabled, target expression is required
         if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled
-                && (exerciseDto.graspableTargetExpression == null
-                        || exerciseDto.graspableTargetExpression.isBlank())) {
+                && (exerciseDto.graspableTargetExpression == null || exerciseDto.graspableTargetExpression.isBlank())) {
             throw new ValidationException(
                     "Graspable Math target expression is required when Graspable Math is enabled");
         }
@@ -305,17 +291,19 @@ public class ExerciseService {
     }
 
     /**
-     * Partially updates an existing exercise (PATCH semantics).
-     * Only updates exercise properties that are explicitly provided in the DTO;
-     * null values are ignored.
-     * Updates last edit timestamp. Validates user and lesson references if
-     * provided.
+     * Partially updates an existing exercise (PATCH semantics). Only updates exercise properties that are explicitly
+     * provided in the DTO; null values are ignored. Updates last edit timestamp. Validates user and lesson references
+     * if provided.
      *
-     * @param publicId    the public ID of the exercise to update
-     * @param exerciseDto the partial exercise data with selected fields to update
+     * @param publicId
+     *            the public ID of the exercise to update
+     * @param exerciseDto
+     *            the partial exercise data with selected fields to update
      * @return the updated {@link ExerciseViewDto}
-     * @throws WebApplicationException if exercise not found (NOT_FOUND status)
-     * @throws ValidationException     if provided references are invalid
+     * @throws WebApplicationException
+     *             if exercise not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if provided references are invalid
      */
     @Transactional
     public ExerciseViewDto patchExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
@@ -374,9 +362,9 @@ public class ExerciseService {
     /**
      * Deletes an exercise by ID.
      *
-     * @param publicId the exercise ID to delete
-     * @return {@code true} if deletion succeeded, {@code false} if exercise not
-     *         found
+     * @param publicId
+     *            the exercise ID to delete
+     * @return {@code true} if deletion succeeded, {@code false} if exercise not found
      */
     @Transactional
     public boolean deleteExercise(final String publicId) {
@@ -385,10 +373,11 @@ public class ExerciseService {
     }
 
     /**
-     * Searches exercises by title and content using the provided query string.
-     * Returns all exercises if query is null or empty.
+     * Searches exercises by title and content using the provided query string. Returns all exercises if query is null
+     * or empty.
      *
-     * @param query the search query string (title/content match)
+     * @param query
+     *            the search query string (title/content match)
      * @return a list of matching {@link ExerciseViewDto}s
      */
     @Transactional
@@ -397,18 +386,17 @@ public class ExerciseService {
             return this.getAllExercises();
         }
         final List<ExerciseEntity> exercises = this.exerciseRepository.search(query);
-        return exercises.stream()
-                .map(ExerciseViewDto::new)
-                .toList();
+        return exercises.stream().map(ExerciseViewDto::new).toList();
     }
 
     /**
-     * Finds exercises created within a date range (inclusive).
-     * Date strings are parsed as ISO-8601 dates. Returns an empty list if parsing
-     * fails or dates are null.
+     * Finds exercises created within a date range (inclusive). Date strings are parsed as ISO-8601 dates. Returns an
+     * empty list if parsing fails or dates are null.
      *
-     * @param startDate the start date (ISO-8601 format: YYYY-MM-DD)
-     * @param endDate   the end date (ISO-8601 format: YYYY-MM-DD)
+     * @param startDate
+     *            the start date (ISO-8601 format: YYYY-MM-DD)
+     * @param endDate
+     *            the end date (ISO-8601 format: YYYY-MM-DD)
      * @return a list of {@link ExerciseViewDto}s created within the date range
      */
     @Transactional
@@ -425,9 +413,7 @@ public class ExerciseService {
             final var endDateTime = end.atTime(LocalTime.MAX);
 
             final List<ExerciseEntity> exercises = this.exerciseRepository.findByDateRange(startDateTime, endDateTime);
-            return exercises.stream()
-                    .map(ExerciseViewDto::new)
-                    .toList();
+            return exercises.stream().map(ExerciseViewDto::new).toList();
         } catch (final DateTimeParseException e) {
             return List.of();
         }
@@ -447,16 +433,18 @@ public class ExerciseService {
     /**
      * Applies a lesson reference to an exercise.
      *
-     * <p>When {@code lessonPublicId} is null or blank, the lesson is cleared
-     * (set to null) only if {@code clearIfMissing} is true; otherwise the
-     * existing lesson is preserved. When {@code lessonPublicId} is non-blank
-     * and cannot be resolved, a {@link ValidationException} is thrown if
-     * {@code clearIfMissing} is false.
+     * <p>
+     * When {@code lessonPublicId} is null or blank, the lesson is cleared (set to null) only if {@code clearIfMissing}
+     * is true; otherwise the existing lesson is preserved. When {@code lessonPublicId} is non-blank and cannot be
+     * resolved, a {@link ValidationException} is thrown if {@code clearIfMissing} is false.
      *
-     * @param exercise       the exercise to update
-     * @param lessonPublicId the lesson public ID (null/blank clears the lesson when clearIfMissing is true)
-     * @param clearIfMissing if true, clears the lesson when lessonPublicId is null/blank;
-     *                       if false, throws for unresolvable non-blank IDs and preserves existing for null/blank
+     * @param exercise
+     *            the exercise to update
+     * @param lessonPublicId
+     *            the lesson public ID (null/blank clears the lesson when clearIfMissing is true)
+     * @param clearIfMissing
+     *            if true, clears the lesson when lessonPublicId is null/blank; if false, throws for unresolvable
+     *            non-blank IDs and preserves existing for null/blank
      */
     private void applyLessonToExercise(final ExerciseEntity exercise, final String lessonPublicId,
             final boolean clearIfMissing) {

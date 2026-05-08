@@ -10,10 +10,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 
 /**
- * Bridge bean that forwards CDI {@link CommentCreatedEvent}s to
- * programmatically
- * registered listeners. Allows non-CDI components (e.g. Vaadin layouts created
- * with {@code new}) to observe comment creation events without becoming beans.
+ * Bridge bean that forwards CDI {@link CommentCreatedEvent}s to programmatically registered listeners. Allows non-CDI
+ * components (e.g. Vaadin layouts created with {@code new}) to observe comment creation events without becoming beans.
  */
 @ApplicationScoped
 public class CommentCreatedEventBridge {
@@ -25,7 +23,8 @@ public class CommentCreatedEventBridge {
     /**
      * Registers a listener that will be invoked for every comment creation event.
      *
-     * @param listener the consumer to add
+     * @param listener
+     *            the consumer to add
      */
     public void addListener(final Consumer<CommentCreatedEvent> listener) {
         this.listeners.add(listener);
@@ -34,7 +33,8 @@ public class CommentCreatedEventBridge {
     /**
      * Removes a previously registered listener.
      *
-     * @param listener the consumer to remove
+     * @param listener
+     *            the consumer to remove
      */
     public void removeListener(final Consumer<CommentCreatedEvent> listener) {
         this.listeners.remove(listener);
@@ -45,7 +45,7 @@ public class CommentCreatedEventBridge {
             try {
                 listener.accept(event);
             } catch (final Exception t) {
-                LOG.errorf(t, "Listener %s failed handling event %s",  listener.getClass().getName(),  event);
+                LOG.errorf(t, "Listener %s failed handling event %s", listener.getClass().getName(), event);
             }
         }
     }

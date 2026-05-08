@@ -6,13 +6,11 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 
 /**
- * A custom button component for removing users.
- * Displays a confirmation dialog before executing the delete action to prevent
- * accidental removals.
+ * A custom button component for removing users. Displays a confirmation dialog before executing the delete action to
+ * prevent accidental removals.
  */
 public class RemoveUserButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Remove User";

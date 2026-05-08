@@ -65,12 +65,10 @@ class JsonRepairServiceTest {
     @DisplayName("stripQuotationMarks should handle nested quotes")
     void stripQuotationMarksShouldHandleNestedQuotes() {
         // Nested quotes: outer quotes removed, inner preserved
-        assertEquals("He said \"hello\"",
-                this.jsonRepairService.stripQuotationMarks("\"He said \"hello\"\""));
+        assertEquals("He said \"hello\"", this.jsonRepairService.stripQuotationMarks("\"He said \"hello\"\""));
 
         // Multiple levels of smart quotes
-        assertEquals("inner",
-                this.jsonRepairService.stripQuotationMarks("““inner””"));
+        assertEquals("inner", this.jsonRepairService.stripQuotationMarks("““inner””"));
     }
 
     @Test
@@ -78,16 +76,14 @@ class JsonRepairServiceTest {
     void stripQuotationMarksShouldNotRemoveMismatchedQuotes() {
         // Mismatched quotes should be left alone
         assertEquals("\"Hello world'", this.jsonRepairService.stripQuotationMarks("\"Hello world'"));
-        assertEquals("“Hello world’",
-                this.jsonRepairService.stripQuotationMarks("“Hello world’"));
+        assertEquals("“Hello world’", this.jsonRepairService.stripQuotationMarks("“Hello world’"));
     }
 
     @Test
     @DisplayName("stripQuotationMarks should not remove quotes that don't wrap the entire string")
     void stripQuotationMarksShouldNotRemovePartialQuotes() {
         // Quotes in the middle should be preserved
-        assertEquals("Hello \"world\" there",
-                this.jsonRepairService.stripQuotationMarks("Hello \"world\" there"));
+        assertEquals("Hello \"world\" there", this.jsonRepairService.stripQuotationMarks("Hello \"world\" there"));
     }
 
     @Test

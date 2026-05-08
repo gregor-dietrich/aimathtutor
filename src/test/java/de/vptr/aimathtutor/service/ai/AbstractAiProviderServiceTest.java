@@ -86,8 +86,7 @@ class AbstractAiProviderServiceTest {
     @Test
     @DisplayName("requireApiKey throws NonRetryableAiProviderException for null key")
     void testRequireApiKey_throwsWhenKeyNull() {
-        assertThrows(NonRetryableAiProviderException.class,
-                () -> PROVIDER.callRequireApiKey(null, "TEST_API_KEY"));
+        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireApiKey(null, "TEST_API_KEY"));
     }
 
     @Test
@@ -100,15 +99,13 @@ class AbstractAiProviderServiceTest {
     @Test
     @DisplayName("requireNonEmptyContent throws NonRetryableAiProviderException for null content")
     void testRequireNonEmptyContent_throwsWhenNull() {
-        assertThrows(NonRetryableAiProviderException.class,
-                () -> PROVIDER.callRequireNonEmptyContent(null));
+        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireNonEmptyContent(null));
     }
 
     @Test
     @DisplayName("requireNonEmptyContent throws NonRetryableAiProviderException for blank content")
     void testRequireNonEmptyContent_throwsWhenBlank() {
-        assertThrows(NonRetryableAiProviderException.class,
-                () -> PROVIDER.callRequireNonEmptyContent("   "));
+        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireNonEmptyContent("   "));
     }
 
     @Test
@@ -128,8 +125,7 @@ class AbstractAiProviderServiceTest {
     @Test
     @DisplayName("requireConfigured throws NonRetryableAiProviderException for blank value")
     void testRequireConfigured_throwsWhenBlank() {
-        assertThrows(NonRetryableAiProviderException.class,
-                () -> PROVIDER.callRequireConfigured("", "model setting"));
+        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireConfigured("", "model setting"));
     }
 
     @Test
@@ -141,7 +137,6 @@ class AbstractAiProviderServiceTest {
     @Test
     @DisplayName("isConfigured is callable and returns a boolean")
     void testIsConfigured_returnsBoolean() {
-        assertDoesNotThrow(() -> this.geminiService.isConfigured(),
-                "isConfigured must be callable without throwing");
+        assertDoesNotThrow(() -> this.geminiService.isConfigured(), "isConfigured must be callable without throwing");
     }
 }

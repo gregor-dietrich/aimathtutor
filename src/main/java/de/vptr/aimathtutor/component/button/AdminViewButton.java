@@ -7,8 +7,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
 /**
- * A custom button component for accessing the admin panel.
- * Displays an icon and tooltip text indicating its administrative purpose.
+ * A custom button component for accessing the admin panel. Displays an icon and tooltip text indicating its
+ * administrative purpose.
  */
 public class AdminViewButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Admin Panel";

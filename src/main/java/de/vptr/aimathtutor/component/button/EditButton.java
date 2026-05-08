@@ -8,8 +8,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 /**
- * Button used to open an edit form for an entity. Shows an edit icon and
- * delegates click handling to the provided listener.
+ * Button used to open an edit form for an entity. Shows an edit icon and delegates click handling to the provided
+ * listener.
  */
 public class EditButton extends Button {
     private static final String DEFAULT_TOOLTIP = "Edit";

@@ -137,14 +137,14 @@ class AnalyticsServiceTest {
         final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
 
         final Long differentExerciseId = this.createExercise();
-        final String sameUserDiffExerciseSessionId = this.graspableMathService.createSession(studentId,
-                differentExerciseId);
+        final String sameUserDiffExerciseSessionId =
+                this.graspableMathService.createSession(studentId, differentExerciseId);
 
-        final String diffUserSameExerciseSessionId = this.graspableMathService.createSession(otherStudentId,
-                exerciseId);
+        final String diffUserSameExerciseSessionId =
+                this.graspableMathService.createSession(otherStudentId, exerciseId);
 
-        final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByUserAndExercise(studentId,
-                exerciseId);
+        final List<StudentSessionViewDto> sessions =
+                this.analyticsService.getSessionsByUserAndExercise(studentId, exerciseId);
         assertNotNull(sessions);
         assertFalse(sessions.isEmpty());
         assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
@@ -153,8 +153,7 @@ class AnalyticsServiceTest {
         final String expectedExercisePublicId = exercise.publicId;
         for (final StudentSessionViewDto s : sessions) {
             assertEquals("student1", s.username, "All sessions should belong to student1");
-            assertEquals(expectedExercisePublicId, s.exercisePublicId,
-                    "All sessions should belong to the exercise");
+            assertEquals(expectedExercisePublicId, s.exercisePublicId, "All sessions should belong to the exercise");
         }
         assertFalse(sessions.stream().anyMatch(s -> sameUserDiffExerciseSessionId.equals(s.sessionId)),
                 "Session with same user but different exercise should be excluded");
@@ -250,8 +249,8 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getAiInteractionsBySession returns empty list for unknown session")
     void testGetAiInteractionsBySession_notFound() {
-        final List<AiInteractionViewDto> interactions = this.analyticsService
-                .getAiInteractionsBySession("no-such-session");
+        final List<AiInteractionViewDto> interactions =
+                this.analyticsService.getAiInteractionsBySession("no-such-session");
         assertNotNull(interactions);
         assertTrue(interactions.isEmpty());
     }
@@ -511,8 +510,8 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getUsersProgressSummaryByUsernameSearch returns all for blank term")
     void testGetUsersProgressSummaryByUsernameSearch_blank() {
-        final List<StudentProgressSummaryDto> summaries = this.analyticsService
-                .getUsersProgressSummaryByUsernameSearch("");
+        final List<StudentProgressSummaryDto> summaries =
+                this.analyticsService.getUsersProgressSummaryByUsernameSearch("");
         assertNotNull(summaries);
         assertFalse(summaries.isEmpty(), "Blank search delegates to getAllUsersProgressSummary");
     }
@@ -521,8 +520,8 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getUsersProgressSummaryByUsernameSearch returns matching entries")
     void testGetUsersProgressSummaryByUsernameSearch_match() {
-        final List<StudentProgressSummaryDto> summaries = this.analyticsService
-                .getUsersProgressSummaryByUsernameSearch("admin");
+        final List<StudentProgressSummaryDto> summaries =
+                this.analyticsService.getUsersProgressSummaryByUsernameSearch("admin");
         assertNotNull(summaries);
         assertFalse(summaries.isEmpty(), "admin user should match");
         assertTrue(summaries.stream().anyMatch(s -> "admin".equals(s.username)));
@@ -532,8 +531,8 @@ class AnalyticsServiceTest {
     @TestTransaction
     @DisplayName("getUsersProgressSummaryByUsernameSearch returns empty for no match")
     void testGetUsersProgressSummaryByUsernameSearch_noMatch() {
-        final List<StudentProgressSummaryDto> summaries = this.analyticsService
-                .getUsersProgressSummaryByUsernameSearch("zzz_nobody_xyz");
+        final List<StudentProgressSummaryDto> summaries =
+                this.analyticsService.getUsersProgressSummaryByUsernameSearch("zzz_nobody_xyz");
         assertNotNull(summaries);
         assertTrue(summaries.isEmpty());
     }
@@ -676,8 +675,7 @@ class AnalyticsServiceTest {
         final LocalDateTime pastEnd = LocalDateTime.now().minusHours(1);
         final var pastSummaries = this.analyticsService.getUsersProgressSummaryByDateRange(pastStart, pastEnd);
         assertNotNull(pastSummaries);
-        assertFalse(pastSummaries.stream().anyMatch(s -> "student1".equals(s.username)
-                && s.totalSessions > 0),
+        assertFalse(pastSummaries.stream().anyMatch(s -> "student1".equals(s.username) && s.totalSessions > 0),
                 "student1 should not appear active in an old range with no sessions");
     }
 
@@ -702,10 +700,8 @@ class AnalyticsServiceTest {
 
         final var stats = this.analyticsService.getProblemCategoryStats();
         assertNotNull(stats);
-        assertTrue(stats.containsKey(exercise.title),
-                "Stats should contain the seeded exercise title");
-        assertEquals(1, stats.get(exercise.title),
-                "Should have exactly one completed session for the exercise");
+        assertTrue(stats.containsKey(exercise.title), "Stats should contain the seeded exercise title");
+        assertEquals(1, stats.get(exercise.title), "Should have exactly one completed session for the exercise");
     }
 
 }

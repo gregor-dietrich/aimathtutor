@@ -16,7 +16,6 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserService;
@@ -54,11 +53,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private boolean avatarUpdateInProgress;
 
     /**
-     * Called before navigation occurs. Checks authentication, loads current user
-     * information,
-     * and builds the settings UI. Redirects to login if not authenticated.
+     * Called before navigation occurs. Checks authentication, loads current user information, and builds the settings
+     * UI. Redirects to login if not authenticated.
      *
-     * @param event the before enter navigation event
+     * @param event
+     *            the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
@@ -119,9 +118,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
+                "var(--lumo-border-radius-m)");
 
         final var header = new H3("Account Information");
         header.getStyle().set("margin-top", "0");
@@ -147,9 +145,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
+                "var(--lumo-border-radius-m)");
 
         final var header = new H3("Change Password");
         header.getStyle().set("margin-top", "0");
@@ -185,15 +182,14 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle()
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
+                "var(--lumo-border-radius-m)");
 
         final var header = new H3("Chat Avatars");
         header.getStyle().set("margin-top", "0");
 
-        final var description = new Paragraph(
-                "Select emojis to represent yourself and the AI tutor in chat conversations.");
+        final var description =
+                new Paragraph("Select emojis to represent yourself and the AI tutor in chat conversations.");
 
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
@@ -210,8 +206,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         // Preview box
         this.previewBox = new Div();
-        this.previewBox.getStyle()
-                .set("padding", "var(--lumo-space-m)")
+        this.previewBox.getStyle().set("padding", "var(--lumo-space-m)")
                 .set("background-color", "var(--lumo-contrast-10pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)");
@@ -241,8 +236,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var userBubble = new Div();
         userBubble.setText(userEmoji + " Hello, can you help me?");
-        userBubble.getStyle()
-                .set("padding", "var(--lumo-space-s)")
+        userBubble.getStyle().set("padding", "var(--lumo-space-s)")
                 .set("background-color", "var(--lumo-primary-color-10pct)")
                 .set("border-radius", "var(--lumo-border-radius-l)")
                 .set("border", "1px solid var(--lumo-primary-color-50pct)");
@@ -255,9 +249,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var aiBubble = new Div();
         aiBubble.setText(tutorEmoji + " Of course! I'm here to help.");
-        aiBubble.getStyle()
-                .set("padding", "var(--lumo-space-s)")
-                .set("background-color", "var(--lumo-contrast-10pct)")
+        aiBubble.getStyle().set("padding", "var(--lumo-space-s)").set("background-color", "var(--lumo-contrast-10pct)")
                 .set("border-radius", "var(--lumo-border-radius-l)")
                 .set("border", "1px solid var(--lumo-contrast-20pct)");
         aiMessage.add(aiBubble);
@@ -266,10 +258,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     }
 
     private void loadCurrentSettings() {
-        AsyncDataLoader.load(
-                () -> this.userService.getSettings(this.currentUserId),
-                this,
-                this::applySettings,
+        AsyncDataLoader.load(() -> this.userService.getSettings(this.currentUserId), this, this::applySettings,
                 "Failed to load settings");
     }
 

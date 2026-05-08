@@ -20,18 +20,16 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Entity representing AI configuration settings stored in the database.
- * Allows runtime management of AI provider, model, and prompt configuration
- * without requiring application restart.
+ * Entity representing AI configuration settings stored in the database. Allows runtime management of AI provider,
+ * model, and prompt configuration without requiring application restart.
  */
 @Entity
 @Table(name = "ai_config")
-@NamedQueries({
-        @NamedQuery(name = "AiConfig.findByKey", query = "FROM AiConfigEntity WHERE configKey = :key"),
+@NamedQueries({ @NamedQuery(name = "AiConfig.findByKey", query = "FROM AiConfigEntity WHERE configKey = :key"),
         @NamedQuery(name = "AiConfig.findByPublicId", query = "FROM AiConfigEntity WHERE publicId = :p"),
-        @NamedQuery(name = "AiConfig.findByCategory", query = "FROM AiConfigEntity WHERE category = :category ORDER BY configKey"),
-        @NamedQuery(name = "AiConfig.findAll", query = "FROM AiConfigEntity ORDER BY category, configKey"),
-})
+        @NamedQuery(name = "AiConfig.findByCategory",
+                query = "FROM AiConfigEntity WHERE category = :category ORDER BY configKey"),
+        @NamedQuery(name = "AiConfig.findAll", query = "FROM AiConfigEntity ORDER BY category, configKey"), })
 public class AiConfigEntity extends BaseEntity {
 
     @NotBlank
@@ -69,8 +67,7 @@ public class AiConfigEntity extends BaseEntity {
     /**
      * Default constructor for Hibernate.
      */
-    public AiConfigEntity() {
-    }
+    public AiConfigEntity() {}
 
     /**
      * Constructor with required fields.

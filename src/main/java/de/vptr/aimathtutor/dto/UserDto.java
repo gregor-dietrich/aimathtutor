@@ -11,10 +11,12 @@ public class UserDto {
 
     public String publicId;
 
-    @Size(min = AppConstants.USER_USERNAME_MIN_LENGTH, max = AppConstants.USER_USERNAME_MAX_LENGTH, message = "Username must be between {min} and {max} characters")
+    @Size(min = AppConstants.USER_USERNAME_MIN_LENGTH, max = AppConstants.USER_USERNAME_MAX_LENGTH,
+            message = "Username must be between {min} and {max} characters")
     public String username;
 
-    @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = AppConstants.PASSWORD_MAX_LENGTH, message = "Password must be between {min} and {max} characters")
+    @Size(min = AppConstants.PASSWORD_MIN_LENGTH, max = AppConstants.PASSWORD_MAX_LENGTH,
+            message = "Password must be between {min} and {max} characters")
     public String password;
 
     @Email(message = "Email must be valid")
@@ -29,8 +31,7 @@ public class UserDto {
 
     public String activationKey;
 
-    public UserDto() {
-    }
+    public UserDto() {}
 
     /**
      * Constructs a UserDto with the specified parameters.

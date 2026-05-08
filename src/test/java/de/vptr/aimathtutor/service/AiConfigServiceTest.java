@@ -23,9 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
- * Unit tests for AiConfigService.
- * Tests configuration CRUD operations, type conversions, validation, and
- * caching.
+ * Unit tests for AiConfigService. Tests configuration CRUD operations, type conversions, validation, and caching.
  */
 @QuarkusTest
 @DisplayName("AiConfigService Tests")
@@ -47,14 +45,11 @@ class AiConfigServiceTest {
     void setUp() {
         // Clean up any test configuration records from previous test runs
         // This ensures tests are isolated and don't fail on subsequent runs
-        final var testKeys = List.of(
-                "nonexistent.key", "test.key", "nonexistent.int", "test.int", "test.invalid.int",
-                "nonexistent.double", "test.double", "test.invalid.double", "nonexistent.bool",
-                "test.bool.true", "test.bool.false", "test.bool.one", "test.bool.zero",
-                "test.config1", "test.config2", "test.config3", "update.test",
-                "batch.config1", "batch.config2", "batch.config3",
-                "cache.test", "cache.clear.test", "test.integer", "test.boolean", "test.string",
-                "test.temperature", "test.max-tokens", "test.config3",
+        final var testKeys = List.of("nonexistent.key", "test.key", "nonexistent.int", "test.int", "test.invalid.int",
+                "nonexistent.double", "test.double", "test.invalid.double", "nonexistent.bool", "test.bool.true",
+                "test.bool.false", "test.bool.one", "test.bool.zero", "test.config1", "test.config2", "test.config3",
+                "update.test", "batch.config1", "batch.config2", "batch.config3", "cache.test", "cache.clear.test",
+                "test.integer", "test.boolean", "test.string", "test.temperature", "test.max-tokens", "test.config3",
                 "ollama.base-url", "gemini.base-url");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
@@ -117,8 +112,8 @@ class AiConfigServiceTest {
         assertEquals(123, value);
 
         // Invalid integer format returns default
-        final var invalidEntity = new AiConfigEntity("test.invalid.int", "not_a_number", ConfigType.INTEGER,
-                ConfigCategory.GENERAL);
+        final var invalidEntity =
+                new AiConfigEntity("test.invalid.int", "not_a_number", ConfigType.INTEGER, ConfigCategory.GENERAL);
         invalidEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(invalidEntity);
 
@@ -143,8 +138,8 @@ class AiConfigServiceTest {
         assertEquals(2.71, value);
 
         // Invalid double format returns default
-        final var invalidEntity = new AiConfigEntity("test.invalid.double", "not_a_double", ConfigType.DOUBLE,
-                ConfigCategory.GENERAL);
+        final var invalidEntity =
+                new AiConfigEntity("test.invalid.double", "not_a_double", ConfigType.DOUBLE, ConfigCategory.GENERAL);
         invalidEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(invalidEntity);
 
@@ -168,8 +163,8 @@ class AiConfigServiceTest {
         assertEquals(true, value);
 
         // Test "false" string
-        final var falseEntity = new AiConfigEntity("test.bool.false", "false", ConfigType.BOOLEAN,
-                ConfigCategory.GENERAL);
+        final var falseEntity =
+                new AiConfigEntity("test.bool.false", "false", ConfigType.BOOLEAN, ConfigCategory.GENERAL);
         falseEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(falseEntity);
         value = this.aiConfigService.getConfigValueAsBoolean("test.bool.false", true);
@@ -195,8 +190,8 @@ class AiConfigServiceTest {
     @Transactional
     void testUpdateConfig() {
         // Create initial config
-        final var entity = new AiConfigEntity("update.test", "initial_value", ConfigType.STRING,
-                ConfigCategory.GENERAL);
+        final var entity =
+                new AiConfigEntity("update.test", "initial_value", ConfigType.STRING, ConfigCategory.GENERAL);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -222,8 +217,7 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(config2);
 
         // Update multiple
-        final var updates = List.of(
-                new AiConfigUpdateDto("batch.config1", "new_value1"),
+        final var updates = List.of(new AiConfigUpdateDto("batch.config1", "new_value1"),
                 new AiConfigUpdateDto("batch.config2", "new_value2"),
                 new AiConfigUpdateDto("batch.config3", "new_value3") // New config
         );
@@ -242,8 +236,8 @@ class AiConfigServiceTest {
     void testValidateIntegerType() {
         // Create an INTEGER type config (marked as optional so empty values are
         // allowed)
-        final var entity = new AiConfigEntity("test.integer", "100", ConfigType.INTEGER, ConfigCategory.GENERAL, null,
-                true);
+        final var entity =
+                new AiConfigEntity("test.integer", "100", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -263,8 +257,8 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateDoubleType() {
         // Create a DOUBLE type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.double", "3.14", ConfigType.DOUBLE, ConfigCategory.GENERAL, null,
-                true);
+        final var entity =
+                new AiConfigEntity("test.double", "3.14", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -284,8 +278,8 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateBooleanType() {
         // Create a BOOLEAN type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.boolean", "true", ConfigType.BOOLEAN, ConfigCategory.GENERAL, null,
-                true);
+        final var entity =
+                new AiConfigEntity("test.boolean", "true", ConfigType.BOOLEAN, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -308,8 +302,8 @@ class AiConfigServiceTest {
     @Transactional
     void testValidateStringType() {
         // Create a STRING type config (marked as optional so empty values are allowed)
-        final var entity = new AiConfigEntity("test.string", "value", ConfigType.STRING, ConfigCategory.GENERAL, null,
-                true);
+        final var entity =
+                new AiConfigEntity("test.string", "value", ConfigType.STRING, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -376,8 +370,8 @@ class AiConfigServiceTest {
     @DisplayName("Range validation - temperature out of bounds")
     @Transactional
     void testValidateTemperatureRange() {
-        final var entity = new AiConfigEntity("test.temperature", "0.5", ConfigType.DOUBLE, ConfigCategory.GENERAL,
-                null, true);
+        final var entity =
+                new AiConfigEntity("test.temperature", "0.5", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
@@ -398,25 +392,24 @@ class AiConfigServiceTest {
     @Transactional
     void testUrlValidationUnresolvableHostAllowedForOllama() {
         // .invalid TLD is guaranteed never to resolve (RFC 2606)
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig(
-                "ollama.base-url", "http://nonexistent-ollama-host.invalid/", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ollama.base-url",
+                "http://nonexistent-ollama-host.invalid/", this.adminUser.id));
     }
 
     @Test
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
     @Transactional
     void testUrlValidationUnresolvableHostRejectedForNonOllama() {
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig(
-                        "gemini.base-url", "https://nonexistent-gemini-host.invalid/", this.adminUser.id));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("gemini.base-url",
+                "https://nonexistent-gemini-host.invalid/", this.adminUser.id));
     }
 
     @Test
     @DisplayName("Range validation - max-tokens out of bounds")
     @Transactional
     void testValidateMaxTokensRange() {
-        final var entity = new AiConfigEntity("test.max-tokens", "1000", ConfigType.INTEGER, ConfigCategory.GENERAL,
-                null, true);
+        final var entity =
+                new AiConfigEntity("test.max-tokens", "1000", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 

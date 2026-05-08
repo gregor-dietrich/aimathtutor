@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;
@@ -9,21 +8,18 @@ import jakarta.validation.constraints.Size;
 /**
  * DTO for exercise comment operations (POST, PUT, PATCH).
  * 
- * - POST: content required (validated by service), exerciseId required
- * - PUT: content required (validated by service), exerciseId ignored (from URL)
- * - PATCH: content optional (allows null), exerciseId ignored (from URL)
+ * - POST: content required (validated by service), exerciseId required - PUT: content required (validated by service),
+ * exerciseId ignored (from URL) - PATCH: content optional (allows null), exerciseId ignored (from URL)
  */
-@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", justification = "DTO public fields intentionally used for JSON mapping and simplicity")
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
+        justification = "DTO public fields intentionally used for JSON mapping and simplicity")
 public class CommentDto {
 
     /**
-     * Enumeration of comment statuses.
-     * Maps to string values stored in the database and used in UI components.
+     * Enumeration of comment statuses. Maps to string values stored in the database and used in UI components.
      */
     public enum CommentStatus {
-        VISIBLE("VISIBLE"),
-        HIDDEN("HIDDEN"),
-        DELETED("DELETED");
+        VISIBLE("VISIBLE"), HIDDEN("HIDDEN"), DELETED("DELETED");
 
         private final String value;
 
@@ -44,7 +40,8 @@ public class CommentDto {
         /**
          * Converts a string value to the corresponding CommentStatus enum.
          *
-         * @param value the string value to convert
+         * @param value
+         *            the string value to convert
          * @return the matching CommentStatus, or null if no match
          */
         public static CommentStatus fromString(final String value) {
@@ -62,7 +59,8 @@ public class CommentDto {
 
     public String publicId;
 
-    @Size(min = AppConstants.COMMENT_CONTENT_MIN_LENGTH, max = AppConstants.COMMENT_CONTENT_MAX_LENGTH, message = "Content must be between {min} and {max} characters")
+    @Size(min = AppConstants.COMMENT_CONTENT_MIN_LENGTH, max = AppConstants.COMMENT_CONTENT_MAX_LENGTH,
+            message = "Content must be between {min} and {max} characters")
     public String content;
 
     // Required for POST operations (creation)
@@ -99,13 +97,13 @@ public class CommentDto {
         /**
          * Default constructor for JSON mapping.
          */
-        public ExerciseField() {
-        }
+        public ExerciseField() {}
 
         /**
          * Constructs an ExerciseField with the given public ID.
          *
-         * @param publicId the exercise's public identifier
+         * @param publicId
+         *            the exercise's public identifier
          */
         public ExerciseField(final String publicId) {
             this.publicId = publicId;

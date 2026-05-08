@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 
 /**
- * DTO for displaying student session information in admin views.
- * Contains computed fields and safe data for client display.
+ * DTO for displaying student session information in admin views. Contains computed fields and safe data for client
+ * display.
  */
 public class StudentSessionViewDto {
 
@@ -29,8 +29,7 @@ public class StudentSessionViewDto {
     public Long durationSeconds;
     public Double successRate;
 
-    public StudentSessionViewDto() {
-    }
+    public StudentSessionViewDto() {}
 
     /**
      * Constructs a StudentSessionViewDto from a StudentSessionEntity.
