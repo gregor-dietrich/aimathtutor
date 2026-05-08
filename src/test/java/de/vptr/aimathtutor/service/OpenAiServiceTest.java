@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
-import de.vptr.aimathtutor.util.AppConstants;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
 import de.vptr.aimathtutor.util.RetryAnnotationVerifier;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;

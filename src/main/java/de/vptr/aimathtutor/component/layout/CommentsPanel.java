@@ -170,8 +170,6 @@ public class CommentsPanel extends VerticalLayout {
         }
 
         if (comments.isEmpty()) {
-            return;
-        }
 
         for (final CommentViewDto comment : comments) {
             final Div commentDiv = this.createCommentElement(comment);
