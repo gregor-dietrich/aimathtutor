@@ -22,27 +22,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
     StudentSessionRepository sessionRepository;
-    @Inject
-    ExerciseRepository exerciseRepository;
-    @Inject
-    UserRepository userRepository;
-    @Inject
-    UserRankRepository userRankRepository;
-
-    @Override
-    protected UserRepository userRepository() {
-        return this.userRepository;
-    }
-
-    @Override
-    protected ExerciseRepository exerciseRepository() {
-        return this.exerciseRepository;
-    }
-
-    @Override
-    protected UserRankRepository userRankRepository() {
-        return this.userRankRepository;
-    }
 
     @Test
     @TestTransaction

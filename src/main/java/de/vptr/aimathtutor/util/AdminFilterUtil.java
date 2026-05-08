@@ -32,7 +32,7 @@ public final class AdminFilterUtil {
         }
 
         if (startDate.isAfter(endDate)) {
-            NotificationUtil.showWarning("Start date must be before end date");
+            NotificationUtil.showWarning("Start date must not be after end date");
             return Optional.empty();
         }
 
