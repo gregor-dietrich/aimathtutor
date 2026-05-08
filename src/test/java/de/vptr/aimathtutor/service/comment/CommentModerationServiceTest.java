@@ -159,16 +159,6 @@ class CommentModerationServiceTest {
                 null, fixture.moderator().id, "reason"));
     }
 
-    private CommentEntity createComment(final ExerciseEntity exercise, final UserEntity user) {
-        final var comment = new CommentEntity();
-        comment.content = "Test comment";
-        comment.exercise = exercise;
-        comment.user = user;
-        comment.status = CommentStatus.VISIBLE;
-        this.commentRepository.persist(comment);
-        return comment;
-    }
-
     private record ModerationFixture(UserEntity moderator, CommentEntity comment) {
     }
 
