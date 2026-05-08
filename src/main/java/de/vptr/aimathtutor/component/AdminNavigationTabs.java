@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.component;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.RouterLink;
-
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.view.admin.AdminCommentsView;
 import de.vptr.aimathtutor.view.admin.AdminConfigView;

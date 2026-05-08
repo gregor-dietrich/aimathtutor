@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.service;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.Lumo;
-
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**

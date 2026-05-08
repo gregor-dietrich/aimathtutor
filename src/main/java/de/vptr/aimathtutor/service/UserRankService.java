@@ -5,7 +5,6 @@ import java.util.Locale;
 import java.util.Optional;
 
 import com.vaadin.flow.server.VaadinSession;
-
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;

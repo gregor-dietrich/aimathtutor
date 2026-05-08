@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.vaadin.flow.server.VaadinSession;
-
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;

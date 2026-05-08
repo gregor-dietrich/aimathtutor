@@ -25,7 +25,6 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.component.layout.CommentsPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;

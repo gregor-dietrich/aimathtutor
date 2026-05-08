@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**

@@ -24,7 +24,6 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
-
 import de.vptr.aimathtutor.component.button.CreateButton;
 import de.vptr.aimathtutor.component.button.DeleteButton;
 import de.vptr.aimathtutor.component.button.EditButton;

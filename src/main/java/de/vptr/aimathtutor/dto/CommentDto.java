@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.constraints.Size;

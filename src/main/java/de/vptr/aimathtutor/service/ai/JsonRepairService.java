@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

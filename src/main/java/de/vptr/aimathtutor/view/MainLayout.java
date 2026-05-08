@@ -11,7 +11,6 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.RouterLayout;
-
 import de.vptr.aimathtutor.component.NavigationTabs;
 import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.AdminViewButton;

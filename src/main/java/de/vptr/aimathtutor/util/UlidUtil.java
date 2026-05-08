@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.util;
 
 import com.github.f4b6a3.ulid.UlidCreator;
-
 import jakarta.ws.rs.BadRequestException;
 
 /**

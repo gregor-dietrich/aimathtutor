@@ -7,7 +7,6 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

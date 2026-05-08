@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.component;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-
 import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.ThemeService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

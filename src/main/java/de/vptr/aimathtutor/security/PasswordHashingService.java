@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.security;
 import java.nio.charset.StandardCharsets;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
-
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**

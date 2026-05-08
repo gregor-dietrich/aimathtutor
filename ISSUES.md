@@ -422,6 +422,57 @@ Clickable spans are used extensively across views, especially admin views, howev
 
 ---
 
+## 11. Spotless — Proper Auto-Formatting Configuration
+
+**Issue:** Spotless is currently configured for import ordering only (`importOrder` + `removeUnusedImports`). It does not enforce code formatting (indentation, line length, annotation placement).
+
+**Goal:** Configure Spotless with `googleJavaFormat` to provide full auto-formatting that matches the project's conventions:
+
+- **4-space indentation** (use `AOSP` style in google-java-format, or a custom `eclipse` formatter file)
+- **120-character line length** (google-java-format defaults to 100; need custom config or `eclipse` formatter)
+- **Annotation placement:** `@Inject`, `@Override`, etc. on their own line before members/methods (VSCode/Eclipse JDT default), NOT on the same line as the declaration (google-java-format default)
+- **Import order:** must match VSCode's Eclipse JDT ordering (currently working via `importOrder`)
+
+**Implementation plan:**
+
+1. Evaluate approaches:
+   - **Option A:** Use `googleJavaFormat` with `AOSP` style (4-space indent) + custom `eclipse` formatter XML for line length and annotation placement
+   - **Option B:** Use `eclipse` formatter directly with a project-specific XML config file that encodes all conventions (indentation, line length, annotation placement, import order)
+   - **Option C (preferred):** Use `eclipse` formatter with a config file generated from VSCode's Eclipse JDT settings, ensuring Spotless and VSCode produce identical output
+
+2. If using Eclipse formatter, export the config from VSCode (Eclipse JDT) or create `eclipse-formatter.xml` in project root with:
+   - `org.eclipse.jdt.core.formatter.tabulation.char=space`
+   - `org.eclipse.jdt.core.formatter.tabulation.size=4`
+   - `org.eclipse.jdt.core.formatter.lineSplit=120`
+   - `org.eclipse.jdt.core.formatter.annotation_placement=SEPARATE_LINE`
+   - Import order matching checkstyle's `ImportOrder` rule
+
+3. Update `pom.xml` spotless configuration:
+
+   ```xml
+   <java>
+       <eclipse>
+           <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
+       </eclipse>
+       <importOrder>
+           <order>java,javax,org,#</order>
+       </importOrder>
+       <removeUnusedImports />
+   </java>
+   ```
+
+4. Run `./mvnw spotless:apply` to format entire codebase.
+
+5. Verify `./mvnw checkstyle:check` passes after Spotless formatting (no conflicts between the two tools).
+
+6. Update checkstyle `LineLength` to 120 if not already done.
+
+**Risks:** Eclipse formatter and Checkstyle may conflict on edge cases (e.g., Javadoc formatting). Need to ensure both tools agree.
+
+**Estimated effort:** 2-4 hours for config + one-time bulk format.
+
+---
+
 ## 10. Vaadin Views — End-to-End Testing (Long-term)
 
 **Package:** `de.vptr.aimathtutor.view`

@@ -12,7 +12,6 @@ import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
 import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
