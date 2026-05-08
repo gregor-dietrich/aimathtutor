@@ -36,7 +36,7 @@ public final class ErrorMessageUtil {
                         try {
                             final JsonNode root = OBJECT_MAPPER.readTree(trimmed);
                             final String msg = findMessageNode(root);
-                            if (msg != null) {
+                            if (msg != null && !msg.isEmpty()) {
                                 return msg;
                             }
                         } catch (final Exception e) {

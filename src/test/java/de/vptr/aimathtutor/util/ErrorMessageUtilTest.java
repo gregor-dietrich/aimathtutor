@@ -203,7 +203,7 @@ class ErrorMessageUtilTest {
         String result = ErrorMessageUtil.extractErrorMessage(response);
 
         // Then
-        assertEquals("", result);
+        assertEquals("{\"message\":\"\",\"status\":400}", result);
     }
 
     @Test

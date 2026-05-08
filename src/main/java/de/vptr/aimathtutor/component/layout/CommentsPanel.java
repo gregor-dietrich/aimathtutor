@@ -163,14 +163,14 @@ public class CommentsPanel extends VerticalLayout {
             return;
         }
 
-        if (comments.isEmpty()) {
-            return;
-        }
-
         if (this.currentPage > 0) {
             this.commentsContainer.getChildren()
                     .filter(c -> c instanceof Button && "Load More Comments".equals(((Button) c).getText())).findFirst()
                     .ifPresent(this.commentsContainer::remove);
+        }
+
+        if (comments.isEmpty()) {
+            return;
         }
 
         for (final CommentViewDto comment : comments) {

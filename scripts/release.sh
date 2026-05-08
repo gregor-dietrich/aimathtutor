@@ -6,6 +6,8 @@ IMAGE_NAME=gregordietrich/aimathtutor
 
 set -e
 
+echo "Starting release..."
+
 read -p "Enter the new tag [1.0.0-SNAPSHOT]: " REVISION
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 TAG="${IMAGE_NAME}:${REVISION}"
@@ -42,5 +44,7 @@ docker tag "$TAG" "$IMAGE_NAME":latest
 docker push "$IMAGE_NAME":alpine
 docker push "$IMAGE_NAME":ubuntu
 docker push "$IMAGE_NAME":latest
+
+echo "Release completed."
 
 cd - > /dev/null

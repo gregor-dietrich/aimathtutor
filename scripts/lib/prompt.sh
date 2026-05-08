@@ -22,6 +22,9 @@ prompt_yes_no() {
     esac
 
     read -r -p "${question}" reply
+    if [ -z "$reply" ] && [ -n "$default_answer" ]; then
+        reply="$default_answer"
+    fi
     case "$reply" in
         [yYjJ])
             return 0
