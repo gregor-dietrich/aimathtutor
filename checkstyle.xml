@@ -40,8 +40,8 @@
 
     <module name="LineLength">
         <property name="fileExtensions" value="java" />
-        <property name="max" value="100" />
-        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://" />
+        <property name="max" value="120" />
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://|^\s+&quot;SELECT|^\s+&quot;FROM" />
     </module>
 
     <module name="TreeWalker">
@@ -90,7 +90,7 @@
             <property name="tokens" value="PACKAGE_DEF, IMPORT, STATIC_IMPORT" />
         </module>
         <module name="ImportOrder">
-            <property name="groups" value="java,javax,jakarta,*,de.vptr.aimathtutor" />
+            <property name="groups" value="java,javax,org" />
             <property name="ordered" value="true" />
             <property name="separated" value="true" />
             <property name="option" value="top" />

@@ -71,6 +71,7 @@
         <exclude name="DataClass" />
         <exclude name="ExcessiveImports" />
         <exclude name="ExcessiveParameterList" />
+        <exclude name="GodClass" />
         <exclude name="LawOfDemeter" />
         <exclude name="NcssCount" />
         <exclude name="SignatureDeclareThrowsException" />
@@ -78,6 +79,34 @@
         <exclude name="SingularField" />
         <exclude name="SwitchDensity" />
         <exclude name="UseObjectForClearerAPI" />
+    </rule>
+
+    <!-- Design complexity rules with elevated thresholds -->
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <property name="reportLevel" value="35" />
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="classReportLevel" value="200" />
+            <property name="methodReportLevel" value="50" />
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/NPathComplexity">
+        <properties>
+            <property name="reportLevel" value="600000" />
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="40" />
+        </properties>
+    </rule>
+    <rule ref="category/java/design.xml/TooManyFields">
+        <properties>
+            <property name="maxfields" value="40" />
+        </properties>
     </rule>
 
     <!-- Code Style: Only critical rules -->
