@@ -45,7 +45,7 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Represents a part in the Gemini response content. Gemma models with thinking mode return parts where
+     * Represents a part in the Gemini response content. Models with thinking mode return parts where
      * {@code thought=true} containing reasoning that should not be shown to users. Only parts where {@code thought} is
      * absent or {@code false} contain the actual response text.
      */
@@ -79,9 +79,9 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Extract the text content from the first candidate, skipping thought/reasoning parts. Gemma models with thinking
-     * mode return parts where {@code thought=true} containing internal reasoning that should not be shown to students.
-     * Only parts where {@code thought} is absent or {@code false} contain the actual response text.
+     * Extract the text content from the first candidate, skipping thought/reasoning parts. Models with thinking mode
+     * return parts where {@code thought=true} containing internal reasoning that should not be shown to students. Only
+     * parts where {@code thought} is absent or {@code false} contain the actual response text.
      */
     public String getTextContent() {
         if (this.candidates == null || this.candidates.isEmpty()) {
@@ -89,11 +89,15 @@ public class GeminiResponseDto {
         }
 
         final var candidate = this.candidates.get(0);
-        if (candidate.content == null || candidate.content.parts == null || candidate.content.parts.isEmpty()) {
+        if (candidate == null || candidate.content == null || candidate.content.parts == null
+                || candidate.content.parts.isEmpty()) {
             return null;
         }
 
         for (final var part : candidate.content.parts) {
+            if (part == null) {
+                continue;
+            }
             if (!Boolean.TRUE.equals(part.thought) && part.text != null && !part.text.isBlank()) {
                 return part.text;
             }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -206,5 +207,20 @@ class GeminiResponseDtoTest {
         final var dto = new GeminiResponseDto();
 
         assertNull(dto.getFinishReason());
+    }
+
+    @Test
+    @DisplayName("Should skip null entries in parts list")
+    void shouldSkipNullParts() {
+        final var dto = new GeminiResponseDto();
+        final var candidate = new GeminiResponseDto.Candidate();
+        candidate.content = new GeminiResponseDto.Content();
+        final var validPart = new GeminiResponseDto.Part();
+        validPart.text = "Valid response";
+        validPart.thought = false;
+        candidate.content.parts = Arrays.asList(null, validPart);
+        dto.candidates = List.of(candidate);
+
+        assertEquals("Valid response", dto.getTextContent());
     }
 }

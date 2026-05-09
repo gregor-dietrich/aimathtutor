@@ -25,8 +25,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for interacting with Google Gemini AI API Handles REST API calls to Gemma 4 models Configuration is
- * dynamically from AiConfigService.
+ * Service for interacting with the Google Gemini AI API. Configuration is provided dynamically via
+ * {@link AiConfigService}.
  */
 @ApplicationScoped
 public class GeminiService extends AbstractAiProviderService {
