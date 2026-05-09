@@ -6,6 +6,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.ThemeService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Shared top bar layout: a width-full horizontal bar that always carries a right-side group ending with a
@@ -52,7 +53,7 @@ public class TopBar extends HorizontalLayout {
      * Replace the left-side content with the given component. Pass {@code null} to leave only the right-side group
      * (justified to the end).
      */
-    public void setLeftContent(final Component leftContent) {
+    public void setLeftContent(@Nullable final Component leftContent) {
         this.getChildren().filter(c -> c != this.rightSide).toList().forEach(this::remove);
 
         if (leftContent != null) {
@@ -67,6 +68,7 @@ public class TopBar extends HorizontalLayout {
      * Insert buttons on the right side, immediately before the trailing theme toggle. The first button becomes the
      * leftmost of the inserted group. Null entries are ignored.
      */
+    @SuppressWarnings("NullAway")
     public void addRightSideButtons(final Component... buttons) {
         final int insertIndex = Math.max(0, this.rightSide.getComponentCount() - 1);
         for (int i = buttons.length - 1; i >= 0; i--) {
@@ -79,6 +81,7 @@ public class TopBar extends HorizontalLayout {
     /**
      * Remove the given components from the right side. Null and detached components are ignored.
      */
+    @SuppressWarnings("NullAway")
     public void removeFromRightSide(final Component... components) {
         for (final Component c : components) {
             if (c != null) {

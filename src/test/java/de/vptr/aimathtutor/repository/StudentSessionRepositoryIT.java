@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
@@ -37,10 +38,10 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         session.completed = true;
         this.sessionRepository.persist(session);
 
-        final List<StudentSessionEntity> found = this.sessionRepository.findByUserIdAndDateRange(user.id,
-                LocalDateTime.now().minusDays(2), LocalDateTime.now());
+        final List<StudentSessionEntity> found = this.sessionRepository.findByUserIdAndDateRange(
+                Objects.requireNonNull(user.id), LocalDateTime.now().minusDays(2), LocalDateTime.now());
         Assertions.assertFalse(found.isEmpty());
-        Assertions.assertTrue(found.stream().anyMatch(s -> s.sessionId.equals(session.sessionId)));
+        Assertions.assertTrue(found.stream().anyMatch(s -> Objects.equals(s.sessionId, session.sessionId)));
     }
 
     @Test
@@ -58,7 +59,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
         final List<StudentSessionEntity> found = this.sessionRepository.searchByUserOrExerciseTerm("sessuser_srch");
         Assertions.assertFalse(found.isEmpty());
-        Assertions.assertTrue(found.stream().anyMatch(s -> s.sessionId.equals(session.sessionId)));
+        Assertions.assertTrue(found.stream().anyMatch(s -> Objects.equals(s.sessionId, session.sessionId)));
     }
 
     @Test
@@ -91,8 +92,8 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         session.startTime = LocalDateTime.now();
         this.sessionRepository.persist(session);
 
-        final List<StudentSessionEntity> found = this.sessionRepository.findByUserId(user.id);
+        final List<StudentSessionEntity> found = this.sessionRepository.findByUserId(Objects.requireNonNull(user.id));
         Assertions.assertFalse(found.isEmpty());
-        Assertions.assertTrue(found.stream().anyMatch(s -> s.sessionId.equals(session.sessionId)));
+        Assertions.assertTrue(found.stream().anyMatch(s -> Objects.equals(s.sessionId, session.sessionId)));
     }
 }

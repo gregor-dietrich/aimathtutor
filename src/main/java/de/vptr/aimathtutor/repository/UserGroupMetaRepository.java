@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserGroupMetaEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -118,6 +119,7 @@ public class UserGroupMetaRepository extends AbstractRepository {
      *            the group ID to filter by
      * @return the {@link UserGroupMetaEntity} if the membership exists, null otherwise
      */
+    @Nullable
     public UserGroupMetaEntity findByUserAndGroup(final Long userId, final Long groupId) {
         final var q = this.em.createNamedQuery("UserGroupMeta.findByUserAndGroup", UserGroupMetaEntity.class);
         q.setParameter("u", userId);
@@ -135,6 +137,7 @@ public class UserGroupMetaRepository extends AbstractRepository {
      *            the group public ID to filter by
      * @return the {@link UserGroupMetaEntity} if the membership exists, null otherwise
      */
+    @Nullable
     public UserGroupMetaEntity findByUserPublicIdAndGroupPublicId(final String userPublicId,
             final String groupPublicId) {
         if (userPublicId == null || groupPublicId == null) {

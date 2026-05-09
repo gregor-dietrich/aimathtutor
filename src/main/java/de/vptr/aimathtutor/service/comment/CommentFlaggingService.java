@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service.comment;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
@@ -58,7 +59,7 @@ public class CommentFlaggingService {
         }
 
         // Prevent self-flagging
-        if (comment.user != null && comment.user.id.equals(flaggerId)) {
+        if (comment.user != null && Objects.equals(comment.user.id, flaggerId)) {
             LOG.warnf("Self-flag attempt: commentPublicId=%s, flaggerId=%s", commentPublicId, flaggerId);
             throw new WebApplicationException("Cannot flag your own comment", Response.Status.BAD_REQUEST);
         }

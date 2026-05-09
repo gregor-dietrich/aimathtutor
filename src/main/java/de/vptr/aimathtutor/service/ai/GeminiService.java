@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,11 +15,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
-import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
-import de.vptr.aimathtutor.service.ai.AiConfigKeys;
-import de.vptr.aimathtutor.service.ai.AiProviderException;
-import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.AiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -36,6 +35,7 @@ public class GeminiService extends AbstractAiProviderService {
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
     @ConfigProperty(name = "gemini.api.key", defaultValue = "")
+    @Nullable
     private String apiKey; // API key is always read from environment variable, never from database
 
     @Inject

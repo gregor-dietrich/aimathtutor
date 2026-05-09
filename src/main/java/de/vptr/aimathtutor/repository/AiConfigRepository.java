@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -33,7 +34,7 @@ public class AiConfigRepository extends AbstractRepository {
      * @return an Optional containing the entity if found, empty otherwise
      */
     @Transactional
-    public Optional<AiConfigEntity> findByConfigKey(final String configKey) {
+    public Optional<AiConfigEntity> findByConfigKey(@Nullable final String configKey) {
         if (configKey == null) {
             return Optional.empty();
         }
@@ -50,7 +51,7 @@ public class AiConfigRepository extends AbstractRepository {
      *            the public ID of the configuration
      * @return an {@link Optional} containing the configuration if found, empty otherwise
      */
-    public Optional<AiConfigEntity> findByPublicId(final String publicId) {
+    public Optional<AiConfigEntity> findByPublicId(@Nullable final String publicId) {
         if (publicId == null) {
             return Optional.empty();
         }

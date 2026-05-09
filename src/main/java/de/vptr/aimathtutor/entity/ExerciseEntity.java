@@ -9,6 +9,7 @@ import org.hibernate.generator.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,18 +54,22 @@ public class ExerciseEntity extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false)
+    @Nullable
     public String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     @NotBlank
+    @Nullable
     public String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @Nullable
     public UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_id")
+    @Nullable
     public LessonEntity lesson;
 
     @Column(nullable = false)
@@ -74,14 +79,17 @@ public class ExerciseEntity extends BaseEntity {
     public boolean commentable = false;
 
     @Generated(event = EventType.INSERT)
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
+    @Nullable
     public List<CommentEntity> comments;
 
     // Graspable Math Configuration
@@ -89,15 +97,19 @@ public class ExerciseEntity extends BaseEntity {
     public boolean graspableEnabled = false;
 
     @Column(name = "graspable_initial_expression", columnDefinition = "TEXT")
+    @Nullable
     public String graspableInitialExpression;
 
     @Column(name = "graspable_target_expression", columnDefinition = "TEXT")
+    @Nullable
     public String graspableTargetExpression;
 
     @Column(name = "graspable_difficulty")
     @Enumerated(EnumType.STRING)
+    @Nullable
     public DifficultyLevel graspableDifficulty;
 
     @Column(name = "graspable_hints", columnDefinition = "TEXT")
+    @Nullable
     public String graspableHints; // JSON array of hint strings
 }

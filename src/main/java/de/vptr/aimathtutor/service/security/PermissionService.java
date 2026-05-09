@@ -1,7 +1,9 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.service.UserRankService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -15,7 +17,7 @@ public class PermissionService {
     @Inject
     UserRankService userRankService;
 
-    private void require(final Boolean permission, final String action) {
+    private void require(@Nullable final Boolean permission, final String action) {
         if (!Boolean.TRUE.equals(permission)) {
             throw new PermissionDeniedException("You do not have permission to " + action);
         }

@@ -17,6 +17,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class MockAiProviderTest {
 
     @Inject

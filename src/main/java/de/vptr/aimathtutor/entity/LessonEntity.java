@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -34,23 +35,29 @@ public class LessonEntity extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false)
+    @Nullable
     public String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
+    @Nullable
     public LessonEntity parent;
 
     @OneToMany(mappedBy = "parent")
+    @Nullable
     public List<LessonEntity> children;
 
     @OneToMany(mappedBy = "lesson")
+    @Nullable
     public List<ExerciseEntity> exercises;
 
     @Generated(event = EventType.INSERT)
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     // Helper method to check if this is a root lesson

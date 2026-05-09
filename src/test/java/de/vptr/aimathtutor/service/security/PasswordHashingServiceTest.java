@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.security;
+package de.vptr.aimathtutor.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -171,6 +171,7 @@ class PasswordHashingServiceTest {
 
     @Test
     @DisplayName("Should throw on null password when hashing")
+    @SuppressWarnings("NullAway")
     void shouldThrowOnNullPasswordWhenHashing() {
         assertThrows(IllegalArgumentException.class, () -> this.passwordHashingService.hashPassword(null));
     }

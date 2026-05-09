@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,6 +30,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("Should return invalid input when username is null")
+    @SuppressWarnings("NullAway")
     void shouldReturnInvalidInputWhenUsernameIsNull() {
         final var result = this.authService.authenticate(null, "password");
         assertFalse(result.isSuccess());
@@ -54,6 +55,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("Should return invalid input when password is null")
+    @SuppressWarnings("NullAway")
     void shouldReturnInvalidInputWhenPasswordIsNull() {
         final var result = this.authService.authenticate("username", null);
         assertFalse(result.isSuccess());

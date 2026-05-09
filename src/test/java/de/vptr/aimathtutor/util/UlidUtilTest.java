@@ -14,6 +14,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.BadRequestException;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class UlidUtilTest {
 
     @Test

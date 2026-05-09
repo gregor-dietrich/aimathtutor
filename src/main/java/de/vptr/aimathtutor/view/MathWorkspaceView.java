@@ -30,14 +30,15 @@ import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
-import de.vptr.aimathtutor.service.AiTutorService;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.GraspableMathService;
+import de.vptr.aimathtutor.service.ai.AiTutorService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AiChatUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -45,6 +46,7 @@ import jakarta.inject.Inject;
  * receive real-time AI feedback.
  */
 @Route(value = "graspable-math", layout = MainLayout.class)
+@SuppressWarnings("NullAway")
 public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
 
     private static final Logger LOG = Logger.getLogger(MathWorkspaceView.class);
@@ -61,11 +63,17 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     @Inject
     private transient ManagedExecutor managedExecutor;
 
+    @Nullable
     private Div graspableCanvas;
+    @Nullable
     private AiChatPanel chatPanel;
+    @Nullable
     private String currentExpression;
+    @Nullable
     private String initialExpression;
+    @Nullable
     private String targetExpression;
+    @Nullable
     private String sessionId;
     private boolean initialized = false;
     private boolean problemSolved = false;
@@ -74,6 +82,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     // Request ID staleness guard: prevents async results from overwriting
     // newer state when users rapidly generate problems. Do NOT remove
     // requestId checks or pendingProblemFuture.cancel() calls.
+    @Nullable
     private transient CompletableFuture<?> pendingProblemFuture;
     private transient long problemRequestId = 0;
 

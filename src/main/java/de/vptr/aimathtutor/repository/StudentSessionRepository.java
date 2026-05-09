@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -22,7 +23,8 @@ public class StudentSessionRepository extends AbstractRepository {
      *            external session identifier
      * @return matching StudentSessionEntity or null if none found or sessionId is null
      */
-    public StudentSessionEntity findBySessionId(final String sessionId) {
+    @Nullable
+    public StudentSessionEntity findBySessionId(@Nullable final String sessionId) {
         if (sessionId == null) {
             return null;
         }
@@ -56,7 +58,8 @@ public class StudentSessionRepository extends AbstractRepository {
      *            external session identifier
      * @return matching StudentSessionEntity or null if none found or sessionId is null
      */
-    public StudentSessionEntity findBySessionIdWithRelations(final String sessionId) {
+    @Nullable
+    public StudentSessionEntity findBySessionIdWithRelations(@Nullable final String sessionId) {
         if (sessionId == null) {
             return null;
         }
@@ -117,6 +120,7 @@ public class StudentSessionRepository extends AbstractRepository {
      *            primary key of the session
      * @return session entity or null if id is null or not found
      */
+    @Nullable
     public StudentSessionEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -132,7 +136,8 @@ public class StudentSessionRepository extends AbstractRepository {
     /**
      * Find sessions by user and exercise in a single DB query with relations eagerly loaded.
      */
-    public List<StudentSessionEntity> findByUserIdAndExerciseId(final Long userId, final Long exerciseId) {
+    public List<StudentSessionEntity> findByUserIdAndExerciseId(@Nullable final Long userId,
+            @Nullable final Long exerciseId) {
         if (userId == null || exerciseId == null) {
             return List.of();
         }

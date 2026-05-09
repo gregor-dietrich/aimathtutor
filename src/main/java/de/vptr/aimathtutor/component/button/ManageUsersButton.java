@@ -7,6 +7,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Button used to open the manage users view. Shows an appropriate icon and optional tooltip.
  */
@@ -16,7 +18,8 @@ public class ManageUsersButton extends Button {
     /**
      * Constructs a ManageUsersButton with the specified action and tooltip.
      */
-    public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction, final String tooltipText) {
+    public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction,
+            @Nullable final String tooltipText) {
         super("", addUserAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);
         this.setIcon(LineAwesomeIcon.USERS_COG_SOLID.create());

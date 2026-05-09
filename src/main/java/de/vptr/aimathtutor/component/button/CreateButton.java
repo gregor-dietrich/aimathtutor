@@ -7,6 +7,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Button used to create a new resource. Shows a + icon and applies a success theme. Callers provide a click listener to
  * handle the creation action.
@@ -17,7 +19,8 @@ public class CreateButton extends Button {
     /**
      * Constructs a CreateButton with the specified action and tooltip.
      */
-    public CreateButton(final ComponentEventListener<ClickEvent<Button>> createAction, final String tooltipText) {
+    public CreateButton(final ComponentEventListener<ClickEvent<Button>> createAction,
+            @Nullable final String tooltipText) {
         super("", createAction);
         this.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         this.setIcon(LineAwesomeIcon.PLUS_SOLID.create());

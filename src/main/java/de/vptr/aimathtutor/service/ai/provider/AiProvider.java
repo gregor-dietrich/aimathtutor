@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service.ai.provider;
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
+import jakarta.annotation.Nullable;
 
 /**
  * Strategy interface for AI providers that analyze math actions and answer student questions.
@@ -25,6 +26,7 @@ public interface AiProvider {
      *            conversation context
      * @return AI-generated feedback
      */
+    @Nullable
     AiFeedbackDto analyzeMathAction(GraspableEventDto event, ConversationContextDto context);
 
     /**
@@ -42,6 +44,6 @@ public interface AiProvider {
      *            conversation context
      * @return the AI's answer
      */
-    String answerQuestion(String question, String currentExpression, String initialExpression, String targetExpression,
-            ConversationContextDto context);
+    String answerQuestion(String question, @Nullable String currentExpression, @Nullable String initialExpression,
+            @Nullable String targetExpression, ConversationContextDto context);
 }

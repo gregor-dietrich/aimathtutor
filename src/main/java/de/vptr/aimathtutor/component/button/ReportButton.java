@@ -8,6 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
+import jakarta.annotation.Nullable;
 
 /**
  * Small report button used to flag content. Applies a warning/secondary style.
@@ -20,7 +21,8 @@ public class ReportButton extends Button {
     /**
      * Constructs a ReportButton with the specified action and tooltip.
      */
-    public ReportButton(final ComponentEventListener<ClickEvent<Button>> reportAction, final String tooltipText) {
+    public ReportButton(final ComponentEventListener<ClickEvent<Button>> reportAction,
+            @Nullable final String tooltipText) {
         super("");
         this.reportAction = reportAction;
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);

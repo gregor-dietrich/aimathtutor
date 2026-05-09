@@ -7,6 +7,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Button used to open an edit form for an entity. Shows an edit icon and delegates click handling to the provided
  * listener.
@@ -17,7 +19,7 @@ public class EditButton extends Button {
     /**
      * Constructs an EditButton with the specified action and tooltip.
      */
-    public EditButton(final ComponentEventListener<ClickEvent<Button>> editAction, final String tooltipText) {
+    public EditButton(final ComponentEventListener<ClickEvent<Button>> editAction, @Nullable final String tooltipText) {
         super("", editAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
         this.setIcon(LineAwesomeIcon.EDIT_SOLID.create());

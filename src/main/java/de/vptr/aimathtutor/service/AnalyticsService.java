@@ -18,6 +18,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -78,7 +79,8 @@ public class AnalyticsService {
      * exercise
      */
     @Transactional
-    public List<StudentSessionViewDto> getSessionsByUserAndExercise(final Long userId, final Long exerciseId) {
+    public List<StudentSessionViewDto> getSessionsByUserAndExercise(final Long userId,
+            @Nullable final Long exerciseId) {
         LOG.tracef("Getting sessions for user: %s on exercise: %s", userId, exerciseId);
         // Use repository single-query filter
         final List<StudentSessionEntity> sessions =
@@ -148,6 +150,7 @@ public class AnalyticsService {
      * Get a specific session by ID
      */
     @Transactional
+    @Nullable
     public StudentSessionViewDto getSessionById(final Long sessionId) {
         LOG.tracef("Getting session: %s", sessionId);
         final StudentSessionEntity session = this.studentSessionRepository.findById(sessionId);
@@ -158,6 +161,7 @@ public class AnalyticsService {
      * Get a specific session by session ID string
      */
     @Transactional
+    @Nullable
     public StudentSessionViewDto getSessionBySessionId(final String sessionId) {
         LOG.tracef("Getting session by session ID: %s", sessionId);
         final StudentSessionEntity session = this.studentSessionRepository.findBySessionIdWithRelations(sessionId);
@@ -208,6 +212,7 @@ public class AnalyticsService {
      * Get progress summary for a single user
      */
     @Transactional
+    @Nullable
     public StudentProgressSummaryDto getUserProgressSummary(final Long userId) {
         LOG.tracef("Getting progress summary for user: %s", userId);
 

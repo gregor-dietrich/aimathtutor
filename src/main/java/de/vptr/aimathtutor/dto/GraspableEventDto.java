@@ -4,37 +4,48 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Represents a student action in the Graspable Math workspace. This DTO captures events like simplify, expand, factor,
  * move, etc.
  */
 public class GraspableEventDto {
-
+    @Nullable
     @JsonProperty("event_type")
     public String eventType; // e.g., "simplify", "expand", "factor", "move", "combine"
 
+    @Nullable
     @JsonProperty("expression_before")
     public String expressionBefore; // The mathematical expression before the action
 
+    @Nullable
     @JsonProperty("expression_after")
     public String expressionAfter; // The mathematical expression after the action
 
+    @Nullable
     @JsonProperty("action_details")
     public String actionDetails; // Additional context about the action (JSON string)
 
+    @Nullable
     @JsonProperty("student_id")
     public Long studentId;
 
+    @Nullable
     @JsonProperty("exercise_id")
     public Long exerciseId;
 
+    @Nullable
     @JsonProperty("session_id")
     public String sessionId; // Unique identifier for this student session
 
+    @Nullable
     public LocalDateTime timestamp;
 
+    @Nullable
     public Boolean correct; // Whether the action was mathematically correct
 
+    @Nullable
     public Boolean isComplete; // Whether this action resulted in problem completion
 
     public GraspableEventDto() {

@@ -4,28 +4,35 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Response DTO for OpenAI Chat Completions API Based on OpenAI REST API specification
  */
-@SuppressFBWarnings(value = { "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD" },
-        justification = "DTO for JSON mapping from OpenAI; public fields intentionally used for Jackson mapping")
 public class OpenAiResponseDto {
 
+    @Nullable
     public String id;
+    @Nullable
     public String object;
+    @Nullable
     public Long created;
+    @Nullable
     public String model;
+    @Nullable
     public List<Choice> choices;
+    @Nullable
     public Usage usage;
 
     /**
      * Represents a choice in the OpenAI response.
      */
     public static class Choice {
+        @Nullable
         public Integer index;
+        @Nullable
         public Message message;
+        @Nullable
         @JsonProperty("finish_reason")
         public String finishReason;
     }
@@ -34,7 +41,9 @@ public class OpenAiResponseDto {
      * Represents a message in the OpenAI response.
      */
     public static class Message {
+        @Nullable
         public String role;
+        @Nullable
         public String content;
     }
 
@@ -42,10 +51,13 @@ public class OpenAiResponseDto {
      * Represents usage statistics in the OpenAI response.
      */
     public static class Usage {
+        @Nullable
         @JsonProperty("prompt_tokens")
         public Integer promptTokens;
+        @Nullable
         @JsonProperty("completion_tokens")
         public Integer completionTokens;
+        @Nullable
         @JsonProperty("total_tokens")
         public Integer totalTokens;
     }
@@ -53,6 +65,7 @@ public class OpenAiResponseDto {
     /**
      * Extract the text content from the first choice
      */
+    @Nullable
     public String getTextContent() {
         if (this.choices == null || this.choices.isEmpty()) {
             return null;

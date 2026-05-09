@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,18 +33,22 @@ public class CommentFlagEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
+    @Nullable
     public CommentEntity comment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "flagger_id", nullable = false)
+    @Nullable
     public UserEntity flagger;
 
     @Generated(event = EventType.INSERT)
     @Column(name = "created")
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     /**

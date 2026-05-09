@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,8 +23,8 @@ import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -89,7 +90,8 @@ public class AiConfigService {
      *            the default value if not found
      * @return the configuration value or default
      */
-    public String getConfigValue(final String key, final String defaultValue) {
+    @Nullable
+    public String getConfigValue(final String key, @Nullable final String defaultValue) {
         if (key == null) {
             return defaultValue;
         }
@@ -381,7 +383,7 @@ public class AiConfigService {
      * @throws IllegalArgumentException
      *             if validation fails
      */
-    private void validateConfigValue(final String configKey, final String configValue) {
+    private void validateConfigValue(final String configKey, @Nullable final String configValue) {
         // Fetch the entity to get its declared type and optionality
         final var existingEntity = this.aiConfigRepository.findByConfigKey(configKey);
 
@@ -403,6 +405,7 @@ public class AiConfigService {
             return;
         }
 
+        Objects.requireNonNull(configValue);
         final var configType = existingEntity.get().configType;
         if (configType == null) {
             // No type constraint defined
@@ -436,7 +439,6 @@ public class AiConfigService {
                 }
             }
             case BOOLEAN -> {
-                @SuppressWarnings("null") // false positive
                 final var lower = configValue.toLowerCase(Locale.ROOT).trim();
                 if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
                     throw new IllegalArgumentException(
@@ -448,7 +450,6 @@ public class AiConfigService {
                 // No specific validation
             }
         }
-
     }
 
     /**

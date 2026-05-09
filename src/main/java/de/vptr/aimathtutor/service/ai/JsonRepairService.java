@@ -10,6 +10,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -209,6 +210,7 @@ public class JsonRepairService {
      *            The JSON-escaped text
      * @return The text with escape sequences replaced by actual characters
      */
+    @Nullable
     private String unescapeJsonString(final String text) {
         if (text == null) {
             return null;

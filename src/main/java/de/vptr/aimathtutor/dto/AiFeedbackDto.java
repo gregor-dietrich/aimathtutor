@@ -1,12 +1,14 @@
 package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Represents AI-generated feedback for a student's math action. Contains hints, encouragement, corrections, and next
@@ -48,32 +50,37 @@ public class AiFeedbackDto {
     public LocalDateTime timestamp;
 
     @JsonProperty("session_id")
+    @Nullable
     public String sessionId;
 
     /**
      * Constructs an AiFeedbackDto with default values.
      */
     public AiFeedbackDto() {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDateTime.now(ZoneId.systemDefault());
         this.hints = new ArrayList<>();
         this.suggestedNextSteps = new ArrayList<>();
         this.relatedConcepts = new ArrayList<>();
         this.confidence = 0.5;
+        this.type = FeedbackType.NEUTRAL;
+        this.message = "";
+        this.detailedExplanation = "";
+        this.sessionId = "";
     }
 
     /**
      * Constructs an AiFeedbackDto with the specified type and message.
      */
-    public AiFeedbackDto(final FeedbackType type, final String message) {
+    public AiFeedbackDto(final FeedbackType type, @Nullable final String message) {
         this();
         this.type = type;
-        this.message = message;
+        this.message = message != null ? message : "";
     }
 
     /**
      * Creates a positive feedback DTO with the specified message.
      */
-    public static AiFeedbackDto positive(final String message) {
+    public static AiFeedbackDto positive(@Nullable final String message) {
         return new AiFeedbackDto(FeedbackType.POSITIVE, message);
     }
 
@@ -85,7 +92,7 @@ public class AiFeedbackDto {
      *            the corrective feedback message
      * @return an AiFeedbackDto with corrective feedback type
      */
-    public static AiFeedbackDto corrective(final String message) {
+    public static AiFeedbackDto corrective(@Nullable final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 
@@ -97,7 +104,7 @@ public class AiFeedbackDto {
      *            the hint message
      * @return an AiFeedbackDto with hint feedback type
      */
-    public static AiFeedbackDto hint(final String message) {
+    public static AiFeedbackDto hint(@Nullable final String message) {
         return new AiFeedbackDto(FeedbackType.HINT, message);
     }
 
@@ -109,7 +116,7 @@ public class AiFeedbackDto {
      *            the suggestion message
      * @return an AiFeedbackDto with suggestion feedback type
      */
-    public static AiFeedbackDto suggestion(final String message) {
+    public static AiFeedbackDto suggestion(@Nullable final String message) {
         return new AiFeedbackDto(FeedbackType.SUGGESTION, message);
     }
 
@@ -121,7 +128,7 @@ public class AiFeedbackDto {
      *            the neutral feedback message
      * @return an AiFeedbackDto with neutral feedback type
      */
-    public static AiFeedbackDto neutral(final String message) {
+    public static AiFeedbackDto neutral(@Nullable final String message) {
         return new AiFeedbackDto(FeedbackType.NEUTRAL, message);
     }
 
@@ -133,7 +140,7 @@ public class AiFeedbackDto {
      *            the error feedback message
      * @return an AiFeedbackDto with corrective feedback type
      */
-    public static AiFeedbackDto error(final String message) {
+    public static AiFeedbackDto error(@Nullable final String message) {
         return new AiFeedbackDto(FeedbackType.CORRECTIVE, message);
     }
 

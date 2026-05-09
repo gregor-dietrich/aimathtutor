@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.dto;
 
 import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -14,20 +15,25 @@ import jakarta.validation.constraints.Size;
         justification = "DTO public fields intentionally used for JSON mapping and convenience")
 public class LessonDto {
 
+    @Nullable
     public String publicId;
 
+    @Nullable
     @Size(min = AppConstants.LESSON_NAME_MIN_LENGTH, max = AppConstants.LESSON_NAME_MAX_LENGTH,
             message = "Name must be between {min} and {max} characters")
     public String name;
 
+    @Nullable
     public String parentPublicId;
 
+    @Nullable
     public ParentField parent;
 
     /**
      * Nested field representing a parent lesson reference.
      */
     public static class ParentField {
+        @Nullable
         public String publicId;
 
         /**

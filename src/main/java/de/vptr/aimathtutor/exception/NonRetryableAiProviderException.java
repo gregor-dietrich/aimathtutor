@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service.ai;
+package de.vptr.aimathtutor.exception;
 
 /**
  * Permanent AI provider failure: missing API key, invalid configuration, content blocked by safety filters, or

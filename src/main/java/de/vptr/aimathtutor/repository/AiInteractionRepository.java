@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -96,6 +97,7 @@ public class AiInteractionRepository extends AbstractRepository {
      * @return the persisted {@link AiInteractionEntity}, or null if the input was null
      */
     @Transactional
+    @Nullable
     public AiInteractionEntity persist(final AiInteractionEntity interaction) {
         if (interaction == null) {
             return null;

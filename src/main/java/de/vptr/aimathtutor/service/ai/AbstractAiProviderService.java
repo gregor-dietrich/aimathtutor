@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service.ai;
 
-import de.vptr.aimathtutor.service.AiConfigService;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -35,6 +36,7 @@ public abstract class AbstractAiProviderService {
     /**
      * The currently configured model name.
      */
+    @Nullable
     public String getModel() {
         return this.aiConfigService.getConfigValue(this.getConfigPrefix() + AiConfigKeys.SUFFIX_MODEL,
                 this.getDefaultModel());
@@ -44,7 +46,7 @@ public abstract class AbstractAiProviderService {
      * Returns true if the API key is non-null, non-blank, and not an unresolved placeholder (e.g.
      * {@code ${OPENAI_API_KEY}}).
      */
-    protected static boolean isApiKeyConfigured(final String apiKey) {
+    protected static boolean isApiKeyConfigured(@Nullable final String apiKey) {
         return apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("${");
     }
 
@@ -56,7 +58,7 @@ public abstract class AbstractAiProviderService {
      * @param envVarName
      *            the environment variable users should set
      */
-    protected void requireApiKey(final String apiKey, final String envVarName) {
+    protected void requireApiKey(@Nullable final String apiKey, final String envVarName) {
         if (!isApiKeyConfigured(apiKey)) {
             throw new NonRetryableAiProviderException(this.getProviderName(),
                     "API key not configured. Please set " + envVarName + " environment variable");
@@ -66,7 +68,7 @@ public abstract class AbstractAiProviderService {
     /**
      * Throws {@link NonRetryableAiProviderException} when the response content is empty.
      */
-    protected String requireNonEmptyContent(final String content) {
+    protected String requireNonEmptyContent(@Nullable final String content) {
         if (content == null || content.isBlank()) {
             throw new NonRetryableAiProviderException(this.getProviderName(), "Empty response");
         }
@@ -76,7 +78,7 @@ public abstract class AbstractAiProviderService {
     /**
      * Throws {@link NonRetryableAiProviderException} when a required dynamic configuration value is missing.
      */
-    protected void requireConfigured(final String value, final String settingDescription) {
+    protected void requireConfigured(@Nullable final String value, final String settingDescription) {
         if (value == null || value.isBlank()) {
             throw new NonRetryableAiProviderException(this.getProviderName(),
                     settingDescription + " not configured. Please configure via admin settings.");

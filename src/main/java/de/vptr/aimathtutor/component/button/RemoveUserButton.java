@@ -8,6 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
+import jakarta.annotation.Nullable;
 
 /**
  * A custom button component for removing users. Displays a confirmation dialog before executing the delete action to
@@ -21,7 +22,8 @@ public class RemoveUserButton extends Button {
     /**
      * Constructs a RemoveUserButton with the specified action and tooltip.
      */
-    public RemoveUserButton(final ComponentEventListener<ClickEvent<Button>> deleteAction, final String tooltipText) {
+    public RemoveUserButton(final ComponentEventListener<ClickEvent<Button>> deleteAction,
+            @Nullable final String tooltipText) {
         super("");
         this.deleteAction = deleteAction;
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);

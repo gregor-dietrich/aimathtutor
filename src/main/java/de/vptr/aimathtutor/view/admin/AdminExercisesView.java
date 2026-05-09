@@ -52,12 +52,14 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
  * Admin view for managing exercises: listing, editing, and publishing.
  */
 @Route(value = "admin/exercises", layout = AdminMainLayout.class)
+@SuppressWarnings("NullAway")
 public class AdminExercisesView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminExercisesView.class);
@@ -280,7 +282,7 @@ public class AdminExercisesView extends AbstractAdminView {
      * @param exercise
      *            the exercise to edit or null to create a new one
      */
-    private void openExerciseDialog(final ExerciseViewDto exercise) {
+    private void openExerciseDialog(@Nullable final ExerciseViewDto exercise) {
         this.exerciseDialog.removeAll();
         this.currentExercise = exercise != null ? exercise.toExerciseDto() : new ExerciseDto();
 

@@ -5,6 +5,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.annotation.Nullable;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -58,6 +59,7 @@ public final class ErrorMessageUtil {
         return "HTTP " + status;
     }
 
+    @Nullable
     private static String findMessageNode(final JsonNode root) {
         if (root == null) {
             return null;
@@ -74,7 +76,8 @@ public final class ErrorMessageUtil {
         return null;
     }
 
-    private static String extractMessageWithRegex(final String responseBody, final JsonNode alreadyParsed) {
+    @Nullable
+    private static String extractMessageWithRegex(final String responseBody, @Nullable final JsonNode alreadyParsed) {
         if (alreadyParsed != null) {
             final String msg = findMessageNode(alreadyParsed);
             if (msg != null && !msg.isEmpty()) {

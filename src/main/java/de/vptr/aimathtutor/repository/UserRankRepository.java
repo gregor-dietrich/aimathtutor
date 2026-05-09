@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -41,7 +42,7 @@ public class UserRankRepository extends AbstractRepository {
      *            the public ID of the rank
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
-    public Optional<UserRankEntity> findByPublicId(final String publicId) {
+    public Optional<UserRankEntity> findByPublicId(@Nullable final String publicId) {
         if (publicId == null) {
             return Optional.empty();
         }
@@ -58,6 +59,7 @@ public class UserRankRepository extends AbstractRepository {
      *            the user rank ID
      * @return the {@link UserRankEntity} if found, null otherwise
      */
+    @Nullable
     public UserRankEntity findById(final Long id) {
         if (id == null) {
             return null;

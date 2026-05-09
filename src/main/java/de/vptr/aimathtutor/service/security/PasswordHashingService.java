@@ -1,8 +1,9 @@
-package de.vptr.aimathtutor.security;
+package de.vptr.aimathtutor.service.security;
 
 import java.nio.charset.StandardCharsets;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
@@ -41,7 +42,7 @@ public class PasswordHashingService {
      *            the stored bcrypt password hash
      * @return true if the password matches, false otherwise
      */
-    public boolean verifyPassword(final String password, final String storedHash) {
+    public boolean verifyPassword(@Nullable final String password, @Nullable final String storedHash) {
         if (password == null || storedHash == null) {
             return false;
         }

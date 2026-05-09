@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service.comment;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Locale;
 
 import org.jboss.logging.Logger;
@@ -78,16 +79,16 @@ public class CommentModerationService {
 
         final String normalizedAction = action.toUpperCase(Locale.ROOT);
         switch (normalizedAction) {
-            case "HIDE":
+            case "HIDE" -> {
                 comment.status = CommentStatus.HIDDEN;
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
-                comment.moderatedAt = LocalDateTime.now();
+                comment.moderatedAt = LocalDateTime.now(ZoneId.systemDefault());
                 LOG.infof("Comment hidden by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
-                break;
-            case "SHOW":
+            }
+            case "SHOW" -> {
                 comment.status = CommentStatus.VISIBLE;
                 comment.flagsCount = 0;
                 comment.deletedBy = null;
@@ -95,11 +96,11 @@ public class CommentModerationService {
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
-                comment.moderatedAt = LocalDateTime.now();
+                comment.moderatedAt = LocalDateTime.now(ZoneId.systemDefault());
                 LOG.infof("Comment shown by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
-                break;
-            case "RESTORE":
+            }
+            case "RESTORE" -> {
                 // Restore a deleted comment (same as SHOW) and clear flags
                 comment.status = CommentStatus.VISIBLE;
                 comment.flagsCount = 0;
@@ -108,25 +109,26 @@ public class CommentModerationService {
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
-                comment.moderatedAt = LocalDateTime.now();
+                comment.moderatedAt = LocalDateTime.now(ZoneId.systemDefault());
                 LOG.infof("Comment restored by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
-                break;
-            case "DELETE":
+            }
+            case "DELETE" -> {
                 comment.status = CommentStatus.DELETED;
                 comment.deletedBy = moderator;
-                comment.deletedAt = LocalDateTime.now();
+                comment.deletedAt = LocalDateTime.now(ZoneId.systemDefault());
                 comment.moderationReason = reason;
                 comment.moderator = moderator;
                 comment.moderationAction = normalizedAction;
-                comment.moderatedAt = LocalDateTime.now();
+                comment.moderatedAt = LocalDateTime.now(ZoneId.systemDefault());
                 LOG.infof("Comment deleted by moderator: commentPublicId=%s, moderatorId=%s", commentPublicId,
                         moderatorId);
-                break;
-            default:
+            }
+            default -> {
                 LOG.warnf("Invalid moderation action: action=%s, commentPublicId=%s, moderatorId=%s", action,
                         commentPublicId, moderatorId);
                 throw new ValidationException("Invalid moderation action: " + action);
+            }
         }
 
         this.commentRepository.persist(comment);

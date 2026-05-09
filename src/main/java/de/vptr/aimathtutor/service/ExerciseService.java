@@ -17,6 +17,8 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.LessonRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -446,7 +448,7 @@ public class ExerciseService {
      *            if true, clears the lesson when lessonPublicId is null/blank; if false, throws for unresolvable
      *            non-blank IDs and preserves existing for null/blank
      */
-    private void applyLessonToExercise(final ExerciseEntity exercise, final String lessonPublicId,
+    private void applyLessonToExercise(final ExerciseEntity exercise, @Nullable final String lessonPublicId,
             final boolean clearIfMissing) {
         if (lessonPublicId == null || lessonPublicId.isBlank()) {
             if (clearIfMissing) {

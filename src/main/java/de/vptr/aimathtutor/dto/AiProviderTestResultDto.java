@@ -1,11 +1,13 @@
 package de.vptr.aimathtutor.dto;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Result of testing an AI provider connection.
  */
 public class AiProviderTestResultDto {
-
     public boolean success;
+    @Nullable
     public String message;
 
     /**

@@ -16,7 +16,8 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.security.PasswordHashingService;
+import de.vptr.aimathtutor.service.security.PasswordHashingService;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -25,6 +26,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class UserServiceTest {
 
     private static final String VALID_PASSWORD = "P@ssw0rd1";

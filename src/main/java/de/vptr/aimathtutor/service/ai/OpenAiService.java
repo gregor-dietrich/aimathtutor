@@ -1,5 +1,6 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -8,11 +9,10 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
-import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
-import de.vptr.aimathtutor.service.ai.AiConfigKeys;
-import de.vptr.aimathtutor.service.ai.AiProviderException;
-import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.AiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.client.Client;
@@ -39,8 +39,10 @@ public class OpenAiService extends AbstractAiProviderService {
             "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";
 
     @ConfigProperty(name = "openai.api.key", defaultValue = "")
+    @Nullable
     private String apiKey; // API key is always read from environment variable, never from database
 
+    @Nullable
     private volatile Client client;
 
     @Override
@@ -135,12 +137,15 @@ public class OpenAiService extends AbstractAiProviderService {
         this.requireConfigured(model, "OpenAI model");
         this.requireConfigured(baseUrl, "OpenAI API URL");
 
-        try {
-            final var request =
-                    jsonMode ? OpenAiRequestDto.createJsonRequest(systemPrompt, prompt, model, temperature, maxTokens)
-                            : OpenAiRequestDto.createChatRequest(systemPrompt, prompt, model, temperature, maxTokens);
+        final var effectiveModel = Objects.requireNonNull(model);
+        final var effectiveBaseUrl = Objects.requireNonNull(baseUrl);
 
-            final String url = baseUrl + "/chat/completions";
+        try {
+            final var request = jsonMode
+                    ? OpenAiRequestDto.createJsonRequest(systemPrompt, prompt, effectiveModel, temperature, maxTokens)
+                    : OpenAiRequestDto.createChatRequest(systemPrompt, prompt, effectiveModel, temperature, maxTokens);
+
+            final String url = effectiveBaseUrl + "/chat/completions";
 
             Invocation.Builder requestBuilder = this.getClient().target(url).request(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + this.apiKey);

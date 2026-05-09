@@ -48,6 +48,7 @@ import jakarta.inject.Inject;
  * Admin view for managing user groups and their memberships.
  */
 @Route(value = "admin/user-groups", layout = AdminMainLayout.class)
+@SuppressWarnings("NullAway")
 public class AdminUserGroupsView extends AbstractAdminView {
     private static final Logger LOG = Logger.getLogger(AdminUserGroupsView.class);
 

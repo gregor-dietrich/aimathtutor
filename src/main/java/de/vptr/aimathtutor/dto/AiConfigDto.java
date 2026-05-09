@@ -1,17 +1,16 @@
 package de.vptr.aimathtutor.dto;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Data Transfer Object for AI configuration. Used for transferring AI configuration data between backend and frontend.
  */
-@SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD",
-        justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class AiConfigDto {
 
     /**
@@ -43,6 +42,7 @@ public class AiConfigDto {
          *            the string value to convert
          * @return the matching ConfigType, or null if no match
          */
+        @Nullable
         public static ConfigType fromString(final String value) {
             if (value == null) {
                 return null;
@@ -85,6 +85,7 @@ public class AiConfigDto {
          *            the string value to convert
          * @return the matching ConfigCategory, or null if no match
          */
+        @Nullable
         public static ConfigCategory fromString(final String value) {
             if (value == null) {
                 return null;
@@ -98,25 +99,33 @@ public class AiConfigDto {
         }
     }
 
+    @Nullable
     public String publicId;
 
     @JsonProperty("config_key")
+    @Nullable
     public String configKey;
 
     @JsonProperty("config_value")
+    @Nullable
     public String configValue;
 
     @JsonProperty("config_type")
+    @Nullable
     public ConfigType configType;
 
+    @Nullable
     public ConfigCategory category;
 
+    @Nullable
     public String description;
 
     @JsonProperty("last_updated_at")
+    @Nullable
     public LocalDateTime lastUpdatedAt;
 
     @JsonProperty("last_updated_by")
+    @Nullable
     public String lastUpdatedBy; // Username for display
 
     /**
@@ -134,15 +143,16 @@ public class AiConfigDto {
         this.configValue = configValue;
         this.configType = configType;
         this.category = category;
-        this.lastUpdatedAt = LocalDateTime.now();
+        this.lastUpdatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 
     /**
      * Constructor with all fields.
      */
-    public AiConfigDto(final String publicId, final String configKey, final String configValue,
-            final ConfigType configType, final ConfigCategory category, final String description,
-            final LocalDateTime lastUpdatedAt, final String lastUpdatedBy) {
+    public AiConfigDto(@Nullable final String publicId, @Nullable final String configKey,
+            @Nullable final String configValue, @Nullable final ConfigType configType,
+            @Nullable final ConfigCategory category, @Nullable final String description,
+            @Nullable final LocalDateTime lastUpdatedAt, @Nullable final String lastUpdatedBy) {
         this.publicId = publicId;
         this.configKey = configKey;
         this.configValue = configValue;

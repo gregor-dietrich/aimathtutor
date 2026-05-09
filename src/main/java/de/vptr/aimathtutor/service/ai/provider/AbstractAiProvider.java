@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service.ai.provider;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.service.ai.JsonRepairService;
 import de.vptr.aimathtutor.service.ai.PromptBuilderService;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -26,8 +27,9 @@ public abstract class AbstractAiProvider implements AiProvider {
     protected abstract String generateContent(String prompt);
 
     @Override
-    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
-            final String targetExpression, final ConversationContextDto context) {
+    public String answerQuestion(final String question, @Nullable final String currentExpression,
+            @Nullable final String initialExpression, @Nullable final String targetExpression,
+            final ConversationContextDto context) {
         final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
                 initialExpression, targetExpression, context);
         return this.generateContent(prompt);

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,51 +33,63 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "AiInteraction.findByExerciseId",
                 query = "FROM AiInteractionEntity WHERE exercise.id = :e") })
 public class AiInteractionEntity extends BaseEntity {
-
+    @Nullable
     @Column(name = "session_id")
     public String sessionId;
 
+    @Nullable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     public UserEntity user;
 
+    @Nullable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id")
     public ExerciseEntity exercise;
 
     @NotBlank
+    @Nullable
     @Column(name = "event_type", nullable = false)
     public String eventType; // Type of math action
 
+    @Nullable
     @Column(name = "student_message", columnDefinition = "TEXT")
     public String studentMessage; // Optional: explicit student question/message
 
+    @Nullable
     @Column(name = "expression_before", columnDefinition = "TEXT")
     public String expressionBefore;
 
+    @Nullable
     @Column(name = "expression_after", columnDefinition = "TEXT")
     public String expressionAfter;
 
     @NotBlank
+    @Nullable
     @Column(name = "feedback_type", nullable = false)
     public String feedbackType; // POSITIVE, CORRECTIVE, HINT, etc.
 
+    @Nullable
     @Column(name = "feedback_message", columnDefinition = "TEXT")
     public String feedbackMessage;
 
+    @Nullable
     @Column(name = "confidence_score")
     public Double confidenceScore;
 
     @Column(name = "action_correct")
     public boolean actionCorrect;
 
+    @Nullable
     @Column(name = "conversation_context", columnDefinition = "TEXT")
     public String conversationContext; // JSON string of context sent with AI request
 
+    @Nullable
     @Generated(event = EventType.INSERT)
     @Column(name = "created")
     public LocalDateTime created;
 
+    @Nullable
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;

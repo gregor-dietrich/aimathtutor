@@ -6,10 +6,11 @@ import org.jboss.logging.Logger;
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.OllamaService;
 import de.vptr.aimathtutor.service.ai.JsonRepairService;
+import de.vptr.aimathtutor.service.ai.OllamaService;
 import de.vptr.aimathtutor.service.ai.PromptBuilderService;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -49,8 +50,9 @@ public class OllamaAiProvider implements AiProvider {
     @Override
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
             jitter = AppConstants.RETRY_JITTER_MS)
-    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
-            final String targetExpression, final ConversationContextDto context) {
+    public String answerQuestion(final String question, @Nullable final String currentExpression,
+            @Nullable final String initialExpression, @Nullable final String targetExpression,
+            final ConversationContextDto context) {
         final var prompt = this.promptBuilderService.buildQuestionAnsweringPrompt(question, currentExpression,
                 initialExpression, targetExpression, context);
         return this.ollamaService.generateContent(prompt);

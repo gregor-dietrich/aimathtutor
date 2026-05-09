@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -43,6 +43,7 @@ class RateLimitServiceTest {
 
     @Test
     @DisplayName("Should reject null or blank user IDs")
+    @SuppressWarnings("NullAway")
     void shouldRejectNullOrBlankUserIds() {
         assertFalse(this.rateLimitService.tryConsume(null));
         assertFalse(this.rateLimitService.tryConsume(""));
@@ -51,6 +52,7 @@ class RateLimitServiceTest {
 
     @Test
     @DisplayName("Should return zero cooldown for unknown users")
+    @SuppressWarnings("NullAway")
     void shouldReturnZeroCooldownForUnknownUsers() {
         assertEquals(0, this.rateLimitService.getRemainingCooldownSeconds("unknown"));
         assertEquals(0, this.rateLimitService.getRemainingCooldownSeconds(null));
