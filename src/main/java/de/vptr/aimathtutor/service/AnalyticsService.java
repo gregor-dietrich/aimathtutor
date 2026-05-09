@@ -520,7 +520,7 @@ public class AnalyticsService {
 
         final var publishedExercises = ((Number) this.entityManager
                 .createQuery("SELECT COUNT(e) FROM ExerciseEntity e WHERE e.published = true").getSingleResult())
-                        .longValue();
+                .longValue();
         final var prevPublishedExercises = ((Number) this.entityManager
                 .createQuery("SELECT COUNT(e) FROM ExerciseEntity e WHERE e.published = true AND e.created < :d")
                 .setParameter("d", weekAgo).getSingleResult()).longValue();
