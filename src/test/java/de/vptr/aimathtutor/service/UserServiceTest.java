@@ -9,8 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -42,6 +44,13 @@ class UserServiceTest {
 
     @InjectMock
     private PermissionService permissionService;
+
+    @BeforeEach
+    void setUpPermissionService() {
+        Mockito.doNothing().when(this.permissionService).requireUserAdd();
+        Mockito.doNothing().when(this.permissionService).requireUserEdit();
+        Mockito.doNothing().when(this.permissionService).requireUserDelete();
+    }
 
     private UserDto buildValidDto() {
         final var dto = new UserDto();

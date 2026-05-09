@@ -291,8 +291,8 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 // Show success notification
                 final var notifyUi = this.getUI().orElse(null);
                 if (notifyUi != null) {
-                    notifyUi.access(() -> {
-                        NotificationUtil.showSuccess("🎉 Congratulations! You've solved the problem correctly!");
+                    final var _ = notifyUi.access(() -> {
+                        NotificationUtil.showSuccess(AppConstants.EXERCISE_SOLVED_MESSAGE);
                     });
                 }
 
@@ -315,9 +315,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         }
         final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
-        this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
+        final var _ = this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
                 .thenAccept(feedback -> {
-                    ui.access(() -> {
+                    final var _ = ui.access(() -> {
                         // Only log and display if we got feedback
                         if (feedback != null) {
                             // Log interaction (optional - for analytics)
@@ -335,7 +335,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                         }
                     });
                 }).exceptionally(ex -> {
-                    ui.access(() -> {
+                    final var _ = ui.access(() -> {
                         LOG.error("Error getting AI feedback", ex);
                     });
                     return null;
@@ -548,15 +548,15 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 () -> this.aiTutorService.generateProblem(DifficultyLevel.INTERMEDIATE, this.selectedCategory),
                 this.managedExecutor);
         this.pendingProblemFuture = rootFuture;
-        rootFuture.thenAccept(problem -> {
-            ui.access(() -> {
+        final var _ = rootFuture.thenAccept(problem -> {
+            final var _ = ui.access(() -> {
                 if (requestId != this.problemRequestId) {
                     return;
                 }
                 onLoadProblem.accept(problem, requestId);
             });
         }).exceptionally(ex -> {
-            ui.access(() -> {
+            final var _ = ui.access(() -> {
                 if (requestId != this.problemRequestId) {
                     return;
                 }

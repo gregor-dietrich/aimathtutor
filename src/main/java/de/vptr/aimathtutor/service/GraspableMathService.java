@@ -240,11 +240,11 @@ public class GraspableMathService {
         // Handle common equivalent forms
         // e.g., "x=5" is equivalent to "5=x"
         if (normalized.contains("=")) {
-            final String[] parts = normalized.split("=");
-            if (parts.length == 2) {
+            final int eqIdx = normalized.indexOf('=');
+            if (eqIdx > 0) {
                 // Sort the sides to handle "x=5" and "5=x" as equivalent
-                final String left = parts[0].trim();
-                final String right = parts[1].trim();
+                final String left = normalized.substring(0, eqIdx).trim();
+                final String right = normalized.substring(eqIdx + 1).trim();
                 // If one side is just a number/variable and the other is more complex, keep
                 // order
                 // Otherwise, sort alphabetically for consistency

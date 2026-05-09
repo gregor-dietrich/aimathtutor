@@ -89,7 +89,7 @@ public final class AiChatUtil {
         if (ui == null || !ui.isAttached()) {
             return;
         }
-        ui.access(() -> displayAiAnswer(answer, chatPanel, conversationContext));
+        final var _ = ui.access(() -> displayAiAnswer(answer, chatPanel, conversationContext));
     }
 
     /**
@@ -109,6 +109,6 @@ public final class AiChatUtil {
         if (ui == null || !ui.isAttached()) {
             return;
         }
-        ui.access(() -> displayAiError(ex, chatPanel, log));
+        final var _ = ui.access(() -> displayAiError(ex, chatPanel, log));
     }
 }

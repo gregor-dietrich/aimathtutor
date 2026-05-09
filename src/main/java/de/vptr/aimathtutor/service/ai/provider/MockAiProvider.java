@@ -30,7 +30,7 @@ public class MockAiProvider implements AiProvider {
 
         // Analyze based on event type
         switch (event.eventType != null ? event.eventType.toLowerCase(Locale.ROOT) : "") {
-            case "simplify":
+            case "simplify" -> {
                 if (event.correct != null && event.correct) {
                     feedback = AiFeedbackDto.positive("Great job! You simplified correctly.");
                 } else if (event.correct != null && !event.correct) {
@@ -40,48 +40,41 @@ public class MockAiProvider implements AiProvider {
                     // No correctness info provided - be less spammy
                     return null; // Don't give feedback for unclear simplification
                 }
-                break;
-
-            case "expand":
+            }
+            case "expand" -> {
                 feedback = AiFeedbackDto.positive("Good expansion!");
                 feedback.suggestedNextSteps.add("Now try to simplify the result");
-                break;
-
-            case "factor":
+            }
+            case "factor" -> {
                 feedback = AiFeedbackDto.positive("Nice factoring!");
-                break;
-
-            case "combine":
+            }
+            case "combine" -> {
                 feedback = AiFeedbackDto.suggestion("Combining like terms - make sure they match!");
-                break;
-
+            }
             // Graspable Math specific action names
-            case "addsubinvertaction":
+            case "addsubinvertaction" -> {
                 feedback = AiFeedbackDto.hint("Good! You added/subtracted to both sides to maintain balance.");
                 feedback.suggestedNextSteps.add("Continue simplifying to isolate the variable");
-                break;
-
-            case "muldivinvertaction":
+            }
+            case "muldivinvertaction" -> {
                 feedback = AiFeedbackDto.hint("Nice! You multiplied/divided both sides to maintain balance.");
                 feedback.suggestedNextSteps.add("Simplify the result");
-                break;
-
-            case "fractioncanceltermsaction":
+            }
+            case "fractioncanceltermsaction" -> {
                 feedback = AiFeedbackDto.positive("Great job simplifying the fraction!");
-                break;
-
-            case "move":
+            }
+            case "move" -> {
                 // Only give feedback if the expression actually changed
                 if (event.expressionBefore != null && event.expressionAfter != null
                         && event.expressionBefore.equals(event.expressionAfter)) {
                     return null; // No change, no feedback
                 }
                 feedback = AiFeedbackDto.hint("Remember to change the sign when moving across the equals sign!");
-                break;
-
-            default:
+            }
+            default -> {
                 // Don't give feedback for unknown or minor actions
                 return null;
+            }
         }
 
         feedback.sessionId = event.sessionId;

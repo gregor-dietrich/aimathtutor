@@ -361,8 +361,8 @@ public class AdminConfigView extends AbstractAdminView {
         if (ui == null) {
             return;
         }
-        CompletableFuture.supplyAsync(testCall::get, this.managedExecutor).thenAccept(result -> {
-            ui.access(() -> {
+        final var _ = CompletableFuture.supplyAsync(testCall, this.managedExecutor).thenAccept(result -> {
+            final var _ = ui.access(() -> {
                 final String msg = result.message != null ? result.message : "No response";
                 if (result.success) {
                     NotificationUtil.showSuccess(msg);
@@ -372,7 +372,7 @@ public class AdminConfigView extends AbstractAdminView {
                 LOG.infof("%s connection test: %s", providerName, result.message);
             });
         }).exceptionally(ex -> {
-            ui.access(() -> {
+            final var _ = ui.access(() -> {
                 NotificationUtil.showError("Connection test failed: " + ex.getMessage());
                 LOG.errorf(ex, "%s connection test failed", providerName);
             });

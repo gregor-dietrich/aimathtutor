@@ -10,8 +10,10 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
@@ -37,14 +39,21 @@ class ExerciseServiceTest {
     @Inject
     private LessonService lessonService;
 
+    @InjectMock
+    private PermissionService permissionService;
+
     @Inject
     private UserRepository userRepository;
 
     @Inject
     private EntityManager em;
 
-    @InjectMock
-    private PermissionService permissionService;
+    @BeforeEach
+    void setUpPermissionService() {
+        Mockito.doNothing().when(this.permissionService).requireExerciseAdd();
+        Mockito.doNothing().when(this.permissionService).requireExerciseEdit();
+        Mockito.doNothing().when(this.permissionService).requireExerciseDelete();
+    }
 
     private String teacherPublicId() {
         final var teacher = this.userRepository.findByUsername("teacher");

@@ -9,8 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -36,6 +38,11 @@ class GraspableMathServiceTest {
 
     @InjectMock
     private PermissionService permissionService;
+
+    @BeforeEach
+    void setUpPermissionService() {
+        Mockito.doNothing().when(this.permissionService).requireExerciseAdd();
+    }
 
     private Long studentId() {
         final var user = this.userRepository.findByUsername("student1");

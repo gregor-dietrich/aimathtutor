@@ -122,4 +122,7 @@ public final class AppConstants {
 
     @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
     public static final String BLOCKED_HOST_ANY = "0.0.0.0";
+
+    /** Message shown when an exercise is solved correctly. */
+    public static final String EXERCISE_SOLVED_MESSAGE = "🎉 Congratulations! You've solved the problem correctly!";
 }
