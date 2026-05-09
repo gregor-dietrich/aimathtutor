@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.security;
+package de.vptr.aimathtutor.service.security;
 
 import java.nio.charset.StandardCharsets;
 

@@ -29,7 +29,7 @@ import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.service.CommentService;
+import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.spi.CDI;
@@ -119,7 +119,7 @@ public class CommentsPanel extends VerticalLayout {
         this.commentCreatedListener = event -> {
             if (event.getExerciseId() != null && event.getExerciseId().equals(this.exerciseId)) {
                 this.getUI().ifPresent(ui -> {
-                    final var unused = ui.access(this::refresh);
+                    final var _ = ui.access(this::refresh);
                 });
             }
         };

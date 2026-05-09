@@ -26,9 +26,9 @@ import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
-import de.vptr.aimathtutor.service.AiConfigService;
-import de.vptr.aimathtutor.service.AiProviderTestService;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.service.ai.AiConfigService;
+import de.vptr.aimathtutor.service.ai.provider.AiProviderTestService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -357,7 +357,7 @@ public class AdminConfigView extends AbstractAdminView {
     // --- Connection tests ---------------------------------------------------
 
     private void testConnection(final Supplier<AiProviderTestResultDto> testCall, final String providerName) {
-        final var ui = getUI().orElse(null);
+        final var ui = this.getUI().orElse(null);
         if (ui == null) {
             return;
         }

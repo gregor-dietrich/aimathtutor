@@ -465,7 +465,7 @@
                     <excludes>
                         <exclude>de/vptr/aimathtutor/view/**</exclude>
                         <exclude>de/vptr/aimathtutor/component/**</exclude>
-                        <exclude>de/vptr/aimathtutor/util/PasswordUtility.class</exclude>
+                        <exclude>de/vptr/aimathtutor/util/PasswordUtil.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>

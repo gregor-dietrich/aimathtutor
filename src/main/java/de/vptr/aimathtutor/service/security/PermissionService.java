@@ -1,7 +1,8 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.service.UserRankService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

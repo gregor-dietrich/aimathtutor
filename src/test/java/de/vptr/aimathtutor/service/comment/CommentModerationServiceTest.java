@@ -17,7 +17,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.PermissionService;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.TestCommentFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;

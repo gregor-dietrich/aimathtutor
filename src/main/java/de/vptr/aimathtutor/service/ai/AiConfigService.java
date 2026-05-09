@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -23,7 +23,6 @@ import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;

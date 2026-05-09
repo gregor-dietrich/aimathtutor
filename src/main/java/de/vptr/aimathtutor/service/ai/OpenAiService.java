@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -9,10 +9,8 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
-import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
-import de.vptr.aimathtutor.service.ai.AiConfigKeys;
-import de.vptr.aimathtutor.service.ai.AiProviderException;
-import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.AiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;

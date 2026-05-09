@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import java.time.Duration;
 import java.time.Instant;

@@ -4,7 +4,6 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.AiConfigService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

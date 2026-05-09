@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service.ai;
+package de.vptr.aimathtutor.exception;
 
 import java.io.IOException;
 

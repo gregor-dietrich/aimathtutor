@@ -5,7 +5,7 @@ import org.jboss.logging.Logger;
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.OpenAiService;
+import de.vptr.aimathtutor.service.ai.OpenAiService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

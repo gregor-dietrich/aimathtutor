@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.service.PermissionService;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response.Status;

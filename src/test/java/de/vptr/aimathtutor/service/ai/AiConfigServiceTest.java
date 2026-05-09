@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

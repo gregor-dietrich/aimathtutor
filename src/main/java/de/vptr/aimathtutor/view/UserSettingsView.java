@@ -18,8 +18,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.UserSettingsDto;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;

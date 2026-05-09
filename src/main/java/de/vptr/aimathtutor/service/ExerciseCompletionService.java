@@ -5,6 +5,7 @@ import java.util.List;
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
+import de.vptr.aimathtutor.service.security.AuthService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

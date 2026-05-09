@@ -40,7 +40,7 @@ import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.service.CommentService;
+import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;

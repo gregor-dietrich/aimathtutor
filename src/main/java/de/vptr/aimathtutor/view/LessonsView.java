@@ -24,9 +24,9 @@ import com.vaadin.flow.router.RouteParameters;
 
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -93,7 +93,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         // Only root lessons are rendered at the top level
-        final List<LessonViewDto> rootLessons = payload.lessons.stream().filter(l -> l.isRootLesson()).toList();
+        final List<LessonViewDto> rootLessons = payload.lessons.stream().filter(LessonViewDto::isRootLesson).toList();
 
         if (rootLessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");

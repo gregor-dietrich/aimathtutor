@@ -10,6 +10,7 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.service.ai.AiTutorService;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**

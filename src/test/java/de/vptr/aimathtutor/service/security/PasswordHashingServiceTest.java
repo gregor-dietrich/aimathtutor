@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.security;
+package de.vptr.aimathtutor.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

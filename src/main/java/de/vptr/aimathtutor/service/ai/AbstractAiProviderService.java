@@ -1,6 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
-import de.vptr.aimathtutor.service.AiConfigService;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 

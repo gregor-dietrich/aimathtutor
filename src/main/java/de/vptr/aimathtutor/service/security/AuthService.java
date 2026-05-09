@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import java.util.Locale;
 
@@ -11,7 +11,7 @@ import com.vaadin.flow.server.VaadinSession;
 import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.security.PasswordHashingService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;

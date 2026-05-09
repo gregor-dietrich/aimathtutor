@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,10 +15,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.vptr.aimathtutor.dto.GeminiRequestDto;
 import de.vptr.aimathtutor.dto.GeminiResponseDto;
-import de.vptr.aimathtutor.service.ai.AbstractAiProviderService;
-import de.vptr.aimathtutor.service.ai.AiConfigKeys;
-import de.vptr.aimathtutor.service.ai.AiProviderException;
-import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.AiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;

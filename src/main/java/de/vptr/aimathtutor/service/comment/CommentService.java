@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.comment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,10 +25,8 @@ import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.comment.CommentFlaggingService;
-import de.vptr.aimathtutor.service.comment.CommentModerationService;
-import de.vptr.aimathtutor.service.comment.CommentPermissionService;
-import de.vptr.aimathtutor.service.comment.CommentRateLimitService;
+import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;

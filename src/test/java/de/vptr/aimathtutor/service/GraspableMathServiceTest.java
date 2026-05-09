@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;

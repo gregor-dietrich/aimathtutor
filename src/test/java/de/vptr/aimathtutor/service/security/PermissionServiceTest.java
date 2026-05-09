@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.service.UserRankService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
 
-import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 
 /**
  * Verifies that a service method has the expected {@code @Retry} annotation with values matching {@link AppConstants}.

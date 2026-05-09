@@ -32,7 +32,7 @@ fi
 
 # Pass the password as the second token after "generate" (the Java CLI expects args[1])
 echo "Generating salt+hash..."
-${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtility" -Dexec.args="generate ${PASSWORD}" exec:java
+${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args="generate ${PASSWORD}" exec:java
 echo "Password hash generated."
 
 cd - > /dev/null
