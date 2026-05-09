@@ -31,10 +31,12 @@
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <dependency-check-plugin.version>12.2.2</dependency-check-plugin.version>
+        <error-prone.version>2.49.0</error-prone.version>
         <html-sanitizer.version>20260313.1</html-sanitizer.version>
         <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
         <license-plugin.version>2.7.1</license-plugin.version>
         <line-awesome.version>2.1.0</line-awesome.version>
+        <nullaway.version>0.13.4</nullaway.version>
         <pmd-plugin.version>3.28.0</pmd-plugin.version>
         <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
         <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
@@ -361,6 +363,24 @@
                 <version>${compiler-plugin.version}</version>
                 <configuration>
                     <parameters>true</parameters>
+                    <compilerArgs>
+                        <arg>-XDcompilePolicy=simple</arg>
+                        <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR
+                            -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor</arg>
+                        <arg>--should-stop=ifError=FLOW</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${error-prone.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.uber.nullaway</groupId>
+                            <artifactId>nullaway</artifactId>
+                            <version>${nullaway.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>

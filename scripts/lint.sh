@@ -11,7 +11,7 @@ REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
 echo "Running lint checks..."
 
-${MVN_CMD} -q spotless:apply checkstyle:check spotbugs:check pmd:check pmd:cpd-check -Drevision="${REVISION}"
+${MVN_CMD} -q compile spotless:apply checkstyle:check spotbugs:check pmd:check pmd:cpd-check -Drevision="${REVISION}"
 
 echo "Lint checks completed."
 
