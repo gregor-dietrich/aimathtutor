@@ -402,7 +402,7 @@ INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, cat
 (2, '01ARZ3NDEKTSV4RRFFQ69G5FG1', 'ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, gemini, openai, or ollama', false, 1),
 
 -- Gemini settings
-(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'gemini.model', 'gemma-3-27b-it', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
+(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'gemini.model', 'gemma-4-31b-it', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
 (4, '01ARZ3NDEKTSV4RRFFQ69G5FG3', 'gemini.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GEMINI', 'Gemini API base URL', false, 1),
 (5, '01ARZ3NDEKTSV4RRFFQ69G5FG4', 'gemini.temperature', '0.7', 'DOUBLE', 'GEMINI', 'Gemini temperature setting (0.0-2.0)', false, 1),
 (6, '01ARZ3NDEKTSV4RRFFQ69G5FG5', 'gemini.max-tokens', '2000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', false, 1),

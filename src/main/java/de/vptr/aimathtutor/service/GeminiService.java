@@ -25,14 +25,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for interacting with Google Gemini AI API Handles REST API calls to Gemini 2.5 Flash-Lite Configuration is
- * loaded dynamically from AiConfigService.
+ * Service for interacting with the Google Gemini AI API. Configuration is provided dynamically via
+ * {@link AiConfigService}.
  */
 @ApplicationScoped
 public class GeminiService extends AbstractAiProviderService {
 
     private static final Logger LOG = Logger.getLogger(GeminiService.class);
-    private static final String DEFAULT_MODEL = "gemma-3-27b-it";
+    private static final String DEFAULT_MODEL = "gemma-4-31b-it";
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
     @ConfigProperty(name = "gemini.api.key", defaultValue = "")

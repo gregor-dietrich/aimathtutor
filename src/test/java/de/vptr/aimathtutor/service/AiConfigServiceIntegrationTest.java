@@ -124,7 +124,7 @@ class AiConfigServiceIntegrationTest {
         final Map<String, String> geminiConfigs = this.aiConfigService.getAllConfigsByCategory(ConfigCategory.GEMINI);
         assertFalse(geminiConfigs.isEmpty());
         assertTrue(geminiConfigs.containsKey("gemini.model"));
-        assertEquals("gemma-3-27b-it", geminiConfigs.get("gemini.model"));
+        assertEquals("gemma-4-31b-it", geminiConfigs.get("gemini.model"));
     }
 
     @Test
