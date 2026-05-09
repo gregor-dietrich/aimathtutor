@@ -7,6 +7,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Logout button that triggers the application's logout flow when clicked.
  */
@@ -16,7 +18,8 @@ public class LogoutButton extends Button {
     /**
      * Constructs a LogoutButton with the specified action and tooltip.
      */
-    public LogoutButton(final ComponentEventListener<ClickEvent<Button>> logoutAction, final String tooltipText) {
+    public LogoutButton(final ComponentEventListener<ClickEvent<Button>> logoutAction,
+            @Nullable final String tooltipText) {
         super("", logoutAction);
         this.addThemeVariants(ButtonVariant.LUMO_ERROR);
         this.setIcon(LineAwesomeIcon.POWER_OFF_SOLID.create());

@@ -4,30 +4,31 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Response DTO for Google Gemini API Based on Gemini REST API specification
  */
 public class GeminiResponseDto {
-
+    @Nullable
     public List<Candidate> candidates;
 
     @JsonProperty("promptFeedback")
+    @Nullable
     public PromptFeedback promptFeedback;
 
     /**
      * Represents a candidate in the Gemini response.
      */
     public static class Candidate {
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Populated by Jackson at runtime")
+        @Nullable
         public Content content;
+        @Nullable
         @JsonProperty("finishReason")
         public String finishReason;
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Index provided by Gemini but not used by the client")
+        @Nullable
         public Integer index;
+        @Nullable
         @JsonProperty("safetyRatings")
         public List<SafetyRating> safetyRatings;
     }
@@ -36,11 +37,9 @@ public class GeminiResponseDto {
      * Represents content in the Gemini response.
      */
     public static class Content {
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Populated by Jackson at runtime")
+        @Nullable
         public List<Part> parts;
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Role may be present in responses but not used by the client")
+        @Nullable
         public String role;
     }
 
@@ -50,11 +49,9 @@ public class GeminiResponseDto {
      * absent or {@code false} contain the actual response text.
      */
     public static class Part {
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "JSON mapping DTO fields are public and populated by Jackson")
+        @Nullable
         public String text;
-        @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Populated by Jackson at runtime; true marks reasoning/thought parts to skip")
+        @Nullable
         public Boolean thought;
     }
 
@@ -62,11 +59,9 @@ public class GeminiResponseDto {
      * Represents a safety rating in the Gemini response.
      */
     public static class SafetyRating {
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Safety rating fields are optional in API responses")
+        @Nullable
         public String category;
-        @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
-                justification = "Probability may exist but is not used by the client")
+        @Nullable
         public String probability;
     }
 
@@ -74,6 +69,7 @@ public class GeminiResponseDto {
      * Represents prompt feedback in the Gemini response.
      */
     public static class PromptFeedback {
+        @Nullable
         @JsonProperty("safetyRatings")
         public List<SafetyRating> safetyRatings;
     }
@@ -83,6 +79,7 @@ public class GeminiResponseDto {
      * return parts where {@code thought=true} containing internal reasoning that should not be shown to students. Only
      * parts where {@code thought} is absent or {@code false} contain the actual response text.
      */
+    @Nullable
     public String getTextContent() {
         if (this.candidates == null || this.candidates.isEmpty()) {
             return null;
@@ -109,6 +106,7 @@ public class GeminiResponseDto {
     /**
      * Check if the response was blocked due to safety filters
      */
+    @Nullable
     public boolean isBlocked() {
         if (this.candidates == null || this.candidates.isEmpty()) {
             return false;
@@ -121,6 +119,7 @@ public class GeminiResponseDto {
     /**
      * Check if the response is empty or missing candidates
      */
+    @Nullable
     public boolean isEmptyResponse() {
         return this.candidates == null || this.candidates.isEmpty();
     }
@@ -129,6 +128,7 @@ public class GeminiResponseDto {
      * Check if the response was truncated due to the token limit (Gemini reports {@code "MAX_TOKENS"} as the finish
      * reason).
      */
+    @Nullable
     public boolean isTruncated() {
         if (this.candidates == null || this.candidates.isEmpty()) {
             return false;
@@ -141,6 +141,7 @@ public class GeminiResponseDto {
      *
      * @return the finish reason, or {@code null} if no candidates are present.
      */
+    @Nullable
     public String getFinishReason() {
         if (this.candidates == null || this.candidates.isEmpty()) {
             return null;

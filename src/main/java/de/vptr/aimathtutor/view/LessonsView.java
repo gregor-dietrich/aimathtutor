@@ -24,9 +24,9 @@ import com.vaadin.flow.router.RouteParameters;
 
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -93,7 +93,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         }
 
         // Only root lessons are rendered at the top level
-        final List<LessonViewDto> rootLessons = payload.lessons.stream().filter(l -> l.isRootLesson()).toList();
+        final List<LessonViewDto> rootLessons = payload.lessons.stream().filter(LessonViewDto::isRootLesson).toList();
 
         if (rootLessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
@@ -164,13 +164,16 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         visited.add(lesson.getPublicId());
 
-        for (final String childId : lesson.childrenPublicIds) {
-            if (visited.contains(childId)) {
-                continue;
-            }
-            final LessonViewDto child = lessonByPublicId.get(childId);
-            if (child != null) {
-                section.add(this.createLessonSection(child, depth + 1, lessonByPublicId, exercisesByLesson, visited));
+        if (lesson.childrenPublicIds != null) {
+            for (final String childId : lesson.childrenPublicIds) {
+                if (visited.contains(childId)) {
+                    continue;
+                }
+                final LessonViewDto child = lessonByPublicId.get(childId);
+                if (child != null) {
+                    section.add(
+                            this.createLessonSection(child, depth + 1, lessonByPublicId, exercisesByLesson, visited));
+                }
             }
         }
 
@@ -183,7 +186,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 exerciseGrid.add(this.createExerciseCard(exercise));
             }
             section.add(exerciseGrid);
-        } else if (lesson.childrenPublicIds.isEmpty()) {
+        } else if (lesson.childrenPublicIds == null || lesson.childrenPublicIds.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");
             noExercisesMsg.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-style", "italic");
             section.add(noExercisesMsg);

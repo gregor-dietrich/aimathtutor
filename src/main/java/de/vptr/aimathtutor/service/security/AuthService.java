@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import java.util.Locale;
 
@@ -11,8 +11,9 @@ import com.vaadin.flow.server.VaadinSession;
 import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.security.PasswordHashingService;
+import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -168,6 +169,7 @@ public class AuthService {
         }
     }
 
+    @Nullable
     private String extractClientIp() {
         final VaadinRequest request = VaadinRequest.getCurrent();
         if (request == null) {
@@ -259,6 +261,7 @@ public class AuthService {
      *
      * @return the username of the current user, or null if not authenticated
      */
+    @Nullable
     public String getUsername() {
         // VaadinSession.getCurrent() can return null outside UI request context.
         final var session = VaadinSession.getCurrent();
@@ -273,6 +276,7 @@ public class AuthService {
      *
      * @return the ID of the current user, or null if not authenticated or user not found
      */
+    @Nullable
     public Long getUserId() {
         final String username = this.getUsername();
         if (username == null) {
@@ -287,6 +291,7 @@ public class AuthService {
      * 
      * @return UserEntity or null if not authenticated
      */
+    @Nullable
     public UserEntity getCurrentUserEntity() {
         final String username = this.getUsername();
         if (username == null) {

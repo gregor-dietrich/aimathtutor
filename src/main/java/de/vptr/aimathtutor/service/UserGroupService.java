@@ -15,6 +15,7 @@ import de.vptr.aimathtutor.entity.UserGroupMetaEntity;
 import de.vptr.aimathtutor.repository.UserGroupMetaRepository;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;

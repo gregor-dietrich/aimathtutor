@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.ai.provider;
 
 import java.io.IOException;
 import java.net.URI;
@@ -12,6 +12,10 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
+import de.vptr.aimathtutor.service.ai.AiConfigService;
+import de.vptr.aimathtutor.service.ai.GeminiService;
+import de.vptr.aimathtutor.service.ai.OllamaService;
+import de.vptr.aimathtutor.service.ai.OpenAiService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Represents a message in the chat interface between student and AI tutor. Can be either a user question or an AI
@@ -30,22 +30,26 @@ public class ChatMessageDto {
         SYSTEM // System messages (e.g., "Problem loaded")
     }
 
+    @Nullable
     public Sender sender;
 
     @JsonProperty("message_type")
+    @Nullable
     public MessageType messageType;
 
+    @Nullable
     public String message;
 
     @JsonProperty("session_id")
+    @Nullable
     public String sessionId;
 
-    @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD",
-            justification = "Set by caller or Jackson at runtime")
+    @Nullable
     public LocalDateTime timestamp;
 
     // Optional: Reference to the action that triggered this message (for feedback)
     @JsonProperty("related_action")
+    @Nullable
     public String relatedAction;
 
     public ChatMessageDto() {
@@ -61,11 +65,11 @@ public class ChatMessageDto {
      * @param message
      *            the content of the message
      */
-    public ChatMessageDto(final Sender sender, final MessageType messageType, final String message) {
+    public ChatMessageDto(final Sender sender, final MessageType messageType, @Nullable final String message) {
         this();
         this.sender = sender;
         this.messageType = messageType;
-        this.message = message;
+        this.message = message != null ? message : "";
     }
 
     /**
@@ -75,7 +79,7 @@ public class ChatMessageDto {
      *            question text
      * @return ChatMessageDto instance for a user question
      */
-    public static ChatMessageDto userQuestion(final String message) {
+    public static ChatMessageDto userQuestion(@Nullable final String message) {
         return new ChatMessageDto(Sender.USER, MessageType.QUESTION, message);
     }
 
@@ -86,7 +90,7 @@ public class ChatMessageDto {
      *            feedback text
      * @return ChatMessageDto instance for AI feedback
      */
-    public static ChatMessageDto aiFeedback(final String message) {
+    public static ChatMessageDto aiFeedback(@Nullable final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.FEEDBACK, message);
     }
 
@@ -97,7 +101,7 @@ public class ChatMessageDto {
      *            answer text
      * @return ChatMessageDto instance for an AI answer
      */
-    public static ChatMessageDto aiAnswer(final String message) {
+    public static ChatMessageDto aiAnswer(@Nullable final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.ANSWER, message);
     }
 
@@ -108,7 +112,7 @@ public class ChatMessageDto {
      *            system text
      * @return ChatMessageDto instance for system messages
      */
-    public static ChatMessageDto system(final String message) {
+    public static ChatMessageDto system(@Nullable final String message) {
         return new ChatMessageDto(Sender.AI, MessageType.SYSTEM, message);
     }
 

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -35,18 +36,22 @@ public class UserGroupMetaEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @Nullable
     public UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
+    @Nullable
     public UserGroupEntity group;
 
     @Generated(event = EventType.INSERT)
     @Column(name = "created")
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     // Helper method to check if user is in group

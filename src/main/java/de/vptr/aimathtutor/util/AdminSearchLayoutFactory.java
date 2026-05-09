@@ -7,6 +7,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.layout.SearchFilterBar;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
+import jakarta.annotation.Nullable;
 
 /**
  * Factory for creating admin search layouts with consistent structure.
@@ -21,12 +22,16 @@ public final class AdminSearchLayoutFactory {
      */
     public static final class Components {
         /** Search text field. */
+        @Nullable
         public TextField searchField;
         /** Start date picker. */
+        @Nullable
         public DatePicker startDatePicker;
         /** End date picker. */
+        @Nullable
         public DatePicker endDatePicker;
         /** Button layout. */
+        @Nullable
         public HorizontalLayout buttonLayout;
     }
 

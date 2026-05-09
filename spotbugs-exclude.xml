@@ -89,11 +89,11 @@
 
   <!--
     DM_EXIT:
-    PasswordUtility is a CLI utility where System.exit is appropriate.
+    PasswordUtil is a CLI utility where System.exit is appropriate.
   -->
   <Match>
     <Bug pattern="DM_EXIT" />
-    <Class name="de.vptr.aimathtutor.util.PasswordUtility" />
+    <Class name="de.vptr.aimathtutor.util.PasswordUtil" />
   </Match>
 
   <!--

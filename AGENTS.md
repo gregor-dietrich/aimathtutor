@@ -16,7 +16,7 @@ You should challenge the user's request if it would result in implementing anti-
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI: `http://localhost:9001/q/dev/`.
 - **Tests:** `make test` → `./mvnw test`. Uses `@QuarkusTest`, Mockito, Panache Mock. CI runs `./mvnw verify`.
 - **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`.
-- **Lint:** `make lint` → `scripts/lint.sh` — runs spotless:apply, checkstyle, spotbugs, PMD, and CPD checks.
+- **Lint:** `make lint` → `scripts/lint.sh` — runs compilation (Error Prone & NullAway), spotless:apply, checkstyle, spotbugs, PMD, and CPD checks.
 - **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` + `build-frontend`. CI: `./mvnw clean install package -DskipTests -Pproduction`.
 - **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.ref=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.misc=ALL-UNNAMED`, `--add-opens java.base/java.nio=ALL-UNNAMED`, `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`, `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`, and `-XX:+EnableDynamicAgentLoading`. Set consistently in `pom.xml` (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and Docker `JAVA_OPTS_APPEND`.
 - **Versioning:** Maven property `${revision}` (default `1.0.0-SNAPSHOT`). Pass `-Drevision=X.Y.Z`.
@@ -50,6 +50,14 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **@Push:** Enabled globally on `AppConfig`. Views do not need their own `@Push`.
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin serializes views.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.**
+- **Entity field `@Nullable` convention (NullAway-driven):** NullAway runs at ERROR level and treats unannotated fields as `@NonNull`. JPA entities use a no-arg constructor, so reference-type fields are null after construction before Hibernate populates them. Therefore **all entity fields** that are reference types (or collections) MUST be `@Nullable`, even if the DB column is `nullable=false`. Decision matrix:
+  - **Primitives** (`boolean`, `int`, etc.): never `@Nullable`
+  - **Auto-generated** (`id`, `version`, `publicId`, `created`, `lastEdit`): `@Nullable` — null before persist
+  - **Collections** (`@OneToMany`, `@ManyToMany`): `@Nullable` — null before Hibernate wraps as PersistentBag
+  - **Required business fields** (`username`, `title`, `content`, `name` with `nullable=false`): `@Nullable` — null after no-arg ctor, enforced at persist via `@NotBlank`/`@NotNull`
+  - **Genuinely optional** (`email`, `avatarEmoji`, `parent`, moderation fields): `@Nullable`
+  - **To-one associations** (`@ManyToOne`, `@OneToOne`): `@Nullable` even with `@JoinColumn(nullable=false)` — same null-after-ctor reason
+  - **Pairing `@Nullable` + `@NotNull` (Bean Validation)** on the same field is valid: `@Nullable` placates NullAway, `@NotNull` rejects null at persist time
 
 ### Critical Anti-Patterns (Do Not Propose)
 

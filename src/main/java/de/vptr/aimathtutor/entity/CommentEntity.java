@@ -6,6 +6,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -90,26 +91,32 @@ public class CommentEntity extends BaseEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false)
     @NotBlank
+    @Nullable
     public String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", nullable = false)
+    @Nullable
     public ExerciseEntity exercise;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @Nullable
     public UserEntity user;
 
     @Generated(event = EventType.INSERT)
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     // NEW: Threading support
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
+    @Nullable
     public CommentEntity parentComment;
 
     // NEW: Moderation support
@@ -121,25 +128,32 @@ public class CommentEntity extends BaseEntity {
     public int flagsCount = 0;
 
     @Column(name = "session_id", length = 255)
+    @Nullable
     public String sessionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deleted_by")
+    @Nullable
     public UserEntity deletedBy;
 
     @Column(name = "deleted_at")
+    @Nullable
     public LocalDateTime deletedAt;
 
     @Column(name = "moderation_reason", length = 500)
+    @Nullable
     public String moderationReason;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "moderator_id")
+    @Nullable
     public UserEntity moderator;
 
     @Column(name = "moderation_action", length = 20)
+    @Nullable
     public String moderationAction;
 
     @Column(name = "moderated_at")
+    @Nullable
     public LocalDateTime moderatedAt;
 }

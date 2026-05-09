@@ -11,6 +11,8 @@ import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -43,6 +45,7 @@ public class UserRankService {
      * @return a {@link UserRankViewDto} of the current user's rank, or null if not authenticated
      */
     @Transactional
+    @Nullable
     public UserRankViewDto getCurrentUserRank() {
         final var session = VaadinSession.getCurrent();
         if (session == null) {

@@ -4,8 +4,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 

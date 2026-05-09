@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -113,23 +114,28 @@ import jakarta.validation.constraints.NotNull;
                         + "WHERE s.completed = true GROUP BY s.exercise.title") })
 public class StudentSessionEntity extends BaseEntity {
 
+    @Nullable
     @NotBlank
     @Column(name = "session_id", unique = true, nullable = false)
     public String sessionId;
 
+    @Nullable
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     public UserEntity user;
 
+    @Nullable
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id")
     public ExerciseEntity exercise;
 
+    @Nullable
     @Column(name = "start_time")
     public LocalDateTime startTime;
 
+    @Nullable
     @Column(name = "end_time")
     public LocalDateTime endTime;
 
@@ -145,14 +151,16 @@ public class StudentSessionEntity extends BaseEntity {
     @Column(name = "hints_used", nullable = false)
     public int hintsUsed = 0;
 
+    @Nullable
     @Column(name = "final_expression", columnDefinition = "TEXT")
     public String finalExpression;
 
+    @Nullable
     @Generated(event = EventType.INSERT)
     public LocalDateTime created;
 
+    @Nullable
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;
-
 }

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
+import jakarta.annotation.Nullable;
 
 /**
  * DTO for displaying student session information in admin views. Contains computed fields and safe data for client
@@ -11,22 +12,37 @@ import de.vptr.aimathtutor.entity.StudentSessionEntity;
  */
 public class StudentSessionViewDto {
 
+    @Nullable
     public String publicId;
+    @Nullable
     public String sessionId;
+    @Nullable
     public String userPublicId;
+    @Nullable
     public String username;
+    @Nullable
     public String exercisePublicId;
+    @Nullable
     public String exerciseTitle;
+    @Nullable
     public LocalDateTime startTime;
+    @Nullable
     public LocalDateTime endTime;
+    @Nullable
     public Boolean completed;
+    @Nullable
     public Integer actionsCount;
+    @Nullable
     public Integer correctActions;
+    @Nullable
     public Integer hintsUsed;
+    @Nullable
     public String finalExpression;
 
     // Computed fields
+    @Nullable
     public Long durationSeconds;
+    @Nullable
     public Double successRate;
 
     public StudentSessionViewDto() {
@@ -60,7 +76,7 @@ public class StudentSessionViewDto {
             }
 
             // Compute duration only for completed sessions
-            if (entity.startTime != null && entity.endTime != null && entity.completed) {
+            if (entity.startTime != null && entity.endTime != null && Boolean.TRUE.equals(entity.completed)) {
                 this.durationSeconds = Duration.between(entity.startTime, entity.endTime).getSeconds();
             } else {
                 this.durationSeconds = null;
@@ -78,9 +94,10 @@ public class StudentSessionViewDto {
     /**
      * Get formatted duration as HH:mm:ss, or null for incomplete sessions
      */
+    @Nullable
     public String getFormattedDuration() {
         // Don't show duration for incomplete sessions
-        if (this.durationSeconds == null || !this.completed) {
+        if (this.durationSeconds == null || !Boolean.TRUE.equals(this.completed)) {
             return null;
         }
 
@@ -109,6 +126,7 @@ public class StudentSessionViewDto {
         if (this.successRate == null) {
             return "0%";
         }
-        return String.format("%.1f%%", this.successRate * 100);
+        final double rate = this.successRate;
+        return String.format("%.1f%%", rate * 100);
     }
 }

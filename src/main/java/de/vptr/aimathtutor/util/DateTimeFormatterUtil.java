@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -17,9 +18,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class DateTimeFormatterUtil {
 
     @ConfigProperty(name = "app.date.format", defaultValue = "yyyy-MM-dd")
+    @Nullable
     String dateFormat;
 
     @ConfigProperty(name = "app.datetime.format", defaultValue = "yyyy-MM-dd HH:mm:ss")
+    @Nullable
     String dateTimeFormat;
 
     private DateTimeFormatter dateFormatter;
@@ -27,8 +30,9 @@ public class DateTimeFormatterUtil {
 
     @PostConstruct
     void init() {
-        this.dateFormatter = DateTimeFormatter.ofPattern(this.dateFormat);
-        this.dateTimeFormatter = DateTimeFormatter.ofPattern(this.dateTimeFormat);
+        this.dateFormatter = DateTimeFormatter.ofPattern(this.dateFormat != null ? this.dateFormat : "yyyy-MM-dd");
+        this.dateTimeFormatter =
+                DateTimeFormatter.ofPattern(this.dateTimeFormat != null ? this.dateTimeFormat : "yyyy-MM-dd HH:mm:ss");
     }
 
     /**
@@ -38,8 +42,9 @@ public class DateTimeFormatterUtil {
      *            the LocalDate to format (may be null)
      * @return formatted date string, or null if input is null
      */
+    @Nullable
     public String formatDate(final LocalDate date) {
-        if (date == null) {
+        if (date == null || this.dateFormatter == null) {
             return null;
         }
         return date.format(this.dateFormatter);
@@ -52,8 +57,9 @@ public class DateTimeFormatterUtil {
      *            the LocalDateTime to format (may be null)
      * @return formatted datetime string, or null if input is null
      */
+    @Nullable
     public String formatDateTime(final LocalDateTime dateTime) {
-        if (dateTime == null) {
+        if (dateTime == null || this.dateTimeFormatter == null) {
             return null;
         }
         return dateTime.format(this.dateTimeFormatter);
@@ -62,6 +68,7 @@ public class DateTimeFormatterUtil {
     /**
      * Get the configured date format pattern
      */
+    @Nullable
     public String getDateFormat() {
         return this.dateFormat;
     }
@@ -69,6 +76,7 @@ public class DateTimeFormatterUtil {
     /**
      * Get the configured datetime format pattern
      */
+    @Nullable
     public String getDateTimeFormat() {
         return this.dateTimeFormat;
     }

@@ -4,30 +4,48 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
+import jakarta.annotation.Nullable;
 
 /**
  * View DTO for comments used in UI grids and panels.
  */
 public class CommentViewDto {
+    @Nullable
     public String publicId;
+    @Nullable
     public String content;
+    @Nullable
     public String exercisePublicId;
+    @Nullable
     public String exerciseTitle;
+    @Nullable
     public String userPublicId;
+    @Nullable
     public String username;
+    @Nullable
     public LocalDateTime created;
+    @Nullable
     public LocalDateTime lastEdit;
 
+    @Nullable
     public String parentPublicId;
+    @Nullable
     public CommentStatus status;
+    @Nullable
     public Integer flagsCount;
+    @Nullable
     public String sessionId;
+    @Nullable
     public String authorPublicId;
 
     // Internal numeric IDs for UI component use
+    @Nullable
     public Long exerciseId;
+    @Nullable
     public Long userId;
+    @Nullable
     public Long parentId;
+    @Nullable
     public Long authorId;
 
     /**

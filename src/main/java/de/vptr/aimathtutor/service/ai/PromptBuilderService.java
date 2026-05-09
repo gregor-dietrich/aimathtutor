@@ -4,7 +4,7 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.AiConfigService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -36,8 +36,9 @@ public class PromptBuilderService {
      *            conversation context
      * @return the constructed prompt string
      */
-    public String buildQuestionAnsweringPrompt(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression, final ConversationContextDto context) {
+    public String buildQuestionAnsweringPrompt(final String question, @Nullable final String currentExpression,
+            @Nullable final String initialExpression, @Nullable final String targetExpression,
+            final ConversationContextDto context) {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
@@ -150,7 +151,8 @@ public class PromptBuilderService {
      *            the raw user input
      * @return sanitized input safe for inclusion in prompts
      */
-    public String sanitizePromptInput(final String input) {
+    @Nullable
+    public String sanitizePromptInput(@Nullable final String input) {
         if (input == null) {
             return null;
         }
@@ -167,6 +169,7 @@ public class PromptBuilderService {
      * Null-safe getter for string configuration values. Falls back to default if aiConfigService is not injected or
      * value is missing.
      */
+    @Nullable
     private String getConfigString(final String key, final String defaultValue) {
         if (this.aiConfigService == null) {
             LOG.debugf("AiConfigService not injected, using default for key=%s", key);

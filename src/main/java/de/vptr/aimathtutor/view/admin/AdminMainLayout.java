@@ -17,9 +17,9 @@ import de.vptr.aimathtutor.component.AdminNavigationTabs;
 import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.LogoutButton;
 import de.vptr.aimathtutor.component.button.UserViewButton;
-import de.vptr.aimathtutor.service.AuthService;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.LayoutNavigationUtil;
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.LoginView;
@@ -31,6 +31,7 @@ import jakarta.inject.Inject;
  * admin permission validation, and theme application. Routes child admin views through a sidebar navigation and content
  * area layout.
  */
+@SuppressWarnings("NullAway")
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
     private static final Logger LOG = Logger.getLogger(AdminMainLayout.class);
 

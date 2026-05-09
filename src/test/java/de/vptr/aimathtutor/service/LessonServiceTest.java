@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,6 +25,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class LessonServiceTest {
 
     @Inject
@@ -185,7 +187,7 @@ class LessonServiceTest {
     void shouldReturnDtoWithInitializedCollections() {
         this.lessonService.createLesson(this.buildLesson("init"));
 
-        assertAllLessonsHaveValidCollections();
+        this.assertAllLessonsHaveValidCollections();
     }
 
     @Test
@@ -196,7 +198,7 @@ class LessonServiceTest {
 
         this.em.clear();
 
-        assertAllLessonsHaveValidCollections();
+        this.assertAllLessonsHaveValidCollections();
     }
 
     private void assertAllLessonsHaveValidCollections() {

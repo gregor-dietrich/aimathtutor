@@ -193,48 +193,13 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ---
 
-## 3. Encrypt-at-Rest
-
-**Goal:** encrypt PII at rest with file-backed key management.
-
-**Plan:**
-
-1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
-2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
-3. Add blind-index/hash companion columns for fields requiring equality search.
-4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
-   - load key from file on startup
-   - generate and persist key if missing
-   - enforce restrictive file permissions
-5. Add shared crypto service + entity converters/mappers so encryption/decryption is centralized and plaintext is never logged.
-6. Add migrations to create encrypted/blind-index columns, backfill legacy plaintext, and remove plaintext columns after cutover.
-7. Update `application.properties` with sensible local default key path and `docker-compose.yml` with env var + persistent volume mount.
-8. Add unit/integration tests for crypto behavior, startup key generation, CRUD, and searchable encrypted fields.
-
-**Done when:**
-
-- Target PII fields are stored encrypted at rest.
-- App starts with existing key or generates one when absent.
-- Compose/dev setup persists key material via mounted volume.
-- SpotBugs, Checkstyle, PMD, PMD-CPD and all Maven Tests passing.
-
----
-
-## 4. Vaadin Views — End-to-End Testing (Long-term)
-
-**Package:** `de.vptr.aimathtutor.view`
-**Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.
-**Approach:** Introduce [Vaadin TestBench](https://vaadin.com/docs/latest/testing/end-to-end) or [Playwright](https://playwright.dev/) for end-to-end tests. This is a multi-day investment and should be treated as a separate project initiative, not a quick fix.
-
----
-
-## 5. Multiple Problems Per Exercise with Sequential Unlocking
+## 3. Multiple Problems Per Exercise with Sequential Unlocking
 
 **Goal:** Allow exercises to have multiple problems (like hints), unlock "Next Problem" button when current is complete.
 
 **Implementation Plan:**
 
-### 5.1 Backend Changes
+### 3.1 Backend Changes
 
 1. **ExerciseEntity/ExerciseViewDto** - Modify fields:
    - `graspableInitialExpression` -> Keep as is (semicolon-separated: "2x+5=15;3x-7=20;x^2=9")
@@ -252,7 +217,7 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
    - Add `graspable_target_expression VARCHAR(1000)` to `exercises` table
    - Add them to the existing init script - do NOT create separate scripts
 
-### 5.2 Frontend Changes
+### 3.2 Frontend Changes
 
 1. **ExerciseWorkspaceView** - Add UI components:
    - Field: `int currentProblemIndex = 0`
@@ -283,63 +248,101 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ---
 
-## 6. Error Prone + NullAway Integration
+## 4. Vaadin Views — End-to-End Testing (Long-term)
 
-**Issue:** No compile-time bug pattern detection beyond standard `javac` warnings. Null safety is not enforced.
-
-**Why implement:** Error Prone (Google) catches real bugs at compile time: null dereferences, resource leaks, equality bugs, thread safety issues, and more. NullAway adds null-safety enforcement via `@Nullable`/`@NonNull` annotations.
-
-**Implementation plan:**
-
-1. Add `error-prone` compiler plugin to `pom.xml` via `maven-compiler-plugin` configuration (Note: Version must be extracted as a variable as per convention in `pom.xml`):
-
-   ```xml
-   <compilerArgs>
-       <arg>-XDcompilePolicy=simple</arg>
-       <arg>-Xplugin:ErrorProne</arg>
-   </compilerArgs>
-   <annotationProcessorPaths>
-       <path>
-           <groupId>com.google.errorprone</groupId>
-           <artifactId>error_prone_core</artifactId>
-           <version>2.49.0</version>
-       </path>
-   </annotationProcessorPaths>
-   ```
-
-2. Add NullAway as Error Prone plugin:
-
-   ```xml
-   <compilerArgs>
-       <arg>-Xplugin:ErrorProne -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor</arg>
-   </compilerArgs>
-   ```
-
-3. Start with `WARN` severity for all Error Prone checks. Fix existing violations.
-4. After clean build, graduate to `ERROR` severity.
-5. For NullAway: annotate package boundaries with `@NonNull` by default, use `@Nullable` for nullable returns/params.
-
-**Estimated effort:** 2-4 person-days for initial setup and fixing existing violations.
-
-**Risks:** Error Prone may flag legitimate patterns in Quarkus/Vaadin code. May need selective suppressions via `@SuppressWarnings`.
+**Package:** `de.vptr.aimathtutor.view`
+**Gap:** Views are completely untested. Vaadin's UI thread model makes standard JUnit testing infeasible without a browser harness.
+**Approach:** Introduce [Vaadin TestBench](https://vaadin.com/docs/latest/testing/end-to-end) or [Playwright](https://playwright.dev/) for end-to-end tests. This is a multi-day investment and should be treated as a separate project initiative, not a quick fix.
 
 ---
 
-## 8. Miscellaneous Fixes
+## 5. Encrypt-at-Rest
 
-### 8.1 Admin Dashboard Enhancement
+**Goal:** encrypt PII at rest with file-backed key management.
 
-The admin dashboard could use some further enhancement, such as diagrams.
+**Plan:**
 
-### 8.2 Keyboard accessibility
+1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
+2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
+3. Add blind-index/hash companion columns for fields requiring equality search.
+4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
+   - load key from file on startup
+   - generate and persist key if missing
+   - enforce restrictive file permissions
+5. Add shared crypto service + entity converters/mappers so encryption/decryption is centralized and plaintext is never logged.
+6. Add migrations to create encrypted/blind-index columns, backfill legacy plaintext, and remove plaintext columns after cutover.
+7. Update `application.properties` with sensible local default key path and `docker-compose.yml` with env var + persistent volume mount.
+8. Add unit/integration tests for crypto behavior, startup key generation, CRUD, and searchable encrypted fields.
 
-Clickable spans are used extensively across views, especially admin views, however they lack keyboard accessibility. Users navigating with keyboards cannot trigger the click event. Consider using a Button or Anchor component with appropriate ARIA attributes, or add keyboard event listeners (Enter/Space) to the Span.
+**Done when:**
 
-> **Consistency check:** When fixing, check all views (admin and student) for identical clickable-span patterns and fix them consistently.
+- Target PII fields are stored encrypted at rest.
+- App starts with existing key or generates one when absent.
+- Compose/dev setup persists key material via mounted volume.
+- SpotBugs, Checkstyle, PMD, PMD-CPD and all Maven Tests passing.
 
 ---
 
-## 9. OWASP Dependency-Check & Secret Scanning
+## 6. Keyboard accessibility
+
+**Problem:** 5 clickable `Span` components in admin Grid columns lack keyboard accessibility (not focusable, no Enter/Space handling, no ARIA role).
+
+**Affected files (all in `view/admin/`):**
+
+| File                       | Line | Variable       | Handler                         |
+| -------------------------- | ---- | -------------- | ------------------------------- |
+| `AdminExercisesView.java`  | 213  | `titleSpan`    | `openExerciseDialog`            |
+| `AdminUserRanksView.java`  | 150  | `nameSpan`     | `openRankDialog`                |
+| `AdminUsersView.java`      | 157  | `usernameSpan` | `openUserDialog`                |
+| `AdminUserGroupsView.java` | 172  | `nameSpan`     | `openGroupDialog`               |
+| `AdminSessionsView.java`   | 89   | `usernameSpan` | `UI.getCurrent().navigate(...)` |
+
+All 5 follow an identical pattern: `new Span(text)` + style block (`color`, `cursor`, `width`, `display`) + `addClickListener(...)`.
+
+**Fix per file:** Replace the Span with Vaadin `Button` using `theme="tertiary-inline"` (natively focusable, responds to Enter/Space, announced by screen readers, styled like a link):
+
+```java
+// Before:
+final var titleSpan = new Span(exercise.title);
+titleSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+titleSpan.getStyle().set("cursor", "pointer");
+titleSpan.getStyle().set("width", "100%");
+titleSpan.getStyle().set("display", "block");
+titleSpan.addClickListener(ignored -> this.openExerciseDialog(exercise));
+return titleSpan;
+
+// After:
+final var titleButton = new Button(exercise.title, ignored -> this.openExerciseDialog(exercise));
+titleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+titleButton.getStyle().set("width", "100%");
+return titleButton;
+```
+
+Note: `color` and `cursor` styles are removed — `LUMO_TERTIARY_INLINE` already uses primary text color and pointer cursor by default.
+
+**Import changes per file:**
+
+| File                       | Remove import | Add import                | Reason                                           |
+| -------------------------- | ------------- | ------------------------- | ------------------------------------------------ |
+| `AdminExercisesView.java`  | `Span`        | —                         | No longer used                                   |
+| `AdminUserRanksView.java`  | —             | —                         | `Span` still used at line 229 (icon placeholder) |
+| `AdminUsersView.java`      | —             | —                         | `Span` still used at line 245 (password label)   |
+| `AdminUserGroupsView.java` | `Span`        | —                         | No longer used                                   |
+| `AdminSessionsView.java`   | `Span`        | `Button`, `ButtonVariant` | No longer used, needs both                       |
+
+All files except `AdminSessionsView.java` already import `Button` and `ButtonVariant`.
+
+> **Consistency check:** All clickable-span patterns are in admin views only (confirmed via full codebase audit — no student views have clickable spans).
+
+---
+
+## 7. Admin Dashboard Enhancement
+
+The admin dashboard could use some further enhancement, such as diagrams etc.
+
+---
+
+## 8. OWASP Dependency-Check & Secret Scanning
 
 **Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
 
@@ -360,81 +363,5 @@ Clickable spans are used extensively across views, especially admin views, howev
    ```
 
 4. Gitleaks can run unconditionally (no secrets required).
-
----
-
-## 10. Pre-commit Hooks
-
-**Issue:** No local enforcement of code quality before commits. Developers discover style/lint failures only in CI.
-
-**Why implement:** Catches issues before they reach the repository, reducing CI feedback loops and keeping `main` clean.
-
-**Implementation plan:**
-
-1. Add `.git-hooks/pre-commit` to project root (executable shell script):
-
-   ```shell
-   #!/usr/bin/env bash
-   set -e
-   echo "Running Checkstyle..."
-   ./mvnw checkstyle:check -q
-   echo "Running SpotBugs..."
-   ./mvnw spotbugs:check -q
-   echo "Pre-commit checks passed."
-   ```
-
-2. Configure git to use the project hooks directory by default. Add to `.gitconfig` template or document:
-
-   ```shell
-   git config core.hooksPath .git-hooks
-   ```
-
-   Or add a `Makefile` target and call it from a post-checkout hook so it runs automatically:
-
-   ```makefile
-   .PHONY: install-hooks
-   install-hooks:
-    chmod +x .git-hooks/pre-commit
-    git config core.hooksPath .git-hooks
-   ```
-
-**Estimated effort:** 1 hour.
-
-**Note:** Pre-commit hooks are enabled by default. CI remains the authoritative gate for PRs that bypass local hooks.
-
----
-
-## 11. Dead Code Detection
-
-**Issue:** No automated detection of dead code (unused methods, fields, classes, or private members). Quality gates cover style (Checkstyle), bugs (SpotBugs), complexity/duplication (PMD/CPD), and security (OWASP), but unused code accumulates silently.
-
-**Why implement:** Dead code increases maintenance burden, confuses developers, and inflates binary size. Early detection keeps the codebase lean.
-
-**Options:**
-
-1. **PMD `UnusedCode` ruleset** (recommended): PMD already runs in CI. Add the `category/java/bestpractices.xml` ruleset which includes `UnusedFormalParameter`, `UnusedLocalVariable`, `UnusedPrivateField`, `UnusedPrivateMethod`, and `UnusedImports`. This integrates with existing `pmd:check` with zero new dependencies.
-
-2. **Error Prone + NullAway** (see TODO #6): Error Prone includes `UnusedMethod` and `UnusedVariable` checks. If Error Prone is adopted, dead code detection comes free.
-
-3. **SpotBugs `UMAC_UNCALLED_METHOD`**: SpotBugs already runs in CI. The `UMAC_UNCALLED_METHOD` bug pattern detects private methods that are never called. Limited scope (private methods only) but zero config.
-
-**Recommended implementation:**
-
-1. Add `category/java/bestpractices.xml` to PMD rulesets in `pom.xml`:
-
-   ```xml
-   <rulesets>
-       <ruleset>pmd-ruleset.xml</ruleset>
-       <ruleset>category/java/bestpractices.xml</ruleset>
-   </rulesets>
-   ```
-
-2. Run `./mvnw pmd:check` and fix all violations (expect unused imports, private fields, helper methods).
-
-3. Optionally suppress known false positives via `@SuppressWarnings("PMD.UnusedPrivateMethod")` or PMD exclusion rules.
-
-**Estimated effort:** 2-4 hours for setup + 1-2 days for fixing existing violations.
-
-**Risks:** PMD's unused code detection may flag legitimate patterns (e.g., methods called only via reflection, CDI injection points, event observers). These should be suppressed with `@SuppressWarnings` or documented exclusions.
 
 ---

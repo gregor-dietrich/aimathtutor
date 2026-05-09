@@ -42,6 +42,7 @@ import jakarta.inject.Inject;
  * Admin view for managing lessons and their hierarchy.
  */
 @Route(value = "admin/lessons", layout = AdminMainLayout.class)
+@SuppressWarnings("NullAway")
 public class AdminLessonsView extends AbstractAdminView {
     private static final Logger LOG = Logger.getLogger(AdminLessonsView.class);
 

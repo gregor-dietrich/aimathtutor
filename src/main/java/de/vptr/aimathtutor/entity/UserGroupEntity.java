@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,16 +30,20 @@ public class UserGroupEntity extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false)
+    @Nullable
     public String name;
 
     @Generated(event = EventType.INSERT)
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @Nullable
     public List<UserGroupMetaEntity> userGroupMetas;
 
     // Helper method to get users in this group
@@ -49,6 +54,9 @@ public class UserGroupEntity extends BaseEntity {
      * @return a list of {@link UserEntity} objects that are members of this group
      */
     public List<UserEntity> getUsers() {
+        if (this.userGroupMetas == null) {
+            return List.of();
+        }
         return this.userGroupMetas.stream().map(meta -> meta.user).toList();
     }
 

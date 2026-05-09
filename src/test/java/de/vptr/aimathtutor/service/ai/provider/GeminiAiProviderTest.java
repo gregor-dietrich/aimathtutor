@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.service.GeminiService;
+import de.vptr.aimathtutor.service.ai.GeminiService;
 import de.vptr.aimathtutor.service.ai.JsonRepairService;
 import de.vptr.aimathtutor.service.ai.PromptBuilderService;
 import io.quarkus.test.InjectMock;
@@ -21,6 +21,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class GeminiAiProviderTest {
 
     @Inject

@@ -10,11 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.service.GeminiService;
+import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class AbstractAiProviderServiceTest {
 
     @Inject

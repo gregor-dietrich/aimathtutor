@@ -18,6 +18,7 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -30,6 +31,7 @@ import jakarta.ws.rs.core.Response;
  * Integration tests for UserRankService. Tests CRUD operations, searching, and permission management for user ranks.
  */
 @QuarkusTest
+@SuppressWarnings("NullAway")
 @DisplayName("UserRankService Tests")
 class UserRankServiceTest {
 

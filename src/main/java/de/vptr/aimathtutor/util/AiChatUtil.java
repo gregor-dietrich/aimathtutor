@@ -8,6 +8,7 @@ import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import jakarta.annotation.Nullable;
 
 /**
  * Utility for common AI chat panel operations.
@@ -30,7 +31,7 @@ public final class AiChatUtil {
      *            the current user entity
      * @return the avatar pair
      */
-    public static AvatarPair getAvatars(final UserEntity currentUserEntity) {
+    public static AvatarPair getAvatars(@Nullable final UserEntity currentUserEntity) {
         final String userAvatar = currentUserEntity != null && currentUserEntity.userAvatarEmoji != null
                 ? currentUserEntity.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER;
         final String tutorAvatar = currentUserEntity != null && currentUserEntity.tutorAvatarEmoji != null

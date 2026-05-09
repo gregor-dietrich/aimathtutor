@@ -29,6 +29,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/session/:sessionId", layout = AdminMainLayout.class)
 @PageTitle("Session Details - AI Math Tutor")
+@SuppressWarnings("NullAway")
 public class AdminSessionView extends AbstractAdminView {
 
     @Inject

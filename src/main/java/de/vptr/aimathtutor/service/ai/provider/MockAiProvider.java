@@ -5,6 +5,7 @@ import java.util.Locale;
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
@@ -20,6 +21,7 @@ public class MockAiProvider implements AiProvider {
     }
 
     @Override
+    @Nullable
     public AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context) {
         if (event == null) {
             throw new IllegalArgumentException("event cannot be null");
@@ -89,8 +91,9 @@ public class MockAiProvider implements AiProvider {
     }
 
     @Override
-    public String answerQuestion(final String question, final String currentExpression, final String initialExpression,
-            final String targetExpression, final ConversationContextDto context) {
+    public String answerQuestion(final String question, @Nullable final String currentExpression,
+            @Nullable final String initialExpression, @Nullable final String targetExpression,
+            final ConversationContextDto context) {
         if (question == null || question.isBlank()) {
             return "I'm here to help! Can you be more specific about what you're stuck on?";
         }

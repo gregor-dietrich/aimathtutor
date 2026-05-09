@@ -1,8 +1,10 @@
 package de.vptr.aimathtutor.service.comment;
 
+import java.util.Objects;
+
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.service.PermissionService;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response.Status;
@@ -24,7 +26,7 @@ public class CommentPermissionService {
      * @return true if the user authored the comment
      */
     public boolean isAuthor(final CommentEntity comment, final UserEntity user) {
-        return user != null && comment.user != null && comment.user.id.equals(user.id);
+        return user != null && comment.user != null && Objects.equals(comment.user.id, user.id);
     }
 
     /**

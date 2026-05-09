@@ -2,16 +2,16 @@ package de.vptr.aimathtutor.util;
 
 import org.jboss.logging.Logger;
 
-import de.vptr.aimathtutor.security.PasswordHashingService;
+import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
  * Small CLI utility to generate a bcrypt hash for a password using the project's PasswordHashingService. Intended for
  * local/dev use to create seeded passwords for `init.sql`.
  */
-public final class PasswordUtility {
+public final class PasswordUtil {
 
-    private static final Logger LOG = Logger.getLogger(PasswordUtility.class);
+    private static final Logger LOG = Logger.getLogger(PasswordUtil.class);
 
     private static PasswordHashingService getHashingService() {
         try {
@@ -22,7 +22,7 @@ public final class PasswordUtility {
         }
     }
 
-    private PasswordUtility() {
+    private PasswordUtil() {
     }
 
     /**
@@ -66,7 +66,7 @@ public final class PasswordUtility {
     }
 
     private static void printUsage() {
-        final String className = PasswordUtility.class.getName();
+        final String className = PasswordUtil.class.getName();
         System.out.println(className + " - small helper to generate bcrypt hash for local dev");
         System.out.println("Usage:");
         System.out.println("  java -cp target/classes " + className + " generate <password>");

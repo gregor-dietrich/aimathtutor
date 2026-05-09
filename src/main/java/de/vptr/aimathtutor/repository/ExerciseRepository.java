@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -60,6 +61,7 @@ public class ExerciseRepository extends AbstractRepository {
      *            the exercise ID
      * @return the {@link ExerciseEntity} if found, null otherwise
      */
+    @Nullable
     public ExerciseEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -132,6 +134,7 @@ public class ExerciseRepository extends AbstractRepository {
      * @return the persisted {@link ExerciseEntity}, or null if the input was null
      */
     @Transactional
+    @Nullable
     public ExerciseEntity persist(final ExerciseEntity exercise) {
         if (exercise == null) {
             return null;

@@ -4,6 +4,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.Lumo;
 
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
@@ -20,9 +21,10 @@ public class ThemeService {
         LIGHT("Light", null), DARK("Dark", Lumo.DARK), SYSTEM("System", null);
 
         private final String displayName;
+        @Nullable
         private final String themeVariant;
 
-        Theme(final String displayName, final String themeVariant) {
+        Theme(final String displayName, @Nullable final String themeVariant) {
             this.displayName = displayName;
             this.themeVariant = themeVariant;
         }
@@ -41,6 +43,7 @@ public class ThemeService {
          *
          * @return the theme variant string, or null for automatic/default
          */
+        @Nullable
         public String getThemeVariant() {
             return this.themeVariant;
         }
@@ -89,31 +92,31 @@ public class ThemeService {
             final var themeList = ui.getElement().getThemeList();
 
             switch (theme) {
-                case DARK:
+                case DARK -> {
                     // Clear any document-level theme attributes and apply dark theme
                     ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
                     themeList.clear();
                     themeList.add(Lumo.DARK);
-                    break;
-                case LIGHT:
+                }
+                case LIGHT -> {
                     // Clear any document-level theme attributes and ensure light theme
                     ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
                     themeList.clear();
                     // Light theme is default, no need to add anything to themeList
-                    break;
-                case SYSTEM:
+                }
+                case SYSTEM -> {
                     // Clear Vaadin theme list and use CSS media query to detect system preference
                     themeList.clear();
                     ui.getPage().executeJs(
                             "if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {"
                                     + "  document.documentElement.setAttribute('theme', 'dark');" + "} else {"
                                     + "  document.documentElement.removeAttribute('theme');" + "}");
-                    break;
-                default:
+                }
+                default -> {
                     // Unknown theme - fall back to system and log
                     themeList.clear();
                     ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
-                    break;
+                }
             }
         }
     }

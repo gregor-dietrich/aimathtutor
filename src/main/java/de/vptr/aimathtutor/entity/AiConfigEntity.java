@@ -7,6 +7,7 @@ import org.hibernate.generator.EventType;
 
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,13 +33,16 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "AiConfig.findAll", query = "FROM AiConfigEntity ORDER BY category, configKey"), })
 public class AiConfigEntity extends BaseEntity {
 
+    @Nullable
     @NotBlank
     @Column(name = "config_key", unique = true, nullable = false)
     public String configKey;
 
+    @Nullable
     @Column(name = "config_value", columnDefinition = "TEXT")
     public String configValue;
 
+    @Nullable
     @Column(name = "config_type", nullable = false)
     @Enumerated(EnumType.STRING)
     public ConfigType configType; // "STRING", "INTEGER", "DOUBLE", "BOOLEAN", "TEXT"
@@ -46,20 +50,25 @@ public class AiConfigEntity extends BaseEntity {
     @Column(name = "is_optional", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     public boolean isOptional = false; // Whether this config can have empty/null values
 
+    @Nullable
     @Column(name = "category", nullable = false)
     @Enumerated(EnumType.STRING)
     public ConfigCategory category; // "GENERAL", "GEMINI", "OPENAI", "OLLAMA", "PROMPTS"
 
+    @Nullable
     @Column(name = "description", columnDefinition = "TEXT")
     public String description;
 
+    @Nullable
     @Generated(event = EventType.INSERT)
     public LocalDateTime created;
 
+    @Nullable
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
     public LocalDateTime lastEdit;
 
+    @Nullable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_updated_by")
     public UserEntity lastUpdatedBy;

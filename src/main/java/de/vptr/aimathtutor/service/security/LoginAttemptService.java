@@ -1,4 +1,4 @@
-package de.vptr.aimathtutor.service;
+package de.vptr.aimathtutor.service.security;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

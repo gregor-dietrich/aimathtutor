@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
@@ -40,6 +41,7 @@ import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 
@@ -47,6 +49,7 @@ import jakarta.validation.ConstraintViolationException;
  * Admin view for managing users: list, edit, create and remove user accounts.
  */
 @Route(value = "admin/users", layout = AdminMainLayout.class)
+@SuppressWarnings("NullAway")
 public class AdminUsersView extends AbstractAdminView {
     private static final Logger LOG = Logger.getLogger(AdminUsersView.class);
 
@@ -180,8 +183,8 @@ public class AdminUsersView extends AbstractAdminView {
             return checkbox;
         }).setHeader("Banned").setWidth("100px").setFlexGrow(0);
 
-        this.grid.addColumn(user -> this.dateTimeFormatter.formatDateTime(user.created)).setHeader("Created")
-                .setWidth("180px").setFlexGrow(0);
+        this.grid.addColumn(user -> user.created != null ? this.dateTimeFormatter.formatDateTime(user.created) : "")
+                .setHeader("Created").setWidth("180px").setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);
@@ -198,7 +201,7 @@ public class AdminUsersView extends AbstractAdminView {
         return layout;
     }
 
-    private void openUserDialog(final UserViewDto user) {
+    private void openUserDialog(@Nullable final UserViewDto user) {
         this.userDialog.removeAll();
         this.currentUser = user != null ? user.toUserDto() : new UserDto();
 
@@ -280,8 +283,8 @@ public class AdminUsersView extends AbstractAdminView {
         // Rank binding - convert between UserRankViewDto and rankPublicId
         this.binder.forField(rankField).asRequired("Rank is required").bind(user1 -> {
             if (user1.rankPublicId != null && this.availableRanks != null) {
-                return this.availableRanks.stream().filter(rank -> rank.publicId.equals(user1.rankPublicId)).findFirst()
-                        .orElse(null);
+                return this.availableRanks.stream().filter(rank -> Objects.equals(rank.publicId, user1.rankPublicId))
+                        .findFirst().orElse(null);
             }
             return null;
         }, (user1, value) -> {
@@ -344,10 +347,13 @@ public class AdminUsersView extends AbstractAdminView {
             }
 
             if (!newPassword.equals(confirmPassword)) {
-                NotificationUtil.showError("Passwords do not match");
                 return;
             }
 
+            if (user.publicId == null) {
+                NotificationUtil.showError("User ID is missing");
+                return;
+            }
             this.changeUserPassword(user.publicId, newPassword);
         });
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -376,8 +382,8 @@ public class AdminUsersView extends AbstractAdminView {
             NotificationUtil.showSuccess("Password changed successfully");
             this.passwordDialog.close();
         } catch (final PermissionDeniedException e) {
-            LOG.warnf("Permission denied changing password: %s", e.getMessage());
-            NotificationUtil.showError(e.getMessage());
+            LOG.warnf("Permission denied changing password: %s", e.getMessage() != null ? e.getMessage() : "");
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Unexpected error changing password", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -416,7 +422,7 @@ public class AdminUsersView extends AbstractAdminView {
             NotificationUtil.showError(messages);
         } catch (final PermissionDeniedException e) {
             LOG.warn("Permission denied saving user", e);
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Unexpected error saving user", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -425,7 +431,7 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void deleteUser(final UserViewDto user) {
         try {
-            if (this.userService.deleteUser(user.publicId)) {
+            if (user.publicId != null && this.userService.deleteUser(user.publicId)) {
                 NotificationUtil.showSuccess("User deleted successfully");
                 this.loadUsersAsync();
             } else {
@@ -433,7 +439,7 @@ public class AdminUsersView extends AbstractAdminView {
             }
         } catch (final PermissionDeniedException e) {
             LOG.warn("Permission denied deleting user", e);
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting user", e);
             NotificationUtil.showError("Unexpected error occurred");

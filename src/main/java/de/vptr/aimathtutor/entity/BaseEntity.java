@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.entity;
 
 import de.vptr.aimathtutor.util.UlidUtil;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,12 +20,15 @@ public abstract class BaseEntity extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Nullable
     public Long id;
 
     @Version
+    @Nullable
     public Long version;
 
     @Column(name = "public_id", nullable = false, unique = true, length = 26, updatable = false)
+    @Nullable
     public String publicId;
 
     /**

@@ -15,6 +15,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -86,6 +87,7 @@ public class GraspableMathService {
      *            The session ID
      * @return The session entity, or null if not found
      */
+    @Nullable
     public StudentSessionEntity getSession(final String sessionId) {
         return this.studentSessionRepository.findBySessionId(sessionId);
     }
@@ -180,6 +182,7 @@ public class GraspableMathService {
      *            The session ID
      * @return Accuracy as a percentage (0-100), or null if session not found
      */
+    @Nullable
     public Double getSessionAccuracy(final String sessionId) {
         final var session = this.studentSessionRepository.findBySessionId(sessionId);
         if (session == null || session.actionsCount == 0) {

@@ -4,35 +4,55 @@ import java.time.LocalDateTime;
 
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
+import jakarta.annotation.Nullable;
 
 /**
  * View DTO representing an exercise with denormalized user and lesson fields suitable for display in the UI.
  */
 public class ExerciseViewDto {
-
+    @Nullable
     public Long id;
+    @Nullable
     public String publicId;
+    @Nullable
     public String title;
+    @Nullable
     public String content;
+    @Nullable
     public String userPublicId;
+    @Nullable
     public String username;
+    @Nullable
     public String lessonPublicId;
+    @Nullable
     public String lessonName;
+    @Nullable
     public Boolean published;
+    @Nullable
     public Boolean commentable;
+    @Nullable
     public LocalDateTime created;
+    @Nullable
     public LocalDateTime lastEdit;
+    @Nullable
     public Long commentsCount;
 
     // Completion tracking for current user
+    @Nullable
     public Boolean userCompleted;
+    @Nullable
     public Integer userCompletionCount;
 
     // Graspable Math fields
+    @Nullable
     public Boolean graspableEnabled;
+    @Nullable
     public String graspableInitialExpression;
+    @Nullable
     public String graspableTargetExpression;
+    @Nullable
     public DifficultyLevel graspableDifficulty;
+    @Nullable
     public String graspableHints;
 
     public ExerciseViewDto() {
@@ -69,6 +89,7 @@ public class ExerciseViewDto {
     /**
      * Getter for publicId
      */
+    @Nullable
     public String getPublicId() {
         return this.publicId;
     }
