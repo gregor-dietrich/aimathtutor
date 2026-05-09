@@ -474,7 +474,7 @@ public class AnalyticsService {
                 continue;
             }
             final var date = session.startTime.toLocalDate();
-            counts.merge(date, 1L, Long::sum);
+            counts.merge(date, 1L, (a, b) -> a + b);
         }
         for (int i = days; i >= 0; i--) {
             counts.putIfAbsent(LocalDate.now(ZoneId.systemDefault()).minusDays(i), 0L);
@@ -549,22 +549,22 @@ public class AnalyticsService {
         for (final var session : sessions) {
             final int actions = session.actionsCount;
             if (actions == 0) {
-                buckets.merge("0%", 1, Integer::sum);
+                buckets.merge("0%", 1, (a, b) -> a + b);
                 continue;
             }
             final double rate = (double) session.correctActions / actions;
             if (rate == 0.0) {
-                buckets.merge("0%", 1, Integer::sum);
+                buckets.merge("0%", 1, (a, b) -> a + b);
             } else if (rate <= 0.25) {
-                buckets.merge("1-25%", 1, Integer::sum);
+                buckets.merge("1-25%", 1, (a, b) -> a + b);
             } else if (rate <= 0.50) {
-                buckets.merge("26-50%", 1, Integer::sum);
+                buckets.merge("26-50%", 1, (a, b) -> a + b);
             } else if (rate <= 0.75) {
-                buckets.merge("51-75%", 1, Integer::sum);
+                buckets.merge("51-75%", 1, (a, b) -> a + b);
             } else if (rate < 1.0) {
-                buckets.merge("76-99%", 1, Integer::sum);
+                buckets.merge("76-99%", 1, (a, b) -> a + b);
             } else {
-                buckets.merge("100%", 1, Integer::sum);
+                buckets.merge("100%", 1, (a, b) -> a + b);
             }
         }
         return buckets;
@@ -586,13 +586,13 @@ public class AnalyticsService {
         for (final var session : sessions) {
             final int h = session.hintsUsed;
             if (h == 0) {
-                buckets.merge("0 hints", 1, Integer::sum);
+                buckets.merge("0 hints", 1, (a, b) -> a + b);
             } else if (h <= 3) {
-                buckets.merge("1-3 hints", 1, Integer::sum);
+                buckets.merge("1-3 hints", 1, (a, b) -> a + b);
             } else if (h <= 7) {
-                buckets.merge("4-7 hints", 1, Integer::sum);
+                buckets.merge("4-7 hints", 1, (a, b) -> a + b);
             } else {
-                buckets.merge("8+ hints", 1, Integer::sum);
+                buckets.merge("8+ hints", 1, (a, b) -> a + b);
             }
         }
         return buckets;
