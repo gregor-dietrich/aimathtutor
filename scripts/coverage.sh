@@ -21,7 +21,7 @@ REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
 echo "Running tests with JaCoCo coverage..."
 
-${MVN_CMD} -q test -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}" -Dmaven.test.failure.ignore=true
+${MVN_CMD} -q verify -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}" -Dmaven.test.failure.ignore=true
 
 echo "Generating coverage report..."
 
