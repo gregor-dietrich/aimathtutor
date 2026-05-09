@@ -185,8 +185,8 @@ public class AdminConfigView extends AbstractAdminView {
         final var apiKeyField =
                 this.createReadOnlyApiKeyField("GEMINI_API_KEY", "https://aistudio.google.com/app/apikey");
 
-        final var modelField = this.createTextConfigField("Model", AiConfigKeys.GEMINI_MODEL, "gemma-3-27b-it",
-                "Gemini model name (e.g., gemma-3-27b-it)");
+        final var modelField = this.createTextConfigField("Model", AiConfigKeys.GEMINI_MODEL, "gemma-4-31b-it",
+                "Gemma model name (e.g., gemma-4-31b-it)");
 
         final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.GEMINI_API_BASE_URL,
                 "https://generativelanguage.googleapis.com", null);
