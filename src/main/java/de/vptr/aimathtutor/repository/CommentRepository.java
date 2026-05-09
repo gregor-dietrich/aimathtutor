@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -206,6 +207,7 @@ public class CommentRepository extends AbstractRepository {
      * @return the persisted {@link CommentEntity}, or null if the input was null
      */
     @Transactional
+    @Nullable
     public CommentEntity persist(final CommentEntity comment) {
         if (comment == null) {
             return null;

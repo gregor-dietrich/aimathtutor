@@ -3,9 +3,11 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,7 @@ import de.vptr.aimathtutor.service.comment.CommentFlaggingService;
 import de.vptr.aimathtutor.service.comment.CommentModerationService;
 import de.vptr.aimathtutor.service.comment.CommentPermissionService;
 import de.vptr.aimathtutor.service.comment.CommentRateLimitService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -221,11 +224,14 @@ public class CommentService {
                 throw new WebApplicationException("Cannot reply to deleted/hidden comment",
                         Response.Status.BAD_REQUEST);
             }
-            if (!parentComment.exercise.publicId.equals(dto.exercisePublicId)) {
+            if (parentComment.exercise == null
+                    || !Objects.equals(parentComment.exercise.publicId, dto.exercisePublicId)) {
                 LOG.warnf(
                         "Comment creation failed: parent comment belongs to different exercise. "
                                 + "parentPublicId=%s, parentExercisePublicId=%s, dto.exercisePublicId=%s, authorId=%s",
-                        dto.parentCommentPublicId, parentComment.exercise.publicId, dto.exercisePublicId, authorId);
+                        dto.parentCommentPublicId,
+                        parentComment.exercise != null ? parentComment.exercise.publicId : null, dto.exercisePublicId,
+                        authorId);
                 throw new WebApplicationException("Parent comment belongs to a different exercise",
                         Response.Status.BAD_REQUEST);
             }
@@ -250,8 +256,21 @@ public class CommentService {
         this.commentRepository.persist(comment);
 
         // 7. Fire CDI event for real-time updates
-        this.commentCreatedEvent.fire(new CommentCreatedEvent(comment.id, comment.exercise.id, comment.user.id,
-                comment.user.username, comment.content, comment.created));
+        final Long commentId = comment.id;
+        final Long exerciseId = comment.exercise != null ? comment.exercise.id : null;
+        final Long userId = comment.user != null ? comment.user.id : null;
+        final String username = comment.user != null ? comment.user.username : null;
+        final String content = comment.content;
+        final LocalDateTime created = comment.created;
+
+        if (commentId != null && exerciseId != null && userId != null && username != null && content != null
+                && created != null) {
+            this.commentCreatedEvent
+                    .fire(new CommentCreatedEvent(commentId, exerciseId, userId, username, content, created));
+        } else {
+            LOG.warnf("Comment created but missing mandatory fields for event: id=%s, exerciseId=%s, userId=%s",
+                    commentId, exerciseId, userId);
+        }
 
         LOG.infof("Comment created successfully: commentId=%s, exercisePublicId=%s, authorId=%s", comment.id,
                 dto.exercisePublicId, authorId);
@@ -290,7 +309,7 @@ public class CommentService {
      */
     @Transactional
     CommentViewDto updateComment(final CommentEntity comment) {
-        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
+        final CommentEntity existingComment = this.commentRepository.findById(Objects.requireNonNull(comment.id));
         if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
@@ -320,7 +339,7 @@ public class CommentService {
      */
     @Transactional
     CommentViewDto patchComment(final CommentEntity comment) {
-        final CommentEntity existingComment = this.commentRepository.findById(comment.id);
+        final CommentEntity existingComment = this.commentRepository.findById(Objects.requireNonNull(comment.id));
         if (existingComment == null) {
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
         }
@@ -374,7 +393,7 @@ public class CommentService {
                 this.permissionService.requireCommentDelete();
             }
             comment.status = CommentStatus.DELETED;
-            comment.deletedAt = LocalDateTime.now();
+            comment.deletedAt = LocalDateTime.now(ZoneId.systemDefault());
             comment.deletedBy = requester;
             LOG.infof("Comment soft-deleted: commentPublicId=%s, requesterId=%s", commentPublicId, requesterId);
         } else {
@@ -409,13 +428,12 @@ public class CommentService {
         if (!this.commentPermissionService.isAuthor(comment, editor)) {
             this.permissionService.requireCommentEdit();
         }
-
         // Update content
         if (dto.content != null && !dto.content.isBlank()) {
             comment.content = this.sanitizeCommentContent(dto.content);
             this.commentRepository.persist(comment);
             LOG.infof("Comment edited successfully: commentPublicId=%s, editorId=%s, isAuthor=%s", commentPublicId,
-                    editorId, comment.user != null && comment.user.publicId.equals(editor.publicId));
+                    editorId, Objects.equals(comment.user != null ? comment.user.publicId : null, editor.publicId));
         }
 
         return new CommentViewDto(comment);
@@ -434,7 +452,7 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> listCommentsByExercise(final Long exerciseId, final int page, final int pageSize,
-            final String parentPublicId) {
+            @Nullable final String parentPublicId) {
 
         List<CommentEntity> comments;
         if (parentPublicId == null) {

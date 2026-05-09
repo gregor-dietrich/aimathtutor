@@ -1,12 +1,14 @@
 package de.vptr.aimathtutor.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.LessonRepository;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -205,7 +207,7 @@ public class LessonService {
     private boolean isDescendantOf(final LessonEntity potentialParent, final LessonEntity lesson) {
         var current = potentialParent.parent;
         while (current != null) {
-            if (current.id.equals(lesson.id)) {
+            if (Objects.equals(current.id, lesson.id)) {
                 return true;
             }
             current = current.parent;
@@ -252,7 +254,7 @@ public class LessonService {
         return lessons.stream().map(LessonViewDto::new).toList();
     }
 
-    private LessonEntity requireLessonFound(final String publicId) {
+    private LessonEntity requireLessonFound(@Nullable final String publicId) {
         final var existing = this.lessonRepository.findByPublicId(publicId).orElse(null);
         if (existing == null) {
             throw new WebApplicationException("Lesson not found", Response.Status.NOT_FOUND);

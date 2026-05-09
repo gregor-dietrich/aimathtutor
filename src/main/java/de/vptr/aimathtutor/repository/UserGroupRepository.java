@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserGroupEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -58,6 +59,7 @@ public class UserGroupRepository extends AbstractRepository {
      *            the user group ID
      * @return the {@link UserGroupEntity} if found, null otherwise
      */
+    @Nullable
     public UserGroupEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -72,6 +74,7 @@ public class UserGroupRepository extends AbstractRepository {
      *            the name of the user group to find
      * @return the {@link UserGroupEntity} if found, null otherwise
      */
+    @Nullable
     public UserGroupEntity findByName(final String name) {
         final var q = this.em.createNamedQuery("UserGroup.findByName", UserGroupEntity.class);
         q.setParameter("n", name);

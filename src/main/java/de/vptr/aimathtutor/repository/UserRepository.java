@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -21,6 +22,7 @@ public class UserRepository extends AbstractRepository {
      *            the user ID
      * @return the {@link UserEntity} if found, null otherwise
      */
+    @Nullable
     public UserEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -80,6 +82,7 @@ public class UserRepository extends AbstractRepository {
      *            the username to search for
      * @return the {@link UserEntity} if found, null otherwise
      */
+    @Nullable
     public UserEntity findByUsername(final String username) {
         return this.findByUsernameOptional(username).orElse(null);
     }
@@ -109,6 +112,7 @@ public class UserRepository extends AbstractRepository {
      * @return the persisted {@link UserEntity}, or null if the input was null
      */
     @Transactional
+    @Nullable
     public UserEntity persist(final UserEntity user) {
         if (user == null) {
             return null;

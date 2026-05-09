@@ -67,7 +67,7 @@ public class AiInteractionLogger {
             interaction.feedbackType = feedback.type != null ? feedback.type.toString() : "UNKNOWN";
             interaction.feedbackMessage = feedback.message;
             interaction.confidenceScore = feedback.confidence;
-            interaction.actionCorrect = event.correct;
+            interaction.actionCorrect = Boolean.TRUE.equals(event.correct);
             try {
                 final var contextMap = new HashMap<String, Object>();
                 contextMap.put("eventType", event.eventType);

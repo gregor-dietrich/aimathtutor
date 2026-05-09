@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.LessonEntity;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
@@ -23,6 +24,7 @@ public class LessonRepository extends AbstractRepository {
      *            the lesson ID
      * @return the {@link LessonEntity} if found, null otherwise
      */
+    @Nullable
     public LessonEntity findById(final Long id) {
         if (id == null) {
             return null;
@@ -48,7 +50,7 @@ public class LessonRepository extends AbstractRepository {
      *            the public ID of the lesson
      * @return an {@link Optional} containing the lesson if found, empty otherwise
      */
-    public Optional<LessonEntity> findByPublicId(final String publicId) {
+    public Optional<LessonEntity> findByPublicId(@Nullable final String publicId) {
         if (publicId == null) {
             return Optional.empty();
         }
@@ -87,7 +89,7 @@ public class LessonRepository extends AbstractRepository {
      *            the ID of the parent lesson to filter by
      * @return a list of child {@link LessonEntity} objects ordered descending by ID
      */
-    public List<LessonEntity> findByParentId(final Long parentId) {
+    public List<LessonEntity> findByParentId(@Nullable final Long parentId) {
         final TypedQuery<LessonEntity> q =
                 this.em.createQuery("FROM LessonEntity WHERE parent.id = :p ORDER BY id DESC", LessonEntity.class);
         q.setParameter("p", parentId);
@@ -154,6 +156,7 @@ public class LessonRepository extends AbstractRepository {
      * @return the persisted {@link LessonEntity}, or null if the input was null
      */
     @Transactional
+    @Nullable
     public LessonEntity persist(final LessonEntity lesson) {
         if (lesson == null) {
             return null;

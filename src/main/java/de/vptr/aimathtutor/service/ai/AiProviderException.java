@@ -2,6 +2,8 @@ package de.vptr.aimathtutor.service.ai;
 
 import java.io.IOException;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Unified runtime exception thrown by AI provider services (OpenAI, Gemini, Ollama). Carries the provider name and an
  * optional HTTP status code so callers can react uniformly without depending on provider-specific exception
@@ -40,7 +42,7 @@ public class AiProviderException extends RuntimeException {
     }
 
     protected AiProviderException(final String providerName, final String message, final int httpStatus,
-            final Throwable cause) {
+            @Nullable final Throwable cause) {
         super(formatMessage(providerName, message, httpStatus), cause);
         this.providerName = providerName;
         this.httpStatus = httpStatus;

@@ -20,6 +20,7 @@ import de.vptr.aimathtutor.service.ai.provider.GeminiAiProvider;
 import de.vptr.aimathtutor.service.ai.provider.MockAiProvider;
 import de.vptr.aimathtutor.service.ai.provider.OllamaAiProvider;
 import de.vptr.aimathtutor.service.ai.provider.OpenAiProvider;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -85,6 +86,7 @@ public class AiTutorService {
      *            the user ID (as string) for rate limiting; if null, uses event.studentId
      * @return AI-generated feedback, or null if no feedback needed
      */
+    @Nullable
     AiFeedbackDto analyzeMathAction(final GraspableEventDto event, final ConversationContextDto context,
             final String userIdStr) {
         if (event == null) {
@@ -97,7 +99,7 @@ public class AiTutorService {
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true);
-        if (!aiEnabled) {
+        if (!Boolean.TRUE.equals(aiEnabled)) {
             LOG.debug("AI is disabled, returning null");
             return null; // Don't provide feedback if AI is disabled
         }
@@ -166,7 +168,7 @@ public class AiTutorService {
      *            the user ID as a string
      * @return true if the call is within the rate limit and was recorded
      */
-    private boolean checkAiRateLimit(final String userIdStr) {
+    private boolean checkAiRateLimit(@Nullable final String userIdStr) {
         if (userIdStr == null) {
             return false;
         }
@@ -243,9 +245,9 @@ public class AiTutorService {
      *            the user ID (as string) for rate limiting
      * @return AI-generated answer
      */
-    ChatMessageDto answerQuestion(final String question, final String currentExpression, final String initialExpression,
-            final String targetExpression, final String sessionId, final ConversationContextDto context,
-            final String userIdStr) {
+    ChatMessageDto answerQuestion(final String question, @Nullable final String currentExpression,
+            @Nullable final String initialExpression, @Nullable final String targetExpression, final String sessionId,
+            final ConversationContextDto context, final String userIdStr) {
         if (question == null) {
             throw new IllegalArgumentException("question cannot be null");
         }
@@ -254,7 +256,7 @@ public class AiTutorService {
 
         // Load dynamic configuration (null-safe)
         final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true);
-        if (!aiEnabled) {
+        if (!Boolean.TRUE.equals(aiEnabled)) {
             return ChatMessageDto.aiAnswer(
                     "I'm currently offline, but keep working on the problem! You can ask your teacher for help.");
         }
@@ -282,7 +284,9 @@ public class AiTutorService {
         };
 
         // Strip leading and trailing quotation marks from AI response
-        answer = this.jsonRepairService.stripQuotationMarks(answer);
+        if (answer != null) {
+            answer = this.jsonRepairService.stripQuotationMarks(answer);
+        }
 
         final var message = ChatMessageDto.aiAnswer(answer);
         message.sessionId = sessionId;
@@ -293,9 +297,10 @@ public class AiTutorService {
      * Async version of answerQuestion that returns a CompletableFuture. This allows the UI to show a typing indicator
      * while waiting for the response. Uses Quarkus ManagedExecutor to ensure proper CDI context propagation.
      */
-    public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression, final String sessionId,
-            final ConversationContextDto context, final String userIdStr) {
+    public CompletableFuture<ChatMessageDto> answerQuestionAsync(final String question,
+            @Nullable final String currentExpression, @Nullable final String initialExpression,
+            @Nullable final String targetExpression, final String sessionId, final ConversationContextDto context,
+            final String userIdStr) {
         return CompletableFuture.supplyAsync(() -> this.answerQuestion(question, currentExpression, initialExpression,
                 targetExpression, sessionId, context, userIdStr), this.managedExecutor);
     }
@@ -347,6 +352,7 @@ public class AiTutorService {
 
     // Provider call helpers with fallback to mock
 
+    @Nullable
     private AiFeedbackDto safeAnalyze(final AiProvider provider, final GraspableEventDto event,
             final ConversationContextDto context) {
         if (!provider.isAvailable()) {
@@ -361,8 +367,10 @@ public class AiTutorService {
         }
     }
 
-    private String safeAnswer(final AiProvider provider, final String question, final String currentExpression,
-            final String initialExpression, final String targetExpression, final ConversationContextDto context) {
+    @Nullable
+    private String safeAnswer(final AiProvider provider, final String question,
+            @Nullable final String currentExpression, @Nullable final String initialExpression,
+            @Nullable final String targetExpression, final ConversationContextDto context) {
         if (!provider.isAvailable()) {
             LOG.warnf("%s not configured, falling back to mock AI", provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,
@@ -377,6 +385,7 @@ public class AiTutorService {
         }
     }
 
+    @Nullable
     private String getConfigString(final String key, final String defaultValue) {
         if (this.aiConfigService == null) {
             LOG.debugf("AiConfigService not injected, using default for key=%s", key);
@@ -385,6 +394,7 @@ public class AiTutorService {
         return this.aiConfigService.getConfigValue(key, defaultValue);
     }
 
+    @Nullable
     private Boolean getConfigBoolean(final String key, final Boolean defaultValue) {
         if (this.aiConfigService == null) {
             LOG.debugf("AiConfigService not injected, using default for key=%s", key);

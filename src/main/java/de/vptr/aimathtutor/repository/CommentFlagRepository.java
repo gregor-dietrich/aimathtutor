@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.repository;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -80,7 +81,7 @@ public class CommentFlagRepository extends AbstractRepository {
             throw new WebApplicationException("Comment or flagger not provided", Response.Status.BAD_REQUEST);
         }
 
-        if (this.hasUserFlaggedComment(comment.id, flagger.id)) {
+        if (this.hasUserFlaggedComment(Objects.requireNonNull(comment.id), Objects.requireNonNull(flagger.id))) {
             throw new WebApplicationException("You have already flagged this comment", Response.Status.BAD_REQUEST);
         }
 

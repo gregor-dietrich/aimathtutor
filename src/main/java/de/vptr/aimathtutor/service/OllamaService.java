@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -14,6 +15,7 @@ import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.service.ai.AiProviderException;
 import de.vptr.aimathtutor.service.ai.NonRetryableAiProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -42,6 +44,7 @@ public class OllamaService extends AbstractAiProviderService {
     @ConfigProperty(name = "ollama.client.read-timeout-seconds", defaultValue = "60")
     int readTimeoutSeconds;
 
+    @Nullable
     private volatile Client client;
 
     @Override
@@ -117,12 +120,14 @@ public class OllamaService extends AbstractAiProviderService {
         this.requireConfigured(apiUrl, "Ollama API URL");
         this.requireConfigured(model, "Ollama model");
 
+        final var effectiveModel = Objects.requireNonNull(model);
+
         try {
             // Create request
-            final var request = OllamaRequestDto.createGenerateRequest(prompt, model, temperature, maxTokens);
+            final var request = OllamaRequestDto.createGenerateRequest(prompt, effectiveModel, temperature, maxTokens);
 
             // Build API URL
-            final String url = apiUrl + "/api/generate";
+            final String url = Objects.requireNonNull(apiUrl) + "/api/generate";
 
             // Make API call
             final long startTime = System.currentTimeMillis();
@@ -228,6 +233,7 @@ public class OllamaService extends AbstractAiProviderService {
     /**
      * Get the API URL
      */
+    @Nullable
     public String getApiUrl() {
         return this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
     }
