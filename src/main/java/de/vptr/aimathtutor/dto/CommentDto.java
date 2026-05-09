@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -45,6 +46,7 @@ public class CommentDto {
          *            the string value to convert
          * @return the matching CommentStatus, or null if no match
          */
+        @Nullable
         public static CommentStatus fromString(final String value) {
             if (value == null) {
                 return null;
@@ -58,41 +60,52 @@ public class CommentDto {
         }
     }
 
+    @Nullable
     public String publicId;
 
     @Size(min = AppConstants.COMMENT_CONTENT_MIN_LENGTH, max = AppConstants.COMMENT_CONTENT_MAX_LENGTH,
             message = "Content must be between {min} and {max} characters")
+    @Nullable
     public String content;
 
     // Required for POST operations (creation)
     // Ignored for PUT/PATCH operations (exerciseId comes from the URL path)
+    @Nullable
     public String exercisePublicId;
 
     // Internal numeric ID for UI component use
+    @Nullable
     public Long exerciseId;
 
     // NEW: For threading support
+    @Nullable
     public String parentCommentPublicId;
 
     // Internal numeric ID for UI component use
+    @Nullable
     public Long parentCommentId;
 
     // NEW: For lesson comments (future extension)
+    @Nullable
     public String lessonPublicId;
 
     // Internal numeric ID for UI component use
+    @Nullable
     public Long lessonId;
 
     // NEW: For tracking which session the comment was made during
+    @Nullable
     public String sessionId;
 
     // Helper field for compatibility with old code that used nested objects
+    @Nullable
     public ExerciseField exercise;
 
     /**
      * Nested field representing an exercise reference.
      */
     public static class ExerciseField {
+        @Nullable
         public String publicId;
 
         /**

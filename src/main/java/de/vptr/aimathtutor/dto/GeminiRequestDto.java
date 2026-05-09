@@ -5,27 +5,32 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 
 /**
  * Request DTO for Google Gemini API Based on Gemini REST API specification
  */
-@SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" },
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         justification = "Request DTO used for JSON mapping; public fields are intentional")
 public class GeminiRequestDto {
-
+    @Nullable
     public List<Content> contents;
 
     @JsonProperty("generationConfig")
+    @Nullable
     public GenerationConfig generationConfig;
 
     @JsonProperty("safetySettings")
+    @Nullable
     public List<SafetySetting> safetySettings;
 
     /**
      * Represents content in the Gemini request.
      */
     public static class Content {
+        @Nullable
         public List<Part> parts;
+        @Nullable
         public String role; // "user" or "model"
 
         public Content() {
@@ -41,6 +46,7 @@ public class GeminiRequestDto {
      * Represents a part in the Gemini request content.
      */
     public static class Part {
+        @Nullable
         public String text;
 
         public Part() {
@@ -55,11 +61,15 @@ public class GeminiRequestDto {
      * Represents generation configuration in the Gemini request.
      */
     public static class GenerationConfig {
+        @Nullable
         public Double temperature; // 0.0 to 1.0
+        @Nullable
         @JsonProperty("maxOutputTokens")
         public Integer maxOutputTokens;
+        @Nullable
         @JsonProperty("topP")
         public Double topP;
+        @Nullable
         @JsonProperty("topK")
         public Integer topK;
 
@@ -76,7 +86,9 @@ public class GeminiRequestDto {
      * Represents a safety setting in the Gemini request.
      */
     public static class SafetySetting {
+        @Nullable
         public String category;
+        @Nullable
         public String threshold;
 
         public SafetySetting() {

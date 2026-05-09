@@ -9,6 +9,7 @@ import org.hibernate.generator.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,20 +44,24 @@ public class UserEntity extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false, unique = true)
+    @Nullable
     public String username;
 
     @NotBlank
     @Column(nullable = false)
     @JsonIgnore
+    @Nullable
     public String password;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rank_id", nullable = false)
     @JsonIgnoreProperties({ "users" })
+    @Nullable
     public UserRankEntity rank;
 
     @Email
     @Column(unique = true)
+    @Nullable
     public String email;
 
     @Column(nullable = false)
@@ -67,34 +72,43 @@ public class UserEntity extends BaseEntity {
 
     @Column(name = "activation_key")
     @JsonIgnore
+    @Nullable
     public String activationKey;
 
     @Generated(event = EventType.INSERT)
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 
     @Column(name = "user_avatar_emoji", length = 10)
+    @Nullable
     public String userAvatarEmoji;
 
     @Column(name = "tutor_avatar_emoji", length = 10)
+    @Nullable
     public String tutorAvatarEmoji;
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Nullable
     public List<ExerciseEntity> exercises;
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
+    @Nullable
     public List<CommentEntity> comments;
 
     @OneToMany(mappedBy = "flagger", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
+    @Nullable
     public List<CommentFlagEntity> commentFlags;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
+    @Nullable
     public List<UserGroupMetaEntity> userGroupMetas;
 }

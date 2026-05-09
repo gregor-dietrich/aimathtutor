@@ -8,12 +8,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import de.vptr.aimathtutor.util.AppConstants;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Size;
 
 /**
  * DTO for exercise data.
  */
-@SuppressFBWarnings(value = { "PA_PUBLIC_PRIMITIVE_ATTRIBUTE", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" },
+@SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         justification = "DTO used for JSON mapping and UI binding; public fields are intentional")
 public class ExerciseDto {
 
@@ -44,44 +45,60 @@ public class ExerciseDto {
         }
     }
 
+    @Nullable
     public String publicId;
 
     @Size(min = AppConstants.EXERCISE_TITLE_MIN_LENGTH, max = AppConstants.EXERCISE_TITLE_MAX_LENGTH,
             message = "Title must be between {min} and {max} characters")
+    @Nullable
     public String title;
 
     @Size(min = AppConstants.EXERCISE_CONTENT_MIN_LENGTH, max = AppConstants.EXERCISE_CONTENT_MAX_LENGTH,
             message = "Content must be between {min} and {max} characters")
+    @Nullable
     public String content;
 
+    @Nullable
     public String userPublicId;
 
+    @Nullable
     public String lessonPublicId;
 
+    @Nullable
     public Boolean published;
 
+    @Nullable
     public Boolean commentable;
 
+    @Nullable
     public LocalDateTime created;
 
+    @Nullable
     public LocalDateTime lastEdit;
 
+    @Nullable
     public Boolean graspableEnabled;
 
     @Size(max = AppConstants.EXERCISE_EXPRESSION_MAX_LENGTH,
             message = "Initial expression must not exceed {max} characters")
+    @Nullable
     public String graspableInitialExpression;
 
     @Size(max = AppConstants.EXERCISE_EXPRESSION_MAX_LENGTH,
             message = "Target expression must not exceed {max} characters")
+    @Nullable
     public String graspableTargetExpression;
 
+    @Nullable
     public DifficultyLevel graspableDifficulty;
 
     @Size(max = AppConstants.EXERCISE_HINTS_MAX_LENGTH, message = "Hints must not exceed {max} characters")
+    @Nullable
     public String graspableHints;
 
+    @Nullable
     public UserField user;
+    @Nullable
     public LessonField lesson;
 
     /**
@@ -120,7 +137,9 @@ public class ExerciseDto {
      * Nested field representing a user reference.
      */
     public static class UserField {
+        @Nullable
         public String publicId;
+        @Nullable
         public String username;
 
         /**
@@ -152,7 +171,9 @@ public class ExerciseDto {
      * Nested field representing a lesson reference.
      */
     public static class LessonField {
+        @Nullable
         public String publicId;
+        @Nullable
         public String name;
 
         /**

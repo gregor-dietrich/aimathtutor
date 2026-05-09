@@ -3,18 +3,24 @@ package de.vptr.aimathtutor.dto;
 import java.util.List;
 
 import de.vptr.aimathtutor.entity.LessonEntity;
+import jakarta.annotation.Nullable;
 
 /**
  * Response DTO for lesson operations. Contains computed fields and safe data for client responses.
  */
 public class LessonViewDto {
+    @Nullable
     public String publicId;
+    @Nullable
     public String name;
+    @Nullable
     public String parentPublicId;
+    @Nullable
     public String parentName;
     public boolean isRootLesson;
     public int childrenCount;
     public int exercisesCount;
+    @Nullable
     public List<String> childrenPublicIds;
 
     /**
@@ -29,7 +35,10 @@ public class LessonViewDto {
      * @param entity
      *            the lesson entity to convert
      */
-    public LessonViewDto(final LessonEntity entity) {
+    public LessonViewDto(@Nullable final LessonEntity entity) {
+        if (entity == null) {
+            return;
+        }
         this.publicId = entity.publicId;
         this.name = entity.name;
         this.isRootLesson = entity.isRootLesson();
@@ -59,10 +68,12 @@ public class LessonViewDto {
         return this.isRootLesson;
     }
 
+    @Nullable
     public String getName() {
         return this.name;
     }
 
+    @Nullable
     public String getPublicId() {
         return this.publicId;
     }

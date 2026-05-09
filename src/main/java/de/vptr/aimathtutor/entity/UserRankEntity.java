@@ -8,6 +8,7 @@ import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.NamedQueries;
@@ -30,6 +31,7 @@ public class UserRankEntity extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false)
+    @Nullable
     public String name;
 
     // View permissions
@@ -98,12 +100,15 @@ public class UserRankEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "rank")
     @JsonIgnore
+    @Nullable
     public List<UserEntity> users;
 
     @Generated(event = EventType.INSERT)
+    @Nullable
     public LocalDateTime created;
 
     @Generated(event = EventType.UPDATE)
     @Column(name = "last_edit")
+    @Nullable
     public LocalDateTime lastEdit;
 }

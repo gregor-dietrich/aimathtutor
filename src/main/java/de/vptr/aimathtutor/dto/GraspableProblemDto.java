@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -59,28 +59,33 @@ public class GraspableProblemDto {
         }
     }
 
+    @Nullable
     public String title;
 
-    @SuppressFBWarnings(value = "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD",
-            justification = "Description is optional and used by front-end; public for JSON mapping")
+    @Nullable
     public String description;
 
+    @Nullable
     @JsonProperty("initial_expression")
     public String initialExpression; // The starting mathematical expression
 
+    @Nullable
     @JsonProperty("target_expression")
     public String targetExpression; // The goal expression (if any)
 
     @JsonProperty("allowed_operations")
     public List<String> allowedOperations; // e.g., ["simplify", "expand", "factor"]
 
+    @Nullable
     @NotNull(message = "Difficulty is required")
     public DifficultyLevel difficulty;
 
+    @Nullable
     public ProblemCategory category; // The problem category/type
 
     public List<String> hints; // Pre-defined hints for this problem
 
+    @Nullable
     @JsonProperty("graspable_config")
     public String graspableConfig; // JSON configuration for Graspable Math widget
 
