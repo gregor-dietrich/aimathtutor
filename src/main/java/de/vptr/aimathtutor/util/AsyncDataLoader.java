@@ -60,7 +60,7 @@ public final class AsyncDataLoader {
      */
     public static <T> void load(final Supplier<T> dataSupplier, final Component component, final Consumer<T> onSuccess,
             @Nullable final Runnable onError, final String errorMessage) {
-        CompletableFuture.supplyAsync(() -> {
+        final var _ = CompletableFuture.supplyAsync(() -> {
             try {
                 return dataSupplier.get();
             } catch (final RuntimeException e) {
@@ -68,18 +68,20 @@ public final class AsyncDataLoader {
                 throw e;
             }
         }).orTimeout(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS, TimeUnit.SECONDS).whenComplete((data, throwable) -> {
-            component.getUI().ifPresent(ui -> ui.access(() -> {
-                if (throwable == null) {
-                    onSuccess.accept(data);
-                    return;
-                }
-                LOG.errorf(throwable, "Async load failed: %s", throwable.getMessage());
-                NotificationUtil.showError(errorMessage);
-                if (onError == null) {
-                    return;
-                }
-                onError.run();
-            }));
+            component.getUI().ifPresent(ui -> {
+                final var _ = ui.access(() -> {
+                    if (throwable == null) {
+                        onSuccess.accept(data);
+                        return;
+                    }
+                    LOG.errorf(throwable, "Async load failed: %s", throwable.getMessage());
+                    NotificationUtil.showError(errorMessage);
+                    if (onError == null) {
+                        return;
+                    }
+                    onError.run();
+                });
+            });
         });
     }
 }

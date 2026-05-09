@@ -45,15 +45,15 @@ class AbstractAiProviderServiceTest {
             return false;
         }
 
-        public void callRequireApiKey(final String key, final String envVar) {
+        private void callRequireApiKey(final String key, final String envVar) {
             this.requireApiKey(key, envVar);
         }
 
-        public String callRequireNonEmptyContent(final String content) {
+        private String callRequireNonEmptyContent(final String content) {
             return this.requireNonEmptyContent(content);
         }
 
-        public void callRequireConfigured(final String value, final String desc) {
+        private void callRequireConfigured(final String value, final String desc) {
             this.requireConfigured(value, desc);
         }
     }

@@ -160,7 +160,7 @@ public class AiChatPanel extends VerticalLayout {
      *            The message to add
      */
     public void addMessage(final ChatMessageDto message) {
-        UI.getCurrent().access(() -> {
+        final var _ = UI.getCurrent().access(() -> {
             // Outer container for the entire message row (avatar + bubble)
             final var messageRow = new HorizontalLayout();
             messageRow.setWidthFull();
@@ -264,7 +264,7 @@ public class AiChatPanel extends VerticalLayout {
 
         typingRow.add(avatarLabel, typingDiv);
 
-        UI.getCurrent().access(() -> {
+        final var _ = UI.getCurrent().access(() -> {
             this.chatHistoryPanel.add(typingRow);
             // Auto-scroll to bottom
             UI.getCurrent().getPage().executeJs("const panel = $0; panel.scrollTop = panel.scrollHeight;",
@@ -290,7 +290,7 @@ public class AiChatPanel extends VerticalLayout {
                 // Clear reference immediately within synchronized block to prevent
                 // another thread from seeing stale reference
                 this.currentTypingIndicator = null;
-                UI.getCurrent().access(() -> {
+                final var _ = UI.getCurrent().access(() -> {
                     try {
                         this.chatHistoryPanel.remove(indicatorToRemove);
                     } catch (final Exception e) {
@@ -310,7 +310,7 @@ public class AiChatPanel extends VerticalLayout {
      */
     public void hideTypingIndicator(final HorizontalLayout indicator) {
         if (indicator != null) {
-            UI.getCurrent().access(() -> this.chatHistoryPanel.remove(indicator));
+            final var _ = UI.getCurrent().access(() -> this.chatHistoryPanel.remove(indicator));
         }
     }
 

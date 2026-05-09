@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,7 @@ class CommentModerationServiceTest {
         final var fixture = this.createModerationFixture();
         fixture.comment().flagsCount = 3;
         fixture.comment().deletedBy = fixture.moderator();
-        fixture.comment().deletedAt = LocalDateTime.now();
+        fixture.comment().deletedAt = LocalDateTime.now(ZoneId.systemDefault());
 
         this.moderationService.moderateComment(fixture.comment().publicId, "SHOW", fixture.moderator().id, "Approved");
 

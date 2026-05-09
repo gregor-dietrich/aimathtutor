@@ -76,6 +76,7 @@ public class GraspableProblemDto {
     @JsonProperty("allowed_operations")
     public List<String> allowedOperations; // e.g., ["simplify", "expand", "factor"]
 
+    @SuppressWarnings("MultipleNullnessAnnotations")
     @Nullable
     @NotNull(message = "Difficulty is required")
     public DifficultyLevel difficulty;

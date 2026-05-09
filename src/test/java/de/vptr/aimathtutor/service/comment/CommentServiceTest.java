@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +56,11 @@ class CommentServiceTest {
 
     @InjectMock
     private CommentRateLimitService commentRateLimitService;
+
+    @BeforeEach
+    void setUpRateLimit() {
+        doNothing().when(this.commentRateLimitService).checkRateLimit(anyLong());
+    }
 
     private ExerciseViewDto createCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");

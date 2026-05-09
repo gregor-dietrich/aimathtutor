@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 
@@ -126,8 +127,8 @@ public class ExerciseRepositoryIT {
         ex.published = true;
         this.exerciseRepository.persist(ex);
 
-        final LocalDateTime start = LocalDateTime.now().minusDays(1);
-        final LocalDateTime end = LocalDateTime.now().plusDays(1);
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusDays(1);
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusDays(1);
         final List<ExerciseEntity> result = this.exerciseRepository.findByDateRange(start, end);
         Assertions.assertFalse(result.isEmpty());
         Assertions.assertTrue(result.stream().anyMatch(e -> "DateRangeEx".equals(e.title)));

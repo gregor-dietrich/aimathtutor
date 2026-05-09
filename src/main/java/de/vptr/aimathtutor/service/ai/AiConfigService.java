@@ -56,24 +56,37 @@ public class AiConfigService {
             Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
                     "You are a helpful AI math tutor. "
                             + "A student is working on an algebra problem and has asked you a question."),
-            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, "Provide a helpful, encouraging answer that:\n"
-                    + "- Guides the student's thinking without solving it for them\n"
-                    + "- Is concise (2-3 sentences max)\n" + "- Relates to their current problem if possible\n"
-                    + "- Uses clear, simple language\n" + "- Encourages them to try the next step\n\nYour answer:"),
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, """
+                    Provide a helpful, encouraging answer that:
+                    - Guides the student's thinking without solving it for them
+                    - Is concise (2-3 sentences max)
+                    - Relates to their current problem if possible
+                    - Uses clear, simple language
+                    - Encourages them to try the next step
+
+                    Your answer:"""),
             Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX,
                     "You are an encouraging but concise AI math tutor helping a student learn algebra. "
                             + "Analyze the student's action and provide brief, helpful feedback."),
-            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, "Provide feedback in the following JSON format:\n" + "{\n"
-                    + "  \"type\": \"POSITIVE\" or \"CORRECTIVE\" or \"HINT\" or \"SUGGESTION\",\n"
-                    + "  \"message\": \"Your brief, encouraging feedback (ONE sentence only)\",\n"
-                    + "  \"hints\": [],\n" + "  \"suggestedNextSteps\": [],\n" + "  \"confidence\": 0.0 to 1.0\n"
-                    + "}\n\n" + "IMPORTANT Guidelines:\n" + "- Keep message to ONE SHORT sentence (max 15 words)\n"
-                    + "- Be encouraging but not overly enthusiastic\n"
-                    + "- If the action is correct, give brief praise\n" + "- If incorrect, point out the error gently\n"
-                    + "- Only provide hints array if student made a mistake (max 1-2 hints)\n"
-                    + "- Do NOT provide hints for correct actions\n"
-                    + "- Leave suggestedNextSteps empty unless specifically needed\n"
-                    + "- Be specific about what they did, not generic"));
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, """
+                    Provide feedback in the following JSON format:
+                    {
+                      "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
+                      "message": "Your brief, encouraging feedback (ONE sentence only)",
+                      "hints": [],
+                      "suggestedNextSteps": [],
+                      "confidence": 0.0 to 1.0
+                    }
+
+                    IMPORTANT Guidelines:
+                    - Keep message to ONE SHORT sentence (max 15 words)
+                    - Be encouraging but not overly enthusiastic
+                    - If the action is correct, give brief praise
+                    - If incorrect, point out the error gently
+                    - Only provide hints array if student made a mistake (max 1-2 hints)
+                    - Do NOT provide hints for correct actions
+                    - Leave suggestedNextSteps empty unless specifically needed
+                    - Be specific about what they did, not generic"""));
 
     @Inject
     private AiConfigRepository aiConfigRepository;
@@ -529,10 +542,12 @@ public class AiConfigService {
             throw new IllegalArgumentException("Private IP addresses are not allowed for key '" + configKey + "'");
         }
         if (host.startsWith("172.")) {
-            final String[] parts = host.split("\\.");
-            if (parts.length >= 2) {
+            final String afterFirstDot = host.substring(4);
+            final int secondDot = afterFirstDot.indexOf('.');
+            final String secondOctetStr = secondDot > 0 ? afterFirstDot.substring(0, secondDot) : afterFirstDot;
+            if (!secondOctetStr.isEmpty()) {
                 try {
-                    final int secondOctet = Integer.parseInt(parts[1]);
+                    final int secondOctet = Integer.parseInt(secondOctetStr);
                     if (secondOctet >= 16 && secondOctet <= 31) {
                         throw new IllegalArgumentException(
                                 "Private IP addresses are not allowed for key '" + configKey + "'");

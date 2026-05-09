@@ -1,11 +1,14 @@
 package de.vptr.aimathtutor.view;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
 
@@ -192,19 +195,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             final var badge = new Span("Difficulty: " + this.exercise.graspableDifficulty.getValue());
             badge.getElement().getThemeList().add("badge");
             switch (this.exercise.graspableDifficulty) {
-                case BEGINNER:
-                    badge.getElement().getThemeList().add("success");
-                    break;
-                case INTERMEDIATE:
-                    badge.getElement().getThemeList().add("contrast");
-                    break;
-                case ADVANCED:
-                case EXPERT:
-                    badge.getElement().getThemeList().add("error");
-                    break;
-                default:
+                case BEGINNER -> badge.getElement().getThemeList().add("success");
+                case INTERMEDIATE -> badge.getElement().getThemeList().add("contrast");
+                case ADVANCED, EXPERT -> badge.getElement().getThemeList().add("error");
+                default -> {
                     // Unknown difficulty - keep default styling
-                    break;
+                }
             }
             badge.getStyle().set("margin-top", "0.5rem");
             titleSection.add(badge);
@@ -431,7 +427,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 this.authService.getUserId());
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
-        event.timestamp = LocalDateTime.now();
+        event.timestamp = LocalDateTime.now(ZoneId.systemDefault());
         event.correct = true;
 
         // Add event to conversation context
@@ -454,8 +450,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 // Show success notification
                 final var notifyUi = this.getUI().orElse(null);
                 if (notifyUi != null) {
-                    notifyUi.access(() -> {
-                        NotificationUtil.showSuccess("🎉 Congratulations! You've solved the problem correctly!");
+                    final var _ = notifyUi.access(() -> {
+                        NotificationUtil.showSuccess(AppConstants.EXERCISE_SOLVED_MESSAGE);
                     });
                 }
             }
@@ -482,13 +478,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit);
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
-        rootFuture.thenAccept(feedback -> {
-            ui.access(() -> {
+        final var _ = rootFuture.thenAccept(feedback -> {
+            final var _ = ui.access(() -> {
                 // Only log and display if we got feedback
                 if (feedback != null) {
                     // Log interaction
                     this.aiTutorService.logInteraction(event, feedback);
-
                     // Build feedback message with hints
                     final StringBuilder fullMessage = new StringBuilder(feedback.message);
                     if (feedback.hints != null && !feedback.hints.isEmpty()) {
@@ -496,7 +491,6 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                             fullMessage.append("\n💡 ").append(hint);
                         }
                     }
-
                     final var message = ChatMessageDto.aiFeedback(fullMessage.toString());
                     message.sessionId = this.currentSessionId;
                     this.conversationContext.addAiMessage(message);
@@ -504,7 +498,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 }
             });
         }).exceptionally(ex -> {
-            ui.access(() -> {
+            final var _ = ui.access(() -> {
                 LOG.error("Error getting AI feedback", ex);
             });
             return null;
@@ -544,7 +538,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 this.conversationContext, userIdStr);
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
-        rootFuture.thenAccept(answer -> {
+        final var _ = rootFuture.thenAccept(answer -> {
             if (sessionId != null) {
                 try {
                     this.aiTutorService.logQuestionInteraction(sessionId, userId, exerciseId, question,
@@ -569,7 +563,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Split hints by newline, semicolon, or pipe character
         // Supports formats like: "hint1\nhint2" or "hint1;hint2" or "hint1|hint2"
-        final String[] hints = this.exercise.graspableHints.split("\\r?\\n|;|\\|");
+        final String[] hints = Pattern.compile("[^\\r\\n;|]+").matcher(this.exercise.graspableHints).results()
+                .map(MatchResult::group).toArray(String[]::new);
 
         if (this.hintCount >= hints.length) {
             NotificationUtil.showInfo("No more hints available");

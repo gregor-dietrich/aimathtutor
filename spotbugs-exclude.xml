@@ -141,4 +141,44 @@
     <Bug pattern="CT_CONSTRUCTOR_THROW" />
     <Class name="de.vptr.aimathtutor.component.button.DeleteButton" />
   </Match>
+
+  <!--
+    DLS_DEAD_LOCAL_STORE:
+    Future return values from ui.access() and async chains are assigned to
+    variables named `ignored` to satisfy Error Prone's
+    FutureReturnValueIgnored check. The assignment signals fire-and-forget intent.
+    Excluded per-class for the specific methods that intentionally discard futures.
+  -->
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.component.layout.AiChatPanel" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.service.security.LoginAttemptService" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.service.security.RateLimitService" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.util.AiChatUtil" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.util.AsyncDataLoader" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.view.ExerciseWorkspaceView" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.view.MathWorkspaceView" />
+  </Match>
+  <Match>
+    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
+    <Class name="de.vptr.aimathtutor.view.admin.AdminConfigView" />
+  </Match>
 </FindBugsFilter>

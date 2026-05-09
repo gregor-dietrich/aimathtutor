@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Set up JDK 25
         uses: actions/setup-java@v5
         with:
@@ -48,16 +50,19 @@ jobs:
         run: ./mvnw clean install package -DskipTests
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
-      # - name: Secret Scanning
-      #   uses: gitleaks/gitleaks-action@v2
-      # - name: Run OWASP Dependency-Check
-      #   run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
-      # - name: Upload Dependency-Check results
-      #   uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: dependency-check-report
-      #     path: target/dependency-check-report.html
+      - name: Secret Scanning
+        uses: gitleaks/gitleaks-action@v2
+      - name: Run OWASP Dependency-Check
+        if: env.NVD_API_KEY != ''
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+      - name: Upload Dependency-Check results
+        if: env.NVD_API_KEY != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.html
 
   build:
     runs-on: ubuntu-latest

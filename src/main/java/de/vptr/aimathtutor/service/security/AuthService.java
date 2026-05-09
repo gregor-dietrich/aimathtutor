@@ -178,7 +178,8 @@ public class AuthService {
         final String remoteAddr = request.getRemoteAddr();
         final String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank() && this.isTrustedProxy(remoteAddr)) {
-            return forwarded.split(",")[0].trim();
+            final int commaIdx = forwarded.indexOf(',');
+            return (commaIdx >= 0 ? forwarded.substring(0, commaIdx) : forwarded).trim();
         }
         return remoteAddr;
     }

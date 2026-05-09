@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -243,7 +244,7 @@ public class AnalyticsService {
         final List<StudentSessionEntity> allSessions = this.studentSessionRepository.findAll();
 
         // Build progress summaries for each user
-        return buildProgressSummaries(users, allSessions);
+        return this.buildProgressSummaries(users, allSessions);
     }
 
     private List<StudentProgressSummaryDto> buildProgressSummaries(final List<UserEntity> users,
@@ -332,7 +333,7 @@ public class AnalyticsService {
     @Transactional
     public long getActiveStudentsCount() {
         LOG.trace("Getting active students count");
-        final LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        final LocalDateTime sevenDaysAgo = LocalDateTime.now(ZoneId.systemDefault()).minusDays(7);
         return this.studentSessionRepository.countActiveStudentsSince(sevenDaysAgo);
     }
 
@@ -342,8 +343,8 @@ public class AnalyticsService {
     @Transactional
     public long getTodaySessionsCount() {
         LOG.trace("Getting today's sessions count");
-        final LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        final LocalDateTime endOfDay = LocalDate.now().plusDays(1).atStartOfDay();
+        final LocalDateTime startOfDay = LocalDate.now(ZoneId.systemDefault()).atStartOfDay();
+        final LocalDateTime endOfDay = LocalDate.now(ZoneId.systemDefault()).plusDays(1).atStartOfDay();
         return this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(startOfDay, endOfDay);
     }
 
@@ -426,6 +427,6 @@ public class AnalyticsService {
 
         final List<Long> userIds = users.stream().map(u -> u.id).toList();
         final List<StudentSessionEntity> userSessions = this.studentSessionRepository.findByUserIdIn(userIds);
-        return buildProgressSummaries(users, userSessions);
+        return this.buildProgressSummaries(users, userSessions);
     }
 }

@@ -119,12 +119,14 @@ public class StudentSessionEntity extends BaseEntity {
     @Column(name = "session_id", unique = true, nullable = false)
     public String sessionId;
 
+    @SuppressWarnings("MultipleNullnessAnnotations")
     @Nullable
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     public UserEntity user;
 
+    @SuppressWarnings("MultipleNullnessAnnotations")
     @Nullable
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

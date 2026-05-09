@@ -366,7 +366,17 @@
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR
-                            -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor</arg>
+                            -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor
+                            -Xep:FutureReturnValueIgnored:ERROR
+                            -Xep:NullablePrimitive:ERROR
+                            -Xep:MultipleNullnessAnnotations:ERROR
+                            -Xep:JavaDurationGetSecondsToToSeconds:ERROR
+                            -Xep:StringSplitter:ERROR
+                            -Xep:StringConcatToTextBlock:ERROR
+                            -Xep:StatementSwitchToExpressionSwitch:ERROR
+                            -Xep:UnnecessaryMethodReference:ERROR
+                            -Xep:UnusedVariable:ERROR
+                            -Xep:EffectivelyPrivate:ERROR</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>

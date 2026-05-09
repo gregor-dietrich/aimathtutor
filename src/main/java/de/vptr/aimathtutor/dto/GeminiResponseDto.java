@@ -106,7 +106,6 @@ public class GeminiResponseDto {
     /**
      * Check if the response was blocked due to safety filters
      */
-    @Nullable
     public boolean isBlocked() {
         if (this.candidates == null || this.candidates.isEmpty()) {
             return false;
@@ -119,7 +118,6 @@ public class GeminiResponseDto {
     /**
      * Check if the response is empty or missing candidates
      */
-    @Nullable
     public boolean isEmptyResponse() {
         return this.candidates == null || this.candidates.isEmpty();
     }
@@ -128,7 +126,6 @@ public class GeminiResponseDto {
      * Check if the response was truncated due to the token limit (Gemini reports {@code "MAX_TOKENS"} as the finish
      * reason).
      */
-    @Nullable
     public boolean isTruncated() {
         if (this.candidates == null || this.candidates.isEmpty()) {
             return false;

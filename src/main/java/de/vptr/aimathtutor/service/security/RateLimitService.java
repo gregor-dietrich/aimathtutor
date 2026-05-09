@@ -37,7 +37,7 @@ public class RateLimitService {
             return t;
         });
         // Schedule periodic cleanup of stale user entries
-        this.cleanupExecutor.scheduleAtFixedRate(this::cleanupStaleEntries, CLEANUP_INTERVAL_SECONDS,
+        final var _ = this.cleanupExecutor.scheduleAtFixedRate(this::cleanupStaleEntries, CLEANUP_INTERVAL_SECONDS,
                 CLEANUP_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
@@ -136,7 +136,7 @@ public class RateLimitService {
                 cooldown[0] = 0;
             } else {
                 final Instant oldest = timestamps.get(0);
-                final long elapsed = Duration.between(oldest, now).getSeconds();
+                final long elapsed = Duration.between(oldest, now).toSeconds();
                 cooldown[0] = Math.max(0, WINDOW_SECONDS - elapsed);
             }
 

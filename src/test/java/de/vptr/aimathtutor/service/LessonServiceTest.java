@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
@@ -36,6 +38,13 @@ class LessonServiceTest {
 
     @InjectMock
     private PermissionService permissionService;
+
+    @BeforeEach
+    void setUpPermissionService() {
+        Mockito.doNothing().when(this.permissionService).requireLessonAdd();
+        Mockito.doNothing().when(this.permissionService).requireLessonEdit();
+        Mockito.doNothing().when(this.permissionService).requireLessonDelete();
+    }
 
     private Long getLessonNumericId(final String publicId) {
         return this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)

@@ -36,7 +36,7 @@ public class LoginAttemptService {
             t.setDaemon(true);
             return t;
         });
-        this.cleanupExecutor.scheduleAtFixedRate(this::cleanupExpiredEntries, CLEANUP_INTERVAL_SECONDS,
+        final var _ = this.cleanupExecutor.scheduleAtFixedRate(this::cleanupExpiredEntries, CLEANUP_INTERVAL_SECONDS,
                 CLEANUP_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 

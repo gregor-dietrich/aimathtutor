@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -224,8 +225,8 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
 
-        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(start, end);
         assertNotNull(sessions);
         assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
@@ -443,7 +444,7 @@ class AnalyticsServiceTest {
         session.sessionId = UUID.randomUUID().toString();
         session.user = user;
         session.exercise = exercise;
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
         this.studentSessionRepository.persist(session);
         final long after = this.analyticsService.getActiveStudentsCount();
         assertEquals(before + 1, after, "Adding one active student should increase active count by 1");
@@ -457,7 +458,7 @@ class AnalyticsServiceTest {
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getTodaySessionsCount();
         final var session = this.createAndPersistSession(studentId, exerciseId);
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
         final long after = this.analyticsService.getTodaySessionsCount();
         assertEquals(before + 1, after, "Adding one session with today's date should increase today count by 1");
     }
@@ -547,12 +548,12 @@ class AnalyticsServiceTest {
     void testGetSessionsByUserAndDateRange() {
         final var fixture = this.createSessionFixture();
 
-        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
         final var within = this.analyticsService.getSessionsByUserAndDateRange(fixture.studentId(), start, end);
 
-        final LocalDateTime futureStart = LocalDateTime.now().plusHours(1);
-        final LocalDateTime futureEnd = LocalDateTime.now().plusHours(2);
+        final LocalDateTime futureStart = LocalDateTime.now(ZoneId.systemDefault()).plusHours(1);
+        final LocalDateTime futureEnd = LocalDateTime.now(ZoneId.systemDefault()).plusHours(2);
         final var outside =
                 this.analyticsService.getSessionsByUserAndDateRange(fixture.studentId(), futureStart, futureEnd);
         this.assertDateRangeFilter(fixture.sessionId(), within, outside);
@@ -564,12 +565,12 @@ class AnalyticsServiceTest {
     void testGetSessionsByExerciseAndDateRange() {
         final var fixture = this.createSessionFixture();
 
-        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
         final var within = this.analyticsService.getSessionsByExerciseAndDateRange(fixture.exerciseId(), start, end);
 
-        final LocalDateTime futureStart = LocalDateTime.now().plusHours(1);
-        final LocalDateTime futureEnd = LocalDateTime.now().plusHours(2);
+        final LocalDateTime futureStart = LocalDateTime.now(ZoneId.systemDefault()).plusHours(1);
+        final LocalDateTime futureEnd = LocalDateTime.now(ZoneId.systemDefault()).plusHours(2);
         final var outside =
                 this.analyticsService.getSessionsByExerciseAndDateRange(fixture.exerciseId(), futureStart, futureEnd);
         this.assertDateRangeFilter(fixture.sessionId(), within, outside);
@@ -584,8 +585,8 @@ class AnalyticsServiceTest {
         final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
         this.graspableMathService.markSessionComplete(sessionId);
 
-        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
 
         final var completed = this.analyticsService.getSessionsByStatusAndDateRange(Boolean.TRUE, start, end);
         assertNotNull(completed);
@@ -645,17 +646,17 @@ class AnalyticsServiceTest {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
         final var session = this.createAndPersistSession(studentId, exerciseId);
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
 
-        final LocalDateTime start = LocalDateTime.now().minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now().plusMinutes(1);
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
         final var summaries = this.analyticsService.getUsersProgressSummaryByDateRange(start, end);
         assertNotNull(summaries);
         assertTrue(summaries.stream().anyMatch(s -> "student1".equals(s.username)),
                 "student1 should appear in the date range summary");
 
-        final LocalDateTime pastStart = LocalDateTime.now().minusHours(2);
-        final LocalDateTime pastEnd = LocalDateTime.now().minusHours(1);
+        final LocalDateTime pastStart = LocalDateTime.now(ZoneId.systemDefault()).minusHours(2);
+        final LocalDateTime pastEnd = LocalDateTime.now(ZoneId.systemDefault()).minusHours(1);
         final var pastSummaries = this.analyticsService.getUsersProgressSummaryByDateRange(pastStart, pastEnd);
         assertNotNull(pastSummaries);
         assertFalse(pastSummaries.stream().anyMatch(s -> "student1".equals(s.username) && s.totalSessions > 0),
