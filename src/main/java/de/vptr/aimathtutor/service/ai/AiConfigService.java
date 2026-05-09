@@ -439,7 +439,6 @@ public class AiConfigService {
                 }
             }
             case BOOLEAN -> {
-                @SuppressWarnings("null") // false positive
                 final var lower = configValue.toLowerCase(Locale.ROOT).trim();
                 if (!("true".equals(lower) || "false".equals(lower) || "1".equals(lower) || "0".equals(lower))) {
                     throw new IllegalArgumentException(
