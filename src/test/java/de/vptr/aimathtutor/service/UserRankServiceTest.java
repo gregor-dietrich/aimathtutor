@@ -30,6 +30,7 @@ import jakarta.ws.rs.core.Response;
  * Integration tests for UserRankService. Tests CRUD operations, searching, and permission management for user ranks.
  */
 @QuarkusTest
+@SuppressWarnings("NullAway")
 @DisplayName("UserRankService Tests")
 class UserRankServiceTest {
 

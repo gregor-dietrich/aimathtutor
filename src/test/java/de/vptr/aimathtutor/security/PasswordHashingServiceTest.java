@@ -171,6 +171,7 @@ class PasswordHashingServiceTest {
 
     @Test
     @DisplayName("Should throw on null password when hashing")
+    @SuppressWarnings("NullAway")
     void shouldThrowOnNullPasswordWhenHashing() {
         assertThrows(IllegalArgumentException.class, () -> this.passwordHashingService.hashPassword(null));
     }

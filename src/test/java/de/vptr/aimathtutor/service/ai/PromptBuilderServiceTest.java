@@ -19,6 +19,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class PromptBuilderServiceTest {
 
     @Inject
@@ -127,6 +128,7 @@ class PromptBuilderServiceTest {
 
     @Test
     @DisplayName("buildMathTutoringPrompt with null context omits context sections")
+    @SuppressWarnings("NullAway")
     void buildMathTutoringPrompt_nullContext() {
         final GraspableEventDto event = new GraspableEventDto();
         event.eventType = "factor";

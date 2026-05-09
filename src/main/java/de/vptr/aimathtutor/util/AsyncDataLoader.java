@@ -9,6 +9,8 @@ import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.Component;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Utility for loading data asynchronously into Vaadin views with consistent timeout, error handling, and UI access
  * patterns.
@@ -57,7 +59,7 @@ public final class AsyncDataLoader {
      *            user-facing message shown if loading fails
      */
     public static <T> void load(final Supplier<T> dataSupplier, final Component component, final Consumer<T> onSuccess,
-            final Runnable onError, final String errorMessage) {
+            @Nullable final Runnable onError, final String errorMessage) {
         CompletableFuture.supplyAsync(() -> {
             try {
                 return dataSupplier.get();

@@ -27,6 +27,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class ExerciseServiceTest {
 
     @Inject

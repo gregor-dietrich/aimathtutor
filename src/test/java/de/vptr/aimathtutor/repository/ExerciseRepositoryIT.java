@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,7 @@ public class ExerciseRepositoryIT {
         ex.published = true;
         this.exerciseRepository.persist(ex);
 
-        final List<ExerciseEntity> result = this.exerciseRepository.findByUserId(user.id);
+        final List<ExerciseEntity> result = this.exerciseRepository.findByUserId(Objects.requireNonNull(user.id));
         Assertions.assertFalse(result.isEmpty());
         Assertions.assertTrue(result.stream().anyMatch(e -> "UserExercise".equals(e.title)));
     }

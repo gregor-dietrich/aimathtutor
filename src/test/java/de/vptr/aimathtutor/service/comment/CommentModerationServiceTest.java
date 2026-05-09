@@ -28,6 +28,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class CommentModerationServiceTest {
 
     @Inject

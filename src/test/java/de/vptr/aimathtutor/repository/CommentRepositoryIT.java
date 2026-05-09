@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,8 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         comment.user = user;
         this.commentRepository.persist(comment);
 
-        final List<CommentEntity> comments = this.commentRepository.findByExerciseIdWithRelations(ex.id);
+        final List<CommentEntity> comments =
+                this.commentRepository.findByExerciseIdWithRelations(Objects.requireNonNull(ex.id));
         Assertions.assertFalse(comments.isEmpty());
         final CommentEntity loaded = comments.get(0);
         Assertions.assertNotNull(loaded.user);

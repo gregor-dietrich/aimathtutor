@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class ExerciseCompletionServiceTest {
 
     @Inject
@@ -72,14 +74,17 @@ class ExerciseCompletionServiceTest {
         when(this.authService.getUserId()).thenReturn(student.id);
 
         final ExerciseViewDto exercise = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(student.id, exercise.id);
+        final String sessionId = this.graspableMathService.createSession(Objects.requireNonNull(student.id),
+                Objects.requireNonNull(exercise.id));
         this.graspableMathService.markSessionComplete(sessionId);
 
         final ExerciseViewDto result = this.exerciseCompletionService.enrichWithCompletionData(exercise);
 
         assertNotNull(result);
-        assertTrue(result.userCompleted, "userCompleted should be true after completing a session");
-        assertTrue(result.userCompletionCount >= 1, "userCompletionCount should be at least 1");
+        assertTrue(Boolean.TRUE.equals(result.userCompleted),
+                "userCompleted should be true after completing a session");
+        assertTrue(result.userCompletionCount != null && result.userCompletionCount >= 1,
+                "userCompletionCount should be at least 1");
     }
 
     @Test
@@ -91,12 +96,14 @@ class ExerciseCompletionServiceTest {
         when(this.authService.getUserId()).thenReturn(student.id);
 
         final ExerciseViewDto exercise = this.createExercise();
-        this.graspableMathService.createSession(student.id, exercise.id);
+        this.graspableMathService.createSession(Objects.requireNonNull(student.id),
+                Objects.requireNonNull(exercise.id));
 
         final ExerciseViewDto result = this.exerciseCompletionService.enrichWithCompletionData(exercise);
 
         assertNotNull(result);
-        assertFalse(result.userCompleted, "userCompleted should be false when session is not completed");
+        assertFalse(Boolean.TRUE.equals(result.userCompleted),
+                "userCompleted should be false when session is not completed");
     }
 
     @Test
@@ -114,6 +121,7 @@ class ExerciseCompletionServiceTest {
 
     @Test
     @DisplayName("enrichListWithCompletionData returns same list for null input")
+    @SuppressWarnings("NullAway")
     void testEnrichListWithCompletionData_nullInput() {
         assertNull(this.exerciseCompletionService.enrichListWithCompletionData(null));
     }

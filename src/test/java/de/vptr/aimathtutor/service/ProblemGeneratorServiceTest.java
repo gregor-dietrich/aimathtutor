@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto.ProblemCategory;
 
+@SuppressWarnings("NullAway")
 class ProblemGeneratorServiceTest {
 
     private ProblemGeneratorService service;
@@ -63,6 +64,7 @@ class ProblemGeneratorServiceTest {
 
     @Test
     @DisplayName("Should default to LINEAR_EQUATIONS when category is null")
+    @SuppressWarnings("NullAway")
     void shouldDefaultCategoryWhenNull() {
         final GraspableProblemDto problem = this.service.generateProblem(DifficultyLevel.BEGINNER, null);
 

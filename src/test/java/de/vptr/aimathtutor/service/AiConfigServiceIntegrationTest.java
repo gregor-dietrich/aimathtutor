@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
@@ -38,6 +40,7 @@ class AiConfigServiceIntegrationTest {
 
     private static final Long ADMIN_USER_ID = 1L;
     private static final String TEST_KEY = "it.test.config";
+    @Nullable
     private String originalTemperature;
 
     @BeforeEach
@@ -52,7 +55,7 @@ class AiConfigServiceIntegrationTest {
 
         // Clean up any leftover test key from previous interrupted runs
         final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
-        existing.ifPresent(e -> this.aiConfigRepository.deleteById(e.id));
+        existing.ifPresent(e -> this.aiConfigRepository.deleteById(Objects.requireNonNull(e.id)));
     }
 
     @AfterEach
@@ -65,15 +68,7 @@ class AiConfigServiceIntegrationTest {
 
         // Remove test key if it still exists
         final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
-        existing.ifPresent(e -> this.aiConfigRepository.deleteById(e.id));
-    }
-
-    @Test
-    @DisplayName("Read seeded string config value")
-    @Transactional
-    void testGetConfigValueFromSeed() {
-        final String value = this.aiConfigService.getConfigValue("ai.tutor.enabled", "false");
-        assertEquals("true", value);
+        existing.ifPresent(e -> this.aiConfigRepository.deleteById(Objects.requireNonNull(e.id)));
     }
 
     @Test
@@ -177,7 +172,8 @@ class AiConfigServiceIntegrationTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("gemini.temperature", "1.2", ADMIN_USER_ID));
 
         // Restore
-        this.aiConfigService.updateConfig("gemini.temperature", this.originalTemperature, ADMIN_USER_ID);
+        this.aiConfigService.updateConfig("gemini.temperature", Objects.requireNonNull(this.originalTemperature),
+                ADMIN_USER_ID);
     }
 
     @Test

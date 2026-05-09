@@ -27,6 +27,7 @@ import jakarta.transaction.Transactional;
  */
 @QuarkusTest
 @DisplayName("AiConfigService Tests")
+@SuppressWarnings("NullAway")
 class AiConfigServiceTest {
 
     @Inject
