@@ -50,8 +50,6 @@ jobs:
         run: ./mvnw clean install package -DskipTests
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
-      - name: Secret Scanning
-        uses: gitleaks/gitleaks-action@v2
       - name: Run OWASP Dependency-Check
         if: env.NVD_API_KEY != ''
         env:
@@ -63,6 +61,18 @@ jobs:
         with:
           name: dependency-check-report
           path: target/dependency-check-report.html
+
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations,
 
   build:
     runs-on: ubuntu-latest
