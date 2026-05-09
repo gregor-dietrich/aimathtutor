@@ -22,6 +22,7 @@ import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.LayoutNavigationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -31,9 +32,13 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
     private static final Logger LOG = Logger.getLogger(MainLayout.class);
 
+    @Nullable
     private Button adminViewButton;
+    @Nullable
     private Button settingsButton;
+    @Nullable
     private Button logoutButton;
+    @Nullable
     private Tabs navigationTabs;
 
     @Inject
@@ -45,6 +50,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     @Inject
     private transient UserRankService userRankService;
 
+    @Nullable
     private TopBar topBar;
     private boolean initialized = false;
 
@@ -53,6 +59,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP",
             justification = "Top bar is intended to be shared and extended by child views")
+    @Nullable
     public HorizontalLayout getTopBar() {
         return this.topBar;
     }
@@ -149,7 +156,11 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         }
     }
 
+    @SuppressWarnings("NullAway")
     private void addButtonsToTopBar() {
+        if (this.topBar == null) {
+            return;
+        }
         // Avoid adding twice
         if (this.logoutButton != null
                 && this.topBar.getRightSide().getChildren().anyMatch(c -> c == this.logoutButton)) {
@@ -180,6 +191,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.topBar.addRightSideButtons(this.adminViewButton, this.settingsButton, this.logoutButton);
     }
 
+    @SuppressWarnings("NullAway")
     private void removeButtonsFromTopBar() {
         if (this.topBar == null) {
             return;

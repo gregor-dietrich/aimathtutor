@@ -8,6 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
 import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
+import jakarta.annotation.Nullable;
 
 /**
  * Button used to delete an item. Applies a destructive theme and invokes the provided click listener when activated.
@@ -20,7 +21,8 @@ public class DeleteButton extends Button {
     /**
      * Constructs a DeleteButton with the specified action and tooltip.
      */
-    public DeleteButton(final ComponentEventListener<ClickEvent<Button>> deleteAction, final String tooltipText) {
+    public DeleteButton(final ComponentEventListener<ClickEvent<Button>> deleteAction,
+            @Nullable final String tooltipText) {
         super("");
         if (deleteAction == null) {
             throw new IllegalArgumentException("deleteAction must not be null");

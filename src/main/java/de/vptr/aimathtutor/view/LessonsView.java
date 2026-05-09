@@ -164,13 +164,16 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         visited.add(lesson.getPublicId());
 
-        for (final String childId : lesson.childrenPublicIds) {
-            if (visited.contains(childId)) {
-                continue;
-            }
-            final LessonViewDto child = lessonByPublicId.get(childId);
-            if (child != null) {
-                section.add(this.createLessonSection(child, depth + 1, lessonByPublicId, exercisesByLesson, visited));
+        if (lesson.childrenPublicIds != null) {
+            for (final String childId : lesson.childrenPublicIds) {
+                if (visited.contains(childId)) {
+                    continue;
+                }
+                final LessonViewDto child = lessonByPublicId.get(childId);
+                if (child != null) {
+                    section.add(
+                            this.createLessonSection(child, depth + 1, lessonByPublicId, exercisesByLesson, visited));
+                }
             }
         }
 
@@ -183,7 +186,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 exerciseGrid.add(this.createExerciseCard(exercise));
             }
             section.add(exerciseGrid);
-        } else if (lesson.childrenPublicIds.isEmpty()) {
+        } else if (lesson.childrenPublicIds == null || lesson.childrenPublicIds.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");
             noExercisesMsg.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-style", "italic");
             section.add(noExercisesMsg);

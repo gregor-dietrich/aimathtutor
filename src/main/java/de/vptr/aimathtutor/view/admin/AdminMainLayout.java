@@ -31,6 +31,7 @@ import jakarta.inject.Inject;
  * admin permission validation, and theme application. Routes child admin views through a sidebar navigation and content
  * area layout.
  */
+@SuppressWarnings("NullAway")
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {
     private static final Logger LOG = Logger.getLogger(AdminMainLayout.class);
 

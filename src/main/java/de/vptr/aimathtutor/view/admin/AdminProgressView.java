@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/progress", layout = AdminMainLayout.class)
 @PageTitle("Student Progress - AI Math Tutor")
+@SuppressWarnings("NullAway")
 public class AdminProgressView extends AbstractAdminView {
 
     @Inject

@@ -20,6 +20,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.util.AppConstants;
+import jakarta.annotation.Nullable;
 
 /**
  * Reusable AI chat panel component for displaying chat messages and handling user input. This component is designed to
@@ -36,6 +37,7 @@ public class AiChatPanel extends VerticalLayout {
     private final MessageSendListener messageSendListener;
     private String userAvatarEmoji = AppConstants.AVATAR_DEFAULT_USER;
     private String tutorAvatarEmoji = AppConstants.AVATAR_DEFAULT_TUTOR;
+    @Nullable
     private HorizontalLayout currentTypingIndicator; // Track current typing indicator
     private final AtomicInteger pendingRequestsCount = new AtomicInteger(0); // Track number of pending AI requests
 
@@ -295,6 +297,7 @@ public class AiChatPanel extends VerticalLayout {
                         LOGGER.tracef("Typing indicator removal race: %s", indicatorToRemove);
                     }
                 });
+
             }
         }
     }

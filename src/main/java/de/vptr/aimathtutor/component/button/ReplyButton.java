@@ -7,6 +7,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 
+import jakarta.annotation.Nullable;
+
 /**
  * Button used to reply to a comment or message. Shows a reply icon and delegates the click event to the supplied
  * listener.
@@ -17,7 +19,8 @@ public class ReplyButton extends Button {
     /**
      * Constructs a ReplyButton with the specified action and tooltip.
      */
-    public ReplyButton(final ComponentEventListener<ClickEvent<Button>> replyAction, final String tooltipText) {
+    public ReplyButton(final ComponentEventListener<ClickEvent<Button>> replyAction,
+            @Nullable final String tooltipText) {
         super("", replyAction);
         this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
         this.setIcon(LineAwesomeIcon.REPLY_SOLID.create());

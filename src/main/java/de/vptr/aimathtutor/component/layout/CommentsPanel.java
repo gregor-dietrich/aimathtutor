@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.component.layout;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Consumer;
@@ -30,6 +31,7 @@ import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.spi.CDI;
 
 /**
@@ -50,10 +52,14 @@ public class CommentsPanel extends VerticalLayout {
     private final Long currentUserId;
     private static final int PAGE_SIZE = 50;
 
+    @Nullable
     private Div commentsContainer;
+    @Nullable
     private TextArea commentTextArea;
+    @Nullable
     private Button submitButton;
     private int currentPage = 0;
+    @Nullable
     private String currentParentPublicId = null;
     private transient Consumer<CommentCreatedEvent> commentCreatedListener;
 
@@ -112,9 +118,12 @@ public class CommentsPanel extends VerticalLayout {
         final var bridge = CDI.current().select(CommentCreatedEventBridge.class).get();
         this.commentCreatedListener = event -> {
             if (event.getExerciseId() != null && event.getExerciseId().equals(this.exerciseId)) {
-                this.getUI().ifPresent(ui -> ui.access(this::refresh));
+                this.getUI().ifPresent(ui -> {
+                    final var unused = ui.access(this::refresh);
+                });
             }
         };
+
         bridge.addListener(this.commentCreatedListener);
     }
 
@@ -154,19 +163,21 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     private void displayComments(final List<CommentViewDto> comments) {
-        if (this.currentPage == 0) {
+        if (this.currentPage == 0 && this.commentsContainer != null) {
             this.commentsContainer.removeAll();
         }
 
         if (comments.isEmpty() && this.currentPage == 0) {
-            this.commentsContainer.add(new Span("No comments yet. Be the first to comment!"));
+            if (this.commentsContainer != null) {
+                this.commentsContainer.add(new Span("No comments yet. Be the first to comment!"));
+            }
             return;
         }
 
-        if (this.currentPage > 0) {
+        if (this.currentPage > 0 && this.commentsContainer != null) {
             this.commentsContainer.getChildren()
-                    .filter(c -> c instanceof Button && "Load More Comments".equals(((Button) c).getText())).findFirst()
-                    .ifPresent(this.commentsContainer::remove);
+                    .filter(c -> c instanceof final Button button && "Load More Comments".equals(button.getText()))
+                    .findFirst().ifPresent(this.commentsContainer::remove);
         }
 
         if (comments.isEmpty()) {
@@ -175,12 +186,18 @@ public class CommentsPanel extends VerticalLayout {
 
         for (final CommentViewDto comment : comments) {
             final Div commentDiv = this.createCommentElement(comment);
-            this.commentsContainer.add(commentDiv);
+            if (this.commentsContainer != null) {
+                this.commentsContainer.add(commentDiv);
+            }
 
             // If this comment has replies, load and display them
             if (comment.parentPublicId == null) {
+                final String publicId = comment.publicId;
+                if (publicId == null) {
+                    continue;
+                }
                 try {
-                    final List<CommentViewDto> replies = this.getCommentService().findReplies(comment.publicId);
+                    final List<CommentViewDto> replies = this.getCommentService().findReplies(publicId);
                     if (!replies.isEmpty()) {
                         final Div repliesContainer = new Div();
                         repliesContainer.addClassName("comment-replies");
@@ -190,16 +207,19 @@ public class CommentsPanel extends VerticalLayout {
                         for (final CommentViewDto reply : replies) {
                             repliesContainer.add(this.createCommentElement(reply));
                         }
-                        this.commentsContainer.add(repliesContainer);
+                        if (this.commentsContainer != null) {
+                            this.commentsContainer.add(repliesContainer);
+                        }
                     }
+
                 } catch (final Exception e) {
-                    LOG.debugf(e, "Failed to load replies for comment %s", comment.publicId);
+                    LOG.debugf(e, "Failed to load replies for comment %s", publicId);
                 }
             }
         }
 
         // Add load more button if we got full page
-        if (comments.size() >= PAGE_SIZE) {
+        if (comments.size() >= PAGE_SIZE && this.commentsContainer != null) {
             final Button loadMoreButton = new Button("Load More Comments");
             loadMoreButton.addClickListener(e -> {
                 this.currentPage++;
@@ -217,11 +237,23 @@ public class CommentsPanel extends VerticalLayout {
                 .set("border-radius", "var(--lumo-border-radius-m)");
 
         // Header with author and date - styled differently from content
-        final String relativeDate = this.formatRelativeDate(comment.created);
-        final Span header = new Span(comment.username + " · " + relativeDate);
-        header.addClassName("comment-header");
-        header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem").set("color",
-                "var(--lumo-contrast-70pct)");
+        final LocalDateTime created = comment.created;
+        if (created == null) {
+            // Fallback if created is null, though it shouldn't be
+            final Span header = new Span((comment.username != null ? comment.username : "Unknown") + " · unknown");
+            header.addClassName("comment-header");
+            header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem")
+                    .set("color", "var(--lumo-contrast-70pct)");
+            commentDiv.add(header);
+        } else {
+            final String relativeDate = this.formatRelativeDate(created);
+            final Span header =
+                    new Span((comment.username != null ? comment.username : "Unknown") + " · " + relativeDate);
+            header.addClassName("comment-header");
+            header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem")
+                    .set("color", "var(--lumo-contrast-70pct)");
+            commentDiv.add(header);
+        }
 
         // Content with line break from header
         final String displayContent = CommentStatus.DELETED.equals(comment.status) ? "[deleted]" : comment.content;
@@ -236,25 +268,36 @@ public class CommentsPanel extends VerticalLayout {
 
         // Show/hide based on status
         if (!CommentStatus.DELETED.equals(comment.status)) {
-            final Button replyButton = new ReplyButton(e -> this.onReplyClicked(comment.publicId));
-            actions.add(replyButton);
+            final String publicId = comment.publicId;
+            if (publicId != null) {
+                final Button replyButton = new ReplyButton(e -> this.onReplyClicked(publicId));
+                actions.add(replyButton);
+            }
 
             if (comment.authorId == null || !comment.authorId.equals(this.currentUserId)) {
-                final Button reportButton = new ReportButton(e -> this.onReportClicked(comment.publicId));
-                actions.add(reportButton);
+                final String reportId = comment.publicId;
+                if (reportId != null) {
+                    final Button reportButton = new ReportButton(e -> this.onReportClicked(reportId));
+                    actions.add(reportButton);
+                }
             }
         }
 
         // Edit/Delete if author
         if (comment.authorId != null && comment.authorId.equals(this.currentUserId)) {
-            final Button editButton = new EditButton(e -> this.onEditClicked(comment.publicId, comment.content));
-            actions.add(editButton);
+            final String editId = comment.publicId;
+            final String commentText = comment.content;
+            if (editId != null && commentText != null) {
+                final Button editButton = new EditButton(e -> this.onEditClicked(editId, commentText));
+                actions.add(editButton);
+            }
 
-            final Button deleteButton = new DeleteButton(e -> this.onDeleteClicked(comment.publicId));
-            actions.add(deleteButton);
+            final String deleteId = comment.publicId;
+            if (deleteId != null) {
+                final Button deleteButton = new DeleteButton(e -> this.onDeleteClicked(deleteId));
+                actions.add(deleteButton);
+            }
         }
-
-        commentDiv.add(header);
 
         // Add edit timestamp if applicable
         if (comment.lastEdit != null) {
@@ -270,6 +313,9 @@ public class CommentsPanel extends VerticalLayout {
     }
 
     private void onCommentSubmitted() {
+        if (this.commentTextArea == null) {
+            return;
+        }
         final String text = this.commentTextArea.getValue().trim();
         if (text.isEmpty()) {
             NotificationUtil.showError("Comment cannot be empty");
@@ -291,11 +337,13 @@ public class CommentsPanel extends VerticalLayout {
             this.commentTextArea.clear();
             this.refresh();
             this.commentTextArea.setPlaceholder("Write a comment...");
-            this.submitButton.setText("Post Comment");
+            if (this.submitButton != null) {
+                this.submitButton.setText("Post Comment");
+            }
 
             NotificationUtil.showSuccess("Comment posted!");
         } catch (final PermissionDeniedException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Failed to create comment", e);
             NotificationUtil.showError("Failed to post comment. Please try again.");
@@ -304,9 +352,13 @@ public class CommentsPanel extends VerticalLayout {
 
     private void onReplyClicked(final String commentPublicId) {
         this.currentParentPublicId = commentPublicId;
-        this.commentTextArea.focus();
-        this.commentTextArea.setPlaceholder("Reply to comment...");
-        this.submitButton.setText("Post Reply");
+        if (this.commentTextArea != null) {
+            this.commentTextArea.focus();
+            this.commentTextArea.setPlaceholder("Reply to comment...");
+        }
+        if (this.submitButton != null) {
+            this.submitButton.setText("Post Reply");
+        }
 
         // Don't reload - just scroll to form and focus
         // The replies will be shown inline under the parent comment
@@ -330,10 +382,11 @@ public class CommentsPanel extends VerticalLayout {
                 this.loadComments();
                 NotificationUtil.showSuccess("Comment updated!");
             } catch (final PermissionDeniedException ex) {
-                NotificationUtil.showError(ex.getMessage());
+                NotificationUtil.showError(ex.getMessage() != null ? ex.getMessage() : "Permission denied");
             } catch (final Exception ex) {
                 LOG.error("Failed to edit comment", ex);
-                NotificationUtil.showError("Failed to edit comment. Please try again.");
+                NotificationUtil.showError(
+                        ex.getMessage() != null ? ex.getMessage() : "Failed to edit comment. Please try again.");
             }
         });
 
@@ -350,7 +403,7 @@ public class CommentsPanel extends VerticalLayout {
             this.loadComments();
             NotificationUtil.showSuccess("Comment deleted!");
         } catch (final PermissionDeniedException ex) {
-            NotificationUtil.showError(ex.getMessage());
+            NotificationUtil.showError(ex.getMessage() != null ? ex.getMessage() : "Permission denied");
         } catch (final Exception ex) {
             LOG.error("Failed to delete comment", ex);
             NotificationUtil.showError("Failed to delete comment. Please try again.");
@@ -372,7 +425,7 @@ public class CommentsPanel extends VerticalLayout {
             return "unknown";
         }
 
-        final LocalDateTime now = LocalDateTime.now();
+        final LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         final long minutesAgo = ChronoUnit.MINUTES.between(dateTime, now);
 
         if (minutesAgo < 1) {
@@ -412,7 +465,7 @@ public class CommentsPanel extends VerticalLayout {
      */
     public void refresh() {
         this.currentPage = 0;
-        this.currentParentPublicId = null;
+        this.currentParentPublicId = null; // OK since it's @Nullable
         this.loadComments();
     }
 

@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -30,6 +31,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "settings", layout = MainLayout.class)
 @PageTitle("Settings")
+@SuppressWarnings("NullAway")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
 
     @Inject
@@ -38,16 +40,25 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     @Inject
     private transient UserService userService;
 
+    @Nullable
     private PasswordField currentPasswordField;
+    @Nullable
     private PasswordField newPasswordField;
+    @Nullable
     private PasswordField confirmPasswordField;
 
+    @Nullable
     private ComboBox<String> userAvatarSelect;
+    @Nullable
     private ComboBox<String> tutorAvatarSelect;
+    @Nullable
     private Div previewBox;
 
+    @Nullable
     private Long currentUserId;
+    @Nullable
     private String currentUsername;
+    @Nullable
     private String currentEmail;
 
     private boolean passwordChangeInProgress;

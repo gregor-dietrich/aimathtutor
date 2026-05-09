@@ -38,6 +38,7 @@ import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
@@ -45,6 +46,7 @@ import jakarta.ws.rs.WebApplicationException;
  * Admin view for creating, editing and deleting user ranks (permission sets).
  */
 @Route(value = "admin/user-ranks", layout = AdminMainLayout.class)
+@SuppressWarnings("NullAway")
 public class AdminUserRanksView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminUserRanksView.class);
@@ -160,7 +162,8 @@ public class AdminUserRanksView extends AbstractAdminView {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
-            layout.add(this.permissionIcon(rank.adminView ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
+            layout.add(this.permissionIcon(
+                    Boolean.TRUE.equals(rank.adminView) ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
                     "Admin View"));
             return layout;
         }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
@@ -252,7 +255,7 @@ public class AdminUserRanksView extends AbstractAdminView {
      * @param rank
      *            the rank to edit or null to create a new one
      */
-    private void openRankDialog(final UserRankViewDto rank) {
+    private void openRankDialog(@Nullable final UserRankViewDto rank) {
         this.rankDialog.removeAll();
         this.currentRank = rank != null ? rank.toUserRankDto() : new UserRankDto();
 
@@ -421,7 +424,7 @@ public class AdminUserRanksView extends AbstractAdminView {
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
         } catch (final PermissionDeniedException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Unexpected error saving rank", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -430,14 +433,14 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void deleteRank(final UserRankViewDto rank) {
         try {
-            if (this.rankService.deleteRank(rank.publicId)) {
+            if (rank.publicId != null && this.rankService.deleteRank(rank.publicId)) {
                 NotificationUtil.showSuccess("Rank deleted successfully");
                 this.loadRanksAsync();
             } else {
                 NotificationUtil.showError("Failed to delete rank");
             }
         } catch (final PermissionDeniedException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final WebApplicationException e) {
             LOG.error("Error deleting rank", e);
             NotificationUtil.showError("Failed to delete rank. Please try again.");

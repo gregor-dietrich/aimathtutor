@@ -30,6 +30,7 @@ import de.vptr.aimathtutor.service.AiConfigService;
 import de.vptr.aimathtutor.service.AiProviderTestService;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -307,7 +308,7 @@ public class AdminConfigView extends AbstractAdminView {
     }
 
     private TextField createTextConfigField(final String label, final String configKey, final String defaultValue,
-            final String helperText) {
+            @Nullable final String helperText) {
         final var field = new TextField(label);
         field.setValue(this.aiConfigService.getConfigValue(configKey, defaultValue));
         field.setWidthFull();
@@ -362,10 +363,11 @@ public class AdminConfigView extends AbstractAdminView {
         }
         CompletableFuture.supplyAsync(testCall::get, this.managedExecutor).thenAccept(result -> {
             ui.access(() -> {
+                final String msg = result.message != null ? result.message : "No response";
                 if (result.success) {
-                    NotificationUtil.showSuccess(result.message);
+                    NotificationUtil.showSuccess(msg);
                 } else {
-                    NotificationUtil.showError(result.message);
+                    NotificationUtil.showError(msg);
                 }
                 LOG.infof("%s connection test: %s", providerName, result.message);
             });
@@ -394,6 +396,7 @@ public class AdminConfigView extends AbstractAdminView {
 
     // requireUserId helper: every save method must null-check getUserId()
     // before proceeding. Do NOT move getUserId() below first use.
+    @Nullable
     private Long requireUserId(final String action) {
         final Long userId = this.authService.getUserId();
         if (userId == null) {

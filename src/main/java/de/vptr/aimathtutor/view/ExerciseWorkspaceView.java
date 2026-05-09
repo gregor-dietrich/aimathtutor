@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +41,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -48,6 +50,7 @@ import jakarta.inject.Inject;
  */
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
+@SuppressWarnings("NullAway")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
     private static final Logger LOG = Logger.getLogger(ExerciseWorkspaceView.class);
 
@@ -63,20 +66,30 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     @Inject
     private transient AuthService authService;
 
+    @Nullable
     private transient Long exerciseId;
+    @Nullable
     private transient ExerciseViewDto exercise;
+    @Nullable
     private transient String currentSessionId;
     private transient int hintCount = 0;
     private transient boolean problemSolved = false;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
+    @Nullable
     private transient Div graspableCanvas;
+    @Nullable
     private transient AiChatPanel chatPanel;
+    @Nullable
     private transient CommentsPanel commentsPanel;
+    @Nullable
     private transient VerticalLayout hintsPanel;
+    @Nullable
     private transient Button requestHintButton;
+    @Nullable
     private transient Button backButton;
+    @Nullable
     private transient String currentExpression;
     private final transient ConcurrentHashMap<String, CompletableFuture<?>> pendingAsyncFutures =
             new ConcurrentHashMap<>();
@@ -117,7 +130,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         this.exercise = exerciseOpt.get();
-        this.exerciseId = this.exercise.id;
+        this.exerciseId = Objects.requireNonNull(this.exercise.id);
 
         // Check if exercise is published (students can only see published exercises)
         if (!Boolean.TRUE.equals(this.exercise.published)) {
@@ -139,7 +152,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Create session for this exercise
         try {
             final Long userId = this.authService.getUserId();
-            this.currentSessionId = this.graspableMathService.createSession(userId, this.exerciseId);
+            this.currentSessionId = this.graspableMathService.createSession(Objects.requireNonNull(userId),
+                    Objects.requireNonNull(this.exerciseId));
         } catch (final Exception e) {
             LOG.error("Failed to create session", e);
             this.currentSessionId = "session-" + System.currentTimeMillis();
@@ -285,10 +299,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             leftPanel.add(noticeDiv, hintsSection);
         }
 
-        if (this.exercise.commentable) {
+        if (Boolean.TRUE.equals(this.exercise.commentable)) {
             // Create comments panel (full width, below canvas)
-            this.commentsPanel = new CommentsPanel(this.exerciseId, this.exercise.publicId, this.currentSessionId,
-                    this.authService.getUserId());
+            this.commentsPanel = new CommentsPanel(Objects.requireNonNull(this.exerciseId),
+                    Objects.requireNonNull(this.exercise.publicId), Objects.requireNonNull(this.currentSessionId),
+                    Objects.requireNonNull(this.authService.getUserId()));
             this.commentsPanel.getStyle().set("margin-top", "1rem");
 
             // Add comments section to left panel
@@ -532,7 +547,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         rootFuture.thenAccept(answer -> {
             if (sessionId != null) {
                 try {
-                    this.aiTutorService.logQuestionInteraction(sessionId, userId, exerciseId, question, answer.message);
+                    this.aiTutorService.logQuestionInteraction(sessionId, userId, exerciseId, question,
+                            answer.message != null ? answer.message : "");
                 } catch (final Exception e) {
                     LOG.warn("Failed to log question interaction", e);
                 }

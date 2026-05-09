@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
@@ -45,6 +46,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -52,6 +54,7 @@ import jakarta.inject.Inject;
  * administrators.
  */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
+@SuppressWarnings("NullAway")
 public class AdminCommentsView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminCommentsView.class);
@@ -61,18 +64,30 @@ public class AdminCommentsView extends AbstractAdminView {
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
 
+    @Nullable
     private Grid<CommentViewDto> grid;
+    @Nullable
     private TextField searchField;
+    @Nullable
     private Button searchButton;
+    @Nullable
     private DatePicker startDatePicker;
+    @Nullable
     private DatePicker endDatePicker;
+    @Nullable
     private IntegerField userIdField;
+    @Nullable
     private IntegerField exerciseIdField;
+    @Nullable
     private Select<String> statusFilterSelect;
+    @Nullable
     private IntegerField flagsFilterField;
 
+    @Nullable
     private Dialog commentDialog;
+    @Nullable
     private Binder<CommentDto> binder;
+    @Nullable
     private transient CommentDto currentComment;
 
     /**
@@ -345,7 +360,8 @@ public class AdminCommentsView extends AbstractAdminView {
                 NotificationUtil.showError("You must be logged in to edit comments");
                 return;
             }
-            this.commentService.editComment(this.currentComment.publicId, this.currentComment, editorId);
+            this.commentService.editComment(Objects.requireNonNull(this.currentComment.publicId), this.currentComment,
+                    editorId);
             NotificationUtil.showSuccess("Comment updated successfully");
 
             this.commentDialog.close();
@@ -354,7 +370,7 @@ public class AdminCommentsView extends AbstractAdminView {
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
         } catch (final PermissionDeniedException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Error saving comment", e);
             NotificationUtil.showError("An error occurred while saving the comment. Please try again.");
@@ -368,11 +384,11 @@ public class AdminCommentsView extends AbstractAdminView {
                 NotificationUtil.showError("You must be logged in to delete comments");
                 return;
             }
-            this.commentService.deleteComment(comment.publicId, requesterId, true);
+            this.commentService.deleteComment(Objects.requireNonNull(comment.publicId), requesterId, true);
             NotificationUtil.showSuccess("Comment deleted successfully");
             this.loadCommentsAsync();
         } catch (final PermissionDeniedException e) {
-            NotificationUtil.showError(e.getMessage());
+            NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
             LOG.error("Error deleting comment", e);
             NotificationUtil.showError("An error occurred while deleting the comment. Please try again.");
@@ -458,12 +474,16 @@ public class AdminCommentsView extends AbstractAdminView {
     private void hideComment(final CommentViewDto comment) {
         this.showModerationReasonDialog("Hide Comment", "Why are you hiding this comment?", reason -> {
             try {
+                if (comment.publicId == null) {
+                    NotificationUtil.showError("Comment public ID is missing");
+                    return;
+                }
                 final var currentUserId = this.authService.getUserId();
                 this.commentService.moderateComment(comment.publicId, "HIDE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment hidden successfully");
                 this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
-                NotificationUtil.showError(e.getMessage());
+                NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
             } catch (final Exception e) {
                 LOG.error("Error hiding comment", e);
                 NotificationUtil.showError("An error occurred while hiding the comment. Please try again.");
@@ -474,12 +494,16 @@ public class AdminCommentsView extends AbstractAdminView {
     private void showComment(final CommentViewDto comment) {
         this.showModerationReasonDialog("Show Comment", "Why are you showing this comment again?", reason -> {
             try {
+                if (comment.publicId == null) {
+                    NotificationUtil.showError("Comment public ID is missing");
+                    return;
+                }
                 final var currentUserId = this.authService.getUserId();
                 this.commentService.moderateComment(comment.publicId, "SHOW", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment shown successfully");
                 this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
-                NotificationUtil.showError(e.getMessage());
+                NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
             } catch (final Exception e) {
                 LOG.error("Error showing comment", e);
                 NotificationUtil.showError("An error occurred while showing the comment. Please try again.");
@@ -490,12 +514,16 @@ public class AdminCommentsView extends AbstractAdminView {
     private void restoreComment(final CommentViewDto comment) {
         this.showModerationReasonDialog("Restore Comment", "Why are you restoring this comment?", reason -> {
             try {
+                if (comment.publicId == null) {
+                    NotificationUtil.showError("Comment public ID is missing");
+                    return;
+                }
                 final var currentUserId = this.authService.getUserId();
                 this.commentService.moderateComment(comment.publicId, "RESTORE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment restored successfully");
                 this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
-                NotificationUtil.showError(e.getMessage());
+                NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
             } catch (final Exception e) {
                 LOG.error("Error restoring comment", e);
                 NotificationUtil.showError("An error occurred while restoring the comment. Please try again.");
