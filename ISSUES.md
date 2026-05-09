@@ -283,13 +283,7 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ---
 
-## 6. Admin Dashboard Enhancement
-
-The admin dashboard could use some further enhancement, such as diagrams etc.
-
----
-
-## 7. Keyboard accessibility
+## 6. Keyboard accessibility
 
 **Problem:** 5 clickable `Span` components in admin Grid columns lack keyboard accessibility (not focusable, no Enter/Space handling, no ARIA role).
 
@@ -339,6 +333,12 @@ Note: `color` and `cursor` styles are removed — `LUMO_TERTIARY_INLINE` already
 All files except `AdminSessionsView.java` already import `Button` and `ButtonVariant`.
 
 > **Consistency check:** All clickable-span patterns are in admin views only (confirmed via full codebase audit — no student views have clickable spans).
+
+---
+
+## 7. Admin Dashboard Enhancement
+
+The admin dashboard could use some further enhancement, such as diagrams etc.
 
 ---
 

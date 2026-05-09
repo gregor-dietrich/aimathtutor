@@ -50,6 +50,14 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **@Push:** Enabled globally on `AppConfig`. Views do not need their own `@Push`.
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin serializes views.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.**
+- **Entity field `@Nullable` convention (NullAway-driven):** NullAway runs at ERROR level and treats unannotated fields as `@NonNull`. JPA entities use a no-arg constructor, so reference-type fields are null after construction before Hibernate populates them. Therefore **all entity fields** that are reference types (or collections) MUST be `@Nullable`, even if the DB column is `nullable=false`. Decision matrix:
+  - **Primitives** (`boolean`, `int`, etc.): never `@Nullable`
+  - **Auto-generated** (`id`, `version`, `publicId`, `created`, `lastEdit`): `@Nullable` — null before persist
+  - **Collections** (`@OneToMany`, `@ManyToMany`): `@Nullable` — null before Hibernate wraps as PersistentBag
+  - **Required business fields** (`username`, `title`, `content`, `name` with `nullable=false`): `@Nullable` — null after no-arg ctor, enforced at persist via `@NotBlank`/`@NotNull`
+  - **Genuinely optional** (`email`, `avatarEmoji`, `parent`, moderation fields): `@Nullable`
+  - **To-one associations** (`@ManyToOne`, `@OneToOne`): `@Nullable` even with `@JoinColumn(nullable=false)` — same null-after-ctor reason
+  - **Pairing `@Nullable` + `@NotNull` (Bean Validation)** on the same field is valid: `@Nullable` placates NullAway, `@NotNull` rejects null at persist time
 
 ### Critical Anti-Patterns (Do Not Propose)
 

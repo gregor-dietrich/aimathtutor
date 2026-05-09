@@ -46,13 +46,23 @@ CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Check
 
 ## Enforced Checkstyle Rules (Beyond Google Style)
 
-| Rule                  | Enforcement                       | Fix                                            |
-| --------------------- | --------------------------------- | ---------------------------------------------- |
-| No FQCNs              | `RegexpSinglelineJava`            | Always use imports                             |
-| No SLF4J              | `IllegalImport`                   | Use `org.jboss.logging.Logger`                 |
-| No `*v` log methods   | `RegexpSinglelineJava`            | Use `*f` methods (`infof`, `debugf`) with `%s` |
-| No direct UlidCreator | `IllegalImport`                   | Use `UlidUtil` wrapper                         |
-| 4-space indent        | `FileTabCharacter` + indent rules | No tabs, 4 spaces                              |
+| Rule                      | Enforcement                       | Fix                                                               |
+| ------------------------- | --------------------------------- | ----------------------------------------------------------------- |
+| No FQCNs                  | `RegexpSinglelineJava`            | Always use imports                                                |
+| No SLF4J                  | `IllegalImport`                   | Use `org.jboss.logging.Logger`                                    |
+| No `*v` log methods       | `RegexpSinglelineJava`            | Use `*f` methods (`infof`, `debugf`) with `%s`                    |
+| No direct UlidCreator     | `IllegalImport`                   | Use `UlidUtil` wrapper                                            |
+| 4-space indent            | `FileTabCharacter` + indent rules | No tabs, 4 spaces                                                 |
+| No `@Nullable` violations | NullAway (Error Prune plugin)     | `@Nullable` on entity reference fields (see AGENTS.md convention) |
+
+## NullAway & Entity `@Nullable` Convention
+
+NullAway runs at ERROR level on `de.vptr.aimathtutor`. Entity reference-type fields are null after no-arg construction, before Hibernate populates them. Therefore:
+
+- **Never remove `@Nullable`** from an entity reference field — NullAway will assume it's `@NonNull` and create false negatives
+- Primitives never get `@Nullable`
+- Pairing `@Nullable` + `@NotNull` (Bean Validation) is valid and recommended: `@Nullable` for NullAway, `@NotNull` for DB-level enforcement
+- See AGENTS.md "Entity field `@Nullable` convention" for the full decision matrix
 
 ## Security Checklist
 
