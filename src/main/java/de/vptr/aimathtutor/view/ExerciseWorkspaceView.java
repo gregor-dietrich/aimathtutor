@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -431,7 +432,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 this.authService.getUserId());
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
-        event.timestamp = LocalDateTime.now();
+        event.timestamp = LocalDateTime.now(ZoneId.systemDefault());
         event.correct = true;
 
         // Add event to conversation context

@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.ai;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -67,7 +68,7 @@ public class JsonRepairService {
             feedback.clampConfidence();
 
             // Set timestamp
-            feedback.timestamp = LocalDateTime.now();
+            feedback.timestamp = LocalDateTime.now(ZoneId.systemDefault());
 
             LOG.debug("Successfully parsed AI provider response as JSON");
             return feedback;

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -34,12 +35,13 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         session.sessionId = "sess-drng-" + UUID.randomUUID();
         session.user = user;
         session.exercise = ex;
-        session.startTime = LocalDateTime.now().minusDays(1);
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault()).minusDays(1);
         session.completed = true;
         this.sessionRepository.persist(session);
 
         final List<StudentSessionEntity> found = this.sessionRepository.findByUserIdAndDateRange(
-                Objects.requireNonNull(user.id), LocalDateTime.now().minusDays(2), LocalDateTime.now());
+                Objects.requireNonNull(user.id), LocalDateTime.now(ZoneId.systemDefault()).minusDays(2),
+                LocalDateTime.now(ZoneId.systemDefault()));
         Assertions.assertFalse(found.isEmpty());
         Assertions.assertTrue(found.stream().anyMatch(s -> Objects.equals(s.sessionId, session.sessionId)));
     }
@@ -54,7 +56,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         session.sessionId = "sess-srch-" + UUID.randomUUID();
         session.user = user;
         session.exercise = ex;
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
         this.sessionRepository.persist(session);
 
         final List<StudentSessionEntity> found = this.sessionRepository.searchByUserOrExerciseTerm("sessuser_srch");
@@ -72,10 +74,11 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         session.sessionId = "sess-cnt-" + UUID.randomUUID();
         session.user = user;
         session.exercise = ex;
-        session.startTime = LocalDateTime.now().minusMinutes(5);
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(5);
         this.sessionRepository.persist(session);
 
-        final long count = this.sessionRepository.countActiveStudentsSince(LocalDateTime.now().minusHours(1));
+        final long count = this.sessionRepository
+                .countActiveStudentsSince(LocalDateTime.now(ZoneId.systemDefault()).minusHours(1));
         Assertions.assertTrue(count >= 1, "Should count at least the student we just created a session for");
     }
 
@@ -89,7 +92,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         session.sessionId = "sess-byuid-" + UUID.randomUUID();
         session.user = user;
         session.exercise = ex;
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
         this.sessionRepository.persist(session);
 
         final List<StudentSessionEntity> found = this.sessionRepository.findByUserId(Objects.requireNonNull(user.id));

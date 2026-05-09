@@ -341,27 +341,3 @@ All files except `AdminSessionsView.java` already import `Button` and `ButtonVar
 The admin dashboard could use some further enhancement, such as diagrams etc.
 
 ---
-
-## 8. OWASP Dependency-Check & Secret Scanning
-
-**Issue:** The CI pipeline (`.github/workflows/ci-cd.yml`) is missing OWASP dependency-check and secret scanning steps. Both are currently commented out.
-
-**Why implement:** OWASP dependency-check is a documented Code Quality Gate (`failBuildOnCVSS=7`). Running it in CI prevents known-vulnerable dependencies from reaching `main`. Gitleaks secret scanning prevents accidental credential commits.
-
-**Action:**
-
-1. Add the `NVD_API_KEY` as a GitHub repository secret.
-2. Uncomment the OWASP dependency-check and Gitleaks steps in the `security` job.
-3. Make the OWASP step conditional or fail-soft if `NVD_API_KEY` is absent, so PRs from forks don't break:
-
-   ```yaml
-   - name: Run OWASP Dependency-Check
-     if: env.NVD_API_KEY != ''
-     run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
-     env:
-       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-   ```
-
-4. Gitleaks can run unconditionally (no secrets required).
-
----

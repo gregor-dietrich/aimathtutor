@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -68,7 +69,7 @@ public class GraspableMathService {
         session.sessionId = sessionId;
         session.user = user;
         session.exercise = exercise;
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
         session.completed = false;
         session.actionsCount = 0;
         session.correctActions = 0;
@@ -278,7 +279,7 @@ public class GraspableMathService {
         }
         session.completed = true;
         if (session.endTime == null) {
-            session.endTime = LocalDateTime.now();
+            session.endTime = LocalDateTime.now(ZoneId.systemDefault());
         }
         this.studentSessionRepository.persist(session);
         return true;

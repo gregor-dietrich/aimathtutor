@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 
@@ -314,7 +315,7 @@ class DbTimestampIT {
         session.sessionId = "sess-timestamp";
         session.user = user;
         session.exercise = exercise;
-        session.startTime = LocalDateTime.now();
+        session.startTime = LocalDateTime.now(ZoneId.systemDefault());
 
         this.studentSessionRepository.persist(session);
         this.em.flush();
