@@ -3,6 +3,8 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -11,17 +13,20 @@ import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiInteractionViewDto;
+import de.vptr.aimathtutor.dto.DashboardTrendDto;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiInteractionRepository;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 /**
@@ -44,6 +49,12 @@ public class AnalyticsService {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    ExerciseRepository exerciseRepository;
+
+    @Inject
+    EntityManager entityManager;
 
     /**
      * Get all student sessions
@@ -428,5 +439,186 @@ public class AnalyticsService {
         final List<Long> userIds = users.stream().map(u -> u.id).toList();
         final List<StudentSessionEntity> userSessions = this.studentSessionRepository.findByUserIdIn(userIds);
         return this.buildProgressSummaries(users, userSessions);
+    }
+
+    /**
+     * Get total user count.
+     */
+    @Transactional
+    public long getUserCount() {
+        LOG.trace("Getting user count");
+        return this.userRepository.countAll();
+    }
+
+    /**
+     * Get published exercise count.
+     */
+    @Transactional
+    public long getPublishedExerciseCount() {
+        LOG.trace("Getting published exercise count");
+        return this.exerciseRepository.countPublished();
+    }
+
+    /**
+     * Get daily session counts for the last N days. Returns a LinkedHashMap with every day filled (0 for missing days).
+     */
+    @Transactional
+    public LinkedHashMap<LocalDate, Long> getDailySessionCounts(final int days) {
+        LOG.tracef("Getting daily session counts for last %d days", days);
+        final var end = LocalDateTime.now(ZoneId.systemDefault());
+        final var start = end.minusDays(days);
+        final var sessions = this.getSessionsByDateRange(start, end);
+        final var counts = new LinkedHashMap<LocalDate, Long>();
+        for (final var session : sessions) {
+            if (session.startTime == null) {
+                continue;
+            }
+            final var date = session.startTime.toLocalDate();
+            counts.merge(date, 1L, Long::sum);
+        }
+        for (int i = days; i >= 0; i--) {
+            counts.putIfAbsent(LocalDate.now(ZoneId.systemDefault()).minusDays(i), 0L);
+        }
+        return counts;
+    }
+
+    /**
+     * Get trend data comparing current 7-day period to the prior 7-day period.
+     */
+    @Transactional
+    public DashboardTrendDto getTrendData() {
+        LOG.trace("Getting dashboard trend data");
+        final var now = LocalDateTime.now(ZoneId.systemDefault());
+        final var weekAgo = now.minusDays(7);
+        final var twoWeeksAgo = now.minusDays(14);
+
+        final var totalSessions = this.studentSessionRepository.countByStartTimeBetween(weekAgo, now);
+        final var prevTotalSessions = this.studentSessionRepository.countByStartTimeBetween(twoWeeksAgo, weekAgo);
+
+        final var completedSessions =
+                this.studentSessionRepository.findByCompletedAndDateRange(Boolean.TRUE, weekAgo, now).size();
+        final var prevCompletedSessions =
+                this.studentSessionRepository.findByCompletedAndDateRange(Boolean.TRUE, twoWeeksAgo, weekAgo).size();
+
+        final var activeStudents = this.studentSessionRepository.countActiveStudentsSince(weekAgo);
+        final var prevActiveStudents = this.studentSessionRepository.countActiveStudentsSince(twoWeeksAgo);
+
+        final var startOfToday = LocalDate.now(ZoneId.systemDefault()).atStartOfDay();
+        final var startOfTomorrow = startOfToday.plusDays(1);
+        final var todaySessions = this.studentSessionRepository
+                .countByStartTimeGreaterThanEqualAndStartTimeLessThan(startOfToday, startOfTomorrow);
+        final var prevTodaySessions =
+                this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(
+                        startOfToday.minusDays(7), startOfTomorrow.minusDays(7));
+
+        final var totalUsers =
+                ((Number) this.entityManager.createQuery("SELECT COUNT(u) FROM UserEntity u").getSingleResult())
+                        .longValue();
+        final var prevTotalUsers =
+                ((Number) this.entityManager.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.created < :d")
+                        .setParameter("d", weekAgo).getSingleResult()).longValue();
+
+        final var publishedExercises = ((Number) this.entityManager
+                .createQuery("SELECT COUNT(e) FROM ExerciseEntity e WHERE e.published = true").getSingleResult())
+                        .longValue();
+        final var prevPublishedExercises = ((Number) this.entityManager
+                .createQuery("SELECT COUNT(e) FROM ExerciseEntity e WHERE e.published = true AND e.created < :d")
+                .setParameter("d", weekAgo).getSingleResult()).longValue();
+
+        return new DashboardTrendDto(totalSessions, prevTotalSessions, completedSessions, prevCompletedSessions,
+                activeStudents, prevActiveStudents, todaySessions, prevTodaySessions, totalUsers, prevTotalUsers,
+                publishedExercises, prevPublishedExercises);
+    }
+
+    /**
+     * Get completion rate histogram across individual sessions, bucketed by session accuracy (correct_actions /
+     * actions_count): 0%, 1-25%, 26-50%, 51-75%, 76-99%, 100%.
+     */
+    @Transactional
+    public LinkedHashMap<String, Integer> getCompletionRateHistogram() {
+        LOG.trace("Getting completion rate histogram");
+        final var sessions = this.studentSessionRepository.findAll();
+        final var buckets = new LinkedHashMap<String, Integer>();
+        buckets.put("0%", 0);
+        buckets.put("1-25%", 0);
+        buckets.put("26-50%", 0);
+        buckets.put("51-75%", 0);
+        buckets.put("76-99%", 0);
+        buckets.put("100%", 0);
+
+        for (final var session : sessions) {
+            final int actions = session.actionsCount;
+            if (actions == 0) {
+                buckets.merge("0%", 1, Integer::sum);
+                continue;
+            }
+            final double rate = (double) session.correctActions / actions;
+            if (rate == 0.0) {
+                buckets.merge("0%", 1, Integer::sum);
+            } else if (rate <= 0.25) {
+                buckets.merge("1-25%", 1, Integer::sum);
+            } else if (rate <= 0.50) {
+                buckets.merge("26-50%", 1, Integer::sum);
+            } else if (rate <= 0.75) {
+                buckets.merge("51-75%", 1, Integer::sum);
+            } else if (rate < 1.0) {
+                buckets.merge("76-99%", 1, Integer::sum);
+            } else {
+                buckets.merge("100%", 1, Integer::sum);
+            }
+        }
+        return buckets;
+    }
+
+    /**
+     * Get hint usage distribution across individual sessions: 0 hints, 1-3, 4-7, 8+.
+     */
+    @Transactional
+    public LinkedHashMap<String, Integer> getHintUsageBuckets() {
+        LOG.trace("Getting hint usage buckets");
+        final var sessions = this.studentSessionRepository.findAll();
+        final var buckets = new LinkedHashMap<String, Integer>();
+        buckets.put("0 hints", 0);
+        buckets.put("1-3 hints", 0);
+        buckets.put("4-7 hints", 0);
+        buckets.put("8+ hints", 0);
+
+        for (final var session : sessions) {
+            final int h = session.hintsUsed;
+            if (h == 0) {
+                buckets.merge("0 hints", 1, Integer::sum);
+            } else if (h <= 3) {
+                buckets.merge("1-3 hints", 1, Integer::sum);
+            } else if (h <= 7) {
+                buckets.merge("4-7 hints", 1, Integer::sum);
+            } else {
+                buckets.merge("8+ hints", 1, Integer::sum);
+            }
+        }
+        return buckets;
+    }
+
+    /**
+     * Get recent sessions within the last 7 days, limited to the given count.
+     */
+    @Transactional
+    public List<StudentSessionViewDto> getRecentSessions(final int limit) {
+        LOG.tracef("Getting recent sessions, limit %d", limit);
+        final var now = LocalDateTime.now(ZoneId.systemDefault());
+        final var weekAgo = now.minusDays(7);
+        final var sessions = this.studentSessionRepository.findByStartTimeBetween(weekAgo, now);
+        return sessions.stream().map(StudentSessionViewDto::new).limit(limit).toList();
+    }
+
+    /**
+     * Get top students by completed sessions count, limited to the given count.
+     */
+    @Transactional
+    public List<StudentProgressSummaryDto> getTopStudentsByCompletion(final int limit) {
+        LOG.tracef("Getting top students by completion, limit %d", limit);
+        return this.getAllUsersProgressSummary().stream()
+                .filter(s -> s.completedSessions != null && s.completedSessions > 0)
+                .sorted(Comparator.comparingInt((final StudentProgressSummaryDto s) -> s.completedSessions).reversed())
+                .limit(limit).toList();
     }
 }

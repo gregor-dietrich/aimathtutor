@@ -185,6 +185,16 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
+     * Counts all users.
+     *
+     * @return total number of users
+     */
+    public long countAll() {
+        final var q = this.em.createQuery("SELECT COUNT(u) FROM UserEntity u", Long.class);
+        return q.getSingleResult();
+    }
+
+    /**
      * Searches for users matching the given search term.
      *
      * @param searchTerm

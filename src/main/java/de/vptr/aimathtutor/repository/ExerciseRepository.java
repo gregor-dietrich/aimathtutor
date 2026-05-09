@@ -79,6 +79,16 @@ public class ExerciseRepository extends AbstractRepository {
     }
 
     /**
+     * Counts all published exercises.
+     *
+     * @return count of published exercises
+     */
+    public long countPublished() {
+        final var q = this.em.createNamedQuery("Exercise.countPublished", Long.class);
+        return q.getSingleResult();
+    }
+
+    /**
      * Retrieves all exercises created by a specific user.
      *
      * @param userId
