@@ -338,6 +338,460 @@ All files except `AdminSessionsView.java` already import `Button` and `ButtonVar
 
 ## 7. Admin Dashboard Enhancement
 
-The admin dashboard could use some further enhancement, such as diagrams etc.
+**Goal:** Transform the current 4-stat-card dashboard into a comprehensive, professionally designed analytics dashboard suitable for a VC-backed EdTech startup, using **only already-available data sources** (no schema/entity changes).
+
+**Current state:** 4 stat cards (Total Sessions, Completed, Active Students 7d, Today's Sessions) — purely textual, no visualizations, no trends, no drill-down. Current file: `AdminDashboardView.java` (123 lines).
+
+**Target state:** Multi-section dashboard with KPI cards (with trend indicators), SVG time-series charts, distribution visualizations, top-performers list, and recent activity feed — all styled with Lumo design tokens, no external charting dependencies.
+
+**Priority:** High — first thing admins see; sets tone for entire admin experience.
+**Estimated difficulty:** ★★★☆☆ (primarily UI work with thin backend convenience methods)
+
+---
+
+### 7.1 Charting Strategy
+
+**Approach:** Pure SVG charts generated server-side in a utility class. No additional dependencies.
+
+**Rationale:**
+
+- Zero new Maven dependencies (Vaadin Charts is commercial; JFreeChart would add weight)
+- Works within Vaadin Flow's server-side rendering model
+- SVG produces crisp, professional charts at any resolution
+- Lumo CSS variables can be embedded in SVG for theme consistency
+- Implementation is self-contained in ~3 files
+
+**Reusable components to create:**
+
+- `ChartUtil` — static methods returning SVG strings for line, bar, and donut charts
+- `DashboardKpiCard` — styled card with value, label, trend arrow (% change)
+- `ChartCard` — card wrapper with title + chart content
+- `SVGComponent` — thin Vaadin component wrapping an SVG string in an `HtmlContainer`
+
+---
+
+### 7.2 Dashboard Layout
+
+```txt
+Row 1: KPI Cards (7 compact cards, responsive wrap)
+  ┌─────────────┐ ┌──────────────┐ ┌───────────────┐ ┌──────────────┐
+  │ Total        │ │ Completed    │ │ Active (7d)   │ │ Today        │
+  │ Sessions     │ │ Sessions     │ │ Students      │ │ Sessions     │
+  │ 1,234 ▲ 12%  │ │ 890 ▲ 8%     │ │ 156 ▼ 3%      │ │ 42 ▲ 25%     │
+  └─────────────┘ └──────────────┘ └───────────────┘ └──────────────┘
+  ┌─────────────┐ ┌──────────────┐ ┌───────────────┐
+  │ Total       │ │ Published    │ │ Avg Success   │
+  │ Users       │ │ Exercises    │ │ Rate          │
+  │ 89 ▲ 5%     │ │ 45 — 0%      │ │ 72.3% ▲ 2%    │
+  └─────────────┘ └──────────────┘ └───────────────┘
+
+Row 2: Time-Series + Top Categories (2 equal columns)
+  ┌──────────────────────────────┐ ┌──────────────────────────────┐
+  │  Sessions per Day (30 days)  │ │  Top Exercises by Completion │
+  │  [SVG line chart]            │ │  [SVG horizontal bar chart]  │
+  │                              │ │                              │
+  └──────────────────────────────┘ └──────────────────────────────┘
+
+Row 3: Distributions (2 equal columns)
+  ┌──────────────────────────────┐ ┌──────────────────────────────┐
+  │  Completion Rate Distribution│ │  Hints Usage Distribution    │
+  │  [SVG donut/bar chart]       │ │  [SVG horizontal bar chart]  │
+  └──────────────────────────────┘ └──────────────────────────────┘
+
+Row 4: Activity Feed + Top Performers (2 equal columns)
+  ┌──────────────────────────────┐ ┌──────────────────────────────┐
+  │  Recent Activity (7 days)    │ │  Top Students by Completion  │
+  │  • Student A — Ex. 1 — 3m ago│ │  1. Student A — 45 sessions  │
+  │  • Student B — Ex. 2 — 15m ago│ │  2. Student B — 38 sessions  │
+  │  • Student C — Ex. 3 — 1h ago│ │  3. Student C — 32 sessions  │
+  └──────────────────────────────┘ └──────────────────────────────┘
+```
+
+---
+
+### 7.3 Metrics, Data Sources, and Computation
+
+All sourced from existing `AnalyticsService`, `UserRepository`, `ExerciseRepository` — no new DB columns.
+
+| #   | Metric                       | Data Source                                             | Computation                                                   |
+| --- | ---------------------------- | ------------------------------------------------------- | ------------------------------------------------------------- |
+| 1   | Total Sessions               | `AnalyticsService.getTotalSessionsCount()`              | Existing `countAll()`                                         |
+| 2   | Completed Sessions           | `AnalyticsService.getCompletedSessionsCount()`          | Existing `countByCompleted(true)`                             |
+| 3   | Active Students (7d)         | `AnalyticsService.getActiveStudentsCount()`             | Existing `countActiveStudentsSince()`                         |
+| 4   | Today's Sessions             | `AnalyticsService.getTodaySessionsCount()`              | Existing half-open range count                                |
+| 5   | Total Users                  | `AnalyticsService.getUserCount()`                       | **New:** `UserRepository` injected, `SELECT COUNT(u)` JPQL    |
+| 6   | Published Exercises          | `AnalyticsService.getPublishedExerciseCount()`          | **New:** `ExerciseRepository.findPublished().size()`          |
+| 7   | Avg Success Rate             | `AnalyticsService.getAllUsersProgressSummary()`         | Average of all `successRate` fields                           |
+| 8   | Sessions per Day (30d)       | `AnalyticsService.getSessionsByDateRange(30dAgo, now)`  | Bucket by `startTime.toLocalDate()`, fill missing days with 0 |
+| 9   | Top Exercises                | `AnalyticsService.getProblemCategoryStats()`            | Existing — sort by count, take top N                          |
+| 10  | Completion Rate Dist.        | `AnalyticsService.getAllUsersProgressSummary()`         | Bucket `completedSessions/totalSessions` into 5 ranges        |
+| 11  | Hints Usage Dist.            | `AnalyticsService.getAllUsersProgressSummary()`         | Sum all `hintsUsed` per student; bucket: 0, 1-5, 6-20, 21+    |
+| 12  | Recent Sessions (7d)         | `AnalyticsService.getSessionsByDateRange(7dAgo, now)`   | Take first 10; show username, exercise, relative time         |
+| 13  | Top Students (by completion) | `AnalyticsService.getAllUsersProgressSummary()`         | Sort by `completedSessions` desc, take 5                      |
+| 14  | Trend % (vs prior period)    | `getSessionsByDateRange()` for current and prior period | `(current - prior) / prior * 100` for each KPI                |
+
+**Trend computation:** For each KPI, compare current period (e.g., last 7 days) to the immediately preceding period (e.g., 7-14 days ago). This requires two date-range queries per KPI — acceptable since all are lightweight `count` queries.
+
+---
+
+### 7.4 New Backend Methods
+
+Add to `AnalyticsService`. These are thin convenience wrappers — no new queries beyond what repositories already expose, all computation happens in Java after fetching data.
+
+#### 7.4.1 `getUserCount()` → `long`
+
+Delegates to `UserRepository` (currently not injected in `AnalyticsService` — add `@Inject UserRepository userRepository` field, which already exists at line 46).
+
+Wait — `UserRepository` is already injected in `AnalyticsService` (line 46). Just need to call `this.userRepository.findAll().size()` or better, add a `countAll()` to `UserRepository`:
+
+```java
+// In UserRepository — new method:
+public long countAll() {
+    final var q = this.em.createQuery("SELECT COUNT(u) FROM UserEntity u", Long.class);
+    return q.getSingleResult();
+}
+```
+
+#### 7.4.2 `getPublishedExerciseCount()` → `long`
+
+```java
+// In AnalyticsService:
+@Inject transient ExerciseRepository exerciseRepository;  // new injection
+...
+public long getPublishedExerciseCount() {
+    return this.exerciseRepository.findPublished().size();
+}
+```
+
+Or add a `countPublished()` to `ExerciseRepository` for efficiency.
+
+#### 7.4.3 `getDailySessionCounts(int days)` → `LinkedHashMap<LocalDate, Long>`
+
+```java
+public LinkedHashMap<LocalDate, Long> getDailySessionCounts(int days) {
+    var end = LocalDateTime.now();
+    var start = end.minusDays(days);
+    var sessions = getSessionsByDateRange(start, end);
+    var counts = sessions.stream()
+        .collect(Collectors.groupingBy(
+            s -> s.startTime.toLocalDate(),
+            LinkedHashMap::new,
+            Collectors.counting()
+        ));
+    // Fill missing days with 0
+    for (int i = days; i >= 0; i--) {
+        counts.putIfAbsent(LocalDate.now().minusDays(i), 0L);
+    }
+    return counts;
+}
+```
+
+#### 7.4.4 `getTrendData()` → `DashboardTrendDto`
+
+DTO bundling 7-day and prior-7-day counts for each KPI, plus computed percentage changes. Methods needed:
+
+- `countByStartTimeBetween(start, end)` already exists on `StudentSessionRepository`
+- `countActiveStudentsSince(time)` already exists
+
+New DTO:
+
+```java
+public class DashboardTrendDto {
+    public final long totalSessions, prevTotalSessions;
+    public final long completedSessions, prevCompletedSessions;
+    public final long activeStudents, prevActiveStudents;
+    public final long todaySessions, prevTodaySessions;
+    // computed
+    public double totalSessionsChange() { ... }
+    public double completedSessionsChange() { ... }
+    // etc.
+}
+```
+
+#### 7.4.5 `getCompletionRateHistogram()` → `LinkedHashMap<String, Integer>`
+
+Buckets: `0%`, `1–25%`, `26–50%`, `51–75%`, `76–99%`, `100%`.
+Compute from `getAllUsersProgressSummary()` — for each student, compute `completedSessions / totalSessions`, map to bucket.
+
+#### 7.4.6 `getHintUsageBuckets()` → `LinkedHashMap<String, Integer>`
+
+Buckets: `0 hints`, `1–5 hints`, `6–20 hints`, `21+ hints`.
+Sum hintsUsed from `getAllUsersProgressSummary()`, bucket.
+
+#### 7.4.7 `getRecentSessions(int limit)` → `List<StudentSessionViewDto>`
+
+```java
+public List<StudentSessionViewDto> getRecentSessions(int limit) {
+    var weekAgo = LocalDateTime.now().minusDays(7);
+    var sessions = getSessionsByDateRange(weekAgo, null);
+    return sessions.stream().limit(limit).toList();
+}
+```
+
+#### 7.4.8 `getTopStudentsByCompletion(int limit)` → `List<StudentProgressSummaryDto>`
+
+```java
+public List<StudentProgressSummaryDto> getTopStudentsByCompletion(int limit) {
+    return getAllUsersProgressSummary().stream()
+        .sorted(Comparator.comparingInt(s -> s.completedSessions != null ? s.completedSessions : 0))
+        .limit(limit)
+        .toList();
+}
+```
+
+#### 7.4.9 DTO: `DashboardData` (bundled result)
+
+Inner class or record in `AdminDashboardView` to pass all data in a single async load:
+
+```java
+record DashboardData(
+    long totalSessions, long completedSessions, long activeStudents, long todaySessions,
+    long totalUsers, long publishedExercises, double avgSuccessRate,
+    LinkedHashMap<LocalDate, Long> dailySessionCounts,
+    LinkedHashMap<String, Integer> topExercises,
+    LinkedHashMap<String, Integer> completionRateHistogram,
+    LinkedHashMap<String, Integer> hintUsageBuckets,
+    List<StudentSessionViewDto> recentSessions,
+    List<StudentProgressSummaryDto> topStudents,
+    DashboardTrendDto trends
+) {}
+```
+
+---
+
+### 7.5 New UI Components
+
+Package: `de.vptr.aimathtutor.component.dashboard` (new sub-package)
+
+| File                      | Type             | Description                                                                      |
+| ------------------------- | ---------------- | -------------------------------------------------------------------------------- |
+| `DashboardKpiCard.java`   | `VerticalLayout` | Single KPI: value (large bold), label (uppercase small), trend arrow+% (colored) |
+| `ChartCard.java`          | `VerticalLayout` | Wrapper: title + chart content with consistent card styling                      |
+| `SvgLineChart.java`       | `HtmlContainer`  | Renders an SVG `<svg>` element line chart from data points                       |
+| `SvgBarChart.java`        | `HtmlContainer`  | Renders SVG horizontal bar chart from labeled values                             |
+| `SvgDonutChart.java`      | `HtmlContainer`  | Renders SVG donut chart from category-value pairs                                |
+| `RecentActivityFeed.java` | `VerticalLayout` | Styled list of recent sessions with relative timestamps                          |
+| `TopStudentsList.java`    | `VerticalLayout` | Compact ranked list of top students                                              |
+
+#### 7.5.1 `DashboardKpiCard` Design
+
+```java
+┌─────────────────────┐
+│                     │
+│   1,234             │  ← value (--lumo-primary-color, 32px, 800 weight)
+│                     │
+│   TOTAL SESSIONS    │  ← label (--lumo-secondary-text-color, 11px, uppercase, 600 tracking)
+│                     │
+│   ↑ 12.3% vs last  │  ← trend (--lumo-success-color for up, --lumo-error-color for down)
+│       7 days       │
+└─────────────────────┘
+```
+
+- Fixed width: ~200px or flex-grow equal
+- Border radius: 8px
+- Background: `var(--lumo-base-color)` with `1px solid var(--lumo-contrast-10pct)`
+- Hover: subtle `box-shadow` elevation
+
+#### 7.5.2 SVG Chart Specifications
+
+All charts use `viewBox` for responsiveness and embed Lumo CSS variable colors via inline `<style>` within SVG.
+
+**Line Chart (Sessions per Day):**
+
+- 800×300 viewBox
+- Light gray gridlines (horizontal only, 4-5 lines)
+- X-axis: day labels (every 5th day)
+- Y-axis: session count (3-4 tick marks)
+- Line: `--lumo-primary-color` (2px stroke), with gradient fill below
+- Dots on data points (4px radius, same color)
+- No legend (single series)
+
+**Horizontal Bar Chart (Top Exercises / Hint Buckets):**
+
+- 600×250 viewBox (height scales with item count)
+- Bar: `--lumo-primary-color` with 80% opacity
+- Label left-aligned, value right-aligned
+- Bar length proportional to max value
+
+**Donut Chart (Completion Rate):**
+
+- 300×300 viewBox
+- 6 segments with distinct hues from Lumo palette
+- Center text: "Completion Rate" + average percentage
+- Segments ordered clockwise from "0%" at top
+
+#### 7.5.3 ChartUtil SVG Generation
+
+```java
+public final class ChartUtil {
+    public static String lineChart(
+        LinkedHashMap<LocalDate, Long> data,
+        String title, int width, int height
+    ) { ... }
+
+    public static String horizontalBarChart(
+        LinkedHashMap<String, Integer> data,
+        String title, int width, int height
+    ) { ... }
+
+    public static String donutChart(
+        LinkedHashMap<String, Integer> data,
+        String centerLabel, String centerValue, int size
+    ) { ... }
+}
+```
+
+Returns a complete `<svg>` element string embeddable in a Vaadin `HtmlContainer`.
+
+---
+
+### 7.6 Rebuild AdminDashboardView
+
+Current file: 123 lines → target: ~300-400 lines (including inner `DashboardData` record).
+
+**Structure:**
+
+```java
+@Route(value = "admin/dashboard", layout = AdminMainLayout.class)
+@PageTitle("Admin Dashboard - AI Math Tutor")
+public class AdminDashboardView extends AbstractAdminView {
+
+    @Inject private transient AnalyticsService analyticsService;
+
+    // UI component references for partial updates
+    private transient List<DashboardKpiCard> kpiCards;
+    private transient ChartCard sessionsChart;
+    private transient ChartCard topExercisesChart;
+    // ...
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        if (!isAuthOk(event)) return;
+        buildUi();
+        loadDashboardData();
+    }
+
+    private void buildUi() {
+        removeAll();
+        setSizeFull();
+        setPadding(true);
+        setSpacing(true);
+
+        // Title
+        add(new H2("Dashboard Overview"));
+
+        // Row 1: KPI cards in HorizontalLayout with wrapping
+        var kpiRow = new HorizontalLayout();
+        kpiRow.setWidthFull();
+        kpiRow.setFlexGrow(1, kpiCards...);
+        add(kpiRow);
+
+        // Row 2: Two ChartCards side by side
+        var chartRow1 = new HorizontalLayout(...);
+        add(chartRow1);
+
+        // Row 3: Two ChartCards side by side
+        var chartRow2 = new HorizontalLayout(...);
+        add(chartRow2);
+
+        // Row 4: Activity + Top Students
+        var bottomRow = new HorizontalLayout(...);
+        add(bottomRow);
+    }
+
+    private void loadDashboardData() {
+        AsyncDataLoader.load(() -> {
+            var totalSessions = analyticsService.getTotalSessionsCount();
+            var completedSessions = analyticsService.getCompletedSessionsCount();
+            // ... all other metrics ...
+            var dailyCounts = analyticsService.getDailySessionCounts(30);
+            var trends = analyticsService.getTrendData();
+            // ...
+            return new DashboardData(totalSessions, completedSessions, ..., dailyCounts, trends);
+        }, this, this::renderDashboard, "Failed to load dashboard data");
+    }
+
+    private void renderDashboard(DashboardData data) {
+        updateKpiCards(data);
+        updateCharts(data);
+        updateActivityFeed(data);
+        updateTopStudents(data);
+    }
+}
+```
+
+---
+
+### 7.7 Async Data Loading & Performance
+
+- **Single async load**: One `CompletableFuture.supplyAsync()` call fetches ALL dashboard data bundled in `DashboardData` — avoids multiple sequential network round-trips.
+- **Lightweight queries**: Each KPI uses a simple `COUNT` query (existing); time-series and distribution data query sessions with date ranges, bucketed in Java.
+- **Acceptable latency**: Even with 50K sessions, bucketing by date in Java completes in <50ms. The `getAllUsersProgressSummary()` method already demonstrates this approach.
+- **Caching**: Not needed for MVP — queries are fast. Future: add a 60-second in-memory cache on `DashboardData` if latency becomes an issue.
+- **Empty state**: All charts/cards gracefully handle empty data (show "No data" or zeroes).
+
+---
+
+### 7.8 Startup Dashboard Visual Design Principles
+
+| Principle                | Implementation                                                     |
+| ------------------------ | ------------------------------------------------------------------ |
+| **Minimal ink** (Tufte)  | Light gray gridlines, no chart borders, minimal axis labels        |
+| **Data-ink ratio**       | No 3D, no gradients, no extraneous decorations                     |
+| **Color meaning**        | Lumo success (↑ positive), error (↓ negative), primary (main data) |
+| **Consistent spacing**   | 24px between sections, 16px between cards, 12px within cards       |
+| **Typography hierarchy** | 32px KPI values → 14px secondary text → 11px labels                |
+| **Interactive feedback** | Subtle shadow elevation on hover for cards                         |
+| **Loading state**        | Cards show "—" or skeleton placeholder while data loads            |
+| **Error state**          | Cards show "⚠" with error; user can refresh                        |
+
+---
+
+### 7.9 Implementation Order (Recommended)
+
+| Step | What                                                                                                                                     | Creates                         | Est. effort |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ----------- |
+| 1    | Add `countAll()` to `UserRepository`; `getUserCount()`, `getPublishedExerciseCount()` to `AnalyticsService`                              | 2 small methods                 | 15 min      |
+| 2    | Add `getDailySessionCounts()`, `getTrendData()` to `AnalyticsService`                                                                    | 2 methods + `DashboardTrendDto` | 30 min      |
+| 3    | Add `getCompletionRateHistogram()`, `getHintUsageBuckets()`, `getRecentSessions()`, `getTopStudentsByCompletion()` to `AnalyticsService` | 4 methods                       | 30 min      |
+| 4    | Create `ChartUtil` with SVG generation methods                                                                                           | 1 utility + 3 SVG generators    | 2-3 h       |
+| 5    | Create `DashboardKpiCard`, `ChartCard` components                                                                                        | 2 component classes             | 1 h         |
+| 6    | Create `SvgLineChart`, `SvgBarChart`, `SvgDonutChart` thin wrappers                                                                      | 3 wrapper classes               | 30 min      |
+| 7    | Create `RecentActivityFeed`, `TopStudentsList`                                                                                           | 2 component classes             | 30 min      |
+| 8    | Rebuild `AdminDashboardView` with new layout + async loading                                                                             | Rewrite dashboard view          | 2 h         |
+| 9    | Manual testing + visual polish                                                                                                           | —                               | 1 h         |
+| 10   | Run `make lint` + `make test`                                                                                                            | —                               | 5 min       |
+
+**Total estimated effort: ~8-10 hours** (one focused day)
+
+---
+
+### 7.10 Testing
+
+- **Unit tests** for:
+  - `ChartUtil` SVG output structure (valid XML, correct viewBox, presence of data points)
+  - `DashboardTrendDto` percentage change computation (positive, negative, zero, divide-by-zero)
+  - New `AnalyticsService` methods (daily counts, histograms, top N)
+  - Empty data edge cases
+- **Manual verification**:
+  - All 4 layout rows render correctly side by side
+  - SVG charts display with proper colors and scaling
+  - Trend arrows show correct direction and color
+  - Responsive wrap on narrow window
+  - Loading and error states display correctly
+- **Existing tests must pass**: `make test` and `make lint`
+
+---
+
+### 7.11 Future Enhancements (Out of Scope)
+
+- Time-period selector (7d/30d/90d/1y toggle) — requires component state management
+- Interactive chart tooltips — requires Chart.js or JS integration
+- Dashboard PDF/PNG export — requires HTML2Canvas or Puppeteer
+- Drag-and-drop dashboard widget layout — requires Vaadin DragSource/DropTarget
+- Click-to-drill-down (chart click navigates to filtered admin view) — requires chart click handlers in SVG
+- Automated email report delivery — requires scheduler + template engine
+- Export to CSV for specific chart data
+- Custom date range picker for chart data
 
 ---
