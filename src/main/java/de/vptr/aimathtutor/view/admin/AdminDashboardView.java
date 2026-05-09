@@ -1,8 +1,11 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.HashMap;
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -11,13 +14,22 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.dashboard.ChartCard;
+import de.vptr.aimathtutor.component.dashboard.ChartUtil;
+import de.vptr.aimathtutor.component.dashboard.DashboardKpiCard;
+import de.vptr.aimathtutor.component.dashboard.RecentActivityFeed;
+import de.vptr.aimathtutor.component.dashboard.TopStudentsList;
+import de.vptr.aimathtutor.dto.DashboardTrendDto;
+import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
+import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
- * Admin dashboard for displaying high-level analytics and overview statistics. Shows total sessions, active students,
- * completed sessions, and recent activity.
+ * Premium admin dashboard with KPI cards in a responsive CSS grid, SVG line/bar charts, donut chart for completion
+ * rates, recent activity feed, and top performers. Glass-morphism design language with gradient accents.
  */
 @Route(value = "admin/dashboard", layout = AdminMainLayout.class)
 @PageTitle("Admin Dashboard - AI Math Tutor")
@@ -26,55 +38,117 @@ public class AdminDashboardView extends AbstractAdminView {
     @Inject
     private transient AnalyticsService analyticsService;
 
-    // Map to store references to stat card value spans for efficient updates
-    private final transient Map<String, Span> statCardValues = new HashMap<>();
+    @Nullable
+    private transient DashboardKpiCard totalSessionsCard;
+    @Nullable
+    private transient DashboardKpiCard completedSessionsCard;
+    @Nullable
+    private transient DashboardKpiCard activeStudentsCard;
+    @Nullable
+    private transient DashboardKpiCard todaySessionsCard;
+    @Nullable
+    private transient DashboardKpiCard totalUsersCard;
+    @Nullable
+    private transient DashboardKpiCard publishedExercisesCard;
+    @Nullable
+    private transient DashboardKpiCard avgSuccessRateCard;
 
-    /**
-     * Create a new admin dashboard view with default layout initialization.
-     */
-    public AdminDashboardView() {
-        this.setSizeFull();
-        this.setPadding(true);
-        this.setSpacing(true);
-        // transient statCardValues is initialized inline; no further action required
-    }
+    @Nullable
+    private transient ChartCard sessionsChart;
+    @Nullable
+    private transient ChartCard topExercisesChart;
+    @Nullable
+    private transient ChartCard completionRateChart;
+    @Nullable
+    private transient ChartCard hintsChart;
 
-    /**
-     * Called before the view is shown. Ensures authentication and triggers UI construction and data loading.
-     */
+    @Nullable
+    private transient VerticalLayout activityFeedContainer;
+    @Nullable
+    private transient VerticalLayout topStudentsContainer;
+
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
         if (!this.isAuthOk(event)) {
             return;
         }
-
         this.buildUi();
         this.loadDashboardData();
     }
 
     private void buildUi() {
         this.removeAll();
-        this.statCardValues.clear();
+        this.setSizeFull();
+        this.setPadding(true);
+        this.setSpacing(true);
 
-        // Title
         final var title = new H2("Dashboard Overview");
+        title.getStyle().set("margin-top", "0").set("margin-bottom", "4px").set("font-size", "22px")
+                .set("font-weight", "700").set("color", "var(--lumo-header-text-color)")
+                .set("letter-spacing", "-0.3px");
         this.add(title);
 
-        // Statistics cards container
-        final var cardsContainer = new HorizontalLayout();
-        cardsContainer.setSpacing(true);
-        cardsContainer.setWidthFull();
+        final var subtitle = new Span("Real-time analytics at a glance");
+        subtitle.getStyle().set("font-size", "13px").set("color", "var(--lumo-secondary-text-color)")
+                .set("margin-bottom", "8px").set("display", "block");
+        this.add(subtitle);
 
-        // Add placeholder cards that will be updated with data
-        final var totalSessionsCard = this.createStatCard("Total Sessions", "Loading...");
-        final var completedSessionsCard = this.createStatCard("Completed Sessions", "Loading...");
-        final var activeStudentsCard = this.createStatCard("Active Students (Last 7 Days)", "Loading...");
-        final var todaySessionsCard = this.createStatCard("Today's Sessions", "Loading...");
+        // Row 1: Active Students, Total Users, Published Exercises
+        this.activeStudentsCard = new DashboardKpiCard("Active Students (7d)", "—");
+        this.totalUsersCard = new DashboardKpiCard("Total Users", "—");
+        this.publishedExercisesCard = new DashboardKpiCard("Published Exercises", "—");
 
-        cardsContainer.add(totalSessionsCard, completedSessionsCard, activeStudentsCard, todaySessionsCard);
-        cardsContainer.setFlexGrow(1, totalSessionsCard, completedSessionsCard, activeStudentsCard, todaySessionsCard);
+        final var kpiRow1 = new Div(this.activeStudentsCard, this.totalUsersCard, this.publishedExercisesCard);
+        kpiRow1.setWidthFull();
+        kpiRow1.getStyle().set("display", "grid").set("grid-template-columns", "repeat(3, 1fr)").set("gap", "14px")
+                .set("margin-bottom", "6px");
+        this.add(kpiRow1);
 
-        this.add(cardsContainer);
+        // Row 2: Total Sessions, Completed Sessions, Today's Sessions, Avg Success Rate
+        this.totalSessionsCard = new DashboardKpiCard("Total Sessions", "—");
+        this.completedSessionsCard = new DashboardKpiCard("Completed Sessions", "—");
+        this.todaySessionsCard = new DashboardKpiCard("Today's Sessions", "—");
+        this.avgSuccessRateCard = new DashboardKpiCard("Avg Success Rate", "—");
+
+        final var kpiRow2 = new Div(this.totalSessionsCard, this.completedSessionsCard, this.todaySessionsCard,
+                this.avgSuccessRateCard);
+        kpiRow2.setWidthFull();
+        kpiRow2.getStyle().set("display", "grid").set("grid-template-columns", "repeat(4, 1fr)").set("gap", "14px")
+                .set("margin-bottom", "6px");
+        this.add(kpiRow2);
+
+        // Row 3: Sessions per Day (wider) + Completion Rate Distribution (narrower)
+        this.sessionsChart = new ChartCard("Sessions per Day (30 days)");
+        this.completionRateChart = new ChartCard("Completion Rate Distribution");
+        this.completionRateChart.getStyle().set("max-width", "340px");
+        final var chartRow1 = new HorizontalLayout(this.sessionsChart, this.completionRateChart);
+        chartRow1.setWidthFull();
+        chartRow1.setSpacing(true);
+        chartRow1.setFlexGrow(2, this.sessionsChart);
+        chartRow1.setFlexGrow(1, this.completionRateChart);
+        this.add(chartRow1);
+
+        // Row 4: Top Exercises by Completion + Hints Usage Distribution
+        this.topExercisesChart = new ChartCard("Top Exercises by Completion");
+        this.hintsChart = new ChartCard("Hints Usage Distribution");
+        final var chartRow2 = new HorizontalLayout(this.topExercisesChart, this.hintsChart);
+        chartRow2.setWidthFull();
+        chartRow2.setSpacing(true);
+        chartRow2.setFlexGrow(1, this.topExercisesChart, this.hintsChart);
+        this.add(chartRow2);
+
+        // Row 4: Activity Feed + Top Students
+        this.activityFeedContainer = new VerticalLayout();
+        this.activityFeedContainer.setWidthFull();
+
+        this.topStudentsContainer = new VerticalLayout();
+        this.topStudentsContainer.setWidthFull();
+
+        final var bottomRow = new HorizontalLayout(this.activityFeedContainer, this.topStudentsContainer);
+        bottomRow.setWidthFull();
+        bottomRow.setSpacing(true);
+        bottomRow.setFlexGrow(1, this.activityFeedContainer, this.topStudentsContainer);
+        this.add(bottomRow);
     }
 
     private void loadDashboardData() {
@@ -83,41 +157,87 @@ public class AdminDashboardView extends AbstractAdminView {
             final var completedSessions = this.analyticsService.getCompletedSessionsCount();
             final var activeStudents = this.analyticsService.getActiveStudentsCount();
             final var todaySessions = this.analyticsService.getTodaySessionsCount();
-            return Map.of("Total Sessions", String.valueOf(totalSessions), "Completed Sessions",
-                    String.valueOf(completedSessions), "Active Students (Last 7 Days)", String.valueOf(activeStudents),
-                    "Today's Sessions", String.valueOf(todaySessions));
-        }, this, stats -> {
-            stats.forEach(this::updateStatCard);
-        }, "Failed to load dashboard data");
+            final var totalUsers = this.analyticsService.getUserCount();
+            final var publishedExercises = this.analyticsService.getPublishedExerciseCount();
+
+            final var summaries = this.analyticsService.getAllUsersProgressSummary();
+            final var avgSuccessRate = summaries.stream().filter(s -> s.successRate != null)
+                    .mapToDouble(s -> s.successRate).average().orElse(0.0);
+
+            final var dailyCounts = this.analyticsService.getDailySessionCounts(30);
+            final var topExercises = this.analyticsService.getProblemCategoryStats();
+            final var completionHistogram = this.analyticsService.getCompletionRateHistogram();
+            final var hintBuckets = this.analyticsService.getHintUsageBuckets();
+            final var recentSessions = this.analyticsService.getRecentSessions(10);
+            final var topStudents = this.analyticsService.getTopStudentsByCompletion(5);
+            final var trends = this.analyticsService.getTrendData();
+
+            return new DashboardData(totalSessions, completedSessions, activeStudents, todaySessions, totalUsers,
+                    publishedExercises, avgSuccessRate, dailyCounts, topExercises, completionHistogram, hintBuckets,
+                    recentSessions, topStudents, trends);
+        }, this, this::renderDashboard, "Failed to load dashboard data");
     }
 
-    private VerticalLayout createStatCard(final String title, final String value) {
-        final var card = new VerticalLayout();
-        card.setPadding(true);
-        card.setSpacing(false);
-        card.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "4px")
-                .set("background-color", "var(--lumo-contrast-5pct)");
+    @SuppressWarnings("NullAway")
+    private void renderDashboard(final DashboardData data) {
+        this.totalSessionsCard.setValue(formatNumber(data.totalSessions));
+        this.totalSessionsCard.setTrend(data.trends.totalSessionsChange());
 
-        final var titleLabel = new Span(title);
-        titleLabel.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)")
-                .set("text-transform", "uppercase").set("font-weight", "500");
+        this.completedSessionsCard.setValue(formatNumber(data.completedSessions));
+        this.completedSessionsCard.setTrend(data.trends.completedSessionsChange());
 
-        final var valueLabel = new Span(value);
-        valueLabel.getStyle().set("font-size", "28px").set("font-weight", "700").set("color",
-                "var(--lumo-primary-text-color)");
+        this.activeStudentsCard.setValue(formatNumber(data.activeStudents));
+        this.activeStudentsCard.setTrend(data.trends.activeStudentsChange());
 
-        // Store reference to value label for efficient updates
-        this.statCardValues.put(title, valueLabel);
+        this.todaySessionsCard.setValue(formatNumber(data.todaySessions));
+        this.todaySessionsCard.setTrend(data.trends.todaySessionsChange());
 
-        card.add(titleLabel, valueLabel);
-        return card;
+        this.totalUsersCard.setValue(formatNumber(data.totalUsers));
+        this.totalUsersCard.setTrend(data.trends.totalUsersChange());
+
+        this.publishedExercisesCard.setValue(formatNumber(data.publishedExercises));
+        this.publishedExercisesCard.setTrend(data.trends.publishedExercisesChange());
+
+        final var avgRatePct = String.format("%.1f%%", data.avgSuccessRate * 100);
+        this.avgSuccessRateCard.setValue(avgRatePct);
+
+        this.sessionsChart.setChartContent(ChartUtil.lineChart(data.dailySessionCounts, null, 800, 300));
+        this.topExercisesChart
+                .setChartContent(ChartUtil.horizontalBarChart(toLinkedHashMap(data.topExercises), null, 600, 250));
+        this.completionRateChart
+                .setChartContent(ChartUtil.donutChart(data.completionRateHistogram, "sessions", null, 220));
+        this.hintsChart.setChartContent(ChartUtil.horizontalBarChart(data.hintUsageBuckets, null, 600, 250));
+
+        this.activityFeedContainer.removeAll();
+        this.activityFeedContainer.add(new RecentActivityFeed(data.recentSessions));
+
+        this.topStudentsContainer.removeAll();
+        this.topStudentsContainer.add(new TopStudentsList(data.topStudents));
     }
 
-    private void updateStatCard(final String title, final String value) {
-        // Direct lookup in map for O(1) access instead of tree traversal
-        final var valueLabel = this.statCardValues.get(title);
-        if (valueLabel != null) {
-            valueLabel.setText(value);
+    private static String formatNumber(final long n) {
+        if (n >= 1000) {
+            return String.format("%,d", n);
         }
+        return String.valueOf(n);
+    }
+
+    private static LinkedHashMap<String, Integer> toLinkedHashMap(final Map<String, Integer> map) {
+        if (map instanceof LinkedHashMap) {
+            return (LinkedHashMap<String, Integer>) map;
+        }
+        final var result = new LinkedHashMap<String, Integer>();
+        if (map != null) {
+            result.putAll(map);
+        }
+        return result;
+    }
+
+    private record DashboardData(long totalSessions, long completedSessions, long activeStudents, long todaySessions,
+            long totalUsers, long publishedExercises, double avgSuccessRate,
+            LinkedHashMap<LocalDate, Long> dailySessionCounts, Map<String, Integer> topExercises,
+            LinkedHashMap<String, Integer> completionRateHistogram, LinkedHashMap<String, Integer> hintUsageBuckets,
+            List<StudentSessionViewDto> recentSessions, List<StudentProgressSummaryDto> topStudents,
+            DashboardTrendDto trends) {
     }
 }
