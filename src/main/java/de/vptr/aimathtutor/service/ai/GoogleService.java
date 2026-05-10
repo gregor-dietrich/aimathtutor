@@ -150,6 +150,9 @@ public class GoogleService extends AbstractProviderService {
         } catch (final IOException e) {
             LOG.error("Error calling Google API", e);
             throw ProviderException.transportFailure(this.getProviderName(), "Failed to call Google API", e);
+        } catch (final RuntimeException e) {
+            LOG.error("Unexpected runtime error calling Google API", e);
+            throw ProviderException.transportFailure(this.getProviderName(), "Unexpected error", e);
         }
     }
 }

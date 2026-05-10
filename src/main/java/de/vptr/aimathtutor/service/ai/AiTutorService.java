@@ -12,6 +12,7 @@ import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import de.vptr.aimathtutor.service.ProblemGeneratorService;
 import de.vptr.aimathtutor.service.ai.provider.GoogleProvider;
 import de.vptr.aimathtutor.service.ai.provider.MockProvider;
@@ -361,6 +362,8 @@ public class AiTutorService {
         }
         try {
             return provider.analyzeMathAction(event, context);
+        } catch (final NonRetryableProviderException e) {
+            throw e;
         } catch (final RuntimeException e) {
             LOG.errorf(e, "Error using %s, falling back to mock", provider.getClass().getSimpleName());
             return this.mockAiProvider.analyzeMathAction(event, context);
@@ -378,6 +381,8 @@ public class AiTutorService {
         }
         try {
             return provider.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
+        } catch (final NonRetryableProviderException e) {
+            throw e;
         } catch (final RuntimeException e) {
             LOG.errorf(e, "Error using %s, falling back to mock", provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,

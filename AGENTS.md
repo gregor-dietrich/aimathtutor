@@ -87,6 +87,18 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Checkstyle + PMD + CPD).
 
+### ⚠️ Never Change Quality Gate Thresholds
+
+**Never modify** any quality gate threshold, tolerance, or exclusion count in `pom.xml`, checkstyle, PMD, CPD, SpotBugs, or any other configuration. This includes, but is not limited to:
+
+- `pmd-cpd.minTokens` (CPD minimum tokens)
+- Checkstyle severity levels
+- SpotBugs effort/maxRank
+- PMD ruleset thresholds
+- JaCoCo coverage limits
+
+These thresholds are deliberately set by the project maintainers. Changing them to work around a code issue is strictly forbidden. Instead, refactor the code to pass the existing gates, but do so meaningfully, i.e. do not try to game detection by making meaningless changes - refactor properly instead. Also, Suppressions and Exclusions should be used as rarely as possible while being as fine-grained as possible.
+
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.3-alpine3.23` on port `55432`).

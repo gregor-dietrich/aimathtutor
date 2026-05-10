@@ -57,10 +57,7 @@ public class ProviderTestService {
         final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL,
                 "https://generativelanguage.googleapis.com");
         try {
-            final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + "/v1beta/models"))
-                    .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).GET().build();
-
-            final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            final HttpResponse<String> response = this.doGetRequest(baseUrl + "/v1beta/models");
 
             if (response.statusCode() == 401 || response.statusCode() == 403) {
                 return ProviderTestResultDto.ok("Google endpoint is reachable (authentication required)");
@@ -76,6 +73,9 @@ public class ProviderTestService {
         } catch (final IOException e) {
             LOG.warnf(e, "Google endpoint unreachable: %s", e.getMessage());
             return ProviderTestResultDto.fail("Cannot reach Google endpoint: " + e.getMessage());
+        } catch (final IllegalArgumentException e) {
+            LOG.warnf(e, "Invalid Google base URL: %s", baseUrl);
+            return ProviderTestResultDto.fail("Invalid Google base URL: " + e.getMessage());
         }
     }
 
@@ -91,12 +91,9 @@ public class ProviderTestService {
         final String baseUrl =
                 this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1");
         try {
-            final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(baseUrl + "/models"))
-                    .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).GET().build();
+            final HttpResponse<String> response = this.doGetRequest(baseUrl + "/models");
 
-            final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 401) {
+            if (response.statusCode() == 401 || response.statusCode() == 403) {
                 return ProviderTestResultDto.ok("OpenAI endpoint is reachable (authentication required)");
             }
             if (response.statusCode() == 200) {
@@ -110,6 +107,9 @@ public class ProviderTestService {
         } catch (final IOException e) {
             LOG.warnf(e, "OpenAI endpoint unreachable: %s", e.getMessage());
             return ProviderTestResultDto.fail("Cannot reach OpenAI endpoint: " + e.getMessage());
+        } catch (final IllegalArgumentException e) {
+            LOG.warnf(e, "Invalid OpenAI base URL: %s", baseUrl);
+            return ProviderTestResultDto.fail("Invalid OpenAI base URL: " + e.getMessage());
         }
     }
 
@@ -122,6 +122,12 @@ public class ProviderTestService {
                     .fail("Ollama server is not available. Check that Ollama is running and the URL is correct.");
         }
         return ProviderTestResultDto.ok("Ollama server is reachable");
+    }
+
+    private HttpResponse<String> doGetRequest(final String url) throws IOException, InterruptedException {
+        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
+                .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).GET().build();
+        return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     /**

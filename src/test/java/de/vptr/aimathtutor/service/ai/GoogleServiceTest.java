@@ -29,8 +29,9 @@ class GoogleServiceTest {
     @Test
     @DisplayName("Should report stable configuration state")
     void shouldReportConfigurationState() {
-        final boolean configured = this.googleService.isConfigured();
-        assertEquals(configured, this.googleService.isConfigured());
+        final boolean first = this.googleService.isConfigured();
+        final boolean second = this.googleService.isConfigured();
+        assertEquals(first, second, "isConfigured() must be deterministic within a single request");
     }
 
     @Test
