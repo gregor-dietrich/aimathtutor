@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.component.dashboard;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -41,8 +40,8 @@ public final class ChartUtil {
      *            viewBox height
      * @return SVG string
      */
-    public static String lineChart(final LinkedHashMap<LocalDate, Long> data, @Nullable final String title,
-            final int width, final int height) {
+    public static String lineChart(final Map<LocalDate, Long> data, @Nullable final String title, final int width,
+            final int height) {
         if (data == null || data.isEmpty()) {
             return emptySvg(width, height, "No data");
         }
@@ -135,7 +134,7 @@ public final class ChartUtil {
      *            viewBox height
      * @return SVG string
      */
-    public static String horizontalBarChart(final LinkedHashMap<String, Integer> data, @Nullable final String title,
+    public static String horizontalBarChart(final Map<String, Integer> data, @Nullable final String title,
             final int width, final int height) {
         if (data == null || data.isEmpty()) {
             return emptySvg(width, height, "No data");
@@ -193,7 +192,7 @@ public final class ChartUtil {
      *            viewBox size (square)
      * @return SVG string
      */
-    public static String donutChart(final LinkedHashMap<String, Integer> data, @Nullable final String centerLabel,
+    public static String donutChart(final Map<String, Integer> data, @Nullable final String centerLabel,
             @Nullable final String centerValue, final int size) {
         if (data == null || data.isEmpty()) {
             return emptySvg(size, size, "No data");

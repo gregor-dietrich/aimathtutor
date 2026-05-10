@@ -463,7 +463,7 @@ public class AnalyticsService {
      * Get daily session counts for the last N days. Returns a LinkedHashMap with every day filled (0 for missing days).
      */
     @Transactional
-    public LinkedHashMap<LocalDate, Long> getDailySessionCounts(final int days) {
+    public Map<LocalDate, Long> getDailySessionCounts(final int days) {
         LOG.tracef("Getting daily session counts for last %d days", days);
         final var end = LocalDateTime.now(ZoneId.systemDefault());
         final var start = end.minusDays(days);
@@ -535,7 +535,7 @@ public class AnalyticsService {
      * actions_count): 0%, 1-25%, 26-50%, 51-75%, 76-99%, 100%.
      */
     @Transactional
-    public LinkedHashMap<String, Integer> getCompletionRateHistogram() {
+    public Map<String, Integer> getCompletionRateHistogram() {
         LOG.trace("Getting completion rate histogram");
         final var sessions = this.studentSessionRepository.findAll();
         final var buckets = new LinkedHashMap<String, Integer>();
@@ -574,7 +574,7 @@ public class AnalyticsService {
      * Get hint usage distribution across individual sessions: 0 hints, 1-3, 4-7, 8+.
      */
     @Transactional
-    public LinkedHashMap<String, Integer> getHintUsageBuckets() {
+    public Map<String, Integer> getHintUsageBuckets() {
         LOG.trace("Getting hint usage buckets");
         final var sessions = this.studentSessionRepository.findAll();
         final var buckets = new LinkedHashMap<String, Integer>();

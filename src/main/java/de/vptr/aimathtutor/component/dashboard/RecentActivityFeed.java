@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.component.dashboard;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public class RecentActivityFeed extends VerticalLayout {
         if (time == null) {
             return "unknown";
         }
-        final var now = LocalDateTime.now();
+        final var now = LocalDateTime.now(ZoneId.systemDefault());
         final var minutes = ChronoUnit.MINUTES.between(time, now);
         if (minutes < 1) {
             return "just now";

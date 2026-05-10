@@ -222,7 +222,7 @@ public class AdminDashboardView extends AbstractAdminView {
         return String.valueOf(n);
     }
 
-    private static LinkedHashMap<String, Integer> toLinkedHashMap(final Map<String, Integer> map) {
+    private static Map<String, Integer> toLinkedHashMap(final Map<String, Integer> map) {
         if (map instanceof LinkedHashMap) {
             return (LinkedHashMap<String, Integer>) map;
         }
@@ -234,10 +234,9 @@ public class AdminDashboardView extends AbstractAdminView {
     }
 
     private record DashboardData(long totalSessions, long completedSessions, long activeStudents, long todaySessions,
-            long totalUsers, long publishedExercises, double avgSuccessRate,
-            LinkedHashMap<LocalDate, Long> dailySessionCounts, Map<String, Integer> topExercises,
-            LinkedHashMap<String, Integer> completionRateHistogram, LinkedHashMap<String, Integer> hintUsageBuckets,
-            List<StudentSessionViewDto> recentSessions, List<StudentProgressSummaryDto> topStudents,
-            DashboardTrendDto trends) {
+            long totalUsers, long publishedExercises, double avgSuccessRate, Map<LocalDate, Long> dailySessionCounts,
+            Map<String, Integer> topExercises, Map<String, Integer> completionRateHistogram,
+            Map<String, Integer> hintUsageBuckets, List<StudentSessionViewDto> recentSessions,
+            List<StudentProgressSummaryDto> topStudents, DashboardTrendDto trends) {
     }
 }
