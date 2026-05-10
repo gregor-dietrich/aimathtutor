@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Locale;
@@ -22,6 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class AiTutorServiceTest {
 
     @Inject
@@ -341,6 +343,41 @@ class AiTutorServiceTest {
         assertNotNull(answer);
         assertNotNull(answer.message);
         assertEquals(sessionId, answer.sessionId);
+    }
+
+    @Test
+    @DisplayName("Should throw for null event in analyzeMathAction")
+    @Transactional
+    void shouldThrowForNullEvent() {
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiTutorService.analyzeMathAction(null, new ConversationContextDto(), "test-user"));
+    }
+
+    @Test
+    @DisplayName("Should throw for null question in answerQuestion")
+    @Transactional
+    void shouldThrowForNullQuestion() {
+        assertThrows(IllegalArgumentException.class, () -> this.aiTutorService.answerQuestion(null, null, null, null,
+                "session-1", new ConversationContextDto(), "test-user"));
+    }
+
+    @Test
+    @DisplayName("Should handle isComplete flag with congratulatory feedback")
+    @Transactional
+    void shouldHandleIsCompleteFlag() {
+        final var event = new GraspableEventDto();
+        event.eventType = "simplify";
+        event.isComplete = true;
+        event.expressionAfter = "x = 5";
+        event.sessionId = "session-complete";
+
+        final AiFeedbackDto feedback =
+                this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "test-user");
+
+        assertNotNull(feedback);
+        assertEquals(AiFeedbackDto.FeedbackType.POSITIVE, feedback.type);
+        assertNotNull(feedback.message);
+        assertFalse(feedback.message.isEmpty());
     }
 
     @Test

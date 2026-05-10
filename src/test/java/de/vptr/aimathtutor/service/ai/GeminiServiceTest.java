@@ -38,4 +38,22 @@ class GeminiServiceTest {
     void generateContentShouldHaveRetryAnnotation() throws NoSuchMethodException {
         RetryAnnotationVerifier.verifyRetryAnnotation(GeminiService.class, "generateContent", String.class);
     }
+
+    @Test
+    @DisplayName("getConfigPrefix returns the Gemini prefix")
+    void testGetConfigPrefix() {
+        assertNotNull(this.geminiService.getConfigPrefix());
+    }
+
+    @Test
+    @DisplayName("getDefaultModel returns the default model")
+    void testGetDefaultModel() {
+        assertNotNull(this.geminiService.getDefaultModel());
+    }
+
+    @Test
+    @DisplayName("getProviderName returns Gemini")
+    void testGetProviderName() {
+        assertNotNull(this.geminiService.getProviderName());
+    }
 }

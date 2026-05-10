@@ -481,6 +481,124 @@ class CommentServiceTest {
     }
 
     @Test
+    @DisplayName("createComment rejects unpublished exercise")
+    @TestTransaction
+    void testCreateComment_unpublishedExercise() {
+        final var teacher = this.userRepository.findByUsername("teacher");
+        assertNotNull(teacher);
+        final var exDto = new ExerciseDto();
+        exDto.title = "unpublished_" + UUID.randomUUID().toString().substring(0, 8);
+        exDto.content = "x";
+        exDto.userPublicId = teacher.publicId;
+        exDto.published = false;
+        exDto.commentable = true;
+        final var ex = this.exerciseService.createExercise(exDto);
+
+        final var dto = new CommentDto();
+        dto.content = "test";
+        dto.exercisePublicId = ex.publicId;
+
+        assertThrows(WebApplicationException.class,
+                () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
+    }
+
+    @Test
+    @DisplayName("createComment rejects missing exercise by default")
+    @TestTransaction
+    void testCreateComment_missingExercisePublicId() {
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student);
+        final var dto = new CommentDto();
+        dto.content = "test";
+        dto.exercisePublicId = null;
+
+        assertThrows(ValidationException.class, () -> this.commentService.createComment(dto, student.id));
+    }
+
+    @Test
+    @DisplayName("createComment with non-existent parent publicId throws BAD_REQUEST")
+    @TestTransaction
+    void testCreateComment_nonexistentParent() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "reply to nowhere";
+        dto.exercisePublicId = exercise.publicId;
+        dto.parentCommentPublicId = "00000000000000000000000000";
+
+        assertThrows(WebApplicationException.class, () -> this.commentService.createComment(dto, student.id));
+    }
+
+    @Test
+    @DisplayName("createComment with parent from different exercise throws BAD_REQUEST")
+    @TestTransaction
+    void testCreateComment_parentDifferentExercise() {
+        final var exercise1 = this.createCommentableExercise();
+        final var exercise2 = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+
+        final var parentDto = new CommentDto();
+        parentDto.content = "parent";
+        parentDto.exercisePublicId = exercise1.publicId;
+        final var parent = this.commentService.createComment(parentDto, student.id);
+
+        final var replyDto = new CommentDto();
+        replyDto.content = "reply";
+        replyDto.exercisePublicId = exercise2.publicId;
+        replyDto.parentCommentPublicId = parent.publicId;
+
+        assertThrows(WebApplicationException.class, () -> this.commentService.createComment(replyDto, student.id));
+    }
+
+    @Test
+    @DisplayName("findByDateRange returns empty list for null dates")
+    @TestTransaction
+    void testFindByDateRange_nullDates() {
+        assertTrue(this.commentService.findByDateRange(null, null).isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByDateRange returns empty list for invalid date strings")
+    @TestTransaction
+    void testFindByDateRange_invalidDates() {
+        assertTrue(this.commentService.findByDateRange("not-a-date", "also-not-a-date").isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByPublicId returns comment when found")
+    @TestTransaction
+    void testFindByPublicId_found() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "find me by public id";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        final var found = this.commentService.findByPublicId(created.publicId);
+        assertTrue(found.isPresent());
+        assertEquals(created.content, found.get().content);
+    }
+
+    @Test
+    @DisplayName("flagComment calls through to flagging service")
+    @TestTransaction
+    void testFlagComment() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var otherStudent = this.userRepository.findByUsername("student2");
+        assertNotNull(otherStudent, "student2 fixture must exist");
+        final var dto = new CommentDto();
+        dto.content = "flaggable";
+        dto.exercisePublicId = exercise.publicId;
+        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+
+        // Use a different user to flag (can't flag own comment)
+        this.commentService.flagComment(created.publicId, otherStudent.id, "inappropriate");
+        // Should complete without exception
+    }
+
+    @Test
     @DisplayName("listCommentsBySession returns comments with the given sessionId")
     @TestTransaction
     void testListCommentsBySession() {

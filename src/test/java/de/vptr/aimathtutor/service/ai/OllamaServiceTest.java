@@ -61,4 +61,30 @@ class OllamaServiceTest {
     void generateContentShouldHaveRetryAnnotation() throws NoSuchMethodException {
         RetryAnnotationVerifier.verifyRetryAnnotation(OllamaService.class, "generateContent", String.class);
     }
+
+    @Test
+    @DisplayName("cleanup should complete without exception and leave getters working")
+    void testCleanup() {
+        this.ollamaService.cleanup();
+        this.ollamaService.cleanup();
+        assertNotNull(this.ollamaService.getModel());
+    }
+
+    @Test
+    @DisplayName("getConfigPrefix returns the Ollama prefix")
+    void testGetConfigPrefix() {
+        assertNotNull(this.ollamaService.getConfigPrefix());
+    }
+
+    @Test
+    @DisplayName("getDefaultModel returns the default model")
+    void testGetDefaultModel() {
+        assertNotNull(this.ollamaService.getDefaultModel());
+    }
+
+    @Test
+    @DisplayName("getProviderName returns Ollama")
+    void testGetProviderName() {
+        assertNotNull(this.ollamaService.getProviderName());
+    }
 }

@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service.security;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
@@ -131,6 +132,38 @@ class AuthServiceTest {
         final AuthResultDto result = this.authService.authenticate("student2", "student2");
         assertFalse(result.isSuccess());
         assertEquals("Invalid username or password", result.getMessage());
+    }
+
+    @Test
+    @DisplayName("logout returns silently when no session exists")
+    void testLogout_noSession() {
+        this.authService.logout();
+        assertFalse(this.authService.isAuthenticated());
+    }
+
+    @Test
+    @DisplayName("isAuthenticated returns false when no session exists")
+    void testIsAuthenticated_noSession() {
+        assertFalse(this.authService.isAuthenticated(), "isAuthenticated should return false when no VaadinSession");
+    }
+
+    @Test
+    @DisplayName("getUsername returns null when no session exists")
+    void testGetUsername_noSession() {
+        assertNull(this.authService.getUsername(), "getUsername should return null when no VaadinSession");
+    }
+
+    @Test
+    @DisplayName("getUserId returns null when no session exists")
+    void testGetUserId_noSession() {
+        assertNull(this.authService.getUserId(), "getUserId should return null when no VaadinSession");
+    }
+
+    @Test
+    @DisplayName("getCurrentUserEntity returns null when no session exists")
+    void testGetCurrentUserEntity_noSession() {
+        assertNull(this.authService.getCurrentUserEntity(),
+                "getCurrentUserEntity should return null when no VaadinSession");
     }
 
     @Test
