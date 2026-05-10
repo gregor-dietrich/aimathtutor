@@ -40,10 +40,12 @@ public class TopStudentsList extends VerticalLayout {
         }
 
         int rank = 1;
+        boolean hasAny = false;
         for (final var student : students) {
             if (student == null) {
                 continue;
             }
+            hasAny = true;
             final var row = new HorizontalLayout();
             row.setWidthFull();
             row.setPadding(false);
@@ -57,12 +59,18 @@ public class TopStudentsList extends VerticalLayout {
             final var nameSpan = new Span(student.username != null ? student.username : "Unknown");
             nameSpan.getStyle().set("font-size", "13px").set("flex", "1");
 
-            final var countSpan =
-                    new Span((student.completedSessions != null ? student.completedSessions : 0) + " sessions");
+            final int count = student.completedSessions != null ? student.completedSessions : 0;
+            final var countSpan = new Span(count + " " + (count == 1 ? "session" : "sessions"));
             countSpan.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)");
 
             row.add(rankSpan, nameSpan, countSpan);
             add(row);
+        }
+
+        if (!hasAny) {
+            final var empty = new Span("No top students yet");
+            empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");
+            add(empty);
         }
     }
 }
