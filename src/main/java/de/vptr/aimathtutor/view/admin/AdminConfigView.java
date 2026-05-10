@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -10,6 +11,7 @@ import org.jboss.logging.Logger;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -80,198 +82,166 @@ public class AdminConfigView extends AbstractAdminView {
         if (!this.isAuthOk(event)) {
             return;
         }
-
         this.buildUi();
     }
 
     private void buildUi() {
         this.removeAll();
 
-        // Title
         final var title = new H2("AI Configuration");
         this.add(title);
 
-        // Create tabs for different configuration categories
         final var tabs = new Tabs();
         tabs.setWidthFull();
 
-        // General tab
-        final var generalTab = new Tab("General");
-        final var generalPanel = this.buildGeneralPanel();
+        final var providerTab = new Tab("Provider");
+        final var providerPanel = this.buildProviderPanel();
 
-        // Google tab
-        final var googleTab = new Tab("Google");
-        final var googlePanel = this.buildGooglePanel();
-
-        // Ollama tab
-        final var ollamaTab = new Tab("Ollama");
-        final var ollamaPanel = this.buildOllamaPanel();
-
-        // OpenAI tab
-        final var openaiTab = new Tab("OpenAI");
-        final var openaiPanel = this.buildOpenAiPanel();
-
-        // Prompts tab
         final var promptsTab = new Tab("Prompts");
         final var promptsPanel = this.buildPromptsPanel();
 
-        tabs.add(generalTab, googleTab, ollamaTab, openaiTab, promptsTab);
-
+        tabs.add(providerTab, promptsTab);
         this.add(tabs);
 
-        // Container for tab content
         final var contentContainer = new VerticalLayout();
         contentContainer.setSpacing(true);
         contentContainer.setPadding(false);
         contentContainer.setWidthFull();
-        contentContainer.add(generalPanel);
-
+        contentContainer.add(providerPanel);
         this.add(contentContainer);
 
-        // Handle tab selection
         tabs.addSelectedChangeListener(event -> {
             contentContainer.removeAll();
-            final Tab selected = event.getSelectedTab();
-            if (selected.equals(generalTab)) {
-                contentContainer.add(generalPanel);
-            } else if (selected.equals(googleTab)) {
-                contentContainer.add(googlePanel);
-            } else if (selected.equals(openaiTab)) {
-                contentContainer.add(openaiPanel);
-            } else if (selected.equals(ollamaTab)) {
-                contentContainer.add(ollamaPanel);
-            } else if (selected.equals(promptsTab)) {
+            if (event.getSelectedTab().equals(promptsTab)) {
                 contentContainer.add(promptsPanel);
+            } else {
+                contentContainer.add(providerPanel);
             }
         });
     }
 
-    private VerticalLayout buildGeneralPanel() {
+    private VerticalLayout buildProviderPanel() {
         final var panel = new VerticalLayout();
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        // AI Enabled
         final var enabledCheckbox = new Checkbox("Enable AI Tutor");
-        final String enabledValue = this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, "true");
-        enabledCheckbox.setValue("true".equalsIgnoreCase(enabledValue));
-        enabledCheckbox.setLabel("Enable AI Tutor");
+        enabledCheckbox.setValue(
+                "true".equalsIgnoreCase(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, "true")));
 
-        // AI Provider selection
         final var providerCombo = new ComboBox<String>("AI Provider");
         providerCombo.setItems("mock", "google", "ollama", "openai");
         providerCombo.setValue(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"));
         providerCombo.setWidthFull();
 
-        // Save button
-        final var saveBtn = new Button("Save", ignored -> this.saveGeneralConfig(enabledCheckbox, providerCombo));
+        // Google provider fields
+        final var googleApiKeyField =
+                this.createReadOnlyApiKeyField("GOOGLE_API_KEY", "https://aistudio.google.com/app/apikey");
+        final var googleModelField = this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it",
+                "Google AI model name (e.g., gemma-4-31b-it, google-2.5-pro)");
+        final var googleUrlField = this.createTextConfigField("API Base URL", AiConfigKeys.GOOGLE_API_BASE_URL,
+                "https://generativelanguage.googleapis.com", null);
+        final var googleTempField = this.createTemperatureField(AiConfigKeys.GOOGLE_PREFIX);
+        final var googleMaxTokensField = this.createMaxTokensField(AiConfigKeys.GOOGLE_PREFIX);
+        final var googleSection = new VerticalLayout(googleApiKeyField, googleModelField, googleUrlField,
+                googleTempField, googleMaxTokensField);
+        googleSection.setSpacing(true);
+        googleSection.setPadding(false);
 
-        // Reset to defaults button
+        // OpenAI provider fields
+        final var openaiApiKeyField =
+                this.createReadOnlyApiKeyField("OPENAI_API_KEY", "https://platform.openai.com/api-keys");
+        final var openaiOrgIdField =
+                this.createTextConfigField("Organization ID (Optional)", AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
+        final var openaiModelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-5-nano",
+                "OpenAI model name (e.g., gpt-5-nano)");
+        final var openaiUrlField = this.createTextConfigField("API Base URL", AiConfigKeys.OPENAI_API_BASE_URL,
+                "https://api.openai.com/v1", null);
+        final var openaiTempField = this.createTemperatureField(AiConfigKeys.OPENAI_PREFIX);
+        final var openaiMaxTokensField = this.createMaxTokensField(AiConfigKeys.OPENAI_PREFIX);
+        final var openaiSection = new VerticalLayout(openaiApiKeyField, openaiOrgIdField, openaiModelField,
+                openaiUrlField, openaiTempField, openaiMaxTokensField);
+        openaiSection.setSpacing(true);
+        openaiSection.setPadding(false);
+
+        // Ollama provider fields
+        final var ollamaApiUrlField = this.createTextConfigField("API URL", AiConfigKeys.OLLAMA_API_URL,
+                "http://ollama:11434", "Ollama API URL (e.g., http://localhost:11434)");
+        final var ollamaModelField = this.createTextConfigField("Model", AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b",
+                "Ollama model name (e.g., llama3.2:3b)");
+        final var ollamaTempField = this.createTemperatureField(AiConfigKeys.OLLAMA_PREFIX);
+        final var ollamaMaxTokensField = this.createMaxTokensField(AiConfigKeys.OLLAMA_PREFIX);
+        ollamaMaxTokensField
+                .setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
+        final var ollamaSection =
+                new VerticalLayout(ollamaApiUrlField, ollamaModelField, ollamaTempField, ollamaMaxTokensField);
+        ollamaSection.setSpacing(true);
+        ollamaSection.setPadding(false);
+
+        final var saveBtn = new Button("Save");
+        final var testBtn = new Button("Test Connection");
         final var resetBtn = new Button("Reset to Defaults", ignored -> this.resetAllToDefaults());
-        resetBtn.getStyle().set("margin-left", "auto");
 
-        final var buttonRow = new HorizontalLayout(saveBtn, resetBtn);
+        final var leftButtons = new HorizontalLayout(saveBtn, testBtn);
+        final var buttonRow = new HorizontalLayout(leftButtons, resetBtn);
         buttonRow.setWidthFull();
         buttonRow.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        panel.add(enabledCheckbox, providerCombo, buttonRow);
-        return panel;
-    }
+        final Runnable updateSectionVisibility = () -> {
+            final String p = providerCombo.getValue();
+            googleSection.setVisible("google".equals(p));
+            openaiSection.setVisible("openai".equals(p));
+            ollamaSection.setVisible("ollama".equals(p));
+            testBtn.setVisible(p != null && !"mock".equals(p));
+        };
+        providerCombo.addValueChangeListener(ignored -> updateSectionVisibility.run());
+        updateSectionVisibility.run();
 
-    private VerticalLayout buildGooglePanel() {
-        final var panel = new VerticalLayout();
-        panel.setSpacing(true);
-        panel.setPadding(true);
+        final Runnable saveAction = () -> {
+            final String provider = providerCombo.getValue();
+            final var updates = new ArrayList<AiConfigUpdateDto>();
+            updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED,
+                    enabledCheckbox.getValue() ? "true" : "false"));
+            updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, provider != null ? provider : "mock"));
+            if ("google".equals(provider)) {
+                updates.addAll(List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, googleModelField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, googleUrlField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE, temperatureOrDefault(googleTempField)),
+                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS,
+                                intOrDefault(googleMaxTokensField, "2000"))));
+            } else if ("openai".equals(provider)) {
+                updates.addAll(
+                        List.of(new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, openaiOrgIdField.getValue()),
+                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, openaiModelField.getValue()),
+                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, openaiUrlField.getValue()),
+                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE,
+                                        temperatureOrDefault(openaiTempField)),
+                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS,
+                                        intOrDefault(openaiMaxTokensField, "2000"))));
+            } else if ("ollama".equals(provider)) {
+                updates.addAll(List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, ollamaApiUrlField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, ollamaModelField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE, temperatureOrDefault(ollamaTempField)),
+                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS,
+                                intOrDefault(ollamaMaxTokensField, "2000"))));
+            }
+            this.saveProviderConfig("Provider", updates);
+        };
 
-        final var apiKeyField =
-                this.createReadOnlyApiKeyField("GOOGLE_API_KEY", "https://aistudio.google.com/app/apikey");
-
-        final var modelField = this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it",
-                "Google AI model name (e.g., gemma-4-31b-it, google-2.5-pro)");
-
-        final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.GOOGLE_API_BASE_URL,
-                "https://generativelanguage.googleapis.com", null);
-
-        final var tempField = this.createTemperatureField(AiConfigKeys.GOOGLE_PREFIX);
-        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.GOOGLE_PREFIX);
-
-        final var saveBtn =
-                new Button("Save", ignored -> this.saveGoogleConfig(modelField, urlField, tempField, maxTokensField));
-        final var testBtn = new Button("Test Connection", ignored -> {
-            this.saveGoogleConfig(modelField, urlField, tempField, maxTokensField);
-            this.testGoogleConnection();
+        saveBtn.addClickListener(ignored -> saveAction.run());
+        testBtn.addClickListener(ignored -> {
+            saveAction.run();
+            final String provider = providerCombo.getValue();
+            if ("google".equals(provider)) {
+                this.testGoogleConnection();
+            } else if ("openai".equals(provider)) {
+                this.testOpenAiConnection();
+            } else if ("ollama".equals(provider)) {
+                this.testOllamaConnection();
+            }
         });
 
-        panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField,
-                this.buildSaveTestRow(saveBtn, testBtn));
-        return panel;
-    }
-
-    private VerticalLayout buildOpenAiPanel() {
-        final var panel = new VerticalLayout();
-        panel.setSpacing(true);
-        panel.setPadding(true);
-
-        final var apiKeyField =
-                this.createReadOnlyApiKeyField("OPENAI_API_KEY", "https://platform.openai.com/api-keys");
-
-        final var orgIdField =
-                this.createTextConfigField("Organization ID (Optional)", AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
-
-        final var modelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-5-nano",
-                "OpenAI model name (e.g., gpt-5-nano)");
-
-        final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.OPENAI_API_BASE_URL,
-                "https://api.openai.com/v1", null);
-
-        final var tempField = this.createTemperatureField(AiConfigKeys.OPENAI_PREFIX);
-        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.OPENAI_PREFIX);
-
-        final var saveBtn = new Button("Save",
-                ignored -> this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField));
-        final var testBtn = new Button("Test Connection", ignored -> {
-            this.saveOpenAiConfig(orgIdField, modelField, urlField, tempField, maxTokensField);
-            this.testOpenAiConnection();
-        });
-
-        panel.add(apiKeyField, orgIdField, modelField, urlField, tempField, maxTokensField,
-                this.buildSaveTestRow(saveBtn, testBtn));
-        return panel;
-    }
-
-    private VerticalLayout buildOllamaPanel() {
-        final var panel = new VerticalLayout();
-        panel.setSpacing(true);
-        panel.setPadding(true);
-
-        final var apiUrlField = this.createTextConfigField("API URL", AiConfigKeys.OLLAMA_API_URL,
-                "http://ollama:11434", "Ollama API URL (e.g., http://localhost:11434)");
-
-        final var modelField = this.createTextConfigField("Model", AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b",
-                "Ollama model name (e.g., llama3.2:3b)");
-
-        final var tempField = this.createTemperatureField(AiConfigKeys.OLLAMA_PREFIX);
-
-        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.OLLAMA_PREFIX);
-        maxTokensField.setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
-
-        final var timeoutField = new NumberField("Timeout (seconds)");
-        timeoutField.setValue(
-                this.aiConfigService.getConfigValueAsInt(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, 30).doubleValue());
-        timeoutField.setMin(1);
-        timeoutField.setMax(300);
-        timeoutField.setStep(1);
-        timeoutField.setHelperText("API timeout in seconds (1-300)");
-
-        final var saveBtn = new Button("Save",
-                ignored -> this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField));
-        final var testBtn = new Button("Test Connection", ignored -> {
-            this.saveOllamaConfig(apiUrlField, modelField, tempField, maxTokensField, timeoutField);
-            this.testOllamaConnection();
-        });
-
-        panel.add(apiUrlField, modelField, tempField, maxTokensField, timeoutField,
-                this.buildSaveTestRow(saveBtn, testBtn));
+        panel.add(enabledCheckbox, providerCombo, googleSection, openaiSection, ollamaSection, buttonRow);
         return panel;
     }
 
@@ -289,11 +259,14 @@ public class AdminConfigView extends AbstractAdminView {
         final var mtPostfix = this.createPromptArea("Math Tutoring Postfix", AiConfigKeys.PROMPT_TUTORING_POSTFIX,
                 "Postfix for math tutoring prompts");
 
-        // Save button
+        final var grid = new FormLayout();
+        grid.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
+        grid.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix);
+
         final var saveBtn =
                 new Button("Save", ignored -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
-        panel.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix, saveBtn);
+        panel.add(grid, saveBtn);
         return panel;
     }
 
@@ -345,13 +318,6 @@ public class AdminConfigView extends AbstractAdminView {
         area.setMinHeight("150px");
         area.setHelperText(helperText);
         return area;
-    }
-
-    private HorizontalLayout buildSaveTestRow(final Button saveBtn, final Button testBtn) {
-        final var row = new HorizontalLayout(saveBtn, testBtn);
-        row.setWidthFull();
-        row.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        return row;
     }
 
     // --- Connection tests ---------------------------------------------------
@@ -463,42 +429,6 @@ public class AdminConfigView extends AbstractAdminView {
             NotificationUtil.showError("Error resetting defaults. Please try again later.");
             LOG.error("Error resetting defaults", e);
         }
-    }
-
-    private void saveGeneralConfig(final Checkbox enabledCheckbox, final ComboBox<String> providerCombo) {
-        this.saveProviderConfig("AI",
-                List.of(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED,
-                        enabledCheckbox.getValue() ? "true" : "false"),
-                        new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, providerCombo.getValue())));
-    }
-
-    private void saveGoogleConfig(final TextField modelField, final TextField urlField, final NumberField tempField,
-            final NumberField maxTokensField) {
-        this.saveProviderConfig("Google",
-                List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, modelField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, urlField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE, temperatureOrDefault(tempField)),
-                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
-    }
-
-    private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,
-            final NumberField tempField, final NumberField maxTokensField) {
-        this.saveProviderConfig("OpenAI",
-                List.of(new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, orgIdField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, modelField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, urlField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE, temperatureOrDefault(tempField)),
-                        new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
-    }
-
-    private void saveOllamaConfig(final TextField apiUrlField, final TextField modelField, final NumberField tempField,
-            final NumberField maxTokensField, final NumberField timeoutField) {
-        this.saveProviderConfig("Ollama",
-                List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, apiUrlField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, modelField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE, temperatureOrDefault(tempField)),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS, intOrDefault(maxTokensField, "2000")),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, intOrDefault(timeoutField, "30"))));
     }
 
     private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
