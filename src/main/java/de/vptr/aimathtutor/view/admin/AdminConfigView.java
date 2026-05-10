@@ -200,12 +200,13 @@ public class AdminConfigView extends AbstractAdminView {
 
         final Runnable updateEnabledState = () -> {
             final boolean enabled = Boolean.TRUE.equals(enabledCheckbox.getValue());
+            final String p = providerCombo.getValue();
             providerCombo.setEnabled(enabled);
             googleSection.setEnabled(enabled);
             openaiSection.setEnabled(enabled);
             ollamaSection.setEnabled(enabled);
-            saveBtn.setEnabled(enabled);
-            testBtn.setEnabled(enabled);
+            saveBtn.setEnabled(true);
+            testBtn.setEnabled(enabled && p != null && !"mock".equals(p));
         };
         enabledCheckbox.addValueChangeListener(ignored -> updateEnabledState.run());
         updateEnabledState.run();
@@ -278,8 +279,8 @@ public class AdminConfigView extends AbstractAdminView {
         grid.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
         grid.add(qaPrefix, qaPostfix, mtPrefix, mtPostfix);
 
-        final var saveBtn =
-                new Button("Save", ignored -> this.savePromptsConfig(qaPrefix, qaPostfix, mtPrefix, mtPostfix));
+        final var saveBtn = new Button("Save");
+        saveBtn.addClickListener(e -> this.onPromptsSave(saveBtn, qaPrefix, qaPostfix, mtPrefix, mtPostfix));
 
         panel.add(grid, saveBtn);
         return panel;
@@ -475,28 +476,41 @@ public class AdminConfigView extends AbstractAdminView {
         return userId;
     }
 
-    /**
-     * Persist a list of config updates with standard error handling and a "{label} configuration updated successfully"
-     * notification on success.
-     */
-    private void saveProviderConfig(final String label, final List<AiConfigUpdateDto> updates) {
-        try {
-            final Long userId = this.requireUserId("save settings");
-            if (userId == null) {
-                return;
-            }
-
-            this.aiConfigService.updateMultipleConfigs(updates, userId);
-
-            NotificationUtil.showSuccess(label + " configuration updated successfully");
-            LOG.infof("%s config saved", label);
-        } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
-            LOG.errorf(e, "Validation error saving %s config", label);
-        } catch (final Exception e) {
-            NotificationUtil.showError("Error saving configuration. Please try again later.");
-            LOG.errorf(e, "Error saving %s config", label);
+    private void onPromptsSave(final Button saveBtn, final TextArea questionPrefixArea,
+            final TextArea questionPostfixArea, final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            return;
         }
+        final Long userId = this.requireUserId("save settings");
+        if (userId == null) {
+            return;
+        }
+        final var updates =
+                List.of(new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_PREFIX, questionPrefixArea.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_POSTFIX, questionPostfixArea.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_PREFIX, tutoringPrefixArea.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_POSTFIX, tutoringPostfixArea.getValue()));
+        saveBtn.setEnabled(false);
+        final var _ = CompletableFuture
+                .supplyAsync(() -> this.persistConfig("Prompts", updates, userId), this.managedExecutor)
+                .thenAccept(success -> {
+                    final var _ = ui.access(() -> {
+                        saveBtn.setEnabled(true);
+                        if (success) {
+                            NotificationUtil.showSuccess("Prompts configuration updated successfully");
+                        } else {
+                            NotificationUtil.showError("Error saving configuration. Please try again later.");
+                        }
+                    });
+                }).exceptionally(ex -> {
+                    final var _ = ui.access(() -> {
+                        NotificationUtil.showError("Error saving configuration. Please try again later.");
+                        LOG.errorf(ex, "Error saving Prompts config");
+                        saveBtn.setEnabled(true);
+                    });
+                    return null;
+                });
     }
 
     private boolean persistConfig(final String label, final List<AiConfigUpdateDto> updates, final Long userId) {
@@ -526,12 +540,4 @@ public class AdminConfigView extends AbstractAdminView {
         return Integer.toString(value.intValue());
     }
 
-    private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
-            final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
-        this.saveProviderConfig("Prompts",
-                List.of(new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_PREFIX, questionPrefixArea.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_POSTFIX, questionPostfixArea.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_PREFIX, tutoringPrefixArea.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_POSTFIX, tutoringPostfixArea.getValue())));
-    }
 }
