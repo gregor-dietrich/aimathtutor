@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -180,7 +181,7 @@ public class AdminConfigView extends AbstractAdminView {
 
         final var saveBtn = new Button("Save");
         final var testBtn = new Button("Test Connection");
-        final var resetBtn = new Button("Reset to Defaults", ignored -> this.resetAllToDefaults());
+        final var resetBtn = new Button("Reset to Defaults");
 
         final var leftButtons = new HorizontalLayout(saveBtn, testBtn);
         final var buttonRow = new HorizontalLayout(leftButtons, resetBtn);
@@ -197,49 +198,51 @@ public class AdminConfigView extends AbstractAdminView {
         providerCombo.addValueChangeListener(ignored -> updateSectionVisibility.run());
         updateSectionVisibility.run();
 
-        final Runnable saveAction = () -> {
+        final Supplier<Optional<List<AiConfigUpdateDto>>> buildUpdates = () -> {
             final String provider = providerCombo.getValue();
             final var updates = new ArrayList<AiConfigUpdateDto>();
             updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED,
                     enabledCheckbox.getValue() ? "true" : "false"));
             updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, provider != null ? provider : "mock"));
-            if ("google".equals(provider)) {
-                updates.addAll(List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, googleModelField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, googleUrlField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE, temperatureOrDefault(googleTempField)),
-                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS,
-                                intOrDefault(googleMaxTokensField, "2000"))));
-            } else if ("openai".equals(provider)) {
-                updates.addAll(
-                        List.of(new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, openaiOrgIdField.getValue()),
-                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, openaiModelField.getValue()),
-                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, openaiUrlField.getValue()),
-                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE,
-                                        temperatureOrDefault(openaiTempField)),
-                                new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS,
-                                        intOrDefault(openaiMaxTokensField, "2000"))));
-            } else if ("ollama".equals(provider)) {
-                updates.addAll(List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, ollamaApiUrlField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, ollamaModelField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE, temperatureOrDefault(ollamaTempField)),
-                        new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS,
-                                intOrDefault(ollamaMaxTokensField, "2000"))));
+            try {
+                if ("google".equals(provider)) {
+                    updates.addAll(
+                            List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, googleModelField.getValue()),
+                                    new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, googleUrlField.getValue()),
+                                    new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE,
+                                            temperatureOrDefault(googleTempField)),
+                                    new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS,
+                                            intOrDefault(googleMaxTokensField, "2000"))));
+                } else if ("openai".equals(provider)) {
+                    updates.addAll(List.of(
+                            new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, openaiOrgIdField.getValue()),
+                            new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, openaiModelField.getValue()),
+                            new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, openaiUrlField.getValue()),
+                            new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE,
+                                    temperatureOrDefault(openaiTempField)),
+                            new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS,
+                                    intOrDefault(openaiMaxTokensField, "2000"))));
+                } else if ("ollama".equals(provider)) {
+                    updates.addAll(
+                            List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, ollamaApiUrlField.getValue()),
+                                    new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, ollamaModelField.getValue()),
+                                    new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE,
+                                            temperatureOrDefault(ollamaTempField)),
+                                    new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS,
+                                            intOrDefault(ollamaMaxTokensField, "2000"))));
+                }
+            } catch (final IllegalArgumentException e) {
+                NotificationUtil.showError("Validation error: " + e.getMessage());
+                return Optional.empty();
             }
-            this.saveProviderConfig("Provider", updates);
+            return Optional.of(updates);
         };
 
-        saveBtn.addClickListener(ignored -> saveAction.run());
-        testBtn.addClickListener(ignored -> {
-            saveAction.run();
-            final String provider = providerCombo.getValue();
-            if ("google".equals(provider)) {
-                this.testGoogleConnection();
-            } else if ("openai".equals(provider)) {
-                this.testOpenAiConnection();
-            } else if ("ollama".equals(provider)) {
-                this.testOllamaConnection();
-            }
-        });
+        saveBtn.addClickListener(
+                ignored -> this.onProviderSaveOrTest(false, saveBtn, testBtn, resetBtn, buildUpdates, providerCombo));
+        testBtn.addClickListener(
+                ignored -> this.onProviderSaveOrTest(true, saveBtn, testBtn, resetBtn, buildUpdates, providerCombo));
+        resetBtn.addClickListener(ignored -> this.onProviderReset(saveBtn, testBtn, resetBtn));
 
         panel.add(enabledCheckbox, providerCombo, googleSection, openaiSection, ollamaSection, buttonRow);
         return panel;
@@ -320,6 +323,94 @@ public class AdminConfigView extends AbstractAdminView {
         return area;
     }
 
+    // --- Provider button handlers -------------------------------------------
+
+    private void onProviderSaveOrTest(final boolean withTest, final Button saveBtn, final Button testBtn,
+            final Button resetBtn, final Supplier<Optional<List<AiConfigUpdateDto>>> buildUpdates,
+            final ComboBox<String> providerCombo) {
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
+        final Long userId = this.requireUserId("save settings");
+        if (userId == null) {
+            return;
+        }
+        final var updatesOpt = buildUpdates.get();
+        if (updatesOpt.isEmpty()) {
+            return;
+        }
+        final var updates = updatesOpt.get();
+        final String provider = withTest ? providerCombo.getValue() : "";
+        saveBtn.setEnabled(false);
+        testBtn.setEnabled(false);
+        resetBtn.setEnabled(false);
+        final var _ = CompletableFuture
+                .supplyAsync(() -> this.persistConfig("Provider", updates, userId), this.managedExecutor)
+                .thenAccept(success -> {
+                    final var _ = ui.access(() -> {
+                        saveBtn.setEnabled(true);
+                        testBtn.setEnabled(true);
+                        resetBtn.setEnabled(true);
+                        if (success) {
+                            if (withTest) {
+                                if ("google".equals(provider)) {
+                                    this.testGoogleConnection();
+                                } else if ("openai".equals(provider)) {
+                                    this.testOpenAiConnection();
+                                } else if ("ollama".equals(provider)) {
+                                    this.testOllamaConnection();
+                                }
+                            } else {
+                                NotificationUtil.showSuccess("Provider configuration updated successfully");
+                            }
+                        } else {
+                            NotificationUtil.showError("Error saving configuration. Please try again later.");
+                        }
+                    });
+                }).exceptionally(ex -> {
+                    final var _ = ui.access(() -> {
+                        NotificationUtil.showError("Error saving configuration. Please try again later.");
+                        LOG.errorf(ex, "Error saving Provider config");
+                        saveBtn.setEnabled(true);
+                        testBtn.setEnabled(true);
+                        resetBtn.setEnabled(true);
+                    });
+                    return null;
+                });
+    }
+
+    private void onProviderReset(final Button saveBtn, final Button testBtn, final Button resetBtn) {
+        final var ui = this.getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
+        final Long userId = this.requireUserId("reset settings");
+        if (userId == null) {
+            return;
+        }
+        saveBtn.setEnabled(false);
+        testBtn.setEnabled(false);
+        resetBtn.setEnabled(false);
+        final var _ = CompletableFuture
+                .runAsync(() -> this.aiConfigService.resetToDefaults(userId), this.managedExecutor).thenRun(() -> {
+                    final var _ = ui.access(() -> {
+                        NotificationUtil.showSuccess("All settings reset to defaults");
+                        LOG.info("Reset all AI configs to defaults");
+                        this.buildUi();
+                    });
+                }).exceptionally(ex -> {
+                    final var _ = ui.access(() -> {
+                        NotificationUtil.showError("Error resetting defaults. Please try again later.");
+                        LOG.error("Error resetting defaults", ex);
+                        saveBtn.setEnabled(true);
+                        testBtn.setEnabled(true);
+                        resetBtn.setEnabled(true);
+                    });
+                    return null;
+                });
+    }
+
     // --- Connection tests ---------------------------------------------------
 
     private void testConnection(final Supplier<ProviderTestResultDto> testCall, final String providerName) {
@@ -396,6 +487,17 @@ public class AdminConfigView extends AbstractAdminView {
         }
     }
 
+    private boolean persistConfig(final String label, final List<AiConfigUpdateDto> updates, final Long userId) {
+        try {
+            this.aiConfigService.updateMultipleConfigs(updates, userId);
+            LOG.infof("%s config saved", label);
+            return true;
+        } catch (final Exception e) {
+            LOG.errorf(e, "Error saving %s config", label);
+            return false;
+        }
+    }
+
     private static String temperatureOrDefault(final NumberField field) {
         final var value = field.getValue();
         return value != null ? value.toString() : "0.7";
@@ -410,25 +512,6 @@ public class AdminConfigView extends AbstractAdminView {
             throw new IllegalArgumentException(field.getLabel() + " must be a whole number, but got: " + value);
         }
         return Integer.toString(value.intValue());
-    }
-
-    private void resetAllToDefaults() {
-        try {
-            final Long userId = this.requireUserId("reset settings");
-            if (userId == null) {
-                return;
-            }
-            this.aiConfigService.resetToDefaults(userId);
-            NotificationUtil.showSuccess("All settings reset to defaults");
-            LOG.info("Reset all AI configs to defaults");
-            this.buildUi();
-        } catch (final IllegalArgumentException e) {
-            NotificationUtil.showError("Validation error: " + e.getMessage());
-            LOG.error("Validation error resetting defaults", e);
-        } catch (final Exception e) {
-            NotificationUtil.showError("Error resetting defaults. Please try again later.");
-            LOG.error("Error resetting defaults", e);
-        }
     }
 
     private void savePromptsConfig(final TextArea questionPrefixArea, final TextArea questionPostfixArea,
