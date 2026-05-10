@@ -5,7 +5,9 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -493,9 +495,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 }
             });
         }).exceptionally(ex -> {
-            final var _ = ui.access(() -> {
-                LOG.error("Error getting AI feedback", ex);
-            });
+            final Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+            if (!(cause instanceof CancellationException)) {
+                final var _ = ui.access(() -> LOG.error("Error getting AI feedback", ex));
+            }
             return null;
         }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }

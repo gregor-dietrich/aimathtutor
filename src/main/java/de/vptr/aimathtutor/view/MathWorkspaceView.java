@@ -1,6 +1,8 @@
 package de.vptr.aimathtutor.view;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -331,9 +333,10 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                         }
                     });
                 }).exceptionally(ex -> {
-                    final var _ = ui.access(() -> {
-                        LOG.error("Error getting AI feedback", ex);
-                    });
+                    final Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                    if (!(cause instanceof CancellationException)) {
+                        final var _ = ui.access(() -> LOG.error("Error getting AI feedback", ex));
+                    }
                     return null;
                 });
     }
@@ -552,13 +555,16 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 onLoadProblem.accept(problem, requestId);
             });
         }).exceptionally(ex -> {
-            final var _ = ui.access(() -> {
-                if (requestId != this.problemRequestId) {
-                    return;
-                }
-                LOG.error("Error generating problem", ex);
-                this.chatPanel.addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
-            });
+            final Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+            if (!(cause instanceof CancellationException)) {
+                final var _ = ui.access(() -> {
+                    if (requestId != this.problemRequestId) {
+                        return;
+                    }
+                    LOG.error("Error generating problem", ex);
+                    this.chatPanel.addMessage(ChatMessageDto.system("Failed to generate problem. Please try again."));
+                });
+            }
             return null;
         });
     }

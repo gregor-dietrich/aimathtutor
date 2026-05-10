@@ -1,5 +1,8 @@
 package de.vptr.aimathtutor.util;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletionException;
+
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.UI;
@@ -67,6 +70,10 @@ public final class AiChatUtil {
      *            the logger
      */
     public static void displayAiError(final Throwable ex, final AiChatPanel chatPanel, final Logger log) {
+        final Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+        if (cause instanceof CancellationException) {
+            return;
+        }
         chatPanel.hideTypingIndicator();
         log.error("Error getting AI answer", ex);
         chatPanel.addMessage(ChatMessageDto.aiAnswer("Sorry, I encountered an error. Please try again."));
