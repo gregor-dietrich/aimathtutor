@@ -139,7 +139,9 @@ public class ProviderTestService {
             case "google" -> this.testGoogle();
             case "openai" -> this.testOpenAi();
             case "ollama" -> this.testOllama();
-            default -> this.testMock();
+            case "mock" -> this.testMock();
+            default -> ProviderTestResultDto
+                    .fail("Unknown AI provider: " + provider + ". Supported providers: google, openai, ollama");
         };
     }
 }

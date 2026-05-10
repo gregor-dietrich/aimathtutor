@@ -219,14 +219,10 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 .set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "12px")
                 .set("cursor", "pointer").set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)")
                 .set("display", "flex").set("flex-direction", "column").set("position", "relative")
-                .set("overflow", "hidden");
+                .set("overflow", "hidden").set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)");
 
         // Accent bar
-        final var accentBar = new Div();
-        final String accentGradient = "linear-gradient(90deg, var(--lumo-primary-color),"
-                + " var(--lumo-primary-color-50pct), var(--lumo-primary-color-10pct))";
-        accentBar.getStyle().set("height", "3px").set("width", "100%").set("background", accentGradient)
-                .set("flex-shrink", "0");
+        final var accentBar = new GlassAccentBar();
 
         // Content wrapper
         final var content = new Div();
