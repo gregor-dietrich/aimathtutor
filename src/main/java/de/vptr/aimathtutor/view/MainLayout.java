@@ -3,8 +3,6 @@ package de.vptr.aimathtutor.view;
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -123,14 +121,6 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.showNavigationTabs();
 
         LOG.tracef("All checks passed for %s", targetView.getSimpleName());
-    }
-
-    @Override
-    public void showRouterLayoutContent(final HasElement content) {
-        if (content instanceof Component component) {
-            component.getElement().getStyle().set("flex", "1").set("min-height", "0");
-        }
-        this.getElement().appendChild(content.getElement());
     }
 
     private void updateLogoutButtonVisibility() {
