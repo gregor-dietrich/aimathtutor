@@ -38,7 +38,7 @@ See the [Makefile](Makefile) or use `make help` for all available commands and s
 
 - **API Keys**: Set environment variables `GOOGLE_API_KEY`, `OPENAI_API_KEY`, and `OPENAI_ORG_ID` (immutable at runtime).
 - **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable, database-backed).
-- **Encryption key**: Set `AIMATHTUTOR_ENCRYPTION_KEY_FILE` to the path of the AES-256 master key file. If unset, the key is auto-discovered or generated under `$XDG_DATA_HOME/aimathtutor/` (`~/.local/share/aimathtutor/`). In Docker, mount the `aimathtutor_keys` volume at `/etc/aimathtutor/keys`. This key is used to encrypt PII fields (such as user email) at rest.
+- **Encryption key**: Resolution order: (1) `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var, (2) `$XDG_DATA_HOME/aimathtutor/encryption.key`, (3) `~/.aimathtutor/encryption.key`, (4) auto-generate a 256-bit key at the XDG path with 0600 permissions. In Docker, mount the `aimathtutor_keys` volume at `/etc/aimathtutor/keys`. This key encrypts PII fields (such as user email) at rest.
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
 

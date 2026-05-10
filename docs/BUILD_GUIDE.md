@@ -43,7 +43,7 @@ source .env
 
 > **_NOTE:_** API keys are immutable configuration sourced from environment variables. All other AI settings (model, temperature, prompts, etc.) are configured at runtime via the Admin Settings UI (`/admin/config`) after logging in.
 
-### 1b. Encryption Key Setup
+### 1a. Encryption Key Setup
 
 AIMathTutor encrypts PII fields (email) at rest using AES-256-GCM. The master key is stored in a file on disk.
 
@@ -54,12 +54,13 @@ AIMathTutor encrypts PII fields (email) at rest using AES-256-GCM. The master ke
 **Production (custom path):** Set `AIMATHTUTOR_ENCRYPTION_KEY_FILE` to an absolute path writable by the application process. The file must contain a Base64-encoded 32-byte key. The application generates it if absent.
 
 > **⚠️ Critical:** Back up the key file (or the `aimathtutor_keys` Docker volume). Losing the key renders all encrypted data permanently unrecoverable. Key resolution order:
+>
 > 1. `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var (if set and non-empty)
 > 2. `$XDG_DATA_HOME/aimathtutor/encryption.key` (if file exists)
 > 3. `~/.aimathtutor/encryption.key` (if file exists)
 > 4. Auto-generate at the XDG path
 
-### 1a. Setting Up Ollama (Optional)
+### 1b. Setting Up Ollama (Optional)
 
 If you want to use Ollama as your AI provider for local, privacy-focused LLM inference, you have two options:
 

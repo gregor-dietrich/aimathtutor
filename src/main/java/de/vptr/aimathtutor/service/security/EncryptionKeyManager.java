@@ -1,9 +1,11 @@
 package de.vptr.aimathtutor.service.security;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -19,13 +21,13 @@ import jakarta.enterprise.context.ApplicationScoped;
  * it survives application restarts.
  *
  * <p>
- * Resolution order for key file path:
+ * {@link #resolveKeyPath()} determines the key file location using this order:
  * <ol>
- * <li>Config property {@code aimathtutor.encryption.key-file} / env var {@code AIMATHTUTOR_ENCRYPTION_KEY_FILE}</li>
+ * <li>Env var {@code AIMATHTUTOR_ENCRYPTION_KEY_FILE} (if set and non-empty)</li>
  * <li>Existing key at {@code $XDG_DATA_HOME/aimathtutor/encryption.key} (or
  * {@code ~/.local/share/aimathtutor/encryption.key})</li>
  * <li>Existing key at {@code ~/.aimathtutor/encryption.key}</li>
- * <li>Generates a new key at the XDG location (creating dirs as needed)</li>
+ * <li>Auto-generates a new 256-bit key at the XDG location with 0600 permissions</li>
  * </ol>
  */
 @ApplicationScoped
@@ -96,13 +98,27 @@ public class EncryptionKeyManager {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            Files.write(path, Base64.getEncoder().encode(key));
 
+            // Write to a temp file in the same directory, set 0600 permissions before writing,
+            // then atomically move to the target path to avoid a window of world-readable exposure.
+            final Path tmp = parent != null ? Files.createTempFile(parent, ".key-", ".tmp")
+                    : Files.createTempFile(".key-", ".tmp");
             try {
-                Files.setPosixFilePermissions(path,
-                        Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-            } catch (final UnsupportedOperationException e) {
-                LOG.warnf("Cannot set POSIX permissions on %s (non-POSIX filesystem)", path);
+                try {
+                    Files.setPosixFilePermissions(tmp,
+                            Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+                } catch (final UnsupportedOperationException e) {
+                    LOG.warnf("Cannot set POSIX permissions on %s (non-POSIX filesystem)", path);
+                }
+                Files.write(tmp, Base64.getEncoder().encode(key));
+                try {
+                    Files.move(tmp, path, StandardCopyOption.ATOMIC_MOVE);
+                } catch (final FileAlreadyExistsException e) {
+                    LOG.info("Encryption key file created concurrently; loading existing key");
+                    return loadKey(path);
+                }
+            } finally {
+                Files.deleteIfExists(tmp);
             }
 
             LOG.infof("Generated new encryption key at: %s", path);

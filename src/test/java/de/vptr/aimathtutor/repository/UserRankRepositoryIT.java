@@ -15,7 +15,6 @@ import jakarta.inject.Inject;
  * Integration tests for {@link UserRankRepository}.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 public class UserRankRepositoryIT {
 
     @Inject
@@ -31,9 +30,10 @@ public class UserRankRepositoryIT {
     @Test
     @TestTransaction
     public void testFindAll_returnsRanks() {
-        this.createRank("Rank_fall");
+        final UserRankEntity created = this.createRank("Rank_fall");
         final List<UserRankEntity> all = this.userRankRepository.findAll();
-        Assertions.assertFalse(all.isEmpty());
+        Assertions.assertTrue(all.stream().anyMatch(r -> Objects.equals(r.id, created.id)),
+                "findAll must include the rank that was just created");
     }
 
     @Test
@@ -47,6 +47,7 @@ public class UserRankRepositoryIT {
 
     @Test
     @TestTransaction
+    @SuppressWarnings("NullAway")
     public void testFindById_null() {
         Assertions.assertNull(this.userRankRepository.findById(null));
     }
@@ -129,6 +130,7 @@ public class UserRankRepositoryIT {
 
     @Test
     @TestTransaction
+    @SuppressWarnings("NullAway")
     public void testPersist_null_doesNotThrow() {
         Assertions.assertDoesNotThrow(() -> this.userRankRepository.persist(null));
     }

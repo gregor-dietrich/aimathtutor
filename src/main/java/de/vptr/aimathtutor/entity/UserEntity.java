@@ -69,6 +69,7 @@ public class UserEntity extends BaseEntity {
 
     @Column(name = "email_blind_index", unique = true, length = 44)
     @Nullable
+    @JsonIgnore
     public String emailBlindIndex;
 
     @Column(nullable = false)

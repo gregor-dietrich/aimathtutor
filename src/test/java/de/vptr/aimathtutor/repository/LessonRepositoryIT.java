@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
  * Integration tests for {@link LessonRepository}.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 public class LessonRepositoryIT {
 
     @Inject
@@ -25,7 +25,7 @@ public class LessonRepositoryIT {
         return createLesson(name, null);
     }
 
-    private LessonEntity createLesson(final String name, final LessonEntity parent) {
+    private LessonEntity createLesson(final String name, @Nullable final LessonEntity parent) {
         final LessonEntity lesson = new LessonEntity();
         lesson.name = name;
         lesson.parent = parent;
@@ -44,6 +44,7 @@ public class LessonRepositoryIT {
 
     @Test
     @TestTransaction
+    @SuppressWarnings("NullAway")
     public void testFindById_null() {
         Assertions.assertNull(this.lessonRepository.findById(null));
     }
@@ -93,9 +94,13 @@ public class LessonRepositoryIT {
     @Test
     @TestTransaction
     public void testFindAllOrdered_returnsLessons() {
-        this.createLesson("Trigonometry");
+        final LessonEntity alpha = this.createLesson("Alpha");
+        final LessonEntity beta = this.createLesson("Beta");
         final List<LessonEntity> all = this.lessonRepository.findAllOrdered();
         Assertions.assertFalse(all.isEmpty());
+        final List<Long> ids = all.stream().map(l -> l.id).toList();
+        Assertions.assertTrue(ids.indexOf(beta.id) < ids.indexOf(alpha.id),
+                "findAllOrdered must return the newest lesson (beta, higher id) before the older one (alpha)");
     }
 
     @Test
@@ -132,18 +137,21 @@ public class LessonRepositoryIT {
 
     @Test
     @TestTransaction
+    @SuppressWarnings("NullAway")
     public void testSearch_nullReturnsAll() {
         this.createLesson("Statistics");
+        final List<LessonEntity> baseline = this.lessonRepository.findAllOrdered();
         final List<LessonEntity> results = this.lessonRepository.search(null);
-        Assertions.assertFalse(results.isEmpty());
+        Assertions.assertEquals(baseline.size(), results.size(), "search(null) must return all lessons");
     }
 
     @Test
     @TestTransaction
     public void testSearch_blankReturnsAll() {
         this.createLesson("Probability");
+        final List<LessonEntity> baseline = this.lessonRepository.findAllOrdered();
         final List<LessonEntity> results = this.lessonRepository.search("   ");
-        Assertions.assertFalse(results.isEmpty());
+        Assertions.assertEquals(baseline.size(), results.size(), "search(blank) must return all lessons");
     }
 
     @Test
@@ -189,6 +197,7 @@ public class LessonRepositoryIT {
 
     @Test
     @TestTransaction
+    @SuppressWarnings("NullAway")
     public void testPersist_null() {
         Assertions.assertNull(this.lessonRepository.persist(null));
     }

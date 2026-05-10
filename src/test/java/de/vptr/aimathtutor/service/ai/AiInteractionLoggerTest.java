@@ -187,9 +187,9 @@ class AiInteractionLoggerTest {
     }
 
     @Test
-    @DisplayName("logQuestionInteraction warns when user and exercise are not found")
+    @DisplayName("logQuestionInteraction persists two records when user and exercise are not found")
     @TestTransaction
-    void testLogQuestionInteraction_userAndExerciseNotFound() {
+    void testLogQuestionInteraction_persistsTwoRecordsWhenUserAndExerciseNotFound() {
         final long countBefore = this.aiInteractionRepository.findAll().size();
         final String sessionId = "notfound-session-" + UUID.randomUUID();
 

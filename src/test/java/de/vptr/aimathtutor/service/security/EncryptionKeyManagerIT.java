@@ -32,9 +32,10 @@ public class EncryptionKeyManagerIT {
     @Test
     public void testGetMasterKey_mutatingReturnedKeyDoesNotAffectInternal() {
         final byte[] key1 = this.encryptionKeyManager.getMasterKey();
+        final byte original = key1[0];
         key1[0] = (byte) ~key1[0];
         final byte[] key2 = this.encryptionKeyManager.getMasterKey();
-        Assertions.assertEquals(key2[0], this.encryptionKeyManager.getMasterKey()[0],
+        Assertions.assertEquals(original, key2[0],
                 "Mutating the returned array must not corrupt the internal key");
     }
 

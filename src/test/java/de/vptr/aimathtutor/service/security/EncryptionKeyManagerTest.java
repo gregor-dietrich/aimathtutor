@@ -128,8 +128,8 @@ public class EncryptionKeyManagerTest {
         final EncryptionKeyManager km = new EncryptionKeyManager();
         this.initWithTempHome(km);
 
-        Assertions.assertNotNull(km.masterKey);
-        Assertions.assertEquals(32, km.masterKey.length);
+        Assertions.assertArrayEquals(expectedKey, km.masterKey,
+                "init() must load the key from ~/.aimathtutor/encryption.key when neither env var nor XDG path is set");
     }
 
     @Test
