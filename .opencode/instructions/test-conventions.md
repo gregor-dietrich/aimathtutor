@@ -61,9 +61,31 @@ class SomeServiceTest {
 
 ## Test Categories
 
-| Category       | Approach                                                          |
-| -------------- | ----------------------------------------------------------------- |
-| Service tests  | `@QuarkusTest` + `@Inject` service + Mockito for dependencies     |
-| Entity tests   | `PanacheMock` for static methods, `@TestTransaction` for DB tests |
-| Security tests | Test password hashing via `PasswordHashingService`                |
-| Utility tests  | Pure unit tests, no `@QuarkusTest` needed                         |
+| Category        | Approach                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| Service tests   | `@QuarkusTest` + `@Inject` service + Mockito for dependencies                                                 |
+| Entity tests    | `PanacheMock` for static methods, `@TestTransaction` for DB tests                                             |
+| Security tests  | Test password hashing via `PasswordHashingService`                                                            |
+| Utility tests   | Pure unit tests, no `@QuarkusTest` needed                                                                     |
+| Encryption ITs  | `@QuarkusTest` + `@Inject DataSource` for raw JDBC; verify ciphertext envelope format and blind-index storage |
+
+## Encryption Integration Tests
+
+`EncryptionIT` pattern: inject `DataSource` and read raw column values via JDBC to assert that plaintext is never stored. Use `@TestTransaction` to roll back after each test. Pass `@Nullable String email` to helper methods — use `@SuppressWarnings("NullAway")` on tests that deliberately pass `null` to `@NonNull` parameters (same pattern as `UserRepositoryIT`).
+
+```java
+@Test
+@TestTransaction
+void testEmailStoredAsCiphertext() throws SQLException {
+    // persist user via repository, then read raw value via DataSource
+    try (Connection c = dataSource.getConnection();
+         PreparedStatement ps = c.prepareStatement("SELECT email FROM users WHERE username = ?")) {
+        ps.setString(1, username);
+        try (ResultSet rs = ps.executeQuery()) {
+            String raw = rs.next() ? rs.getString(1) : null;
+            assertNotNull(raw);
+            assertTrue(raw.startsWith("1|")); // versioned envelope
+        }
+    }
+}
+```

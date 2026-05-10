@@ -64,6 +64,12 @@ NullAway runs at ERROR level on `de.vptr.aimathtutor`. Entity reference-type fie
 - Pairing `@Nullable` + `@NotNull` (Bean Validation) is valid and recommended: `@Nullable` for NullAway, `@NotNull` for DB-level enforcement
 - See AGENTS.md "Entity field `@Nullable` convention" for the full decision matrix
 
+## PMD Suppressions
+
+Most suppressions are forbidden (see AGENTS.md "Never Change Quality Gate Thresholds"). The only known legitimate suppression in this codebase is:
+
+- `@SuppressWarnings("PMD.HardCodedCryptoKey")` on `EncryptionService.init()`: PMD flags HKDF domain-separator strings (`"encrypt"`, `"blind-index"`) as hardcoded keys — they are not. The suppression comment must explain this. Do not add this suppression elsewhere.
+
 ## Security Checklist
 
 - [ ] No hardcoded secrets (passwords, tokens, API keys)
@@ -75,6 +81,7 @@ NullAway runs at ERROR level on `de.vptr.aimathtutor`. Entity reference-type fie
 - [ ] Dependencies checked for CVEs
 - [ ] AI API keys from env vars only, never logged
 - [ ] All `@Inject` fields in Vaadin views are `transient`
+- [ ] Encrypted PII fields queried only via blind-index columns, never by column value
 
 ## Performance Checklist
 

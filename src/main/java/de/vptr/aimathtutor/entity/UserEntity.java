@@ -9,9 +9,11 @@ import org.hibernate.generator.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.vptr.aimathtutor.entity.converter.EncryptedStringConverter;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
@@ -28,14 +30,14 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing users in the system.
  */
 @NamedQueries({ @NamedQuery(name = "User.findByUsername", query = "FROM UserEntity WHERE username = :u"),
-        @NamedQuery(name = "User.findByEmail", query = "FROM UserEntity WHERE email = :e"),
+        @NamedQuery(name = "User.findByEmail", query = "FROM UserEntity WHERE emailBlindIndex = :b"),
         @NamedQuery(name = "User.findByPublicId", query = "FROM UserEntity WHERE publicId = :p"),
         @NamedQuery(name = "User.findAllOrdered", query = "FROM UserEntity ORDER BY created DESC"),
         @NamedQuery(name = "User.findActive",
                 query = "FROM UserEntity WHERE activated = true and banned = false ORDER BY created DESC"),
         @NamedQuery(name = "User.findByRankId", query = "FROM UserEntity WHERE rank.id = :r ORDER BY created DESC"),
         @NamedQuery(name = "User.searchByTerm",
-                query = "FROM UserEntity WHERE LOWER(username) LIKE :s OR LOWER(email) LIKE :s ORDER BY created DESC"),
+                query = "FROM UserEntity WHERE LOWER(username) LIKE :s ORDER BY created DESC"),
         @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r") })
 @Entity
 @Table(name = "users", indexes = { @Index(name = "idx_user_rank", columnList = "rank_id"),
@@ -60,9 +62,14 @@ public class UserEntity extends BaseEntity {
     public UserRankEntity rank;
 
     @Email
-    @Column(unique = true)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(columnDefinition = "TEXT")
     @Nullable
     public String email;
+
+    @Column(name = "email_blind_index", unique = true, length = 44)
+    @Nullable
+    public String emailBlindIndex;
 
     @Column(nullable = false)
     public boolean banned = false;

@@ -1,4 +1,3 @@
-
 # AIMathTutor
 
 AIMathTutor is a full-stack web application for interactive math learning, built with Quarkus (backend) and Vaadin (frontend). It features an embedded Graspable Math workspace, AI-powered tutoring, lesson/exercise management, analytics, and granular user roles.
@@ -19,12 +18,12 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Common Development Commands (via Makefile)
 
-- `make dev`      – Start Quarkus in dev mode
-- `make test`     – Execute the Maven test suite
-- `make build`    – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
-- `make install`  – `make check` and `mvn clean install -DskipTests`
+- `make dev` – Start Quarkus in dev mode
+- `make test` – Execute the Maven test suite
+- `make build` – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
+- `make install` – `make check` and `mvn clean install -DskipTests`
 - `make password` – Generate a salt+hash for a password (for init.sql)
-- `make release`  – Pull from origin/main, `make build`, `make tag`, and push Docker image tag to registry
+- `make release` – Pull from origin/main, `make build`, `make tag`, and push Docker image tag to registry
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 
 See the [Makefile](Makefile) or use `make help` for all available commands and scripts.
@@ -39,6 +38,7 @@ See the [Makefile](Makefile) or use `make help` for all available commands and s
 
 - **API Keys**: Set environment variables `GOOGLE_API_KEY`, `OPENAI_API_KEY`, and `OPENAI_ORG_ID` (immutable at runtime).
 - **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable, database-backed).
+- **Encryption key**: Set `AIMATHTUTOR_ENCRYPTION_KEY_FILE` to the path of the AES-256 master key file. If unset, the key is auto-discovered or generated under `$XDG_DATA_HOME/aimathtutor/` (`~/.local/share/aimathtutor/`). In Docker, mount the `aimathtutor_keys` volume at `/etc/aimathtutor/keys`. This key is used to encrypt PII fields (such as user email) at rest.
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
 

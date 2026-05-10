@@ -34,6 +34,7 @@ You are a Backend Developer for AIMathTutor — a monolithic Quarkus 3.33 + Vaad
 - **REST clients only for AI APIs**: `GoogleService`, `OpenAiService`, `OllamaService` use `@RegisterRestClient` for external AI calls.
 - **Security is session-based**: Auth via `VaadinSession`, permission checks via `PermissionService` in service layer. Do NOT use `@RolesAllowed` or `@Authenticated` annotations.
 - **Password hashing**: PBKDF2-SHA256. Use `PasswordHashingService`. Never store/compare plaintext.
+- **Encrypt-at-Rest**: PII fields use `EncryptedStringConverter` (JPA `AttributeConverter`) backed by `EncryptionService`. Key management via `EncryptionKeyManager`. Searchable encrypted fields require a companion blind-index column populated in `UserRepository.persist()`. Do NOT add `LIKE` queries on encrypted columns — they must use blind-index equality lookups.
 - **ULIDs**: Use `UlidUtil` — never import `com.github.f4b6a3.ulid.UlidCreator` directly (Checkstyle `IllegalImport`).
 - **Logging**: Use `org.jboss.logging.Logger` with `*f` methods (`infof`, `debugf`) and `%s` placeholders. Never use SLF4J or `*v` methods (Checkstyle enforced).
 - **AI config**: Runtime-mutable via `AiConfigService` (DB-backed). API keys/config from env vars (`GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`).

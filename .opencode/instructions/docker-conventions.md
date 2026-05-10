@@ -44,6 +44,7 @@ Full-stack compose:
 - Database: `SQL_USERNAME`, `SQL_PASSWORD`, `SQL_DATABASE`, `SQL_PORT`
 - AI providers: `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`
 - pgAdmin: `PGADMIN_EMAIL`, `PGADMIN_PASSWORD`
+- **Encryption key**: `AIMATHTUTOR_ENCRYPTION_KEY_FILE=/etc/aimathtutor/keys/encryption.key` — must be set in the app service. Mount the `aimathtutor_keys` named volume at `/etc/aimathtutor/keys`. **Back up this volume** — losing it makes all encrypted PII permanently unrecoverable.
 - **Never hardcode real secrets** as defaults. Use placeholders (e.g., `changeit`).
 
 ## Build Script
