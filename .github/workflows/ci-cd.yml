@@ -36,6 +36,10 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "25"
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations,
       - name: Cache Maven packages
         uses: actions/cache@v5
         with:
@@ -61,18 +65,6 @@ jobs:
         with:
           name: dependency-check-report
           path: target/dependency-check-report.html
-
-  scan:
-    name: gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations,
 
   build:
     runs-on: ubuntu-latest
