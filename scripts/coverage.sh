@@ -3,8 +3,6 @@
 . "$(dirname "$0")"/lib/get_dir.sh
 . "$DIR/lib/get_maven.sh"
 
-set -e
-
 cd "$DIR/.."
 
 OPEN_REPORT=false
@@ -21,7 +19,8 @@ REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
 echo "Running tests with JaCoCo coverage..."
 
-${MVN_CMD} -q verify -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}" -Dmaven.test.failure.ignore=true
+maven_status=0
+${MVN_CMD} -q verify -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}" -Dmaven.test.failure.ignore=true || maven_status=$?
 
 echo "Generating coverage report..."
 
@@ -38,3 +37,5 @@ if [ "$OPEN_REPORT" = true ]; then
 fi
 
 echo "Coverage report generated at $REPORT."
+
+exit $maven_status
