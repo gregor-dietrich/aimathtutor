@@ -51,6 +51,9 @@ public class AdminSessionView extends AbstractAdminView {
     private transient Div infoCardContent;
     private transient Grid<AiInteractionViewDto> interactionsGrid;
 
+    /**
+     * Constructs the AdminSessionView with scrollable full-width layout.
+     */
     public AdminSessionView() {
         this.setWidthFull();
         this.setPadding(true);
@@ -81,21 +84,20 @@ public class AdminSessionView extends AbstractAdminView {
         // Header
         final var title = new H2("Session Details");
         title.getStyle().set("margin-top", "0").set("margin-bottom", "4px").set("font-size", "22px")
-                .set("font-weight", "700").set("color", "var(--lumo-header-text-color)")
-                .set("letter-spacing", "-0.3px").set("display", "inline");
+                .set("font-weight", "700").set("color", "var(--lumo-header-text-color)").set("letter-spacing", "-0.3px")
+                .set("display", "inline");
 
         this.statusBadge = new Span("Loading");
         this.statusBadge.getElement().getThemeList().add("badge");
         this.statusBadge.getElement().getThemeList().add("contrast");
 
         final var titleRow = new Div(title, this.statusBadge);
-        titleRow.getStyle().set("display", "flex").set("align-items", "center")
-                .set("gap", "12px").set("margin-bottom", "4px");
+        titleRow.getStyle().set("display", "flex").set("align-items", "center").set("gap", "12px").set("margin-bottom",
+                "4px");
         this.add(titleRow);
 
         this.headerSubtitle = new Span("Loading session information...");
-        this.headerSubtitle.getStyle().set("font-size", "13px")
-                .set("color", "var(--lumo-secondary-text-color)")
+        this.headerSubtitle.getStyle().set("font-size", "13px").set("color", "var(--lumo-secondary-text-color)")
                 .set("margin-bottom", "8px").set("display", "block");
         this.add(this.headerSubtitle);
 
@@ -105,12 +107,9 @@ public class AdminSessionView extends AbstractAdminView {
         this.successRateCard = new DashboardKpiCard("Success Rate", "—");
         this.hintsCard = new DashboardKpiCard("Hints Used", "—");
 
-        final var kpiRow = new Div(this.actionsCard, this.correctActionsCard,
-                this.successRateCard, this.hintsCard);
+        final var kpiRow = new Div(this.actionsCard, this.correctActionsCard, this.successRateCard, this.hintsCard);
         kpiRow.setWidthFull();
-        kpiRow.getStyle().set("display", "grid")
-                .set("grid-template-columns", "repeat(4, 1fr)")
-                .set("gap", "14px");
+        kpiRow.getStyle().set("display", "grid").set("grid-template-columns", "repeat(4, 1fr)").set("gap", "14px");
         this.add(kpiRow);
 
         this.add(this.buildInfoCard());
@@ -131,10 +130,8 @@ public class AdminSessionView extends AbstractAdminView {
                 .set("padding", "12px 16px 0").set("display", "block");
 
         this.infoCardContent = new Div();
-        this.infoCardContent.getStyle()
-                .set("display", "grid")
-                .set("grid-template-columns", "repeat(auto-fill, minmax(220px, 1fr))")
-                .set("gap", "16px")
+        this.infoCardContent.getStyle().set("display", "grid")
+                .set("grid-template-columns", "repeat(auto-fill, minmax(220px, 1fr))").set("gap", "16px")
                 .set("padding", "12px 16px 16px");
         this.infoCardContent.add(createInfoField("Session ID", "Loading..."));
 
@@ -162,8 +159,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.interactionsGrid.setWidthFull();
         this.interactionsGrid.getStyle().set("padding", "0 8px 8px");
 
-        this.interactionsGrid.addColumn(
-                        interaction -> this.dateTimeFormatter.formatDateTime(interaction.created))
+        this.interactionsGrid.addColumn(interaction -> this.dateTimeFormatter.formatDateTime(interaction.created))
                 .setHeader("Time").setFlexGrow(0).setWidth(AppConstants.GRID_ACTION_WIDTH);
 
         this.interactionsGrid.addColumn(interaction -> {
@@ -186,8 +182,7 @@ public class AdminSessionView extends AbstractAdminView {
             return "";
         }).setHeader("Message").setFlexGrow(2);
 
-        this.interactionsGrid.addColumn(
-                        interaction -> interaction.feedbackType != null ? interaction.feedbackType : "")
+        this.interactionsGrid.addColumn(interaction -> interaction.feedbackType != null ? interaction.feedbackType : "")
                 .setHeader("Feedback Type").setFlexGrow(0).setWidth("100px");
 
         card.add(accentBar, cardTitle, this.interactionsGrid);
@@ -198,19 +193,18 @@ public class AdminSessionView extends AbstractAdminView {
     private static void applyGlassCardStyle(final VerticalLayout card) {
         final String bg = "linear-gradient(135deg, var(--lumo-base-color),"
                 + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        card.getStyle().set("background", bg)
-                .set("border-radius", "12px")
+        card.getStyle().set("background", bg).set("border-radius", "12px")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
-                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)")
-                .set("overflow", "hidden");
+                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("overflow", "hidden");
     }
 
     private static Div buildAccentBar() {
         final var bar = new Div();
         bar.getStyle().set("height", "3px").set("width", "100%")
-                .set("background", "linear-gradient(90deg, var(--lumo-primary-color),"
-                        + " var(--lumo-primary-color-50pct), var(--lumo-primary-color-10pct))")
+                .set("background",
+                        "linear-gradient(90deg, var(--lumo-primary-color),"
+                                + " var(--lumo-primary-color-50pct), var(--lumo-primary-color-10pct))")
                 .set("flex-shrink", "0");
         return bar;
     }
@@ -220,8 +214,8 @@ public class AdminSessionView extends AbstractAdminView {
 
         final var labelSpan = new Span(label);
         labelSpan.getStyle().set("font-size", "11px").set("color", "var(--lumo-secondary-text-color)")
-                .set("text-transform", "uppercase").set("font-weight", "700")
-                .set("letter-spacing", "0.8px").set("display", "block").set("margin-bottom", "2px");
+                .set("text-transform", "uppercase").set("font-weight", "700").set("letter-spacing", "0.8px")
+                .set("display", "block").set("margin-bottom", "2px");
 
         final var valueSpan = new Span(value);
         valueSpan.getStyle().set("font-size", "14px").set("color", "var(--lumo-body-text-color)")
@@ -259,8 +253,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.statusBadge.setText(this.session.completed ? "Completed" : "In Progress");
         this.statusBadge.getElement().getThemeList().clear();
         this.statusBadge.getElement().getThemeList().add("badge");
-        this.statusBadge.getElement().getThemeList()
-                .add(this.session.completed ? "success" : "contrast");
+        this.statusBadge.getElement().getThemeList().add(this.session.completed ? "success" : "contrast");
 
         this.actionsCard.setValue(String.valueOf(this.session.actionsCount));
         this.correctActionsCard.setValue(String.valueOf(this.session.correctActions));
@@ -268,17 +261,15 @@ public class AdminSessionView extends AbstractAdminView {
         this.hintsCard.setValue(String.valueOf(this.session.hintsUsed));
 
         this.infoCardContent.removeAll();
-        this.infoCardContent.add(
-                createInfoField("Session ID", this.session.sessionId),
+        this.infoCardContent.add(createInfoField("Session ID", this.session.sessionId),
                 createInfoField("Student", this.session.username),
                 createInfoField("Exercise", this.session.exerciseTitle),
-                createInfoField("Start Time",
-                        this.dateTimeFormatter.formatDateTime(this.session.startTime)),
-                createInfoField("End Time", this.session.endTime != null
-                        ? this.dateTimeFormatter.formatDateTime(this.session.endTime)
-                        : "Not yet completed"),
-                createInfoField("Duration", this.session.getFormattedDuration() != null
-                        ? this.session.getFormattedDuration() : "N/A"),
+                createInfoField("Start Time", this.dateTimeFormatter.formatDateTime(this.session.startTime)),
+                createInfoField("End Time",
+                        this.session.endTime != null ? this.dateTimeFormatter.formatDateTime(this.session.endTime)
+                                : "Not yet completed"),
+                createInfoField("Duration",
+                        this.session.getFormattedDuration() != null ? this.session.getFormattedDuration() : "N/A"),
                 createInfoField("Final Expression",
                         this.session.finalExpression != null ? this.session.finalExpression : "N/A"));
     }

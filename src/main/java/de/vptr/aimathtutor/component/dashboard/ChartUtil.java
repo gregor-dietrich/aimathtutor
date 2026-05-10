@@ -279,8 +279,7 @@ public final class ChartUtil {
             sb.append("<rect x=\"").append(legendX).append("\" y=\"").append(itemY - 8)
                     .append("\" width=\"10\" height=\"10\" rx=\"2\" fill=\"").append(color).append("\"/>");
             sb.append("<text x=\"").append(legendX + 14).append("\" y=\"").append(itemY)
-                    .append("\" class=\"donut-legend\">")
-                    .append(escapeXml(truncateLabel(entry.getKey(), 14)))
+                    .append("\" class=\"donut-legend\">").append(escapeXml(truncateLabel(entry.getKey(), 14)))
                     .append(" (").append(pct).append("%)").append("</text>");
             idx++;
         }
