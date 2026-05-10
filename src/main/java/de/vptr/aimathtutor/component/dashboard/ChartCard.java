@@ -4,6 +4,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+import de.vptr.aimathtutor.component.GlassAccentBar;
+
 /**
  * Premium chart card with glass-morphism styling, matching the DashboardKpiCard design language. Wraps SVG chart
  * content with a title header.
@@ -19,14 +21,14 @@ public class ChartCard extends VerticalLayout {
      *            the chart title (may be null or empty to omit)
      */
     public ChartCard(final String title) {
-        setPadding(false);
-        setSpacing(false);
-        setWidthFull();
-        setHeightFull();
+        this.setPadding(false);
+        this.setSpacing(false);
+        this.setWidthFull();
+        this.setHeightFull();
 
         final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
                 + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        getStyle().set("background", bgGradient).set("border-radius", "12px")
+        this.getStyle().set("background", bgGradient).set("border-radius", "12px")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
                 .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("position", "relative")
@@ -43,16 +45,17 @@ public class ChartCard extends VerticalLayout {
             titleSpan.getStyle().set("font-size", "13px").set("font-weight", "700")
                     .set("color", "var(--lumo-primary-text-color)").set("letter-spacing", "0.3px")
                     .set("padding", "12px 16px 0").set("display", "block");
-            add(accentBar, titleSpan);
+            this.add(accentBar, titleSpan);
         } else {
-            add(accentBar);
+            this.add(accentBar);
         }
 
         this.chartContainer = new Div();
         this.chartContainer.setWidthFull();
         this.chartContainer.setHeightFull();
         this.chartContainer.getStyle().set("min-height", "200px").set("padding", "8px 8px 4px");
-        add(this.chartContainer);
+        this.add(this.chartContainer);
+        GlassAccentBar.addHoverEffect(this);
     }
 
     /**
