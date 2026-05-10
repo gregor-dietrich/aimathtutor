@@ -4,11 +4,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.TestTransaction;
@@ -18,6 +20,7 @@ import jakarta.inject.Inject;
 /**
  * Integration tests for {@link ExerciseRepository}.
  */
+@SuppressWarnings("NullAway")
 @QuarkusTest
 public class ExerciseRepositoryIT {
 
@@ -27,6 +30,8 @@ public class ExerciseRepositoryIT {
     UserRepository userRepository;
     @Inject
     UserRankRepository userRankRepository;
+    @Inject
+    LessonRepository lessonRepository;
 
     private UserEntity createUser(final String suffix) {
         final UserRankEntity rank = new UserRankEntity();
@@ -41,6 +46,16 @@ public class ExerciseRepositoryIT {
         user.rank = rank;
         this.userRepository.persist(user);
         return user;
+    }
+
+    private ExerciseEntity createExercise(final UserEntity user, final String suffix) {
+        final ExerciseEntity ex = new ExerciseEntity();
+        ex.title = "Ex_" + suffix;
+        ex.content = "x + 1";
+        ex.user = user;
+        ex.published = true;
+        this.exerciseRepository.persist(ex);
+        return ex;
     }
 
     @Test
@@ -150,5 +165,162 @@ public class ExerciseRepositoryIT {
         Assertions.assertFalse(result.isEmpty(), "Blank search should return all exercises");
         Assertions.assertTrue(result.stream().anyMatch(e -> "BlankSearchEx".equals(e.title)),
                 "Blank search should include the test exercise");
+    }
+
+    @Test
+    @TestTransaction
+    public void testSearch_nullReturnsAll() {
+        final UserEntity user = this.createUser("nullsrch");
+        this.createExercise(user, "nullsrch");
+        final List<ExerciseEntity> result = this.exerciseRepository.search(null);
+        Assertions.assertFalse(result.isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindAllOrdered_returnsResults() {
+        final UserEntity user = this.createUser("fall");
+        this.createExercise(user, "fall");
+        Assertions.assertFalse(this.exerciseRepository.findAllOrdered().isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByIdOptional_found() {
+        final UserEntity user = this.createUser("fido");
+        final ExerciseEntity ex = this.createExercise(user, "fido");
+        final Optional<ExerciseEntity> found = this.exerciseRepository.findByIdOptional(Objects.requireNonNull(ex.id));
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals(ex.id, found.get().id);
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByIdOptional_null() {
+        Assertions.assertTrue(this.exerciseRepository.findByIdOptional(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByPublicId_found() {
+        final UserEntity user = this.createUser("fpub");
+        final ExerciseEntity ex = this.createExercise(user, "fpub");
+        final Optional<ExerciseEntity> found =
+                this.exerciseRepository.findByPublicId(Objects.requireNonNull(ex.publicId));
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals(ex.publicId, found.get().publicId);
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByPublicId_null() {
+        Assertions.assertTrue(this.exerciseRepository.findByPublicId(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindById_found() {
+        final UserEntity user = this.createUser("fid");
+        final ExerciseEntity ex = this.createExercise(user, "fid");
+        final ExerciseEntity found = this.exerciseRepository.findById(Objects.requireNonNull(ex.id));
+        Assertions.assertNotNull(found);
+        Assertions.assertEquals(ex.id, found.id);
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindById_null() {
+        Assertions.assertNull(this.exerciseRepository.findById(null));
+    }
+
+    @Test
+    @TestTransaction
+    public void testCountPublished_returnsCount() {
+        final UserEntity user = this.createUser("cntpub");
+        this.createExercise(user, "cntpub");
+        Assertions.assertTrue(this.exerciseRepository.countPublished() >= 1);
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByLessonId_found() {
+        final UserEntity user = this.createUser("flsn");
+        final LessonEntity lesson = new LessonEntity();
+        lesson.name = "Lesson_flsn";
+        this.lessonRepository.persist(lesson);
+
+        final ExerciseEntity ex = new ExerciseEntity();
+        ex.title = "Ex_flsn";
+        ex.content = "x";
+        ex.user = user;
+        ex.published = true;
+        ex.lesson = lesson;
+        this.exerciseRepository.persist(ex);
+
+        final List<ExerciseEntity> result = this.exerciseRepository.findByLessonId(Objects.requireNonNull(lesson.id));
+        Assertions.assertFalse(result.isEmpty());
+        Assertions.assertTrue(result.stream().anyMatch(e -> Objects.equals(e.id, ex.id)));
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindGraspableMathExercisesByLesson_found() {
+        final UserEntity user = this.createUser("fgmbl");
+        final LessonEntity lesson = new LessonEntity();
+        lesson.name = "Lesson_fgmbl";
+        this.lessonRepository.persist(lesson);
+
+        final ExerciseEntity ex = new ExerciseEntity();
+        ex.title = "GraspableByLesson_fgmbl";
+        ex.content = "2x";
+        ex.user = user;
+        ex.published = true;
+        ex.graspableEnabled = true;
+        ex.graspableTargetExpression = "x=1";
+        ex.lesson = lesson;
+        this.exerciseRepository.persist(ex);
+
+        final List<ExerciseEntity> result =
+                this.exerciseRepository.findGraspableMathExercisesByLesson(Objects.requireNonNull(lesson.id));
+        Assertions.assertFalse(result.isEmpty());
+        Assertions.assertTrue(result.stream().anyMatch(e -> Objects.equals(e.id, ex.id)));
+    }
+
+    @Test
+    @TestTransaction
+    public void testPersist_null_returnsNull() {
+        Assertions.assertNull(this.exerciseRepository.persist(null));
+    }
+
+    @Test
+    @TestTransaction
+    public void testDeleteById_existing() {
+        final UserEntity user = this.createUser("delid");
+        final ExerciseEntity ex = this.createExercise(user, "delid");
+        final Long id = Objects.requireNonNull(ex.id);
+        Assertions.assertTrue(this.exerciseRepository.deleteById(id));
+        Assertions.assertNull(this.exerciseRepository.findById(id));
+    }
+
+    @Test
+    @TestTransaction
+    public void testDeleteById_nonExisting() {
+        Assertions.assertFalse(this.exerciseRepository.deleteById(999_999L));
+    }
+
+    @Test
+    @TestTransaction
+    public void testDeleteByPublicId_existing() {
+        final UserEntity user = this.createUser("delpub");
+        final ExerciseEntity ex = this.createExercise(user, "delpub");
+        final String publicId = Objects.requireNonNull(ex.publicId);
+        Assertions.assertTrue(this.exerciseRepository.deleteByPublicId(publicId));
+        Assertions.assertTrue(this.exerciseRepository.findByPublicId(publicId).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testDeleteByPublicId_nonExisting() {
+        Assertions.assertFalse(this.exerciseRepository.deleteByPublicId("nonexistent"));
     }
 }

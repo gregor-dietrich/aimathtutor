@@ -158,4 +158,44 @@ class AiInteractionLoggerTest {
         assertTrue(records.stream().anyMatch(r -> "QUESTION_ANSWER".equals(r.eventType)),
                 "One record should have eventType QUESTION_ANSWER");
     }
+
+    @Test
+    @DisplayName("logInteraction falls back to UNKNOWN when eventType or feedbackType are null")
+    @TestTransaction
+    void testLogInteraction_nullEventTypeAndFeedbackType() {
+        final long countBefore = this.aiInteractionRepository.findAll().size();
+
+        final var event = new GraspableEventDto();
+        event.sessionId = "null-type-session-" + UUID.randomUUID();
+        event.eventType = null;
+        event.correct = null;
+
+        final var feedback = new AiFeedbackDto();
+        feedback.type = null;
+
+        this.aiInteractionLogger.logInteraction(event, feedback);
+
+        final long countAfter = this.aiInteractionRepository.findAll().size();
+        assertEquals(countBefore + 1, countAfter, "One interaction record should be persisted even with null types");
+
+        final var records = this.aiInteractionRepository.findBySessionId(event.sessionId);
+        assertNotNull(records);
+        assertTrue(records.stream().anyMatch(r -> "UNKNOWN".equals(r.eventType)),
+                "eventType should default to UNKNOWN");
+        assertTrue(records.stream().anyMatch(r -> "UNKNOWN".equals(r.feedbackType)),
+                "feedbackType should default to UNKNOWN");
+    }
+
+    @Test
+    @DisplayName("logQuestionInteraction warns when user and exercise are not found")
+    @TestTransaction
+    void testLogQuestionInteraction_userAndExerciseNotFound() {
+        final long countBefore = this.aiInteractionRepository.findAll().size();
+        final String sessionId = "notfound-session-" + UUID.randomUUID();
+
+        this.aiInteractionLogger.logQuestionInteraction(sessionId, 999_999L, 999_999L, "Question?", "Answer.");
+
+        final long countAfter = this.aiInteractionRepository.findAll().size();
+        assertEquals(countBefore + 2, countAfter, "Two records should still be persisted when user/exercise not found");
+    }
 }

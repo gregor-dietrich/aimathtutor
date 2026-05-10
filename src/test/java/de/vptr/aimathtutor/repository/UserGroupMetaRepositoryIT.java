@@ -215,4 +215,13 @@ public class UserGroupMetaRepositoryIT extends AbstractRepositoryIT {
     public void testDelete_null() {
         Assertions.assertDoesNotThrow(() -> this.userGroupMetaRepository.delete(null));
     }
+
+    @SuppressWarnings("NullAway")
+    @Test
+    @TestTransaction
+    public void testDelete_nonExistentId() {
+        final UserGroupMetaEntity meta = new UserGroupMetaEntity();
+        meta.id = 999_999L;
+        Assertions.assertDoesNotThrow(() -> this.userGroupMetaRepository.delete(meta));
+    }
 }

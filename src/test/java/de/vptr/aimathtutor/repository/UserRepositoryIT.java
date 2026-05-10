@@ -271,4 +271,11 @@ public class UserRepositoryIT {
     public void testDeleteByPublicId_nonExisting() {
         Assertions.assertFalse(this.userRepository.deleteByPublicId("nonexistent"));
     }
+
+    @SuppressWarnings("NullAway")
+    @Test
+    @TestTransaction
+    public void testPersist_null_returnsNull() {
+        Assertions.assertNull(this.userRepository.persist(null));
+    }
 }

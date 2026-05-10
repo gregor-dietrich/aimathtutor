@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,6 +67,18 @@ class LoginAttemptServiceTest {
         this.loginAttemptService.recordSuccessfulLogin(key);
         assertFalse(this.loginAttemptService.isLockedOut(key));
         assertEquals(0, this.loginAttemptService.getRemainingLockoutSeconds(key));
+    }
+
+    @Test
+    @DisplayName("Should return zero remaining seconds when under the attempt threshold")
+    void shouldReturnZeroWhenUnderThreshold() {
+        final String key = "underThreshold_" + UUID.randomUUID();
+        // 3 attempts — under the lockout threshold of 5
+        for (int i = 0; i < 3; i++) {
+            this.loginAttemptService.recordFailedAttempt(key);
+        }
+        assertEquals(0, this.loginAttemptService.getRemainingLockoutSeconds(key));
+        assertFalse(this.loginAttemptService.isLockedOut(key));
     }
 
     @Test

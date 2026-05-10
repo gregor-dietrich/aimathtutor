@@ -80,4 +80,31 @@ public class EncryptionServiceTest {
         Assertions.assertNotNull(idx1);
         Assertions.assertNotEquals(idx1, idx2);
     }
+
+    @Test
+    public void testDecrypt_invalidEnvelopeFormat_throws() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> this.encryptionService.decrypt("not-a-valid-envelope"));
+    }
+
+    @Test
+    public void testDecrypt_wrongVersion_throws() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> this.encryptionService.decrypt("2|aGVsbG8=|d29ybGQ="));
+    }
+
+    @Test
+    public void testEncryptDecryptRoundtrip_emptyString() {
+        final String plaintext = "";
+        final String ciphertext = this.encryptionService.encrypt(plaintext);
+        Assertions.assertNotNull(ciphertext);
+        Assertions.assertEquals(plaintext, this.encryptionService.decrypt(ciphertext));
+    }
+
+    @Test
+    public void testBlindIndex_emptyString_returnsNonNull() {
+        final String idx = this.encryptionService.generateBlindIndex("");
+        Assertions.assertNotNull(idx);
+        Assertions.assertFalse(idx.isBlank());
+    }
 }
