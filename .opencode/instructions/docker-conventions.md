@@ -42,7 +42,7 @@ Full-stack compose:
 - Timezone: `TZ` (default `UTC`)
 - Image tag: `REVISION` (default `1.0.0-SNAPSHOT`)
 - Database: `SQL_USERNAME`, `SQL_PASSWORD`, `SQL_DATABASE`, `SQL_PORT`
-- AI providers: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`
+- AI providers: `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`
 - pgAdmin: `PGADMIN_EMAIL`, `PGADMIN_PASSWORD`
 - **Never hardcode real secrets** as defaults. Use placeholders (e.g., `changeit`).
 

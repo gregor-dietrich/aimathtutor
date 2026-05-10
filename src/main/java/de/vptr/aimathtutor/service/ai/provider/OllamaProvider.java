@@ -19,9 +19,9 @@ import jakarta.inject.Inject;
  * {@code @Retry} for automatic retries with jitter.
  */
 @ApplicationScoped
-public class OllamaAiProvider implements AiProvider {
+public class OllamaProvider implements ProviderInterface {
 
-    private static final Logger LOG = Logger.getLogger(OllamaAiProvider.class);
+    private static final Logger LOG = Logger.getLogger(OllamaProvider.class);
 
     @Inject
     OllamaService ollamaService;

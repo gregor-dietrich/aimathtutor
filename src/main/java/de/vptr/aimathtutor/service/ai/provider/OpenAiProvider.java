@@ -14,7 +14,7 @@ import jakarta.inject.Inject;
  * responses.
  */
 @ApplicationScoped
-public class OpenAiProvider extends AbstractAiProvider {
+public class OpenAiProvider extends AbstractProvider {
 
     private static final Logger LOG = Logger.getLogger(OpenAiProvider.class);
 

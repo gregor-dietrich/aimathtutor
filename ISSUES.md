@@ -333,3 +333,5 @@ Note: `color` and `cursor` styles are removed — `LUMO_TERTIARY_INLINE` already
 All files except `AdminSessionsView.java` already import `Button` and `ButtonVariant`.
 
 > **Consistency check:** All clickable-span patterns are in admin views only (confirmed via full codebase audit — no student views have clickable spans).
+
+---

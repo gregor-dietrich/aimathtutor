@@ -9,8 +9,8 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.OpenAiRequestDto;
 import de.vptr.aimathtutor.dto.OpenAiResponseDto;
-import de.vptr.aimathtutor.exception.AiProviderException;
-import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
+import de.vptr.aimathtutor.exception.ProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -27,7 +27,7 @@ import jakarta.ws.rs.core.Response;
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
-public class OpenAiService extends AbstractAiProviderService {
+public class OpenAiService extends AbstractProviderService {
 
     private static final Logger LOG = Logger.getLogger(OpenAiService.class);
     private static final String DEFAULT_MODEL = "gpt-5-nano";
@@ -108,7 +108,7 @@ public class OpenAiService extends AbstractAiProviderService {
      * @return The generated text response
      */
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
-            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableProviderException.class)
     public String generateContent(final String prompt) {
         return this.doGenerate(prompt, CHAT_SYSTEM_PROMPT, false);
     }
@@ -117,7 +117,7 @@ public class OpenAiService extends AbstractAiProviderService {
      * Generate content with JSON mode (guarantees valid JSON)
      */
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
-            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableProviderException.class)
     public String generateJsonContent(final String prompt) {
         return this.doGenerate(prompt, JSON_SYSTEM_PROMPT, true);
     }
@@ -159,14 +159,14 @@ public class OpenAiService extends AbstractAiProviderService {
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
                     LOG.errorf("OpenAI API error (status %s): %s", response.getStatus(), errorBody);
-                    throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
+                    throw ProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
                 final var openAiResponse = response.readEntity(OpenAiResponseDto.class);
 
                 if (openAiResponse.isContentFiltered()) {
                     LOG.warn("OpenAI response was filtered by content safety policies");
-                    throw new NonRetryableAiProviderException(this.getProviderName(),
+                    throw new NonRetryableProviderException(this.getProviderName(),
                             "Response filtered by content safety policies");
                 }
 
@@ -192,12 +192,12 @@ public class OpenAiService extends AbstractAiProviderService {
                 return content;
             }
 
-        } catch (final AiProviderException e) {
+        } catch (final ProviderException e) {
             LOG.error("OpenAI provider call failed", e);
             throw e;
         } catch (final RuntimeException e) {
             LOG.error("Unexpected error calling OpenAI API", e);
-            throw AiProviderException.transportFailure(this.getProviderName(), "Failed to call OpenAI API", e);
+            throw ProviderException.transportFailure(this.getProviderName(), "Failed to call OpenAI API", e);
         }
     }
 }

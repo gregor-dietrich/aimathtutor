@@ -5,17 +5,17 @@ import java.io.IOException;
 import jakarta.annotation.Nullable;
 
 /**
- * Unified runtime exception thrown by AI provider services (OpenAI, Gemini, Ollama). Carries the provider name and an
+ * Unified runtime exception thrown by AI provider services (OpenAI, Google, Ollama). Carries the provider name and an
  * optional HTTP status code so callers can react uniformly without depending on provider-specific exception
  * hierarchies.
  *
  * <p>
  * This base type represents a transient failure and is eligible for retry. Permanent failures (missing API key, blocked
- * content, misconfiguration) are signalled with {@link NonRetryableAiProviderException}; the
+ * content, misconfiguration) are signalled with {@link NonRetryableProviderException}; the
  * {@code @Retry(abortOn = NonRetryableAiProviderException.class)} annotation on the calling methods skips retries in
  * those cases.
  */
-public class AiProviderException extends RuntimeException {
+public class ProviderException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
@@ -28,20 +28,19 @@ public class AiProviderException extends RuntimeException {
     /**
      * Build an exception backed by an HTTP failure.
      */
-    public static AiProviderException httpFailure(final String providerName, final int httpStatus,
-            final String message) {
-        return new AiProviderException(providerName, message, httpStatus, null);
+    public static ProviderException httpFailure(final String providerName, final int httpStatus, final String message) {
+        return new ProviderException(providerName, message, httpStatus, null);
     }
 
     /**
      * Build an exception wrapping a transport-level cause (e.g. {@link IOException}).
      */
-    public static AiProviderException transportFailure(final String providerName, final String message,
+    public static ProviderException transportFailure(final String providerName, final String message,
             final Throwable cause) {
-        return new AiProviderException(providerName, message, NO_HTTP_STATUS, cause);
+        return new ProviderException(providerName, message, NO_HTTP_STATUS, cause);
     }
 
-    protected AiProviderException(final String providerName, final String message, final int httpStatus,
+    protected ProviderException(final String providerName, final String message, final int httpStatus,
             @Nullable final Throwable cause) {
         super(formatMessage(providerName, message, httpStatus), cause);
         this.providerName = providerName;

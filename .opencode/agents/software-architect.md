@@ -31,7 +31,7 @@ You are a Software Architect for AIMathTutor — a monolithic Quarkus 3.33 + Vaa
 - **Monolithic**: Single Quarkus application with embedded Vaadin UI. No REST boundary between views and services.
 - **Base package**: `de.vptr.aimathtutor`
 - **Packages**: `entity/` (Panache Active Record), `repository/`, `service/` (`@ApplicationScoped`), `view/` (Vaadin), `dto/`, `security/`, `event/`, `exception/`, `util/`, `component/`
-- **AI layer**: Pluggable providers (Gemini, OpenAI, Ollama, mock) via `AbstractAiProviderService` in `service/ai/provider/`
+- **AI layer**: Pluggable providers (Google, OpenAI, Ollama, mock) via `AbstractAiProviderService` in `service/ai/provider/`
 - **Security**: Session-based via `VaadinSession`. Permission checks via `PermissionService` in service layer. `MainLayout`/`AdminMainLayout` enforce auth via `BeforeEnterObserver`.
 - **Graspable Math**: Embedded workspace via Vaadin + JavaScript API in `MathWorkspaceView`
 
@@ -44,7 +44,7 @@ You are a Software Architect for AIMathTutor — a monolithic Quarkus 3.33 + Vaa
 - **Authorization**: `PermissionService` in service layer — no `@RolesAllowed` or `@Authenticated` on views
 - **Injection risks**: JPA queries must use parameterized Panache methods — no string interpolation
 - **Dependency risk**: Evaluate new dependencies for maintenance status, known CVEs, license compliance
-- **AI API keys**: Sourced from env vars (`GEMINI_API_KEY`, `OPENAI_API_KEY`) — never logged or exposed
+- **AI API keys**: Sourced from env vars (`GOOGLE_API_KEY`, `OPENAI_API_KEY`) — never logged or exposed
 
 ### Performance
 

@@ -96,7 +96,7 @@ CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Check
 
 ## AI Configuration
 
-- **API keys (env vars):** `GEMINI_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`.
+- **API keys (env vars):** `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`.
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts — configured via Admin Settings UI at `/admin/config`.
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on Ollama calls, sets 1s connect/read timeouts.

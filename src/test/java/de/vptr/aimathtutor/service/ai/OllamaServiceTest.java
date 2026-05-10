@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -73,18 +74,18 @@ class OllamaServiceTest {
     @Test
     @DisplayName("getConfigPrefix returns the Ollama prefix")
     void testGetConfigPrefix() {
-        assertNotNull(this.ollamaService.getConfigPrefix());
+        assertEquals("ollama", this.ollamaService.getConfigPrefix());
     }
 
     @Test
     @DisplayName("getDefaultModel returns the default model")
     void testGetDefaultModel() {
-        assertNotNull(this.ollamaService.getDefaultModel());
+        assertEquals("llama3.2:3b", this.ollamaService.getDefaultModel());
     }
 
     @Test
     @DisplayName("getProviderName returns Ollama")
     void testGetProviderName() {
-        assertNotNull(this.ollamaService.getProviderName());
+        assertEquals("Ollama", this.ollamaService.getProviderName());
     }
 }

@@ -22,10 +22,10 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
-class OllamaAiProviderTest {
+class OllamaProviderTest {
 
     @Inject
-    OllamaAiProvider ollamaAiProvider;
+    OllamaProvider ollamaAiProvider;
 
     @InjectMock
     OllamaService ollamaService;

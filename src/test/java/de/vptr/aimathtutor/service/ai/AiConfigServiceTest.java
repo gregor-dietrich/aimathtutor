@@ -54,7 +54,7 @@ class AiConfigServiceTest {
                 "test.bool.false", "test.bool.one", "test.bool.zero", "test.config1", "test.config2", "test.config3",
                 "update.test", "batch.config1", "batch.config2", "batch.config3", "cache.test", "cache.clear.test",
                 "test.integer", "test.boolean", "test.string", "test.temperature", "test.max-tokens", "test.config3",
-                "ollama.base-url", "gemini.base-url");
+                "ollama.base-url", "google.base-url");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
@@ -506,8 +506,8 @@ class AiConfigServiceTest {
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
     @Transactional
     void testUrlValidationUnresolvableHostRejectedForNonOllama() {
-        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("gemini.base-url",
-                "https://nonexistent-gemini-host.invalid/", this.adminUser.id));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("google.base-url",
+                "https://nonexistent-google-host.invalid/", this.adminUser.id));
     }
 
     @Test

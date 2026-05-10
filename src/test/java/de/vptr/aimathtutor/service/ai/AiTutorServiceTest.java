@@ -23,7 +23,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AiTutorServiceTest {
 
     @Inject
@@ -348,6 +347,7 @@ class AiTutorServiceTest {
     @Test
     @DisplayName("Should throw for null event in analyzeMathAction")
     @Transactional
+    @SuppressWarnings("NullAway")
     void shouldThrowForNullEvent() {
         assertThrows(IllegalArgumentException.class,
                 () -> this.aiTutorService.analyzeMathAction(null, new ConversationContextDto(), "test-user"));
@@ -356,6 +356,7 @@ class AiTutorServiceTest {
     @Test
     @DisplayName("Should throw for null question in answerQuestion")
     @Transactional
+    @SuppressWarnings("NullAway")
     void shouldThrowForNullQuestion() {
         assertThrows(IllegalArgumentException.class, () -> this.aiTutorService.answerQuestion(null, null, null, null,
                 "session-1", new ConversationContextDto(), "test-user"));

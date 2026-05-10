@@ -13,10 +13,10 @@ import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.vptr.aimathtutor.dto.GeminiRequestDto;
-import de.vptr.aimathtutor.dto.GeminiResponseDto;
-import de.vptr.aimathtutor.exception.AiProviderException;
-import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.dto.GoogleRequestDto;
+import de.vptr.aimathtutor.dto.GoogleResponseDto;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
+import de.vptr.aimathtutor.exception.ProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -24,17 +24,17 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for interacting with the Google Gemini AI API. Configuration is provided dynamically via
+ * Service for interacting with the Google Google AI API. Configuration is provided dynamically via
  * {@link AiConfigService}.
  */
 @ApplicationScoped
-public class GeminiService extends AbstractAiProviderService {
+public class GoogleService extends AbstractProviderService {
 
-    private static final Logger LOG = Logger.getLogger(GeminiService.class);
+    private static final Logger LOG = Logger.getLogger(GoogleService.class);
     private static final String DEFAULT_MODEL = "gemma-4-31b-it";
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
-    @ConfigProperty(name = "gemini.api.key", defaultValue = "")
+    @ConfigProperty(name = "google.api.key", defaultValue = "")
     @Nullable
     private String apiKey; // API key is always read from environment variable, never from database
 
@@ -45,7 +45,7 @@ public class GeminiService extends AbstractAiProviderService {
 
     @Override
     protected String getConfigPrefix() {
-        return AiConfigKeys.GEMINI_PREFIX;
+        return AiConfigKeys.GOOGLE_PREFIX;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class GeminiService extends AbstractAiProviderService {
 
     @Override
     protected String getProviderName() {
-        return "Gemini";
+        return "Google";
     }
 
     @Override
@@ -69,35 +69,35 @@ public class GeminiService extends AbstractAiProviderService {
         this.httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
                 .connectTimeout(Duration.ofSeconds(10)).build();
 
-        LOG.debug("Initialized Gemini HttpClient");
+        LOG.debug("Initialized Google HttpClient");
     }
 
     /**
-     * Generate content using Gemini API
+     * Generate content using Google API
      *
      * @param prompt
      *            The input prompt
      * @return The generated text response
      */
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
-            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableProviderException.class)
     public String generateContent(final String prompt) {
-        LOG.debugf("Generating content with Gemini for prompt length: %s", prompt != null ? prompt.length() : 0);
+        LOG.debugf("Generating content with Google for prompt length: %s", prompt != null ? prompt.length() : 0);
 
-        this.requireApiKey(this.apiKey, "GEMINI_API_KEY");
+        this.requireApiKey(this.apiKey, "GOOGLE_API_KEY");
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.GEMINI_MODEL, DEFAULT_MODEL);
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GEMINI_API_BASE_URL, DEFAULT_BASE_URL);
-        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.GEMINI_TEMPERATURE, 0.7);
-        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.GEMINI_MAX_TOKENS, 2000);
+        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_MODEL, DEFAULT_MODEL);
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL, DEFAULT_BASE_URL);
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.GOOGLE_TEMPERATURE, 0.7);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.GOOGLE_MAX_TOKENS, 2000);
 
-        this.requireConfigured(model, "Gemini model");
-        this.requireConfigured(baseUrl, "Gemini API URL");
+        this.requireConfigured(model, "Google model");
+        this.requireConfigured(baseUrl, "Google API URL");
 
         try {
             // Create request DTO
-            final var requestDto = GeminiRequestDto.createTextRequest(prompt, temperature, maxTokens);
+            final var requestDto = GoogleRequestDto.createTextRequest(prompt, temperature, maxTokens);
 
             // Convert to JSON
             final String requestJson = this.objectMapper.writeValueAsString(requestDto);
@@ -105,7 +105,7 @@ public class GeminiService extends AbstractAiProviderService {
             // Build API URL (key moved to header to avoid appearing in logs/proxies)
             final String url = String.format("%s/v1beta/models/%s:generateContent", baseUrl, model);
 
-            LOG.debugf("Calling Gemini API at: %s", url);
+            LOG.debugf("Calling Google API at: %s", url);
 
             // Create HTTP request with API key in header instead of query param
             final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
@@ -119,38 +119,38 @@ public class GeminiService extends AbstractAiProviderService {
             final String responseBody = response.body();
 
             if (statusCode != 200) {
-                LOG.errorf("Gemini API error (status %s): %s", statusCode, responseBody);
-                throw AiProviderException.httpFailure(this.getProviderName(), statusCode, responseBody);
+                LOG.errorf("Google API error (status %s): %s", statusCode, responseBody);
+                throw ProviderException.httpFailure(this.getProviderName(), statusCode, responseBody);
             }
 
             // Parse response
-            final var geminiResponse = this.objectMapper.readValue(responseBody, GeminiResponseDto.class);
+            final var googleResponse = this.objectMapper.readValue(responseBody, GoogleResponseDto.class);
 
-            if (geminiResponse.isBlocked()) {
-                LOG.warn("Gemini response was blocked by safety filters");
-                throw new NonRetryableAiProviderException(this.getProviderName(), "Response blocked by safety filters");
+            if (googleResponse.isBlocked()) {
+                LOG.warn("Google response was blocked by safety filters");
+                throw new NonRetryableProviderException(this.getProviderName(), "Response blocked by safety filters");
             }
 
-            if (geminiResponse.isTruncated()) {
-                LOG.warnf("Gemini response was truncated due to token limit (finishReason=%s)",
-                        geminiResponse.getFinishReason());
+            if (googleResponse.isTruncated()) {
+                LOG.warnf("Google response was truncated due to token limit (finishReason=%s)",
+                        googleResponse.getFinishReason());
             }
 
-            final String content = this.requireNonEmptyContent(geminiResponse.getTextContent());
+            final String content = this.requireNonEmptyContent(googleResponse.getTextContent());
 
-            LOG.debugf("Successfully generated content from Gemini, length: %s", content.length());
+            LOG.debugf("Successfully generated content from Google, length: %s", content.length());
             return content;
 
-        } catch (final AiProviderException e) {
-            LOG.error("Gemini provider call failed", e);
+        } catch (final ProviderException e) {
+            LOG.error("Google provider call failed", e);
             throw e;
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOG.error("Gemini call interrupted", e);
-            throw AiProviderException.transportFailure(this.getProviderName(), "Call interrupted", e);
+            LOG.error("Google call interrupted", e);
+            throw ProviderException.transportFailure(this.getProviderName(), "Call interrupted", e);
         } catch (final IOException e) {
-            LOG.error("Error calling Gemini API", e);
-            throw AiProviderException.transportFailure(this.getProviderName(), "Failed to call Gemini API", e);
+            LOG.error("Error calling Google API", e);
+            throw ProviderException.transportFailure(this.getProviderName(), "Failed to call Google API", e);
         }
     }
 }

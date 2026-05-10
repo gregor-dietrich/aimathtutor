@@ -24,7 +24,7 @@ For Docker, you have 2 options:
 For development, set the following environment variables (only needed if using cloud AI providers):
 
 ```sh
-export GEMINI_API_KEY=your_gemini_api_key_here
+export GOOGLE_API_KEY=your_google_api_key_here
 export OPENAI_API_KEY=your_openai_api_key_here
 export OPENAI_ORG_ID=your_openai_org_id_here  # Optional
 ```
@@ -33,7 +33,7 @@ Alternatively, create a `.env` file in the project root and source it:
 
 ```sh
 # .env
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_API_KEY=your_google_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_ORG_ID=your_openai_org_id_here
 

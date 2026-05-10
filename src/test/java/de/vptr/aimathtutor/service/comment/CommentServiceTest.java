@@ -498,8 +498,9 @@ class CommentServiceTest {
         dto.content = "test";
         dto.exercisePublicId = ex.publicId;
 
-        assertThrows(WebApplicationException.class,
+        final var thrown = assertThrows(WebApplicationException.class,
                 () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
     @Test
@@ -526,7 +527,9 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         dto.parentCommentPublicId = "00000000000000000000000000";
 
-        assertThrows(WebApplicationException.class, () -> this.commentService.createComment(dto, student.id));
+        final var ex =
+                assertThrows(WebApplicationException.class, () -> this.commentService.createComment(dto, student.id));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test
@@ -547,7 +550,9 @@ class CommentServiceTest {
         replyDto.exercisePublicId = exercise2.publicId;
         replyDto.parentCommentPublicId = parent.publicId;
 
-        assertThrows(WebApplicationException.class, () -> this.commentService.createComment(replyDto, student.id));
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.commentService.createComment(replyDto, student.id));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test

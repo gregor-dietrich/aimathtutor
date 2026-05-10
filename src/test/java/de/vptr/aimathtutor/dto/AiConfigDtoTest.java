@@ -105,7 +105,7 @@ class AiConfigDtoTest {
     @DisplayName("ConfigCategory.fromString returns matching category")
     void testConfigCategoryFromString() {
         assertEquals(AiConfigDto.ConfigCategory.GENERAL, AiConfigDto.ConfigCategory.fromString("GENERAL"));
-        assertEquals(AiConfigDto.ConfigCategory.GEMINI, AiConfigDto.ConfigCategory.fromString("GEMINI"));
+        assertEquals(AiConfigDto.ConfigCategory.GOOGLE, AiConfigDto.ConfigCategory.fromString("GOOGLE"));
         assertEquals(AiConfigDto.ConfigCategory.OPENAI, AiConfigDto.ConfigCategory.fromString("OPENAI"));
         assertEquals(AiConfigDto.ConfigCategory.OLLAMA, AiConfigDto.ConfigCategory.fromString("OLLAMA"));
         assertEquals(AiConfigDto.ConfigCategory.PROMPTS, AiConfigDto.ConfigCategory.fromString("PROMPTS"));
@@ -115,7 +115,7 @@ class AiConfigDtoTest {
     @DisplayName("ConfigCategory.fromString is case-insensitive")
     void testConfigCategoryFromStringCaseInsensitive() {
         assertEquals(AiConfigDto.ConfigCategory.GENERAL, AiConfigDto.ConfigCategory.fromString("general"));
-        assertEquals(AiConfigDto.ConfigCategory.GEMINI, AiConfigDto.ConfigCategory.fromString("Gemini"));
+        assertEquals(AiConfigDto.ConfigCategory.GOOGLE, AiConfigDto.ConfigCategory.fromString("Google"));
     }
 
     @Test
@@ -134,7 +134,7 @@ class AiConfigDtoTest {
     @DisplayName("ConfigCategory getValue returns correct value")
     void testConfigCategoryGetValue() {
         assertEquals("GENERAL", AiConfigDto.ConfigCategory.GENERAL.getValue());
-        assertEquals("GEMINI", AiConfigDto.ConfigCategory.GEMINI.getValue());
+        assertEquals("GOOGLE", AiConfigDto.ConfigCategory.GOOGLE.getValue());
         assertEquals("OPENAI", AiConfigDto.ConfigCategory.OPENAI.getValue());
         assertEquals("OLLAMA", AiConfigDto.ConfigCategory.OLLAMA.getValue());
         assertEquals("PROMPTS", AiConfigDto.ConfigCategory.PROMPTS.getValue());

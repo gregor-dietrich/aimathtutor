@@ -12,15 +12,15 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-class GeminiServiceTest {
+class GoogleServiceTest {
 
     @Inject
-    GeminiService geminiService;
+    GoogleService googleService;
 
     @Test
-    @DisplayName("Should expose configured Gemini model")
+    @DisplayName("Should expose configured Google model")
     void shouldReturnConfiguredModel() {
-        final String model = this.geminiService.getModel();
+        final String model = this.googleService.getModel();
 
         assertNotNull(model);
         assertFalse(model.isBlank());
@@ -29,31 +29,31 @@ class GeminiServiceTest {
     @Test
     @DisplayName("Should report stable configuration state")
     void shouldReportConfigurationState() {
-        final boolean configured = this.geminiService.isConfigured();
-        assertEquals(configured, this.geminiService.isConfigured());
+        final boolean configured = this.googleService.isConfigured();
+        assertEquals(configured, this.googleService.isConfigured());
     }
 
     @Test
     @DisplayName("Should annotate generateContent with @Retry using AppConstants values")
     void generateContentShouldHaveRetryAnnotation() throws NoSuchMethodException {
-        RetryAnnotationVerifier.verifyRetryAnnotation(GeminiService.class, "generateContent", String.class);
+        RetryAnnotationVerifier.verifyRetryAnnotation(GoogleService.class, "generateContent", String.class);
     }
 
     @Test
-    @DisplayName("getConfigPrefix returns the Gemini prefix")
+    @DisplayName("getConfigPrefix returns the Google prefix")
     void testGetConfigPrefix() {
-        assertNotNull(this.geminiService.getConfigPrefix());
+        assertEquals("google", this.googleService.getConfigPrefix());
     }
 
     @Test
     @DisplayName("getDefaultModel returns the default model")
     void testGetDefaultModel() {
-        assertNotNull(this.geminiService.getDefaultModel());
+        assertEquals("gemma-4-31b-it", this.googleService.getDefaultModel());
     }
 
     @Test
-    @DisplayName("getProviderName returns Gemini")
+    @DisplayName("getProviderName returns Google")
     void testGetProviderName() {
-        assertNotNull(this.geminiService.getProviderName());
+        assertEquals("Google", this.googleService.getProviderName());
     }
 }

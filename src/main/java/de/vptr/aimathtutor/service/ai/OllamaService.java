@@ -10,8 +10,8 @@ import org.jboss.logging.Logger;
 import de.vptr.aimathtutor.dto.OllamaRequestDto;
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
 import de.vptr.aimathtutor.dto.OllamaTagsResponseDto;
-import de.vptr.aimathtutor.exception.AiProviderException;
-import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
+import de.vptr.aimathtutor.exception.ProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -28,7 +28,7 @@ import jakarta.ws.rs.core.Response;
  * Configuration is loaded dynamically from AiConfigService.
  */
 @ApplicationScoped
-public class OllamaService extends AbstractAiProviderService {
+public class OllamaService extends AbstractProviderService {
 
     private static final Logger LOG = Logger.getLogger(OllamaService.class);
     private static final String DEFAULT_MODEL = "llama3.2:3b";
@@ -104,7 +104,7 @@ public class OllamaService extends AbstractAiProviderService {
      * @return The generated text response
      */
     @Retry(maxRetries = AppConstants.RETRY_MAX_RETRIES, delay = AppConstants.RETRY_DELAY_MS,
-            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableAiProviderException.class)
+            jitter = AppConstants.RETRY_JITTER_MS, abortOn = NonRetryableProviderException.class)
     public String generateContent(final String prompt) {
         LOG.debugf("Generating content with Ollama for prompt length: %s", prompt != null ? prompt.length() : 0);
 
@@ -137,7 +137,7 @@ public class OllamaService extends AbstractAiProviderService {
                 if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                     final String errorBody = response.readEntity(String.class);
                     LOG.errorf("Ollama API error (status %s): %s", response.getStatus(), errorBody);
-                    throw AiProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
+                    throw ProviderException.httpFailure(this.getProviderName(), response.getStatus(), errorBody);
                 }
 
                 // Parse response
@@ -167,12 +167,12 @@ public class OllamaService extends AbstractAiProviderService {
                 return content;
             }
 
-        } catch (final AiProviderException e) {
+        } catch (final ProviderException e) {
             LOG.error("Ollama provider call failed", e);
             throw e;
         } catch (final RuntimeException e) {
             LOG.error("Unexpected error calling Ollama API", e);
-            throw AiProviderException.transportFailure(this.getProviderName(),
+            throw ProviderException.transportFailure(this.getProviderName(),
                     "Failed to call Ollama API: " + e.getMessage(), e);
         }
     }

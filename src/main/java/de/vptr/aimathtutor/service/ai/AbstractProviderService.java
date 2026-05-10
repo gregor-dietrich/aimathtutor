@@ -1,20 +1,20 @@
 package de.vptr.aimathtutor.service.ai;
 
-import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
- * Base class for AI provider services (OpenAI, Gemini, Ollama). Provides shared logic for config-driven model lookup,
+ * Base class for AI provider services (OpenAI, Google, Ollama). Provides shared logic for config-driven model lookup,
  * API key validation, and empty-response checks.
  */
-public abstract class AbstractAiProviderService {
+public abstract class AbstractProviderService {
 
     @Inject
     protected AiConfigService aiConfigService;
 
     /**
-     * The configuration key prefix for this provider (e.g. "openai", "gemini", "ollama").
+     * The configuration key prefix for this provider (e.g. "openai", "google", "ollama").
      */
     protected abstract String getConfigPrefix();
 
@@ -51,7 +51,7 @@ public abstract class AbstractAiProviderService {
     }
 
     /**
-     * Throws {@link NonRetryableAiProviderException} when the API key is missing.
+     * Throws {@link NonRetryableProviderException} when the API key is missing.
      *
      * @param apiKey
      *            the resolved API key value
@@ -60,27 +60,27 @@ public abstract class AbstractAiProviderService {
      */
     protected void requireApiKey(@Nullable final String apiKey, final String envVarName) {
         if (!isApiKeyConfigured(apiKey)) {
-            throw new NonRetryableAiProviderException(this.getProviderName(),
+            throw new NonRetryableProviderException(this.getProviderName(),
                     "API key not configured. Please set " + envVarName + " environment variable");
         }
     }
 
     /**
-     * Throws {@link NonRetryableAiProviderException} when the response content is empty.
+     * Throws {@link NonRetryableProviderException} when the response content is empty.
      */
     protected String requireNonEmptyContent(@Nullable final String content) {
         if (content == null || content.isBlank()) {
-            throw new NonRetryableAiProviderException(this.getProviderName(), "Empty response");
+            throw new NonRetryableProviderException(this.getProviderName(), "Empty response");
         }
         return content;
     }
 
     /**
-     * Throws {@link NonRetryableAiProviderException} when a required dynamic configuration value is missing.
+     * Throws {@link NonRetryableProviderException} when a required dynamic configuration value is missing.
      */
     protected void requireConfigured(@Nullable final String value, final String settingDescription) {
         if (value == null || value.isBlank()) {
-            throw new NonRetryableAiProviderException(this.getProviderName(),
+            throw new NonRetryableProviderException(this.getProviderName(),
                     settingDescription + " not configured. Please configure via admin settings.");
         }
     }

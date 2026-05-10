@@ -399,13 +399,13 @@ CREATE INDEX idx_ai_config_public_id ON ai_config (public_id);
 INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, category, description, is_optional, last_updated_by) VALUES
 -- General settings
 (1, '01ARZ3NDEKTSV4RRFFQ69G5FG0', 'ai.tutor.enabled', 'true', 'BOOLEAN', 'GENERAL', 'Enable or disable AI tutor functionality', false, 1),
-(2, '01ARZ3NDEKTSV4RRFFQ69G5FG1', 'ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, gemini, openai, or ollama', false, 1),
+(2, '01ARZ3NDEKTSV4RRFFQ69G5FG1', 'ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, google, openai, or ollama', false, 1),
 
--- Gemini settings
-(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'gemini.model', 'gemma-4-31b-it', 'STRING', 'GEMINI', 'Gemini model name', false, 1),
-(4, '01ARZ3NDEKTSV4RRFFQ69G5FG3', 'gemini.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GEMINI', 'Gemini API base URL', false, 1),
-(5, '01ARZ3NDEKTSV4RRFFQ69G5FG4', 'gemini.temperature', '0.7', 'DOUBLE', 'GEMINI', 'Gemini temperature setting (0.0-2.0)', false, 1),
-(6, '01ARZ3NDEKTSV4RRFFQ69G5FG5', 'gemini.max-tokens', '2000', 'INTEGER', 'GEMINI', 'Gemini maximum tokens for responses', false, 1),
+-- Google settings
+(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'google.model', 'gemma-4-31b-it', 'STRING', 'GOOGLE', 'Google model name', false, 1),
+(4, '01ARZ3NDEKTSV4RRFFQ69G5FG3', 'google.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GOOGLE', 'Google API base URL', false, 1),
+(5, '01ARZ3NDEKTSV4RRFFQ69G5FG4', 'google.temperature', '0.7', 'DOUBLE', 'GOOGLE', 'Google temperature setting (0.0-2.0)', false, 1),
+(6, '01ARZ3NDEKTSV4RRFFQ69G5FG5', 'google.max-tokens', '2000', 'INTEGER', 'GOOGLE', 'Google maximum tokens for responses', false, 1),
 
 -- OpenAI settings
 (7, '01ARZ3NDEKTSV4RRFFQ69G5FG6', 'openai.model', 'gpt-5-nano', 'STRING', 'OPENAI', 'OpenAI model name', false, 1),

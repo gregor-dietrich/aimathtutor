@@ -13,7 +13,7 @@ import jakarta.enterprise.context.ApplicationScoped;
  * services.
  */
 @ApplicationScoped
-public class MockAiProvider implements AiProvider {
+public class MockProvider implements ProviderInterface {
 
     @Override
     public boolean isAvailable() {
