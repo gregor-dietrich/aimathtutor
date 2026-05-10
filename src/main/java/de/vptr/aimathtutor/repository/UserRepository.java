@@ -217,9 +217,7 @@ public class UserRepository extends AbstractRepository {
             return this.findAll();
         }
         if (searchTerm.contains("@")) {
-            return this.findByEmailOptional(searchTerm)
-                    .map(List::of)
-                    .orElse(List.of());
+            return this.findByEmailOptional(searchTerm).map(List::of).orElse(List.of());
         }
         final var q = this.em.createNamedQuery("User.searchByTerm", UserEntity.class);
         q.setParameter("s", searchTerm);

@@ -35,8 +35,7 @@ public class EncryptionKeyManagerIT {
         final byte original = key1[0];
         key1[0] = (byte) ~key1[0];
         final byte[] key2 = this.encryptionKeyManager.getMasterKey();
-        Assertions.assertEquals(original, key2[0],
-                "Mutating the returned array must not corrupt the internal key");
+        Assertions.assertEquals(original, key2[0], "Mutating the returned array must not corrupt the internal key");
     }
 
     @Test

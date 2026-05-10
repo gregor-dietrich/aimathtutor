@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.service.security;
 
+import java.util.Base64;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -114,9 +116,9 @@ public class EncryptionServiceTest {
         Assertions.assertNotNull(envelope);
 
         final String[] parts = envelope.split("\\|", 3);
-        final byte[] cipherBytes = java.util.Base64.getDecoder().decode(parts[2]);
+        final byte[] cipherBytes = Base64.getDecoder().decode(parts[2]);
         cipherBytes[cipherBytes.length - 1] ^= (byte) 0xFF;
-        final String tampered = parts[0] + "|" + parts[1] + "|" + java.util.Base64.getEncoder().encodeToString(cipherBytes);
+        final String tampered = parts[0] + "|" + parts[1] + "|" + Base64.getEncoder().encodeToString(cipherBytes);
 
         Assertions.assertThrows(IllegalStateException.class, () -> this.encryptionService.decrypt(tampered),
                 "AES-GCM must reject tampered ciphertext/auth tag");
