@@ -147,10 +147,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     private void initializeView() {
-        this.setWidthFull(); // Full width only
+        this.setSizeFull();
         this.setSpacing(false);
         this.setPadding(false);
-        this.setAlignItems(Alignment.STRETCH); // Make children stretch to same height
+        this.setAlignItems(Alignment.STRETCH);
 
         // Create session for this exercise
         try {
@@ -166,10 +166,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Left side: Exercise content and Graspable Math canvas (70%)
         final var leftPanel = new VerticalLayout();
-        leftPanel.setWidthFull(); // Only set width, let height be natural
+        leftPanel.setSizeFull();
         leftPanel.setSpacing(true);
         leftPanel.setPadding(true);
-        leftPanel.getStyle().set("width", "70%");
+        leftPanel.getStyle().set("width", "70%").set("overflow-y", "auto");
 
         // Exercise header
         final var header = new VerticalLayout();

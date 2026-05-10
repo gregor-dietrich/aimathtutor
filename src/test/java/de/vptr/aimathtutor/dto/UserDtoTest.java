@@ -27,6 +27,7 @@ class UserDtoTest {
     @DisplayName("Parameterized constructor sets all fields")
     void testParameterizedConstructor() {
         final var dto = new UserDto("alice", "pass123", "alice@example.com", "rp1", false, true, "key123");
+        assertNull(dto.publicId);
         assertEquals("alice", dto.username);
         assertEquals("pass123", dto.password);
         assertEquals("alice@example.com", dto.email);

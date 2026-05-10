@@ -58,6 +58,7 @@ class ChatMessageDtoTest {
         final var dto = ChatMessageDto.aiFeedback("Good work!");
         assertEquals(Sender.AI, dto.sender);
         assertEquals(MessageType.FEEDBACK, dto.messageType);
+        assertEquals("Good work!", dto.message);
     }
 
     @Test
@@ -66,6 +67,7 @@ class ChatMessageDtoTest {
         final var dto = ChatMessageDto.aiAnswer("The answer is 4");
         assertEquals(Sender.AI, dto.sender);
         assertEquals(MessageType.ANSWER, dto.messageType);
+        assertEquals("The answer is 4", dto.message);
     }
 
     @Test
@@ -74,6 +76,7 @@ class ChatMessageDtoTest {
         final var dto = ChatMessageDto.system("Problem loaded");
         assertEquals(Sender.AI, dto.sender);
         assertEquals(MessageType.SYSTEM, dto.messageType);
+        assertEquals("Problem loaded", dto.message);
     }
 
     @Test

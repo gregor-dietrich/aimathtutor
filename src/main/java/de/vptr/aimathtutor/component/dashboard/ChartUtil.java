@@ -91,8 +91,9 @@ public final class ChartUtil {
                 path.append("L").append(x).append(",").append(y);
                 gradientFill.append("L").append(x).append(",").append(y);
             }
-            gradientFill.append("L").append(x).append(",").append(padding[0] + plotH).append("Z");
         }
+        gradientFill.append("L").append(padding[3] + (plotW * steps / Math.max(steps, 1))).append(",")
+                .append(padding[0] + plotH).append("Z");
 
         sb.append("<defs><linearGradient id=\"lineGrad\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">");
         sb.append("<stop offset=\"0%\" stop-color=\"").append(LUMO_PRIMARY).append("\" stop-opacity=\"0.2\"/>");
@@ -226,24 +227,33 @@ public final class ChartUtil {
         int idx = 0;
         for (final var entry : items) {
             final double angle = 360.0 * entry.getValue() / total;
-            final int largeArc = angle > 180 ? 1 : 0;
-
-            final int endX = cx + (int) (outerR * Math.cos(Math.toRadians(startAngle + angle)));
-            final int endY = cy + (int) (outerR * Math.sin(Math.toRadians(startAngle + angle)));
-            final int innerEndX = cx + (int) (innerR * Math.cos(Math.toRadians(startAngle + angle)));
-            final int innerEndY = cy + (int) (innerR * Math.sin(Math.toRadians(startAngle + angle)));
-            final int startX = cx + (int) (outerR * Math.cos(Math.toRadians(startAngle)));
-            final int startY = cy + (int) (outerR * Math.sin(Math.toRadians(startAngle)));
-            final int innerStartX = cx + (int) (innerR * Math.cos(Math.toRadians(startAngle)));
-            final int innerStartY = cy + (int) (innerR * Math.sin(Math.toRadians(startAngle)));
-
             final String color = DONUT_COLORS[idx % DONUT_COLORS.length];
 
-            sb.append("<path d=\"M").append(startX).append(",").append(startY).append(" A").append(outerR).append(",")
-                    .append(outerR).append(" 0 ").append(largeArc).append(",1 ").append(endX).append(",").append(endY)
-                    .append(" L").append(innerEndX).append(",").append(innerEndY).append(" A").append(innerR)
-                    .append(",").append(innerR).append(" 0 ").append(largeArc).append(",0 ").append(innerStartX)
-                    .append(",").append(innerStartY).append(" Z\" fill=\"").append(color).append("\"/>");
+            if (angle >= 359.99 || items.size() == 1) {
+                // Full-ring: use two concentric circles with fill-rule="evenodd"
+                sb.append("<circle cx=\"").append(cx).append("\" cy=\"").append(cy).append("\" r=\"").append(outerR)
+                        .append("\" fill=\"").append(color).append("\"/>");
+                sb.append("<circle cx=\"").append(cx).append("\" cy=\"").append(cy).append("\" r=\"").append(innerR)
+                        .append("\" fill=\"var(--lumo-base-color)\"/>");
+            } else {
+                final int largeArc = angle > 180 ? 1 : 0;
+
+                final int endX = cx + (int) (outerR * Math.cos(Math.toRadians(startAngle + angle)));
+                final int endY = cy + (int) (outerR * Math.sin(Math.toRadians(startAngle + angle)));
+                final int innerEndX = cx + (int) (innerR * Math.cos(Math.toRadians(startAngle + angle)));
+                final int innerEndY = cy + (int) (innerR * Math.sin(Math.toRadians(startAngle + angle)));
+                final int startX = cx + (int) (outerR * Math.cos(Math.toRadians(startAngle)));
+                final int startY = cy + (int) (outerR * Math.sin(Math.toRadians(startAngle)));
+                final int innerStartX = cx + (int) (innerR * Math.cos(Math.toRadians(startAngle)));
+                final int innerStartY = cy + (int) (innerR * Math.sin(Math.toRadians(startAngle)));
+
+                sb.append("<path d=\"M").append(startX).append(",").append(startY).append(" A").append(outerR)
+                        .append(",").append(outerR).append(" 0 ").append(largeArc).append(",1 ").append(endX)
+                        .append(",").append(endY).append(" L").append(innerEndX).append(",").append(innerEndY)
+                        .append(" A").append(innerR).append(",").append(innerR).append(" 0 ").append(largeArc)
+                        .append(",0 ").append(innerStartX).append(",").append(innerStartY).append(" Z\" fill=\"")
+                        .append(color).append("\"/>");
+            }
 
             final double midAngle = Math.toRadians(startAngle + angle / 2);
             final int labelR = outerR - (outerR - innerR) / 2;

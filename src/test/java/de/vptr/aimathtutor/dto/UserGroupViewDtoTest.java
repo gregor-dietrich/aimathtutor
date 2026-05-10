@@ -37,6 +37,8 @@ class UserGroupViewDtoTest {
     void testEntityConstructorNull() {
         final var dto = new UserGroupViewDto((UserGroupEntity) null);
         assertNull(dto.publicId);
+        assertNull(dto.name);
+        assertNull(dto.userCount);
     }
 
     @Test

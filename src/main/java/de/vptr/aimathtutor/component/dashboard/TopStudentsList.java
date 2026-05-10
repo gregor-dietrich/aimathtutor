@@ -41,6 +41,9 @@ public class TopStudentsList extends VerticalLayout {
 
         int rank = 1;
         for (final var student : students) {
+            if (student == null) {
+                continue;
+            }
             final var row = new HorizontalLayout();
             row.setWidthFull();
             row.setPadding(false);

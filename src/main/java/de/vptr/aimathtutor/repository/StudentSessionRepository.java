@@ -327,6 +327,25 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
+     * Count distinct active students (users with sessions) in a time range.
+     *
+     * @param start
+     *            inclusive range start
+     * @param end
+     *            exclusive range end
+     * @return count of distinct users with sessions in the range
+     */
+    public long countActiveStudentsBetween(final LocalDateTime start, final LocalDateTime end) {
+        if (start == null || end == null) {
+            return 0L;
+        }
+        final var q = this.em.createNamedQuery("StudentSession.countActiveStudentsBetween", Long.class);
+        q.setParameter("s", start);
+        q.setParameter("e", end);
+        return q.getSingleResult();
+    }
+
+    /**
      * Count sessions with start times between the provided range.
      *
      * @param start

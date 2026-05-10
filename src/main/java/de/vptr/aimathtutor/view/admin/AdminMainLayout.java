@@ -73,6 +73,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     @Override
     public void showRouterLayoutContent(final HasElement content) {
         if (this.contentArea != null) {
+            content.getElement().getStyle().set("flex", "1").set("min-height", "0");
             this.contentArea.getElement().removeAllChildren();
             this.contentArea.getElement().appendChild(content.getElement());
         } else {
@@ -185,7 +186,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.mainLayout.setWidthFull();
         this.mainLayout.setPadding(false);
         this.mainLayout.setSpacing(false);
-        this.mainLayout.getStyle().set("min-height", "0");
+        this.mainLayout.getStyle().set("height", "100%");
 
         // Create sidebar
         this.sidebar = new VerticalLayout();
@@ -194,7 +195,8 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.sidebar.setSpacing(false);
         this.sidebar.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
         this.sidebar.getStyle().set("border-right", "1px solid var(--lumo-contrast-10pct)");
-        this.sidebar.getStyle().set("min-height", "0");
+        this.sidebar.getStyle().set("height", "100%");
+        this.sidebar.getStyle().set("overflow-y", "auto");
 
         // Create navigation tabs
         final var userRank = this.userRankService.getCurrentUserRank();
@@ -206,7 +208,8 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.contentArea.setWidthFull();
         this.contentArea.setPadding(false);
         this.contentArea.setSpacing(false);
-        this.contentArea.getStyle().set("min-height", "0");
+        this.contentArea.getStyle().set("height", "100%");
+        this.contentArea.getStyle().set("overflow-y", "auto");
 
         // Add sidebar and content area to main layout
         this.mainLayout.add(this.sidebar, this.contentArea);

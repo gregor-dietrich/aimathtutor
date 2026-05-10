@@ -129,7 +129,7 @@ public class AdminDashboardView extends AbstractAdminView {
         this.add(chartRow1);
 
         // Row 4: Top Exercises by Completion + Hints Usage Distribution
-        this.topExercisesChart = new ChartCard("Top Exercises by Completion");
+        this.topExercisesChart = new ChartCard("Top Categories by Completion");
         this.hintsChart = new ChartCard("Hints Usage Distribution");
         final var chartRow2 = new HorizontalLayout(this.topExercisesChart, this.hintsChart);
         chartRow2.setWidthFull();

@@ -110,20 +110,21 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     private void buildUi() {
         this.removeAll();
 
-        this.setWidthFull(); // Full width only
+        this.setSizeFull();
+
         this.setSpacing(false);
         this.setPadding(false);
-        this.setAlignItems(Alignment.STRETCH); // Make children stretch to same height
+        this.setAlignItems(Alignment.STRETCH);
 
         // Generate session ID
         this.sessionId = "session-" + System.currentTimeMillis();
 
         // Left side: Graspable Math workspace (70%)
         final var leftPanel = new VerticalLayout();
-        leftPanel.setWidthFull(); // Only set width, let height be natural
+        leftPanel.setSizeFull();
         leftPanel.setSpacing(true);
         leftPanel.setPadding(true);
-        leftPanel.getStyle().set("width", "70%");
+        leftPanel.getStyle().set("width", "70%").set("overflow-y", "auto");
 
         // Header
         final var header = new H2("Graspable Math Workspace");

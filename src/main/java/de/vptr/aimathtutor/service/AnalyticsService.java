@@ -465,19 +465,20 @@ public class AnalyticsService {
     @Transactional
     public Map<LocalDate, Long> getDailySessionCounts(final int days) {
         LOG.tracef("Getting daily session counts for last %d days", days);
-        final var end = LocalDateTime.now(ZoneId.systemDefault());
+        final var zone = ZoneId.systemDefault();
+        final var counts = new LinkedHashMap<LocalDate, Long>();
+        for (int i = days; i >= 0; i--) {
+            counts.put(LocalDate.now(zone).minusDays(i), 0L);
+        }
+        final var end = LocalDateTime.now(zone);
         final var start = end.minusDays(days);
         final var sessions = this.getSessionsByDateRange(start, end);
-        final var counts = new LinkedHashMap<LocalDate, Long>();
         for (final var session : sessions) {
             if (session.startTime == null) {
                 continue;
             }
             final var date = session.startTime.toLocalDate();
             counts.merge(date, 1L, (a, b) -> a + b);
-        }
-        for (int i = days; i >= 0; i--) {
-            counts.putIfAbsent(LocalDate.now(ZoneId.systemDefault()).minusDays(i), 0L);
         }
         return counts;
     }
@@ -501,7 +502,7 @@ public class AnalyticsService {
                 this.studentSessionRepository.findByCompletedAndDateRange(Boolean.TRUE, twoWeeksAgo, weekAgo).size();
 
         final var activeStudents = this.studentSessionRepository.countActiveStudentsSince(weekAgo);
-        final var prevActiveStudents = this.studentSessionRepository.countActiveStudentsSince(twoWeeksAgo);
+        final var prevActiveStudents = this.studentSessionRepository.countActiveStudentsBetween(twoWeeksAgo, weekAgo);
 
         final var startOfToday = LocalDate.now(ZoneId.systemDefault()).atStartOfDay();
         final var startOfTomorrow = startOfToday.plusDays(1);
