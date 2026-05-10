@@ -52,7 +52,7 @@ public class AiConfigService {
             Map.entry(AiConfigKeys.OPENAI_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.OPENAI_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.OLLAMA_API_URL, "http://ollama:11434"),
             Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"), Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
-            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"), Map.entry(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, "30"),
+            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
                     "You are a helpful AI math tutor. "
                             + "A student is working on an algebra problem and has asked you a question."),
