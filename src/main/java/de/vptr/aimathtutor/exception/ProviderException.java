@@ -12,7 +12,7 @@ import jakarta.annotation.Nullable;
  * <p>
  * This base type represents a transient failure and is eligible for retry. Permanent failures (missing API key, blocked
  * content, misconfiguration) are signalled with {@link NonRetryableProviderException}; the
- * {@code @Retry(abortOn = NonRetryableAiProviderException.class)} annotation on the calling methods skips retries in
+ * {@code @Retry(abortOn = NonRetryableProviderException.class)} annotation on the calling methods skips retries in
  * those cases.
  */
 public class ProviderException extends RuntimeException {

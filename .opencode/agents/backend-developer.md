@@ -37,7 +37,7 @@ You are a Backend Developer for AIMathTutor — a monolithic Quarkus 3.33 + Vaad
 - **ULIDs**: Use `UlidUtil` — never import `com.github.f4b6a3.ulid.UlidCreator` directly (Checkstyle `IllegalImport`).
 - **Logging**: Use `org.jboss.logging.Logger` with `*f` methods (`infof`, `debugf`) and `%s` placeholders. Never use SLF4J or `*v` methods (Checkstyle enforced).
 - **AI config**: Runtime-mutable via `AiConfigService` (DB-backed). API keys from env vars (`GOOGLE_API_KEY`, `OPENAI_API_KEY`).
-- **AI provider exceptions**: `AiProviderException` (retryable), `NonRetryableAiProviderException` (not retryable). Use `@Retry` from MicroProfile Fault Tolerance.
+- **AI provider exceptions**: `ProviderException` (retryable), `NonRetryableProviderException` (not retryable). Use `@Retry` from MicroProfile Fault Tolerance.
 - **Query safety**: Use Panache query methods or JPQL with parameters — never concatenate strings.
 - **Transaction scope**: `@Transactional` only on service methods that mutate data.
 

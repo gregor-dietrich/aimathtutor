@@ -31,7 +31,7 @@ See the [Makefile](Makefile) or use `make help` for all available commands and s
 
 ## 🤖 Supported AI Providers
 
-- [Google Google](https://aistudio.google.com/api-keys)
+- [Google](https://aistudio.google.com/api-keys)
 - [Ollama](https://ollama.com/download)
 - [OpenAI](https://platform.openai.com/api-keys)
 

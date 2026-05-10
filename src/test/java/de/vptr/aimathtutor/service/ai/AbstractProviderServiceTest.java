@@ -85,26 +85,26 @@ class AbstractProviderServiceTest {
     }
 
     @Test
-    @DisplayName("requireApiKey throws NonRetryableAiProviderException for null key")
+    @DisplayName("requireApiKey throws NonRetryableProviderException for null key")
     void testRequireApiKey_throwsWhenKeyNull() {
         assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireApiKey(null, "TEST_API_KEY"));
     }
 
     @Test
-    @DisplayName("requireApiKey throws NonRetryableAiProviderException for placeholder key")
+    @DisplayName("requireApiKey throws NonRetryableProviderException for placeholder key")
     void testRequireApiKey_throwsWhenKeyPlaceholder() {
         assertThrows(NonRetryableProviderException.class,
                 () -> PROVIDER.callRequireApiKey("${TEST_KEY}", "TEST_API_KEY"));
     }
 
     @Test
-    @DisplayName("requireNonEmptyContent throws NonRetryableAiProviderException for null content")
+    @DisplayName("requireNonEmptyContent throws NonRetryableProviderException for null content")
     void testRequireNonEmptyContent_throwsWhenNull() {
         assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireNonEmptyContent(null));
     }
 
     @Test
-    @DisplayName("requireNonEmptyContent throws NonRetryableAiProviderException for blank content")
+    @DisplayName("requireNonEmptyContent throws NonRetryableProviderException for blank content")
     void testRequireNonEmptyContent_throwsWhenBlank() {
         assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireNonEmptyContent("   "));
     }
@@ -117,13 +117,13 @@ class AbstractProviderServiceTest {
     }
 
     @Test
-    @DisplayName("requireConfigured throws NonRetryableAiProviderException for null value")
+    @DisplayName("requireConfigured throws NonRetryableProviderException for null value")
     void testRequireConfigured_throwsWhenNull() {
         assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireConfigured(null, "model setting"));
     }
 
     @Test
-    @DisplayName("requireConfigured throws NonRetryableAiProviderException for blank value")
+    @DisplayName("requireConfigured throws NonRetryableProviderException for blank value")
     void testRequireConfigured_throwsWhenBlank() {
         assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireConfigured("", "model setting"));
     }

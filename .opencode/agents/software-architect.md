@@ -52,7 +52,7 @@ You are a Software Architect for AIMathTutor — a monolithic Quarkus 3.33 + Vaa
 - **Query efficiency**: Avoid N+1 patterns; use Panache query methods with appropriate fetching strategies
 - **Lazy loading**: Default `@ManyToOne(fetch = LAZY)` — only eagerly fetch when profiling justifies it
 - **Async UI**: Views must use `CompletableFuture.supplyAsync()` + `ui.access()` for non-blocking data fetching
-- **AI resilience**: External AI calls use `@Retry` + `@Timeout`. Distinguish retryable (`AiProviderException`) from non-retryable (`NonRetryableAiProviderException`)
+- **AI resilience**: External AI calls use `@Retry` + `@Timeout`. Distinguish retryable (`ProviderException`) from non-retryable (`NonRetryableProviderException`)
 
 ### Vaadin Conventions
 

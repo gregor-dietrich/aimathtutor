@@ -8,7 +8,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 
 /**
- * Request DTO for Google Google API Based on Google REST API specification
+ * Request DTO for Google AI API Based on Google REST API specification
  */
 @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         justification = "Request DTO used for JSON mapping; public fields are intentional")

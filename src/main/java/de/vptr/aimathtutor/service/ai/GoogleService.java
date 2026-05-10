@@ -24,8 +24,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Service for interacting with the Google Google AI API. Configuration is provided dynamically via
- * {@link AiConfigService}.
+ * Service for interacting with the Google AI API. Configuration is provided dynamically via {@link AiConfigService}.
  */
 @ApplicationScoped
 public class GoogleService extends AbstractProviderService {

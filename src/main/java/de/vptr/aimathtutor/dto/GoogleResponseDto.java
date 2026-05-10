@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 
 /**
- * Response DTO for Google Google API Based on Google REST API specification
+ * Response DTO for Google AI API Based on Google REST API specification
  */
 public class GoogleResponseDto {
     @Nullable
