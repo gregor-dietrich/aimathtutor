@@ -44,7 +44,7 @@ public class AiConfigService {
     // Default values for runtime reset to factory defaults.
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
             Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"), Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
-            Map.entry(AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it"),
+            Map.entry(AiConfigKeys.GOOGLE_MODEL, "gemini-3.1-flash-lite"),
             Map.entry(AiConfigKeys.GOOGLE_API_BASE_URL, "https://generativelanguage.googleapis.com"),
             Map.entry(AiConfigKeys.GOOGLE_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.GOOGLE_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.OPENAI_MODEL, "gpt-5-nano"), Map.entry(AiConfigKeys.OPENAI_ORGANIZATION_ID, ""),
@@ -52,7 +52,7 @@ public class AiConfigService {
             Map.entry(AiConfigKeys.OPENAI_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.OPENAI_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.OLLAMA_API_URL, "http://ollama:11434"),
             Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"), Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
-            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"), Map.entry(AiConfigKeys.OLLAMA_TIMEOUT_SECONDS, "30"),
+            Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
                     "You are a helpful AI math tutor. "
                             + "A student is working on an algebra problem and has asked you a question."),

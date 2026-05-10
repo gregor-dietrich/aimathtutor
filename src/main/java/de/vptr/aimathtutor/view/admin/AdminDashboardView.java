@@ -119,13 +119,12 @@ public class AdminDashboardView extends AbstractAdminView {
 
         // Row 3: Sessions per Day (wider) + Completion Rate Distribution (narrower)
         this.sessionsChart = new ChartCard("Sessions per Day (30 days)");
+        this.sessionsChart.getStyle().set("min-width", "50%").set("max-width", "75%").set("flex-grow", "3");
         this.completionRateChart = new ChartCard("Completion Rate Distribution");
-        this.completionRateChart.getStyle().set("max-width", "340px");
+        this.completionRateChart.getStyle().set("min-width", "25%").set("max-width", "50%").set("flex-grow", "1");
         final var chartRow1 = new HorizontalLayout(this.sessionsChart, this.completionRateChart);
         chartRow1.setWidthFull();
         chartRow1.setSpacing(true);
-        chartRow1.setFlexGrow(2, this.sessionsChart);
-        chartRow1.setFlexGrow(1, this.completionRateChart);
         this.add(chartRow1);
 
         // Row 4: Top Exercises by Completion + Hints Usage Distribution

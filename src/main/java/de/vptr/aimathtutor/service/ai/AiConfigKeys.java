@@ -41,7 +41,6 @@ public final class AiConfigKeys {
     public static final String OLLAMA_MODEL = OLLAMA_PREFIX + SUFFIX_MODEL;
     public static final String OLLAMA_TEMPERATURE = OLLAMA_PREFIX + SUFFIX_TEMPERATURE;
     public static final String OLLAMA_MAX_TOKENS = OLLAMA_PREFIX + SUFFIX_MAX_TOKENS;
-    public static final String OLLAMA_TIMEOUT_SECONDS = OLLAMA_PREFIX + ".timeout-seconds";
 
     // Prompts
     public static final String PROMPT_QUESTION_PREFIX = "ai.prompt.question.answering.prefix";

@@ -48,9 +48,6 @@ public final class AppConstants {
     /** Canvas height for the exercise workspace view. */
     public static final String CANVAS_HEIGHT_WORKSPACE = "77vh";
 
-    /** Canvas height for the math workspace view. */
-    public static final String CANVAS_HEIGHT_MATH = "80vh";
-
     /** Default user avatar emoji. */
     public static final String AVATAR_DEFAULT_USER = "🧒";
 

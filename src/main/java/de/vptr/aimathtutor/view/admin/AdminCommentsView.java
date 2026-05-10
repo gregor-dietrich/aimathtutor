@@ -216,10 +216,6 @@ public class AdminCommentsView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Configure columns
-        this.grid.addColumn(comment -> comment.publicId).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH)
-                .setFlexGrow(0);
-
         // Exercise title column
         this.grid.addComponentColumn(comment -> {
             final var title = comment.exerciseTitle != null ? comment.exerciseTitle : "(No title)";

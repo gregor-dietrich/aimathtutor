@@ -143,9 +143,6 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Configure columns
-        this.grid.addColumn(rank -> rank.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
-
         // Make the name column clickable
         this.grid.addComponentColumn(rank -> {
             final var nameSpan = new Span(rank.name);

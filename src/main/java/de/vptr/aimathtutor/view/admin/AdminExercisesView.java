@@ -205,10 +205,6 @@ public class AdminExercisesView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Configure columns
-        this.grid.addColumn(exercise -> exercise.publicId).setHeader("ID").setWidth(AppConstants.GRID_ID_WIDTH)
-                .setFlexGrow(0);
-
         // Make the title column clickable
         this.grid.addComponentColumn(exercise -> {
             final var titleSpan = new Span(exercise.title);

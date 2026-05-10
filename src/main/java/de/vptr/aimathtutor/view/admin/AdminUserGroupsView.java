@@ -165,9 +165,6 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Configure columns
-        this.grid.addColumn(group -> group.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
-
         // Make the name column clickable
         this.grid.addComponentColumn(group -> {
             final var nameSpan = new Span(group.name);

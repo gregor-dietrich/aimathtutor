@@ -5,7 +5,9 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -272,12 +274,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Graspable Math canvas container (only if enabled)
         if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
-            this.graspableCanvas = new Div();
-            this.graspableCanvas.setId("graspable-canvas"); // Fixed ID expected by JavaScript
-            this.graspableCanvas.getStyle().set("width", "100%").set("height", AppConstants.CANVAS_HEIGHT_WORKSPACE)
-                    .set("border", "1px solid var(--lumo-contrast-20pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)")
-                    .set("background-color", "var(--lumo-base-color)").set("margin-top", "1rem");
+            this.graspableCanvas = GraspableMathConnector.createCanvas();
 
             leftPanel.add(header, this.graspableCanvas, hintsSection);
         } else {
@@ -498,9 +495,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 }
             });
         }).exceptionally(ex -> {
-            final var _ = ui.access(() -> {
-                LOG.error("Error getting AI feedback", ex);
-            });
+            final Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+            if (!(cause instanceof CancellationException)) {
+                final var _ = ui.access(() -> LOG.error("Error getting AI feedback", ex));
+            }
             return null;
         }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }

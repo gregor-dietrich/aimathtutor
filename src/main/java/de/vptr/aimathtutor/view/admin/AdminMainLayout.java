@@ -5,7 +5,11 @@ import org.jboss.logging.Logger;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -37,7 +41,9 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
     private transient Button userViewButton;
     private transient Button logoutButton;
+    private transient Button sidebarToggleButton;
     private transient Tabs navigationTabs;
+    private transient boolean sidebarExpanded = true;
 
     @Inject
     private transient AuthService authService;
@@ -172,12 +178,28 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     private void createTopBar() {
         this.topBar = new TopBar(this.themeService);
 
+        this.sidebarToggleButton = new Button(new Icon(VaadinIcon.MENU), e -> this.toggleSidebar());
+        this.sidebarToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        this.sidebarToggleButton.setAriaLabel("Toggle navigation sidebar");
+
         final var title = new H1("AI Math Tutor - Admin Panel");
         title.getStyle().set("margin", "0");
         title.getStyle().set("color", "var(--lumo-primary-text-color)");
-        this.topBar.setLeftContent(title);
 
+        final var leftContent = new HorizontalLayout(this.sidebarToggleButton, title);
+        leftContent.setAlignItems(FlexComponent.Alignment.CENTER);
+        leftContent.setSpacing(true);
+        leftContent.setPadding(false);
+
+        this.topBar.setLeftContent(leftContent);
         this.addComponentAsFirst(this.topBar);
+    }
+
+    private void toggleSidebar() {
+        this.sidebarExpanded = !this.sidebarExpanded;
+        if (this.sidebar != null) {
+            this.sidebar.setVisible(this.sidebarExpanded);
+        }
     }
 
     private void createMainLayout() {
@@ -221,13 +243,19 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
     private void showNavigationTabs() {
         if (this.sidebar != null && this.mainLayout != null) {
-            this.sidebar.setVisible(true);
+            this.sidebar.setVisible(this.sidebarExpanded);
+        }
+        if (this.sidebarToggleButton != null) {
+            this.sidebarToggleButton.setVisible(true);
         }
     }
 
     private void hideNavigationTabs() {
         if (this.sidebar != null) {
             this.sidebar.setVisible(false);
+        }
+        if (this.sidebarToggleButton != null) {
+            this.sidebarToggleButton.setVisible(false);
         }
     }
 

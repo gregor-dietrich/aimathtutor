@@ -90,7 +90,6 @@ public class AdminSessionsView extends AbstractAdminView {
             final var usernameSpan = new Span(session.username);
             usernameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
             usernameSpan.getStyle().set("cursor", "pointer");
-            usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
             usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
@@ -102,12 +101,6 @@ public class AdminSessionsView extends AbstractAdminView {
                 .setWidth("180px").setFlexGrow(0);
 
         this.grid.addColumn(StudentSessionViewDto::getFormattedDuration).setHeader("Duration").setFlexGrow(0);
-
-        this.grid.addColumn(session -> session.actionsCount).setHeader("Actions").setFlexGrow(0);
-
-        this.grid.addColumn(StudentSessionViewDto::getSuccessRatePercentage).setHeader("Success Rate").setFlexGrow(1);
-
-        this.grid.addColumn(session -> session.hintsUsed).setHeader("Hints Used").setFlexGrow(0);
 
         this.grid.addColumn(session -> session.completed ? "✓" : "✗").setHeader("Completed").setFlexGrow(0);
 

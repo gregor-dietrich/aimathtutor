@@ -404,7 +404,7 @@ INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, cat
 (2, '01ARZ3NDEKTSV4RRFFQ69G5FG1', 'ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, google, openai, or ollama', false, 1),
 
 -- Google settings
-(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'google.model', 'gemma-4-31b-it', 'STRING', 'GOOGLE', 'Google model name', false, 1),
+(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'google.model', 'gemini-3.1-flash-lite', 'STRING', 'GOOGLE', 'Google model name', false, 1),
 (4, '01ARZ3NDEKTSV4RRFFQ69G5FG3', 'google.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GOOGLE', 'Google API base URL', false, 1),
 (5, '01ARZ3NDEKTSV4RRFFQ69G5FG4', 'google.temperature', '0.7', 'DOUBLE', 'GOOGLE', 'Google temperature setting (0.0-2.0)', false, 1),
 (6, '01ARZ3NDEKTSV4RRFFQ69G5FG5', 'google.max-tokens', '2000', 'INTEGER', 'GOOGLE', 'Google maximum tokens for responses', false, 1),

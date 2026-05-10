@@ -49,7 +49,7 @@ class GoogleServiceTest {
     @Test
     @DisplayName("getDefaultModel returns the default model")
     void testGetDefaultModel() {
-        assertEquals("gemma-4-31b-it", this.googleService.getDefaultModel());
+        assertEquals("gemini-3.1-flash-lite", this.googleService.getDefaultModel());
     }
 
     @Test

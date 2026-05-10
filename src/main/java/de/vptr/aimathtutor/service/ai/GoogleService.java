@@ -30,7 +30,7 @@ import jakarta.inject.Inject;
 public class GoogleService extends AbstractProviderService {
 
     private static final Logger LOG = Logger.getLogger(GoogleService.class);
-    private static final String DEFAULT_MODEL = "gemma-4-31b-it";
+    private static final String DEFAULT_MODEL = "gemini-3.1-flash-lite";
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
     @ConfigProperty(name = "google.api.key", defaultValue = "")
