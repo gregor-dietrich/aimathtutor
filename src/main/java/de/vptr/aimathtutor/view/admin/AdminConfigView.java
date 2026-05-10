@@ -210,6 +210,7 @@ public class AdminConfigView extends AbstractAdminView {
             testBtn.setEnabled(enabled && p != null && !"mock".equals(p));
         };
         enabledCheckbox.addValueChangeListener(ignored -> updateEnabledState.run());
+        providerCombo.addValueChangeListener(ignored -> updateEnabledState.run());
         updateEnabledState.run();
 
         final Supplier<Optional<List<AiConfigUpdateDto>>> buildUpdates = () -> {
@@ -252,11 +253,11 @@ public class AdminConfigView extends AbstractAdminView {
             return Optional.of(updates);
         };
 
-        saveBtn.addClickListener(
-                ignored -> this.onProviderSaveOrTest(false, saveBtn, testBtn, resetBtn, buildUpdates, providerCombo));
-        testBtn.addClickListener(
-                ignored -> this.onProviderSaveOrTest(true, saveBtn, testBtn, resetBtn, buildUpdates, providerCombo));
-        resetBtn.addClickListener(ignored -> this.onProviderReset(saveBtn, testBtn, resetBtn));
+        saveBtn.addClickListener(ignored -> this.onProviderSaveOrTest(false, saveBtn, testBtn, resetBtn, buildUpdates,
+                providerCombo, updateEnabledState));
+        testBtn.addClickListener(ignored -> this.onProviderSaveOrTest(true, saveBtn, testBtn, resetBtn, buildUpdates,
+                providerCombo, updateEnabledState));
+        resetBtn.addClickListener(ignored -> this.onProviderReset(saveBtn, testBtn, resetBtn, updateEnabledState));
 
         panel.add(enabledCheckbox, providerCombo, googleSection, openaiSection, ollamaSection, buttonRow);
         return panel;
@@ -291,7 +292,8 @@ public class AdminConfigView extends AbstractAdminView {
 
     private PasswordField createReadOnlyApiKeyField(final String envVarName, final String docsUrl) {
         final var field = new PasswordField("API Key");
-        field.setValue("••••••••");
+        field.setValue("•••••••••••••••••");
+        field.setWidthFull();
         field.setReadOnly(true);
         field.setHelperText("API key is managed via " + envVarName + " environment variable. Get key from: " + docsUrl);
         return field;
@@ -341,7 +343,7 @@ public class AdminConfigView extends AbstractAdminView {
 
     private void onProviderSaveOrTest(final boolean withTest, final Button saveBtn, final Button testBtn,
             final Button resetBtn, final Supplier<Optional<List<AiConfigUpdateDto>>> buildUpdates,
-            final ComboBox<String> providerCombo) {
+            final ComboBox<String> providerCombo, final Runnable updateEnabledState) {
         final var ui = this.getUI().orElse(null);
         if (ui == null) {
             return;
@@ -364,8 +366,8 @@ public class AdminConfigView extends AbstractAdminView {
                 .thenAccept(success -> {
                     final var _ = ui.access(() -> {
                         saveBtn.setEnabled(true);
-                        testBtn.setEnabled(true);
                         resetBtn.setEnabled(true);
+                        updateEnabledState.run();
                         if (success) {
                             if (withTest) {
                                 if ("google".equals(provider)) {
@@ -387,14 +389,15 @@ public class AdminConfigView extends AbstractAdminView {
                         NotificationUtil.showError("Error saving configuration. Please try again later.");
                         LOG.errorf(ex, "Error saving Provider config");
                         saveBtn.setEnabled(true);
-                        testBtn.setEnabled(true);
                         resetBtn.setEnabled(true);
+                        updateEnabledState.run();
                     });
                     return null;
                 });
     }
 
-    private void onProviderReset(final Button saveBtn, final Button testBtn, final Button resetBtn) {
+    private void onProviderReset(final Button saveBtn, final Button testBtn, final Button resetBtn,
+            final Runnable updateEnabledState) {
         final var ui = this.getUI().orElse(null);
         if (ui == null) {
             return;
@@ -410,16 +413,16 @@ public class AdminConfigView extends AbstractAdminView {
                 .runAsync(() -> this.aiConfigService.resetToDefaults(userId), this.managedExecutor).thenRun(() -> {
                     final var _ = ui.access(() -> {
                         NotificationUtil.showSuccess("All settings reset to defaults");
-                        LOG.info("Reset all AI configs to defaults");
+                        LOG.infof("Reset all AI configs to defaults");
                         this.buildUi();
                     });
                 }).exceptionally(ex -> {
                     final var _ = ui.access(() -> {
                         NotificationUtil.showError("Error resetting defaults. Please try again later.");
-                        LOG.error("Error resetting defaults", ex);
+                        LOG.errorf(ex, "Error resetting defaults: %s", ex.getMessage());
                         saveBtn.setEnabled(true);
-                        testBtn.setEnabled(true);
                         resetBtn.setEnabled(true);
+                        updateEnabledState.run();
                     });
                     return null;
                 });
