@@ -84,6 +84,16 @@ public class AiChatPanel extends VerticalLayout {
                 .set("flex-direction", "column").set("position", "sticky").set("top", "0").set("height", "100vh")
                 .set("overflow", "hidden");
 
+        // Correct the height so the panel fills exactly from its rendered top to the
+        // viewport bottom. Without this, height:100vh overshoots by the topbar height
+        // and the input area is initially hidden below the fold.
+        this.addAttachListener(e -> e.getUI().getPage().executeJs(
+                "setTimeout(function(){" +
+                "  var el=$0; var rect=el.getBoundingClientRect();" +
+                "  el.style.height=(window.innerHeight-rect.top)+'px';" +
+                "},0);",
+                this.getElement()));
+
         // Chat header
         final var chatHeader = new H4("AI Tutor Chat");
         chatHeader.getStyle().set("margin-top", "0").set("flex-shrink", "0");

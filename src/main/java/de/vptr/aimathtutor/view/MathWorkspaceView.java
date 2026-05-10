@@ -133,7 +133,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         // Graspable Math canvas container
         this.graspableCanvas = new Div();
         this.graspableCanvas.setId("graspable-canvas");
-        this.graspableCanvas.getStyle().set("width", "100%").set("height", AppConstants.CANVAS_HEIGHT_MATH)
+        this.graspableCanvas.getStyle().set("width", "100%").set("height", AppConstants.CANVAS_HEIGHT_WORKSPACE)
                 .set("border", "1px solid var(--lumo-contrast-20pct)")
                 .set("border-radius", "var(--lumo-border-radius-m)").set("background-color", "var(--lumo-base-color)")
                 .set("margin-top", "1rem");
