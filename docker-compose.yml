@@ -11,6 +11,7 @@ services:
       quarkus.datasource.jdbc.url: jdbc:postgresql://db:5432/${SQL_DATABASE:-aimathtutor}
       quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
+      AIMATHTUTOR_ENCRYPTION_KEY_FILE: /etc/aimathtutor/keys/encryption.key
 
     # AI API Keys (sourced from .env file)
     # Provider-specific settings (model, temperature, etc.) are configured
@@ -21,6 +22,7 @@ services:
     ports:
       - "80:9001"
     volumes:
+      - aimathtutor_keys:/etc/aimathtutor/keys
       - aimathtutor_logs:/deployments/logs
     depends_on:
       db:
@@ -47,7 +49,7 @@ services:
 
 # Uncomment if you want to use pgAdmin:
 # pgadmin:
-#   image: dpage/pgadmin4:9.13.0
+#   image: dpage/pgadmin4:9.14.0
 #   restart: unless-stopped
 #   environment:
 #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
@@ -80,6 +82,7 @@ services:
 #     start_period: 10s
 
 volumes:
+  aimathtutor_keys:
   aimathtutor_logs:
   # ollama_data: # Uncomment if you want to use Ollama
   # pgadmin_data: # Uncomment if you want to use pgAdmin

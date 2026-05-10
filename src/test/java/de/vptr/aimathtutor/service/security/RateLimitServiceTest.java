@@ -58,4 +58,15 @@ class RateLimitServiceTest {
         assertEquals(0, this.rateLimitService.getRemainingCooldownSeconds(null));
         assertEquals(0, this.rateLimitService.getRemainingCooldownSeconds(""));
     }
+
+    @Test
+    @DisplayName("Should return zero cooldown when under the rate limit")
+    void shouldReturnZeroCooldownWhenUnderLimit() {
+        final String userId = UUID.randomUUID().toString();
+        for (int i = 0; i < 5; i++) {
+            assertTrue(this.rateLimitService.tryConsume(userId));
+        }
+        assertEquals(0, this.rateLimitService.getRemainingCooldownSeconds(userId),
+                "Cooldown should be zero when under the rate limit");
+    }
 }

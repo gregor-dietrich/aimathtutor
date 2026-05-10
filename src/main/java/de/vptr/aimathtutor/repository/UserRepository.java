@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.service.security.EncryptionService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 /**
@@ -14,6 +16,9 @@ import jakarta.transaction.Transactional;
  */
 @ApplicationScoped
 public class UserRepository extends AbstractRepository {
+
+    @Inject
+    EncryptionService encryptionService;
 
     /**
      * Retrieves a user by its unique identifier.
@@ -88,24 +93,29 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves an optional user by its email address.
+     * Retrieves an optional user by email address using a blind index for equality lookup.
      *
      * @param email
-     *            the email address to search for
+     *            the plaintext email address to search for
      * @return an {@link Optional} containing the user if found, empty otherwise
      */
     public Optional<UserEntity> findByEmailOptional(final String email) {
         if (email == null) {
             return Optional.empty();
         }
+        final String blindIndex = this.encryptionService.generateBlindIndex(email);
+        if (blindIndex == null) {
+            return Optional.empty();
+        }
         final var q = this.em.createNamedQuery("User.findByEmail", UserEntity.class);
-        q.setParameter("e", email);
+        q.setParameter("b", blindIndex);
         q.setMaxResults(1);
         return q.getResultStream().findFirst();
     }
 
     /**
-     * Persists a user entity to the database.
+     * Persists a user entity to the database. Always (re-)computes {@code emailBlindIndex} from the current plaintext
+     * {@code email} so the blind index stays consistent with the encrypted column.
      *
      * @param user
      *            the user to persist; null values are ignored
@@ -117,6 +127,7 @@ public class UserRepository extends AbstractRepository {
         if (user == null) {
             return null;
         }
+        user.emailBlindIndex = this.encryptionService.generateBlindIndex(user.email);
         this.em.persist(user);
         return user;
     }
@@ -204,6 +215,9 @@ public class UserRepository extends AbstractRepository {
     public List<UserEntity> search(final String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAll();
+        }
+        if (searchTerm.contains("@")) {
+            return this.findByEmailOptional(searchTerm).map(List::of).orElse(List.of());
         }
         final var q = this.em.createNamedQuery("User.searchByTerm", UserEntity.class);
         q.setParameter("s", searchTerm);

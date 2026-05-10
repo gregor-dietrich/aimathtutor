@@ -56,9 +56,12 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
   -e GOOGLE_API_KEY=your_google_api_key \
+  -e AIMATHTUTOR_ENCRYPTION_KEY_FILE=/etc/aimathtutor/keys/encryption.key \
+  -v aimathtutor_keys:/etc/aimathtutor/keys \
   gregordietrich/aimathtutor:latest
 ```
 
+> **_NOTE:_** The `aimathtutor_keys` volume stores the AES-256 master key used to encrypt PII (email) at rest. Back this volume up — losing it makes encrypted data permanently unrecoverable. On first start, a key is generated automatically if none exists.
 > **_NOTE:_** Model names, temperatures, and other AI provider settings (other than API keys) must be configured after startup via the **Admin Settings UI** at `/admin/config` after logging in with admin credentials.
 
 ### Using Docker Compose
@@ -88,6 +91,8 @@ PGADMIN_EMAIL=your@email.com
 PGADMIN_PASSWORD=safe_password_here
 ```
 
+> **_NOTE:_** The encryption key file path is configured in `docker-compose.yml` and does not need to be set in `.env`.
+
 #### 3. Create a `docker-compose.yml` file in the same directory
 
 ```yml
@@ -106,10 +111,14 @@ services:
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       # OPENAI_API_KEY: ${OPENAI_API_KEY}
       # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
+
+      # Encryption key file — auto-generated on first start if absent
+      AIMATHTUTOR_ENCRYPTION_KEY_FILE: /etc/aimathtutor/keys/encryption.key
     ports:
       - "80:9001/tcp"
     volumes:
       - aimathtutor_logs:/deployments/logs
+      - aimathtutor_keys:/etc/aimathtutor/keys
     depends_on:
       db:
         condition: service_healthy
@@ -158,6 +167,7 @@ services:
         condition: service_healthy
 
 volumes:
+  aimathtutor_keys: # AES-256 master key — back this up; losing it = data unrecoverable
   aimathtutor_logs:
   pgadmin_data:
   postgres_data:

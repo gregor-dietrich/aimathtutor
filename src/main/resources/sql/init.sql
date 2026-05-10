@@ -75,7 +75,8 @@ CREATE TABLE users (
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   rank_id BIGINT NOT NULL,
-  email VARCHAR(255) DEFAULT NULL UNIQUE,
+  email TEXT DEFAULT NULL,
+  email_blind_index VARCHAR(44) DEFAULT NULL UNIQUE,
   banned BOOLEAN NOT NULL DEFAULT FALSE,
   activated BOOLEAN NOT NULL DEFAULT FALSE,
   activation_key VARCHAR(255) DEFAULT NULL,
@@ -86,6 +87,7 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_user_public_id ON users (public_id);
+CREATE INDEX idx_user_email_blind_index ON users (email_blind_index);
 
 --
 -- Inserts for table `users`

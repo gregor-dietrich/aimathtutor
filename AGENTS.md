@@ -106,6 +106,42 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 - **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
 - **Password utility:** `make password` generates salt+hash for `init.sql`.
 
+## Encrypt-at-Rest
+
+PII fields (currently `UserEntity.email`) are encrypted with AES-256-GCM at the JPA layer.
+
+### Infrastructure
+
+- **`EncryptionKeyManager`** (`service/security/`): loads/generates the 256-bit master key. Resolution order:
+  1. `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var (if set and non-empty — use `System.getenv()`, not `@ConfigProperty`; SmallRye Config rejects empty-string defaults for `String` fields)
+  2. `$XDG_DATA_HOME/aimathtutor/encryption.key` if file exists
+  3. `~/.aimathtutor/encryption.key` if file exists
+  4. Auto-generate at the XDG path (creates dirs, sets permissions 600)
+- **`EncryptionService`** (`service/security/`): derives two sub-keys from master via `HMAC(master, label)` (`"encrypt"` → AES key, `"blind-index"` → HMAC key). Provides `encrypt()`, `decrypt()`, and `generateBlindIndex()`.
+- **`EncryptedStringConverter`** (`entity/converter/`): JPA `AttributeConverter` that calls `EncryptionService` via `CDI.current().select(EncryptionService.class).get()`.
+
+### Ciphertext envelope format
+
+`1|base64(iv)|base64(ciphertext+tag)` — version prefix `1` allows future key-rotation migrations.
+
+### Searchable encrypted fields (blind index)
+
+Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion `email_blind_index` column (`VARCHAR(44) UNIQUE`):
+
+- Populated automatically in `UserRepository.persist()` via `encryptionService.generateBlindIndex(user.email)`.
+- `findByEmailOptional()` queries by blind index, not by the encrypted column.
+- Input is lowercased before hashing (`Locale.ROOT`) to support case-insensitive equality.
+- Admin user search no longer includes email (LIKE on encrypted data is impossible) — username search only.
+
+### Schema
+
+- `email` column: `TEXT` (not `VARCHAR(255)`; encrypted envelope can reach ~380 chars).
+- `email_blind_index`: `VARCHAR(44) UNIQUE`, indexed.
+
+### PMD suppression
+
+`EncryptionService.init()` carries `@SuppressWarnings("PMD.HardCodedCryptoKey")` — PMD false-positive on HKDF domain-separator strings (`"encrypt"`, `"blind-index"`). Suppression must stay as long as the derivation labels exist.
+
 ## AI Configuration
 
 - **API keys (env vars):** `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`.
@@ -123,3 +159,5 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 - **Production:** `docker-compose.yml` (app + PostgreSQL; optional pgadmin/Ollama).
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu` (port 9001, healthcheck `/q/health/ready`).
 - **Build:** `scripts/build.sh` via `make build` — multi-platform `docker buildx` with QEMU fallback.
+- Named volume `aimathtutor_keys` mounted at `/etc/aimathtutor/keys`; env var `AIMATHTUTOR_ENCRYPTION_KEY_FILE=/etc/aimathtutor/keys/encryption.key`.
+- **Back up the key volume.** Losing the key makes all encrypted data permanently unrecoverable.

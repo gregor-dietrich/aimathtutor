@@ -3,19 +3,29 @@ package de.vptr.aimathtutor.service.ai;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.ProviderTestResultDto;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 @QuarkusTest
+@SuppressWarnings("NullAway")
 class ProviderTestServiceTest {
 
     @Inject
     ProviderTestService aiProviderTestService;
+
+    @Nullable
+    @InjectMock
+    AiConfigService mockAiConfigService;
 
     @Test
     @DisplayName("testMock always returns success")
@@ -64,5 +74,18 @@ class ProviderTestServiceTest {
         assertNotNull(result);
         assertNotNull(result.message);
         assertFalse(result.message.isBlank());
+    }
+
+    @Test
+    @DisplayName("testCurrentProvider returns failure for unknown provider name")
+    void testTestCurrentProvider_unknownProvider() {
+        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any()))
+                .thenReturn("unknown_provider_xyz");
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        assertNotNull(result);
+        assertFalse(result.success, "Unknown provider must produce a failure result");
+        assertNotNull(result.message);
+        assertTrue(result.message.contains("Unknown AI provider"),
+                "Failure message must mention the unknown provider, got: " + result.message);
     }
 }
