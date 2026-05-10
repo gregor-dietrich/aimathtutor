@@ -22,16 +22,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "25"
-      - name: Run ErrorProne
-        run: ./mvnw compile test-compile
-      - name: Run Checkstyle
-        run: ./mvnw checkstyle:check
-      - name: Run SpotBugs
-        run: ./mvnw spotbugs:check
-      - name: Run PMD
-        run: ./mvnw pmd:check
-      - name: Run CPD
-        run: ./mvnw pmd:cpd-check
       - name: Run tests
         run: ./mvnw verify
 
