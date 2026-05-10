@@ -195,18 +195,21 @@ public final class ChartUtil {
      */
     public static String donutChart(final Map<String, Integer> data, @Nullable final String centerLabel,
             @Nullable final String centerValue, final int size) {
+        final int legendPanelW = 160;
+        final int totalW = size + legendPanelW;
+
         if (data == null || data.isEmpty()) {
-            return emptySvg(size, size, "No data");
+            return emptySvg(totalW, size, "No data");
         }
 
         final var items = data.entrySet().stream().filter(e -> e.getValue() != null && e.getValue() > 0).toList();
         if (items.isEmpty()) {
-            return emptySvg(size, size, "No data");
+            return emptySvg(totalW, size, "No data");
         }
 
         final int total = items.stream().mapToInt(Map.Entry::getValue).sum();
         if (total == 0) {
-            return emptySvg(size, size, "No data");
+            return emptySvg(totalW, size, "No data");
         }
 
         final int cx = size / 2;
@@ -215,13 +218,14 @@ public final class ChartUtil {
         final int innerR = outerR / 2;
 
         final var sb = new StringBuilder();
-        sb.append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ").append(size).append(" ").append(size)
+        sb.append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ").append(totalW).append(" ").append(size)
                 .append("\" style=\"width:100%;height:100%;\">");
         sb.append("<style>.donut-text{font-family:var(--lumo-font-family);font-size:10px;fill:")
                 .append(LUMO_SECONDARY_TEXT)
                 .append(";text-anchor:middle;}.donut-center{font-family:var(--lumo-font-family);")
                 .append("font-size:18px;font-weight:700;fill:").append(LUMO_PRIMARY)
-                .append(";text-anchor:middle;}</style>");
+                .append(";text-anchor:middle;}.donut-legend{font-family:var(--lumo-font-family);font-size:10px;fill:")
+                .append(LUMO_SECONDARY_TEXT).append(";}</style>");
 
         double startAngle = -90.0;
         int idx = 0;
@@ -230,7 +234,6 @@ public final class ChartUtil {
             final String color = DONUT_COLORS[idx % DONUT_COLORS.length];
 
             if (angle >= 359.99 || items.size() == 1) {
-                // Full-ring: use two concentric circles with fill-rule="evenodd"
                 sb.append("<circle cx=\"").append(cx).append("\" cy=\"").append(cy).append("\" r=\"").append(outerR)
                         .append("\" fill=\"").append(color).append("\"/>");
                 sb.append("<circle cx=\"").append(cx).append("\" cy=\"").append(cy).append("\" r=\"").append(innerR)
@@ -255,13 +258,6 @@ public final class ChartUtil {
                         .append(color).append("\"/>");
             }
 
-            final double midAngle = Math.toRadians(startAngle + angle / 2);
-            final int labelR = outerR - (outerR - innerR) / 2;
-            final int lx = cx + (int) (labelR * Math.cos(midAngle));
-            final int ly = cy + (int) (labelR * Math.sin(midAngle));
-            sb.append("<text x=\"").append(lx).append("\" y=\"").append(ly + 3)
-                    .append("\" class=\"donut-text\" fill=\"white\">").append(entry.getValue()).append("</text>");
-
             startAngle += angle;
             idx++;
         }
@@ -270,6 +266,24 @@ public final class ChartUtil {
                 .append(escapeXml(centerValue != null ? centerValue : String.valueOf(total))).append("</text>");
         sb.append("<text x=\"").append(cx).append("\" y=\"").append(cy + 12).append("\" class=\"donut-text\">")
                 .append(escapeXml(centerLabel != null ? centerLabel : "")).append("</text>");
+
+        // Legend panel to the right of the donut
+        final int legendX = size + 10;
+        final int itemH = 20;
+        final int legendStartY = Math.max(16, cy - (items.size() * itemH) / 2);
+        idx = 0;
+        for (final var entry : items) {
+            final String color = DONUT_COLORS[idx % DONUT_COLORS.length];
+            final int pct = Math.round(100.0f * entry.getValue() / total);
+            final int itemY = legendStartY + idx * itemH;
+            sb.append("<rect x=\"").append(legendX).append("\" y=\"").append(itemY - 8)
+                    .append("\" width=\"10\" height=\"10\" rx=\"2\" fill=\"").append(color).append("\"/>");
+            sb.append("<text x=\"").append(legendX + 14).append("\" y=\"").append(itemY)
+                    .append("\" class=\"donut-legend\">")
+                    .append(escapeXml(truncateLabel(entry.getKey(), 14)))
+                    .append(" (").append(pct).append("%)").append("</text>");
+            idx++;
+        }
 
         sb.append("</svg>");
         return sb.toString();
