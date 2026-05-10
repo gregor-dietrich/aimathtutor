@@ -138,8 +138,9 @@ public class AdminConfigView extends AbstractAdminView {
         // Google provider fields
         final var googleApiKeyField =
                 this.createReadOnlyApiKeyField("GOOGLE_API_KEY", "https://aistudio.google.com/app/apikey");
-        final var googleModelField = this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it",
-                "Google AI model name (e.g., gemma-4-31b-it, google-2.5-pro)");
+        final var googleModelField =
+                this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemini-3.1-flash-lite",
+                        "Google AI model name (e.g., gemini-2.5-flash-lite, gemma-4-31b-it, gemini-3.1-pro, ...)");
         final var googleUrlField = this.createTextConfigField("API Base URL", AiConfigKeys.GOOGLE_API_BASE_URL,
                 "https://generativelanguage.googleapis.com", null);
         final var googleTempField = this.createTemperatureField(AiConfigKeys.GOOGLE_PREFIX);
@@ -154,8 +155,8 @@ public class AdminConfigView extends AbstractAdminView {
                 this.createReadOnlyApiKeyField("OPENAI_API_KEY", "https://platform.openai.com/api-keys");
         final var openaiOrgIdField =
                 this.createTextConfigField("Organization ID (Optional)", AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
-        final var openaiModelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-5-nano",
-                "OpenAI model name (e.g., gpt-5-nano)");
+        final var openaiModelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-4.1-mini",
+                "OpenAI model name (e.g., gpt-5-nano, gpt-5.4-mini, gpt-5.5, ...)");
         final var openaiUrlField = this.createTextConfigField("API Base URL", AiConfigKeys.OPENAI_API_BASE_URL,
                 "https://api.openai.com/v1", null);
         final var openaiTempField = this.createTemperatureField(AiConfigKeys.OPENAI_PREFIX);
@@ -169,7 +170,7 @@ public class AdminConfigView extends AbstractAdminView {
         final var ollamaApiUrlField = this.createTextConfigField("API URL", AiConfigKeys.OLLAMA_API_URL,
                 "http://ollama:11434", "Ollama API URL (e.g., http://localhost:11434)");
         final var ollamaModelField = this.createTextConfigField("Model", AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b",
-                "Ollama model name (e.g., llama3.2:3b)");
+                "Ollama model name (e.g., gemma3:1b, llama3.2:3b, qwen3:8b, phi4:14b, ...)");
         final var ollamaTempField = this.createTemperatureField(AiConfigKeys.OLLAMA_PREFIX);
         final var ollamaMaxTokensField = this.createMaxTokensField(AiConfigKeys.OLLAMA_PREFIX);
         ollamaMaxTokensField

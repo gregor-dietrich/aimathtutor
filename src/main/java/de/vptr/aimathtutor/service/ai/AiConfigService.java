@@ -44,7 +44,7 @@ public class AiConfigService {
     // Default values for runtime reset to factory defaults.
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
             Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"), Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
-            Map.entry(AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it"),
+            Map.entry(AiConfigKeys.GOOGLE_MODEL, "gemini-3.1-flash-lite"),
             Map.entry(AiConfigKeys.GOOGLE_API_BASE_URL, "https://generativelanguage.googleapis.com"),
             Map.entry(AiConfigKeys.GOOGLE_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.GOOGLE_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.OPENAI_MODEL, "gpt-5-nano"), Map.entry(AiConfigKeys.OPENAI_ORGANIZATION_ID, ""),

@@ -119,7 +119,7 @@ class AiConfigServiceIntegrationTest {
         final Map<String, String> googleConfigs = this.aiConfigService.getAllConfigsByCategory(ConfigCategory.GOOGLE);
         assertFalse(googleConfigs.isEmpty());
         assertTrue(googleConfigs.containsKey("google.model"));
-        assertEquals("gemma-4-31b-it", googleConfigs.get("google.model"));
+        assertEquals("gemini-3.1-flash-lite", googleConfigs.get("google.model"));
     }
 
     @Test
