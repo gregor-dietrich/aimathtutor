@@ -37,6 +37,10 @@ import jakarta.inject.Inject;
  */
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
+    private static final String GLASS_BG_GRADIENT = "linear-gradient(135deg, var(--lumo-base-color), "
+            + "color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
+    private static final String GLASS_BORDER = "1px solid var(--lumo-contrast-10pct)";
+    private static final String GLASS_SHADOW = "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
 
     @Inject
     private transient AuthService authService;
@@ -114,12 +118,8 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             standaloneSection.setPadding(true);
             standaloneSection.setWidthFull();
 
-            final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
-                    + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-            standaloneSection.getStyle().set("background", bgGradient).set("border-radius", "12px")
-                    .set("border", "1px solid var(--lumo-contrast-10pct)")
-                    .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
-                    .set("position", "relative");
+            standaloneSection.getStyle().set("background", GLASS_BG_GRADIENT).set("border-radius", "12px")
+                    .set("border", GLASS_BORDER).set("box-shadow", GLASS_SHADOW).set("position", "relative");
 
             final var accentBar = new GlassAccentBar();
 
@@ -151,12 +151,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         section.setWidthFull();
 
         if (depth == 0) {
-            final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
-                    + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-            section.getStyle().set("background", bgGradient).set("border-radius", "12px")
-                    .set("border", "1px solid var(--lumo-contrast-10pct)")
-                    .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
-                    .set("position", "relative").set("margin-bottom", "var(--lumo-space-m)");
+            section.getStyle().set("background", GLASS_BG_GRADIENT).set("border-radius", "12px")
+                    .set("border", GLASS_BORDER).set("box-shadow", GLASS_SHADOW).set("position", "relative")
+                    .set("margin-bottom", "var(--lumo-space-m)");
 
             section.add(new GlassAccentBar());
         } else {
@@ -213,13 +210,11 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     private Div createExerciseCard(final ExerciseViewDto exercise) {
         final var card = new Div();
-        final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
-                + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        card.getStyle().set("width", "300px").set("background", bgGradient)
-                .set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "12px")
-                .set("cursor", "pointer").set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)")
-                .set("display", "flex").set("flex-direction", "column").set("position", "relative")
-                .set("overflow", "hidden").set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)");
+        card.getStyle().set("width", "300px").set("background", GLASS_BG_GRADIENT).set("border", GLASS_BORDER)
+                .set("border-radius", "12px").set("cursor", "pointer")
+                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("display", "flex")
+                .set("flex-direction", "column").set("position", "relative").set("overflow", "hidden")
+                .set("box-shadow", GLASS_SHADOW);
 
         // Accent bar
         final var accentBar = new GlassAccentBar();
