@@ -12,12 +12,13 @@ import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import de.vptr.aimathtutor.service.ProblemGeneratorService;
-import de.vptr.aimathtutor.service.ai.provider.AiProvider;
-import de.vptr.aimathtutor.service.ai.provider.GeminiAiProvider;
-import de.vptr.aimathtutor.service.ai.provider.MockAiProvider;
-import de.vptr.aimathtutor.service.ai.provider.OllamaAiProvider;
+import de.vptr.aimathtutor.service.ai.provider.GoogleProvider;
+import de.vptr.aimathtutor.service.ai.provider.MockProvider;
+import de.vptr.aimathtutor.service.ai.provider.OllamaProvider;
 import de.vptr.aimathtutor.service.ai.provider.OpenAiProvider;
+import de.vptr.aimathtutor.service.ai.provider.ProviderInterface;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.RateLimitService;
 import jakarta.annotation.Nullable;
@@ -28,7 +29,7 @@ import jakarta.inject.Inject;
  * AI Tutor Service - Analyzes student math actions and provides feedback.
  *
  * Configuration is loaded dynamically from AiConfigService, including: - Whether AI is enabled - Which AI provider to
- * use (mock, gemini, openai, ollama) - Prompt templates for question answering and math tutoring
+ * use (mock, google, openai, ollama) - Prompt templates for question answering and math tutoring
  *
  * This service acts as an orchestrator, delegating actual AI provider calls to strategy implementations and logging to
  * AiInteractionLogger.
@@ -42,16 +43,16 @@ public class AiTutorService {
     AiConfigService aiConfigService;
 
     @Inject
-    MockAiProvider mockAiProvider;
+    MockProvider mockAiProvider;
 
     @Inject
-    GeminiAiProvider geminiAiProvider;
+    GoogleProvider googleAiProvider;
 
     @Inject
     OpenAiProvider openAiProvider;
 
     @Inject
-    OllamaAiProvider ollamaAiProvider;
+    OllamaProvider ollamaAiProvider;
 
     @Inject
     ProblemGeneratorService problemGeneratorService;
@@ -131,7 +132,7 @@ public class AiTutorService {
         }
 
         return switch (provider) {
-            case "gemini" -> this.safeAnalyze(this.geminiAiProvider, event, context);
+            case "google" -> this.safeAnalyze(this.googleAiProvider, event, context);
             case "openai" -> this.safeAnalyze(this.openAiProvider, event, context);
             case "ollama" -> this.safeAnalyze(this.ollamaAiProvider, event, context);
             default -> this.mockAiProvider.analyzeMathAction(event, context);
@@ -273,7 +274,7 @@ public class AiTutorService {
         }
 
         var answer = switch (provider) {
-            case "gemini" -> this.safeAnswer(this.geminiAiProvider, question, currentExpression, initialExpression,
+            case "google" -> this.safeAnswer(this.googleAiProvider, question, currentExpression, initialExpression,
                     targetExpression, context);
             case "openai" -> this.safeAnswer(this.openAiProvider, question, currentExpression, initialExpression,
                     targetExpression, context);
@@ -353,7 +354,7 @@ public class AiTutorService {
     // Provider call helpers with fallback to mock
 
     @Nullable
-    private AiFeedbackDto safeAnalyze(final AiProvider provider, final GraspableEventDto event,
+    private AiFeedbackDto safeAnalyze(final ProviderInterface provider, final GraspableEventDto event,
             final ConversationContextDto context) {
         if (!provider.isAvailable()) {
             LOG.warnf("%s not configured, falling back to mock AI", provider.getClass().getSimpleName());
@@ -361,6 +362,8 @@ public class AiTutorService {
         }
         try {
             return provider.analyzeMathAction(event, context);
+        } catch (final NonRetryableProviderException e) {
+            throw e;
         } catch (final RuntimeException e) {
             LOG.errorf(e, "Error using %s, falling back to mock", provider.getClass().getSimpleName());
             return this.mockAiProvider.analyzeMathAction(event, context);
@@ -368,7 +371,7 @@ public class AiTutorService {
     }
 
     @Nullable
-    private String safeAnswer(final AiProvider provider, final String question,
+    private String safeAnswer(final ProviderInterface provider, final String question,
             @Nullable final String currentExpression, @Nullable final String initialExpression,
             @Nullable final String targetExpression, final ConversationContextDto context) {
         if (!provider.isAvailable()) {
@@ -378,6 +381,8 @@ public class AiTutorService {
         }
         try {
             return provider.answerQuestion(question, currentExpression, initialExpression, targetExpression, context);
+        } catch (final NonRetryableProviderException e) {
+            throw e;
         } catch (final RuntimeException e) {
             LOG.errorf(e, "Error using %s, falling back to mock", provider.getClass().getSimpleName());
             return this.mockAiProvider.answerQuestion(question, currentExpression, initialExpression, targetExpression,

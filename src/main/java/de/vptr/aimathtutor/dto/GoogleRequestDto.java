@@ -8,11 +8,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 
 /**
- * Request DTO for Google Gemini API Based on Gemini REST API specification
+ * Request DTO for Google AI API Based on Google REST API specification
  */
 @SuppressFBWarnings(value = "PA_PUBLIC_PRIMITIVE_ATTRIBUTE",
         justification = "Request DTO used for JSON mapping; public fields are intentional")
-public class GeminiRequestDto {
+public class GoogleRequestDto {
     @Nullable
     public List<Content> contents;
 
@@ -25,7 +25,7 @@ public class GeminiRequestDto {
     public List<SafetySetting> safetySettings;
 
     /**
-     * Represents content in the Gemini request.
+     * Represents content in the Google request.
      */
     public static class Content {
         @Nullable
@@ -43,7 +43,7 @@ public class GeminiRequestDto {
     }
 
     /**
-     * Represents a part in the Gemini request content.
+     * Represents a part in the Google request content.
      */
     public static class Part {
         @Nullable
@@ -58,7 +58,7 @@ public class GeminiRequestDto {
     }
 
     /**
-     * Represents generation configuration in the Gemini request.
+     * Represents generation configuration in the Google request.
      */
     public static class GenerationConfig {
         @Nullable
@@ -83,7 +83,7 @@ public class GeminiRequestDto {
     }
 
     /**
-     * Represents a safety setting in the Gemini request.
+     * Represents a safety setting in the Google request.
      */
     public static class SafetySetting {
         @Nullable
@@ -103,9 +103,9 @@ public class GeminiRequestDto {
     /**
      * Helper method to create a simple text request
      */
-    public static GeminiRequestDto createTextRequest(final String prompt, final Double temperature,
+    public static GoogleRequestDto createTextRequest(final String prompt, final Double temperature,
             final Integer maxTokens) {
-        final var request = new GeminiRequestDto();
+        final var request = new GoogleRequestDto();
         request.contents = List.of(new Content(prompt));
         request.generationConfig = new GenerationConfig(temperature, maxTokens);
 

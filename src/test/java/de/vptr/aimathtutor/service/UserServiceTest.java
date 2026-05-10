@@ -26,9 +26,10 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import jakarta.ws.rs.WebApplicationException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
+@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
 class UserServiceTest {
 
     private static final String VALID_PASSWORD = "P@ssw0rd1";
@@ -404,6 +405,137 @@ class UserServiceTest {
         assertEquals(update.username, updated.username);
         assertEquals(update.email, updated.email);
         assertTrue(updated.activated);
+    }
+
+    @Test
+    @DisplayName("updateUser throws WebApplicationException for unknown publicId")
+    @TestTransaction
+    void testUpdateUser_notFound() {
+        final UserDto update = new UserDto();
+        update.username = "nobody";
+        update.password = VALID_PASSWORD;
+
+        assertThrows(WebApplicationException.class,
+                () -> this.userService.updateUser("00000000000000000000000000", update));
+    }
+
+    @Test
+    @DisplayName("updateUser throws ValidationException for duplicate username")
+    @TestTransaction
+    void testUpdateUser_duplicateUsername() {
+        final UserDto first = this.buildValidDto();
+        this.userService.createUser(first);
+
+        final UserDto second = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(second);
+
+        final UserDto update = new UserDto();
+        update.username = first.username;
+        update.password = VALID_PASSWORD;
+
+        assertThrows(ValidationException.class, () -> this.userService.updateUser(created.publicId, update));
+    }
+
+    @Test
+    @DisplayName("patchUser throws WebApplicationException for unknown publicId")
+    @TestTransaction
+    void testPatchUser_notFound() {
+        final UserDto patch = new UserDto();
+        patch.email = "test@example.com";
+
+        assertThrows(WebApplicationException.class,
+                () -> this.userService.patchUser("00000000000000000000000000", patch));
+    }
+
+    @Test
+    @DisplayName("patchUser with null email is handled gracefully")
+    @TestTransaction
+    void testPatchUser_nullEmail() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final UserDto patch = new UserDto();
+        patch.email = null;
+
+        final UserViewDto patched = this.userService.patchUser(created.publicId, patch);
+        assertEquals(dto.email, patched.email, "Email should remain unchanged when patch has null email");
+    }
+
+    @Test
+    @DisplayName("changePassword throws WebApplicationException for unknown user")
+    @TestTransaction
+    void testChangePassword_userNotFound() {
+        assertThrows(WebApplicationException.class,
+                () -> this.userService.changePassword(-999L, "old", "N3wP@ssword!"));
+    }
+
+    @Test
+    @DisplayName("updateAvatars throws ValidationException for too long emoji")
+    @TestTransaction
+    void testUpdateAvatars_tooLongEmoji() {
+        final var entity = this.createAndFetchUser();
+
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "a".repeat(11), "🤖"));
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "🧑", "a".repeat(11)));
+    }
+
+    @Test
+    @DisplayName("getSettings throws WebApplicationException for unknown user id")
+    @TestTransaction
+    void testGetSettings_notFound() {
+        assertThrows(WebApplicationException.class, () -> this.userService.getSettings(-999L));
+    }
+
+    @Test
+    @DisplayName("findByPublicId returns user when found")
+    @TestTransaction
+    void testFindByPublicId_found() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final var found = this.userService.findByPublicId(created.publicId);
+        assertTrue(found.isPresent());
+        assertEquals(dto.username, found.get().username);
+    }
+
+    @Test
+    @DisplayName("createUser with blank password throws ValidationException")
+    @TestTransaction
+    void testCreateUser_blankPassword() {
+        final UserDto userDto = this.buildValidDto();
+        userDto.password = "   ";
+
+        assertThrows(ValidationException.class, () -> this.userService.createUser(userDto));
+    }
+
+    @Test
+    @DisplayName("createUser with password below minimum length throws ValidationException")
+    @TestTransaction
+    void testCreateUser_shortPassword() {
+        final UserDto userDto = this.buildValidDto();
+        userDto.password = "Ab1!";
+
+        assertThrows(ValidationException.class, () -> this.userService.createUser(userDto));
+    }
+
+    @Test
+    @DisplayName("createUser with missing uppercase throws ValidationException")
+    @TestTransaction
+    void testCreateUser_passwordMissingUppercase() {
+        final UserDto userDto = this.buildValidDto();
+        userDto.password = "lowercase1!";
+
+        assertThrows(ValidationException.class, () -> this.userService.createUser(userDto));
+    }
+
+    @Test
+    @DisplayName("createUser with missing special char throws ValidationException")
+    @TestTransaction
+    void testCreateUser_passwordMissingSpecialChar() {
+        final UserDto userDto = this.buildValidDto();
+        userDto.password = "Lowercas3";
+
+        assertThrows(ValidationException.class, () -> this.userService.createUser(userDto));
     }
 
     private UserEntity createAndFetchUser() {

@@ -18,10 +18,10 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
-class MockAiProviderTest {
+class MockProviderTest {
 
     @Inject
-    MockAiProvider provider;
+    MockProvider provider;
 
     @Test
     @DisplayName("isAvailable always returns true")

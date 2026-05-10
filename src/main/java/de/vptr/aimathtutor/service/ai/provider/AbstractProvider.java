@@ -9,7 +9,7 @@ import jakarta.inject.Inject;
 /**
  * Base class for AI providers sharing common prompt-building and question-answering logic.
  */
-public abstract class AbstractAiProvider implements AiProvider {
+public abstract class AbstractProvider implements ProviderInterface {
 
     @Inject
     protected PromptBuilderService promptBuilderService;

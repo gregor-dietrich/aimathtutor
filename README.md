@@ -6,7 +6,7 @@ AIMathTutor is a full-stack web application for interactive math learning, built
 ## 🌟 Features
 
 - Interactive Graspable Math workspace for symbolic manipulation and step-by-step actions
-- Real-time AI tutor feedback, hints, and adaptive problem generation (Gemini, OpenAI, Ollama, mock)
+- Real-time AI tutor feedback, hints, and adaptive problem generation (Google, OpenAI, Ollama, mock)
 - Problem and lesson authoring, organization, and progress tracking
 - Threaded comments on exercises, moderation, and reporting
 - Session/event tracking and analytics dashboards for teachers/admins
@@ -31,13 +31,13 @@ See the [Makefile](Makefile) or use `make help` for all available commands and s
 
 ## 🤖 Supported AI Providers
 
-- [Google Gemini](https://aistudio.google.com/api-keys)
+- [Google](https://aistudio.google.com/api-keys)
 - [Ollama](https://ollama.com/download)
 - [OpenAI](https://platform.openai.com/api-keys)
 
 **Configuration:**
 
-- **API Keys**: Set environment variables `GEMINI_API_KEY`, `OPENAI_API_KEY`, and `OPENAI_ORG_ID` (immutable at runtime).
+- **API Keys**: Set environment variables `GOOGLE_API_KEY`, `OPENAI_API_KEY`, and `OPENAI_ORG_ID` (immutable at runtime).
 - **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable, database-backed).
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
@@ -53,6 +53,6 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUIL
 - Monolithic Quarkus + Vaadin app
 - Vaadin views inject backend services via CDI (`@Inject`)
 - Graspable Math workspace embedded via Vaadin and JavaScript API
-- AI Tutor layer supports Gemini, OpenAI, Ollama, and mock providers
+- AI Tutor layer supports Google, OpenAI, Ollama, and mock providers
 - Entities, DTOs, services and views organized by resource type
 - See [Project Instructions](.github/instructions/aimathtutor.instructions.md) for coding standards and architecture

@@ -22,6 +22,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
+import de.vptr.aimathtutor.component.GlassAccentBar;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.ExerciseService;
@@ -36,6 +37,10 @@ import jakarta.inject.Inject;
  */
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
+    private static final String GLASS_BG_GRADIENT = "linear-gradient(135deg, var(--lumo-base-color), "
+            + "color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
+    private static final String GLASS_BORDER = "1px solid var(--lumo-contrast-10pct)";
+    private static final String GLASS_SHADOW = "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
 
     @Inject
     private transient AuthService authService;
@@ -109,12 +114,17 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         if (!standaloneExercises.isEmpty()) {
             final var standaloneSection = new VerticalLayout();
-            standaloneSection.setSpacing(true);
-            standaloneSection.setPadding(false);
+            standaloneSection.setSpacing(false);
+            standaloneSection.setPadding(true);
             standaloneSection.setWidthFull();
 
+            standaloneSection.getStyle().set("background", GLASS_BG_GRADIENT).set("border-radius", "12px")
+                    .set("border", GLASS_BORDER).set("box-shadow", GLASS_SHADOW).set("position", "relative");
+
+            final var accentBar = new GlassAccentBar();
+
             final var standaloneTitle = new H3("Additional Exercises");
-            standaloneSection.add(standaloneTitle);
+            standaloneTitle.getStyle().set("margin", "0 0 var(--lumo-space-s) 0");
 
             final var exerciseGrid = new HorizontalLayout();
             exerciseGrid.setSpacing(true);
@@ -124,7 +134,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
                 exerciseGrid.add(this.createExerciseCard(exercise));
             }
 
-            standaloneSection.add(exerciseGrid);
+            standaloneSection.add(accentBar, standaloneTitle, exerciseGrid);
             this.add(standaloneSection);
         }
     }
@@ -141,8 +151,11 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         section.setWidthFull();
 
         if (depth == 0) {
-            section.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)").set("margin-bottom", "var(--lumo-space-m)");
+            section.getStyle().set("background", GLASS_BG_GRADIENT).set("border-radius", "12px")
+                    .set("border", GLASS_BORDER).set("box-shadow", GLASS_SHADOW).set("position", "relative")
+                    .set("margin-bottom", "var(--lumo-space-m)");
+
+            section.add(new GlassAccentBar());
         } else {
             section.getStyle().set("border-left", "3px solid var(--lumo-primary-color)").set("padding-left",
                     "var(--lumo-space-m)");
@@ -197,20 +210,21 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     private Div createExerciseCard(final ExerciseViewDto exercise) {
         final var card = new Div();
-        card.getStyle().set("width", "300px").set("padding", "1rem")
-                .set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)").set("cursor", "pointer")
-                .set("transition", "all 0.2s ease").set("display", "flex").set("flex-direction", "column")
-                .set("gap", "0.5rem");
+        card.getStyle().set("width", "300px").set("background", GLASS_BG_GRADIENT).set("border", GLASS_BORDER)
+                .set("border-radius", "12px").set("cursor", "pointer")
+                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("display", "flex")
+                .set("flex-direction", "column").set("position", "relative").set("overflow", "hidden")
+                .set("box-shadow", GLASS_SHADOW);
 
-        // Hover effect
-        card.getElement().addEventListener("mouseenter", ignored -> {
-            card.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)").set("transform", "translateY(-2px)");
-        });
-        card.getElement().addEventListener("mouseleave", ignored -> {
-            card.getStyle().set("box-shadow", "none").set("transform", "translateY(0)");
-        });
+        // Accent bar
+        final var accentBar = new GlassAccentBar();
+
+        // Content wrapper
+        final var content = new Div();
+        content.getStyle().set("padding", "1rem").set("display", "flex").set("flex-direction", "column").set("gap",
+                "0.5rem");
+
+        GlassAccentBar.addHoverEffect(card);
 
         // Title
         final var titleSpan = new Span(exercise.title);
@@ -257,8 +271,6 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         startButton.setWidthFull();
         startButton.addClickListener(ignored -> {
-            // Navigate to ExerciseWorkspaceView for Graspable exercises
-            // or to a generic ExerciseView for non-Graspable exercises
             if (exercise.publicId == null) {
                 NotificationUtil.showError("Exercise ID is missing");
                 return;
@@ -266,7 +278,8 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             UI.getCurrent().navigate(ExerciseWorkspaceView.class, new RouteParameters("exerciseId", exercise.publicId));
         });
 
-        card.add(titleSpan, badgeLayout, startButton);
+        content.add(titleSpan, badgeLayout, startButton);
+        card.add(accentBar, content);
 
         return card;
     }

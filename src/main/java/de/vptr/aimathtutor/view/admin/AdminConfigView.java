@@ -25,10 +25,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
-import de.vptr.aimathtutor.dto.AiProviderTestResultDto;
+import de.vptr.aimathtutor.dto.ProviderTestResultDto;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.service.ai.AiConfigService;
-import de.vptr.aimathtutor.service.ai.provider.AiProviderTestService;
+import de.vptr.aimathtutor.service.ai.ProviderTestService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -50,7 +50,7 @@ public class AdminConfigView extends AbstractAdminView {
     private transient AiConfigService aiConfigService;
 
     @Inject
-    private transient AiProviderTestService aiProviderTestService;
+    private transient ProviderTestService aiProviderTestService;
 
     @Inject
     private transient ManagedExecutor managedExecutor;
@@ -99,9 +99,9 @@ public class AdminConfigView extends AbstractAdminView {
         final var generalTab = new Tab("General");
         final var generalPanel = this.buildGeneralPanel();
 
-        // Gemini tab
-        final var geminiTab = new Tab("Gemini");
-        final var geminiPanel = this.buildGeminiPanel();
+        // Google tab
+        final var googleTab = new Tab("Google");
+        final var googlePanel = this.buildGooglePanel();
 
         // Ollama tab
         final var ollamaTab = new Tab("Ollama");
@@ -115,7 +115,7 @@ public class AdminConfigView extends AbstractAdminView {
         final var promptsTab = new Tab("Prompts");
         final var promptsPanel = this.buildPromptsPanel();
 
-        tabs.add(generalTab, geminiTab, ollamaTab, openaiTab, promptsTab);
+        tabs.add(generalTab, googleTab, ollamaTab, openaiTab, promptsTab);
 
         this.add(tabs);
 
@@ -134,8 +134,8 @@ public class AdminConfigView extends AbstractAdminView {
             final Tab selected = event.getSelectedTab();
             if (selected.equals(generalTab)) {
                 contentContainer.add(generalPanel);
-            } else if (selected.equals(geminiTab)) {
-                contentContainer.add(geminiPanel);
+            } else if (selected.equals(googleTab)) {
+                contentContainer.add(googlePanel);
             } else if (selected.equals(openaiTab)) {
                 contentContainer.add(openaiPanel);
             } else if (selected.equals(ollamaTab)) {
@@ -159,7 +159,7 @@ public class AdminConfigView extends AbstractAdminView {
 
         // AI Provider selection
         final var providerCombo = new ComboBox<String>("AI Provider");
-        providerCombo.setItems("mock", "gemini", "ollama", "openai");
+        providerCombo.setItems("mock", "google", "ollama", "openai");
         providerCombo.setValue(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"));
         providerCombo.setWidthFull();
 
@@ -178,28 +178,28 @@ public class AdminConfigView extends AbstractAdminView {
         return panel;
     }
 
-    private VerticalLayout buildGeminiPanel() {
+    private VerticalLayout buildGooglePanel() {
         final var panel = new VerticalLayout();
         panel.setSpacing(true);
         panel.setPadding(true);
 
         final var apiKeyField =
-                this.createReadOnlyApiKeyField("GEMINI_API_KEY", "https://aistudio.google.com/app/apikey");
+                this.createReadOnlyApiKeyField("GOOGLE_API_KEY", "https://aistudio.google.com/app/apikey");
 
-        final var modelField = this.createTextConfigField("Model", AiConfigKeys.GEMINI_MODEL, "gemma-4-31b-it",
-                "Google AI model name (e.g., gemma-4-31b-it, gemini-2.5-pro)");
+        final var modelField = this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it",
+                "Google AI model name (e.g., gemma-4-31b-it, google-2.5-pro)");
 
-        final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.GEMINI_API_BASE_URL,
+        final var urlField = this.createTextConfigField("API Base URL", AiConfigKeys.GOOGLE_API_BASE_URL,
                 "https://generativelanguage.googleapis.com", null);
 
-        final var tempField = this.createTemperatureField(AiConfigKeys.GEMINI_PREFIX);
-        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.GEMINI_PREFIX);
+        final var tempField = this.createTemperatureField(AiConfigKeys.GOOGLE_PREFIX);
+        final var maxTokensField = this.createMaxTokensField(AiConfigKeys.GOOGLE_PREFIX);
 
         final var saveBtn =
-                new Button("Save", ignored -> this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField));
+                new Button("Save", ignored -> this.saveGoogleConfig(modelField, urlField, tempField, maxTokensField));
         final var testBtn = new Button("Test Connection", ignored -> {
-            this.saveGeminiConfig(modelField, urlField, tempField, maxTokensField);
-            this.testGeminiConnection();
+            this.saveGoogleConfig(modelField, urlField, tempField, maxTokensField);
+            this.testGoogleConnection();
         });
 
         panel.add(apiKeyField, modelField, urlField, tempField, maxTokensField,
@@ -356,7 +356,7 @@ public class AdminConfigView extends AbstractAdminView {
 
     // --- Connection tests ---------------------------------------------------
 
-    private void testConnection(final Supplier<AiProviderTestResultDto> testCall, final String providerName) {
+    private void testConnection(final Supplier<ProviderTestResultDto> testCall, final String providerName) {
         final var ui = this.getUI().orElse(null);
         if (ui == null) {
             return;
@@ -380,8 +380,8 @@ public class AdminConfigView extends AbstractAdminView {
         });
     }
 
-    private void testGeminiConnection() {
-        this.testConnection(this.aiProviderTestService::testGemini, "Gemini");
+    private void testGoogleConnection() {
+        this.testConnection(this.aiProviderTestService::testGoogle, "Google");
     }
 
     private void testOpenAiConnection() {
@@ -472,13 +472,13 @@ public class AdminConfigView extends AbstractAdminView {
                         new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, providerCombo.getValue())));
     }
 
-    private void saveGeminiConfig(final TextField modelField, final TextField urlField, final NumberField tempField,
+    private void saveGoogleConfig(final TextField modelField, final TextField urlField, final NumberField tempField,
             final NumberField maxTokensField) {
-        this.saveProviderConfig("Gemini",
-                List.of(new AiConfigUpdateDto(AiConfigKeys.GEMINI_MODEL, modelField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.GEMINI_API_BASE_URL, urlField.getValue()),
-                        new AiConfigUpdateDto(AiConfigKeys.GEMINI_TEMPERATURE, temperatureOrDefault(tempField)),
-                        new AiConfigUpdateDto(AiConfigKeys.GEMINI_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
+        this.saveProviderConfig("Google",
+                List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, modelField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, urlField.getValue()),
+                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE, temperatureOrDefault(tempField)),
+                        new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS, intOrDefault(maxTokensField, "2000"))));
     }
 
     private void saveOpenAiConfig(final TextField orgIdField, final TextField modelField, final TextField urlField,

@@ -9,12 +9,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("NullAway")
-class AiProviderTestResultDtoTest {
+class ProviderTestResultDtoTest {
 
     @Test
     @DisplayName("Default constructor has defaults")
     void testDefaultConstructor() {
-        final var dto = new AiProviderTestResultDto();
+        final var dto = new ProviderTestResultDto();
         assertFalse(dto.success);
         assertNull(dto.message);
     }
@@ -22,7 +22,7 @@ class AiProviderTestResultDtoTest {
     @Test
     @DisplayName("Parameterized constructor sets fields")
     void testParameterizedConstructor() {
-        final var dto = new AiProviderTestResultDto(true, "Connection OK");
+        final var dto = new ProviderTestResultDto(true, "Connection OK");
         assertTrue(dto.success);
         assertEquals("Connection OK", dto.message);
     }
@@ -30,7 +30,7 @@ class AiProviderTestResultDtoTest {
     @Test
     @DisplayName("ok factory method")
     void testOk() {
-        final var dto = AiProviderTestResultDto.ok("All good");
+        final var dto = ProviderTestResultDto.ok("All good");
         assertTrue(dto.success);
         assertEquals("All good", dto.message);
     }
@@ -38,7 +38,7 @@ class AiProviderTestResultDtoTest {
     @Test
     @DisplayName("fail factory method")
     void testFail() {
-        final var dto = AiProviderTestResultDto.fail("Connection refused");
+        final var dto = ProviderTestResultDto.fail("Connection refused");
         assertFalse(dto.success);
         assertEquals("Connection refused", dto.message);
     }

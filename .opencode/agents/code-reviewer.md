@@ -52,7 +52,7 @@ You are a Code Reviewer for AIMathTutor — a monolithic Quarkus 3.33 + Vaadin 2
 1. **Transaction scope**: `@Transactional` only on service methods that mutate data.
 2. **Query efficiency**: No N+1 patterns. Use Panache query methods. Lazy-loaded relationships.
 3. **Async loading**: Data-heavy views use `CompletableFuture.supplyAsync()` with timeouts to avoid blocking UI.
-4. **AI provider resilience**: Use `@Retry` and `@Timeout` for external AI calls. Handle `AiProviderException` vs `NonRetryableAiProviderException`.
+4. **AI provider resilience**: Use `@Retry` and `@Timeout` for external AI calls. Handle `ProviderException` vs `NonRetryableProviderException`.
 
 ## Output Format
 

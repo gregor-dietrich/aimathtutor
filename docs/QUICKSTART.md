@@ -55,7 +55,7 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
-  -e GEMINI_API_KEY=your_gemini_api_key \
+  -e GOOGLE_API_KEY=your_google_api_key \
   gregordietrich/aimathtutor:latest
 ```
 
@@ -76,10 +76,10 @@ SQL_USERNAME=aimathtutor
 SQL_PASSWORD=changeit
 
 # AI API Keys (required only for cloud AI providers)
-# Get API keys from: https://aistudio.google.com/app/apikey (Gemini)
+# Get API keys from: https://aistudio.google.com/app/apikey (Google)
 #                    https://platform.openai.com/api-keys (OpenAI)
 # Not needed for Ollama (local LLM)
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_API_KEY=your_google_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_ORG_ID=your_openai_org_id_here
 
@@ -103,7 +103,7 @@ services:
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
       # AI API Keys (sourced from .env file above)
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       # OPENAI_API_KEY: ${OPENAI_API_KEY}
       # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
     ports:
@@ -175,7 +175,7 @@ docker compose up -d
 
 After the stack is running, log in to the application with admin credentials (default: `admin` / `admin`) and navigate to **Admin Settings** (`/admin/config`) to:
 
-- Select your AI provider (Gemini, OpenAI, or Ollama)
+- Select your AI provider (Google, OpenAI, or Ollama)
 - Set the model name
 - Adjust temperature, max tokens, and other provider-specific settings
 - Configure custom prompts

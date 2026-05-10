@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 
 /**
- * Response DTO for Google Gemini API Based on Gemini REST API specification
+ * Response DTO for Google AI API Based on Google REST API specification
  */
-public class GeminiResponseDto {
+public class GoogleResponseDto {
     @Nullable
     public List<Candidate> candidates;
 
@@ -18,7 +18,7 @@ public class GeminiResponseDto {
     public PromptFeedback promptFeedback;
 
     /**
-     * Represents a candidate in the Gemini response.
+     * Represents a candidate in the Google response.
      */
     public static class Candidate {
         @Nullable
@@ -34,7 +34,7 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Represents content in the Gemini response.
+     * Represents content in the Google response.
      */
     public static class Content {
         @Nullable
@@ -44,7 +44,7 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Represents a part in the Gemini response content. Models with thinking mode return parts where
+     * Represents a part in the Google response content. Models with thinking mode return parts where
      * {@code thought=true} containing reasoning that should not be shown to users. Only parts where {@code thought} is
      * absent or {@code false} contain the actual response text.
      */
@@ -56,7 +56,7 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Represents a safety rating in the Gemini response.
+     * Represents a safety rating in the Google response.
      */
     public static class SafetyRating {
         @Nullable
@@ -66,7 +66,7 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Represents prompt feedback in the Gemini response.
+     * Represents prompt feedback in the Google response.
      */
     public static class PromptFeedback {
         @Nullable
@@ -123,7 +123,7 @@ public class GeminiResponseDto {
     }
 
     /**
-     * Check if the response was truncated due to the token limit (Gemini reports {@code "MAX_TOKENS"} as the finish
+     * Check if the response was truncated due to the token limit (Google reports {@code "MAX_TOKENS"} as the finish
      * reason).
      */
     public boolean isTruncated() {

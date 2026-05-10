@@ -2,7 +2,10 @@ package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -51,7 +54,7 @@ class AiConfigServiceTest {
                 "test.bool.false", "test.bool.one", "test.bool.zero", "test.config1", "test.config2", "test.config3",
                 "update.test", "batch.config1", "batch.config2", "batch.config3", "cache.test", "cache.clear.test",
                 "test.integer", "test.boolean", "test.string", "test.temperature", "test.max-tokens", "test.config3",
-                "ollama.base-url", "gemini.base-url");
+                "ollama.base-url", "google.base-url");
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
@@ -389,6 +392,108 @@ class AiConfigServiceTest {
     }
 
     @Test
+    @DisplayName("getClampedTemperature clamps values to [0.0, 2.0]")
+    @Transactional
+    void testGetClampedTemperature() {
+        double result = this.aiConfigService.getClampedTemperature("nonexistent.key", 0.5);
+        assertEquals(0.5, result);
+
+        result = this.aiConfigService.getClampedTemperature("nonexistent.key", 3.0);
+        assertEquals(2.0, result, "Should clamp to 2.0");
+
+        result = this.aiConfigService.getClampedTemperature("nonexistent.key", -1.0);
+        assertEquals(0.0, result, "Should clamp to 0.0");
+    }
+
+    @Test
+    @DisplayName("getClampedTokens clamps values to [1, 8192]")
+    @Transactional
+    void testGetClampedTokens() {
+        int result = this.aiConfigService.getClampedTokens("nonexistent.key", 1000);
+        assertEquals(1000, result);
+
+        result = this.aiConfigService.getClampedTokens("nonexistent.key", 10_000);
+        assertEquals(8192, result, "Should clamp to 8192");
+
+        result = this.aiConfigService.getClampedTokens("nonexistent.key", 0);
+        assertEquals(1, result, "Should clamp to 1");
+    }
+
+    @Test
+    @DisplayName("getAllConfigsByCategory with null returns empty map")
+    @Transactional
+    void testGetAllConfigsByCategory_null() {
+        final var result = this.aiConfigService.getAllConfigsByCategory(null);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getAllConfigs returns non-null list")
+    @Transactional
+    void testGetAllConfigs() {
+        final var configs = this.aiConfigService.getAllConfigs();
+        assertNotNull(configs);
+        assertFalse(configs.isEmpty(), "Should have at least the seeded configs");
+    }
+
+    @Test
+    @DisplayName("getConfigsByCategory returns configs in that category")
+    @Transactional
+    void testGetConfigsByCategory() {
+        final var configs = this.aiConfigService.getConfigsByCategory(ConfigCategory.GENERAL);
+        assertNotNull(configs);
+    }
+
+    @Test
+    @DisplayName("updateMultipleConfigs with null/empty list does nothing")
+    @Transactional
+    void testUpdateMultipleConfigs_nullOrEmpty() {
+        assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(null, this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(List.of(), this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("resetToDefaults restores factory defaults")
+    @Transactional
+    void testResetToDefaults() {
+        this.aiConfigService.updateConfig(AiConfigKeys.AI_TUTOR_ENABLED, "false", this.adminUser.id);
+        assertEquals("false", this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, ""));
+
+        this.aiConfigService.resetToDefaults(this.adminUser.id);
+
+        assertEquals("true", this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, ""));
+    }
+
+    @Test
+    @DisplayName("getConfigValue with null key returns default")
+    @Transactional
+    void testGetConfigValue_nullKey() {
+        assertEquals("default", this.aiConfigService.getConfigValue(null, "default"));
+    }
+
+    @Test
+    @DisplayName("validateConfigValue - empty value on non-optional config throws")
+    @Transactional
+    void testValidateConfigValue_nonOptionalEmpty() {
+        final var entity =
+                new AiConfigEntity("test.nonoptional", "value", ConfigType.STRING, ConfigCategory.GENERAL, null, false);
+        entity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(entity);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig("test.nonoptional", "", this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("validateConfigValue - configKey with null key throws")
+    @Transactional
+    void testUpdateConfig_nullKey() {
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
+    }
+
+    @Test
     @DisplayName("URL validation - unresolvable hostname allowed for Ollama")
     @Transactional
     void testUrlValidationUnresolvableHostAllowedForOllama() {
@@ -401,8 +506,8 @@ class AiConfigServiceTest {
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
     @Transactional
     void testUrlValidationUnresolvableHostRejectedForNonOllama() {
-        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("gemini.base-url",
-                "https://nonexistent-gemini-host.invalid/", this.adminUser.id));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("google.base-url",
+                "https://nonexistent-google-host.invalid/", this.adminUser.id));
     }
 
     @Test

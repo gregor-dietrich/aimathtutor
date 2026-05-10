@@ -6,6 +6,7 @@
     "DavidAnson.vscode-markdownlint",
     "docker.docker",
     "eamodio.gitlens",
+    "EditorConfig.EditorConfig",
     "esbenp.prettier-vscode",
     "github.vscode-github-actions",
     "GitHub.vscode-pull-request-github",

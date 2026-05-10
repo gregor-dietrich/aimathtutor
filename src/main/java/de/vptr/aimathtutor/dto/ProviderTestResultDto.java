@@ -5,7 +5,7 @@ import jakarta.annotation.Nullable;
 /**
  * Result of testing an AI provider connection.
  */
-public class AiProviderTestResultDto {
+public class ProviderTestResultDto {
     public boolean success;
     @Nullable
     public String message;
@@ -13,13 +13,13 @@ public class AiProviderTestResultDto {
     /**
      * Default constructor for serialization.
      */
-    public AiProviderTestResultDto() {
+    public ProviderTestResultDto() {
     }
 
     /**
      * Constructor with all fields.
      */
-    public AiProviderTestResultDto(final boolean success, final String message) {
+    public ProviderTestResultDto(final boolean success, final String message) {
         this.success = success;
         this.message = message;
     }
@@ -27,14 +27,14 @@ public class AiProviderTestResultDto {
     /**
      * Creates a successful result.
      */
-    public static AiProviderTestResultDto ok(final String message) {
-        return new AiProviderTestResultDto(true, message);
+    public static ProviderTestResultDto ok(final String message) {
+        return new ProviderTestResultDto(true, message);
     }
 
     /**
      * Creates a failed result.
      */
-    public static AiProviderTestResultDto fail(final String message) {
-        return new AiProviderTestResultDto(false, message);
+    public static ProviderTestResultDto fail(final String message) {
+        return new ProviderTestResultDto(false, message);
     }
 }

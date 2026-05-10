@@ -6,13 +6,15 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.GlassAccentBar;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -38,19 +40,30 @@ public class LoginView extends VerticalLayout {
         this.setAlignItems(Alignment.CENTER);
         this.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        final var title = new H1("AI Math Tutor - Login");
+        final var card = new Div();
+        final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
+                + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
+        card.getStyle().set("background", bgGradient).set("border-radius", "12px")
+                .set("border", "1px solid var(--lumo-contrast-10pct)")
+                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)").set("position", "relative")
+                .set("display", "flex").set("flex-direction", "column").set("padding", "2rem").set("width", "100%")
+                .set("max-width", "360px").set("box-sizing", "border-box");
+        final var accentBar = new GlassAccentBar();
+
+        final var title = new H2("Log in");
+        title.getStyle().set("margin", "0 0 var(--lumo-space-m) 0").set("text-align", "center");
 
         final var usernameField = new TextField("Username");
         usernameField.setPrefixComponent(LineAwesomeIcon.USER_SOLID.create());
         usernameField.setRequired(true);
-        usernameField.setWidth("300px");
+        usernameField.setWidthFull();
 
         final var passwordField = new PasswordField("Password");
         passwordField.setPrefixComponent(LineAwesomeIcon.LOCK_SOLID.create());
         passwordField.setRequired(true);
-        passwordField.setWidth("300px");
+        passwordField.setWidthFull();
 
-        final var loginButton = new Button("Login");
+        final var loginButton = new Button("Log in");
         // INTENTIONALLY SYNCHRONOUS: Wrapping authService.authenticate() in
         // CompletableFuture causes ContextNotActiveException during navigation.
         loginButton.addClickListener(e -> {
@@ -95,15 +108,16 @@ public class LoginView extends VerticalLayout {
                 NotificationUtil.showError("An unexpected error occurred. Please try again.");
             } finally {
                 loginButton.setEnabled(true);
-                loginButton.setText("Login");
+                loginButton.setText("Log in");
             }
         });
 
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.addClickShortcut(Key.ENTER);
-        loginButton.setWidth("300px");
+        loginButton.setWidthFull();
 
-        this.add(title, usernameField, passwordField, loginButton);
+        card.add(accentBar, title, usernameField, passwordField, loginButton);
+        this.add(card);
 
         usernameField.focus();
     }

@@ -60,7 +60,7 @@ public class AiConfigDto {
      * Enumeration of configuration categories. Maps to string values stored in the database and used in UI components.
      */
     public enum ConfigCategory {
-        GENERAL("GENERAL"), GEMINI("GEMINI"), OPENAI("OPENAI"), OLLAMA("OLLAMA"), PROMPTS("PROMPTS");
+        GENERAL("GENERAL"), GOOGLE("GOOGLE"), OPENAI("OPENAI"), OLLAMA("OLLAMA"), PROMPTS("PROMPTS");
 
         private final String value;
 
