@@ -258,27 +258,69 @@ Timebox suggestion: 3-6 person-days to prototype/evaluate libraries, implement M
 
 ## 5. Encrypt-at-Rest
 
-**Goal:** encrypt PII at rest with file-backed key management.
+**Goal:** Encrypt PII at rest with file-backed key management to ensure data privacy and compliance.
 
-**Plan:**
+**Detailed Implementation Plan:**
 
-1. Classify sensitive fields across entities (starting with `UserEntity.email`) and record lookup requirements (display-only vs searchable).
-2. Implement field encryption using AES-256-GCM with random IV per value and versioned ciphertext envelope.
-3. Add blind-index/hash companion columns for fields requiring equality search.
-4. Introduce key management via `AIMATHTUTOR_ENCRYPTION_KEY_FILE`:
-   - load key from file on startup
-   - generate and persist key if missing
-   - enforce restrictive file permissions
-5. Add shared crypto service + entity converters/mappers so encryption/decryption is centralized and plaintext is never logged.
-6. Add migrations to create encrypted/blind-index columns, backfill legacy plaintext, and remove plaintext columns after cutover.
-7. Update `application.properties` with sensible local default key path and `docker-compose.yml` with env var + persistent volume mount.
-8. Add unit/integration tests for crypto behavior, startup key generation, CRUD, and searchable encrypted fields.
+### 5.1 Analysis & Classification
+
+- [ ] Scan all entities (e.g., `UserEntity`, `StudentSessionEntity`) to identify PII fields.
+- [ ] Categorize fields by access pattern:
+  - **Display-only:** Only need decryption (e.g., user profile details).
+  - **Searchable:** Need equality checks (e.g., `UserEntity.email` for login).
+
+### 5.2 Crypto Infrastructure
+
+- [ ] Implement `EncryptionService` (`@ApplicationScoped`):
+  - **Algorithm:** `AES-256-GCM` (`AES/GCM/NoPadding`) for authenticated encryption.
+  - **Ciphertext Format:** Use a versioned envelope: `version|iv|ciphertext` (Base64 encoded) to allow future key rotation.
+  - **IV Management:** Generate a secure random 12-byte IV for every encryption operation.
+  - **Security:** Ensure plaintext is never logged. Use `char[]` or `ByteBuffer` where possible to minimize string pool exposure.
+- [ ] Implement `BlindIndexService`:
+  - Provide `generateBlindIndex(String plaintext)` using `HMAC-SHA256` with a dedicated, separate blind-index key.
+  - Ensure the blind index is deterministic for the same plaintext to allow equality searches.
+
+### 5.3 Key Management
+
+- [ ] Implement `EncryptionKeyManager` to handle the master key:
+  - **Loading:** Load key from file specified by `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var.
+  - **Generation:** If the key file is missing, generate a secure 256-bit key and persist it.
+  - **Permissions:** Enforce restrictive file permissions (e.g., `600` on Linux) during generation.
+  - **Bootstrapping:** Integrate with Quarkus startup to ensure keys are available before Hibernate initializes.
+
+### 5.4 Persistence Integration
+
+- [ ] Implement `EncryptedStringConverter` (implements `AttributeConverter<String, String>`):
+  - Use `CDI.current().select(EncryptionService.class).get()` to access the service within the converter.
+  - Map entity plaintext $\leftrightarrow$ DB ciphertext.
+- [ ] Apply `@Convert(converter = EncryptedStringConverter.class)` to classified PII fields.
+- [ ] For searchable fields:
+  - Add a companion field (e.g., `emailBlindIndex`) in the entity.
+  - Update service layer to populate the blind index before persisting.
+  - Update lookup methods to query via the blind index instead of the encrypted field.
+
+### 5.5 Configuration & DevOps
+
+- [ ] Update `application.properties` with a sensible local default path for the key file.
+- [ ] Update `docker-compose.yml`:
+  - Define `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var.
+  - Add a persistent volume mount (e.g., `/etc/aimathtutor/keys`) to ensure keys survive container restarts.
+
+### 5.6 Verification & Testing
+
+- [ ] **Unit Tests:** `EncryptionServiceTest` verifying encrypt $\to$ decrypt roundtrip and IV uniqueness.
+- [ ] **Integration Tests:**
+  - Verify `UserEntity` stores ciphertext in the DB (via direct JDBC check) but provides plaintext to the application.
+  - Verify that `findByEmail` continues to work using the blind index.
+  - Test startup behavior with existing vs. missing key files.
+- [ ] **Quality Gates:** Ensure `make lint` and `make test` pass without regressions.
 
 **Done when:**
 
 - Target PII fields are stored encrypted at rest.
-- App starts with existing key or generates one when absent.
+- Application starts with existing key or generates one when absent.
 - Compose/dev setup persists key material via mounted volume.
+- Search functionality for PII is maintained via blind indexing.
 - SpotBugs, Checkstyle, PMD, PMD-CPD and all Maven Tests passing.
 
 ---
