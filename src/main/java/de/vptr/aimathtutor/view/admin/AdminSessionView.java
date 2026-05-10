@@ -48,7 +48,13 @@ public class AdminSessionView extends AbstractAdminView {
     private transient DashboardKpiCard successRateCard;
     private transient DashboardKpiCard hintsCard;
 
-    private transient Div infoCardContent;
+    private transient DashboardKpiCard studentCard;
+    private transient DashboardKpiCard exerciseCard;
+    private transient DashboardKpiCard startTimeCard;
+    private transient DashboardKpiCard endTimeCard;
+
+    private transient DashboardKpiCard finalExpressionCard;
+
     private transient Grid<AiInteractionViewDto> interactionsGrid;
 
     /**
@@ -101,43 +107,35 @@ public class AdminSessionView extends AbstractAdminView {
                 .set("margin-bottom", "8px").set("display", "block");
         this.add(this.headerSubtitle);
 
-        // KPI stat cards
+        // Row 1: stats KPI cards
         this.actionsCard = new DashboardKpiCard("Total Actions", "—");
         this.correctActionsCard = new DashboardKpiCard("Correct Actions", "—");
         this.successRateCard = new DashboardKpiCard("Success Rate", "—");
         this.hintsCard = new DashboardKpiCard("Hints Used", "—");
 
-        final var kpiRow = new Div(this.actionsCard, this.correctActionsCard, this.successRateCard, this.hintsCard);
-        kpiRow.setWidthFull();
-        kpiRow.getStyle().set("display", "grid").set("grid-template-columns", "repeat(4, 1fr)").set("gap", "14px");
-        this.add(kpiRow);
+        final var statsRow = new Div(this.actionsCard, this.correctActionsCard, this.successRateCard, this.hintsCard);
+        statsRow.setWidthFull();
+        statsRow.getStyle().set("display", "grid").set("grid-template-columns", "repeat(4, 1fr)").set("gap", "14px");
+        this.add(statsRow);
 
-        this.add(this.buildInfoCard());
+        // Row 2: session context KPI cards
+        this.studentCard = new DashboardKpiCard("Student", "—");
+        this.exerciseCard = new DashboardKpiCard("Exercise", "—");
+        this.startTimeCard = new DashboardKpiCard("Start Time", "—");
+        this.endTimeCard = new DashboardKpiCard("End Time", "—");
+
+        final var contextRow = new Div(this.studentCard, this.exerciseCard, this.startTimeCard, this.endTimeCard);
+        contextRow.setWidthFull();
+        contextRow.getStyle().set("display", "grid").set("grid-template-columns", "repeat(4, 1fr)").set("gap", "14px");
+        this.add(contextRow);
+
+        // Row 3: final expression (single full-width card)
+        this.finalExpressionCard = new DashboardKpiCard("Final Expression", "—");
+        final var expressionRow = new Div(this.finalExpressionCard);
+        expressionRow.setWidthFull();
+        this.add(expressionRow);
+
         this.add(this.buildGridCard());
-    }
-
-    private VerticalLayout buildInfoCard() {
-        final var card = new VerticalLayout();
-        card.setPadding(false);
-        card.setSpacing(false);
-        card.setWidthFull();
-        applyGlassCardStyle(card);
-
-        final var accentBar = buildAccentBar();
-        final var cardTitle = new Span("Session Information");
-        cardTitle.getStyle().set("font-size", "13px").set("font-weight", "700")
-                .set("color", "var(--lumo-primary-text-color)").set("letter-spacing", "0.3px")
-                .set("padding", "12px 16px 0").set("display", "block");
-
-        this.infoCardContent = new Div();
-        this.infoCardContent.getStyle().set("display", "grid")
-                .set("grid-template-columns", "repeat(auto-fill, minmax(220px, 1fr))").set("gap", "16px")
-                .set("padding", "12px 16px 16px");
-        this.infoCardContent.add(createInfoField("Session ID", "Loading..."));
-
-        card.add(accentBar, cardTitle, this.infoCardContent);
-        GlassAccentBar.addHoverEffect(card);
-        return card;
     }
 
     private VerticalLayout buildGridCard() {
@@ -208,22 +206,6 @@ public class AdminSessionView extends AbstractAdminView {
         return bar;
     }
 
-    private static Div createInfoField(final String label, final String value) {
-        final var field = new Div();
-
-        final var labelSpan = new Span(label);
-        labelSpan.getStyle().set("font-size", "11px").set("color", "var(--lumo-secondary-text-color)")
-                .set("text-transform", "uppercase").set("font-weight", "700").set("letter-spacing", "0.8px")
-                .set("display", "block").set("margin-bottom", "2px");
-
-        final var valueSpan = new Span(value);
-        valueSpan.getStyle().set("font-size", "14px").set("color", "var(--lumo-body-text-color)")
-                .set("font-weight", "500").set("display", "block");
-
-        field.add(labelSpan, valueSpan);
-        return field;
-    }
-
     private void loadSessionDetails() {
         AsyncDataLoader.load(() -> {
             this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
@@ -247,7 +229,8 @@ public class AdminSessionView extends AbstractAdminView {
             return;
         }
 
-        this.headerSubtitle.setText(this.session.username + " — " + this.session.exerciseTitle);
+        final var duration = this.session.getFormattedDuration() != null ? this.session.getFormattedDuration() : "N/A";
+        this.headerSubtitle.setText("(" + duration + ") Session ID: " + this.session.sessionId);
 
         this.statusBadge.setText(this.session.completed ? "Completed" : "In Progress");
         this.statusBadge.getElement().getThemeList().clear();
@@ -259,18 +242,13 @@ public class AdminSessionView extends AbstractAdminView {
         this.successRateCard.setValue(this.session.getSuccessRatePercentage());
         this.hintsCard.setValue(String.valueOf(this.session.hintsUsed));
 
-        this.infoCardContent.removeAll();
-        this.infoCardContent.add(createInfoField("Session ID", this.session.sessionId),
-                createInfoField("Student", this.session.username),
-                createInfoField("Exercise", this.session.exerciseTitle),
-                createInfoField("Start Time", this.dateTimeFormatter.formatDateTime(this.session.startTime)),
-                createInfoField("End Time",
-                        this.session.endTime != null ? this.dateTimeFormatter.formatDateTime(this.session.endTime)
-                                : "Not yet completed"),
-                createInfoField("Duration",
-                        this.session.getFormattedDuration() != null ? this.session.getFormattedDuration() : "N/A"),
-                createInfoField("Final Expression",
-                        this.session.finalExpression != null ? this.session.finalExpression : "N/A"));
+        this.studentCard.setValue(this.session.username != null ? this.session.username : "N/A");
+        this.exerciseCard.setValue(this.session.exerciseTitle != null ? this.session.exerciseTitle : "N/A");
+        this.startTimeCard.setValue(
+                this.session.startTime != null ? this.dateTimeFormatter.formatDateTime(this.session.startTime) : "N/A");
+        this.endTimeCard.setValue(this.session.endTime != null
+                ? this.dateTimeFormatter.formatDateTime(this.session.endTime) : "In Progress");
+        this.finalExpressionCard.setValue(this.session.finalExpression != null ? this.session.finalExpression : "—");
     }
 
     private void updateInteractionsGrid(final List<AiInteractionViewDto> interactions) {

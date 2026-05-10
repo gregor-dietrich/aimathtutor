@@ -86,7 +86,7 @@ public class AdminProgressView extends AbstractAdminView {
         // Configure columns
         this.grid.addColumn(progress -> progress.username).setHeader("Student").setFlexGrow(1);
 
-        this.grid.addColumn(progress -> progress.totalSessions).setHeader("Total Sessions").setFlexGrow(0);
+        this.grid.addColumn(progress -> progress.totalSessions).setHeader("Sessions").setFlexGrow(0);
 
         this.grid.addColumn(progress -> progress.completedSessions).setHeader("Completed").setFlexGrow(0);
 
@@ -94,7 +94,7 @@ public class AdminProgressView extends AbstractAdminView {
                 (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getCompletionRatePercentage)
                 .setHeader("Completion Rate").setFlexGrow(1);
 
-        this.grid.addColumn(progress -> progress.totalProblems).setHeader("Total Problems").setFlexGrow(0);
+        this.grid.addColumn(progress -> progress.totalProblems).setHeader("Problems").setFlexGrow(0);
 
         this.grid.addColumn(
                 (ValueProvider<StudentProgressSummaryDto, ?>) StudentProgressSummaryDto::getSuccessRatePercentage)

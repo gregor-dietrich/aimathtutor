@@ -198,6 +198,18 @@ public class AdminConfigView extends AbstractAdminView {
         providerCombo.addValueChangeListener(ignored -> updateSectionVisibility.run());
         updateSectionVisibility.run();
 
+        final Runnable updateEnabledState = () -> {
+            final boolean enabled = Boolean.TRUE.equals(enabledCheckbox.getValue());
+            providerCombo.setEnabled(enabled);
+            googleSection.setEnabled(enabled);
+            openaiSection.setEnabled(enabled);
+            ollamaSection.setEnabled(enabled);
+            saveBtn.setEnabled(enabled);
+            testBtn.setEnabled(enabled);
+        };
+        enabledCheckbox.addValueChangeListener(ignored -> updateEnabledState.run());
+        updateEnabledState.run();
+
         final Supplier<Optional<List<AiConfigUpdateDto>>> buildUpdates = () -> {
             final String provider = providerCombo.getValue();
             final var updates = new ArrayList<AiConfigUpdateDto>();
@@ -318,7 +330,7 @@ public class AdminConfigView extends AbstractAdminView {
         final var area = new TextArea(label);
         area.setValue(this.aiConfigService.getConfigValue(configKey, ""));
         area.setWidthFull();
-        area.setMinHeight("150px");
+        area.setMinRows(18);
         area.setHelperText(helperText);
         return area;
     }

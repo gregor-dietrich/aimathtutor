@@ -150,9 +150,6 @@ public class AdminUsersView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Configure columns
-        this.grid.addColumn(user -> user.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
-
         // Make the username column clickable
         this.grid.addComponentColumn(user -> {
             final var usernameSpan = new Span(user.username);
