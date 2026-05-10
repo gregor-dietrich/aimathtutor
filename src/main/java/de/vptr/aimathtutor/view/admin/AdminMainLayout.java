@@ -73,6 +73,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     @Override
     public void showRouterLayoutContent(final HasElement content) {
         if (this.contentArea != null) {
+            content.getElement().getStyle().set("flex", "1").set("min-height", "0");
             this.contentArea.getElement().removeAllChildren();
             this.contentArea.getElement().appendChild(content.getElement());
         } else {
@@ -161,9 +162,11 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.setSizeFull();
         this.setPadding(false);
         this.setSpacing(false);
+        this.getStyle().set("min-height", "100vh");
 
         this.createTopBar();
         this.createMainLayout();
+        this.expand(this.mainLayout);
     }
 
     private void createTopBar() {
@@ -180,18 +183,20 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     private void createMainLayout() {
         // Create the main horizontal layout that will contain sidebar and content
         this.mainLayout = new HorizontalLayout();
-        this.mainLayout.setSizeFull();
+        this.mainLayout.setWidthFull();
         this.mainLayout.setPadding(false);
         this.mainLayout.setSpacing(false);
+        this.mainLayout.getStyle().set("height", "100%");
 
         // Create sidebar
         this.sidebar = new VerticalLayout();
         this.sidebar.setWidth("250px");
-        this.sidebar.setHeightFull();
         this.sidebar.setPadding(true);
         this.sidebar.setSpacing(false);
         this.sidebar.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
         this.sidebar.getStyle().set("border-right", "1px solid var(--lumo-contrast-10pct)");
+        this.sidebar.getStyle().set("height", "100%");
+        this.sidebar.getStyle().set("overflow-y", "auto");
 
         // Create navigation tabs
         final var userRank = this.userRankService.getCurrentUserRank();
@@ -200,9 +205,11 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
         // Create content area where the actual views will be displayed
         this.contentArea = new VerticalLayout();
-        this.contentArea.setSizeFull();
+        this.contentArea.setWidthFull();
         this.contentArea.setPadding(false);
         this.contentArea.setSpacing(false);
+        this.contentArea.getStyle().set("height", "100%");
+        this.contentArea.getStyle().set("overflow-y", "auto");
 
         // Add sidebar and content area to main layout
         this.mainLayout.add(this.sidebar, this.contentArea);

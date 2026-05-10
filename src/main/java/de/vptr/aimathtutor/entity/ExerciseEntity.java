@@ -49,7 +49,9 @@ import jakarta.validation.constraints.NotBlank;
                 query = "FROM ExerciseEntity " + "WHERE LOWER(title) LIKE :s OR LOWER(content) LIKE :s "
                         + "ORDER BY created DESC"),
         @NamedQuery(name = "Exercise.findByDateRange",
-                query = "FROM ExerciseEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"), })
+                query = "FROM ExerciseEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
+        @NamedQuery(name = "Exercise.countPublished",
+                query = "SELECT COUNT(e) FROM ExerciseEntity e WHERE e.published = true") })
 public class ExerciseEntity extends BaseEntity {
 
     @NotBlank
