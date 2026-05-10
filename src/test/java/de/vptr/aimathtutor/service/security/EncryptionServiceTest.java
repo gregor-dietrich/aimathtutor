@@ -116,6 +116,7 @@ public class EncryptionServiceTest {
         Assertions.assertNotNull(envelope);
 
         final String[] parts = envelope.split("\\|", 3);
+        Assertions.assertEquals(3, parts.length, "Envelope must have three parts before tampering");
         final byte[] cipherBytes = Base64.getDecoder().decode(parts[2]);
         cipherBytes[cipherBytes.length - 1] ^= (byte) 0xFF;
         final String tampered = parts[0] + "|" + parts[1] + "|" + Base64.getEncoder().encodeToString(cipherBytes);
