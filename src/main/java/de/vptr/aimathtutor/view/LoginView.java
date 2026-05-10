@@ -46,8 +46,8 @@ public class LoginView extends VerticalLayout {
         card.getStyle().set("background", bgGradient).set("border-radius", "12px")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)").set("position", "relative")
-                .set("display", "flex").set("flex-direction", "column").set("padding", "2rem").set("width", "360px");
-
+                .set("display", "flex").set("flex-direction", "column").set("padding", "2rem")
+                .set("width", "100%").set("max-width", "360px").set("box-sizing", "border-box");
         final var accentBar = new GlassAccentBar();
 
         final var title = new H2("Log in");
