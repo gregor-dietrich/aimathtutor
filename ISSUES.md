@@ -335,3 +335,36 @@ All files except `AdminSessionsView.java` already import `Button` and `ButtonVar
 > **Consistency check:** All clickable-span patterns are in admin views only (confirmed via full codebase audit — no student views have clickable spans).
 
 ---
+
+## 7. Test Coverage Improvements
+
+### 7.1 Service classes with low coverage
+
+| Class               | Lines Missed | Branches Missed | Notes                                                                          |
+| ------------------- | ------------ | --------------- | ------------------------------------------------------------------------------ |
+| `AnalyticsService`  | 113          | 52              | Depends on many repositories; hard to unit-test without extensive mocking      |
+| `AuthService`       | 70           | 57              | Security-critical; needs careful `VaadinSession` mocking per anti-pattern note |
+| `OpenAiService`     | 65           | 31              | REST client; needs `@QuarkusTest` with WireMock                                |
+| `CommentService`    | 64           | 48              | Large service with many repository dependencies                                |
+| `CommentRepository` | 55           | 18              | Integration test; currently only partial IT coverage                           |
+| `AiTutorService`    | 53           | 60              | Complex orchestration service; needs mock providers                            |
+| `OllamaService`     | 52           | 27              | REST client; same approach as OpenAiService                                    |
+| `GeminiService`     | 42           | 8               | REST client; same approach as OpenAiService                                    |
+| `AiConfigService`   | 38           | 52              | Large config service; existing tests but 38 lines still uncovered              |
+| `UserService`       | 33           | 64              | Many branches; password/username validation paths                              |
+
+The goal is to get line and branch coverage for the service package and it's subpackages as close to 100% as reasonably possible.
+
+### 7.2 Repository integration tests needed
+
+| Repository                | Lines Missed | Existing IT? |
+| ------------------------- | ------------ | ------------ |
+| `UserRepository`          | 22           | No           |
+| `CommentFlagRepository`   | 23           | No           |
+| `UserGroupMetaRepository` | 27           | No           |
+| `AiConfigRepository`      | 9            | No           |
+| `UserGroupRepository`     | 9            | No           |
+
+The goal is to get line and branch coverage for repository and entity packages as close to 100% as reasonably possible.
+
+---
