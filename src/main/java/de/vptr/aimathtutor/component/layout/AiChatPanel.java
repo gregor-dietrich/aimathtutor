@@ -81,9 +81,8 @@ public class AiChatPanel extends VerticalLayout {
         this.setPadding(true);
         this.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
                 .set("border-left", "1px solid var(--lumo-contrast-10pct)").set("display", "flex")
-                .set("flex-direction", "column").set("position", "sticky").set("top", "0")
-                .set("height", "calc(100vh - 100px)") // Subtract approximate header height
-                .set("overflow", "hidden"); // Prevent the panel itself from scrolling
+                .set("flex-direction", "column").set("position", "sticky").set("top", "0").set("height", "100vh")
+                .set("overflow", "hidden");
 
         // Chat header
         final var chatHeader = new H4("AI Tutor Chat");

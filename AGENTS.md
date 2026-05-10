@@ -14,7 +14,7 @@ You should challenge the user's request if it would result in implementing anti-
 - **Java 25 required.** `make check` enforces JDK 25 + Maven ≥3.9.9. CI uses Temurin 25.
 - **Maven wrapper:** `./mvnw` (scripts fall back to system `mvn`).
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI: `http://localhost:9001/q/dev/`.
-- **Tests:** `make test` → `./mvnw test`. Uses `@QuarkusTest`, Mockito, Panache Mock. CI runs `./mvnw verify`.
+- **Tests:** `make test` → `./mvnw verify`. Uses `@QuarkusTest`, Mockito, Panache Mock (runs `verify` to enforce coverage).
 - **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`.
 - **Lint:** `make lint` → `scripts/lint.sh` — runs compilation (Error Prone & NullAway), spotless:apply, checkstyle, spotbugs, PMD, and CPD checks.
 - **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` + `build-frontend`. CI: `./mvnw clean install package -DskipTests -Pproduction`.

@@ -105,6 +105,9 @@ import jakarta.validation.constraints.NotNull;
                         + "ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.countActiveStudents",
                 query = "SELECT COUNT(DISTINCT s.user.id) FROM StudentSessionEntity s WHERE s.startTime >= :t"),
+        @NamedQuery(name = "StudentSession.countActiveStudentsBetween",
+                query = "SELECT COUNT(DISTINCT s.user.id) FROM StudentSessionEntity s "
+                        + "WHERE s.startTime >= :s AND s.startTime < :e"),
         @NamedQuery(name = "StudentSession.countByStartTimeBetween",
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime <= :e"),
         @NamedQuery(name = "StudentSession.countByStartTimeRangeHalfOpen",
