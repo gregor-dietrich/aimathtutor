@@ -4,6 +4,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+import de.vptr.aimathtutor.component.GlassAccentBar;
+
 /**
  * Premium KPI card with glass-morphism styling, gradient accent bar, hover elevation, and trend indicator. Looks like
  * it belongs in a VC-funded analytics platform.
@@ -22,13 +24,13 @@ public class DashboardKpiCard extends VerticalLayout {
      *            initial placeholder while data loads
      */
     public DashboardKpiCard(final String label, final String initialValue) {
-        setPadding(false);
-        setSpacing(false);
-        setWidthFull();
+        this.setPadding(false);
+        this.setSpacing(false);
+        this.setWidthFull();
 
         final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
                 + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        getStyle().set("background", bgGradient).set("border-radius", "12px")
+        this.getStyle().set("background", bgGradient).set("border-radius", "12px")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
                 .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
                 .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("position", "relative")
@@ -58,7 +60,8 @@ public class DashboardKpiCard extends VerticalLayout {
         this.trendLabel.getStyle().set("font-size", "12px").set("font-weight", "500");
 
         content.add(titleLabel, this.valueLabel, this.trendLabel);
-        add(accentBar, content);
+        this.add(accentBar, content);
+        GlassAccentBar.addHoverEffect(this);
     }
 
     /**

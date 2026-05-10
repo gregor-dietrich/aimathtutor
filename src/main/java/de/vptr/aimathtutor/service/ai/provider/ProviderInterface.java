@@ -8,7 +8,7 @@ import jakarta.annotation.Nullable;
 /**
  * Strategy interface for AI providers that analyze math actions and answer student questions.
  */
-public interface AiProvider {
+public interface ProviderInterface {
 
     /**
      * Checks whether this AI provider is available and configured.

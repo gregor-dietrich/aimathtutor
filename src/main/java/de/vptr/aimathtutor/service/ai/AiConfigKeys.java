@@ -20,12 +20,12 @@ public final class AiConfigKeys {
     public static final String SUFFIX_MAX_TOKENS = ".max-tokens";
     public static final String SUFFIX_API_BASE_URL = ".api.base-url";
 
-    // Gemini
-    public static final String GEMINI_PREFIX = "gemini";
-    public static final String GEMINI_MODEL = GEMINI_PREFIX + SUFFIX_MODEL;
-    public static final String GEMINI_API_BASE_URL = GEMINI_PREFIX + SUFFIX_API_BASE_URL;
-    public static final String GEMINI_TEMPERATURE = GEMINI_PREFIX + SUFFIX_TEMPERATURE;
-    public static final String GEMINI_MAX_TOKENS = GEMINI_PREFIX + SUFFIX_MAX_TOKENS;
+    // Google
+    public static final String GOOGLE_PREFIX = "google";
+    public static final String GOOGLE_MODEL = GOOGLE_PREFIX + SUFFIX_MODEL;
+    public static final String GOOGLE_API_BASE_URL = GOOGLE_PREFIX + SUFFIX_API_BASE_URL;
+    public static final String GOOGLE_TEMPERATURE = GOOGLE_PREFIX + SUFFIX_TEMPERATURE;
+    public static final String GOOGLE_MAX_TOKENS = GOOGLE_PREFIX + SUFFIX_MAX_TOKENS;
 
     // OpenAI
     public static final String OPENAI_PREFIX = "openai";

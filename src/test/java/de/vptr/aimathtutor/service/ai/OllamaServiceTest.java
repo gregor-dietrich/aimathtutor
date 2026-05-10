@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -60,5 +61,31 @@ class OllamaServiceTest {
     @DisplayName("Should annotate generateContent with @Retry using AppConstants values")
     void generateContentShouldHaveRetryAnnotation() throws NoSuchMethodException {
         RetryAnnotationVerifier.verifyRetryAnnotation(OllamaService.class, "generateContent", String.class);
+    }
+
+    @Test
+    @DisplayName("cleanup should complete without exception and leave getters working")
+    void testCleanup() {
+        this.ollamaService.cleanup();
+        this.ollamaService.cleanup();
+        assertNotNull(this.ollamaService.getModel());
+    }
+
+    @Test
+    @DisplayName("getConfigPrefix returns the Ollama prefix")
+    void testGetConfigPrefix() {
+        assertEquals("ollama", this.ollamaService.getConfigPrefix());
+    }
+
+    @Test
+    @DisplayName("getDefaultModel returns the default model")
+    void testGetDefaultModel() {
+        assertEquals("llama3.2:3b", this.ollamaService.getDefaultModel());
+    }
+
+    @Test
+    @DisplayName("getProviderName returns Ollama")
+    void testGetProviderName() {
+        assertEquals("Ollama", this.ollamaService.getProviderName());
     }
 }

@@ -53,7 +53,7 @@ public class AiConfigEntity extends BaseEntity {
     @Nullable
     @Column(name = "category", nullable = false)
     @Enumerated(EnumType.STRING)
-    public ConfigCategory category; // "GENERAL", "GEMINI", "OPENAI", "OLLAMA", "PROMPTS"
+    public ConfigCategory category; // "GENERAL", "GOOGLE", "OPENAI", "OLLAMA", "PROMPTS"
 
     @Nullable
     @Column(name = "description", columnDefinition = "TEXT")

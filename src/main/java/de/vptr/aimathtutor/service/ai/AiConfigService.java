@@ -44,9 +44,9 @@ public class AiConfigService {
     // Default values for runtime reset to factory defaults.
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
             Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"), Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
-            Map.entry(AiConfigKeys.GEMINI_MODEL, "gemma-4-31b-it"),
-            Map.entry(AiConfigKeys.GEMINI_API_BASE_URL, "https://generativelanguage.googleapis.com"),
-            Map.entry(AiConfigKeys.GEMINI_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.GEMINI_MAX_TOKENS, "2000"),
+            Map.entry(AiConfigKeys.GOOGLE_MODEL, "gemma-4-31b-it"),
+            Map.entry(AiConfigKeys.GOOGLE_API_BASE_URL, "https://generativelanguage.googleapis.com"),
+            Map.entry(AiConfigKeys.GOOGLE_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.GOOGLE_MAX_TOKENS, "2000"),
             Map.entry(AiConfigKeys.OPENAI_MODEL, "gpt-5-nano"), Map.entry(AiConfigKeys.OPENAI_ORGANIZATION_ID, ""),
             Map.entry(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1"),
             Map.entry(AiConfigKeys.OPENAI_TEMPERATURE, "0.7"), Map.entry(AiConfigKeys.OPENAI_MAX_TOKENS, "2000"),
@@ -499,8 +499,8 @@ public class AiConfigService {
 
         final String host = uri.getHost().toLowerCase(Locale.ROOT);
 
-        // Enforce HTTPS for external providers (Gemini, OpenAI)
-        if ((configKey.contains("gemini") || configKey.contains("openai"))
+        // Enforce HTTPS for external providers (Google, OpenAI)
+        if ((configKey.contains("google") || configKey.contains("openai"))
                 && !"https".equalsIgnoreCase(uri.getScheme())) {
             throw new IllegalArgumentException("External provider URLs must use HTTPS for key '" + configKey + "'");
         }

@@ -10,21 +10,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
-class AbstractAiProviderServiceTest {
+class AbstractProviderServiceTest {
 
     @Inject
-    GeminiService geminiService;
+    GoogleService googleService;
 
     // Minimal concrete subclass to test protected instance methods directly.
     // Not a CDI bean — aiConfigService will be null, but none of the tested
     // methods use it.
-    private static final class TestProvider extends AbstractAiProviderService {
+    private static final class TestProvider extends AbstractProviderService {
         @Override
         protected String getConfigPrefix() {
             return "test";
@@ -63,50 +63,50 @@ class AbstractAiProviderServiceTest {
     @Test
     @DisplayName("isApiKeyConfigured returns false for null")
     void testIsApiKeyConfigured_null() {
-        assertFalse(AbstractAiProviderService.isApiKeyConfigured(null));
+        assertFalse(AbstractProviderService.isApiKeyConfigured(null));
     }
 
     @Test
     @DisplayName("isApiKeyConfigured returns false for blank string")
     void testIsApiKeyConfigured_blank() {
-        assertFalse(AbstractAiProviderService.isApiKeyConfigured("   "));
+        assertFalse(AbstractProviderService.isApiKeyConfigured("   "));
     }
 
     @Test
     @DisplayName("isApiKeyConfigured returns false for unresolved placeholder")
     void testIsApiKeyConfigured_placeholder() {
-        assertFalse(AbstractAiProviderService.isApiKeyConfigured("${GEMINI_API_KEY}"));
+        assertFalse(AbstractProviderService.isApiKeyConfigured("${GOOGLE_API_KEY}"));
     }
 
     @Test
     @DisplayName("isApiKeyConfigured returns true for valid non-placeholder key")
     void testIsApiKeyConfigured_validKey() {
-        assertTrue(AbstractAiProviderService.isApiKeyConfigured("sk-abc123"));
+        assertTrue(AbstractProviderService.isApiKeyConfigured("sk-abc123"));
     }
 
     @Test
-    @DisplayName("requireApiKey throws NonRetryableAiProviderException for null key")
+    @DisplayName("requireApiKey throws NonRetryableProviderException for null key")
     void testRequireApiKey_throwsWhenKeyNull() {
-        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireApiKey(null, "TEST_API_KEY"));
+        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireApiKey(null, "TEST_API_KEY"));
     }
 
     @Test
-    @DisplayName("requireApiKey throws NonRetryableAiProviderException for placeholder key")
+    @DisplayName("requireApiKey throws NonRetryableProviderException for placeholder key")
     void testRequireApiKey_throwsWhenKeyPlaceholder() {
-        assertThrows(NonRetryableAiProviderException.class,
+        assertThrows(NonRetryableProviderException.class,
                 () -> PROVIDER.callRequireApiKey("${TEST_KEY}", "TEST_API_KEY"));
     }
 
     @Test
-    @DisplayName("requireNonEmptyContent throws NonRetryableAiProviderException for null content")
+    @DisplayName("requireNonEmptyContent throws NonRetryableProviderException for null content")
     void testRequireNonEmptyContent_throwsWhenNull() {
-        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireNonEmptyContent(null));
+        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireNonEmptyContent(null));
     }
 
     @Test
-    @DisplayName("requireNonEmptyContent throws NonRetryableAiProviderException for blank content")
+    @DisplayName("requireNonEmptyContent throws NonRetryableProviderException for blank content")
     void testRequireNonEmptyContent_throwsWhenBlank() {
-        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireNonEmptyContent("   "));
+        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireNonEmptyContent("   "));
     }
 
     @Test
@@ -117,27 +117,26 @@ class AbstractAiProviderServiceTest {
     }
 
     @Test
-    @DisplayName("requireConfigured throws NonRetryableAiProviderException for null value")
+    @DisplayName("requireConfigured throws NonRetryableProviderException for null value")
     void testRequireConfigured_throwsWhenNull() {
-        assertThrows(NonRetryableAiProviderException.class,
-                () -> PROVIDER.callRequireConfigured(null, "model setting"));
+        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireConfigured(null, "model setting"));
     }
 
     @Test
-    @DisplayName("requireConfigured throws NonRetryableAiProviderException for blank value")
+    @DisplayName("requireConfigured throws NonRetryableProviderException for blank value")
     void testRequireConfigured_throwsWhenBlank() {
-        assertThrows(NonRetryableAiProviderException.class, () -> PROVIDER.callRequireConfigured("", "model setting"));
+        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireConfigured("", "model setting"));
     }
 
     @Test
-    @DisplayName("getModel returns non-null string via GeminiService")
+    @DisplayName("getModel returns non-null string via GoogleService")
     void testGetModel_returnsNonNull() {
-        assertNotNull(this.geminiService.getModel());
+        assertNotNull(this.googleService.getModel());
     }
 
     @Test
     @DisplayName("isConfigured is callable and returns a boolean")
     void testIsConfigured_returnsBoolean() {
-        assertDoesNotThrow(() -> this.geminiService.isConfigured(), "isConfigured must be callable without throwing");
+        assertDoesNotThrow(() -> this.googleService.isConfigured(), "isConfigured must be callable without throwing");
     }
 }

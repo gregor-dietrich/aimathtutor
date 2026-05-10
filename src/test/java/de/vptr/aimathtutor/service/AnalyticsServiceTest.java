@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +36,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
+@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
 class AnalyticsServiceTest {
 
     @Inject
@@ -637,6 +639,143 @@ class AnalyticsServiceTest {
                 "Interaction for the exercise should appear");
         assertFalse(results.stream().anyMatch(i -> otherSessionId.equals(i.sessionId)),
                 "Interaction from a different exercise should not appear");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getSessionsByDateRange with only startDate returns sessions after that date")
+    void testGetSessionsByDateRange_onlyStart() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
+        final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(start, null);
+        assertNotNull(sessions);
+        assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should appear when filtering with only start date");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getSessionsByDateRange with only endDate returns sessions before that date")
+    void testGetSessionsByDateRange_onlyEnd() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+
+        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
+        final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(null, end);
+        assertNotNull(sessions);
+        assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
+                "Session should appear when filtering with only end date");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getUserCount returns a positive count")
+    void testGetUserCount() {
+        final long count = this.analyticsService.getUserCount();
+        assertTrue(count >= 4, "Should have at least 4 seeded users");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getPublishedExerciseCount returns a non-negative count")
+    void testGetPublishedExerciseCount() {
+        final long count = this.analyticsService.getPublishedExerciseCount();
+        assertTrue(count >= 0, "Published exercise count should be non-negative");
+        final Long exerciseId = this.createExercise();
+        assertNotNull(exerciseId);
+        final long after = this.analyticsService.getPublishedExerciseCount();
+        assertTrue(after >= count, "Creating an exercise should not decrease published count");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getDailySessionCounts returns a map with days+1 entries")
+    void testGetDailySessionCounts() {
+        final Map<LocalDate, Long> counts = this.analyticsService.getDailySessionCounts(7);
+        assertNotNull(counts);
+        assertEquals(8, counts.size(), "Should return 8 entries for 7 days (0..7 inclusive)");
+        assertTrue(counts.containsKey(LocalDate.now(ZoneId.systemDefault())), "Should include today's date");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getCompletionRateHistogram returns all six buckets")
+    void testGetCompletionRateHistogram() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final var session = this.createAndPersistSession(studentId, exerciseId);
+        session.actionsCount = 10;
+        session.correctActions = 5;
+
+        final var hist = this.analyticsService.getCompletionRateHistogram();
+        assertNotNull(hist);
+        assertTrue(hist.containsKey("0%"));
+        assertTrue(hist.containsKey("1-25%"));
+        assertTrue(hist.containsKey("26-50%"));
+        assertTrue(hist.containsKey("51-75%"));
+        assertTrue(hist.containsKey("76-99%"));
+        assertTrue(hist.containsKey("100%"));
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getHintUsageBuckets returns all four buckets")
+    void testGetHintUsageBuckets() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        final var session = this.createAndPersistSession(studentId, exerciseId);
+        session.hintsUsed = 2;
+
+        final var buckets = this.analyticsService.getHintUsageBuckets();
+        assertNotNull(buckets);
+        assertTrue(buckets.containsKey("0 hints"));
+        assertTrue(buckets.containsKey("1-3 hints"));
+        assertTrue(buckets.containsKey("4-7 hints"));
+        assertTrue(buckets.containsKey("8+ hints"));
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getRecentSessions returns sessions within the limit")
+    void testGetRecentSessions() {
+        final Long studentId = this.studentId();
+        final Long exerciseId = this.createExercise();
+        this.graspableMathService.createSession(studentId, exerciseId);
+
+        final var recent = this.analyticsService.getRecentSessions(10);
+        assertNotNull(recent);
+        assertFalse(recent.isEmpty(), "Should find at least one recent session");
+        assertTrue(recent.size() <= 10, "Should not exceed the limit");
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getTopStudentsByCompletion returns top students sorted by completion")
+    void testGetTopStudentsByCompletion() {
+        final var top = this.analyticsService.getTopStudentsByCompletion(5);
+        assertNotNull(top);
+        assertTrue(top.size() <= 5, "Should not exceed the limit");
+        if (top.size() >= 2) {
+            assertTrue(top.get(0).completedSessions >= top.get(1).completedSessions,
+                    "Should be sorted descending by completed sessions");
+        }
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getTrendData returns a non-null DTO with valid values")
+    void testGetTrendData() {
+        final var trend = this.analyticsService.getTrendData();
+        assertNotNull(trend);
+        assertTrue(trend.totalSessions >= 0);
+        assertTrue(trend.completedSessions >= 0);
+        assertTrue(trend.activeStudents >= 0);
+        assertTrue(trend.todaySessions >= 0);
+        assertTrue(trend.totalUsers >= 4);
     }
 
     @Test

@@ -18,6 +18,7 @@ import jakarta.inject.Inject;
  * Integration tests for {@link CommentRepository}.
  */
 @QuarkusTest
+@SuppressWarnings("NullAway")
 public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
@@ -114,5 +115,101 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final List<CommentEntity> result = this.commentRepository.search("UniqueSearchableContent_XYZ");
         Assertions.assertFalse(result.isEmpty(), "Search should find the comment by content");
         Assertions.assertTrue(result.stream().anyMatch(c -> "UniqueSearchableContent_XYZ".equals(c.content)));
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByIdOptional_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByIdOptional(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByIdOptional_notFoundReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByIdOptional(-999L).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByPublicId_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByPublicId(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByPublicIdWithRelations_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByPublicIdWithRelations(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByIdOptionalWithRelations_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByIdOptionalWithRelations(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByExerciseIdWithRelations_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByExerciseIdWithRelations(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindByUserIdWithRelations_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findByUserIdWithRelations(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindBySessionIdWithRelations_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findBySessionIdWithRelations(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindReplies_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findReplies(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindRepliesWithRelations_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindRepliesPaged_nullReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testPersist_nullReturnsNull() {
+        Assertions.assertNull(this.commentRepository.persist(null));
+    }
+
+    @Test
+    @TestTransaction
+    public void testDeleteById_notFoundReturnsFalse() {
+        Assertions.assertFalse(this.commentRepository.deleteById(-999L));
+    }
+
+    @Test
+    @TestTransaction
+    public void testDeleteByPublicId_notFoundReturnsFalse() {
+        Assertions.assertFalse(this.commentRepository.deleteByPublicId("00000000000000000000000000"));
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindRecentCommentsWithRelations_zeroLimitReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findRecentCommentsWithRelations(0).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    public void testFindRecentCommentsWithRelations_negativeLimitReturnsEmpty() {
+        Assertions.assertTrue(this.commentRepository.findRecentCommentsWithRelations(-1).isEmpty());
     }
 }

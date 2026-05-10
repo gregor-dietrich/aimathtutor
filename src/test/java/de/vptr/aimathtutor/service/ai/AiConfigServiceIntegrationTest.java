@@ -51,7 +51,7 @@ class AiConfigServiceIntegrationTest {
         assertNotNull(admin, "Admin user should exist in test database");
 
         // Save original value so we can restore it after tests
-        this.originalTemperature = this.aiConfigService.getConfigValue("gemini.temperature", "0.7");
+        this.originalTemperature = this.aiConfigService.getConfigValue("google.temperature", "0.7");
 
         // Clean up any leftover test key from previous interrupted runs
         final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
@@ -61,9 +61,9 @@ class AiConfigServiceIntegrationTest {
     @AfterEach
     @Transactional
     void tearDown() {
-        // Restore gemini.temperature to its original value
+        // Restore google.temperature to its original value
         if (this.originalTemperature != null) {
-            this.aiConfigService.updateConfig("gemini.temperature", this.originalTemperature, ADMIN_USER_ID);
+            this.aiConfigService.updateConfig("google.temperature", this.originalTemperature, ADMIN_USER_ID);
         }
 
         // Remove test key if it still exists
@@ -75,7 +75,7 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Read seeded integer config value")
     @Transactional
     void testGetConfigValueAsIntFromSeed() {
-        final Integer value = this.aiConfigService.getConfigValueAsInt("gemini.max-tokens", 0);
+        final Integer value = this.aiConfigService.getConfigValueAsInt("google.max-tokens", 0);
         assertEquals(2000, value);
     }
 
@@ -83,7 +83,7 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Read seeded double config value")
     @Transactional
     void testGetConfigValueAsDoubleFromSeed() {
-        final Double value = this.aiConfigService.getConfigValueAsDouble("gemini.temperature", 0.0);
+        final Double value = this.aiConfigService.getConfigValueAsDouble("google.temperature", 0.0);
         assertEquals(0.7, value);
     }
 
@@ -116,10 +116,10 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Get all configs by category using seeded data")
     @Transactional
     void testGetAllConfigsByCategory() {
-        final Map<String, String> geminiConfigs = this.aiConfigService.getAllConfigsByCategory(ConfigCategory.GEMINI);
-        assertFalse(geminiConfigs.isEmpty());
-        assertTrue(geminiConfigs.containsKey("gemini.model"));
-        assertEquals("gemma-4-31b-it", geminiConfigs.get("gemini.model"));
+        final Map<String, String> googleConfigs = this.aiConfigService.getAllConfigsByCategory(ConfigCategory.GOOGLE);
+        assertFalse(googleConfigs.isEmpty());
+        assertTrue(googleConfigs.containsKey("google.model"));
+        assertEquals("gemma-4-31b-it", googleConfigs.get("google.model"));
     }
 
     @Test
@@ -127,14 +127,14 @@ class AiConfigServiceIntegrationTest {
     @Transactional
     void testResetToDefaults() {
         // Change a seeded value away from default
-        this.aiConfigService.updateConfig("gemini.temperature", "1.5", ADMIN_USER_ID);
-        assertEquals("1.5", this.aiConfigService.getConfigValue("gemini.temperature", ""));
+        this.aiConfigService.updateConfig("google.temperature", "1.5", ADMIN_USER_ID);
+        assertEquals("1.5", this.aiConfigService.getConfigValue("google.temperature", ""));
 
         // Reset all to defaults
         this.aiConfigService.resetToDefaults(ADMIN_USER_ID);
 
         // Verify restored
-        final String restored = this.aiConfigService.getConfigValue("gemini.temperature", "");
+        final String restored = this.aiConfigService.getConfigValue("google.temperature", "");
         assertEquals("0.7", restored);
     }
 
@@ -162,17 +162,17 @@ class AiConfigServiceIntegrationTest {
     @Transactional
     void testValidationRejectsOutOfRangeMaxTokens() {
         assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("gemini.max-tokens", "99999", ADMIN_USER_ID));
+                () -> this.aiConfigService.updateConfig("google.max-tokens", "99999", ADMIN_USER_ID));
     }
 
     @Test
     @DisplayName("Validation accepts in-range temperature")
     @Transactional
     void testValidationAcceptsInRangeTemperature() {
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("gemini.temperature", "1.2", ADMIN_USER_ID));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("google.temperature", "1.2", ADMIN_USER_ID));
 
         // Restore
-        this.aiConfigService.updateConfig("gemini.temperature", Objects.requireNonNull(this.originalTemperature),
+        this.aiConfigService.updateConfig("google.temperature", Objects.requireNonNull(this.originalTemperature),
                 ADMIN_USER_ID);
     }
 
@@ -186,6 +186,6 @@ class AiConfigServiceIntegrationTest {
         assertNotNull(student, "Student user should exist");
 
         assertThrows(IllegalStateException.class,
-                () -> this.aiConfigService.updateConfig("gemini.temperature", "0.5", studentId));
+                () -> this.aiConfigService.updateConfig("google.temperature", "0.5", studentId));
     }
 }

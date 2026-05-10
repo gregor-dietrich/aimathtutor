@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
 
-import de.vptr.aimathtutor.exception.NonRetryableAiProviderException;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 
 /**
  * Verifies that a service method has the expected {@code @Retry} annotation with values matching {@link AppConstants}.
@@ -38,6 +38,6 @@ public final class RetryAnnotationVerifier {
         assertEquals(AppConstants.RETRY_DELAY_MS, retry.delay());
         assertEquals(AppConstants.RETRY_JITTER_MS, retry.jitter());
         assertEquals(1, retry.abortOn().length);
-        assertSame(NonRetryableAiProviderException.class, retry.abortOn()[0], "Permanent failures must abort retry");
+        assertSame(NonRetryableProviderException.class, retry.abortOn()[0], "Permanent failures must abort retry");
     }
 }
