@@ -2,7 +2,7 @@
 applyTo: "**"
 ---
 
-# AIMathTutor — Agent Guide
+# AIMathTutor Project
 
 ## Important Note
 
