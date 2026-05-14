@@ -168,8 +168,7 @@ class ExerciseServiceTest {
     @DisplayName("Should find exercise by id and route through completion enrichment")
     @TestTransaction
     void shouldFindExerciseById() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
         final var found = this.exerciseService.findById(created.id);
 
@@ -230,8 +229,7 @@ class ExerciseServiceTest {
     @DisplayName("Should delete exercise by id")
     @TestTransaction
     void shouldDeleteExercise() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
         final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
@@ -243,8 +241,7 @@ class ExerciseServiceTest {
     @DisplayName("updateExercise replaces all fields")
     @TestTransaction
     void testUpdateExercise_replacesFields() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(false));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
 
         final ExerciseDto update = new ExerciseDto();
         update.title = "Updated Title";
@@ -264,8 +261,7 @@ class ExerciseServiceTest {
     @DisplayName("patchExercise updates only the provided field")
     @TestTransaction
     void testPatchExercise_updatesProvidedField() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(false));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
 
         final ExerciseDto patch = new ExerciseDto();
         patch.published = true;
@@ -351,8 +347,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with today's range includes recently created exercise")
     @TestTransaction
     void testFindByDateRange_today() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
         final String today = LocalDate.now(ZoneId.systemDefault()).toString();
         final var results = this.exerciseService.findByDateRange(today, today);
         assertNotNull(results);

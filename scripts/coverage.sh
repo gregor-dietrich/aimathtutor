@@ -13,7 +13,7 @@ while getopts "o" opt; do
 done
 
 CSV="target/site/jacoco/jacoco.csv"
-REPORT=".coverage.md"
+REPORT="Coverage.md"
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
