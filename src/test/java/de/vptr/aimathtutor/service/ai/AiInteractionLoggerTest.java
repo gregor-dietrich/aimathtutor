@@ -14,12 +14,15 @@ import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ExerciseService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mockito;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
@@ -39,6 +42,15 @@ class AiInteractionLoggerTest {
 
     @InjectMock
     PermissionService permissionService;
+
+    @InjectMock
+    AuthService authService;
+
+    @BeforeEach
+    void setUp() {
+        final var teacher = this.userRepository.findByUsername("teacher");
+        Mockito.when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
+    }
 
     private Long teacherId() {
         final var teacher = this.userRepository.findByUsername("teacher");

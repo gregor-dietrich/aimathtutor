@@ -70,11 +70,12 @@ public class AuthService {
 
         final String usernameKey = username.toLowerCase(Locale.ROOT).trim();
         final String clientIp = this.extractClientIp();
+        final String usernameIpKey = usernameKey + ":" + (clientIp != null ? clientIp : "unknown");
 
-        // Check login attempt throttling by username
-        if (this.loginAttemptService.isLockedOut(usernameKey)) {
-            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameKey);
-            LOG.warnf("Authentication throttled by username (%ss remaining)", remaining);
+        // Check login attempt throttling by username + IP to prevent global lockout of a user by an attacker
+        if (this.loginAttemptService.isLockedOut(usernameIpKey)) {
+            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(usernameIpKey);
+            LOG.warnf("Authentication throttled by username:ip (%ss remaining)", remaining);
             return AuthResultDto.backendUnavailable("Too many failed attempts. Try again later.");
         }
 
@@ -91,7 +92,7 @@ public class AuthService {
 
             if (user == null) {
                 LOG.trace("Authentication failed - user not found");
-                this.loginAttemptService.recordFailedAttempt(usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
                 }
@@ -101,7 +102,7 @@ public class AuthService {
             // Check if user is banned
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned");
-                this.loginAttemptService.recordFailedAttempt(usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
                 }
@@ -111,7 +112,7 @@ public class AuthService {
             // Check if user is activated
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated");
-                this.loginAttemptService.recordFailedAttempt(usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
                 }
@@ -121,7 +122,7 @@ public class AuthService {
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password");
-                this.loginAttemptService.recordFailedAttempt(usernameKey);
+                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
                 }
@@ -137,7 +138,7 @@ public class AuthService {
             }
 
             try {
-                this.loginAttemptService.recordSuccessfulLogin(usernameKey);
+                this.loginAttemptService.recordSuccessfulLogin(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordSuccessfulLogin(clientIp);
                 }

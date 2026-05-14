@@ -59,9 +59,6 @@ public class ExerciseDto {
     public String content;
 
     @Nullable
-    public String userPublicId;
-
-    @Nullable
     public String lessonPublicId;
 
     @Nullable
@@ -97,8 +94,6 @@ public class ExerciseDto {
     public String graspableHints;
 
     @Nullable
-    public UserField user;
-    @Nullable
     public LessonField lesson;
 
     /**
@@ -114,8 +109,6 @@ public class ExerciseDto {
      *            the exercise title
      * @param content
      *            the exercise content
-     * @param userPublicId
-     *            the author's public ID
      * @param lessonPublicId
      *            the parent lesson's public ID
      * @param published
@@ -123,48 +116,14 @@ public class ExerciseDto {
      * @param commentable
      *            whether comments are enabled
      */
-    public ExerciseDto(final String title, final String content, final String userPublicId, final String lessonPublicId,
-            final Boolean published, final Boolean commentable) {
+    public ExerciseDto(@Nullable final String title, @Nullable final String content,
+            @Nullable final String lessonPublicId, @Nullable final Boolean published,
+            @Nullable final Boolean commentable) {
         this.title = title;
         this.content = content;
-        this.userPublicId = userPublicId;
         this.lessonPublicId = lessonPublicId;
         this.published = published;
         this.commentable = commentable;
-    }
-
-    /**
-     * Nested field representing a user reference.
-     */
-    public static class UserField {
-        @Nullable
-        public String publicId;
-        @Nullable
-        public String username;
-
-        /**
-         * Default constructor for JSON mapping.
-         */
-        public UserField() {
-        }
-
-        /**
-         * Constructs a UserField with the given public ID.
-         *
-         * @param publicId
-         *            the user's public identifier
-         */
-        public UserField(final String publicId) {
-            this.publicId = publicId;
-        }
-
-        public void setPublicId(final String publicId) {
-            this.publicId = publicId;
-        }
-
-        public void setUsername(final String username) {
-            this.username = username;
-        }
     }
 
     /**
@@ -207,16 +166,6 @@ public class ExerciseDto {
      * overwrite the flat field. A warning is logged when the two values differ.
      */
     public void syncNestedFields() {
-        if (this.user != null && this.user.publicId != null) {
-            if (this.userPublicId != null && !this.user.publicId.equals(this.userPublicId)) {
-                LOG.warnf("Conflict in syncNestedFields: user.publicId (%s) differs from userPublicId (%s). "
-                        + "Using nested value.", this.user.publicId, this.userPublicId);
-            }
-            this.userPublicId = this.user.publicId;
-        } else if (this.userPublicId != null && this.user == null) {
-            this.user = new UserField(this.userPublicId);
-        }
-
         if (this.lesson != null && this.lesson.publicId != null) {
             if (this.lessonPublicId != null && !this.lesson.publicId.equals(this.lessonPublicId)) {
                 LOG.warnf("Conflict in syncNestedFields: lesson.publicId (%s) differs from lessonPublicId (%s). "

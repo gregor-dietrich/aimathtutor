@@ -102,7 +102,6 @@ public class ExerciseViewDto {
         dto.publicId = this.publicId;
         dto.title = this.title;
         dto.content = this.content;
-        dto.userPublicId = this.userPublicId;
         dto.lessonPublicId = this.lessonPublicId;
         dto.published = this.published;
         dto.commentable = this.commentable;

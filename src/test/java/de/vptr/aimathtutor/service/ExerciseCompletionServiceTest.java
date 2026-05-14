@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Objects;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
@@ -43,6 +45,13 @@ class ExerciseCompletionServiceTest {
 
     @InjectMock
     PermissionService permissionService;
+
+    @BeforeEach
+    @Transactional
+    void setUp() {
+        final var teacher = this.userRepository.findByUsername("teacher");
+        when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
+    }
 
     private ExerciseViewDto createExercise() {
         return TestExerciseFactory.createExercise(this.userRepository, this.exerciseService);

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,12 +29,15 @@ import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
@@ -54,6 +58,9 @@ class AnalyticsServiceTest {
     @InjectMock
     PermissionService permissionService;
 
+    @InjectMock
+    AuthService authService;
+
     @Inject
     StudentSessionRepository studentSessionRepository;
 
@@ -63,6 +70,16 @@ class AnalyticsServiceTest {
     @Inject
     ExerciseRepository exerciseRepository;
 
+    @BeforeEach
+    @Transactional
+    void setUpAuthMock() {
+        final var teacher = this.userRepository.findByUsername("teacher");
+        if (teacher != null) {
+            when(this.authService.getUserId()).thenReturn(teacher.id);
+            when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
+        }
+    }
+
     private Long studentId() {
         final var user = this.userRepository.findByUsername("student1");
         assertNotNull(user, "Seeded student1 must exist");
@@ -70,15 +87,8 @@ class AnalyticsServiceTest {
     }
 
     private Long createExercise() {
-        final var teacher = this.userRepository.findByUsername("teacher");
-        assertNotNull(teacher, "Seeded teacher must exist");
-        final var dto = new ExerciseDto();
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
-        dto.title = "analytics_ex_" + suffix;
-        dto.content = "content " + suffix;
-        dto.userPublicId = teacher.publicId;
-        dto.published = true;
-        dto.commentable = false;
+        final var dto = new ExerciseDto("analytics_ex_" + suffix, "content " + suffix, null, true, false);
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
         return created.id;
     }

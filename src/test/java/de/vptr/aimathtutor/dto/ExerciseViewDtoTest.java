@@ -134,7 +134,6 @@ class ExerciseViewDtoTest {
         assertEquals("ex-1", result.publicId);
         assertEquals("Title", result.title);
         assertEquals("Content", result.content);
-        assertEquals("user-1", result.userPublicId);
         assertEquals("lesson-1", result.lessonPublicId);
         assertEquals(true, result.published);
         assertEquals(false, result.commentable);

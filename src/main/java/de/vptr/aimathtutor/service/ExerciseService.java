@@ -17,6 +17,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.LessonRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,6 +27,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 
 /**
  * Service for managing exercises and their Graspable Math integration. Provides CRUD operations, search, and filtering
@@ -34,6 +37,8 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class ExerciseService {
+
+    private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
 
     @Inject
     ExerciseCompletionService exerciseCompletionService;
@@ -49,6 +54,9 @@ public class ExerciseService {
 
     @Inject
     PermissionService permissionService;
+
+    @Inject
+    AuthService authService;
 
     /**
      * Retrieves all exercises ordered by creation/modification date.
@@ -183,9 +191,6 @@ public class ExerciseService {
         if (exerciseDto.content == null || exerciseDto.content.isBlank()) {
             throw new ValidationException("Content is required for creating an exercise");
         }
-        if (exerciseDto.userPublicId == null) {
-            throw new ValidationException("User ID is required for creating an exercise");
-        }
 
         // Validate Graspable Math: if enabled, target expression is required
         if (exerciseDto.graspableEnabled != null && exerciseDto.graspableEnabled
@@ -196,7 +201,7 @@ public class ExerciseService {
 
         final ExerciseEntity exercise = new ExerciseEntity();
         exercise.title = exerciseDto.title;
-        exercise.content = exerciseDto.content;
+        exercise.content = STRICT_HTML_POLICY.sanitize(exerciseDto.content);
         exercise.published = exerciseDto.published != null ? exerciseDto.published : false;
         exercise.commentable = exerciseDto.commentable != null ? exerciseDto.commentable : false;
 
@@ -207,10 +212,10 @@ public class ExerciseService {
         exercise.graspableDifficulty = exerciseDto.graspableDifficulty;
         exercise.graspableHints = exerciseDto.graspableHints;
 
-        // Set user - required for creation
-        final UserEntity user = this.userRepository.findByPublicId(exerciseDto.userPublicId).orElse(null);
+        // Set user - resolve from session to prevent impersonation
+        final UserEntity user = this.authService.getCurrentUserEntity();
         if (user == null) {
-            throw new ValidationException("User with publicId " + exerciseDto.userPublicId + " not found");
+            throw new ValidationException("User not authenticated or not found");
         }
         exercise.user = user;
 
@@ -268,7 +273,7 @@ public class ExerciseService {
 
         // Complete replacement (PUT semantics)
         existingExercise.title = exerciseDto.title;
-        existingExercise.content = exerciseDto.content;
+        existingExercise.content = STRICT_HTML_POLICY.sanitize(exerciseDto.content);
         existingExercise.published = exerciseDto.published != null ? exerciseDto.published : false;
         existingExercise.commentable = exerciseDto.commentable != null ? exerciseDto.commentable : false;
 
@@ -279,11 +284,8 @@ public class ExerciseService {
         existingExercise.graspableDifficulty = exerciseDto.graspableDifficulty;
         existingExercise.graspableHints = exerciseDto.graspableHints;
 
-        // Set user if provided, otherwise keep existing user
-        if (exerciseDto.userPublicId != null) {
-            existingExercise.user = this.resolveUser(exerciseDto.userPublicId);
-        }
-        // Note: Do not set to null if userPublicId is not provided - preserve existing user
+        // userPublicId changes are not allowed; preserve existing user.
+        // If Admins need to change ownership, it should be done via a dedicated admin method.
 
         // Set lesson if provided
         this.applyLessonToExercise(existingExercise, exerciseDto.lessonPublicId, true);
@@ -321,7 +323,7 @@ public class ExerciseService {
             existingExercise.title = exerciseDto.title;
         }
         if (exerciseDto.content != null && !exerciseDto.content.isBlank()) {
-            existingExercise.content = exerciseDto.content;
+            existingExercise.content = STRICT_HTML_POLICY.sanitize(exerciseDto.content);
         }
         if (exerciseDto.published != null) {
             existingExercise.published = exerciseDto.published;
@@ -345,11 +347,6 @@ public class ExerciseService {
         }
         if (exerciseDto.graspableHints != null) {
             existingExercise.graspableHints = exerciseDto.graspableHints;
-        }
-
-        // Set user if provided
-        if (exerciseDto.userPublicId != null) {
-            existingExercise.user = this.resolveUser(exerciseDto.userPublicId);
         }
 
         // Set lesson if provided (PATCH: null keeps existing)
@@ -419,17 +416,6 @@ public class ExerciseService {
         } catch (final DateTimeParseException e) {
             return List.of();
         }
-    }
-
-    /**
-     * Resolves a user by public ID, throwing if not found.
-     */
-    private UserEntity resolveUser(final String userPublicId) {
-        final UserEntity user = this.userRepository.findByPublicId(userPublicId).orElse(null);
-        if (user == null) {
-            throw new ValidationException("User with publicId " + userPublicId + " not found");
-        }
-        return user;
     }
 
     /**

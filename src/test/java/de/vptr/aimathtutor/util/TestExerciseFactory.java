@@ -1,12 +1,9 @@
 package de.vptr.aimathtutor.util;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.util.UUID;
 
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
-import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ExerciseService;
 
@@ -29,15 +26,8 @@ public final class TestExerciseFactory {
      */
     public static ExerciseViewDto createExercise(final UserRepository userRepository,
             final ExerciseService exerciseService) {
-        final UserEntity teacher = userRepository.findByUsername("teacher");
-        assertNotNull(teacher, "Seeded teacher must exist");
-        final var dto = new ExerciseDto();
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
-        dto.title = "ex_" + suffix;
-        dto.content = "content " + suffix;
-        dto.userPublicId = teacher.publicId;
-        dto.published = true;
-        dto.commentable = false;
+        final var dto = new ExerciseDto("ex_" + suffix, "content " + suffix, null, true, false);
         return exerciseService.createExercise(dto);
     }
 }

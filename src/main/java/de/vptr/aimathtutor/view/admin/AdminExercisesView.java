@@ -46,7 +46,6 @@ import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
-import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
@@ -69,8 +68,6 @@ public class AdminExercisesView extends AbstractAdminView {
 
     @Inject
     private transient LessonService lessonService;
-    @Inject
-    private transient UserService userService;
 
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
@@ -284,25 +281,7 @@ public class AdminExercisesView extends AbstractAdminView {
 
         this.binder = new Binder<>(ExerciseDto.class);
 
-        // For new exercises, automatically set the current user as the author
-        if (exercise == null) {
-            try {
-                final var currentUser = this.userService.getCurrentUser();
-                if (currentUser == null || currentUser.publicId == null) {
-                    NotificationUtil.showError("Error retrieving user information. Please try again.");
-                    return;
-                }
-                this.currentExercise.userPublicId = currentUser.publicId;
-                this.currentExercise.user = new ExerciseDto.UserField();
-                this.currentExercise.user.setPublicId(currentUser.publicId);
-                this.currentExercise.user.setUsername(currentUser.username);
-            } catch (final Exception e) {
-                LOG.error("Error retrieving current user for new exercise", e);
-                NotificationUtil.showError("Error retrieving user information. Please try again.");
-                return;
-            }
-        }
-
+        // For new exercises, the current user is automatically set as author in the service layer.
         final var title = new H3(exercise != null ? "Edit Exercise" : "Create Exercise");
 
         final var form = new FormLayout();

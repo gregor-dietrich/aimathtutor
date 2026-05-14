@@ -16,6 +16,8 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 
 /**
  * Service for managing hierarchical lesson structures. Provides CRUD operations and parent-child relationship
@@ -23,6 +25,8 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class LessonService {
+
+    private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
 
     @Inject
     LessonRepository lessonRepository;
@@ -98,6 +102,8 @@ public class LessonService {
             throw new ValidationException("Name is required for creating a lesson");
         }
 
+        lesson.name = STRICT_HTML_POLICY.sanitize(lesson.name);
+
         // If parent is specified, ensure it exists
         if (lesson.parent != null && lesson.parent.id != null) {
             final var existingParent = this.lessonRepository.findById(lesson.parent.id);
@@ -135,7 +141,7 @@ public class LessonService {
         }
 
         // Complete replacement (PUT semantics) - update name and parent
-        existingLesson.name = lesson.name;
+        existingLesson.name = STRICT_HTML_POLICY.sanitize(lesson.name);
 
         // Handle parent change - validate if parent is provided
         if (lesson.parent != null && lesson.parent.publicId != null) {
@@ -176,7 +182,7 @@ public class LessonService {
 
         // Partial update (PATCH semantics) - only update provided fields
         if (lesson.name != null) {
-            existingLesson.name = lesson.name;
+            existingLesson.name = STRICT_HTML_POLICY.sanitize(lesson.name);
         }
 
         // Handle parent change if provided

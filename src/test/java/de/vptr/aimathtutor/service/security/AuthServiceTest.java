@@ -170,16 +170,17 @@ class AuthServiceTest {
     @DisplayName("Should throttle after too many failed attempts")
     void shouldThrottleAfterTooManyFailedAttempts() {
         final String uniqueKey = "throttle_test_" + UUID.randomUUID().toString().substring(0, 8);
+        final String compositeKey = uniqueKey + ":unknown";
         for (int i = 0; i < 5; i++) {
-            this.loginAttemptService.recordFailedAttempt(uniqueKey);
+            this.loginAttemptService.recordFailedAttempt(compositeKey);
         }
-        assertTrue(this.loginAttemptService.isLockedOut(uniqueKey));
+        assertTrue(this.loginAttemptService.isLockedOut(compositeKey));
 
         final AuthResultDto result = this.authService.authenticate(uniqueKey, "anypassword");
         assertFalse(result.isSuccess());
         assertTrue(result.getMessage().contains("Too many failed attempts"),
                 "Expected throttle message, got: " + result.getMessage());
 
-        this.loginAttemptService.recordSuccessfulLogin(uniqueKey);
+        this.loginAttemptService.recordSuccessfulLogin(compositeKey);
     }
 }

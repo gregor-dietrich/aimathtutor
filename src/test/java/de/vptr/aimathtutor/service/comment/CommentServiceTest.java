@@ -25,6 +25,7 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ExerciseService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
@@ -34,6 +35,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
@@ -57,9 +59,13 @@ class CommentServiceTest {
     @InjectMock
     private CommentRateLimitService commentRateLimitService;
 
+    @InjectMock
+    private AuthService authService;
+
     @BeforeEach
     void setUpRateLimit() {
         doNothing().when(this.commentRateLimitService).checkRateLimit(anyLong());
+        when(this.authService.getCurrentUserEntity()).thenReturn(this.userRepository.findByUsername("teacher"));
     }
 
     private ExerciseViewDto createCommentableExercise() {
@@ -69,7 +75,6 @@ class CommentServiceTest {
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         dto.title = "ex_" + suffix;
         dto.content = "exercise content " + suffix;
-        dto.userPublicId = teacher.publicId;
         dto.published = true;
         dto.commentable = true;
         return this.exerciseService.createExercise(dto);
@@ -157,7 +162,6 @@ class CommentServiceTest {
         final var exDto = new ExerciseDto();
         exDto.title = "noncommentable_" + UUID.randomUUID().toString().substring(0, 8);
         exDto.content = "x";
-        exDto.userPublicId = teacher.publicId;
         exDto.published = true;
         exDto.commentable = false;
         final var ex = this.exerciseService.createExercise(exDto);
@@ -489,7 +493,6 @@ class CommentServiceTest {
         final var exDto = new ExerciseDto();
         exDto.title = "unpublished_" + UUID.randomUUID().toString().substring(0, 8);
         exDto.content = "x";
-        exDto.userPublicId = teacher.publicId;
         exDto.published = false;
         exDto.commentable = true;
         final var ex = this.exerciseService.createExercise(exDto);

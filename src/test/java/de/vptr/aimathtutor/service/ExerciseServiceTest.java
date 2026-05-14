@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +20,7 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
@@ -42,6 +43,9 @@ class ExerciseServiceTest {
     @InjectMock
     private PermissionService permissionService;
 
+    @InjectMock
+    private AuthService authService;
+
     @Inject
     private UserRepository userRepository;
 
@@ -49,10 +53,14 @@ class ExerciseServiceTest {
     private EntityManager em;
 
     @BeforeEach
-    void setUpPermissionService() {
+    void setUpMocks() {
         Mockito.doNothing().when(this.permissionService).requireExerciseAdd();
         Mockito.doNothing().when(this.permissionService).requireExerciseEdit();
         Mockito.doNothing().when(this.permissionService).requireExerciseDelete();
+
+        final var teacher = this.userRepository.findByUsername("teacher");
+        Mockito.when(this.authService.getUserId()).thenReturn(teacher.id);
+        Mockito.when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
     }
 
     private String teacherPublicId() {
@@ -61,15 +69,9 @@ class ExerciseServiceTest {
         return teacher.publicId;
     }
 
-    private ExerciseDto buildDto(final String userPublicId, final boolean published) {
-        final var dto = new ExerciseDto();
+    private ExerciseDto buildDto(final boolean published) {
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
-        dto.title = "Exercise " + suffix;
-        dto.content = "Content for " + suffix;
-        dto.userPublicId = userPublicId;
-        dto.published = published;
-        dto.commentable = false;
-        return dto;
+        return new ExerciseDto("Exercise " + suffix, "Content for " + suffix, null, published, false);
     }
 
     @Test
@@ -79,7 +81,6 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = null;
         exerciseDto.content = "Content";
-        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -93,7 +94,6 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "";
         exerciseDto.content = "Content";
-        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -107,7 +107,6 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";
         exerciseDto.content = null;
-        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -121,7 +120,6 @@ class ExerciseServiceTest {
         final ExerciseDto exerciseDto = new ExerciseDto();
         exerciseDto.title = "Title";
         exerciseDto.content = "";
-        exerciseDto.userPublicId = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -129,13 +127,11 @@ class ExerciseServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw ValidationException when creating exercise with null userId")
+    @DisplayName("Should throw ValidationException when creating exercise when not logged in")
     @Transactional
-    void shouldThrowValidationExceptionWhenCreatingExerciseWithNullUserId() {
-        final ExerciseDto exerciseDto = new ExerciseDto();
-        exerciseDto.title = "Title";
-        exerciseDto.content = "Content";
-        exerciseDto.userPublicId = null;
+    void shouldThrowValidationExceptionWhenCreatingExerciseWhenNotLoggedIn() {
+        Mockito.when(this.authService.getCurrentUserEntity()).thenReturn(null);
+        final ExerciseDto exerciseDto = new ExerciseDto("Title", "Content", null, true, true);
 
         assertThrows(ValidationException.class, () -> {
             this.exerciseService.createExercise(exerciseDto);
@@ -146,7 +142,7 @@ class ExerciseServiceTest {
     @DisplayName("Should reject Graspable Math exercise without target expression")
     @Transactional
     void shouldRejectGraspableExerciseWithoutTarget() {
-        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), false);
+        final ExerciseDto dto = this.buildDto(false);
         dto.graspableEnabled = Boolean.TRUE;
         dto.graspableTargetExpression = null;
 
@@ -157,7 +153,7 @@ class ExerciseServiceTest {
     @DisplayName("Should create exercise with valid data")
     @TestTransaction
     void shouldCreateExerciseWithValidData() {
-        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto dto = this.buildDto(true);
 
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
 
@@ -173,7 +169,7 @@ class ExerciseServiceTest {
     @TestTransaction
     void shouldFindExerciseById() {
         final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+                this.exerciseService.createExercise(this.buildDto(true));
 
         final var found = this.exerciseService.findById(created.id);
 
@@ -186,9 +182,8 @@ class ExerciseServiceTest {
     @DisplayName("Should find only published exercises")
     @TestTransaction
     void shouldFindPublishedExercisesOnly() {
-        final var teacherId = this.teacherPublicId();
-        final ExerciseViewDto pub = this.exerciseService.createExercise(this.buildDto(teacherId, true));
-        final ExerciseViewDto draft = this.exerciseService.createExercise(this.buildDto(teacherId, false));
+        final ExerciseViewDto pub = this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto draft = this.exerciseService.createExercise(this.buildDto(false));
 
         final var published = this.exerciseService.findPublishedExercises();
 
@@ -204,7 +199,7 @@ class ExerciseServiceTest {
         lessonEntity.name = "lesson_" + UUID.randomUUID().toString().substring(0, 8);
         final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
 
-        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto dto = this.buildDto(true);
         dto.lessonPublicId = lesson.publicId;
 
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
@@ -224,7 +219,7 @@ class ExerciseServiceTest {
     void shouldFindExercisesByUserId() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher, "Seeded teacher user should exist");
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(teacher.publicId, true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
         final var byUser = this.exerciseService.findByUserId(teacher.id);
 
@@ -236,7 +231,7 @@ class ExerciseServiceTest {
     @TestTransaction
     void shouldDeleteExercise() {
         final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+                this.exerciseService.createExercise(this.buildDto(true));
 
         final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
@@ -249,12 +244,11 @@ class ExerciseServiceTest {
     @TestTransaction
     void testUpdateExercise_replacesFields() {
         final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), false));
+                this.exerciseService.createExercise(this.buildDto(false));
 
         final ExerciseDto update = new ExerciseDto();
         update.title = "Updated Title";
         update.content = "Updated content";
-        update.userPublicId = this.teacherPublicId();
         update.published = true;
         update.commentable = true;
 
@@ -271,7 +265,7 @@ class ExerciseServiceTest {
     @TestTransaction
     void testPatchExercise_updatesProvidedField() {
         final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), false));
+                this.exerciseService.createExercise(this.buildDto(false));
 
         final ExerciseDto patch = new ExerciseDto();
         patch.published = true;
@@ -286,7 +280,7 @@ class ExerciseServiceTest {
     @DisplayName("searchExercises with blank query returns all exercises")
     @TestTransaction
     void testSearchExercises_blank() {
-        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        this.exerciseService.createExercise(this.buildDto(true));
         final var results = this.exerciseService.searchExercises("");
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Blank query should return all exercises");
@@ -296,7 +290,7 @@ class ExerciseServiceTest {
     @DisplayName("searchExercises with matching term returns results")
     @TestTransaction
     void testSearchExercises_match() {
-        final ExerciseDto dto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto dto = this.buildDto(true);
         final String uniqueTitle = "UniqueSearchableTitle_" + UUID.randomUUID().toString().substring(0, 8);
         dto.title = uniqueTitle;
         this.exerciseService.createExercise(dto);
@@ -320,12 +314,12 @@ class ExerciseServiceTest {
     @DisplayName("findGraspableMathExercises returns only graspable exercises")
     @TestTransaction
     void testFindGraspableMathExercises() {
-        final ExerciseDto graspableDto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto graspableDto = this.buildDto(true);
         graspableDto.graspableEnabled = Boolean.TRUE;
         graspableDto.graspableTargetExpression = "x=1";
         final ExerciseViewDto graspableExercise = this.exerciseService.createExercise(graspableDto);
 
-        this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
+        this.exerciseService.createExercise(this.buildDto(true));
 
         final var results = this.exerciseService.findGraspableMathExercises();
         assertNotNull(results);
@@ -358,9 +352,8 @@ class ExerciseServiceTest {
     @TestTransaction
     void testFindByDateRange_today() {
         final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(this.teacherPublicId(), true));
-        // DB stores CURRENT_TIMESTAMP in UTC; use UTC date to match
-        final String today = LocalDate.now(ZoneOffset.UTC).toString();
+                this.exerciseService.createExercise(this.buildDto(true));
+        final String today = LocalDate.now(ZoneId.systemDefault()).toString();
         final var results = this.exerciseService.findByDateRange(today, today);
         assertNotNull(results);
         assertTrue(results.stream().anyMatch(e -> created.publicId.equals(e.publicId)),
@@ -386,13 +379,13 @@ class ExerciseServiceTest {
                 this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
                         .setParameter("p", lesson.publicId).getSingleResult();
 
-        final ExerciseDto gmDto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto gmDto = this.buildDto(true);
         gmDto.lessonPublicId = lesson.publicId;
         gmDto.graspableEnabled = Boolean.TRUE;
         gmDto.graspableTargetExpression = "x=1";
         final ExerciseViewDto gmExercise = this.exerciseService.createExercise(gmDto);
 
-        final ExerciseDto nonGmDto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto nonGmDto = this.buildDto(true);
         nonGmDto.lessonPublicId = lesson.publicId;
         this.exerciseService.createExercise(nonGmDto);
 
@@ -400,7 +393,7 @@ class ExerciseServiceTest {
         final var otherLessonEntity = new LessonEntity();
         otherLessonEntity.name = "other_lesson_" + UUID.randomUUID().toString().substring(0, 8);
         final LessonViewDto otherLesson = this.lessonService.createLesson(otherLessonEntity);
-        final ExerciseDto otherGmDto = this.buildDto(this.teacherPublicId(), true);
+        final ExerciseDto otherGmDto = this.buildDto(true);
         otherGmDto.lessonPublicId = otherLesson.publicId;
         otherGmDto.graspableEnabled = Boolean.TRUE;
         otherGmDto.graspableTargetExpression = "y=2";

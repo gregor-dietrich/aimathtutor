@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
@@ -39,9 +40,14 @@ class GraspableMathServiceTest {
     @InjectMock
     private PermissionService permissionService;
 
+    @InjectMock
+    private AuthService authService;
+
     @BeforeEach
-    void setUpPermissionService() {
+    void setUp() {
         Mockito.doNothing().when(this.permissionService).requireExerciseAdd();
+        final var teacher = this.userRepository.findByUsername("teacher");
+        Mockito.when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
     }
 
     private Long studentId() {
@@ -72,16 +78,18 @@ class GraspableMathServiceTest {
     @DisplayName("Should throw IllegalArgumentException when user is missing")
     @TestTransaction
     void shouldThrowWhenUserMissing() {
+        final Long exerciseId = this.createExercise();
         assertThrows(IllegalArgumentException.class,
-                () -> this.graspableMathService.createSession(999_999L, this.createExercise()));
+                () -> this.graspableMathService.createSession(999_999L, exerciseId));
     }
 
     @Test
     @DisplayName("Should throw IllegalArgumentException when exercise is missing")
     @TestTransaction
     void shouldThrowWhenExerciseMissing() {
+        final Long studentId = this.studentId();
         assertThrows(IllegalArgumentException.class,
-                () -> this.graspableMathService.createSession(this.studentId(), 999_999L));
+                () -> this.graspableMathService.createSession(studentId, 999_999L));
     }
 
     @Test
