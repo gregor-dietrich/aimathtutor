@@ -503,11 +503,18 @@ public class AiConfigService {
         }
 
         final String host = uri.getHost().toLowerCase(Locale.ROOT);
+        final boolean isAllowedOllama = configKey.contains("ollama") && this.allowedOllamaHosts.contains(host);
 
         // Enforce HTTPS for external providers (Google, OpenAI)
         if ((configKey.contains("google") || configKey.contains("openai"))
                 && !"https".equalsIgnoreCase(uri.getScheme())) {
             throw new IllegalArgumentException("External provider URLs must use HTTPS for key '" + configKey + "'");
+        }
+
+        // If it's an allow-listed Ollama host, skip further safety checks (e.g. private IP/loopback).
+        // This is safe because the allow-list is explicitly configured by the administrator.
+        if (isAllowedOllama) {
+            return;
         }
 
         // Block localhost and loopback
@@ -534,14 +541,9 @@ public class AiConfigService {
                 }
             }
         } catch (final UnknownHostException e) {
-            // Only allow unresolved hostnames for Ollama if they are in the allow-list.
-            // This prevents SSRF via DNS rebinding by blocking arbitrary hostnames.
             LOG.debugf(e, "Hostname resolution failed for %s", host);
-            if (!configKey.contains("ollama") || !this.allowedOllamaHosts.contains(host)) {
-                throw new IllegalArgumentException(
-                        "URL host must resolve to a public address or be in the allow-list for key '" + configKey
-                                + "'");
-            }
+            throw new IllegalArgumentException(
+                    "URL host must resolve to a public address or be in the allow-list for key '" + configKey + "'");
         }
 
         // Block common private IPv4 patterns without DNS resolution

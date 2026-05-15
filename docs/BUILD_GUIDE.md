@@ -24,18 +24,18 @@ For Docker, you have 2 options:
 For development, set the following properties (only needed if using cloud AI providers):
 
 ```sh
-export app.google.api.key=your_google_api_key_here
-export app.openai.api.key=your_openai_api_key_here
-export app.openai.organization-id=your_openai_org_id_here  # Optional
+export APP_GOOGLE_API_KEY=your_google_api_key_here
+export APP_OPENAI_API_KEY=your_openai_api_key_here
+export APP_OPENAI_ORGANIZATION_ID=your_openai_org_id_here  # Optional
 ```
 
 Alternatively, create a `.env` file in the project root and source it:
 
 ```sh
 # .env
-app.google.api.key=your_google_api_key_here
-app.openai.api.key=your_openai_api_key_here
-app.openai.organization-id=your_openai_org_id_here
+APP_GOOGLE_API_KEY=your_google_api_key_here
+APP_OPENAI_API_KEY=your_openai_api_key_here
+APP_OPENAI_ORGANIZATION_ID=your_openai_org_id_here
 
 # source it
 source .env
