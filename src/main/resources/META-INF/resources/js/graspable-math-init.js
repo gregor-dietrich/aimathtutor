@@ -313,4 +313,22 @@ window.graspableMathUtils = {
     },
 };
 
+// Re-apply dark/light theme when the Vaadin theme attribute changes
+(function () {
+    var htmlEl = document.documentElement;
+    var lastTheme = null;
+
+    function applyTheme() {
+        if (!window.gmath || !window.gmath.setDarkTheme) return;
+        var isDark = htmlEl.hasAttribute("theme") && htmlEl.getAttribute("theme").includes("dark");
+        if (isDark === lastTheme) return;
+        lastTheme = isDark;
+        window.gmath.setDarkTheme(isDark);
+        console.log("[GM] Theme changed, setDarkTheme(" + isDark + ")");
+    }
+
+    var observer = new MutationObserver(applyTheme);
+    observer.observe(htmlEl, { attributes: true, attributeFilter: ["theme"] });
+}());
+
 console.log("[GM] Script ready");
