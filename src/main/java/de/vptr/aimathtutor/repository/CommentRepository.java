@@ -369,20 +369,38 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Counts comments created by a specific user within a database interval. Uses {@code CURRENT_TIMESTAMP} from the
-     * database to avoid JVM/DB timezone mismatches.
+     * Counts comments created by a specific user within the last {@code seconds} seconds. Uses
+     * {@code CURRENT_TIMESTAMP} from the database to avoid JVM/DB timezone mismatches.
      *
      * @param userId
      *            the user ID to filter by
-     * @param interval
-     *            a PostgreSQL interval literal (e.g. {@code "5 seconds"}, {@code "1 day"})
-     * @return the count of comments created by the user within the interval
+     * @param seconds
+     *            the number of seconds to look back
+     * @return the count of comments created by the user within the window
      */
-    public long countByUserSinceInterval(final Long userId, final String interval) {
+    public long countByUserInLastSeconds(final Long userId, final int seconds) {
         final var q = this.em.createNativeQuery(
                 "SELECT COUNT(*) FROM comments WHERE user_id = ?1 AND created > CURRENT_TIMESTAMP - CAST(?2 AS interval)");
         q.setParameter(1, userId);
-        q.setParameter(2, interval);
+        q.setParameter(2, seconds + " seconds");
+        return ((Number) q.getSingleResult()).longValue();
+    }
+
+    /**
+     * Counts comments created by a specific user within the last {@code days} days. Uses {@code CURRENT_TIMESTAMP} from
+     * the database to avoid JVM/DB timezone mismatches.
+     *
+     * @param userId
+     *            the user ID to filter by
+     * @param days
+     *            the number of days to look back
+     * @return the count of comments created by the user within the window
+     */
+    public long countByUserInLastDays(final Long userId, final int days) {
+        final var q = this.em.createNativeQuery(
+                "SELECT COUNT(*) FROM comments WHERE user_id = ?1 AND created > CURRENT_TIMESTAMP - CAST(?2 AS interval)");
+        q.setParameter(1, userId);
+        q.setParameter(2, days + " days");
         return ((Number) q.getSingleResult()).longValue();
     }
 

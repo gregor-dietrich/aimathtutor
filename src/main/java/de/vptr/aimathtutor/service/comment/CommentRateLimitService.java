@@ -36,7 +36,7 @@ public class CommentRateLimitService {
         }
         // Check 5-second window using DB time to avoid timezone mismatches
         final long recentCount =
-                this.commentRepository.countByUserSinceInterval(userId, RATE_LIMIT_WINDOW_SECONDS + " seconds");
+                this.commentRepository.countByUserInLastSeconds(userId, (int) RATE_LIMIT_WINDOW_SECONDS);
 
         if (recentCount > 0) {
             LOG.debugf("Rate limit exceeded (5-second window): userId=%s, recentCount=%s", userId,
@@ -46,7 +46,7 @@ public class CommentRateLimitService {
         }
 
         // Check daily limit using DB time to avoid timezone mismatches
-        final long dailyCount = this.commentRepository.countByUserSinceInterval(userId, "1 day");
+        final long dailyCount = this.commentRepository.countByUserInLastDays(userId, 1);
 
         if (dailyCount >= RATE_LIMIT_DAILY) {
             LOG.warnf("Daily comment limit exceeded: userId=%s, dailyCount=%s, limit=%s", userId, dailyCount,

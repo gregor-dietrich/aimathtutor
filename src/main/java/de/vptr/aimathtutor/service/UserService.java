@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -115,6 +116,10 @@ public class UserService {
         if (password.length() < AppConstants.PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
             throw new ValidationException("Password must be between " + AppConstants.PASSWORD_MIN_LENGTH + " and "
                     + PASSWORD_MAX_LENGTH + " characters");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new ValidationException("Password must not exceed 72 bytes when encoded as UTF-8 "
+                    + "(some Unicode characters use multiple bytes)");
         }
         if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).+$")) {
             throw new ValidationException("Password must contain at least one uppercase letter, one lowercase letter, "
@@ -378,7 +383,7 @@ public class UserService {
         if (session == null) {
             throw new WebApplicationException("No active session", Response.Status.UNAUTHORIZED);
         }
-        final var username = (String) session.getAttribute("authenticated.username");
+        final var username = (String) session.getAttribute(AppConstants.SESSION_KEY_USERNAME);
         if (username == null) {
             throw new WebApplicationException("User not authenticated", Response.Status.UNAUTHORIZED);
         }

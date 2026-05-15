@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import io.quarkus.test.junit.QuarkusTest;
@@ -185,7 +186,7 @@ class AiConfigServiceIntegrationTest {
         final var student = this.userRepository.findById(studentId);
         assertNotNull(student, "Student user should exist");
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(PermissionDeniedException.class,
                 () -> this.aiConfigService.updateConfig("google.temperature", "0.5", studentId));
     }
 }

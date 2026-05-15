@@ -464,10 +464,10 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testCountByUserSinceInterval_returnsCount() {
+    public void testCountByUserInLastDays_returnsCount() {
         final CommentEntity c = this.createComment("cntinterval");
         final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
-        final long count = this.commentRepository.countByUserSinceInterval(userId, "1 day");
+        final long count = this.commentRepository.countByUserInLastDays(userId, 1);
         Assertions.assertTrue(count >= 0);
     }
 

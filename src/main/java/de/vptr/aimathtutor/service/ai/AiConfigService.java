@@ -18,11 +18,10 @@ import de.vptr.aimathtutor.dto.AiConfigDto;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
-import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -92,7 +91,7 @@ public class AiConfigService {
     private AiConfigRepository aiConfigRepository;
 
     @Inject
-    private UserRepository userRepository;
+    private PermissionService permissionService;
 
     /**
      * Retrieves a configuration value as a String. Falls back to defaultValue if not found.
@@ -596,15 +595,6 @@ public class AiConfigService {
     }
 
     private UserEntity requireConfigEditPermission(final Long userId) {
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null) {
-            throw new IllegalStateException("User not found or has no rank assigned");
-        }
-        final var userRank = new UserRankViewDto(user.rank);
-        if (!userRank.hasAnyExercisePermission() && !userRank.hasAnyLessonPermission()) {
-            throw new IllegalStateException(
-                    "Only users with exercise or lesson management permissions can update configuration");
-        }
-        return user;
+        return this.permissionService.requireAiConfigEdit(userId);
     }
 }
