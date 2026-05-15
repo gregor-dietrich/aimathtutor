@@ -1,7 +1,7 @@
 # Generated
 .coverage
+.coverage.md
 .ref
-Coverage.md
 src/main/bundles/*.bundle
 
 # gm-api
