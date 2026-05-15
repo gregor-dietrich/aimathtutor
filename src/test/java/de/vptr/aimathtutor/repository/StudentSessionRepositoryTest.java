@@ -117,9 +117,8 @@ class StudentSessionRepositoryTest {
 
         this.studentSessionRepository.flush();
 
-        // Should be at least 2 (user1 and user2)
         final long count = this.studentSessionRepository.countActiveStudentsSince(now.minusSeconds(1));
-        assertTrue(count >= 2);
+        assertEquals(2, count);
     }
 
     @Test

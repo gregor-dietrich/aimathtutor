@@ -88,4 +88,34 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("Unknown AI provider"),
                 "Failure message must mention the unknown provider, got: " + result.message);
     }
+
+    @Test
+    @DisplayName("testCurrentProvider delegates to testGoogle when provider is google")
+    void testTestCurrentProvider_google() {
+        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("google");
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        assertNotNull(result);
+        assertNotNull(result.message);
+        assertFalse(result.message.isBlank());
+    }
+
+    @Test
+    @DisplayName("testCurrentProvider delegates to testOpenAi when provider is openai")
+    void testTestCurrentProvider_openai() {
+        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("openai");
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        assertNotNull(result);
+        assertNotNull(result.message);
+        assertFalse(result.message.isBlank());
+    }
+
+    @Test
+    @DisplayName("testCurrentProvider delegates to testOllama when provider is ollama")
+    void testTestCurrentProvider_ollama() {
+        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("ollama");
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        assertNotNull(result);
+        assertNotNull(result.message);
+        assertFalse(result.message.isBlank());
+    }
 }

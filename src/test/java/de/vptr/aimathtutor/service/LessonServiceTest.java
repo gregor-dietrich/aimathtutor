@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -337,5 +338,80 @@ class LessonServiceTest {
     void testDeleteLesson_notFound() {
         final boolean deleted = this.lessonService.deleteLesson("00000000000000000000000000");
         assertFalse(deleted);
+    }
+
+    @Test
+    @DisplayName("updateLesson throws BAD_REQUEST when parent publicId does not exist")
+    @TestTransaction
+    void updateLesson_parentNotFound_throwsBadRequest() {
+        final LessonViewDto created = this.lessonService.createLesson(this.buildLesson("update_parent_missing"));
+
+        final LessonEntity update = new LessonEntity();
+        update.publicId = created.publicId;
+        update.name = "Updated Name";
+        final LessonEntity nonExistentParent = new LessonEntity();
+        nonExistentParent.publicId = "00000000000000000000nonexistent";
+        update.parent = nonExistentParent;
+
+        final var thrown = assertThrows(WebApplicationException.class, () -> this.lessonService.updateLesson(update));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("updateLesson clears parent when lesson.parent is null (PUT semantics)")
+    @TestTransaction
+    void updateLesson_setParentToNull_clearsParent() {
+        final LessonViewDto parent = this.lessonService.createLesson(this.buildLesson("clear_parent"));
+        final LessonEntity childEntity = this.buildLesson("clear_child");
+        final LessonEntity parentRef = new LessonEntity();
+        parentRef.id = this.getLessonNumericId(parent.publicId);
+        childEntity.parent = parentRef;
+        final LessonViewDto child = this.lessonService.createLesson(childEntity);
+
+        final LessonEntity update = new LessonEntity();
+        update.publicId = child.publicId;
+        update.name = child.name;
+        update.parent = null;
+
+        final LessonViewDto updated = this.lessonService.updateLesson(update);
+        assertNull(updated.parentPublicId);
+        assertTrue(updated.isRootLesson);
+    }
+
+    @Test
+    @DisplayName("patchLesson clears parent when parent.id is null")
+    @TestTransaction
+    void patchLesson_parentIdNull_clearsParent() {
+        final LessonViewDto parent = this.lessonService.createLesson(this.buildLesson("patch_clear_parent"));
+        final LessonEntity childEntity = this.buildLesson("patch_clear_child");
+        final LessonEntity parentRef = new LessonEntity();
+        parentRef.id = this.getLessonNumericId(parent.publicId);
+        childEntity.parent = parentRef;
+        final LessonViewDto child = this.lessonService.createLesson(childEntity);
+
+        final LessonEntity patch = new LessonEntity();
+        patch.publicId = child.publicId;
+        final LessonEntity parentWithNullId = new LessonEntity();
+        parentWithNullId.id = null;
+        patch.parent = parentWithNullId;
+
+        final LessonViewDto patched = this.lessonService.patchLesson(patch);
+        assertNull(patched.parentPublicId);
+    }
+
+    @Test
+    @DisplayName("deleteLesson throws BAD_REQUEST when lesson has children")
+    @TestTransaction
+    void deleteLesson_withChildren_throwsBadRequest() {
+        final LessonViewDto parent = this.lessonService.createLesson(this.buildLesson("del_parent"));
+        final LessonEntity childEntity = this.buildLesson("del_child");
+        final LessonEntity parentRef = new LessonEntity();
+        parentRef.id = this.getLessonNumericId(parent.publicId);
+        childEntity.parent = parentRef;
+        this.lessonService.createLesson(childEntity);
+
+        final var thrown =
+                assertThrows(WebApplicationException.class, () -> this.lessonService.deleteLesson(parent.publicId));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 }

@@ -77,15 +77,26 @@ def main() -> None:
     report_path: str = sys.argv[1]
     csv_paths: List[str] = sys.argv[2:]
 
-    rows: List[Dict[str, str]] = []
+    merged: Dict[str, Dict[str, str]] = {}
 
     for csv_path in csv_paths:
         try:
             with open(csv_path, "r") as file:
-                csv_data = list(csv.DictReader(file))
-                rows.extend(csv_data)
+                for row in csv.DictReader(file):
+                    key = row["PACKAGE"] + "/" + row["CLASS"]
+                    if key not in merged:
+                        merged[key] = dict(row)
+                    else:
+                        for col in ("INSTRUCTION_MISSED", "INSTRUCTION_COVERED",
+                                    "BRANCH_MISSED", "BRANCH_COVERED",
+                                    "LINE_MISSED", "LINE_COVERED",
+                                    "COMPLEXITY_MISSED", "COMPLEXITY_COVERED",
+                                    "METHOD_MISSED", "METHOD_COVERED"):
+                            merged[key][col] = str(int(merged[key][col]) + int(row[col]))
         except FileNotFoundError:
             print(f"Warning: CSV file not found: {csv_path}")
+
+    rows: List[Dict[str, str]] = list(merged.values())
 
     if not rows:
         print("Error: No coverage data found.")
@@ -137,12 +148,13 @@ def main() -> None:
     tl = total_lm + total_lc
     tb = total_bm + total_bc
     if tl > 0:
+        bp_total = f"**{total_bc / tb * 100:.1f}%**" if tb > 0 else "**100.0%**"
         pkg_table_data.append([
             "**Total**",
             f"**{total_lm}**",
             f"**{total_lc}**",
             f"**{total_lc / tl * 100:.1f}%**",
-            f"**{total_bc / tb * 100:.1f}%**"
+            bp_total
         ])
     else:
         pkg_table_data.append(["**Total**", "0", "0", "100.0%", "100.0%"])
@@ -189,8 +201,8 @@ def main() -> None:
 
     print(f"Written to {report_path}")
     if tl > 0:
-        print(
-            f"Overall: {total_lc / tl * 100:.1f}% lines, {total_bc / tb * 100:.1f}% branches")
+        bp_str = f"{total_bc / tb * 100:.1f}%" if tb > 0 else "100.0%"
+        print(f"Overall: {total_lc / tl * 100:.1f}% lines, {bp_str} branches")
     else:
         print("Overall: 100.0% lines, 100.0% branches (no data)")
 

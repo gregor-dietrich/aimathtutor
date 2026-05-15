@@ -57,6 +57,8 @@ class CommentRepositoryTest {
         final var user = this.userRepository.findByUsername("student1");
         final var exercise = this.exerciseRepository.findAllOrdered().get(0);
 
+        final long preCount = this.commentRepository.countByUserInLastSeconds(user.id, 60);
+
         final var comment = new CommentEntity();
         comment.content = "Timed content";
         comment.user = user;
@@ -64,8 +66,8 @@ class CommentRepositoryTest {
         this.commentRepository.persist(comment);
         this.commentRepository.flush();
 
-        final long count = this.commentRepository.countByUserInLastSeconds(user.id, 60);
-        assertTrue(count >= 1);
+        final long postCount = this.commentRepository.countByUserInLastSeconds(user.id, 60);
+        assertEquals(preCount + 1, postCount);
     }
 
     @Test
@@ -75,6 +77,8 @@ class CommentRepositoryTest {
         final var user = this.userRepository.findByUsername("student1");
         final var exercise = this.exerciseRepository.findAllOrdered().get(0);
 
+        final long preCount = this.commentRepository.countByUserInLastDays(user.id, 1);
+
         final var comment = new CommentEntity();
         comment.content = "Daily content";
         comment.user = user;
@@ -82,8 +86,8 @@ class CommentRepositoryTest {
         this.commentRepository.persist(comment);
         this.commentRepository.flush();
 
-        final long count = this.commentRepository.countByUserInLastDays(user.id, 1);
-        assertTrue(count >= 1);
+        final long postCount = this.commentRepository.countByUserInLastDays(user.id, 1);
+        assertEquals(preCount + 1, postCount);
     }
 
     @Test

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -271,6 +272,84 @@ class AuthServiceTest {
     void testGetCurrentUserEntity_noSession() {
         assertNull(this.authService.getCurrentUserEntity(),
                 "getCurrentUserEntity should return null when no VaadinSession");
+    }
+
+    @Test
+    @DisplayName("isAuthenticated returns false when authenticated flag is null in session")
+    void testIsAuthenticated_nullAuthenticatedFlag_returnsFalse() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AUTHENTICATED_KEY)).thenReturn(null);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            assertFalse(this.authService.isAuthenticated());
+        }
+    }
+
+    @Test
+    @DisplayName("isAuthenticated returns false when authenticated flag is false in session")
+    void testIsAuthenticated_falseAuthenticatedFlag_returnsFalse() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AUTHENTICATED_KEY)).thenReturn(false);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            assertFalse(this.authService.isAuthenticated());
+        }
+    }
+
+    @Test
+    @DisplayName("isAuthenticated returns false when username is null despite authenticated flag")
+    void testIsAuthenticated_nullUsername_returnsFalse() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AUTHENTICATED_KEY)).thenReturn(true);
+            when(mockSess.getAttribute(USERNAME_KEY)).thenReturn(null);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            assertFalse(this.authService.isAuthenticated());
+        }
+    }
+
+    @Test
+    @DisplayName("isAuthenticated performs DB check and returns true when cache is stale")
+    @TestTransaction
+    void testIsAuthenticated_staleCacheNull_validUser_returnsTrue() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = this.buildStaleCacheSession("admin");
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            assertTrue(this.authService.isAuthenticated());
+            verify(mockSess).setAttribute(eq(LAST_DB_CHECK_KEY), any(Long.class));
+        }
+    }
+
+    @Test
+    @DisplayName("isAuthenticated performs DB check and returns false when user not found")
+    void testIsAuthenticated_staleCacheNull_noUser_returnsFalse() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = this.buildStaleCacheSession("no_such_user_xyz");
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            assertFalse(this.authService.isAuthenticated());
+            verify(mockSess).setAttribute(LAST_DB_CHECK_KEY, null);
+        }
+    }
+
+    private VaadinSession buildStaleCacheSession(final String username) {
+        final VaadinSession mockSess = mock(VaadinSession.class);
+        when(mockSess.getAttribute(AUTHENTICATED_KEY)).thenReturn(true);
+        when(mockSess.getAttribute(LAST_DB_CHECK_KEY)).thenReturn(null);
+        when(mockSess.getAttribute(USERNAME_KEY)).thenReturn(username);
+        return mockSess;
+    }
+
+    @Test
+    @DisplayName("getUserId returns null when username exists in session but user is not in DB")
+    void testGetUserId_unknownUsername_returnsNull() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(USERNAME_KEY)).thenReturn("no_such_user_xyz");
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            assertNull(this.authService.getUserId());
+        }
     }
 
     @Test

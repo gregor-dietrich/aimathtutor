@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -98,7 +99,7 @@ class OllamaServiceTest extends AbstractJaxRsAiServiceTest {
     @DisplayName("cleanup should close client")
     void testCleanup() {
         this.ollamaService.cleanup();
-        // Since it's lazy, getModel still works as it doesn't need client
+        verify(this.mockClient).close();
         assertNotNull(this.ollamaService.getModel());
     }
 

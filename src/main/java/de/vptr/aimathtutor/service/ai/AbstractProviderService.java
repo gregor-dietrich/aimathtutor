@@ -50,6 +50,14 @@ public abstract class AbstractProviderService {
      */
     protected void setClient(final Client client) {
         synchronized (this) {
+            final Client previous = this.client;
+            if (previous != null && previous != client) {
+                try {
+                    previous.close();
+                } catch (final Exception e) {
+                    LOG.debugf(e, "Error closing previous %s JAX-RS Client", this.getProviderName());
+                }
+            }
             this.client = client;
         }
     }

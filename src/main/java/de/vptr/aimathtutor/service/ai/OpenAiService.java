@@ -102,25 +102,25 @@ public class OpenAiService extends AbstractProviderService {
                 jsonMode ? OpenAiRequestDto.createJsonRequest(systemPrompt, prompt, model, temperature, maxTokens)
                         : OpenAiRequestDto.createChatRequest(systemPrompt, prompt, model, temperature, maxTokens);
 
-        Invocation.Builder builder = this.getClient().target(baseUrl).path("/chat/completions")
-                .request(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + this.apiKey);
-
-        if (organizationId != null && !organizationId.isBlank()) {
-            builder = builder.header("OpenAI-Organization", organizationId);
-        }
-
-        try (Response response = builder.post(Entity.json(requestDto))) {
-            final int status = response.getStatus();
-            if (status != 200) {
-                final String errorBody = response.readEntity(String.class);
-                LOG.errorf("OpenAI API error (status %s): %s", status, errorBody);
-                throw ProviderException.httpFailure(this.getProviderName(), status, errorBody);
+        try {
+            Invocation.Builder builder = this.getClient().target(baseUrl).path("/chat/completions")
+                    .request(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + this.apiKey);
+            if (organizationId != null && !organizationId.isBlank()) {
+                builder = builder.header("OpenAI-Organization", organizationId);
             }
+            try (Response response = builder.post(Entity.json(requestDto))) {
+                final int status = response.getStatus();
+                if (status != 200) {
+                    final String errorBody = response.readEntity(String.class);
+                    LOG.errorf("OpenAI API error (status %s): %s", status, errorBody);
+                    throw ProviderException.httpFailure(this.getProviderName(), status, errorBody);
+                }
 
-            final var responseDto = response.readEntity(OpenAiResponseDto.class);
-            final String content = responseDto.getTextContent();
+                final var responseDto = response.readEntity(OpenAiResponseDto.class);
+                final String content = responseDto.getTextContent();
 
-            return this.requireNonEmptyContent(content);
+                return this.requireNonEmptyContent(content);
+            }
         } catch (final ProviderException e) {
             throw e;
         } catch (final Exception e) {

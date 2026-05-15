@@ -80,7 +80,8 @@ public class GoogleService extends AbstractProviderService {
 
         // The following checks satisfy NullAway; requireConfigured already threw if null
         if (model == null || baseUrl == null) {
-            return "";
+            throw new IllegalStateException(
+                    "GoogleService: missing configuration — " + (model == null ? "google.model" : "google.base-url"));
         }
 
         try {
