@@ -666,7 +666,13 @@ class UserServiceTest {
 
         final UserViewDto created = this.userService.createUser(dto);
         assertNotNull(created);
-        assertTrue(this.userService.findByPublicId(created.publicId).isPresent());
+        assertTrue(created.activated != null && created.activated);
+        assertTrue(created.banned != null && created.banned);
+
+        final var saved = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        assertTrue(saved.activated);
+        assertTrue(saved.banned);
+        assertEquals("custom-activation-key", saved.activationKey);
     }
 
     @Test

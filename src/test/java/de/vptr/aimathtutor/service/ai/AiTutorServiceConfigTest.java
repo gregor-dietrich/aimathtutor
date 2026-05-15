@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -118,9 +120,14 @@ class AiTutorServiceConfigTest {
         configureProvider("google", true);
         when(this.googleAiProvider.isAvailable()).thenReturn(true);
         when(this.googleAiProvider.analyzeMathAction(any(), any())).thenReturn(AiFeedbackDto.positive("Google ok"));
-        final var result =
-                this.aiTutorService.analyzeMathAction(this.buildSignificantEvent(), new ConversationContextDto(), "u1");
+
+        final var event = this.buildSignificantEvent();
+        final var context = new ConversationContextDto();
+        final var result = this.aiTutorService.analyzeMathAction(event, context, "u1");
+
         assertNotNull(result);
+        verify(this.googleAiProvider).analyzeMathAction(event, context);
+        verifyNoInteractions(this.openAiProvider, this.ollamaAiProvider);
     }
 
     @Test
@@ -129,9 +136,14 @@ class AiTutorServiceConfigTest {
         configureProvider("openai", true);
         when(this.openAiProvider.isAvailable()).thenReturn(true);
         when(this.openAiProvider.analyzeMathAction(any(), any())).thenReturn(AiFeedbackDto.positive("OpenAI ok"));
-        final var result =
-                this.aiTutorService.analyzeMathAction(this.buildSignificantEvent(), new ConversationContextDto(), "u1");
+
+        final var event = this.buildSignificantEvent();
+        final var context = new ConversationContextDto();
+        final var result = this.aiTutorService.analyzeMathAction(event, context, "u1");
+
         assertNotNull(result);
+        verify(this.openAiProvider).analyzeMathAction(event, context);
+        verifyNoInteractions(this.googleAiProvider, this.ollamaAiProvider);
     }
 
     @Test
@@ -140,9 +152,14 @@ class AiTutorServiceConfigTest {
         configureProvider("ollama", true);
         when(this.ollamaAiProvider.isAvailable()).thenReturn(true);
         when(this.ollamaAiProvider.analyzeMathAction(any(), any())).thenReturn(AiFeedbackDto.positive("Ollama ok"));
-        final var result =
-                this.aiTutorService.analyzeMathAction(this.buildSignificantEvent(), new ConversationContextDto(), "u1");
+
+        final var event = this.buildSignificantEvent();
+        final var context = new ConversationContextDto();
+        final var result = this.aiTutorService.analyzeMathAction(event, context, "u1");
+
         assertNotNull(result);
+        verify(this.ollamaAiProvider).analyzeMathAction(event, context);
+        verifyNoInteractions(this.googleAiProvider, this.openAiProvider);
     }
 
     @Test
