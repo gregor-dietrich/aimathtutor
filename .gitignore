@@ -1,6 +1,6 @@
 # Generated
 .coverage
-.opencode/plans
+.ref
 Coverage.md
 src/main/bundles/*.bundle
 
