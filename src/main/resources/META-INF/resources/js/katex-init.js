@@ -9,7 +9,7 @@
         return; // Already initialized
     }
 
-    var KATEX_VERSION = "0.16.22";
+    var KATEX_VERSION = "0.16.46";
     var BASE = "https://cdn.jsdelivr.net/npm/katex@" + KATEX_VERSION + "/dist/";
 
     var ready = false;
