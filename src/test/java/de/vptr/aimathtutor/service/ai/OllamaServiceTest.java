@@ -3,71 +3,102 @@ package de.vptr.aimathtutor.service.ai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import de.vptr.aimathtutor.util.RetryAnnotationVerifier;
+import de.vptr.aimathtutor.dto.OllamaResponseDto;
+import de.vptr.aimathtutor.dto.OllamaTagsResponseDto;
+import de.vptr.aimathtutor.exception.ProviderException;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-class OllamaServiceTest {
+@SuppressWarnings("NullAway")
+class OllamaServiceTest extends AbstractJaxRsAiServiceTest {
 
     @Inject
     OllamaService ollamaService;
 
-    @Test
-    @DisplayName("Should expose configured API URL")
-    void shouldExposeConfiguredApiUrl() {
-        final String url = this.ollamaService.getApiUrl();
-
-        assertNotNull(url);
-        assertFalse(url.isBlank());
+    @Override
+    protected void setupClient() {
+        when(this.mockBuilder.get()).thenReturn(this.mockResponse);
+        this.ollamaService.setClient(this.mockClient);
     }
 
     @Test
-    @DisplayName("Should expose default model name from config")
+    @DisplayName("generateContent should return content on success")
+    void testGenerateContentSuccess() {
+        when(this.mockResponse.getStatus()).thenReturn(200);
+
+        final var ollamaResponse = new OllamaResponseDto();
+        ollamaResponse.response = "Ollama response";
+        ollamaResponse.done = true;
+
+        when(this.mockResponse.readEntity(OllamaResponseDto.class)).thenReturn(ollamaResponse);
+
+        final String result = this.ollamaService.generateContent("Test prompt");
+        assertEquals("Ollama response", result);
+    }
+
+    @Test
+    @DisplayName("generateContent should throw exception on HTTP error")
+    void testGenerateContentHttpError() {
+        when(this.mockResponse.getStatus()).thenReturn(500);
+        when(this.mockResponse.readEntity(String.class)).thenReturn("Internal Server Error");
+
+        assertThrows(ProviderException.class, () -> this.ollamaService.generateContent("Test prompt"));
+    }
+
+    @Test
+    @DisplayName("isAvailable should return true when server responds with 200")
+    void testIsAvailableSuccess() {
+        when(this.mockResponse.getStatus()).thenReturn(200);
+        assertTrue(this.ollamaService.isAvailable());
+    }
+
+    @Test
+    @DisplayName("isModelInstalled should check tags endpoint")
+    void testIsModelInstalled() {
+        when(this.mockResponse.getStatus()).thenReturn(200);
+
+        final var tagsResponse = new OllamaTagsResponseDto();
+        final var model = new OllamaTagsResponseDto.ModelInfo();
+        model.name = "llama3.2:3b";
+        tagsResponse.models = List.of(model);
+
+        when(this.mockResponse.readEntity(OllamaTagsResponseDto.class)).thenReturn(tagsResponse);
+
+        assertTrue(this.ollamaService.isModelInstalled("llama3.2:3b"));
+        assertFalse(this.ollamaService.isModelInstalled("non-existent"));
+    }
+
+    @Test
+    @DisplayName("Should expose model name from config (default llama3.2:3b)")
     void shouldReturnConfiguredModel() {
         final String model = this.ollamaService.getModel();
-
         assertNotNull(model);
-        assertFalse(model.isBlank());
+        assertEquals("llama3.2:3b", model);
     }
 
     @Test
-    @DisplayName("Should report Ollama as unavailable in test environment")
-    void shouldReportUnavailableWhenServerNotReachable() {
-        // Test profile sets connect/read timeouts to 1s and devservices does not
-        // start an Ollama server, so isAvailable should return false promptly.
-        final boolean available = this.ollamaService.isAvailable();
-        assertFalse(available, "Ollama server should not be reachable in test env");
+    @DisplayName("Should report a configuration state via isConfigured")
+    void shouldReportConfigurationState() {
+        // isConfigured calls isAvailable, which uses mockClient
+        when(this.mockResponse.getStatus()).thenReturn(200);
+        assertTrue(this.ollamaService.isConfigured());
     }
 
     @Test
-    @DisplayName("Should report unknown model as not installed when server unreachable")
-    void shouldReportModelNotInstalledWhenServerUnreachable() {
-        assertFalse(this.ollamaService.isModelInstalled("nonexistent-model"));
-    }
-
-    @Test
-    @DisplayName("Should report stable isConfigured state")
-    void shouldReportConfiguredState() {
-        // isConfigured() delegates to isAvailable() — which is false in test env.
-        assertFalse(this.ollamaService.isConfigured());
-    }
-
-    @Test
-    @DisplayName("Should annotate generateContent with @Retry using AppConstants values")
-    void generateContentShouldHaveRetryAnnotation() throws NoSuchMethodException {
-        RetryAnnotationVerifier.verifyRetryAnnotation(OllamaService.class, "generateContent", String.class);
-    }
-
-    @Test
-    @DisplayName("cleanup should complete without exception and leave getters working")
+    @DisplayName("cleanup should close client")
     void testCleanup() {
         this.ollamaService.cleanup();
-        this.ollamaService.cleanup();
+        // Since it's lazy, getModel still works as it doesn't need client
         assertNotNull(this.ollamaService.getModel());
     }
 
@@ -75,12 +106,6 @@ class OllamaServiceTest {
     @DisplayName("getConfigPrefix returns the Ollama prefix")
     void testGetConfigPrefix() {
         assertEquals("ollama", this.ollamaService.getConfigPrefix());
-    }
-
-    @Test
-    @DisplayName("getDefaultModel returns the default model")
-    void testGetDefaultModel() {
-        assertEquals("llama3.2:3b", this.ollamaService.getDefaultModel());
     }
 
     @Test

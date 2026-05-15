@@ -74,7 +74,7 @@ public class OllamaService extends AbstractProviderService {
      *
      * @return The configured JAX-RS Client instance
      */
-    private synchronized Client getClient() {
+    protected synchronized Client getClient() {
         if (this.client == null) {
             this.client = ClientBuilder.newBuilder().connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
                     .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS).build();
@@ -82,6 +82,13 @@ public class OllamaService extends AbstractProviderService {
                     this.connectTimeoutSeconds, this.readTimeoutSeconds);
         }
         return this.client;
+    }
+
+    /**
+     * Set a custom JAX-RS client (primarily for testing).
+     */
+    protected synchronized void setClient(final Client client) {
+        this.client = client;
     }
 
     /**

@@ -72,6 +72,13 @@ public class GoogleService extends AbstractProviderService {
     }
 
     /**
+     * Set a custom HttpClient (primarily for testing).
+     */
+    protected void setHttpClient(final HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
+
+    /**
      * Generate content using Google API
      *
      * @param prompt

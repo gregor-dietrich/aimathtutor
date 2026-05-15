@@ -68,7 +68,7 @@ public class OpenAiService extends AbstractProviderService {
     /**
      * Get or create the JAX-RS Client with thread-safe double-checked locking.
      */
-    private Client getClient() {
+    protected Client getClient() {
         Client localClient = this.client;
         if (localClient == null) {
             synchronized (this) {
@@ -81,6 +81,15 @@ public class OpenAiService extends AbstractProviderService {
             }
         }
         return localClient;
+    }
+
+    /**
+     * Set a custom JAX-RS client (primarily for testing).
+     */
+    protected void setClient(final Client client) {
+        synchronized (this) {
+            this.client = client;
+        }
     }
 
     /**
