@@ -123,7 +123,7 @@ public abstract class AbstractProviderService {
 
     /**
      * Returns true if the API key is non-null, non-blank, and not an unresolved placeholder (e.g.
-     * {@code ${OPENAI_API_KEY}}).
+     * {@code ${app.openai.api.key}}).
      */
     protected static boolean isApiKeyConfigured(@Nullable final String apiKey) {
         return apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("${");
@@ -140,7 +140,7 @@ public abstract class AbstractProviderService {
     protected void requireApiKey(@Nullable final String apiKey, final String envVarName) {
         if (!isApiKeyConfigured(apiKey)) {
             throw new NonRetryableProviderException(this.getProviderName(),
-                    "API key not configured. Please set " + envVarName + " environment variable");
+                    "API key not configured. Please set the " + envVarName + " property");
         }
     }
 

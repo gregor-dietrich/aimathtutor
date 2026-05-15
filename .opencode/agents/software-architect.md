@@ -44,8 +44,8 @@ You are a Software Architect for AIMathTutor — a monolithic Quarkus 3.33 + Vaa
 - **Authorization**: `PermissionService` in service layer — no `@RolesAllowed` or `@Authenticated` on views
 - **Injection risks**: JPA queries must use parameterized Panache methods — no string interpolation
 - **Dependency risk**: Evaluate new dependencies for maintenance status, known CVEs, license compliance
-- **AI API keys**: Sourced from env vars (`GOOGLE_API_KEY`, `OPENAI_API_KEY`) — never logged or exposed
-- **Encrypt-at-Rest**: PII columns use AES-256-GCM via `EncryptedStringConverter`. HMAC-SHA256 blind-index companion columns enable equality lookups on encrypted fields; LIKE-based search is architecturally impossible on encrypted data. Key file path resolved via env var → XDG → home dir → auto-generate. See AGENTS.md "Encrypt-at-Rest" section for full design.
+- **AI API keys**: Sourced from properties (`app.google.api.key`, `app.openai.api.key`) — never logged or exposed
+- **Encrypt-at-Rest**: PII columns use AES-256-GCM via `EncryptedStringConverter`. HMAC-SHA256 blind-index companion columns enable equality lookups on encrypted fields; LIKE-based search is architecturally impossible on encrypted data. Key file path resolved via property → XDG → home dir → auto-generate. See AGENTS.md "Encrypt-at-Rest" section for full design.
 
 ### Performance
 

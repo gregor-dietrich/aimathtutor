@@ -9,12 +9,15 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.Set;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * Loads or generates the master encryption key used for AES-256-GCM field encryption. The key is persisted to a file so
@@ -23,7 +26,7 @@ import jakarta.enterprise.context.ApplicationScoped;
  * <p>
  * {@link #resolveKeyPath()} determines the key file location using this order:
  * <ol>
- * <li>Env var {@code AIMATHTUTOR_ENCRYPTION_KEY_FILE} (if set and non-empty)</li>
+ * <li>Property {@code app.security.encryption-key-file} (if set and non-empty)</li>
  * <li>Existing key at {@code $XDG_DATA_HOME/aimathtutor/encryption.key} (or
  * {@code ~/.local/share/aimathtutor/encryption.key})</li>
  * <li>Existing key at {@code ~/.aimathtutor/encryption.key}</li>
@@ -36,8 +39,11 @@ public class EncryptionKeyManager {
     private static final Logger LOG = Logger.getLogger(EncryptionKeyManager.class);
     private static final int KEY_BYTES = 32;
     private static final String KEY_FILENAME = "encryption.key";
-    private static final String ENV_KEY_FILE = "AIMATHTUTOR_ENCRYPTION_KEY_FILE";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    @Inject
+    @ConfigProperty(name = "app.security.encryption-key-file")
+    Optional<String> keyFile;
 
     byte[] masterKey;
 
@@ -52,10 +58,9 @@ public class EncryptionKeyManager {
         return this.masterKey.clone(); // defensive copy — callers must not mutate
     }
 
-    private static Path resolveKeyPath() {
-        final String envKeyFile = System.getenv(ENV_KEY_FILE);
-        if (envKeyFile != null && !envKeyFile.isBlank()) {
-            return Paths.get(envKeyFile);
+    private Path resolveKeyPath() {
+        if (this.keyFile.isPresent() && !this.keyFile.get().isBlank()) {
+            return Paths.get(this.keyFile.get());
         }
         final Path xdgKey = xdgKeyPath();
         if (Files.exists(xdgKey)) {

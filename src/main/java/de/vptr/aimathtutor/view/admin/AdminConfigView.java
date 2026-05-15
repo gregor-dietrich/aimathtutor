@@ -137,7 +137,7 @@ public class AdminConfigView extends AbstractAdminView {
 
         // Google provider fields
         final var googleApiKeyField =
-                this.createReadOnlyApiKeyField("GOOGLE_API_KEY", "https://aistudio.google.com/app/apikey");
+                this.createReadOnlyApiKeyField("app.google.api.key", "https://aistudio.google.com/app/apikey");
         final var googleModelField =
                 this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemini-3.1-flash-lite",
                         "Google AI model name (e.g., gemini-2.5-flash-lite, gemma-4-31b-it, gemini-3.1-pro, ...)");
@@ -152,7 +152,7 @@ public class AdminConfigView extends AbstractAdminView {
 
         // OpenAI provider fields
         final var openaiApiKeyField =
-                this.createReadOnlyApiKeyField("OPENAI_API_KEY", "https://platform.openai.com/api-keys");
+                this.createReadOnlyApiKeyField("app.openai.api.key", "https://platform.openai.com/api-keys");
         final var openaiOrgIdField =
                 this.createTextConfigField("Organization ID (Optional)", AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
         final var openaiModelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-4.1-mini",
@@ -295,7 +295,7 @@ public class AdminConfigView extends AbstractAdminView {
         field.setValue("•••••••••••••••••");
         field.setWidthFull();
         field.setReadOnly(true);
-        field.setHelperText("API key is managed via " + envVarName + " environment variable. Get key from: " + docsUrl);
+        field.setHelperText("API key is managed via the " + envVarName + " property. Get key from: " + docsUrl);
         return field;
     }
 

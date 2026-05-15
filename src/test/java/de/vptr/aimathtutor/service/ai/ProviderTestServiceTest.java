@@ -48,7 +48,7 @@ class ProviderTestServiceTest {
     @Test
     @DisplayName("testGoogle returns a non-null result with a non-blank message")
     void testTestGoogle_returnsResult() {
-        // GOOGLE_API_KEY may or may not be set — either success or failure is valid.
+        // app.google.api.key may or may not be set — either success or failure is valid.
         final ProviderTestResultDto result = this.aiProviderTestService.testGoogle();
         assertNotNull(result);
         assertNotNull(result.message);
@@ -58,7 +58,7 @@ class ProviderTestServiceTest {
     @Test
     @DisplayName("testOpenAi returns a non-null result with a non-blank message")
     void testTestOpenAi_returnsResult() {
-        // Without OPENAI_API_KEY: either fails immediately (not configured) or endpoint
+        // Without app.openai.api.key: either fails immediately (not configured) or endpoint
         // is reachable (401 → ok). Either way the result is non-null with a message.
         final ProviderTestResultDto result = this.aiProviderTestService.testOpenAi();
         assertNotNull(result);

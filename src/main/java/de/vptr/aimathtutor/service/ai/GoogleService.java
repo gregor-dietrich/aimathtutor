@@ -28,7 +28,7 @@ public class GoogleService extends AbstractProviderService {
     private static final String DEFAULT_MODEL = "gemini-3.1-flash-lite";
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
-    @ConfigProperty(name = "google.api.key", defaultValue = "")
+    @ConfigProperty(name = "app.google.api.key", defaultValue = "")
     @Nullable
     private String apiKey; // API key is always read from environment variable, never from database
 
@@ -67,7 +67,7 @@ public class GoogleService extends AbstractProviderService {
     public String generateContent(final String prompt) {
         LOG.debugf("Generating content with Google for prompt length: %s", prompt != null ? prompt.length() : 0);
 
-        this.requireApiKey(this.apiKey, "GOOGLE_API_KEY");
+        this.requireApiKey(this.apiKey, "app.google.api.key");
 
         // Load dynamic configuration
         final String model = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_MODEL, DEFAULT_MODEL);

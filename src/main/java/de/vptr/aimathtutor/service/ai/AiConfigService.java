@@ -10,8 +10,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiConfigDto;
@@ -92,6 +94,10 @@ public class AiConfigService {
 
     @Inject
     private PermissionService permissionService;
+
+    @Inject
+    @ConfigProperty(name = "app.security.allowed-ollama-hosts", defaultValue = "ollama,localhost")
+    Set<String> allowedOllamaHosts = Set.of("ollama", "localhost");
 
     /**
      * Retrieves a configuration value as a String. Falls back to defaultValue if not found.
@@ -528,11 +534,13 @@ public class AiConfigService {
                 }
             }
         } catch (final UnknownHostException e) {
-            // Only allow unresolved Docker-style hostnames for Ollama.
+            // Only allow unresolved hostnames for Ollama if they are in the allow-list.
+            // This prevents SSRF via DNS rebinding by blocking arbitrary hostnames.
             LOG.debugf(e, "Hostname resolution failed for %s", host);
-            if (!configKey.contains("ollama")) {
+            if (!configKey.contains("ollama") || !this.allowedOllamaHosts.contains(host)) {
                 throw new IllegalArgumentException(
-                        "URL host must resolve to a public address for key '" + configKey + "'");
+                        "URL host must resolve to a public address or be in the allow-list for key '" + configKey
+                                + "'");
             }
         }
 

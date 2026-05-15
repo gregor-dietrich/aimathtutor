@@ -32,7 +32,7 @@ public class OpenAiService extends AbstractProviderService {
     private static final String JSON_SYSTEM_PROMPT =
             "You are an AI math tutor. Respond ONLY with valid JSON in the specified format.";
 
-    @ConfigProperty(name = "openai.api.key", defaultValue = "")
+    @ConfigProperty(name = "app.openai.api.key", defaultValue = "")
     @Nullable
     private String apiKey; // API key is always read from environment variable, never from database
 
@@ -82,7 +82,7 @@ public class OpenAiService extends AbstractProviderService {
         LOG.debugf("Generating %s content with OpenAI for prompt length: %s", jsonMode ? "JSON" : "text",
                 prompt != null ? prompt.length() : 0);
 
-        this.requireApiKey(this.apiKey, "OPENAI_API_KEY");
+        this.requireApiKey(this.apiKey, "app.openai.api.key");
 
         final String model = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_MODEL, DEFAULT_MODEL);
         final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, DEFAULT_BASE_URL);

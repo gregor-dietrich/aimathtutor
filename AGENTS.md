@@ -113,7 +113,7 @@ PII fields (currently `UserEntity.email`) are encrypted with AES-256-GCM at the 
 ### Infrastructure
 
 - **`EncryptionKeyManager`** (`service/security/`): loads/generates the 256-bit master key. Resolution order:
-  1. `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var (if set and non-empty — use `System.getenv()`, not `@ConfigProperty`; SmallRye Config rejects empty-string defaults for `String` fields)
+  1. `app.security.encryption-key-file` property (if set and non-empty — SmallRye Config will pick this up from env vars or properties)
   2. `$XDG_DATA_HOME/aimathtutor/encryption.key` if file exists
   3. `~/.aimathtutor/encryption.key` if file exists
   4. Auto-generate at the XDG path (creates dirs, sets permissions 600)
@@ -144,8 +144,10 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion `email
 
 ## AI Configuration
 
-- **API keys (env vars):** `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`.
+- **API keys:** `app.google.api.key`, `app.openai.api.key`, `app.openai.organization-id`.
+- **SSRF protection:** `app.security.allowed-ollama-hosts` — comma-separated list of permitted hostnames for Ollama (defaults to `ollama,localhost`). Prevents SSRF via DNS rebinding.
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts — configured via Admin Settings UI at `/admin/config`.
+
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on Ollama calls, sets 1s connect/read timeouts.
 
@@ -159,5 +161,5 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion `email
 - **Production:** `docker-compose.yml` (app + PostgreSQL; optional pgadmin/Ollama).
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu` (port 9001, healthcheck `/q/health/ready`).
 - **Build:** `scripts/build.sh` via `make build` — multi-platform `docker buildx` with QEMU fallback.
-- Named volume `aimathtutor_keys` mounted at `/etc/aimathtutor/keys`; env var `AIMATHTUTOR_ENCRYPTION_KEY_FILE=/etc/aimathtutor/keys/encryption.key`.
+- Named volume `aimathtutor_keys` mounted at `/etc/aimathtutor/keys`; property `app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key`.
 - **Back up the key volume.** Losing the key makes all encrypted data permanently unrecoverable.

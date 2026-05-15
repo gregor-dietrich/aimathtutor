@@ -42,9 +42,9 @@ Full-stack compose:
 - Timezone: `TZ` (default `UTC`)
 - Image tag: `REVISION` (default `1.0.0-SNAPSHOT`)
 - Database: `SQL_USERNAME`, `SQL_PASSWORD`, `SQL_DATABASE`, `SQL_PORT`
-- AI providers: `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ORG_ID`
+- AI providers: `app.google.api.key`, `app.openai.api.key`, `app.openai.organization-id`
 - pgAdmin: `PGADMIN_EMAIL`, `PGADMIN_PASSWORD`
-- **Encryption key**: `AIMATHTUTOR_ENCRYPTION_KEY_FILE=/etc/aimathtutor/keys/encryption.key` — must be set in the app service. Mount the `aimathtutor_keys` named volume at `/etc/aimathtutor/keys`. **Back up this volume** — losing it makes all encrypted PII permanently unrecoverable.
+- **Encryption key**: `app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key` — must be set in the app service environment. Mount the `aimathtutor_keys` named volume at `/etc/aimathtutor/keys`. **Back up this volume** — losing it makes all encrypted PII permanently unrecoverable.
 - **Never hardcode real secrets** as defaults. Use placeholders (e.g., `changeit`).
 
 ## Build Script

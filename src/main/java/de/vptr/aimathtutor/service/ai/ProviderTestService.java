@@ -50,8 +50,7 @@ public class ProviderTestService {
      */
     public ProviderTestResultDto testGoogle() {
         if (!this.googleService.isConfigured()) {
-            return ProviderTestResultDto
-                    .fail("Google API key not configured. Set the GOOGLE_API_KEY environment variable.");
+            return ProviderTestResultDto.fail("Google API key not configured. Set the app.google.api.key property.");
         }
 
         final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL,
@@ -84,8 +83,7 @@ public class ProviderTestService {
      */
     public ProviderTestResultDto testOpenAi() {
         if (!this.openAiService.isConfigured()) {
-            return ProviderTestResultDto
-                    .fail("OpenAI API key not configured. Set the OPENAI_API_KEY environment variable.");
+            return ProviderTestResultDto.fail("OpenAI API key not configured. Set the app.openai.api.key property.");
         }
 
         final String baseUrl =

@@ -19,23 +19,23 @@ For Docker, you have 2 options:
 
 ## 🔧 Setup
 
-### 1. Set Environment Variables for AI API Keys
+### 1. Set Properties for AI API Keys
 
-For development, set the following environment variables (only needed if using cloud AI providers):
+For development, set the following properties (only needed if using cloud AI providers):
 
 ```sh
-export GOOGLE_API_KEY=your_google_api_key_here
-export OPENAI_API_KEY=your_openai_api_key_here
-export OPENAI_ORG_ID=your_openai_org_id_here  # Optional
+export app.google.api.key=your_google_api_key_here
+export app.openai.api.key=your_openai_api_key_here
+export app.openai.organization-id=your_openai_org_id_here  # Optional
 ```
 
 Alternatively, create a `.env` file in the project root and source it:
 
 ```sh
 # .env
-GOOGLE_API_KEY=your_google_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_ORG_ID=your_openai_org_id_here
+app.google.api.key=your_google_api_key_here
+app.openai.api.key=your_openai_api_key_here
+app.openai.organization-id=your_openai_org_id_here
 
 # source it
 source .env
@@ -49,13 +49,13 @@ AIMathTutor encrypts PII fields (email) at rest using AES-256-GCM. The master ke
 
 **Development (default):** No action required. On first startup the application auto-generates a 256-bit key at `~/.local/share/aimathtutor/encryption.key` (or `$XDG_DATA_HOME/aimathtutor/encryption.key` if set). Permissions are set to 600 (owner read/write only).
 
-**Production (Docker Compose):** The project `docker-compose.yml` already configures the `aimathtutor_keys` named volume and the `AIMATHTUTOR_ENCRYPTION_KEY_FILE` environment variable. No extra steps needed.
+**Production (Docker Compose):** The project `docker-compose.yml` already configures the `aimathtutor_keys` named volume and the `app.security.encryption-key-file` property. No extra steps needed.
 
-**Production (custom path):** Set `AIMATHTUTOR_ENCRYPTION_KEY_FILE` to an absolute path writable by the application process. The file must contain a Base64-encoded 32-byte key. The application generates it if absent.
+**Production (custom path):** Set `app.security.encryption-key-file` to an absolute path writable by the application process. The file must contain a Base64-encoded 32-byte key. The application generates it if absent.
 
 > **⚠️ Critical:** Back up the key file (or the `aimathtutor_keys` Docker volume). Losing the key renders all encrypted data permanently unrecoverable. Key resolution order:
 >
-> 1. `AIMATHTUTOR_ENCRYPTION_KEY_FILE` env var (if set and non-empty)
+> 1. `app.security.encryption-key-file` property (if set and non-empty)
 > 2. `$XDG_DATA_HOME/aimathtutor/encryption.key` (if file exists)
 > 3. `~/.aimathtutor/encryption.key` (if file exists)
 > 4. Auto-generate at the XDG path
