@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -174,5 +175,47 @@ class StudentSessionRepositoryTest {
         assertTrue(this.studentSessionRepository.findByStartTimeAfter(null).isEmpty());
         assertEquals(0L, this.studentSessionRepository.countByCompleted(null));
         assertEquals(0L, this.studentSessionRepository.countActiveStudentsSince(null));
+    }
+
+    @Test
+    @DisplayName("Additional null handling for methods not covered above")
+    void testAdditionalNullHandling() {
+        assertTrue(this.studentSessionRepository.findByPublicId(null).isEmpty());
+        assertTrue(this.studentSessionRepository.findByStartTimeBefore(null).isEmpty());
+        assertTrue(this.studentSessionRepository.findByUserIdIn(null).isEmpty());
+        assertTrue(this.studentSessionRepository.findByUserIdIn(List.of()).isEmpty());
+        assertTrue(this.studentSessionRepository.findByStartTimeBetween(null, null).isEmpty());
+        assertEquals(0L, this.studentSessionRepository.countActiveStudentsBetween(null, null));
+        assertEquals(0L, this.studentSessionRepository.countByStartTimeBetween(null, null));
+        final long halfOpenCount =
+                this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(null, null);
+        assertEquals(0L, halfOpenCount);
+        assertTrue(this.studentSessionRepository.findByExerciseIdAndDateRange(null, null, null).isEmpty());
+        assertTrue(this.studentSessionRepository.findByCompletedAndDateRange(null, null, null).isEmpty());
+        assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm(null).isEmpty());
+        assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("findAll, countAll and findProblemCategoryStats return non-null results")
+    void testFindAllAndCountAll() {
+        assertNotNull(this.studentSessionRepository.findAll());
+        assertTrue(this.studentSessionRepository.countAll() >= 0);
+        assertNotNull(this.studentSessionRepository.findProblemCategoryStats());
+    }
+
+    @Test
+    @DisplayName("persist(null) is no-op and deleteById covers null, not-found, and found paths")
+    @TestTransaction
+    void testPersistNullAndDeleteById() {
+        this.studentSessionRepository.persist(null);
+        assertFalse(this.studentSessionRepository.deleteById(null));
+        assertFalse(this.studentSessionRepository.deleteById(999_999L));
+
+        final var user = this.userRepository.findByUsername("student1");
+        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
+        final var session = createAndPersistSession(user, exercise);
+
+        assertTrue(this.studentSessionRepository.deleteById(session.id));
     }
 }

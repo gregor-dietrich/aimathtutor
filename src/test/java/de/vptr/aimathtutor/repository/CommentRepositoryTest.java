@@ -3,6 +3,8 @@ package de.vptr.aimathtutor.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
@@ -163,5 +165,46 @@ class CommentRepositoryTest {
 
         final var recent = this.commentRepository.findRecentCommentsWithRelations(3);
         assertEquals(3, recent.size());
+    }
+
+    @Test
+    @DisplayName("Null guard paths for optional and relation-loading methods")
+    void testNullGuardPaths() {
+        assertTrue(this.commentRepository.findByPublicId(null).isEmpty());
+        assertTrue(this.commentRepository.findByPublicIdWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findByIdOptionalWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findByExerciseIdWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findByUserIdWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findBySessionIdWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findReplies(null).isEmpty());
+        assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());
+        assertTrue(this.commentRepository.findRecentCommentsWithRelations(0).isEmpty());
+    }
+
+    @Test
+    @DisplayName("persist(null) returns null and deleteById covers both found and not-found paths")
+    @TestTransaction
+    void testPersistNullAndDeleteById() {
+        assertNull(this.commentRepository.persist(null));
+
+        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
+        final var comment = new CommentEntity();
+        comment.content = "delete test";
+        comment.exercise = exercise;
+        comment.publicId = UlidUtil.generate();
+        this.commentRepository.persist(comment);
+        this.commentRepository.flush();
+
+        assertFalse(this.commentRepository.deleteById(999_999L));
+        assertTrue(this.commentRepository.deleteById(comment.id));
+    }
+
+    @Test
+    @DisplayName("countByUserInLastSeconds and countByUserInLastDays throw on non-positive values")
+    void testCountByUserInLastSeconds_invalidArgs() {
+        final var user = this.userRepository.findByUsername("student1");
+        assertThrows(IllegalArgumentException.class, () -> this.commentRepository.countByUserInLastSeconds(user.id, 0));
+        assertThrows(IllegalArgumentException.class, () -> this.commentRepository.countByUserInLastDays(user.id, 0));
     }
 }
