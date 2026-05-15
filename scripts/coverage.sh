@@ -12,10 +12,11 @@ while getopts "o" opt; do
     esac
 done
 
-CSV="target/site/jacoco/jacoco.csv"
-REPORT=".coverage.md"
+set -e
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
+CSV="target/site/jacoco/jacoco.csv"
+REPORT=".coverage.md"
 
 echo "Running tests with JaCoCo coverage..."
 
@@ -25,12 +26,11 @@ ${MVN_CMD} -q verify -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enab
 echo "Generating coverage report..."
 
 if [ ! -f "$CSV" ]; then
-    echo "ERROR: JaCoCo CSV still not found after test run" >&2
+    echo "ERROR: JaCoCo CSV not found after test run" >&2
     exit 1
 fi
 
-mkdir -p "$(dirname "$REPORT")"
-python3 "scripts/coverage.py" "$CSV" "$REPORT"
+python3 "scripts/coverage.py" "$REPORT" "$CSV"
 
 if [ "$OPEN_REPORT" = true ]; then
     xdg-open "$REPORT" 2>/dev/null || open "$REPORT" 2>/dev/null || echo "Cannot open $REPORT" >&2

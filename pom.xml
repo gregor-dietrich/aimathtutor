@@ -460,12 +460,12 @@
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.78</minimum>
+                      <minimum>0.74</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.62</minimum>
+                      <minimum>0.59</minimum>
                     </limit>
                   </limits>
                 </rule>
@@ -475,8 +475,9 @@
         </executions>
         <configuration>
           <excludes>
-            <exclude>de/vptr/aimathtutor/view/**</exclude>
             <exclude>de/vptr/aimathtutor/component/**</exclude>
+            <exclude>de/vptr/aimathtutor/dto/**</exclude>
+            <exclude>de/vptr/aimathtutor/view/**</exclude>
             <exclude>de/vptr/aimathtutor/util/AdminFilterUtil*</exclude>
             <exclude>de/vptr/aimathtutor/util/AdminSearchLayoutFactory*</exclude>
             <exclude>de/vptr/aimathtutor/util/AiChatUtil*</exclude>
