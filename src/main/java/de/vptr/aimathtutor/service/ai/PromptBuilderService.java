@@ -4,6 +4,7 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -42,17 +43,10 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_PREFIX, "You are a helpful AI math tutor. "
-                + "A student is working on an algebra problem and has asked you a question.");
-        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_POSTFIX, """
-                Provide a helpful, encouraging answer that:
-                - Guides the student's thinking without solving it for them
-                - Is concise (2-3 sentences max)
-                - Relates to their current problem if possible
-                - Uses clear, simple language
-                - Encourages them to try the next step
-
-                Your answer:""");
+        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_PREFIX,
+                AppConstants.PROMPT_QUESTION_ANSWERING_PREFIX);
+        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_POSTFIX,
+                AppConstants.PROMPT_QUESTION_ANSWERING_POSTFIX);
 
         prompt.append(prefix);
         prompt.append("\n\n");
@@ -99,29 +93,10 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_PREFIX,
-                "You are an encouraging but concise AI math tutor helping a student learn algebra. "
-                        + "Analyze the student's action and provide brief, helpful feedback.");
-        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_POSTFIX, """
-                Provide feedback in the following JSON format:
-                {
-                  "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
-                  "message": "Your brief, encouraging feedback (ONE sentence only)",
-                  "hints": [],
-                  "suggestedNextSteps": [],
-                  "confidence": 0.0 to 1.0
-                }
-
-                IMPORTANT Guidelines:
-                - Keep message to ONE SHORT sentence (max 15 words)
-                - Be encouraging but not overly enthusiastic
-                - If the action is correct, give brief praise
-                - If incorrect, point out the error gently
-                - Only provide hints array if student made a mistake (max 1-2 hints)
-                - Do NOT provide hints for correct actions
-                - Leave suggestedNextSteps empty unless specifically needed
-                - Be specific about what they did, not generic
-                """);
+        final var prefix =
+                this.getConfigString(AiConfigKeys.PROMPT_TUTORING_PREFIX, AppConstants.PROMPT_MATH_TUTORING_PREFIX);
+        final var postfix =
+                this.getConfigString(AiConfigKeys.PROMPT_TUTORING_POSTFIX, AppConstants.PROMPT_MATH_TUTORING_POSTFIX);
 
         prompt.append(prefix);
         prompt.append("\n\n<student_action>\n- Action Type: ");

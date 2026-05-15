@@ -54,40 +54,10 @@ public class AiConfigService {
             Map.entry(AiConfigKeys.OLLAMA_API_URL, "http://ollama:11434"),
             Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"), Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
             Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"),
-            Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
-                    "You are a helpful AI math tutor. "
-                            + "A student is working on an algebra problem and has asked you a question."),
-            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, """
-                    Provide a helpful, encouraging answer that:
-                    - Guides the student's thinking without solving it for them
-                    - Is concise (2-3 sentences max)
-                    - Relates to their current problem if possible
-                    - Uses clear, simple language
-                    - Encourages them to try the next step
-
-                    Your answer:"""),
-            Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX,
-                    "You are an encouraging but concise AI math tutor helping a student learn algebra. "
-                            + "Analyze the student's action and provide brief, helpful feedback."),
-            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, """
-                    Provide feedback in the following JSON format:
-                    {
-                      "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
-                      "message": "Your brief, encouraging feedback (ONE sentence only)",
-                      "hints": [],
-                      "suggestedNextSteps": [],
-                      "confidence": 0.0 to 1.0
-                    }
-
-                    IMPORTANT Guidelines:
-                    - Keep message to ONE SHORT sentence (max 15 words)
-                    - Be encouraging but not overly enthusiastic
-                    - If the action is correct, give brief praise
-                    - If incorrect, point out the error gently
-                    - Only provide hints array if student made a mistake (max 1-2 hints)
-                    - Do NOT provide hints for correct actions
-                    - Leave suggestedNextSteps empty unless specifically needed
-                    - Be specific about what they did, not generic"""));
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX, AppConstants.PROMPT_QUESTION_ANSWERING_PREFIX),
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, AppConstants.PROMPT_QUESTION_ANSWERING_POSTFIX),
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX, AppConstants.PROMPT_MATH_TUTORING_PREFIX),
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, AppConstants.PROMPT_MATH_TUTORING_POSTFIX));
 
     @Inject
     private AiConfigRepository aiConfigRepository;
