@@ -1,12 +1,5 @@
 package de.vptr.aimathtutor.service.ai;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.logging.Logger;
@@ -19,9 +12,11 @@ import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import de.vptr.aimathtutor.exception.ProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Service for interacting with the Google AI API. Configuration is provided dynamically via {@link AiConfigService}.
@@ -39,8 +34,6 @@ public class GoogleService extends AbstractProviderService {
 
     @Inject
     ObjectMapper objectMapper;
-
-    private HttpClient httpClient;
 
     @Override
     protected String getConfigPrefix() {
@@ -60,22 +53,6 @@ public class GoogleService extends AbstractProviderService {
     @Override
     public boolean isConfigured() {
         return isApiKeyConfigured(this.apiKey);
-    }
-
-    @PostConstruct
-    void init() {
-        // Initialize HttpClient with appropriate settings
-        this.httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
-                .connectTimeout(Duration.ofSeconds(10)).build();
-
-        LOG.debug("Initialized Google HttpClient");
-    }
-
-    /**
-     * Set a custom HttpClient (primarily for testing).
-     */
-    protected void setHttpClient(final HttpClient httpClient) {
-        this.httpClient = httpClient;
     }
 
     /**
@@ -101,65 +78,55 @@ public class GoogleService extends AbstractProviderService {
         this.requireConfigured(model, "Google model");
         this.requireConfigured(baseUrl, "Google API URL");
 
+        // The following checks satisfy NullAway; requireConfigured already threw if null
+        if (model == null || baseUrl == null) {
+            return "";
+        }
+
         try {
             // Create request DTO
             final var requestDto = GoogleRequestDto.createTextRequest(prompt, temperature, maxTokens);
 
-            // Convert to JSON
-            final String requestJson = this.objectMapper.writeValueAsString(requestDto);
+            // API URL (key moved to header to avoid appearing in logs/proxies)
+            final String path = String.format("/v1beta/models/%s:generateContent", model);
 
-            // Build API URL (key moved to header to avoid appearing in logs/proxies)
-            final String url = String.format("%s/v1beta/models/%s:generateContent", baseUrl, model);
+            LOG.debugf("Calling Google API at: %s%s", baseUrl, path);
 
-            LOG.debugf("Calling Google API at: %s", url);
+            try (Response response = this.getClient().target(baseUrl).path(path).request(MediaType.APPLICATION_JSON)
+                    .header("x-goog-api-key", this.apiKey).post(Entity.json(requestDto))) {
 
-            // Create HTTP request with API key in header instead of query param
-            final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
-                    .header("Content-Type", "application/json").header("x-goog-api-key", this.apiKey)
-                    .timeout(Duration.ofSeconds(60)).POST(HttpRequest.BodyPublishers.ofString(requestJson)).build();
+                final int statusCode = response.getStatus();
+                if (statusCode != 200) {
+                    final String errorBody = response.readEntity(String.class);
+                    LOG.errorf("Google API error (status %s): %s", statusCode, errorBody);
+                    throw ProviderException.httpFailure(this.getProviderName(), statusCode, errorBody);
+                }
 
-            // Make API call
-            final HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                // Parse response
+                final var googleResponse = response.readEntity(GoogleResponseDto.class);
 
-            final int statusCode = response.statusCode();
-            final String responseBody = response.body();
+                if (googleResponse.isBlocked()) {
+                    LOG.warn("Google response was blocked by safety filters");
+                    throw new NonRetryableProviderException(this.getProviderName(),
+                            "Response blocked by safety filters");
+                }
 
-            if (statusCode != 200) {
-                LOG.errorf("Google API error (status %s): %s", statusCode, responseBody);
-                throw ProviderException.httpFailure(this.getProviderName(), statusCode, responseBody);
+                if (googleResponse.isTruncated()) {
+                    LOG.warnf("Google response was truncated due to token limit (finishReason=%s)",
+                            googleResponse.getFinishReason());
+                }
+
+                final String content = this.requireNonEmptyContent(googleResponse.getTextContent());
+
+                LOG.debugf("Successfully generated content from Google, length: %s", content.length());
+                return content;
             }
-
-            // Parse response
-            final var googleResponse = this.objectMapper.readValue(responseBody, GoogleResponseDto.class);
-
-            if (googleResponse.isBlocked()) {
-                LOG.warn("Google response was blocked by safety filters");
-                throw new NonRetryableProviderException(this.getProviderName(), "Response blocked by safety filters");
-            }
-
-            if (googleResponse.isTruncated()) {
-                LOG.warnf("Google response was truncated due to token limit (finishReason=%s)",
-                        googleResponse.getFinishReason());
-            }
-
-            final String content = this.requireNonEmptyContent(googleResponse.getTextContent());
-
-            LOG.debugf("Successfully generated content from Google, length: %s", content.length());
-            return content;
 
         } catch (final ProviderException e) {
-            LOG.error("Google provider call failed", e);
             throw e;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOG.error("Google call interrupted", e);
-            throw ProviderException.transportFailure(this.getProviderName(), "Call interrupted", e);
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             LOG.error("Error calling Google API", e);
             throw ProviderException.transportFailure(this.getProviderName(), "Failed to call Google API", e);
-        } catch (final RuntimeException e) {
-            LOG.error("Unexpected runtime error calling Google API", e);
-            throw ProviderException.transportFailure(this.getProviderName(), "Unexpected error", e);
         }
     }
 }

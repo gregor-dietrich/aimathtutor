@@ -1,8 +1,15 @@
 package de.vptr.aimathtutor.service.ai;
 
+import java.util.concurrent.TimeUnit;
+
+import org.jboss.logging.Logger;
+
 import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 
 /**
  * Base class for AI provider services (OpenAI, Google, Ollama). Provides shared logic for config-driven model lookup,
@@ -10,8 +17,72 @@ import jakarta.inject.Inject;
  */
 public abstract class AbstractProviderService {
 
+    private static final Logger LOG = Logger.getLogger(AbstractProviderService.class);
+
     @Inject
     protected AiConfigService aiConfigService;
+
+    @Nullable
+    private volatile Client client;
+
+    /**
+     * Get or create the JAX-RS Client with thread-safe double-checked locking.
+     */
+    protected Client getClient() {
+        Client localClient = this.client;
+        if (localClient == null) {
+            synchronized (this) {
+                localClient = this.client;
+                if (localClient == null) {
+                    this.client = localClient =
+                            ClientBuilder.newBuilder().connectTimeout(this.getConnectTimeoutSeconds(), TimeUnit.SECONDS)
+                                    .readTimeout(this.getReadTimeoutSeconds(), TimeUnit.SECONDS).build();
+                    LOG.debugf("Created %s JAX-RS Client (connectTimeout=%ss, readTimeout=%ss)", this.getProviderName(),
+                            this.getConnectTimeoutSeconds(), this.getReadTimeoutSeconds());
+                }
+            }
+        }
+        return localClient;
+    }
+
+    /**
+     * Set a custom JAX-RS client (primarily for testing).
+     */
+    protected void setClient(final Client client) {
+        synchronized (this) {
+            this.client = client;
+        }
+    }
+
+    /**
+     * Default connection timeout in seconds. Override if necessary.
+     */
+    protected int getConnectTimeoutSeconds() {
+        return 10;
+    }
+
+    /**
+     * Default read timeout in seconds. Override if necessary.
+     */
+    protected int getReadTimeoutSeconds() {
+        return 60;
+    }
+
+    /**
+     * Clean up JAX-RS client resources when the bean is destroyed.
+     */
+    @PreDestroy
+    public void cleanup() {
+        final Client localClient;
+        synchronized (this) {
+            localClient = this.client;
+            this.client = null;
+        }
+        if (localClient != null) {
+            localClient.close();
+            LOG.debugf("Closed %s JAX-RS Client", this.getProviderName());
+        }
+    }
 
     /**
      * The configuration key prefix for this provider (e.g. "openai", "google", "ollama").

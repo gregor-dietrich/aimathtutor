@@ -31,7 +31,9 @@ public abstract class AbstractJaxRsAiServiceTest extends AbstractAiServiceTest {
         this.mockResponse = mock(Response.class);
 
         when(this.mockClient.target(anyString())).thenReturn(this.mockTarget);
+        when(this.mockTarget.path(anyString())).thenReturn(this.mockTarget);
         when(this.mockTarget.request(anyString())).thenReturn(this.mockBuilder);
+        when(this.mockBuilder.header(anyString(), any())).thenReturn(this.mockBuilder);
         when(this.mockBuilder.post(any(Entity.class))).thenReturn(this.mockResponse);
 
         setupClient();
