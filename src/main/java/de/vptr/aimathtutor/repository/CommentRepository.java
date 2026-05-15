@@ -379,6 +379,9 @@ public class CommentRepository extends AbstractRepository {
      * @return the count of comments created by the user within the window
      */
     public long countByUserInLastSeconds(final Long userId, final int seconds) {
+        if (seconds <= 0) {
+            throw new IllegalArgumentException("seconds must be > 0");
+        }
         final var q = this.em.createNativeQuery(
                 "SELECT COUNT(*) FROM comments WHERE user_id = ?1 AND created > CURRENT_TIMESTAMP - CAST(?2 AS interval)");
         q.setParameter(1, userId);
@@ -397,6 +400,9 @@ public class CommentRepository extends AbstractRepository {
      * @return the count of comments created by the user within the window
      */
     public long countByUserInLastDays(final Long userId, final int days) {
+        if (days <= 0) {
+            throw new IllegalArgumentException("days must be > 0");
+        }
         final var q = this.em.createNativeQuery(
                 "SELECT COUNT(*) FROM comments WHERE user_id = ?1 AND created > CURRENT_TIMESTAMP - CAST(?2 AS interval)");
         q.setParameter(1, userId);
