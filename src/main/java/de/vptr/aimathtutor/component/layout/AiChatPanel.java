@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.component.layout;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
@@ -90,10 +91,8 @@ public class AiChatPanel extends VerticalLayout {
         this.addAttachListener(e -> {
             final var page = e.getUI().getPage();
             page.addJavaScript("/js/katex-init.js");
-            page.executeJs(
-                    "setTimeout(function(){" + "  var el=$0; var rect=el.getBoundingClientRect();"
-                            + "  el.style.height=(window.innerHeight-rect.top)+'px';" + "},0);",
-                    this.getElement());
+            page.executeJs("setTimeout(function(){" + "  var el=$0; var rect=el.getBoundingClientRect();"
+                    + "  el.style.height=(window.innerHeight-rect.top)+'px';" + "},0);", this.getElement());
         });
 
         // Chat header
@@ -198,9 +197,11 @@ public class AiChatPanel extends VerticalLayout {
                 mathContent.getStyle().set("margin", "0").set("white-space", "pre-wrap");
                 messageDiv.add(mathContent);
                 final var text = message.message != null ? message.message : "";
-                UI.getCurrent().getPage().executeJs("window.aiMathRender($0, $1)", mathContent.getElement(), text);
+                UI.getCurrent().getPage().executeJs("if (typeof window.aiMathRender === 'function') {"
+                        + "  window.aiMathRender($0, $1);" + "} else {" + "  $0.textContent = $1;" + "}",
+                        mathContent.getElement(), text);
             } else {
-                final var messagePara = new Paragraph(message.message);
+                final var messagePara = new Paragraph(Objects.toString(message.message, ""));
                 messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
                 messageDiv.add(messagePara);
             }

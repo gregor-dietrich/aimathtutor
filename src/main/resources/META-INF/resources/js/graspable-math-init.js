@@ -38,6 +38,8 @@ window.initializeGraspableMath = function () {
         var script = document.createElement("script");
         script.src =
             "https://graspablemath.com/shared/libs/gmath-dist/gmath-3.5.16.min.js";
+        script.setAttribute("integrity", "sha384-9p+ZjtQL+J9FuUVrx2j7QCPyU5TLbgKDWBKEi+93X6oDIzNWbDUL7pz6grZIrFf4");
+        script.setAttribute("crossorigin", "anonymous");
         script.onload = function () {
             console.log("[GM] Library loaded, initializing canvas...");
             setTimeout(initializeCanvas, 500);
@@ -329,6 +331,7 @@ window.graspableMathUtils = {
 
     var observer = new MutationObserver(applyTheme);
     observer.observe(htmlEl, { attributes: true, attributeFilter: ["theme"] });
+    applyTheme();
 }());
 
 console.log("[GM] Script ready");

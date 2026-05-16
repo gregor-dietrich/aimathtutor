@@ -51,14 +51,18 @@
         var link = document.createElement("link");
         link.rel = "stylesheet";
         link.href = BASE + "katex.min.css";
+        link.setAttribute("integrity", "sha384-hW6ZmmePRD2f/9cuxGE6C9faGprtIBOme5OLUiEjtRKMTN67tY23ur9eAi21H8De");
+        link.setAttribute("crossorigin", "anonymous");
         link.setAttribute("data-katex", "1");
         document.head.appendChild(link);
     }
 
-    function loadScript(src, onload) {
+    function loadScript(src, onload, integrity) {
         var s = document.createElement("script");
         s.src = src;
         s.defer = true;
+        s.setAttribute("integrity", integrity);
+        s.setAttribute("crossorigin", "anonymous");
         s.onload = onload;
         s.onerror = function () {
             console.error("[KaTeX] Failed to load:", src);
@@ -67,11 +71,19 @@
     }
 
     loadCss();
-    loadScript(BASE + "katex.min.js", function () {
-        loadScript(BASE + "contrib/auto-render.min.js", function () {
-            flushPending();
-        });
-    });
+    loadScript(
+        BASE + "katex.min.js",
+        function () {
+            loadScript(
+                BASE + "contrib/auto-render.min.js",
+                function () {
+                    flushPending();
+                },
+                "sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz"
+            );
+        },
+        "sha384-FVvsvR4UzyIP8Y5hVvHjOfjVh+LWV78ll63SYx1t+nuuMPGMAihB8dJ2YsYyg1Wb"
+    );
 
     /**
      * Render AI message text into el. Sets textContent first (XSS-safe and a

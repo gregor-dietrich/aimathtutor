@@ -68,13 +68,13 @@ html[theme~="dark"] #gm-keyboard textarea {
 }
 
 /* Help button in the GM toolbar retains a light background that setDarkTheme() misses */
-html[theme~="dark"] .btn-help {
+html[theme~="dark"] #graspable-canvas .btn-help {
     background-color: #3a3a3a !important;
     color: #e0e0e0 !important;
     border-color: #555555 !important;
 }
 
-html[theme~="dark"] .btn-help:hover {
+html[theme~="dark"] #graspable-canvas .btn-help:hover {
     background-color: #4a4a4a !important;
 }
 

@@ -102,7 +102,11 @@ else
     docker build -t "$TAG"-ubuntu -f "$DOCKERFILE_UBUNTU" .
 fi
 
-docker tag "$TAG"-alpine "$TAG"
+if docker image inspect "$TAG"-alpine >/dev/null 2>&1; then
+    docker tag "$TAG"-alpine "$TAG"
+else
+    echo "Warning: local image '$TAG-alpine' not found (buildx cache-only build); skipping docker tag."
+fi
 
 echo "Build completed."
 
