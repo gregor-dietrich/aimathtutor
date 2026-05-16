@@ -460,12 +460,12 @@
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.78</minimum>
+                      <minimum>0.86</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.62</minimum>
+                      <minimum>0.74</minimum>
                     </limit>
                   </limits>
                 </rule>
@@ -475,14 +475,25 @@
         </executions>
         <configuration>
           <excludes>
-            <exclude>de/vptr/aimathtutor/view/**</exclude>
             <exclude>de/vptr/aimathtutor/component/**</exclude>
+            <exclude>de/vptr/aimathtutor/dto/**</exclude>
+            <exclude>de/vptr/aimathtutor/view/**</exclude>
+            <exclude>de/vptr/aimathtutor/AppConfig*</exclude>
+            <exclude>de/vptr/aimathtutor/entity/CommentFlagEntity*</exclude>
+            <exclude>de/vptr/aimathtutor/entity/UserGroupEntity*</exclude>
+            <exclude>de/vptr/aimathtutor/entity/UserGroupMetaEntity*</exclude>
+            <exclude>de/vptr/aimathtutor/event/CommentCreatedEvent.class</exclude>
+            <exclude>de/vptr/aimathtutor/event/CommentCreatedEventBridge*</exclude>
             <exclude>de/vptr/aimathtutor/util/AdminFilterUtil*</exclude>
             <exclude>de/vptr/aimathtutor/util/AdminSearchLayoutFactory*</exclude>
             <exclude>de/vptr/aimathtutor/util/AiChatUtil*</exclude>
+            <exclude>de/vptr/aimathtutor/util/AsyncDataLoader.class</exclude>
+            <exclude>de/vptr/aimathtutor/util/GraspableMathConnector.class</exclude>
             <exclude>de/vptr/aimathtutor/util/LayoutNavigationUtil*</exclude>
             <exclude>de/vptr/aimathtutor/util/NotificationUtil*</exclude>
             <exclude>de/vptr/aimathtutor/util/PasswordUtil.class</exclude>
+            <exclude>de/vptr/aimathtutor/util/GraspableEventFactory*</exclude>
+            <exclude>de/vptr/aimathtutor/util/ExecutorShutdownUtil*</exclude>
           </excludes>
         </configuration>
       </plugin>

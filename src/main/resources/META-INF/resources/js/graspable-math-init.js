@@ -37,7 +37,9 @@ window.initializeGraspableMath = function () {
         // Load the actual library script
         var script = document.createElement("script");
         script.src =
-            "https://graspablemath.com/shared/libs/gmath-dist/gmath-3.5.13.min.js";
+            "https://graspablemath.com/shared/libs/gmath-dist/gmath-3.5.16.min.js";
+        script.setAttribute("integrity", "sha384-9p+ZjtQL+J9FuUVrx2j7QCPyU5TLbgKDWBKEi+93X6oDIzNWbDUL7pz6grZIrFf4");
+        script.setAttribute("crossorigin", "anonymous");
         script.onload = function () {
             console.log("[GM] Library loaded, initializing canvas...");
             setTimeout(initializeCanvas, 500);
@@ -180,15 +182,15 @@ window.graspableMathUtils = {
             // Split equation by semicolon to handle multiple equations (e.g., systems of equations)
             var equations = equation.split(';').map(function(eq) { return eq.trim(); }).filter(function(eq) { return eq.length > 0; });
             console.log("[GM] Split into", equations.length, "equation(s):", equations);
-            
+
             var startY = y || 50;
             var spacing = 80; // Vertical spacing between equations
-            
+
             // Create a derivation for each equation
             equations.forEach(function(eq, index) {
                 var currentY = startY + (index * spacing);
                 console.log("[GM] Creating derivation for equation", index + 1, ":", eq, "at y =", currentY);
-                
+
                 var derivation = window.graspableCanvas.model.createElement(
                     "derivation",
                     {
@@ -201,35 +203,35 @@ window.graspableMathUtils = {
                 // Set up event listener for this derivation
                 if (derivation && derivation.events) {
                 var lastKnownEq = derivation.getLastModel().to_ascii();
-                
+
                 derivation.events.on("change", function (event) {
                     try {
                         var currentEq = derivation.getLastModel().to_ascii();
                         console.log("[GM] Change event:", event);
                         console.log("[GM] Equation changed to:", currentEq);
                         console.log("[GM] Derivation rows count:", derivation.rows ? derivation.rows.length : "no rows");
-                        
+
                         // Try to get more detailed action information
                         var actionType = "math_step"; // Changed default to be more specific
                         var actionDetails = null;
                         var beforeEq = lastKnownEq;
-                        
+
                         // Try multiple ways to access row information
                         if (derivation.rows && derivation.rows.length > 0) {
                             console.log("[GM] Total rows:", derivation.rows.length);
-                            
+
                             // Get the last row (most recent action)
                             var lastRow = derivation.rows[derivation.rows.length - 1];
                             console.log("[GM] Last row:", lastRow);
-                            
+
                             // Check if this row has an action
                             if (lastRow && lastRow.action) {
                                 console.log("[GM] Action found:", lastRow.action);
                                 console.log("[GM] Action name:", lastRow.action.name);
                                 console.log("[GM] Action type:", lastRow.action.type);
-                                
+
                                 actionType = lastRow.action.name || lastRow.action.type || "math_step";
-                                
+
                                 // Try to get action details/description
                                 if (lastRow.action.description) {
                                     actionDetails = lastRow.action.description;
@@ -237,7 +239,7 @@ window.graspableMathUtils = {
                                     actionDetails = lastRow.action.label;
                                 }
                             }
-                            
+
                             // Get the before equation from the previous row if available
                             if (derivation.rows.length > 1) {
                                 var prevRow = derivation.rows[derivation.rows.length - 2];
@@ -246,17 +248,17 @@ window.graspableMathUtils = {
                                 }
                             }
                         }
-                        
+
                         console.log("[GM] Action type:", actionType);
                         console.log("[GM] Before:", beforeEq, "-> After:", currentEq);
-                        
+
                         handleGraspableEvent({
                             type: actionType,
                             before: beforeEq,
                             after: currentEq,
                             details: actionDetails,
                         });
-                        
+
                         // Update last known equation
                         lastKnownEq = currentEq;
                     } catch (error) {
@@ -271,7 +273,7 @@ window.graspableMathUtils = {
                         lastKnownEq = derivation.getLastModel().to_ascii();
                     }
                 });
-                
+
                 // Also listen to mistake events
                 derivation.events.on("mistake", function (model) {
                     console.log("[GM] Mistake event - invalid action attempted");
@@ -282,7 +284,7 @@ window.graspableMathUtils = {
                     //     after: model.to_ascii(),
                     // });
                 });
-                
+
                 // Listen to undo events
                 derivation.events.on("undo", function () {
                     console.log("[GM] Undo event");
@@ -292,7 +294,7 @@ window.graspableMathUtils = {
                         after: derivation.getLastModel().to_ascii(),
                     });
                 });
-                
+
                 // Listen to redo events
                 derivation.events.on("redo", function () {
                     console.log("[GM] Redo event");
@@ -312,5 +314,24 @@ window.graspableMathUtils = {
         }
     },
 };
+
+// Re-apply dark/light theme when the Vaadin theme attribute changes
+(function () {
+    var htmlEl = document.documentElement;
+    var lastTheme = null;
+
+    function applyTheme() {
+        if (!window.gmath || !window.gmath.setDarkTheme) return;
+        var isDark = htmlEl.hasAttribute("theme") && htmlEl.getAttribute("theme").includes("dark");
+        if (isDark === lastTheme) return;
+        lastTheme = isDark;
+        window.gmath.setDarkTheme(isDark);
+        console.log("[GM] Theme changed, setDarkTheme(" + isDark + ")");
+    }
+
+    var observer = new MutationObserver(applyTheme);
+    observer.observe(htmlEl, { attributes: true, attributeFilter: ["theme"] });
+    applyTheme();
+}());
 
 console.log("[GM] Script ready");

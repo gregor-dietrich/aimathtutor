@@ -1,11 +1,13 @@
 package de.vptr.aimathtutor.service.security;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,15 @@ public class EncryptionKeyManagerTest {
     private void initWithTempHome(final EncryptionKeyManager km) {
         final String originalHome = System.getProperty("user.home");
         try {
+            // Manually initialize injected fields for unit test (no CDI)
+            try {
+                final Field keyFileField = EncryptionKeyManager.class.getDeclaredField("keyFile");
+                keyFileField.setAccessible(true);
+                keyFileField.set(km, Optional.empty());
+            } catch (final NoSuchFieldException | IllegalAccessException e) {
+                throw new IllegalStateException("Failed to set keyFile field via reflection", e);
+            }
+
             System.setProperty("user.home", this.tempDir.toString());
             km.init();
         } finally {

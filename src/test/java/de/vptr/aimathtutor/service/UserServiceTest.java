@@ -4,15 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -20,6 +27,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -27,6 +35,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
 @SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
@@ -536,6 +545,189 @@ class UserServiceTest {
         userDto.password = "Lowercas3";
 
         assertThrows(ValidationException.class, () -> this.userService.createUser(userDto));
+    }
+
+    @Test
+    @DisplayName("getCurrentUser throws UNAUTHORIZED when no active session exists")
+    void testGetCurrentUser_noSession_throwsUnauthorized() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(null);
+            final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
+            assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), ex.getResponse().getStatus());
+        }
+    }
+
+    @Test
+    @DisplayName("getCurrentUser throws UNAUTHORIZED when session has no username attribute")
+    void testGetCurrentUser_nullUsername_throwsUnauthorized() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn(null);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
+            assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), ex.getResponse().getStatus());
+        }
+    }
+
+    @Test
+    @DisplayName("getCurrentUser returns user DTO when session has valid username")
+    void testGetCurrentUser_validSession_returnsUser() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn("admin");
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            final UserViewDto result = this.userService.getCurrentUser();
+            assertNotNull(result);
+            assertEquals("admin", result.username);
+        }
+    }
+
+    @Test
+    @DisplayName("getCurrentUser throws NOT_FOUND when session username has no matching user")
+    void testGetCurrentUser_userNotFound_throwsNotFound() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn("no_such_user_xyz999");
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
+            assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
+        }
+    }
+
+    @Test
+    @DisplayName("updateUser throws ValidationException when new email is already in use")
+    @TestTransaction
+    void testUpdateUser_duplicateEmail_throwsValidationException() {
+        final UserDto first = this.buildValidDto();
+        this.userService.createUser(first);
+        final UserDto second = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(second);
+
+        final UserDto update = new UserDto();
+        update.username = second.username;
+        update.email = first.email;
+        update.password = VALID_PASSWORD;
+
+        assertThrows(ValidationException.class, () -> this.userService.updateUser(created.publicId, update));
+    }
+
+    @Test
+    @DisplayName("patchUser throws ValidationException when new username is already taken")
+    @TestTransaction
+    void testPatchUser_duplicateUsername_throwsValidationException() {
+        final UserDto first = this.buildValidDto();
+        this.userService.createUser(first);
+        final UserDto second = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(second);
+
+        final UserDto patch = new UserDto();
+        patch.username = first.username;
+
+        assertThrows(ValidationException.class, () -> this.userService.patchUser(created.publicId, patch));
+    }
+
+    @Test
+    @DisplayName("patchUser throws ValidationException when new email is already in use")
+    @TestTransaction
+    void testPatchUser_duplicateEmail_throwsValidationException() {
+        final UserDto first = this.buildValidDto();
+        this.userService.createUser(first);
+        final UserDto second = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(second);
+
+        final UserDto patch = new UserDto();
+        patch.email = first.email;
+
+        assertThrows(ValidationException.class, () -> this.userService.patchUser(created.publicId, patch));
+    }
+
+    @Test
+    @DisplayName("patchUser with blank email normalizes to null and clears the stored email")
+    @TestTransaction
+    void testPatchUser_blankEmail_normalizesToNull() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final UserDto patch = new UserDto();
+        patch.email = "";
+
+        final UserViewDto patched = this.userService.patchUser(created.publicId, patch);
+        assertNull(patched.email);
+    }
+
+    @Test
+    @DisplayName("createUser with explicit banned, activated, and activationKey applies those values")
+    @TestTransaction
+    void testCreateUser_withExplicitBooleans_setBannedAndActivated() {
+        final UserDto dto = this.buildValidDto();
+        dto.banned = true;
+        dto.activated = true;
+        dto.activationKey = "custom-activation-key";
+
+        final UserViewDto created = this.userService.createUser(dto);
+        assertNotNull(created);
+        assertTrue(created.activated != null && created.activated);
+        assertTrue(created.banned != null && created.banned);
+
+        final var saved = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        assertTrue(saved.activated);
+        assertTrue(saved.banned);
+        assertEquals("custom-activation-key", saved.activationKey);
+    }
+
+    @Test
+    @DisplayName("createUser with unknown rankPublicId throws ValidationException")
+    @TestTransaction
+    void testCreateUser_unknownRankPublicId_throwsValidationException() {
+        final UserDto dto = this.buildValidDto();
+        dto.rankPublicId = "00000000000000000000000000";
+        assertThrows(ValidationException.class, () -> this.userService.createUser(dto));
+    }
+
+    @Test
+    @DisplayName("createUser with password exceeding maximum length throws ValidationException")
+    @TestTransaction
+    void testCreateUser_passwordTooLong_throwsValidationException() {
+        final UserDto dto = this.buildValidDto();
+        dto.password = "A1!" + "a".repeat(100);
+        assertThrows(ValidationException.class, () -> this.userService.createUser(dto));
+    }
+
+    @Test
+    @DisplayName("updateAvatars throws ValidationException for blank tutor emoji")
+    @TestTransaction
+    void testUpdateAvatars_blankTutorEmoji_throwsValidationException() {
+        final var entity = this.createAndFetchUser();
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "🧑", ""));
+    }
+
+    @Test
+    @DisplayName("updateAvatars throws ValidationException for null user emoji")
+    @TestTransaction
+    void testUpdateAvatars_nullUserEmoji_throwsValidationException() {
+        final var entity = this.createAndFetchUser();
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, null, "🤖"));
+    }
+
+    @Test
+    @DisplayName("updateAvatars throws ValidationException for null tutor emoji")
+    @TestTransaction
+    void testUpdateAvatars_nullTutorEmoji_throwsValidationException() {
+        final var entity = this.createAndFetchUser();
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "🧑", null));
+    }
+
+    @Test
+    @DisplayName("patchUser with invalid rankPublicId throws ValidationException")
+    @TestTransaction
+    void testPatchUser_invalidRankPublicId_throwsValidationException() {
+        final UserDto dto = this.buildValidDto();
+        final UserViewDto created = this.userService.createUser(dto);
+
+        final UserDto patch = new UserDto();
+        patch.rankPublicId = "00000000000000000000000000";
+
+        assertThrows(ValidationException.class, () -> this.userService.patchUser(created.publicId, patch));
     }
 
     private UserEntity createAndFetchUser() {

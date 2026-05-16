@@ -3,8 +3,12 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,12 +17,17 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -40,6 +49,9 @@ class UserRankServiceTest {
 
     @Inject
     UserRankRepository userRankRepository;
+
+    @Inject
+    UserRepository userRepository;
 
     @Inject
     UserService userService;
@@ -275,6 +287,50 @@ class UserRankServiceTest {
     void testDeleteRank_notFound() {
         final boolean deleted = this.userRankService.deleteRank("00000000000000000000000000");
         assertFalse(deleted);
+    }
+
+    @Test
+    @DisplayName("getCurrentUserRank returns null when no VaadinSession exists")
+    void testCurrentUserRank_withNullSession() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(null);
+            assertNull(this.userRankService.getCurrentUserRank());
+        }
+    }
+
+    @Test
+    @DisplayName("getCurrentUserRank returns null when session has no username attribute")
+    void testCurrentUserRank_withNullUsername() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn(null);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+            assertNull(this.userRankService.getCurrentUserRank());
+        }
+    }
+
+    @Test
+    @DisplayName("getCurrentUserRank returns rank DTO when session has username and user has a rank")
+    @TestTransaction
+    void testCurrentUserRank_withValidSessionAndRank() {
+        final UserRankDto rankDto = new UserRankDto();
+        rankDto.name = "CurrentRankTest_" + UUID.randomUUID().toString().substring(0, 8);
+        final UserRankViewDto rank = this.userRankService.createRank(rankDto);
+
+        final var admin = this.userRepository.findByUsername("admin");
+        assertNotNull(admin, "Seeded admin must exist");
+        admin.rank = this.userRankRepository.findByPublicId(rank.publicId).orElseThrow();
+        this.userRepository.persist(admin);
+
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn("admin");
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            final UserRankViewDto result = this.userRankService.getCurrentUserRank();
+            assertNotNull(result);
+            assertEquals(rank.name, result.name);
+        }
     }
 
     @Test

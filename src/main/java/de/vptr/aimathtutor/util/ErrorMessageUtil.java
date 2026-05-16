@@ -23,7 +23,7 @@ public final class ErrorMessageUtil {
      * Extracts error message from HTTP response body. Attempts to parse structured error response, falls back to status
      * text.
      */
-    public static String extractErrorMessage(final Response response) {
+    public static String extractErrorMessage(@Nullable final Response response) {
         final int status = response != null ? response.getStatus() : -1;
         try {
             if (response == null) {

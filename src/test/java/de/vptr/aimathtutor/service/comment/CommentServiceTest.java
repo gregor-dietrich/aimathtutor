@@ -10,7 +10,10 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +38,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
-import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
@@ -604,6 +606,109 @@ class CommentServiceTest {
         // Use a different user to flag (can't flag own comment)
         this.commentService.flagComment(created.publicId, otherStudent.id, "inappropriate");
         // Should complete without exception
+    }
+
+    @Test
+    @DisplayName("searchComments(null) returns empty list")
+    void testSearchComments_null() {
+        assertTrue(this.commentService.searchComments(null).isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByDateRange returns results for valid date strings")
+    @TestTransaction
+    void testFindByDateRange_validDates() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "date range test";
+        dto.exercisePublicId = exercise.publicId;
+        this.commentService.createComment(dto, student.id);
+
+        final String today = LocalDate.now(ZoneId.systemDefault()).toString();
+        final String tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1).toString();
+        final var results = this.commentService.findByDateRange(today, tomorrow);
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("deleteComment throws NOT_FOUND for non-existent publicId")
+    @TestTransaction
+    void testDeleteComment_notFound() {
+        final var student = this.userRepository.findByUsername("student1");
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.commentService.deleteComment("00000000000000000000000000", student.id, false));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("listCommentsByExercise with non-null parentPublicId returns replies")
+    @TestTransaction
+    void testListCommentsByExercise_withParent() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+
+        final var parentDto = new CommentDto();
+        parentDto.content = "parent";
+        parentDto.exercisePublicId = exercise.publicId;
+        final var parent = this.commentService.createComment(parentDto, student.id);
+
+        final var replyDto = new CommentDto();
+        replyDto.content = "a reply";
+        replyDto.exercisePublicId = exercise.publicId;
+        replyDto.parentCommentPublicId = parent.publicId;
+        this.commentService.createComment(replyDto, student.id);
+
+        final var replies = this.commentService.listCommentsByExercise(exercise.id, 0, 10, parent.publicId);
+        assertNotNull(replies);
+        assertFalse(replies.isEmpty());
+    }
+
+    @Test
+    @DisplayName("editComment throws NOT_FOUND for non-existent publicId")
+    @TestTransaction
+    void testEditComment_notFound() {
+        final var student = this.userRepository.findByUsername("student1");
+        final var editDto = new CommentDto();
+        editDto.content = "edited content";
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.commentService.editComment("00000000000000000000000000", editDto, student.id));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("deleteComment throws BAD_REQUEST when requester is not found")
+    @TestTransaction
+    void testDeleteComment_requesterNotFound() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "comment to delete";
+        dto.exercisePublicId = exercise.publicId;
+        final var created = this.commentService.createComment(dto, student.id);
+
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.commentService.deleteComment(created.publicId, -999L, true));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("editComment throws BAD_REQUEST when editor is not found")
+    @TestTransaction
+    void testEditComment_editorNotFound() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student1");
+        final var dto = new CommentDto();
+        dto.content = "comment to edit";
+        dto.exercisePublicId = exercise.publicId;
+        final var created = this.commentService.createComment(dto, student.id);
+
+        final var editDto = new CommentDto();
+        editDto.content = "new content";
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.commentService.editComment(created.publicId, editDto, -999L));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test

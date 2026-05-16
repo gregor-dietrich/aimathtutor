@@ -34,7 +34,7 @@ clean:
 	@scripts/clean.sh
 
 coverage:
-	@scripts/coverage.sh -o
+	@scripts/coverage.sh
 
 dev:
 	@scripts/dev.sh

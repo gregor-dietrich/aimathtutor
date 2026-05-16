@@ -1,7 +1,9 @@
 package de.vptr.aimathtutor.service.security;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
+import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,6 +18,9 @@ public class PermissionService {
 
     @Inject
     UserRankService userRankService;
+
+    @Inject
+    UserRepository userRepository;
 
     private void require(@Nullable final Boolean permission, final String action) {
         if (!Boolean.TRUE.equals(permission)) {
@@ -99,6 +104,31 @@ public class PermissionService {
 
     public void requireUserGroupDelete() {
         this.require(this.getCurrentRank().userGroupDelete, "delete user groups");
+    }
+
+    // AI config permissions (userId-based, for use in async/non-session contexts)
+
+    /**
+     * Checks that the user identified by {@code userId} has permission to edit AI configuration. Intended for async
+     * contexts where no Vaadin session is available. Returns the resolved {@link UserEntity} so callers can use it for
+     * audit-trail purposes without a second DB lookup.
+     *
+     * @param userId
+     *            the ID of the user to authorise
+     * @return the resolved {@link UserEntity}
+     * @throws PermissionDeniedException
+     *             if the user does not exist, has no rank, or lacks the required permissions
+     */
+    public UserEntity requireAiConfigEdit(final Long userId) {
+        final UserEntity user = this.userRepository.findById(userId);
+        if (user == null || user.rank == null) {
+            throw new PermissionDeniedException("You do not have permission to edit AI configuration");
+        }
+        final var rank = new UserRankViewDto(user.rank);
+        if (!rank.hasAnyExercisePermission() && !rank.hasAnyLessonPermission()) {
+            throw new PermissionDeniedException("You do not have permission to edit AI configuration");
+        }
+        return user;
     }
 
     // User rank permissions

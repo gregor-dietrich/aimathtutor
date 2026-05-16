@@ -75,7 +75,7 @@ class AbstractProviderServiceTest {
     @Test
     @DisplayName("isApiKeyConfigured returns false for unresolved placeholder")
     void testIsApiKeyConfigured_placeholder() {
-        assertFalse(AbstractProviderService.isApiKeyConfigured("${GOOGLE_API_KEY}"));
+        assertFalse(AbstractProviderService.isApiKeyConfigured("${app.google.api.key}"));
     }
 
     @Test
@@ -87,14 +87,14 @@ class AbstractProviderServiceTest {
     @Test
     @DisplayName("requireApiKey throws NonRetryableProviderException for null key")
     void testRequireApiKey_throwsWhenKeyNull() {
-        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireApiKey(null, "TEST_API_KEY"));
+        assertThrows(NonRetryableProviderException.class, () -> PROVIDER.callRequireApiKey(null, "app.test.api.key"));
     }
 
     @Test
     @DisplayName("requireApiKey throws NonRetryableProviderException for placeholder key")
     void testRequireApiKey_throwsWhenKeyPlaceholder() {
         assertThrows(NonRetryableProviderException.class,
-                () -> PROVIDER.callRequireApiKey("${TEST_KEY}", "TEST_API_KEY"));
+                () -> PROVIDER.callRequireApiKey("${TEST_KEY}", "app.test.api.key"));
     }
 
     @Test

@@ -29,6 +29,8 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
@@ -168,8 +170,7 @@ class ExerciseServiceTest {
     @DisplayName("Should find exercise by id and route through completion enrichment")
     @TestTransaction
     void shouldFindExerciseById() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
         final var found = this.exerciseService.findById(created.id);
 
@@ -230,8 +231,7 @@ class ExerciseServiceTest {
     @DisplayName("Should delete exercise by id")
     @TestTransaction
     void shouldDeleteExercise() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
         final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
@@ -243,8 +243,7 @@ class ExerciseServiceTest {
     @DisplayName("updateExercise replaces all fields")
     @TestTransaction
     void testUpdateExercise_replacesFields() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(false));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
 
         final ExerciseDto update = new ExerciseDto();
         update.title = "Updated Title";
@@ -264,8 +263,7 @@ class ExerciseServiceTest {
     @DisplayName("patchExercise updates only the provided field")
     @TestTransaction
     void testPatchExercise_updatesProvidedField() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(false));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
 
         final ExerciseDto patch = new ExerciseDto();
         patch.published = true;
@@ -351,8 +349,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with today's range includes recently created exercise")
     @TestTransaction
     void testFindByDateRange_today() {
-        final ExerciseViewDto created =
-                this.exerciseService.createExercise(this.buildDto(true));
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
         final String today = LocalDate.now(ZoneId.systemDefault()).toString();
         final var results = this.exerciseService.findByDateRange(today, today);
         assertNotNull(results);
@@ -366,6 +363,170 @@ class ExerciseServiceTest {
     void testFindByPublicId_notFound() {
         final var result = this.exerciseService.findByPublicId("00000000000000000000000000");
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("createExercise throws ValidationException for unknown lessonPublicId")
+    @TestTransaction
+    void createExercise_lessonNotFound_throwsValidationException() {
+        final ExerciseDto dto = this.buildDto(true);
+        dto.lessonPublicId = "00000000000000000000nonexistent";
+        assertThrows(ValidationException.class, () -> this.exerciseService.createExercise(dto));
+    }
+
+    @Test
+    @DisplayName("updateExercise throws ValidationException for graspable exercise without target expression")
+    @TestTransaction
+    void updateExercise_graspableWithoutTarget_throwsValidationException() {
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
+
+        final ExerciseDto update = new ExerciseDto();
+        update.title = "Updated Title";
+        update.content = "Updated content";
+        update.graspableEnabled = Boolean.TRUE;
+        update.graspableTargetExpression = null;
+
+        assertThrows(ValidationException.class, () -> this.exerciseService.updateExercise(created.publicId, update));
+    }
+
+    @Test
+    @DisplayName("patchExercise throws NOT_FOUND for unknown publicId")
+    @TestTransaction
+    void patchExercise_notFound_throwsNotFound() {
+        final ExerciseDto patch = new ExerciseDto();
+        patch.published = true;
+
+        final var thrown = assertThrows(WebApplicationException.class,
+                () -> this.exerciseService.patchExercise("00000000000000000000nonexistent", patch));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("findByDateRange with invalid date format returns empty list")
+    @TestTransaction
+    void findByDateRange_invalidFormat_returnsEmpty() {
+        final var results = this.exerciseService.findByDateRange("not-a-date", "also-not-a-date");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("patchExercise updates graspable fields when provided")
+    @TestTransaction
+    void patchExercise_updatesGraspableFields() {
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
+
+        final ExerciseDto patch = new ExerciseDto();
+        patch.graspableEnabled = Boolean.TRUE;
+        patch.graspableTargetExpression = "x = 5";
+        patch.graspableInitialExpression = "x + 1 = 6";
+
+        final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
+
+        assertEquals(Boolean.TRUE, patched.graspableEnabled);
+        assertEquals("x = 5", patched.graspableTargetExpression);
+    }
+
+    @Test
+    @DisplayName("patchExercise attaches lesson when lessonPublicId provided")
+    @TestTransaction
+    void patchExercise_attachesLesson() {
+        final var lessonEntity = new LessonEntity();
+        lessonEntity.name = "patch_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
+
+        final ExerciseDto patch = new ExerciseDto();
+        patch.lessonPublicId = lesson.publicId;
+        final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
+
+        assertEquals(lesson.publicId, patched.lessonPublicId);
+    }
+
+    @Test
+    @DisplayName("patchExercise updates title and content when provided as non-blank values")
+    @TestTransaction
+    void testPatchExercise_updatesTitleAndContent() {
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
+
+        final ExerciseDto patch = new ExerciseDto();
+        patch.title = "Patched Title";
+        patch.content = "Patched content text";
+
+        final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
+
+        assertEquals("Patched Title", patched.title);
+        assertEquals("Patched content text", patched.content);
+    }
+
+    @Test
+    @DisplayName("findByDateRange with null endDate returns empty list")
+    @TestTransaction
+    void testFindByDateRange_nullEndDate_returnsEmpty() {
+        final var results = this.exerciseService.findByDateRange("2024-01-01", null);
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("createExercise with blank graspableTargetExpression throws ValidationException")
+    @TestTransaction
+    void createExercise_graspableWithBlankTarget_throwsValidationException() {
+        final ExerciseDto dto = this.buildDto(false);
+        dto.graspableEnabled = Boolean.TRUE;
+        dto.graspableTargetExpression = "   ";
+        assertThrows(ValidationException.class, () -> this.exerciseService.createExercise(dto));
+    }
+
+    @Test
+    @DisplayName("updateExercise with valid lessonPublicId attaches the lesson")
+    @TestTransaction
+    void testUpdateExercise_withValidLesson_attachesLesson() {
+        final var lessonEntity = new LessonEntity();
+        lessonEntity.name = "upd_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
+
+        final ExerciseDto update = new ExerciseDto();
+        update.title = "Updated";
+        update.content = "Updated content";
+        update.lessonPublicId = lesson.publicId;
+        final ExerciseViewDto updated = this.exerciseService.updateExercise(created.publicId, update);
+
+        assertEquals(lesson.publicId, updated.lessonPublicId);
+    }
+
+    @Test
+    @DisplayName("updateExercise throws ValidationException for unknown lessonPublicId")
+    @TestTransaction
+    void testUpdateExercise_withInvalidLesson_throwsValidationException() {
+        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(false));
+
+        final ExerciseDto update = new ExerciseDto();
+        update.title = "Title";
+        update.content = "Content";
+        update.lessonPublicId = "00000000000000000000nonexistent";
+
+        assertThrows(ValidationException.class, () -> this.exerciseService.updateExercise(created.publicId, update));
+    }
+
+    @Test
+    @DisplayName("patchExercise with blank lessonPublicId keeps the existing lesson (clearIfMissing=false)")
+    @TestTransaction
+    void testPatchExercise_withBlankLessonPublicId_keepsExistingLesson() {
+        final var lessonEntity = new LessonEntity();
+        lessonEntity.name = "pk_lesson_" + UUID.randomUUID().toString().substring(0, 8);
+        final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
+
+        final ExerciseDto dto = this.buildDto(true);
+        dto.lessonPublicId = lesson.publicId;
+        final ExerciseViewDto created = this.exerciseService.createExercise(dto);
+
+        final ExerciseDto patch = new ExerciseDto();
+        patch.lessonPublicId = "";
+        final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
+
+        assertEquals(lesson.publicId, patched.lessonPublicId);
     }
 
     @Test

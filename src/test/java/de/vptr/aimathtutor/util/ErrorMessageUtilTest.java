@@ -221,4 +221,76 @@ class ErrorMessageUtilTest {
         // Then
         assertEquals("Error with spaces", result);
     }
+
+    @Test
+    @DisplayName("Should return HTTP -1 when response is null")
+    void shouldReturnHttpMinusOneWhenResponseIsNull() {
+        final String result = ErrorMessageUtil.extractErrorMessage(null);
+        assertEquals("HTTP -1", result);
+    }
+
+    @Test
+    @DisplayName("Should return trimmed body when JSON has no message field")
+    void shouldReturnTrimmedBodyWhenJsonHasNoMessageField() {
+        String jsonResponse = "{\"error\":\"bad request\",\"code\":400}";
+        when(response.hasEntity()).thenReturn(true);
+        when(response.getStatus()).thenReturn(400);
+        when(response.readEntity(String.class)).thenReturn(jsonResponse);
+
+        String result = ErrorMessageUtil.extractErrorMessage(response);
+
+        assertEquals(jsonResponse, result);
+    }
+
+    @Test
+    @DisplayName("Should return body when nested error object has no message sub-field")
+    void shouldReturnBodyWhenNestedErrorHasNoMessageSubField() {
+        String jsonResponse = "{\"error\":{\"code\":404},\"status\":404}";
+        when(response.hasEntity()).thenReturn(true);
+        when(response.getStatus()).thenReturn(404);
+        when(response.readEntity(String.class)).thenReturn(jsonResponse);
+
+        String result = ErrorMessageUtil.extractErrorMessage(response);
+
+        assertEquals(jsonResponse, result);
+    }
+
+    @Test
+    @DisplayName("Should return body when nested error.message is non-textual value")
+    void shouldReturnBodyWhenNestedErrorMessageIsNonTextual() {
+        String jsonResponse = "{\"error\":{\"message\":123}}";
+        when(response.hasEntity()).thenReturn(true);
+        when(response.getStatus()).thenReturn(500);
+        when(response.readEntity(String.class)).thenReturn(jsonResponse);
+
+        String result = ErrorMessageUtil.extractErrorMessage(response);
+
+        assertEquals(jsonResponse, result);
+    }
+
+    @Test
+    @DisplayName("Should return body when JSON parse fails and string is unterminated")
+    void shouldReturnBodyWhenStringIsUnterminated() {
+        String malformedJson = "{\"message\": \"unterminated";
+        when(response.hasEntity()).thenReturn(true);
+        when(response.getStatus()).thenReturn(400);
+        when(response.readEntity(String.class)).thenReturn(malformedJson);
+
+        String result = ErrorMessageUtil.extractErrorMessage(response);
+
+        assertEquals(malformedJson, result);
+    }
+
+    @Test
+    @DisplayName("Should return body when message value is a non-string JSON literal")
+    void shouldReturnBodyWhenMessageValueIsNonStringLiteral() {
+        String jsonResponse = "{\"message\":null}";
+        when(response.hasEntity()).thenReturn(true);
+        when(response.getStatus()).thenReturn(500);
+        when(response.readEntity(String.class)).thenReturn(jsonResponse);
+
+        String result = ErrorMessageUtil.extractErrorMessage(response);
+
+        assertEquals(jsonResponse, result);
+    }
 }

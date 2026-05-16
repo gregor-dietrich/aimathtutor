@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.AiFeedbackDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
@@ -21,8 +23,6 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockito.Mockito;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")

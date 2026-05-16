@@ -246,6 +246,64 @@ class UserGroupServiceTest {
     }
 
     @Test
+    @DisplayName("patchGroup throws NOT_FOUND for unknown group id")
+    @TestTransaction
+    void patchGroup_notFound_throwsNotFound() {
+        final UserGroupDto patch = new UserGroupDto();
+        patch.name = "Irrelevant";
+        final var thrown =
+                assertThrows(WebApplicationException.class, () -> this.userGroupService.patchGroup(-999L, patch));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("addUserToGroup throws NOT_FOUND for unknown userPublicId")
+    @TestTransaction
+    void addUserToGroup_userNotFound_throwsNotFound() {
+        final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
+        final var thrown = assertThrows(WebApplicationException.class,
+                () -> this.userGroupService.addUserToGroup("00000000000000000000nonexistent", group.publicId));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("addUserToGroup throws NOT_FOUND for unknown groupPublicId")
+    @TestTransaction
+    void addUserToGroup_groupNotFound_throwsNotFound() {
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "Seeded student1 should exist");
+        final var thrown = assertThrows(WebApplicationException.class,
+                () -> this.userGroupService.addUserToGroup(student.publicId, "00000000000000000000nonexistent"));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("removeUserFromGroup returns false when user is not a member")
+    @TestTransaction
+    void removeUserFromGroup_notMember_returnsFalse() {
+        final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
+        final var student = this.userRepository.findByUsername("student1");
+        assertNotNull(student, "Seeded student1 should exist");
+        final boolean removed = this.userGroupService.removeUserFromGroup(student.publicId, group.publicId);
+        assertFalse(removed);
+    }
+
+    @Test
+    @DisplayName("searchGroups with matching query returns results")
+    @TestTransaction
+    void testSearchGroups_match() {
+        final UserGroupDto dto = this.buildDto();
+        final String uniqueName = "AlgebraSearchGroup_" + UUID.randomUUID().toString().substring(0, 8);
+        dto.name = uniqueName;
+        this.userGroupService.createGroup(dto);
+
+        final var results = this.userGroupService.searchGroups(uniqueName);
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().anyMatch(g -> uniqueName.equals(g.name)));
+    }
+
+    @Test
     @DisplayName("getGroupsForUser returns groups after adding user")
     @TestTransaction
     void testGetGroupsForUser_returnsMembership() {

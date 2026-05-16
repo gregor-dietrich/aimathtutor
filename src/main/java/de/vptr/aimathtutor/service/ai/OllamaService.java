@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
@@ -14,11 +13,8 @@ import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import de.vptr.aimathtutor.exception.ProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -42,9 +38,6 @@ public class OllamaService extends AbstractProviderService {
     @ConfigProperty(name = "ollama.client.read-timeout-seconds", defaultValue = "60")
     int readTimeoutSeconds;
 
-    @Nullable
-    private volatile Client client;
-
     @Override
     protected String getConfigPrefix() {
         return AiConfigKeys.OLLAMA_PREFIX;
@@ -60,40 +53,22 @@ public class OllamaService extends AbstractProviderService {
         return "Ollama";
     }
 
+    @Override
+    protected int getConnectTimeoutSeconds() {
+        return this.connectTimeoutSeconds;
+    }
+
+    @Override
+    protected int getReadTimeoutSeconds() {
+        return this.readTimeoutSeconds;
+    }
+
     /**
      * Ollama is configured when the server is reachable; no API key is required.
      */
     @Override
     public boolean isConfigured() {
         return this.isAvailable();
-    }
-
-    /**
-     * Get or create the JAX-RS client with thread-safe lazy initialization. This avoids creating the client if Ollama
-     * is not the active AI provider.
-     *
-     * @return The configured JAX-RS Client instance
-     */
-    private synchronized Client getClient() {
-        if (this.client == null) {
-            this.client = ClientBuilder.newBuilder().connectTimeout(this.connectTimeoutSeconds, TimeUnit.SECONDS)
-                    .readTimeout(this.readTimeoutSeconds, TimeUnit.SECONDS).build();
-            LOG.debugf("Initialized Ollama JAX-RS Client (connectTimeout=%ss, readTimeout=%ss)",
-                    this.connectTimeoutSeconds, this.readTimeoutSeconds);
-        }
-        return this.client;
-    }
-
-    /**
-     * Clean up resources when the bean is destroyed. Synchronized to ensure consistent access to the client field.
-     */
-    @PreDestroy
-    synchronized void cleanup() {
-        if (this.client != null) {
-            this.client.close();
-            this.client = null;
-            LOG.debug("Closed Ollama JAX-RS Client");
-        }
     }
 
     /**

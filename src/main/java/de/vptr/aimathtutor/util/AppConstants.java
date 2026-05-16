@@ -122,4 +122,66 @@ public final class AppConstants {
 
     /** Message shown when an exercise is solved correctly. */
     public static final String EXERCISE_SOLVED_MESSAGE = "🎉 Congratulations! You've solved the problem correctly!";
+
+    /** Vaadin session attribute key for the authenticated username. */
+    public static final String SESSION_KEY_USERNAME = "authenticated.username";
+
+    // Keep these in sync with the corresponding rows in sql/init.sql.
+    // Assigned in a static initializer (not as constant-expression field
+    // initializers) so the literals are NOT inlined into every referencing
+    // class; that inlining triggers SpotBugs HSC_HUGE_SHARED_STRING_CONSTANT.
+
+    /** Default prefix prompt for AI question answering. */
+    public static final String PROMPT_QUESTION_ANSWERING_PREFIX;
+
+    /** Default postfix prompt for AI question answering. */
+    public static final String PROMPT_QUESTION_ANSWERING_POSTFIX;
+
+    /** Default prefix prompt for AI math tutoring. */
+    public static final String PROMPT_MATH_TUTORING_PREFIX;
+
+    /** Default postfix prompt for AI math tutoring. */
+    public static final String PROMPT_MATH_TUTORING_POSTFIX;
+
+    static {
+        PROMPT_QUESTION_ANSWERING_PREFIX = "You are a helpful AI math tutor. "
+                + "A student is working on an algebra problem and has asked you a question.";
+
+        PROMPT_QUESTION_ANSWERING_POSTFIX = """
+                Provide a helpful, encouraging answer that:
+                - Guides the student's thinking without solving it for them
+                - Is concise (2-3 sentences max)
+                - Relates to their current problem if possible
+                - Uses clear, simple language
+                - Encourages them to try the next step
+                - Writes mathematical expressions in LaTeX: wrap inline math in single $...$ \
+                and display math in $$...$$; do not use other math notations
+
+                Your answer:""";
+
+        PROMPT_MATH_TUTORING_PREFIX = "You are an encouraging but concise AI math tutor helping a student learn "
+                + "algebra. Analyze the student's action and provide brief, helpful feedback.";
+
+        PROMPT_MATH_TUTORING_POSTFIX = """
+                Provide feedback in the following JSON format:
+                {
+                  "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
+                  "message": "Your brief, encouraging feedback (ONE sentence only)",
+                  "hints": [],
+                  "suggestedNextSteps": [],
+                  "confidence": 0.0 to 1.0
+                }
+
+                IMPORTANT Guidelines:
+                - Keep message to ONE SHORT sentence (max 15 words)
+                - Be encouraging but not overly enthusiastic
+                - If the action is correct, give brief praise
+                - If incorrect, point out the error gently
+                - Only provide hints array if student made a mistake (max 1-2 hints)
+                - Do NOT provide hints for correct actions
+                - Leave suggestedNextSteps empty unless specifically needed
+                - Be specific about what they did, not generic
+                - In the "message" field, write mathematical expressions in LaTeX: wrap inline \
+                math in single $...$ and display math in $$...$$""";
+    }
 }

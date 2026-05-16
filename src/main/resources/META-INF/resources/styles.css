@@ -67,3 +67,31 @@ html[theme~="dark"] #gm-keyboard textarea {
     border: 1px solid #555555 !important;
 }
 
+/* Help button in the GM toolbar retains a light background that setDarkTheme() misses */
+html[theme~="dark"] #graspable-canvas .btn-help {
+    background-color: #3a3a3a !important;
+    color: #e0e0e0 !important;
+    border-color: #555555 !important;
+}
+
+html[theme~="dark"] #graspable-canvas .btn-help:hover {
+    background-color: #4a4a4a !important;
+}
+
+/* GM help modal content has hardcoded white backgrounds in the library CSS */
+html[theme~="dark"] .gm-help .block {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+}
+
+html[theme~="dark"] .gm-help .block:nth-child(even) {
+    background-color: #323232 !important;
+}
+
+html[theme~="dark"] #gm-help-modal,
+html[theme~="dark"] #gm-help-modal * {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border-color: #555555 !important;
+}
+

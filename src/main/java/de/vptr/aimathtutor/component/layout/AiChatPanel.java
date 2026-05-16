@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.component.layout;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
@@ -87,11 +88,12 @@ public class AiChatPanel extends VerticalLayout {
         // Correct the height so the panel fills exactly from its rendered top to the
         // viewport bottom. Without this, height:100vh overshoots by the topbar height
         // and the input area is initially hidden below the fold.
-        this.addAttachListener(
-                e -> e.getUI().getPage().executeJs(
-                        "setTimeout(function(){" + "  var el=$0; var rect=el.getBoundingClientRect();"
-                                + "  el.style.height=(window.innerHeight-rect.top)+'px';" + "},0);",
-                        this.getElement()));
+        this.addAttachListener(e -> {
+            final var page = e.getUI().getPage();
+            page.addJavaScript("/js/katex-init.js");
+            page.executeJs("setTimeout(function(){" + "  var el=$0; var rect=el.getBoundingClientRect();"
+                    + "  el.style.height=(window.innerHeight-rect.top)+'px';" + "},0);", this.getElement());
+        });
 
         // Chat header
         final var chatHeader = new H4("AI Tutor Chat");
@@ -186,9 +188,23 @@ public class AiChatPanel extends VerticalLayout {
                     .set("border-radius", "var(--lumo-border-radius-l)").set("max-width", "80%")
                     .set("word-wrap", "break-word");
 
-            final var messagePara = new Paragraph(message.message);
-            messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
-            messageDiv.add(messagePara);
+            if (message.sender == ChatMessageDto.Sender.AI
+                    && message.messageType != ChatMessageDto.MessageType.SYSTEM) {
+                // AI feedback/answer text may contain LaTeX math ($...$, $$...$$).
+                // Render it with KaTeX. textContent is set client-side first, so
+                // it is XSS-safe and degrades gracefully if KaTeX fails to load.
+                final var mathContent = new Div();
+                mathContent.getStyle().set("margin", "0").set("white-space", "pre-wrap");
+                messageDiv.add(mathContent);
+                final var text = message.message != null ? message.message : "";
+                UI.getCurrent().getPage().executeJs("if (typeof window.aiMathRender === 'function') {"
+                        + "  window.aiMathRender($0, $1);" + "} else {" + "  $0.textContent = $1;" + "}",
+                        mathContent.getElement(), text);
+            } else {
+                final var messagePara = new Paragraph(Objects.toString(message.message, ""));
+                messagePara.getStyle().set("margin", "0").set("white-space", "pre-wrap");
+                messageDiv.add(messagePara);
+            }
 
             // Style based on sender
             if (message.sender == ChatMessageDto.Sender.USER) {

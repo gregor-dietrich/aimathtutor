@@ -80,6 +80,18 @@
             <property name="message"
                 value="Use *f methods (infof, debugf, etc.) with printf-style %s placeholders instead of *v MessageFormat-style methods." />
         </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="LocalDate\.now\(\s*\)" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="Use LocalDate.now(ZoneId.systemDefault()) instead for explicit timezone handling." />
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="LocalDateTime\.now\(\s*\)" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="Use LocalDateTime.now(ZoneId.systemDefault()) instead for explicit timezone handling." />
+        </module>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL" />
             <property name="format"

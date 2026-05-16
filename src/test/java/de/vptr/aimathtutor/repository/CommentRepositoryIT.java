@@ -21,7 +21,7 @@ import jakarta.inject.Inject;
  * Integration tests for {@link CommentRepository}.
  */
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
+@SuppressWarnings({ "NullAway", "PMD.TooManyMethods", "PMD.ExcessivePublicCount" })
 public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
@@ -459,16 +459,41 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
         final long count =
                 this.commentRepository.countByUserSince(userId, LocalDateTime.now(ZoneId.systemDefault()).minusDays(1));
-        Assertions.assertTrue(count >= 0);
+        Assertions.assertTrue(count >= 1, "expected at least one comment for the created user since yesterday");
     }
 
     @Test
     @TestTransaction
-    public void testCountByUserSinceInterval_returnsCount() {
+    public void testCountByUserInLastDays_returnsCount() {
         final CommentEntity c = this.createComment("cntinterval");
         final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
-        final long count = this.commentRepository.countByUserSinceInterval(userId, "1 day");
-        Assertions.assertTrue(count >= 0);
+        final long count = this.commentRepository.countByUserInLastDays(userId, 1);
+        Assertions.assertTrue(count >= 1, "expected at least one comment for the created user");
+    }
+
+    @Test
+    @TestTransaction
+    public void testCountByUserInLastSeconds_returnsCount() {
+        final CommentEntity c = this.createComment("cntsec");
+        final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
+        final long count = this.commentRepository.countByUserInLastSeconds(userId, 60);
+        Assertions.assertTrue(count >= 1, "expected at least one comment for the created user in the last 60 seconds");
+    }
+
+    @Test
+    public void testCountByUserInLastSeconds_throwsOnInvalidWindow() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> this.commentRepository.countByUserInLastSeconds(1L, 0));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> this.commentRepository.countByUserInLastSeconds(1L, -1));
+    }
+
+    @Test
+    public void testCountByUserInLastDays_throwsOnInvalidWindow() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> this.commentRepository.countByUserInLastDays(1L, 0));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> this.commentRepository.countByUserInLastDays(1L, -1));
     }
 
     @Test

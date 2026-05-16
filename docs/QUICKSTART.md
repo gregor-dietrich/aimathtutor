@@ -55,8 +55,8 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
-  -e GOOGLE_API_KEY=your_google_api_key \
-  -e AIMATHTUTOR_ENCRYPTION_KEY_FILE=/etc/aimathtutor/keys/encryption.key \
+  -e app.google.api.key=your_google_api_key \
+  -e app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key \
   -v aimathtutor_keys:/etc/aimathtutor/keys \
   gregordietrich/aimathtutor:latest
 ```
@@ -82,9 +82,9 @@ SQL_PASSWORD=changeit
 # Get API keys from: https://aistudio.google.com/app/apikey (Google)
 #                    https://platform.openai.com/api-keys (OpenAI)
 # Not needed for Ollama (local LLM)
-GOOGLE_API_KEY=your_google_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_ORG_ID=your_openai_org_id_here
+app.google.api.key=your_google_api_key_here
+app.openai.api.key=your_openai_api_key_here
+app.openai.organization-id=your_openai_org_id_here
 
 # Admin UI
 PGADMIN_EMAIL=your@email.com
@@ -108,12 +108,12 @@ services:
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
 
       # AI API Keys (sourced from .env file above)
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      # OPENAI_API_KEY: ${OPENAI_API_KEY}
-      # OPENAI_ORG_ID: ${OPENAI_ORG_ID}
+      app.google.api.key: ${app.google.api.key}
+      # app.openai.api.key: ${app.openai.api.key}
+      # app.openai.organization-id: ${app.openai.organization-id}
 
       # Encryption key file — auto-generated on first start if absent
-      AIMATHTUTOR_ENCRYPTION_KEY_FILE: /etc/aimathtutor/keys/encryption.key
+      app.security.encryption-key-file: /etc/aimathtutor/keys/encryption.key
     ports:
       - "80:9001/tcp"
     volumes:
@@ -124,7 +124,7 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:18.3-alpine3.23
+    image: postgres:18.4-alpine3.23
     restart: unless-stopped
     command: ["postgres", "-c", "max_connections=200"]
     environment:

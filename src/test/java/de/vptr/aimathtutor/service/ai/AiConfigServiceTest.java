@@ -494,12 +494,16 @@ class AiConfigServiceTest {
     }
 
     @Test
-    @DisplayName("URL validation - unresolvable hostname allowed for Ollama")
+    @DisplayName("URL validation - unresolvable hostname allowed for Ollama ONLY if in allow-list")
     @Transactional
-    void testUrlValidationUnresolvableHostAllowedForOllama() {
-        // .invalid TLD is guaranteed never to resolve (RFC 2606)
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("ollama.base-url",
-                "http://nonexistent-ollama-host.invalid/", this.adminUser.id));
+    void testUrlValidationUnresolvableHostOllamaAllowlist() {
+        // 'ollama' is in the default allow-list
+        assertDoesNotThrow(
+                () -> this.aiConfigService.updateConfig("ollama.base-url", "http://ollama:11434/", this.adminUser.id));
+
+        // 'nonexistent-host' is NOT in the allow-list and won't resolve
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("ollama.base-url",
+                "http://nonexistent-host.invalid/", this.adminUser.id));
     }
 
     @Test

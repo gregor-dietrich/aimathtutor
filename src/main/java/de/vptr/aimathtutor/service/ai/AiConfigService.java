@@ -10,19 +10,20 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiConfigDto;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
-import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -53,46 +54,20 @@ public class AiConfigService {
             Map.entry(AiConfigKeys.OLLAMA_API_URL, "http://ollama:11434"),
             Map.entry(AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b"), Map.entry(AiConfigKeys.OLLAMA_TEMPERATURE, "0.7"),
             Map.entry(AiConfigKeys.OLLAMA_MAX_TOKENS, "2000"),
-            Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX,
-                    "You are a helpful AI math tutor. "
-                            + "A student is working on an algebra problem and has asked you a question."),
-            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, """
-                    Provide a helpful, encouraging answer that:
-                    - Guides the student's thinking without solving it for them
-                    - Is concise (2-3 sentences max)
-                    - Relates to their current problem if possible
-                    - Uses clear, simple language
-                    - Encourages them to try the next step
-
-                    Your answer:"""),
-            Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX,
-                    "You are an encouraging but concise AI math tutor helping a student learn algebra. "
-                            + "Analyze the student's action and provide brief, helpful feedback."),
-            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, """
-                    Provide feedback in the following JSON format:
-                    {
-                      "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
-                      "message": "Your brief, encouraging feedback (ONE sentence only)",
-                      "hints": [],
-                      "suggestedNextSteps": [],
-                      "confidence": 0.0 to 1.0
-                    }
-
-                    IMPORTANT Guidelines:
-                    - Keep message to ONE SHORT sentence (max 15 words)
-                    - Be encouraging but not overly enthusiastic
-                    - If the action is correct, give brief praise
-                    - If incorrect, point out the error gently
-                    - Only provide hints array if student made a mistake (max 1-2 hints)
-                    - Do NOT provide hints for correct actions
-                    - Leave suggestedNextSteps empty unless specifically needed
-                    - Be specific about what they did, not generic"""));
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_PREFIX, AppConstants.PROMPT_QUESTION_ANSWERING_PREFIX),
+            Map.entry(AiConfigKeys.PROMPT_QUESTION_POSTFIX, AppConstants.PROMPT_QUESTION_ANSWERING_POSTFIX),
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX, AppConstants.PROMPT_MATH_TUTORING_PREFIX),
+            Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, AppConstants.PROMPT_MATH_TUTORING_POSTFIX));
 
     @Inject
     private AiConfigRepository aiConfigRepository;
 
     @Inject
-    private UserRepository userRepository;
+    private PermissionService permissionService;
+
+    @Inject
+    @ConfigProperty(name = "app.security.allowed-ollama-hosts", defaultValue = "ollama,localhost")
+    Set<String> allowedOllamaHosts = Set.of("ollama", "localhost");
 
     /**
      * Retrieves a configuration value as a String. Falls back to defaultValue if not found.
@@ -498,11 +473,18 @@ public class AiConfigService {
         }
 
         final String host = uri.getHost().toLowerCase(Locale.ROOT);
+        final boolean isAllowedOllama = configKey.contains("ollama") && this.allowedOllamaHosts.contains(host);
 
         // Enforce HTTPS for external providers (Google, OpenAI)
         if ((configKey.contains("google") || configKey.contains("openai"))
                 && !"https".equalsIgnoreCase(uri.getScheme())) {
             throw new IllegalArgumentException("External provider URLs must use HTTPS for key '" + configKey + "'");
+        }
+
+        // If it's an allow-listed Ollama host, skip further safety checks (e.g. private IP/loopback).
+        // This is safe because the allow-list is explicitly configured by the administrator.
+        if (isAllowedOllama) {
+            return;
         }
 
         // Block localhost and loopback
@@ -529,12 +511,9 @@ public class AiConfigService {
                 }
             }
         } catch (final UnknownHostException e) {
-            // Only allow unresolved Docker-style hostnames for Ollama.
             LOG.debugf(e, "Hostname resolution failed for %s", host);
-            if (!configKey.contains("ollama")) {
-                throw new IllegalArgumentException(
-                        "URL host must resolve to a public address for key '" + configKey + "'");
-            }
+            throw new IllegalArgumentException(
+                    "URL host must resolve to a public address or be in the allow-list for key '" + configKey + "'");
         }
 
         // Block common private IPv4 patterns without DNS resolution
@@ -596,15 +575,6 @@ public class AiConfigService {
     }
 
     private UserEntity requireConfigEditPermission(final Long userId) {
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null) {
-            throw new IllegalStateException("User not found or has no rank assigned");
-        }
-        final var userRank = new UserRankViewDto(user.rank);
-        if (!userRank.hasAnyExercisePermission() && !userRank.hasAnyLessonPermission()) {
-            throw new IllegalStateException(
-                    "Only users with exercise or lesson management permissions can update configuration");
-        }
-        return user;
+        return this.permissionService.requireAiConfigEdit(userId);
     }
 }

@@ -1,7 +1,11 @@
 package de.vptr.aimathtutor.service.security;
 
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.server.VaadinRequest;
@@ -14,6 +18,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -38,9 +43,30 @@ public class AuthService {
     @Inject
     LoginAttemptService loginAttemptService;
 
-    private static final String USERNAME_KEY = "authenticated.username";
+    @ConfigProperty(name = "app.security.trusted-proxy-ips", defaultValue = "127.0.0.1,::1,0:0:0:0:0:0:0:1")
+    @Nullable
+    String trustedProxyIpsConfig;
+
+    private Set<String> trustedProxyIps;
+
+    @PostConstruct
+    void init() {
+        this.trustedProxyIps = trustedProxyIpsConfig != null
+                ? Arrays.stream(trustedProxyIpsConfig.split(",")).map(String::trim).filter(s -> !s.isEmpty())
+                        .collect(Collectors.toUnmodifiableSet())
+                : Set.of(AppConstants.BLOCKED_HOST_LOOPBACK_IPV4, AppConstants.BLOCKED_HOST_LOOPBACK_IPV6,
+                        AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED);
+    }
+
+    private static final String USERNAME_KEY = AppConstants.SESSION_KEY_USERNAME;
     private static final String AUTHENTICATED_KEY = "authenticated.status";
     private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
+
+    // Pre-computed bcrypt hash used for constant-time dummy verification on early-exit
+    // authentication paths (user not found, banned, not activated). Prevents username
+    // enumeration via timing side-channel by ensuring every authenticate() call pays
+    // approximately one bcrypt cost regardless of whether the user exists.
+    private static final String DUMMY_BCRYPT_HASH = "$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36zLdGaohNuXiUeKMTfXrvy";
 
     /**
      * How long an {@link #isAuthenticated()} result may be served from the session without re-validating against the
@@ -92,6 +118,8 @@ public class AuthService {
 
             if (user == null) {
                 LOG.trace("Authentication failed - user not found");
+                // Dummy bcrypt call to normalise timing and prevent username enumeration
+                this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -102,6 +130,7 @@ public class AuthService {
             // Check if user is banned
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned");
+                this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -112,6 +141,7 @@ public class AuthService {
             // Check if user is activated
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated");
+                this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -186,9 +216,7 @@ public class AuthService {
     }
 
     private boolean isTrustedProxy(final String remoteAddr) {
-        return AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(remoteAddr)
-                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6.equals(remoteAddr)
-                || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED.equals(remoteAddr);
+        return this.trustedProxyIps.contains(remoteAddr);
     }
 
     /**

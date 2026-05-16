@@ -12,6 +12,7 @@ import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -37,7 +38,7 @@ public class UserRankService {
     @Inject
     PermissionService permissionService;
 
-    private static final String USERNAME_KEY = "authenticated.username";
+    private static final String USERNAME_KEY = AppConstants.SESSION_KEY_USERNAME;
 
     /**
      * Retrieves the rank of the currently authenticated user.

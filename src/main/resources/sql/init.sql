@@ -431,6 +431,7 @@ INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, cat
 - Relates to their current problem if possible
 - Uses clear, simple language
 - Encourages them to try the next step
+- Writes mathematical expressions in LaTeX: wrap inline math in single $...$ and display math in $$...$$; do not use other math notations
 
 Your answer:', 'TEXT', 'PROMPTS', 'Postfix prompt for question answering', false, 1),
 (19, '01ARZ3NDEKTSV4RRFFQ69G5FGJ', 'ai.prompt.math.tutoring.prefix', 'You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student''s action and provide brief, helpful feedback.', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', false, 1),
@@ -451,7 +452,8 @@ IMPORTANT Guidelines:
 - Only provide hints array if student made a mistake (max 1-2 hints)
 - Do NOT provide hints for correct actions
 - Leave suggestedNextSteps empty unless specifically needed
-- Be specific about what they did, not generic', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', false, 1);
+- Be specific about what they did, not generic
+- In the "message" field, write mathematical expressions in LaTeX: wrap inline math in single $...$ and display math in $$...$$', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', false, 1);
 
 -- Set sequence to 20 so next value is 21
 SELECT setval('ai_config_id_seq', 20, true);

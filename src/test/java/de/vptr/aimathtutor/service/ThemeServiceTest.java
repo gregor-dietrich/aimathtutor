@@ -5,9 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.service.ThemeService.Theme;
 import io.quarkus.test.junit.QuarkusTest;
@@ -142,5 +149,30 @@ class ThemeServiceTest {
             case DARK -> Theme.SYSTEM;
             case SYSTEM -> Theme.LIGHT;
         };
+    }
+
+    @Test
+    @DisplayName("getCurrentTheme returns stored theme from session")
+    void testCurrentTheme_withStoredTheme_returnsStoredTheme() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute("selected_theme")).thenReturn(Theme.DARK);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            assertEquals(Theme.DARK, this.themeService.getCurrentTheme());
+        }
+    }
+
+    @Test
+    @DisplayName("setTheme persists the theme in the session")
+    void setTheme_withSession_storesThemeInSession() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            this.themeService.setTheme(Theme.LIGHT);
+
+            verify(mockSess).setAttribute("selected_theme", Theme.LIGHT);
+        }
     }
 }

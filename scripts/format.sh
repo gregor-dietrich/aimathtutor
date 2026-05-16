@@ -9,10 +9,10 @@ cd "$DIR/.."
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
-echo "Running lint checks..."
+echo "Formatting Java sources..."
 
 ${MVN_CMD} -q spotless:apply ${PL_ARG} -Drevision="${REVISION}"
 
-echo "Lint checks completed."
+echo "Java source formatting completed."
 
 cd - > /dev/null
