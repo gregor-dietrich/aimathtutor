@@ -98,6 +98,8 @@ public class OpenAiService extends AbstractProviderService {
             return "";
         }
 
+        this.requireSafeProviderUrl(baseUrl, AiConfigService.ProviderType.OPENAI);
+
         final var requestDto =
                 jsonMode ? OpenAiRequestDto.createJsonRequest(systemPrompt, prompt, model, temperature, maxTokens)
                         : OpenAiRequestDto.createChatRequest(systemPrompt, prompt, model, temperature, maxTokens);

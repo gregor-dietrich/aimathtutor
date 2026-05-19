@@ -163,4 +163,20 @@ public abstract class AbstractProviderService {
                     settingDescription + " not configured. Please configure via admin settings.");
         }
     }
+
+    /**
+     * Re-validates a provider URL at HTTP-call time. Closes the TOCTOU gap between admin save and dispatch: if the URL
+     * has been changed (or its hostname now resolves to a private address) the request is aborted before any traffic
+     * leaves the JVM. Wraps {@link AiConfigService#validateProviderApiUrl} so the caller gets a
+     * {@link NonRetryableProviderException} (which aborts {@code @Retry}) instead of a raw
+     * {@link IllegalArgumentException}.
+     */
+    protected void requireSafeProviderUrl(final String url, final AiConfigService.ProviderType providerType) {
+        try {
+            this.aiConfigService.validateProviderApiUrl(url, providerType);
+        } catch (final IllegalArgumentException e) {
+            throw new NonRetryableProviderException(this.getProviderName(),
+                    providerType + " API URL rejected by SSRF guard: " + e.getMessage());
+        }
+    }
 }

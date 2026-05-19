@@ -94,13 +94,15 @@ public class OllamaService extends AbstractProviderService {
         this.requireConfigured(model, "Ollama model");
 
         final var effectiveModel = Objects.requireNonNull(model);
+        final var effectiveApiUrl = Objects.requireNonNull(apiUrl);
+        this.requireSafeProviderUrl(effectiveApiUrl, AiConfigService.ProviderType.OLLAMA);
 
         try {
             // Create request
             final var request = OllamaRequestDto.createGenerateRequest(prompt, effectiveModel, temperature, maxTokens);
 
             // Build API URL
-            final String url = Objects.requireNonNull(apiUrl) + "/api/generate";
+            final String url = effectiveApiUrl + "/api/generate";
 
             // Make API call
             final long startTime = System.currentTimeMillis();
@@ -153,10 +155,32 @@ public class OllamaService extends AbstractProviderService {
     }
 
     /**
+     * Returns the configured Ollama API URL after SSRF validation, or {@code null} when the URL is missing or fails the
+     * allow-list. Shared by health-check paths so they can short-circuit without issuing an HTTP request.
+     */
+    @Nullable
+    private String resolveValidatedApiUrl() {
+        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
+        if (apiUrl == null || apiUrl.isBlank()) {
+            return null;
+        }
+        try {
+            this.aiConfigService.validateProviderApiUrl(apiUrl, AiConfigService.ProviderType.OLLAMA);
+            return apiUrl;
+        } catch (final IllegalArgumentException e) {
+            LOG.debugf("Ollama URL rejected by SSRF guard: %s", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Check if Ollama server is available
      */
     public boolean isAvailable() {
-        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
+        final String apiUrl = this.resolveValidatedApiUrl();
+        if (apiUrl == null) {
+            return false;
+        }
         try {
             // Check /api/tags endpoint (lists installed models)
             try (Response response =
@@ -183,7 +207,10 @@ public class OllamaService extends AbstractProviderService {
      * Check if a specific model is installed
      */
     public boolean isModelInstalled(final String modelName) {
-        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
+        final String apiUrl = this.resolveValidatedApiUrl();
+        if (apiUrl == null) {
+            return false;
+        }
         try {
             try (Response response =
                     this.getClient().target(apiUrl + "/api/tags").request(MediaType.APPLICATION_JSON).get()) {

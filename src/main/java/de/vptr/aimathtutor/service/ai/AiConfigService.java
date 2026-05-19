@@ -449,63 +449,132 @@ public class AiConfigService {
     }
 
     /**
-     * Validates that a URL is safe and does not enable SSRF attacks. Enforces HTTPS for external providers, blocks
-     * private IP ranges, and rejects localhost/loopback addresses.
+     * Identifies which AI provider a URL belongs to so the correct host allow-list is applied.
+     */
+    public enum ProviderType {
+        OLLAMA, GOOGLE, OPENAI
+    }
+
+    /**
+     * Validates a provider API URL at runtime, immediately before issuing an HTTP request. Re-applies the same SSRF
+     * checks performed at config-update time so a URL swapped after validation (or a hostname that resolved differently
+     * then) cannot be used to reach internal services.
      *
      * <p>
-     * <b>TOCTOU DNS-rebinding gap:</b> When {@link UnknownHostException} is caught in the hostname resolution block of
-     * {@code validateUrlSafe}, the method allows the URL through only for Ollama (whose hostname may be a Docker
-     * service name). All other providers are rejected when the hostname cannot be resolved, eliminating the permissive
-     * fallback for external providers.
+     * Rules:
+     * <ul>
+     * <li>Host MUST be in the provider's allow-list. Empty allow-list rejects everything for that provider.</li>
+     * <li>External providers (Google, OpenAI) MUST use HTTPS and resolve to a public address. DNS resolution happens
+     * here so DNS-rebinding moves the host to a private IP between admin save and dispatch are caught.</li>
+     * <li>Ollama is allow-list-only; private addresses are permitted because Docker service names like {@code ollama}
+     * intentionally resolve into the container network. The allow-list itself is the trust boundary.</li>
+     * </ul>
      *
-     * <p>
-     * <b>Residual TOCTOU risk (Ollama only):</b> An unresolved Ollama hostname creates a time-of-check vs. time-of-use
-     * window: the name may later resolve to an RFC1918/private address at dispatch time. An attacker who controls DNS
-     * could exploit this to reach an internal service via the Ollama endpoint.
-     *
-     * <p>
-     * <b>Mitigation guidance:</b> For Ollama, consider re-resolving the hostname at dispatch time or maintaining an
-     * explicit allow-list of permitted Docker service names. See the {@code UnknownHostException} catch block and the
-     * plain-string private-range IPv4 prefix checks below for where additional mitigation would go.
+     * @throws IllegalArgumentException
+     *             when the URL fails any check
+     */
+    public void validateProviderApiUrl(@Nullable final String url, final ProviderType providerType) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException(providerType + " API URL is blank");
+        }
+        final URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException(providerType + " API URL is not a valid URI", e);
+        }
+        if (uri.getHost() == null || uri.getHost().isBlank()) {
+            throw new IllegalArgumentException(providerType + " API URL must have a host");
+        }
+
+        final String host = uri.getHost().toLowerCase(Locale.ROOT);
+        final Set<String> allowed = switch (providerType) {
+            case OLLAMA -> this.allowedOllamaHosts;
+            case GOOGLE -> this.allowedGoogleHosts;
+            case OPENAI -> this.allowedOpenAiHosts;
+        };
+        if (!allowed.contains(host)) {
+            throw new IllegalArgumentException(
+                    providerType + " API host '" + host + "' is not in the allow-list. "
+                            + "Update app.security.allowed-" + providerType.name().toLowerCase(Locale.ROOT)
+                            + "-hosts to permit it.");
+        }
+
+        if (providerType == ProviderType.OLLAMA) {
+            return;
+        }
+
+        if (!"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException(providerType + " API URL must use HTTPS");
+        }
+        try {
+            final InetAddress address = InetAddress.getByName(host);
+            if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
+                    || address.isMulticastAddress() || address.isAnyLocalAddress()) {
+                throw new IllegalArgumentException(providerType + " API host '" + host
+                        + "' resolved to a non-public address (possible DNS rebinding)");
+            }
+            if (address instanceof Inet6Address) {
+                final byte[] bytes = address.getAddress();
+                // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
+                if ((bytes[0] & 0xFE) == 0xFC) {
+                    throw new IllegalArgumentException(
+                            providerType + " API host '" + host + "' resolved to an IPv6 unique-local address");
+                }
+            }
+        } catch (final UnknownHostException e) {
+            LOG.debugf(e, "Hostname resolution failed for %s", host);
+            throw new IllegalArgumentException(
+                    providerType + " API host '" + host + "' could not be resolved", e);
+        }
+    }
+
+    /**
+     * Validates that a URL is safe and does not enable SSRF attacks. Called at config-update time only; the
+     * provider-side counterpart {@link #validateProviderApiUrl} re-runs the same checks immediately before each HTTP
+     * request to close the TOCTOU window between save and use.
      */
     private void validateUrlSafe(final String configKey, final String configValue) {
+        final ProviderType providerType;
+        if (configKey.contains("ollama")) {
+            providerType = ProviderType.OLLAMA;
+        } else if (configKey.contains("google")) {
+            providerType = ProviderType.GOOGLE;
+        } else if (configKey.contains("openai")) {
+            providerType = ProviderType.OPENAI;
+        } else {
+            // Unknown provider key — fall back to a strict check: require HTTPS and reject private/loopback.
+            this.validateGenericUrlSafe(configKey, configValue);
+            return;
+        }
+        try {
+            this.validateProviderApiUrl(configValue, providerType);
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("Validation failed for key '" + configKey + "': " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Strict URL validation for keys that do not correspond to a known provider (e.g. future custom endpoints). Blocks
+     * loopback and private IP ranges.
+     */
+    private void validateGenericUrlSafe(final String configKey, final String configValue) {
         final URI uri;
         try {
             uri = URI.create(configValue);
         } catch (final IllegalArgumentException e) {
             throw new IllegalArgumentException("Value must be a valid URL for key '" + configKey + "'", e);
         }
-
         if (uri.getHost() == null || uri.getHost().isBlank()) {
             throw new IllegalArgumentException("URL must have a valid host for key '" + configKey + "'");
         }
-
         final String host = uri.getHost().toLowerCase(Locale.ROOT);
-        final boolean isAllowedOllama = configKey.contains("ollama") && this.allowedOllamaHosts.contains(host);
-        final boolean isAllowedGoogle = configKey.contains("google") && this.allowedGoogleHosts.contains(host);
-        final boolean isAllowedOpenAi = configKey.contains("openai") && this.allowedOpenAiHosts.contains(host);
-
-        // Enforce HTTPS for external providers (Google, OpenAI)
-        if ((configKey.contains("google") || configKey.contains("openai"))
-                && !"https".equalsIgnoreCase(uri.getScheme())) {
-            throw new IllegalArgumentException("External provider URLs must use HTTPS for key '" + configKey + "'");
-        }
-
-        // If it's an allow-listed host for the provider, skip further safety checks (e.g. private IP/loopback).
-        // This is safe because the allow-lists are explicitly configured by the administrator.
-        if (isAllowedOllama || isAllowedGoogle || isAllowedOpenAi) {
-            return;
-        }
-
-        // Block localhost and loopback
         if (AppConstants.BLOCKED_HOST_LOCALHOST.equals(host) || AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(host)
                 || host.startsWith("127.") || AppConstants.BLOCKED_HOST_ANY.equals(host)
                 || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6.equals(host)
                 || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED.equals(host)) {
             throw new IllegalArgumentException("Loopback addresses are not allowed for key '" + configKey + "'");
         }
-
-        // Block private IP ranges by resolving the host
         try {
             final InetAddress address = InetAddress.getByName(host);
             if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
@@ -514,7 +583,6 @@ public class AiConfigService {
             }
             if (address instanceof Inet6Address) {
                 final byte[] bytes = address.getAddress();
-                // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
                 if ((bytes[0] & 0xFE) == 0xFC) {
                     throw new IllegalArgumentException(
                             "Private IP addresses are not allowed for key '" + configKey + "' host '" + host + "'");
@@ -523,29 +591,7 @@ public class AiConfigService {
         } catch (final UnknownHostException e) {
             LOG.debugf(e, "Hostname resolution failed for %s", host);
             throw new IllegalArgumentException(
-                    "URL host must resolve to a public address or be in the allow-list for key '" + configKey + "'");
-        }
-
-        // Block common private IPv4 patterns without DNS resolution
-        if (host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("169.254.")) {
-            throw new IllegalArgumentException("Private IP addresses are not allowed for key '" + configKey + "'");
-        }
-        if (host.startsWith("172.")) {
-            final String afterFirstDot = host.substring(4);
-            final int secondDot = afterFirstDot.indexOf('.');
-            final String secondOctetStr = secondDot > 0 ? afterFirstDot.substring(0, secondDot) : afterFirstDot;
-            if (!secondOctetStr.isEmpty()) {
-                try {
-                    final int secondOctet = Integer.parseInt(secondOctetStr);
-                    if (secondOctet >= 16 && secondOctet <= 31) {
-                        throw new IllegalArgumentException(
-                                "Private IP addresses are not allowed for key '" + configKey + "'");
-                    }
-                } catch (final NumberFormatException e) {
-                    // Not a numeric octet, allow
-                    LOG.debugf("Invalid octet in IP check for %s, allowing", host);
-                }
-            }
+                    "URL host must resolve to a public address for key '" + configKey + "'");
         }
     }
 
