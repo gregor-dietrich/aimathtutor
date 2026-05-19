@@ -45,7 +45,21 @@ public class LessonService {
      */
     @Transactional
     public List<LessonViewDto> getAllLessons() {
-        return this.lessonRepository.findAllOrdered().stream().map(LessonViewDto::new).toList();
+        return this.getAllLessons(0, 500);
+    }
+
+    /**
+     * Retrieves lessons with pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of lessons per page
+     * @return a paginated list of {@link LessonViewDto}s
+     */
+    @Transactional
+    public List<LessonViewDto> getAllLessons(final int page, final int pageSize) {
+        return this.lessonRepository.findAllOrdered(page, pageSize).stream().map(LessonViewDto::new).toList();
     }
 
     /**

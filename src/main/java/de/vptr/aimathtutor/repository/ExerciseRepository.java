@@ -23,7 +23,23 @@ public class ExerciseRepository extends AbstractRepository {
      * @return a list of all {@link ExerciseEntity} objects ordered
      */
     public List<ExerciseEntity> findAllOrdered() {
-        return this.listNamed("Exercise.findAllOrdered", ExerciseEntity.class);
+        return this.findAllOrdered(0, 500);
+    }
+
+    /**
+     * Retrieves exercises from the database in a defined order, using pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of exercises per page
+     * @return a paginated list of all {@link ExerciseEntity} objects ordered
+     */
+    public List<ExerciseEntity> findAllOrdered(final int page, final int pageSize) {
+        final var q = this.em.createNamedQuery("Exercise.findAllOrdered", ExerciseEntity.class);
+        q.setFirstResult(page * pageSize);
+        q.setMaxResults(pageSize);
+        return q.getResultList();
     }
 
     /**

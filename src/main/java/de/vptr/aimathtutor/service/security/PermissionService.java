@@ -125,7 +125,7 @@ public class PermissionService {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");
         }
         final var rank = new UserRankViewDto(user.rank);
-        if (!rank.hasAnyExercisePermission() && !rank.hasAnyLessonPermission()) {
+        if (!rank.canAiConfigEdit()) {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");
         }
         return user;

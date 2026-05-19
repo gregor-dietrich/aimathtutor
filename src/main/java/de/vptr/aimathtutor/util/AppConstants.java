@@ -21,6 +21,9 @@ public final class AppConstants {
     /** Standard grid column width for name/title columns. */
     public static final String GRID_NAME_WIDTH = "200px";
 
+    /** Standard page size for paginated queries. */
+    public static final int DEFAULT_PAGE_SIZE = 50;
+
     /** Maximum retries for external AI service calls. */
     public static final int RETRY_MAX_RETRIES = 3;
 

@@ -66,7 +66,21 @@ public class ExerciseService {
      */
     @Transactional
     public List<ExerciseViewDto> getAllExercises() {
-        return this.exerciseRepository.findAllOrdered().stream().map(ExerciseViewDto::new).toList();
+        return this.getAllExercises(0, 500);
+    }
+
+    /**
+     * Retrieves exercises with pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of exercises per page
+     * @return a paginated list of all {@link ExerciseViewDto} in the system
+     */
+    @Transactional
+    public List<ExerciseViewDto> getAllExercises(final int page, final int pageSize) {
+        return this.exerciseRepository.findAllOrdered(page, pageSize).stream().map(ExerciseViewDto::new).toList();
     }
 
     /**

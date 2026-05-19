@@ -87,7 +87,21 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> getAllComments() {
-        final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations();
+        return this.getAllComments(0, 1000);
+    }
+
+    /**
+     * Retrieves comments with pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of comments per page
+     * @return a paginated list of {@link CommentViewDto}s
+     */
+    @Transactional
+    public List<CommentViewDto> getAllComments(final int page, final int pageSize) {
+        final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations(page, pageSize);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
@@ -134,7 +148,24 @@ public class CommentService {
      */
     @Transactional
     public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
-        final List<CommentEntity> comments = this.commentRepository.findByExerciseIdWithRelations(exerciseId);
+        return this.findByExerciseId(exerciseId, 0, 1000);
+    }
+
+    /**
+     * Retrieves comments for a specific exercise with pagination.
+     *
+     * @param exerciseId
+     *            the exercise ID
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of comments per page
+     * @return a paginated list of {@link CommentViewDto}s
+     */
+    @Transactional
+    public List<CommentViewDto> findByExerciseId(final Long exerciseId, final int page, final int pageSize) {
+        final List<CommentEntity> comments =
+                this.commentRepository.findByExerciseIdWithRelations(exerciseId, page, pageSize);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 

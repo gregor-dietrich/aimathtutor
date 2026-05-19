@@ -98,6 +98,10 @@ public class UserRankEntity extends BaseEntity {
     @Column(name = "user_rank_edit")
     public boolean userRankEdit = false;
 
+    // AI configuration permissions
+    @Column(name = "ai_config_edit")
+    public boolean aiConfigEdit = false;
+
     @OneToMany(mappedBy = "rank")
     @JsonIgnore
     @Nullable

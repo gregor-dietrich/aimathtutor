@@ -69,6 +69,14 @@ public class AiConfigService {
     @ConfigProperty(name = "app.security.allowed-ollama-hosts", defaultValue = "ollama,localhost")
     Set<String> allowedOllamaHosts = Set.of("ollama", "localhost");
 
+    @Inject
+    @ConfigProperty(name = "app.security.allowed-google-hosts", defaultValue = "generativelanguage.googleapis.com")
+    Set<String> allowedGoogleHosts = Set.of("generativelanguage.googleapis.com");
+
+    @Inject
+    @ConfigProperty(name = "app.security.allowed-openai-hosts", defaultValue = "api.openai.com")
+    Set<String> allowedOpenAiHosts = Set.of("api.openai.com");
+
     /**
      * Retrieves a configuration value as a String. Falls back to defaultValue if not found.
      *
@@ -474,6 +482,8 @@ public class AiConfigService {
 
         final String host = uri.getHost().toLowerCase(Locale.ROOT);
         final boolean isAllowedOllama = configKey.contains("ollama") && this.allowedOllamaHosts.contains(host);
+        final boolean isAllowedGoogle = configKey.contains("google") && this.allowedGoogleHosts.contains(host);
+        final boolean isAllowedOpenAi = configKey.contains("openai") && this.allowedOpenAiHosts.contains(host);
 
         // Enforce HTTPS for external providers (Google, OpenAI)
         if ((configKey.contains("google") || configKey.contains("openai"))
@@ -481,9 +491,9 @@ public class AiConfigService {
             throw new IllegalArgumentException("External provider URLs must use HTTPS for key '" + configKey + "'");
         }
 
-        // If it's an allow-listed Ollama host, skip further safety checks (e.g. private IP/loopback).
-        // This is safe because the allow-list is explicitly configured by the administrator.
-        if (isAllowedOllama) {
+        // If it's an allow-listed host for the provider, skip further safety checks (e.g. private IP/loopback).
+        // This is safe because the allow-lists are explicitly configured by the administrator.
+        if (isAllowedOllama || isAllowedGoogle || isAllowedOpenAi) {
             return;
         }
 

@@ -30,7 +30,23 @@ public class CommentRepository extends AbstractRepository {
      * Fetch comments with related user, exercise and parentComment eagerly to avoid lazy-loading in service layer.
      */
     public List<CommentEntity> findAllOrderedWithRelations() {
-        return this.listNamed("Comment.findAllWithRelations", CommentEntity.class);
+        return this.findAllOrderedWithRelations(0, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Fetch comments with related user, exercise and parentComment eagerly, using pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of comments per page
+     * @return a paginated list of all {@link CommentEntity} objects with relations
+     */
+    public List<CommentEntity> findAllOrderedWithRelations(final int page, final int pageSize) {
+        final var q = this.em.createNamedQuery("Comment.findAllWithRelations", CommentEntity.class);
+        q.setFirstResult(page * pageSize);
+        q.setMaxResults(pageSize);
+        return q.getResultList();
     }
 
     /**
@@ -133,11 +149,29 @@ public class CommentRepository extends AbstractRepository {
      * @return a list of {@link CommentEntity} objects with relations for the exercise
      */
     public List<CommentEntity> findByExerciseIdWithRelations(final Long exerciseId) {
+        return this.findByExerciseIdWithRelations(exerciseId, 0, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Retrieves comments for a specific exercise with related entities eagerly loaded, using pagination.
+     *
+     * @param exerciseId
+     *            the exercise ID to filter by
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of comments per page
+     * @return a paginated list of {@link CommentEntity} objects with relations for the exercise
+     */
+    public List<CommentEntity> findByExerciseIdWithRelations(final Long exerciseId, final int page,
+            final int pageSize) {
         if (exerciseId == null) {
             return List.of();
         }
         final var q = this.em.createNamedQuery("Comment.findByExerciseIdWithRelations", CommentEntity.class);
         q.setParameter("e", exerciseId);
+        q.setFirstResult(page * pageSize);
+        q.setMaxResults(pageSize);
         return q.getResultList();
     }
 

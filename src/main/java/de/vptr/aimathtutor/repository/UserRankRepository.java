@@ -21,7 +21,23 @@ public class UserRankRepository extends AbstractRepository {
      * @return a list of all {@link UserRankEntity} objects
      */
     public List<UserRankEntity> findAll() {
-        return this.listNamed("UserRank.findAll", UserRankEntity.class);
+        return this.findAll(0, 100);
+    }
+
+    /**
+     * Retrieves user ranks from the database with pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of ranks per page
+     * @return a paginated list of all {@link UserRankEntity} objects
+     */
+    public List<UserRankEntity> findAll(final int page, final int pageSize) {
+        final var q = this.em.createNamedQuery("UserRank.findAll", UserRankEntity.class);
+        q.setFirstResult(page * pageSize);
+        q.setMaxResults(pageSize);
+        return q.getResultList();
     }
 
     /**

@@ -66,8 +66,23 @@ public class LessonRepository extends AbstractRepository {
      * @return a list of all {@link LessonEntity} objects ordered
      */
     public List<LessonEntity> findAllOrdered() {
+        return this.findAllOrdered(0, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Retrieves lessons from the database in a defined order, using pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of lessons per page
+     * @return a paginated list of {@link LessonEntity} objects ordered
+     */
+    public List<LessonEntity> findAllOrdered(final int page, final int pageSize) {
         final TypedQuery<LessonEntity> q =
                 this.em.createQuery("FROM LessonEntity ORDER BY id DESC", LessonEntity.class);
+        q.setFirstResult(page * pageSize);
+        q.setMaxResults(pageSize);
         return q.getResultList();
     }
 

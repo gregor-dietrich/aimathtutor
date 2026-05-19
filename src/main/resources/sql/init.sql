@@ -44,6 +44,7 @@ CREATE TABLE user_ranks (
   user_rank_add BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_delete BOOLEAN NOT NULL DEFAULT FALSE,
   user_rank_edit BOOLEAN NOT NULL DEFAULT FALSE,
+  ai_config_edit BOOLEAN NOT NULL DEFAULT FALSE,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_edit TIMESTAMP
 );
@@ -54,10 +55,10 @@ CREATE INDEX idx_user_rank_public_id ON user_ranks (public_id);
 -- Inserts for table `user_ranks`
 --
 
-INSERT INTO user_ranks (id, public_id, name, admin_view, exercise_add, exercise_delete, exercise_edit, lesson_add, lesson_delete, lesson_edit, comment_add, comment_delete, comment_edit, user_add, user_delete, user_edit, user_group_add, user_group_delete, user_group_edit, user_rank_add, user_rank_delete, user_rank_edit) VALUES
-(1, '01ARZ3NDEKTSV4RRFFQ69G5FAV', 'Admin', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
-(2, '01ARZ3NDEKTSV4RRFFQ69G5FAW', 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
-(3, '01ARZ3NDEKTSV4RRFFQ69G5FAX', 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+INSERT INTO user_ranks (id, public_id, name, admin_view, exercise_add, exercise_delete, exercise_edit, lesson_add, lesson_delete, lesson_edit, comment_add, comment_delete, comment_edit, user_add, user_delete, user_edit, user_group_add, user_group_delete, user_group_edit, user_rank_add, user_rank_delete, user_rank_edit, ai_config_edit) VALUES
+(1, '01ARZ3NDEKTSV4RRFFQ69G5FAV', 'Admin', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
+(2, '01ARZ3NDEKTSV4RRFFQ69G5FAW', 'Teacher', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
+(3, '01ARZ3NDEKTSV4RRFFQ69G5FAX', 'Student', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 
 -- Set sequence to 3 so next value is 4
 SELECT setval('user_ranks_id_seq', 3, true);

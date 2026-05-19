@@ -64,4 +64,8 @@ public abstract class UserRankPermissions {
     public Boolean userRankDelete;
     @Nullable
     public Boolean userRankEdit;
+
+    // AI configuration permissions
+    @Nullable
+    public Boolean aiConfigEdit;
 }

@@ -59,6 +59,9 @@ public class UserRankViewDto extends UserRankPermissions {
             this.userRankDelete = entity.userRankDelete;
             this.userRankEdit = entity.userRankEdit;
 
+            // AI configuration permissions
+            this.aiConfigEdit = entity.aiConfigEdit;
+
             // Computed fields
             this.usersCount = entity.users != null ? (long) entity.users.size() : 0L;
         }
@@ -122,6 +125,13 @@ public class UserRankViewDto extends UserRankPermissions {
     }
 
     /**
+     * Whether this rank has permission to edit AI configuration.
+     */
+    public boolean canAiConfigEdit() {
+        return Boolean.TRUE.equals(this.aiConfigEdit);
+    }
+
+    /**
      * Convert this view into a mutable {@link UserRankDto} used for editing and persistence.
      */
     public UserRankDto toUserRankDto() {
@@ -147,6 +157,7 @@ public class UserRankViewDto extends UserRankPermissions {
         dto.userRankAdd = this.userRankAdd;
         dto.userRankDelete = this.userRankDelete;
         dto.userRankEdit = this.userRankEdit;
+        dto.aiConfigEdit = this.aiConfigEdit;
         return dto;
     }
 }

@@ -73,7 +73,21 @@ public class UserRankService {
      */
     @Transactional
     public List<UserRankViewDto> getAllRanks() {
-        return this.userRankRepository.findAll().stream().map(UserRankViewDto::new).toList();
+        return this.getAllRanks(0, 100);
+    }
+
+    /**
+     * Retrieves available user ranks with pagination.
+     *
+     * @param page
+     *            the page number (0-indexed)
+     * @param pageSize
+     *            the number of ranks per page
+     * @return a paginated list of {@link UserRankViewDto} objects
+     */
+    @Transactional
+    public List<UserRankViewDto> getAllRanks(final int page, final int pageSize) {
+        return this.userRankRepository.findAll(page, pageSize).stream().map(UserRankViewDto::new).toList();
     }
 
     /**
@@ -256,25 +270,14 @@ public class UserRankService {
      *            the DTO to read from
      */
     private void applyAllPermissions(final UserRankEntity target, final UserRankDto source) {
-        target.adminView = source.adminView != null ? source.adminView : false;
-        target.exerciseAdd = source.exerciseAdd != null ? source.exerciseAdd : false;
-        target.exerciseDelete = source.exerciseDelete != null ? source.exerciseDelete : false;
-        target.exerciseEdit = source.exerciseEdit != null ? source.exerciseEdit : false;
-        target.lessonAdd = source.lessonAdd != null ? source.lessonAdd : false;
-        target.lessonDelete = source.lessonDelete != null ? source.lessonDelete : false;
-        target.lessonEdit = source.lessonEdit != null ? source.lessonEdit : false;
-        target.commentAdd = source.commentAdd != null ? source.commentAdd : false;
-        target.commentDelete = source.commentDelete != null ? source.commentDelete : false;
-        target.commentEdit = source.commentEdit != null ? source.commentEdit : false;
-        target.userAdd = source.userAdd != null ? source.userAdd : false;
-        target.userDelete = source.userDelete != null ? source.userDelete : false;
-        target.userEdit = source.userEdit != null ? source.userEdit : false;
-        target.userGroupAdd = source.userGroupAdd != null ? source.userGroupAdd : false;
-        target.userGroupDelete = source.userGroupDelete != null ? source.userGroupDelete : false;
-        target.userGroupEdit = source.userGroupEdit != null ? source.userGroupEdit : false;
-        target.userRankAdd = source.userRankAdd != null ? source.userRankAdd : false;
-        target.userRankDelete = source.userRankDelete != null ? source.userRankDelete : false;
-        target.userRankEdit = source.userRankEdit != null ? source.userRankEdit : false;
+        target.adminView = Boolean.TRUE.equals(source.adminView);
+        this.applyExercisePermissions(target, source, false);
+        this.applyLessonPermissions(target, source, false);
+        this.applyCommentPermissions(target, source, false);
+        this.applyUserPermissions(target, source, false);
+        this.applyGroupPermissions(target, source, false);
+        this.applyRankPermissions(target, source, false);
+        target.aiConfigEdit = Boolean.TRUE.equals(source.aiConfigEdit);
     }
 
     /**
@@ -290,59 +293,86 @@ public class UserRankService {
         if (source.adminView != null) {
             target.adminView = source.adminView;
         }
-        if (source.exerciseAdd != null) {
-            target.exerciseAdd = source.exerciseAdd;
+        this.applyExercisePermissions(target, source, true);
+        this.applyLessonPermissions(target, source, true);
+        this.applyCommentPermissions(target, source, true);
+        this.applyUserPermissions(target, source, true);
+        this.applyGroupPermissions(target, source, true);
+        this.applyRankPermissions(target, source, true);
+        if (source.aiConfigEdit != null) {
+            target.aiConfigEdit = source.aiConfigEdit;
         }
-        if (source.exerciseDelete != null) {
-            target.exerciseDelete = source.exerciseDelete;
+    }
+
+    private void applyExercisePermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        if (!patch || source.exerciseAdd != null) {
+            target.exerciseAdd = Boolean.TRUE.equals(source.exerciseAdd);
         }
-        if (source.exerciseEdit != null) {
-            target.exerciseEdit = source.exerciseEdit;
+        if (!patch || source.exerciseEdit != null) {
+            target.exerciseEdit = Boolean.TRUE.equals(source.exerciseEdit);
         }
-        if (source.lessonAdd != null) {
-            target.lessonAdd = source.lessonAdd;
+        if (!patch || source.exerciseDelete != null) {
+            target.exerciseDelete = Boolean.TRUE.equals(source.exerciseDelete);
         }
-        if (source.lessonDelete != null) {
-            target.lessonDelete = source.lessonDelete;
+    }
+
+    private void applyLessonPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        if (!patch || source.lessonAdd != null) {
+            target.lessonAdd = Boolean.TRUE.equals(source.lessonAdd);
         }
-        if (source.lessonEdit != null) {
-            target.lessonEdit = source.lessonEdit;
+        if (!patch || source.lessonEdit != null) {
+            target.lessonEdit = Boolean.TRUE.equals(source.lessonEdit);
         }
-        if (source.commentAdd != null) {
-            target.commentAdd = source.commentAdd;
+        if (!patch || source.lessonDelete != null) {
+            target.lessonDelete = Boolean.TRUE.equals(source.lessonDelete);
         }
-        if (source.commentDelete != null) {
-            target.commentDelete = source.commentDelete;
+    }
+
+    private void applyCommentPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        if (!patch || source.commentAdd != null) {
+            target.commentAdd = Boolean.TRUE.equals(source.commentAdd);
         }
-        if (source.commentEdit != null) {
-            target.commentEdit = source.commentEdit;
+        if (!patch || source.commentEdit != null) {
+            target.commentEdit = Boolean.TRUE.equals(source.commentEdit);
         }
-        if (source.userAdd != null) {
-            target.userAdd = source.userAdd;
+        if (!patch || source.commentDelete != null) {
+            target.commentDelete = Boolean.TRUE.equals(source.commentDelete);
         }
-        if (source.userDelete != null) {
-            target.userDelete = source.userDelete;
+    }
+
+    private void applyUserPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        if (!patch || source.userAdd != null) {
+            target.userAdd = Boolean.TRUE.equals(source.userAdd);
         }
-        if (source.userEdit != null) {
-            target.userEdit = source.userEdit;
+        if (!patch || source.userEdit != null) {
+            target.userEdit = Boolean.TRUE.equals(source.userEdit);
         }
-        if (source.userGroupAdd != null) {
-            target.userGroupAdd = source.userGroupAdd;
+        if (!patch || source.userDelete != null) {
+            target.userDelete = Boolean.TRUE.equals(source.userDelete);
         }
-        if (source.userGroupDelete != null) {
-            target.userGroupDelete = source.userGroupDelete;
+    }
+
+    private void applyGroupPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        if (!patch || source.userGroupAdd != null) {
+            target.userGroupAdd = Boolean.TRUE.equals(source.userGroupAdd);
         }
-        if (source.userGroupEdit != null) {
-            target.userGroupEdit = source.userGroupEdit;
+        if (!patch || source.userGroupEdit != null) {
+            target.userGroupEdit = Boolean.TRUE.equals(source.userGroupEdit);
         }
-        if (source.userRankAdd != null) {
-            target.userRankAdd = source.userRankAdd;
+        if (!patch || source.userGroupDelete != null) {
+            target.userGroupDelete = Boolean.TRUE.equals(source.userGroupDelete);
         }
-        if (source.userRankDelete != null) {
-            target.userRankDelete = source.userRankDelete;
+    }
+
+    private void applyRankPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        if (!patch || source.userRankAdd != null) {
+            target.userRankAdd = Boolean.TRUE.equals(source.userRankAdd);
         }
-        if (source.userRankEdit != null) {
-            target.userRankEdit = source.userRankEdit;
+        if (!patch || source.userRankEdit != null) {
+            target.userRankEdit = Boolean.TRUE.equals(source.userRankEdit);
+        }
+        if (!patch || source.userRankDelete != null) {
+            target.userRankDelete = Boolean.TRUE.equals(source.userRankDelete);
         }
     }
 

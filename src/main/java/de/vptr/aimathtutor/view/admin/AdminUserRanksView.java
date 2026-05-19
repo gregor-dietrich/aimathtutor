@@ -179,6 +179,16 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> rank.userRankAdd, rank -> rank.userRankEdit,
                 rank -> rank.userRankDelete);
 
+        // AI configuration permission column
+        this.grid.addComponentColumn(rank -> {
+            final var layout = new HorizontalLayout();
+            layout.setSpacing(true);
+            layout.setPadding(false);
+            layout.add(this.permissionIconOrPlaceholder(Boolean.TRUE.equals(rank.aiConfigEdit),
+                    LineAwesomeIcon.EDIT_SOLID, "Edit AI Configuration"));
+            return layout;
+        }).setHeader("AI Config").setWidth("100px").setFlexGrow(0);
+
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
                 .setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
     }
@@ -301,6 +311,9 @@ public class AdminUserRanksView extends AbstractAdminView {
         final var userRankEditField = new Checkbox("Can Edit User Ranks");
         final var userRankDeleteField = new Checkbox("Can Delete User Ranks");
 
+        // AI configuration permissions
+        final var aiConfigEditField = new Checkbox("Can Edit AI Configuration");
+
         // Bind fields
         this.binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
                 .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
@@ -343,6 +356,9 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.binder.bind(userRankDeleteField, rank1 -> rank1.userRankDelete,
                 (rank1, value) -> rank1.userRankDelete = value);
 
+        // AI configuration permissions bindings
+        this.binder.bind(aiConfigEditField, rank1 -> rank1.aiConfigEdit, (rank1, value) -> rank1.aiConfigEdit = value);
+
         form.add(nameField);
 
         // Add section headers and organize permissions in sections
@@ -367,6 +383,9 @@ public class AdminUserRanksView extends AbstractAdminView {
 
         form.add(new H3("User Rank Permissions"));
         form.add(userRankAddField, userRankEditField, userRankDeleteField);
+
+        form.add(new H3("AI Configuration Permissions"));
+        form.add(aiConfigEditField);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
