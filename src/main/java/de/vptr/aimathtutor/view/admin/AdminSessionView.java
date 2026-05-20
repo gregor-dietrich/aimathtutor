@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
@@ -68,23 +69,22 @@ public class AdminSessionView extends AbstractAdminView {
     }
 
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
+    protected void onBeforeEnter(final BeforeEnterEvent event) {
         this.sessionId = event.getRouteParameters().get("sessionId").orElse(null);
 
         if (this.sessionId == null) {
             event.forwardTo(AdminSessionsView.class);
-            return;
         }
+    }
 
-        this.buildUi();
+    @Override
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadSessionDetails();
     }
 
-    private void buildUi() {
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         // Header

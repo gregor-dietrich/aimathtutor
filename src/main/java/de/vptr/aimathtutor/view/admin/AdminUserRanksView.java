@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -22,7 +23,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -34,12 +34,10 @@ import de.vptr.aimathtutor.component.layout.SearchLayout;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 /**
@@ -51,8 +49,6 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminUserRanksView.class);
 
-    @Inject
-    private transient UserRankService rankService;
     private Grid<UserRankViewDto> grid;
     private TextField searchField;
     private Button searchButton;
@@ -70,29 +66,23 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.setSpacing(true);
     }
 
-    /**
-     * Ensure the current user is authenticated and initialize the UI and asynchronous data loading for ranks.
-     */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadRanksAsync();
     }
 
     private void loadRanksAsync() {
         LOG.info("Starting async rank loading");
-        AsyncDataLoader.load(() -> this.rankService.getAllRanks(), this, ranks -> this.grid.setItems(ranks),
+        AsyncDataLoader.load(() -> this.userRankService.getAllRanks(), this, ranks -> this.grid.setItems(ranks),
                 "Failed to load ranks. Please try again.");
     }
 
     /**
      * Construct UI elements for the user ranks admin view.
      */
-    private void buildUi() {
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("User Ranks");
@@ -427,10 +417,10 @@ public class AdminUserRanksView extends AbstractAdminView {
             this.binder.writeBean(this.currentRank);
 
             if (this.currentRank.publicId == null) {
-                this.rankService.createRank(this.currentRank);
+                this.userRankService.createRank(this.currentRank);
                 NotificationUtil.showSuccess("Rank created successfully");
             } else {
-                this.rankService.updateRank(this.currentRank.publicId, this.currentRank);
+                this.userRankService.updateRank(this.currentRank.publicId, this.currentRank);
                 NotificationUtil.showSuccess("Rank updated successfully");
             }
 
@@ -449,7 +439,7 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void deleteRank(final UserRankViewDto rank) {
         try {
-            if (rank.publicId != null && this.rankService.deleteRank(rank.publicId)) {
+            if (rank.publicId != null && this.userRankService.deleteRank(rank.publicId)) {
                 NotificationUtil.showSuccess("Rank deleted successfully");
                 this.loadRanksAsync();
             } else {
@@ -476,7 +466,7 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.searchButton.setEnabled(false);
         LOG.infof("Starting async rank search with query: %s", query);
 
-        AsyncDataLoader.load(() -> this.rankService.searchRanks(query), this, ranks -> {
+        AsyncDataLoader.load(() -> this.userRankService.searchRanks(query), this, ranks -> {
             this.searchButton.setEnabled(true);
             this.grid.setItems(ranks);
         }, () -> this.searchButton.setEnabled(true), "Failed to search ranks. Please try again.");

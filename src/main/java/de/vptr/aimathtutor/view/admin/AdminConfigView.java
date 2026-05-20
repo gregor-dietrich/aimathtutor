@@ -23,7 +23,6 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
@@ -75,18 +74,10 @@ public class AdminConfigView extends AbstractAdminView {
     }
 
     /**
-     * Called before the view is shown. Ensures authentication and proper permissions. Configuration can only be managed
-     * by users with exercise or lesson permissions.
+     * Constructs the UI for the AI configuration admin view.
      */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-        this.buildUi();
-    }
-
-    private void buildUi() {
+    protected void buildUi() {
         this.removeAll();
 
         final var title = new H2("AI Configuration");

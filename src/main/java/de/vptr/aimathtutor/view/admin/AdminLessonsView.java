@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -19,7 +20,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -66,16 +66,9 @@ public class AdminLessonsView extends AbstractAdminView {
         this.setSpacing(true);
     }
 
-    /**
-     * Ensure user authorization and initialize lesson management components before the view becomes visible.
-     */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadLessonsAsync();
     }
 
@@ -144,7 +137,8 @@ public class AdminLessonsView extends AbstractAdminView {
     /**
      * Build the UI for the lessons administration view.
      */
-    private void buildUi() {
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("Lessons");

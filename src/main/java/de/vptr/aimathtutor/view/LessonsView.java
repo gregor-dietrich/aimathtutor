@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -70,6 +71,17 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         this.buildUi();
     }
 
+    @Override
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
+        AsyncDataLoader.load(() -> {
+            final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
+            final Map<String, List<ExerciseViewDto>> exercisesByLesson =
+                    this.exerciseService.findPublishedExercisesByLessonMap();
+            return new LessonsPayload(lessons, exercisesByLesson);
+        }, this, this::renderLessons, "Failed to load lessons. Please try again.");
+    }
+
     private void buildUi() {
         this.removeAll();
 
@@ -78,13 +90,6 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         final var welcomeLabel = new H2("Welcome, " + this.authService.getUsername() + "!");
         welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
         this.add(welcomeLabel);
-
-        AsyncDataLoader.load(() -> {
-            final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
-            final Map<String, List<ExerciseViewDto>> exercisesByLesson =
-                    this.exerciseService.findPublishedExercisesByLessonMap();
-            return new LessonsPayload(lessons, exercisesByLesson);
-        }, this, this::renderLessons, "Failed to load lessons. Please try again.");
     }
 
     private void renderLessons(final LessonsPayload payload) {

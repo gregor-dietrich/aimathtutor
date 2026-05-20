@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -90,6 +91,8 @@ public class AdminCommentsView extends AbstractAdminView {
     @Nullable
     private transient CommentDto currentComment;
 
+    private transient Long queryExerciseId;
+
     /**
      * Construct the admin comments view and initialize layout properties.
      */
@@ -100,36 +103,31 @@ public class AdminCommentsView extends AbstractAdminView {
     }
 
     /**
-     * Lifecycle callback invoked before entering the view. Ensures the user is authenticated and initializes the UI and
-     * data loading.
+     * Hook invoked before entering the view. Extracts query parameters.
      */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
-
-        // If navigated with an exerciseId query parameter, filter comments
+    protected void onBeforeEnter(final BeforeEnterEvent event) {
+        // If navigated with an exerciseId query parameter, store it for onAttach
         final var params = event.getLocation().getQueryParameters().getParameters();
         if (params.containsKey("exerciseId")) {
             try {
-                final Long exerciseId = Long.valueOf(params.get("exerciseId").get(0));
-                if (exerciseId == null || exerciseId <= 0) {
-                    LOG.warn("Invalid exerciseId parameter: not a positive number");
-                } else {
-                    // Load comments for that exercise only
-                    AsyncDataLoader.load(() -> this.commentService.findByExerciseId(exerciseId), this,
-                            comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
-                    return;
-                }
+                this.queryExerciseId = Long.valueOf(params.get("exerciseId").get(0));
             } catch (final Exception ex) {
                 LOG.warnf(ex, "Invalid exerciseId parameter: %s", params.get("exerciseId"));
             }
         }
+    }
 
-        this.loadCommentsAsync();
+    @Override
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
+        if (this.queryExerciseId != null && this.queryExerciseId > 0) {
+            AsyncDataLoader.load(() -> this.commentService.findByExerciseId(this.queryExerciseId), this,
+                    comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
+            this.queryExerciseId = null; // Clear it so it doesn't reload on every re-attach
+        } else {
+            this.loadCommentsAsync();
+        }
     }
 
     private void loadCommentsAsync() {
@@ -139,7 +137,11 @@ public class AdminCommentsView extends AbstractAdminView {
                 "Failed to load comments. Please try again.");
     }
 
-    private void buildUi() {
+    /**
+     * Construct the UI for the admin comments view.
+     */
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("Comments");

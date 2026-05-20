@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.view.admin;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -10,7 +11,6 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.ValueProvider;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
@@ -51,20 +51,14 @@ public class AdminProgressView extends AbstractAdminView {
         this.setSpacing(true);
     }
 
-    /**
-     * Perform authentication check and construct the progress dashboard before the view becomes visible.
-     */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadProgressData();
     }
 
-    private void buildUi() {
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         // Title
