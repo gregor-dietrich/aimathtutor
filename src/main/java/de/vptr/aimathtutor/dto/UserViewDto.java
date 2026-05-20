@@ -54,8 +54,8 @@ public class UserViewDto {
             this.activated = entity.activated;
             // activationKey is not exposed for security
             this.created = entity.created;
-            this.exercisesCount = entity.exercises != null ? (long) entity.exercises.size() : 0L;
-            this.commentsCount = entity.comments != null ? (long) entity.comments.size() : 0L;
+            this.exercisesCount = entity.exercisesCount != null ? entity.exercisesCount : 0L;
+            this.commentsCount = entity.commentsCount != null ? entity.commentsCount : 0L;
             this.userAvatarEmoji = entity.userAvatarEmoji;
             this.tutorAvatarEmoji = entity.tutorAvatarEmoji;
         }

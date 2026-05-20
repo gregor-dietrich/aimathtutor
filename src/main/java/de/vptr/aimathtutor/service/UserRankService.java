@@ -13,6 +13,8 @@ import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import io.quarkus.cache.CacheInvalidateAll;
+import io.quarkus.cache.CacheResult;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -28,6 +30,12 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class UserRankService {
+
+    /**
+     * Quarkus cache name for the rank-list read path. Ranks change rarely (admin action) but are read on most admin
+     * page loads, so we cache aggressively and invalidate on every write.
+     */
+    private static final String RANK_CACHE = "user-ranks";
 
     @Inject
     UserRankRepository userRankRepository;
@@ -67,17 +75,21 @@ public class UserRankService {
     }
 
     /**
-     * Retrieves all available user ranks in the system.
+     * Retrieves all available user ranks in the system. Result is cached because ranks are read on most admin requests
+     * but rarely written; cache is invalidated by {@link #createRank}, {@link #updateRank}, {@link #patchRank}, and
+     * {@link #deleteRank}.
      *
      * @return a list of all {@link UserRankViewDto} objects
      */
     @Transactional
+    @CacheResult(cacheName = RANK_CACHE)
     public List<UserRankViewDto> getAllRanks() {
         return this.getAllRanks(0, 100);
     }
 
     /**
-     * Retrieves available user ranks with pagination.
+     * Retrieves available user ranks with pagination. Cached per (page, pageSize) tuple; invalidated alongside the
+     * no-arg overload on any rank mutation.
      *
      * @param page
      *            the page number (0-indexed)
@@ -86,6 +98,7 @@ public class UserRankService {
      * @return a paginated list of {@link UserRankViewDto} objects
      */
     @Transactional
+    @CacheResult(cacheName = RANK_CACHE)
     public List<UserRankViewDto> getAllRanks(final int page, final int pageSize) {
         return this.userRankRepository.findAll(page, pageSize).stream().map(UserRankViewDto::new).toList();
     }
@@ -154,6 +167,7 @@ public class UserRankService {
      *             if rank name is invalid
      */
     @Transactional
+    @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto createRank(final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankAdd();
 
@@ -181,6 +195,7 @@ public class UserRankService {
      *             if rank is not found (NOT_FOUND status)
      */
     @Transactional
+    @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankEdit();
 
@@ -207,6 +222,7 @@ public class UserRankService {
      *             if rank is not found (NOT_FOUND status)
      */
     @Transactional
+    @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankEdit();
 
@@ -232,6 +248,7 @@ public class UserRankService {
      *             if rank has assigned users (CONFLICT status)
      */
     @Transactional
+    @CacheInvalidateAll(cacheName = RANK_CACHE)
     public boolean deleteRank(final String publicId) {
         this.permissionService.requireUserRankDelete();
 

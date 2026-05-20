@@ -92,6 +92,19 @@
             <property name="message"
                 value="Use LocalDateTime.now(ZoneId.systemDefault()) instead for explicit timezone handling." />
         </module>
+        <!--
+            JOIN FETCH on a @OneToMany / @ManyToMany collection cannot coexist with
+            setMaxResults: Hibernate emits HHH000104 and paginates in memory, undoing the
+            LIMIT pushdown. List of collection field names matches the entity model; add
+            new collection fields here when they are introduced.
+        -->
+        <module name="RegexpSinglelineJava">
+            <property name="format"
+                value="JOIN\s+FETCH\s+\w+\.(comments|exercises|commentFlags|userGroupMetas|users|interactions|sessions|members|replies|flags|metas|tags|children|parents)\b" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="JOIN FETCH on a collection cannot coexist with setMaxResults. Use @BatchSize, a second 'WHERE id IN :ids' query, or remove the JOIN FETCH." />
+        </module>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL" />
             <property name="format"

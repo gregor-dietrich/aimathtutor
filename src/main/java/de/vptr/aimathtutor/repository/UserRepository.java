@@ -133,12 +133,35 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all users from the database in a defined order.
+     * Default page size for admin listings — matches the cap used by other repositories. Prevents unbounded fetches
+     * from blowing memory when the table grows.
+     */
+    private static final int DEFAULT_PAGE_SIZE = 500;
+
+    /**
+     * Retrieves the first page of users (up to {@link #DEFAULT_PAGE_SIZE}) ordered by creation date descending. Rank is
+     * eagerly fetched via the named query's {@code JOIN FETCH} to avoid N+1 lazy loads during grid rendering.
      *
-     * @return a list of all {@link UserEntity} objects
+     * @return a capped list of {@link UserEntity} objects
      */
     public List<UserEntity> findAll() {
-        return this.listNamed("User.findAllOrdered", UserEntity.class);
+        return this.findAll(0, DEFAULT_PAGE_SIZE);
+    }
+
+    /**
+     * Retrieves a paginated slice of users ordered by creation date descending. Rank is eagerly fetched.
+     *
+     * @param page
+     *            zero-indexed page number
+     * @param pageSize
+     *            number of users per page
+     * @return a paginated list of {@link UserEntity} objects
+     */
+    public List<UserEntity> findAll(final int page, final int pageSize) {
+        final var q = this.em.createNamedQuery("User.findAllOrdered", UserEntity.class);
+        q.setFirstResult(page * pageSize);
+        q.setMaxResults(pageSize);
+        return q.getResultList();
     }
 
     /**

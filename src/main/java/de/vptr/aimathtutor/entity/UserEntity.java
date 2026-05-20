@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
@@ -29,15 +30,21 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Entity representing users in the system.
  */
-@NamedQueries({ @NamedQuery(name = "User.findByUsername", query = "FROM UserEntity WHERE username = :u"),
-        @NamedQuery(name = "User.findByEmail", query = "FROM UserEntity WHERE emailBlindIndex = :b"),
-        @NamedQuery(name = "User.findByPublicId", query = "FROM UserEntity WHERE publicId = :p"),
-        @NamedQuery(name = "User.findAllOrdered", query = "FROM UserEntity ORDER BY created DESC"),
-        @NamedQuery(name = "User.findActive",
-                query = "FROM UserEntity WHERE activated = true and banned = false ORDER BY created DESC"),
-        @NamedQuery(name = "User.findByRankId", query = "FROM UserEntity WHERE rank.id = :r ORDER BY created DESC"),
-        @NamedQuery(name = "User.searchByTerm",
-                query = "FROM UserEntity WHERE LOWER(username) LIKE :s ORDER BY created DESC"),
+@NamedQueries({
+        @NamedQuery(name = "User.findByUsername",
+                query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.username = :u"),
+        @NamedQuery(name = "User.findByEmail",
+                query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.emailBlindIndex = :b"),
+        @NamedQuery(name = "User.findByPublicId",
+                query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.publicId = :p"),
+        @NamedQuery(name = "User.findAllOrdered",
+                query = "FROM UserEntity u LEFT JOIN FETCH u.rank ORDER BY u.created DESC"),
+        @NamedQuery(name = "User.findActive", query = "FROM UserEntity u LEFT JOIN FETCH u.rank "
+                + "WHERE u.activated = true AND u.banned = false ORDER BY u.created DESC"),
+        @NamedQuery(name = "User.findByRankId",
+                query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.rank.id = :r ORDER BY u.created DESC"),
+        @NamedQuery(name = "User.searchByTerm", query = "FROM UserEntity u LEFT JOIN FETCH u.rank "
+                + "WHERE LOWER(u.username) LIKE :s ORDER BY u.created DESC"),
         @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r") })
 @Entity
 @Table(name = "users", indexes = { @Index(name = "idx_user_rank", columnList = "rank_id"),
@@ -119,4 +126,20 @@ public class UserEntity extends BaseEntity {
     @JsonIgnore
     @Nullable
     public List<UserGroupMetaEntity> userGroupMetas;
+
+    /**
+     * Read-only count of exercises authored by this user, computed by SQL on every fetch. Avoids loading the entire
+     * exercises collection when DTOs need only the size.
+     */
+    @Formula("(SELECT COUNT(*) FROM exercises e WHERE e.user_id = id)")
+    @Nullable
+    public Long exercisesCount;
+
+    /**
+     * Read-only count of comments authored by this user, computed by SQL on every fetch. Avoids loading the entire
+     * comments collection when DTOs need only the size.
+     */
+    @Formula("(SELECT COUNT(*) FROM comments c WHERE c.user_id = id)")
+    @Nullable
+    public Long commentsCount;
 }

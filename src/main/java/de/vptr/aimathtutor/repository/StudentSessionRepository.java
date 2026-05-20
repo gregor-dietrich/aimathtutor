@@ -395,6 +395,59 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
+     * Bucket every session by completion-rate accuracy. Returns one row per bucket label with its count, computed
+     * entirely in SQL so the full sessions table never has to be materialised in memory.
+     *
+     * @return list of {@code [bucketLabel, count]} pairs
+     */
+    public List<Object[]> findCompletionRateBuckets() {
+        final var q = this.em.createNamedQuery("StudentSession.findCompletionRateBuckets", Object[].class);
+        return q.getResultList();
+    }
+
+    /**
+     * Bucket every session by hints-used count. Returns one row per bucket label with its count.
+     */
+    public List<Object[]> findHintUsageBuckets() {
+        final var q = this.em.createNamedQuery("StudentSession.findHintUsageBuckets", Object[].class);
+        return q.getResultList();
+    }
+
+    /**
+     * Return the top {@code limit} user IDs by completed-session count, descending. Avoids loading every session and
+     * user just to sort in Java.
+     *
+     * @param limit
+     *            maximum number of rows to return
+     * @return list of {@code [userId, completedCount]} pairs in descending completion order
+     */
+    public List<Object[]> findTopUsersByCompletion(final int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findTopUsersByCompletion", Object[].class);
+        q.setMaxResults(limit);
+        return q.getResultList();
+    }
+
+    /**
+     * Return the most recent {@code limit} sessions started within the given window. Uses {@code LIMIT} at the database
+     * rather than loading the whole window into memory.
+     */
+    public List<StudentSessionEntity> findRecentByStartTimeBetween(final LocalDateTime start, final LocalDateTime end,
+            final int limit) {
+        if (start == null || end == null || limit <= 0) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findByStartTimeBetweenWithRelations",
+                StudentSessionEntity.class);
+        q.setParameter("s", start);
+        q.setParameter("e", end);
+        q.setMaxResults(limit);
+        return q.getResultList();
+    }
+
+    /**
      * Persist a new student session entity.
      *
      * @param session

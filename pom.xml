@@ -167,6 +167,12 @@
       <artifactId>quarkus-logging-json</artifactId>
     </dependency>
 
+    <!-- In-memory cache for read-mostly reference data (e.g. user ranks) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+    </dependency>
+
     <!-- Line Awesome for icons -->
     <dependency>
       <groupId>org.parttio</groupId>

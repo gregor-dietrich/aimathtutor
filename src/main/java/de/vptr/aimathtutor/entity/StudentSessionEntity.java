@@ -114,7 +114,37 @@ import jakarta.validation.constraints.NotNull;
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime < :e"),
         @NamedQuery(name = "StudentSession.findProblemCategoryStats",
                 query = "SELECT s.exercise.title, COUNT(s) FROM StudentSessionEntity s "
-                        + "WHERE s.completed = true GROUP BY s.exercise.title") })
+                        + "WHERE s.completed = true GROUP BY s.exercise.title"),
+        @NamedQuery(name = "StudentSession.findCompletionRateBuckets",
+                query = "SELECT CASE "
+                        + "  WHEN s.actionsCount = 0 OR s.correctActions = 0 THEN '0%' "
+                        + "  WHEN s.correctActions = s.actionsCount THEN '100%' "
+                        + "  WHEN (s.correctActions * 1.0 / s.actionsCount) <= 0.25 THEN '1-25%' "
+                        + "  WHEN (s.correctActions * 1.0 / s.actionsCount) <= 0.50 THEN '26-50%' "
+                        + "  WHEN (s.correctActions * 1.0 / s.actionsCount) <= 0.75 THEN '51-75%' "
+                        + "  ELSE '76-99%' END, COUNT(s) "
+                        + "FROM StudentSessionEntity s GROUP BY CASE "
+                        + "  WHEN s.actionsCount = 0 OR s.correctActions = 0 THEN '0%' "
+                        + "  WHEN s.correctActions = s.actionsCount THEN '100%' "
+                        + "  WHEN (s.correctActions * 1.0 / s.actionsCount) <= 0.25 THEN '1-25%' "
+                        + "  WHEN (s.correctActions * 1.0 / s.actionsCount) <= 0.50 THEN '26-50%' "
+                        + "  WHEN (s.correctActions * 1.0 / s.actionsCount) <= 0.75 THEN '51-75%' "
+                        + "  ELSE '76-99%' END"),
+        @NamedQuery(name = "StudentSession.findHintUsageBuckets",
+                query = "SELECT CASE "
+                        + "  WHEN s.hintsUsed = 0 THEN '0 hints' "
+                        + "  WHEN s.hintsUsed <= 3 THEN '1-3 hints' "
+                        + "  WHEN s.hintsUsed <= 7 THEN '4-7 hints' "
+                        + "  ELSE '8+ hints' END, COUNT(s) "
+                        + "FROM StudentSessionEntity s GROUP BY CASE "
+                        + "  WHEN s.hintsUsed = 0 THEN '0 hints' "
+                        + "  WHEN s.hintsUsed <= 3 THEN '1-3 hints' "
+                        + "  WHEN s.hintsUsed <= 7 THEN '4-7 hints' "
+                        + "  ELSE '8+ hints' END"),
+        @NamedQuery(name = "StudentSession.findTopUsersByCompletion",
+                query = "SELECT s.user.id, COUNT(s) FROM StudentSessionEntity s "
+                        + "WHERE s.completed = true AND s.user IS NOT NULL "
+                        + "GROUP BY s.user.id ORDER BY COUNT(s) DESC") })
 public class StudentSessionEntity extends BaseEntity {
 
     @Nullable

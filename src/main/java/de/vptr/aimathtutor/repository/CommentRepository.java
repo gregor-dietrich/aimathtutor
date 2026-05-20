@@ -18,6 +18,13 @@ import jakarta.transaction.Transactional;
 public class CommentRepository extends AbstractRepository {
 
     /**
+     * Cap on the no-arg convenience overloads. The grid views call these to populate Vaadin grids with all results in
+     * memory; uncapped, a production-sized comments table would exhaust heap. Callers that need true pagination should
+     * use the explicit (page, pageSize) overloads.
+     */
+    private static final int DEFAULT_PAGE_SIZE = 500;
+
+    /**
      * Retrieves all comments from the database in a defined order.
      *
      * @return a list of all {@link CommentEntity} objects ordered
@@ -30,7 +37,7 @@ public class CommentRepository extends AbstractRepository {
      * Fetch comments with related user, exercise and parentComment eagerly to avoid lazy-loading in service layer.
      */
     public List<CommentEntity> findAllOrderedWithRelations() {
-        return this.findAllOrderedWithRelations(0, Integer.MAX_VALUE);
+        return this.findAllOrderedWithRelations(0, DEFAULT_PAGE_SIZE);
     }
 
     /**
@@ -149,7 +156,7 @@ public class CommentRepository extends AbstractRepository {
      * @return a list of {@link CommentEntity} objects with relations for the exercise
      */
     public List<CommentEntity> findByExerciseIdWithRelations(final Long exerciseId) {
-        return this.findByExerciseIdWithRelations(exerciseId, 0, Integer.MAX_VALUE);
+        return this.findByExerciseIdWithRelations(exerciseId, 0, DEFAULT_PAGE_SIZE);
     }
 
     /**
