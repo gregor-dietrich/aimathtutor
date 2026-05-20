@@ -93,6 +93,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private void renderLessons(final LessonsPayload payload) {
+        // Re-build UI to clear any previously rendered lessons from prior attach events
+        this.buildUi();
+
         // Exercises with no lesson are stored under null key
         final List<ExerciseViewDto> standaloneExercises = payload.exercisesByLesson.getOrDefault(null, List.of());
 

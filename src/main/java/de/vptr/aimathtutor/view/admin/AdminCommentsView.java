@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -41,6 +42,7 @@ import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
@@ -62,6 +64,8 @@ public class AdminCommentsView extends AbstractAdminView {
 
     @Inject
     private transient CommentService commentService;
+    @Inject
+    private transient ExerciseService exerciseService;
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
 
@@ -91,7 +95,8 @@ public class AdminCommentsView extends AbstractAdminView {
     @Nullable
     private transient CommentDto currentComment;
 
-    private transient Long queryExerciseId;
+    @Nullable
+    private transient String queryExercisePublicId;
 
     /**
      * Construct the admin comments view and initialize layout properties.
@@ -110,21 +115,22 @@ public class AdminCommentsView extends AbstractAdminView {
         // If navigated with an exerciseId query parameter, store it for onAttach
         final var params = event.getLocation().getQueryParameters().getParameters();
         if (params.containsKey("exerciseId")) {
-            try {
-                this.queryExerciseId = Long.valueOf(params.get("exerciseId").get(0));
-            } catch (final Exception ex) {
-                LOG.warnf(ex, "Invalid exerciseId parameter: %s", params.get("exerciseId"));
-            }
+            this.queryExercisePublicId = params.get("exerciseId").get(0);
         }
     }
 
     @Override
     protected void onAttach(final AttachEvent event) {
         super.onAttach(event);
-        if (this.queryExerciseId != null && this.queryExerciseId > 0) {
-            AsyncDataLoader.load(() -> this.commentService.findByExerciseId(this.queryExerciseId), this,
-                    comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
-            this.queryExerciseId = null; // Clear it so it doesn't reload on every re-attach
+        if (this.queryExercisePublicId != null && !this.queryExercisePublicId.isBlank()) {
+            AsyncDataLoader.load(() -> {
+                final var exercise = this.exerciseService.findByPublicId(this.queryExercisePublicId).orElse(null);
+                if (exercise == null) {
+                    return Collections.<CommentViewDto>emptyList();
+                }
+                return this.commentService.findByExerciseId(exercise.id);
+            }, this, comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
+            this.queryExercisePublicId = null; // Clear it so it doesn't reload on every re-attach
         } else {
             this.loadCommentsAsync();
         }
