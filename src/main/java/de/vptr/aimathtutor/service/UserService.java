@@ -257,6 +257,7 @@ public class UserService {
             throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
         }
 
+        final String oldUsername = existingUser.username;
         // Complete replacement (PUT semantics)
         existingUser.username = userDto.username;
         existingUser.email = normalizedEmail;
@@ -268,7 +269,10 @@ public class UserService {
         this.applyRankToUser(existingUser, userDto.rankPublicId, true);
 
         this.userRepository.persist(existingUser);
-        if (existingUser.username != null) {
+        if (oldUsername != null) {
+            this.authService.evictCache(oldUsername);
+        }
+        if (existingUser.username != null && !existingUser.username.equals(oldUsername)) {
             this.authService.evictCache(existingUser.username);
         }
         return new UserViewDto(existingUser);
@@ -313,6 +317,7 @@ public class UserService {
             }
         }
 
+        final String oldUsername = existingUser.username;
         // Partial update (PATCH semantics) - only update provided fields
         if (userDto.username != null && !userDto.username.isBlank()) {
             existingUser.username = userDto.username;
@@ -334,7 +339,10 @@ public class UserService {
         }
 
         this.userRepository.persist(existingUser);
-        if (existingUser.username != null) {
+        if (oldUsername != null) {
+            this.authService.evictCache(oldUsername);
+        }
+        if (existingUser.username != null && !existingUser.username.equals(oldUsername)) {
             this.authService.evictCache(existingUser.username);
         }
         return new UserViewDto(existingUser);

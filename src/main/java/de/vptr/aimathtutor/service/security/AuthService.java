@@ -92,7 +92,9 @@ public class AuthService {
      */
     public void evictCache(final String username) {
         if (username != null) {
-            this.globalEvictionTimestamps.put(username.toLowerCase(Locale.ROOT).trim(), System.currentTimeMillis());
+            final long now = System.currentTimeMillis();
+            this.globalEvictionTimestamps.entrySet().removeIf(e -> e.getValue() < now - AUTH_CACHE_TTL_MILLIS);
+            this.globalEvictionTimestamps.put(username.toLowerCase(Locale.ROOT).trim(), now);
         }
     }
 
@@ -304,9 +306,11 @@ public class AuthService {
         // Vaadin navigation calls beforeEnter on every route change, and the
         // findByUsername hit otherwise dominates page-to-page latency.
         final var lastCheck = (Long) session.getAttribute(LAST_DB_CHECK_KEY);
+        final long now = System.currentTimeMillis();
+        this.globalEvictionTimestamps.entrySet().removeIf(e -> e.getValue() < now - AUTH_CACHE_TTL_MILLIS);
         final var globalEviction = this.globalEvictionTimestamps.get(username.toLowerCase(Locale.ROOT).trim());
 
-        if (lastCheck != null && (System.currentTimeMillis() - lastCheck < AUTH_CACHE_TTL_MILLIS)
+        if (lastCheck != null && (now - lastCheck < AUTH_CACHE_TTL_MILLIS)
                 && (globalEviction == null || lastCheck > globalEviction)) {
             return true;
         }

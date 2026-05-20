@@ -456,20 +456,36 @@ public class AiConfigService {
     }
 
     /**
-     * Validates a provider API URL at runtime, immediately before issuing an HTTP request. Re-applies the same SSRF
-     * checks performed at config-update time so a URL swapped after validation (or a hostname that resolved differently
-     * then) cannot be used to reach internal services.
+     * Checks if the provided {@link InetAddress} is a non-public address (loopback, site-local, link-local, multicast,
+     * or IPv6 unique-local).
      *
-     * <p>
-     * Rules:
-     * <ul>
-     * <li>Host MUST be in the provider's allow-list. Empty allow-list rejects everything for that provider.</li>
-     * <li>External providers (Google, OpenAI) MUST use HTTPS and resolve to a public address. DNS resolution happens
-     * here so DNS-rebinding moves the host to a private IP between admin save and dispatch are caught.</li>
-     * <li>Ollama is allow-list-only; private addresses are permitted because Docker service names like {@code ollama}
-     * intentionally resolve into the container network. The allow-list itself is the trust boundary.</li>
-     * </ul>
+     * @param address
+     *            the address to check
+     * @return {@code true} if the address is non-public, {@code false} otherwise
+     */
+    private boolean isNonPublicAddress(final InetAddress address) {
+        if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
+                || address.isMulticastAddress() || address.isAnyLocalAddress()) {
+            return true;
+        }
+        if (address instanceof Inet6Address) {
+            final byte[] bytes = address.getAddress();
+            // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
+            return (bytes[0] & 0xFE) == 0xFC;
+        }
+        return false;
+    }
+
+    /**
+     * Validates that a provider API URL is safe to call. Used by {@link #validateUrlSafe} and immediately before HTTP
+     * calls. This method re-runs SSRF checks immediately before each HTTP request to close the TOCTOU window between
+     * admin save and use. Ollama is allow-list-only; private addresses are permitted because Docker service names like
+     * {@code ollama} intentionally resolve into the container network. The allow-list itself is the trust boundary.
      *
+     * @param url
+     *            the URL to validate
+     * @param providerType
+     *            the provider type
      * @throws IllegalArgumentException
      *             when the URL fails any check
      */
@@ -507,18 +523,11 @@ public class AiConfigService {
             throw new IllegalArgumentException(providerType + " API URL must use HTTPS");
         }
         try {
-            final InetAddress address = InetAddress.getByName(host);
-            if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
-                    || address.isMulticastAddress() || address.isAnyLocalAddress()) {
-                throw new IllegalArgumentException(providerType + " API host '" + host
-                        + "' resolved to a non-public address (possible DNS rebinding)");
-            }
-            if (address instanceof Inet6Address) {
-                final byte[] bytes = address.getAddress();
-                // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
-                if ((bytes[0] & 0xFE) == 0xFC) {
-                    throw new IllegalArgumentException(
-                            providerType + " API host '" + host + "' resolved to an IPv6 unique-local address");
+            final InetAddress[] addresses = InetAddress.getAllByName(host);
+            for (final InetAddress address : addresses) {
+                if (this.isNonPublicAddress(address)) {
+                    throw new IllegalArgumentException(providerType + " API host '" + host
+                            + "' resolved to a non-public address (possible DNS rebinding)");
                 }
             }
         } catch (final UnknownHostException e) {
@@ -567,6 +576,9 @@ public class AiConfigService {
             throw new IllegalArgumentException("URL must have a valid host for key '" + configKey + "'");
         }
         final String host = uri.getHost().toLowerCase(Locale.ROOT);
+        if (!"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException("Generic API URL must use HTTPS for key '" + configKey + "'");
+        }
         if (AppConstants.BLOCKED_HOST_LOCALHOST.equals(host) || AppConstants.BLOCKED_HOST_LOOPBACK_IPV4.equals(host)
                 || host.startsWith("127.") || AppConstants.BLOCKED_HOST_ANY.equals(host)
                 || AppConstants.BLOCKED_HOST_LOOPBACK_IPV6.equals(host)
@@ -574,16 +586,11 @@ public class AiConfigService {
             throw new IllegalArgumentException("Loopback addresses are not allowed for key '" + configKey + "'");
         }
         try {
-            final InetAddress address = InetAddress.getByName(host);
-            if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
-                    || address.isMulticastAddress() || address.isAnyLocalAddress()) {
-                throw new IllegalArgumentException("Private IP addresses are not allowed for key '" + configKey + "'");
-            }
-            if (address instanceof Inet6Address) {
-                final byte[] bytes = address.getAddress();
-                if ((bytes[0] & 0xFE) == 0xFC) {
+            final InetAddress[] addresses = InetAddress.getAllByName(host);
+            for (final InetAddress address : addresses) {
+                if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(
-                            "Private IP addresses are not allowed for key '" + configKey + "' host '" + host + "'");
+                            "Private IP addresses are not allowed for key '" + configKey + "'");
                 }
             }
         } catch (final UnknownHostException e) {

@@ -139,11 +139,21 @@ class LoginAttemptServiceTest {
     @Test
     @DisplayName("Should enforce account max cache size")
     void shouldEnforceAccountMaxCacheSize() {
+        final String target = "user_target";
+        // Record enough attempts to cause a lockout
+        for (int i = 0; i < 30; i++) {
+            this.loginAttemptService.recordFailedAccountAttempt(target);
+        }
+        assertTrue(this.loginAttemptService.getRemainingAccountLockoutSeconds(target) > 0);
+
+        // Flood the cache with many distinct accounts to trigger eviction
         for (int i = 0; i < 10_005; i++) {
             this.loginAttemptService.recordFailedAccountAttempt("user_" + i);
         }
-        // Cache cleanup should be triggered
-        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds("user_10004"));
+
+        // Target should have been evicted, so lockout is now 0
+        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds(target),
+                "Target account should have been evicted from the bounded cache");
     }
 
     @Test
@@ -155,8 +165,7 @@ class LoginAttemptServiceTest {
             this.loginAttemptService.recordFailedAttempt(key);
         }
         final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(key);
-        // Should be exactly or very close to 3600
-        assertTrue(remaining <= 3600, "Lockout should never exceed 3600s");
-        assertTrue(remaining > 3500, "Lockout should be at the cap");
+        // Should be exactly 3600
+        assertEquals(3600, remaining, "Lockout should be exactly capped at 3600s");
     }
 }

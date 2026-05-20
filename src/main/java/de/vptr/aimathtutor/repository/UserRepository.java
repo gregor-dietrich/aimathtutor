@@ -158,9 +158,11 @@ public class UserRepository extends AbstractRepository {
      * @return a paginated list of {@link UserEntity} objects
      */
     public List<UserEntity> findAll(final int page, final int pageSize) {
+        final int sanitizedPage = Math.max(0, page);
+        final int sanitizedPageSize = pageSize <= 0 ? 10 : pageSize;
         final var q = this.em.createNamedQuery("User.findAllOrdered", UserEntity.class);
-        q.setFirstResult(page * pageSize);
-        q.setMaxResults(pageSize);
+        q.setFirstResult(sanitizedPage * sanitizedPageSize);
+        q.setMaxResults(sanitizedPageSize);
         return q.getResultList();
     }
 

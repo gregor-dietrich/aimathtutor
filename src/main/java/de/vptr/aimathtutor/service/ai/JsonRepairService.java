@@ -83,7 +83,10 @@ public class JsonRepairService {
                 feedback.confidence = 0.7;
                 return feedback;
             } else {
-                LOG.warnf("Malformed AI response from provider. Raw body: %s", jsonResponse);
+                final int length = jsonResponse.length();
+                final String prefix = length > 50 ? jsonResponse.substring(0, 50) + "..." : jsonResponse;
+                final String hash = Integer.toHexString(jsonResponse.hashCode());
+                LOG.warnf("Malformed AI response from provider. length=%d, hash=%s, prefix=%s", length, hash, prefix);
                 return AiFeedbackDto.error("The AI provider returned an invalid response. Please try again.");
             }
         }

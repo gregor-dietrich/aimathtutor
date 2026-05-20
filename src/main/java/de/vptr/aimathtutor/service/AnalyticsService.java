@@ -613,9 +613,12 @@ public class AnalyticsService {
         final List<StudentSessionEntity> userSessions = this.studentSessionRepository.findByUserIdIn(userIds);
         final Map<Long, List<StudentSessionEntity>> sessionsByUser = userSessions.stream()
                 .filter(session -> session.user != null).collect(Collectors.groupingBy(session -> session.user.id));
+
+        final Map<Long, UserEntity> userById = users.stream().collect(Collectors.toMap(u -> u.id, u -> u));
+
         // Preserve the SQL ordering (highest completion count first)
         return userIds.stream().map(uid -> {
-            final UserEntity user = users.stream().filter(u -> uid.equals(u.id)).findFirst().orElse(null);
+            final UserEntity user = userById.get(uid);
             return user == null ? null : this.computeProgressSummary(user, sessionsByUser.getOrDefault(uid, List.of()));
         }).filter(summary -> summary != null).toList();
     }
