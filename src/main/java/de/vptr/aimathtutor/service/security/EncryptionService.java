@@ -128,11 +128,23 @@ public class EncryptionService {
 
     private static byte[] deriveKey(final byte[] master, final String label) {
         try {
+            // HKDF-Extract(salt=0, IKM=master) -> PRK
+            // RFC 5869: if salt is not provided, it is set to a string of HashLen zeros.
             final Mac mac = Mac.getInstance(HMAC_SHA256);
-            mac.init(new SecretKeySpec(master, HMAC_SHA256));
-            return mac.doFinal(label.getBytes(StandardCharsets.UTF_8));
+            mac.init(new SecretKeySpec(new byte[32], HMAC_SHA256));
+            final byte[] prk = mac.doFinal(master);
+
+            // HKDF-Expand(PRK, info=label, L=32) -> OKM
+            // Since L=32 and HashLen=32, we only need one iteration (T(1)).
+            // T(1) = HMAC-SHA256(PRK, info | 0x01)
+            mac.init(new SecretKeySpec(prk, HMAC_SHA256));
+            final byte[] info = label.getBytes(StandardCharsets.UTF_8);
+            final byte[] infoWithCounter = new byte[info.length + 1];
+            System.arraycopy(info, 0, infoWithCounter, 0, info.length);
+            infoWithCounter[info.length] = 0x01;
+            return mac.doFinal(infoWithCounter);
         } catch (final NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new IllegalStateException("Key derivation failed for label: " + label, e);
+            throw new IllegalStateException("Key derivation (HKDF) failed for label: " + label, e);
         }
     }
 }
