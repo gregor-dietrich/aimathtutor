@@ -122,9 +122,10 @@ public class AdminCommentsView extends AbstractAdminView {
     @Override
     protected void onAttach(final AttachEvent event) {
         super.onAttach(event);
-        if (this.queryExercisePublicId != null && !this.queryExercisePublicId.isBlank()) {
+        final var publicId = this.queryExercisePublicId;
+        if (publicId != null && !publicId.isBlank()) {
             AsyncDataLoader.load(() -> {
-                final var exercise = this.exerciseService.findByPublicId(this.queryExercisePublicId).orElse(null);
+                final var exercise = this.exerciseService.findByPublicId(publicId).orElse(null);
                 if (exercise == null) {
                     return Collections.<CommentViewDto>emptyList();
                 }
