@@ -26,7 +26,13 @@ public class LoginAttemptService {
     private static final int MAX_CACHE_SIZE = 10_000;
     private static final long CLEANUP_INTERVAL_SECONDS = 300; // 5 minutes
 
+    // Account-wide limits
+    private static final int ACCOUNT_MAX_ATTEMPTS = 25;
+    private static final long ACCOUNT_SOFT_LOCK_SECONDS = 600; // 10 minutes
+    private static final long ACCOUNT_WINDOW_SECONDS = 900; // 15 minutes
+
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();
+    private final Map<String, AccountLoginAttempt> accountAttempts = new ConcurrentHashMap<>();
     private ScheduledExecutorService cleanupExecutor;
 
     @PostConstruct
@@ -50,6 +56,7 @@ public class LoginAttemptService {
      */
     private void cleanupExpiredEntries() {
         this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        this.accountAttempts.entrySet().removeIf(entry -> entry.getValue().isExpired());
 
         // If still over limit after cleanup, remove oldest entries
         if (this.attempts.size() > MAX_CACHE_SIZE) {
@@ -57,6 +64,12 @@ public class LoginAttemptService {
                     .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
                     .limit(this.attempts.size() - MAX_CACHE_SIZE)
                     .forEach(entry -> this.attempts.remove(entry.getKey(), entry.getValue()));
+        }
+        if (this.accountAttempts.size() > MAX_CACHE_SIZE) {
+            this.accountAttempts.entrySet().stream()
+                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
+                    .limit(this.accountAttempts.size() - MAX_CACHE_SIZE)
+                    .forEach(entry -> this.accountAttempts.remove(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -85,6 +98,29 @@ public class LoginAttemptService {
     }
 
     /**
+     * Records a failed login attempt for the account (username only).
+     *
+     * @param username
+     *            the username
+     */
+    public void recordFailedAccountAttempt(final String username) {
+        if (this.accountAttempts.size() >= MAX_CACHE_SIZE && !this.accountAttempts.containsKey(username)) {
+            this.cleanupExpiredEntries();
+        }
+
+        this.accountAttempts.compute(username, (k, v) -> {
+            if (v == null || v.isExpired()) {
+                return new AccountLoginAttempt(1, Instant.now(), Instant.now());
+            }
+            // If the window has passed since the *first* attempt in this window, reset
+            if (ChronoUnit.SECONDS.between(v.firstAttempt, Instant.now()) > ACCOUNT_WINDOW_SECONDS) {
+                return new AccountLoginAttempt(1, Instant.now(), Instant.now());
+            }
+            return new AccountLoginAttempt(v.count + 1, v.firstAttempt, Instant.now());
+        });
+    }
+
+    /**
      * Records a successful login, clearing any previous failed attempts.
      *
      * @param key
@@ -92,6 +128,16 @@ public class LoginAttemptService {
      */
     public void recordSuccessfulLogin(final String key) {
         this.attempts.remove(key);
+    }
+
+    /**
+     * Records a successful login for an account, clearing previous failed account attempts.
+     *
+     * @param username
+     *            the username
+     */
+    public void recordSuccessfulAccountLogin(final String username) {
+        this.accountAttempts.remove(username);
     }
 
     /**
@@ -114,6 +160,25 @@ public class LoginAttemptService {
     }
 
     /**
+     * Checks whether the account is currently locked out.
+     *
+     * @param username
+     *            the username
+     * @return true if locked out
+     */
+    public boolean isAccountLockedOut(final String username) {
+        final AccountLoginAttempt attempt = this.accountAttempts.get(username);
+        if (attempt == null) {
+            return false;
+        }
+        if (attempt.isExpired()) {
+            this.accountAttempts.remove(username, attempt);
+            return false;
+        }
+        return attempt.count >= ACCOUNT_MAX_ATTEMPTS;
+    }
+
+    /**
      * Returns the remaining lockout duration in seconds for the given key.
      *
      * @param key
@@ -128,6 +193,22 @@ public class LoginAttemptService {
         final long lockoutSeconds = this.calculateLockoutSeconds(attempt.count);
         final long elapsed = ChronoUnit.SECONDS.between(attempt.lastAttempt, Instant.now());
         return Math.max(0, lockoutSeconds - elapsed);
+    }
+
+    /**
+     * Returns the remaining lockout duration in seconds for the account.
+     *
+     * @param username
+     *            the username
+     * @return remaining lockout seconds, or 0 if not locked out
+     */
+    public long getRemainingAccountLockoutSeconds(final String username) {
+        final AccountLoginAttempt attempt = this.accountAttempts.get(username);
+        if (attempt == null || attempt.isExpired() || attempt.count < ACCOUNT_MAX_ATTEMPTS) {
+            return 0;
+        }
+        final long elapsed = ChronoUnit.SECONDS.between(attempt.lastAttempt, Instant.now());
+        return Math.max(0, ACCOUNT_SOFT_LOCK_SECONDS - elapsed);
     }
 
     private long calculateLockoutSeconds(final int attemptCount) {
@@ -159,6 +240,28 @@ public class LoginAttemptService {
             }
             final long multiplier = 1L << (attemptCount - MAX_ATTEMPTS);
             return Math.min(BASE_LOCKOUT_SECONDS * multiplier, MAX_LOCKOUT_SECONDS);
+        }
+    }
+
+    private static final class AccountLoginAttempt {
+        final int count;
+        final Instant firstAttempt;
+        final Instant lastAttempt;
+
+        AccountLoginAttempt(final int count, final Instant firstAttempt, final Instant lastAttempt) {
+            this.count = count;
+            this.firstAttempt = firstAttempt;
+            this.lastAttempt = lastAttempt;
+        }
+
+        boolean isExpired() {
+            if (this.count >= ACCOUNT_MAX_ATTEMPTS) {
+                final long elapsed = ChronoUnit.SECONDS.between(this.lastAttempt, Instant.now());
+                return elapsed > ACCOUNT_SOFT_LOCK_SECONDS;
+            } else {
+                final long elapsed = ChronoUnit.SECONDS.between(this.firstAttempt, Instant.now());
+                return elapsed > ACCOUNT_WINDOW_SECONDS;
+            }
         }
     }
 }

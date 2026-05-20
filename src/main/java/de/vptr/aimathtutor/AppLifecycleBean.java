@@ -1,11 +1,14 @@
 package de.vptr.aimathtutor;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 /**
  * Application lifecycle bean used for startup/shutdown hooks and initialization tasks.
@@ -14,6 +17,12 @@ import jakarta.enterprise.event.Observes;
 public class AppLifecycleBean {
 
     private static final Logger LOG = Logger.getLogger(AppLifecycleBean.class);
+
+    @Inject
+    LaunchMode launchMode;
+
+    @ConfigProperty(name = "quarkus.datasource.password", defaultValue = "")
+    String dbPassword = "";
 
     /**
      * ASCII art for the application logo. This is displayed in the console when the application starts.
@@ -36,6 +45,11 @@ public class AppLifecycleBean {
 
     void onStart(@Observes final StartupEvent ev) {
         LOG.infof("\n\n%s\n", ASCII_ART);
+        if (launchMode == LaunchMode.NORMAL && "changeit".equals(dbPassword)) {
+            LOG.error("FATAL: Default database password 'changeit' is in use in the production environment!");
+            LOG.error("Please set the QUARKUS_DATASOURCE_PASSWORD environment variable to a strong password.");
+            throw new IllegalStateException("Default database password 'changeit' in use in production");
+        }
     }
 
     void onStop(@Observes final ShutdownEvent ev) {

@@ -475,6 +475,10 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
                 final var currentUserId = this.authService.getUserId();
+                if (currentUserId == null) {
+                    NotificationUtil.showError("Session expired, please log in again");
+                    return;
+                }
                 this.commentService.moderateComment(comment.publicId, "HIDE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment hidden successfully");
                 this.loadCommentsAsync();
@@ -495,6 +499,10 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
                 final var currentUserId = this.authService.getUserId();
+                if (currentUserId == null) {
+                    NotificationUtil.showError("Session expired, please log in again");
+                    return;
+                }
                 this.commentService.moderateComment(comment.publicId, "SHOW", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment shown successfully");
                 this.loadCommentsAsync();
@@ -515,6 +523,10 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
                 final var currentUserId = this.authService.getUserId();
+                if (currentUserId == null) {
+                    NotificationUtil.showError("Session expired, please log in again");
+                    return;
+                }
                 this.commentService.moderateComment(comment.publicId, "RESTORE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment restored successfully");
                 this.loadCommentsAsync();

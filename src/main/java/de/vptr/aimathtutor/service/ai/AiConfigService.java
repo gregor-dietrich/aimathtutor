@@ -494,10 +494,9 @@ public class AiConfigService {
             case OPENAI -> this.allowedOpenAiHosts;
         };
         if (!allowed.contains(host)) {
-            throw new IllegalArgumentException(
-                    providerType + " API host '" + host + "' is not in the allow-list. "
-                            + "Update app.security.allowed-" + providerType.name().toLowerCase(Locale.ROOT)
-                            + "-hosts to permit it.");
+            throw new IllegalArgumentException(providerType + " API host '" + host + "' is not in the allow-list. "
+                    + "Update app.security.allowed-" + providerType.name().toLowerCase(Locale.ROOT)
+                    + "-hosts to permit it.");
         }
 
         if (providerType == ProviderType.OLLAMA) {
@@ -524,8 +523,7 @@ public class AiConfigService {
             }
         } catch (final UnknownHostException e) {
             LOG.debugf(e, "Hostname resolution failed for %s", host);
-            throw new IllegalArgumentException(
-                    providerType + " API host '" + host + "' could not be resolved", e);
+            throw new IllegalArgumentException(providerType + " API host '" + host + "' could not be resolved", e);
         }
     }
 
@@ -590,8 +588,7 @@ public class AiConfigService {
             }
         } catch (final UnknownHostException e) {
             LOG.debugf(e, "Hostname resolution failed for %s", host);
-            throw new IllegalArgumentException(
-                    "URL host must resolve to a public address for key '" + configKey + "'");
+            throw new IllegalArgumentException("URL host must resolve to a public address for key '" + configKey + "'");
         }
     }
 

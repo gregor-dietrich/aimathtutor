@@ -35,16 +35,21 @@ import jakarta.validation.constraints.NotBlank;
                 @Index(name = "idx_exercise_public_id", columnList = "public_id"),
                 @Index(name = "idx_exercise_user_id", columnList = "user_id, created DESC") })
 @NamedQueries({
-        @NamedQuery(name = "Exercise.findAllOrdered", query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                + "LEFT JOIN FETCH e.lesson ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findByPublicId", query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                + "LEFT JOIN FETCH e.lesson WHERE e.publicId = :p"),
-        @NamedQuery(name = "Exercise.findPublished", query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                + "LEFT JOIN FETCH e.lesson WHERE e.published = true ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findByUserId", query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                + "LEFT JOIN FETCH e.lesson WHERE e.user.id = :u ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findByLessonId", query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                + "LEFT JOIN FETCH e.lesson WHERE e.lesson.id = :l ORDER BY e.created DESC"),
+        @NamedQuery(name = "Exercise.findAllOrdered",
+                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
+                        + "LEFT JOIN FETCH e.lesson ORDER BY e.created DESC"),
+        @NamedQuery(name = "Exercise.findByPublicId",
+                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
+                        + "LEFT JOIN FETCH e.lesson WHERE e.publicId = :p"),
+        @NamedQuery(name = "Exercise.findPublished",
+                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
+                        + "LEFT JOIN FETCH e.lesson WHERE e.published = true ORDER BY e.created DESC"),
+        @NamedQuery(name = "Exercise.findByUserId",
+                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
+                        + "LEFT JOIN FETCH e.lesson WHERE e.user.id = :u ORDER BY e.created DESC"),
+        @NamedQuery(name = "Exercise.findByLessonId",
+                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
+                        + "LEFT JOIN FETCH e.lesson WHERE e.lesson.id = :l ORDER BY e.created DESC"),
         @NamedQuery(name = "Exercise.findGraspableEnabled",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.lesson "
                         + "WHERE e.graspableEnabled = true AND e.published = true ORDER BY e.created DESC"),
@@ -55,8 +60,9 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Exercise.searchByTerm",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.lesson "
                         + "WHERE LOWER(e.title) LIKE :s OR LOWER(e.content) LIKE :s ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findByDateRange", query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                + "LEFT JOIN FETCH e.lesson WHERE e.created BETWEEN :s AND :e ORDER BY e.created DESC"),
+        @NamedQuery(name = "Exercise.findByDateRange",
+                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
+                        + "LEFT JOIN FETCH e.lesson WHERE e.created BETWEEN :s AND :e ORDER BY e.created DESC"),
         @NamedQuery(name = "Exercise.countPublished",
                 query = "SELECT COUNT(e) FROM ExerciseEntity e WHERE e.published = true") })
 public class ExerciseEntity extends BaseEntity {

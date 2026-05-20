@@ -40,14 +40,14 @@ public final class AsyncDataLoader {
      */
     public static <T> void load(final Supplier<T> dataSupplier, final Component component, final Consumer<T> onSuccess,
             @Nullable final Runnable onError, final String errorMessage) {
-        load(dataSupplier, component, onSuccess, onError,
-                Duration.ofSeconds(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS), errorMessage);
+        load(dataSupplier, component, onSuccess, onError, Duration.ofSeconds(AppConstants.ADMIN_ASYNC_TIMEOUT_SECONDS),
+                errorMessage);
     }
 
     /**
      * Loads data asynchronously with a caller-specified timeout. Use a short timeout (e.g. 5 s) for fast dashboard tile
-     * queries that should not hold the whole panel hostage if the DB is slow; use a longer timeout for heavy reports
-     * or batch summaries.
+     * queries that should not hold the whole panel hostage if the DB is slow; use a longer timeout for heavy reports or
+     * batch summaries.
      *
      * @param <T>
      *            the type of data being loaded

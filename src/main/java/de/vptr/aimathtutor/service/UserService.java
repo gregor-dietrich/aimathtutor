@@ -15,6 +15,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
@@ -45,6 +46,9 @@ public class UserService {
 
     @Inject
     PermissionService permissionService;
+
+    @Inject
+    AuthService authService;
 
     /**
      * Retrieves all users in the system.
@@ -264,6 +268,9 @@ public class UserService {
         this.applyRankToUser(existingUser, userDto.rankPublicId, true);
 
         this.userRepository.persist(existingUser);
+        if (existingUser.username != null) {
+            this.authService.evictCache(existingUser.username);
+        }
         return new UserViewDto(existingUser);
     }
 
@@ -327,6 +334,9 @@ public class UserService {
         }
 
         this.userRepository.persist(existingUser);
+        if (existingUser.username != null) {
+            this.authService.evictCache(existingUser.username);
+        }
         return new UserViewDto(existingUser);
     }
 
@@ -340,6 +350,10 @@ public class UserService {
     @Transactional
     public boolean deleteUser(final String publicId) {
         this.permissionService.requireUserDelete();
+        final var user = this.userRepository.findByPublicId(publicId);
+        if (user.isPresent() && user.get().username != null) {
+            this.authService.evictCache(user.get().username);
+        }
         return this.userRepository.deleteByPublicId(publicId);
     }
 

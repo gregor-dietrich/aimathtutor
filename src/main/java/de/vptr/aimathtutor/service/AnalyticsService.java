@@ -605,8 +605,8 @@ public class AnalyticsService {
             return List.of();
         }
         final List<Long> userIds = topRows.stream().map(row -> ((Number) row[0]).longValue()).toList();
-        final List<UserEntity> users = userIds.stream().map(this.userRepository::findById).filter(u -> u != null)
-                .toList();
+        final List<UserEntity> users =
+                userIds.stream().map(this.userRepository::findById).filter(u -> u != null).toList();
         if (users.isEmpty()) {
             return List.of();
         }

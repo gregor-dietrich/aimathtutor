@@ -2,7 +2,9 @@ package de.vptr.aimathtutor.service.security;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -76,6 +78,25 @@ public class AuthService {
     private static final long AUTH_CACHE_TTL_MILLIS = 30_000L;
 
     /**
+     * Global eviction map to handle immediate revocation (bans/deactivations) across all sessions for a specific user.
+     * Maps username to the timestamp of the most recent eviction request.
+     */
+    private final Map<String, Long> globalEvictionTimestamps = new ConcurrentHashMap<>();
+
+    /**
+     * Evicts the authentication cache for the specified user. This forces the next {@link #isAuthenticated()} call for
+     * this user (in any session) to re-validate against the database, regardless of the TTL.
+     *
+     * @param username
+     *            the username to evict
+     */
+    public void evictCache(final String username) {
+        if (username != null) {
+            this.globalEvictionTimestamps.put(username.toLowerCase(Locale.ROOT).trim(), System.currentTimeMillis());
+        }
+    }
+
+    /**
      * Authenticates a user with the provided credentials. Validates username and password, checks user activation and
      * ban status, updates last login time, and stores authentication information in the session.
      *
@@ -97,6 +118,13 @@ public class AuthService {
         final String usernameKey = username.toLowerCase(Locale.ROOT).trim();
         final String clientIp = this.extractClientIp();
         final String usernameIpKey = usernameKey + ":" + (clientIp != null ? clientIp : "unknown");
+
+        // Check login attempt throttling by account (username only)
+        if (this.loginAttemptService.isAccountLockedOut(usernameKey)) {
+            final long remaining = this.loginAttemptService.getRemainingAccountLockoutSeconds(usernameKey);
+            LOG.warnf("Authentication throttled by account (%ss remaining)", remaining);
+            return AuthResultDto.backendUnavailable("Too many failed attempts. Try again later.");
+        }
 
         // Check login attempt throttling by username + IP to prevent global lockout of a user by an attacker
         if (this.loginAttemptService.isLockedOut(usernameIpKey)) {
@@ -120,6 +148,7 @@ public class AuthService {
                 LOG.trace("Authentication failed - user not found");
                 // Dummy bcrypt call to normalise timing and prevent username enumeration
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
+                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -131,6 +160,7 @@ public class AuthService {
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned");
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
+                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -142,6 +172,7 @@ public class AuthService {
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated");
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
+                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -152,6 +183,7 @@ public class AuthService {
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password");
+                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
                 this.loginAttemptService.recordFailedAttempt(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
@@ -168,6 +200,7 @@ public class AuthService {
             }
 
             try {
+                this.loginAttemptService.recordSuccessfulAccountLogin(usernameKey);
                 this.loginAttemptService.recordSuccessfulLogin(usernameIpKey);
                 if (clientIp != null) {
                     this.loginAttemptService.recordSuccessfulLogin(clientIp);
@@ -271,7 +304,10 @@ public class AuthService {
         // Vaadin navigation calls beforeEnter on every route change, and the
         // findByUsername hit otherwise dominates page-to-page latency.
         final var lastCheck = (Long) session.getAttribute(LAST_DB_CHECK_KEY);
-        if (lastCheck != null && System.currentTimeMillis() - lastCheck < AUTH_CACHE_TTL_MILLIS) {
+        final var globalEviction = this.globalEvictionTimestamps.get(username.toLowerCase(Locale.ROOT).trim());
+
+        if (lastCheck != null && (System.currentTimeMillis() - lastCheck < AUTH_CACHE_TTL_MILLIS)
+                && (globalEviction == null || lastCheck > globalEviction)) {
             return true;
         }
 

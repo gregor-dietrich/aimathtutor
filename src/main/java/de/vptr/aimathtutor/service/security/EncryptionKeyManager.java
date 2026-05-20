@@ -154,10 +154,9 @@ public class EncryptionKeyManager {
         }
         final AclFileAttributeView aclView = Files.getFileAttributeView(file, AclFileAttributeView.class);
         if (aclView == null) {
-            throw new IllegalStateException(
-                    "Cannot restrict permissions on encryption key file " + file
-                            + ". Neither POSIX nor ACL attribute views are supported by this filesystem. "
-                            + "Move the key to a protected location and set app.security.encryption-key-file.");
+            throw new IllegalStateException("Cannot restrict permissions on encryption key file " + file
+                    + ". Neither POSIX nor ACL attribute views are supported by this filesystem. "
+                    + "Move the key to a protected location and set app.security.encryption-key-file.");
         }
         final UserPrincipal owner = Files.getOwner(file);
         final AclEntry entry = AclEntry.newBuilder().setType(AclEntryType.ALLOW).setPrincipal(owner)

@@ -92,7 +92,8 @@ public class EncryptionService {
         try {
             final String[] parts = envelope.split("\\|", 3);
             if (parts.length != 3 || !ENVELOPE_VERSION.equals(parts[0])) {
-                throw new IllegalArgumentException("Unrecognized ciphertext envelope version: " + parts[0]);
+                LOG.debugf("Unrecognized ciphertext envelope version: %s", parts.length > 0 ? parts[0] : "none");
+                throw new IllegalArgumentException("Unrecognized ciphertext envelope");
             }
             final Base64.Decoder dec = Base64.getDecoder();
             final byte[] iv = dec.decode(parts[1]);
