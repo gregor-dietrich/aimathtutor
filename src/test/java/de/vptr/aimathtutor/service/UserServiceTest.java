@@ -656,13 +656,12 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("createUser with explicit banned, activated, and activationKey applies those values")
+    @DisplayName("createUser with explicit banned and activated applies those values")
     @TestTransaction
     void testCreateUser_withExplicitBooleans_setBannedAndActivated() {
         final UserDto dto = this.buildValidDto();
         dto.banned = true;
         dto.activated = true;
-        dto.activationKey = "custom-activation-key";
 
         final UserViewDto created = this.userService.createUser(dto);
         assertNotNull(created);
@@ -672,7 +671,8 @@ class UserServiceTest {
         final var saved = this.userRepository.findByPublicId(created.publicId).orElseThrow();
         assertTrue(saved.activated);
         assertTrue(saved.banned);
-        assertEquals("custom-activation-key", saved.activationKey);
+        assertNotNull(saved.activationKey);
+        assertFalse(saved.activationKey.isBlank());
     }
 
     @Test

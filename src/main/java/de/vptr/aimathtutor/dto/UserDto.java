@@ -36,9 +36,6 @@ public class UserDto {
     @Nullable
     public Boolean activated;
 
-    @Nullable
-    public String activationKey;
-
     public UserDto() {
     }
 
@@ -46,13 +43,12 @@ public class UserDto {
      * Constructs a UserDto with the specified parameters.
      */
     public UserDto(final String username, final String password, final String email, final String rankPublicId,
-            final Boolean banned, final Boolean activated, final String activationKey) {
+            final Boolean banned, final Boolean activated) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.rankPublicId = rankPublicId;
         this.banned = banned;
         this.activated = activated;
-        this.activationKey = activationKey;
     }
 }

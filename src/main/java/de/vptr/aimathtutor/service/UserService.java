@@ -181,7 +181,7 @@ public class UserService {
         user.email = normalizedEmail;
         user.banned = userDto.banned != null ? userDto.banned : false;
         user.activated = userDto.activated != null ? userDto.activated : false;
-        user.activationKey = userDto.activationKey != null ? userDto.activationKey : UUID.randomUUID().toString();
+        user.activationKey = UUID.randomUUID().toString();
 
         // Hash password with bcrypt
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
@@ -258,7 +258,6 @@ public class UserService {
         existingUser.email = normalizedEmail;
         existingUser.banned = userDto.banned != null ? userDto.banned : false;
         existingUser.activated = userDto.activated != null ? userDto.activated : false;
-        existingUser.activationKey = userDto.activationKey;
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
@@ -319,9 +318,6 @@ public class UserService {
         }
         if (userDto.activated != null) {
             existingUser.activated = userDto.activated;
-        }
-        if (userDto.activationKey != null) {
-            existingUser.activationKey = userDto.activationKey;
         }
 
         // Handle password and rank updates (PATCH: only if provided)
