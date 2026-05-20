@@ -23,7 +23,8 @@ When deploying to production, it is **critical** to override the default databas
 ### Common Development Commands (via Makefile)
 
 - `make dev` – Start Quarkus in dev mode
-- `make test` – Execute the Maven test suite
+- `make test` – Execute unit tests (skips integration tests)
+- `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
 - `make build` – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
 - `make password` – Generate a salt+hash for a password (for init.sql)

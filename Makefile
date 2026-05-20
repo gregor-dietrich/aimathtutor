@@ -8,7 +8,7 @@ help:
 	@echo "  make build            - make check, mvn package, docker buildx"
 	@echo "  make check            - verify local environment (JDK >=21 and Maven >=3.9.9)"
 	@echo "  make clean            - run mvn clean, and remove build artifacts (logs, node_modules, target)"
-	@echo "  make coverage         - run tests with JaCoCo and generate combined coverage report"
+	@echo "  make coverage         - run all tests (including ITs) and generate coverage report"
 	@echo "  make dev              - start Quarkus in dev mode"
 	@echo "  make format           - run spotless to format code"
 	@echo "  make install          - make check, mvn clean install -DskipTests"
@@ -18,7 +18,7 @@ help:
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
 	@echo "  make release          - pull from origin/main, make build, make tag, and push Docker image to registry"
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
-	@echo "  make test             - run full Maven test suite"
+	@echo "  make test             - run unit tests (skips ITs)"
 	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
 
 branch:

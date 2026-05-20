@@ -40,7 +40,8 @@ The utility prints `salt=` and `hash=` values and an example `INSERT` statement 
 
 ```sh
 make install
-make test
+make test      # Runs unit tests (skips ITs)
+make coverage  # Runs all tests (unit + ITs) and generates report
 ```
 
 ## 🏭 Production Mode

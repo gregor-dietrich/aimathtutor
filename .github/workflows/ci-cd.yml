@@ -23,7 +23,7 @@ jobs:
           distribution: "temurin"
           java-version: "25"
       - name: Run tests
-        run: ./mvnw verify
+        run: ./mvnw verify -DskipITs=false
 
   security:
     runs-on: ubuntu-latest
