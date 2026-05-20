@@ -361,7 +361,9 @@
             --enable-native-access=ALL-UNNAMED
             --sun-misc-unsafe-memory-access=allow
             -XX:+EnableDynamicAgentLoading
-            -Xshare:off</jvmArgs>
+            -Xshare:off
+            -Dio.netty.tryReflectionSetAccessible=true
+            -Dio.netty.allocator.useCacheForAllThreads=false</jvmArgs>
         </configuration>
       </plugin>
       <plugin>
