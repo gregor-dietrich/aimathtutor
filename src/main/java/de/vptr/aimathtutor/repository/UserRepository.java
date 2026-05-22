@@ -133,8 +133,8 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all users ordered by creation date descending. Rank is
-     * eagerly fetched via the named query's {@code JOIN FETCH} to avoid N+1 lazy loads during grid rendering.
+     * Retrieves all users ordered by creation date descending. Rank is eagerly fetched via the named query's
+     * {@code JOIN FETCH} to avoid N+1 lazy loads during grid rendering.
      *
      * @return a list of {@link UserEntity} objects
      */

@@ -439,7 +439,7 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(newPassword);
         user.password = hashedPassword;
         this.userRepository.persist(user);
-        
+
         if (user.username != null) {
             this.authService.evictCache(user.username);
         }
