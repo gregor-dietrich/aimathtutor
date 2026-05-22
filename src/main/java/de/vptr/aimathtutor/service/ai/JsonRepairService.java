@@ -75,7 +75,8 @@ public class JsonRepairService {
 
         } catch (final IOException e) {
             final String trimmed = jsonResponse.trim();
-            if (trimmed.endsWith("{") || trimmed.length() < 50) {
+            if (trimmed.startsWith("{") && !trimmed.contains("<")
+                    && (trimmed.contains("\"message\"") || trimmed.endsWith(","))) {
                 LOG.warn("Failed to parse AI provider response as JSON, creating simple feedback", e);
 
                 // Fallback: try to extract the message field from truncated JSON
@@ -84,9 +85,8 @@ public class JsonRepairService {
                 return feedback;
             } else {
                 final int length = jsonResponse.length();
-                final String prefix = length > 50 ? jsonResponse.substring(0, 50) + "..." : jsonResponse;
                 final String hash = Integer.toHexString(jsonResponse.hashCode());
-                LOG.warnf("Malformed AI response from provider. length=%d, hash=%s, prefix=%s", length, hash, prefix);
+                LOG.warnf("Malformed AI response from provider. length=%d, hash=%s", length, hash);
                 return AiFeedbackDto.error("The AI provider returned an invalid response. Please try again.");
             }
         }

@@ -76,7 +76,7 @@ public final class AsyncDataLoader {
                 LOG.error(errorMessage, e);
                 throw e;
             }
-        }).orTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS).whenComplete((data, throwable) -> {
+        }).orTimeout(timeout.toNanos(), TimeUnit.NANOSECONDS).whenComplete((data, throwable) -> {
             component.getUI().ifPresent(ui -> {
                 final var _ = ui.access(() -> {
                     if (throwable == null) {

@@ -100,7 +100,7 @@
         -->
         <module name="RegexpSinglelineJava">
             <property name="format"
-                value="JOIN\s+FETCH\s+\w+\.(comments|exercises|commentFlags|userGroupMetas|users|interactions|sessions|members|replies|flags|metas|tags|children|parents)\b" />
+                value="(?i)JOIN\s+FETCH\s+\w+\.(comments|exercises|commentFlags|userGroupMetas|users|interactions|sessions|members|replies|flags|metas|tags|children|parents)\b" />
             <property name="ignoreComments" value="true" />
             <property name="message"
                 value="JOIN FETCH on a collection cannot coexist with setMaxResults. Use @BatchSize, a second 'WHERE id IN :ids' query, or remove the JOIN FETCH." />

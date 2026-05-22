@@ -106,12 +106,14 @@ public class EncryptionKeyManager {
             final byte[] key = new byte[KEY_BYTES];
             SECURE_RANDOM.nextBytes(key);
 
-            final Path parent = path.getParent();
+            final Path resolved = path.toAbsolutePath().normalize();
+            final Path parent = resolved.getParent();
             if (parent == null) {
                 // Refuse to write to an unspecified directory: createTempFile would land
                 // the unencrypted master key in the system temp dir before atomic move,
                 // which on multi-user hosts may be readable by others.
-                throw new IllegalStateException("Encryption key path must have an explicit parent directory: " + path);
+                throw new IllegalStateException(
+                        "Encryption key path must have an explicit parent directory: " + resolved);
             }
             Files.createDirectories(parent);
 
@@ -122,16 +124,16 @@ public class EncryptionKeyManager {
                 restrictToOwner(tmp);
                 Files.write(tmp, Base64.getEncoder().encode(key));
                 try {
-                    Files.move(tmp, path, StandardCopyOption.ATOMIC_MOVE);
+                    Files.move(tmp, resolved, StandardCopyOption.ATOMIC_MOVE);
                 } catch (final FileAlreadyExistsException e) {
                     LOG.info("Encryption key file created concurrently; loading existing key");
-                    return loadKey(path);
+                    return loadKey(resolved);
                 }
             } finally {
                 Files.deleteIfExists(tmp);
             }
 
-            LOG.infof("Generated new encryption key at: %s", path);
+            LOG.infof("Generated new encryption key at: %s", resolved);
             return key;
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to generate and save encryption key at: " + path, e);

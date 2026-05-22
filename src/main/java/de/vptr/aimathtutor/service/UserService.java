@@ -388,7 +388,8 @@ public class UserService {
         if (query == null || query.isBlank()) {
             return this.getAllUsers();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var trimmedQuery = query.trim().toLowerCase(Locale.ROOT);
+        final var searchTerm = trimmedQuery.contains("@") ? trimmedQuery : "%" + trimmedQuery + "%";
         final List<UserEntity> users = this.userRepository.search(searchTerm);
         return users.stream().map(UserViewDto::new).toList();
     }
@@ -438,6 +439,10 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(newPassword);
         user.password = hashedPassword;
         this.userRepository.persist(user);
+        
+        if (user.username != null) {
+            this.authService.evictCache(user.username);
+        }
     }
 
     /**
