@@ -537,8 +537,10 @@
         </configuration>
         <executions>
           <execution>
+            <id>spotless-check</id>
+            <phase>verify</phase>
             <goals>
-              <goal>apply</goal>
+              <goal>check</goal>
             </goals>
           </execution>
         </executions>
