@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -14,7 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.page.Page;
+import com.vaadin.flow.dom.Element;
+import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.theme.lumo.Lumo;
 
 import de.vptr.aimathtutor.service.ThemeService.Theme;
 import io.quarkus.test.junit.QuarkusTest;
@@ -92,6 +98,46 @@ class ThemeServiceTest {
         assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.LIGHT));
         assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.DARK));
         assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.SYSTEM));
+    }
+
+    @Test
+    @DisplayName("applyTheme with DARK theme updates UI")
+    void applyTheme_withDarkTheme_updatesUi() {
+        assertDoesNotThrow(() -> this.testApplyTheme(Theme.DARK));
+    }
+
+    @Test
+    @DisplayName("applyTheme with LIGHT theme updates UI")
+    void applyTheme_withLightTheme_updatesUi() {
+        assertDoesNotThrow(() -> this.testApplyTheme(Theme.LIGHT));
+    }
+
+    @Test
+    @DisplayName("applyTheme with SYSTEM theme updates UI")
+    void applyTheme_withSystemTheme_updatesUi() {
+        assertDoesNotThrow(() -> this.testApplyTheme(Theme.SYSTEM));
+    }
+
+    private void testApplyTheme(final Theme theme) {
+        try (MockedStatic<UI> mockedUi = mockStatic(UI.class)) {
+            final UI ui = mock(UI.class);
+            final Element element = mock(Element.class);
+            final ThemeList themeList = mock(ThemeList.class);
+            final Page page = mock(Page.class);
+
+            when(ui.getElement()).thenReturn(element);
+            when(element.getThemeList()).thenReturn(themeList);
+            when(ui.getPage()).thenReturn(page);
+            mockedUi.when(UI::getCurrent).thenReturn(ui);
+
+            this.themeService.applyTheme(theme);
+
+            verify(themeList).clear();
+            if (theme == Theme.DARK) {
+                verify(themeList).add(Lumo.DARK);
+            }
+            verify(page).executeJs(anyString());
+        }
     }
 
     @Test

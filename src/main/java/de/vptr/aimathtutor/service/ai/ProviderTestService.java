@@ -35,8 +35,11 @@ public class ProviderTestService {
     @Inject
     AiConfigService aiConfigService;
 
-    private final HttpClient httpClient =
-            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).build();
+    HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).build();
+
+    void setHttpClient(final HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     /**
      * Tests connection to the mock provider (always succeeds).
