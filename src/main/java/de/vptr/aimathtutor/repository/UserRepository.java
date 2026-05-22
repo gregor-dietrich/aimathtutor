@@ -133,12 +133,32 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all users from the database in a defined order.
+     * Retrieves all users ordered by creation date descending. Rank is eagerly fetched via the named query's
+     * {@code JOIN FETCH} to avoid N+1 lazy loads during grid rendering.
      *
-     * @return a list of all {@link UserEntity} objects
+     * @return a list of {@link UserEntity} objects
      */
     public List<UserEntity> findAll() {
-        return this.listNamed("User.findAllOrdered", UserEntity.class);
+        final var q = this.em.createNamedQuery("User.findAllOrdered", UserEntity.class);
+        return q.getResultList();
+    }
+
+    /**
+     * Retrieves a paginated slice of users ordered by creation date descending. Rank is eagerly fetched.
+     *
+     * @param page
+     *            zero-indexed page number
+     * @param pageSize
+     *            number of users per page
+     * @return a paginated list of {@link UserEntity} objects
+     */
+    public List<UserEntity> findAll(final int page, final int pageSize) {
+        final int sanitizedPage = Math.max(0, page);
+        final int sanitizedPageSize = pageSize <= 0 ? 10 : pageSize;
+        final var q = this.em.createNamedQuery("User.findAllOrdered", UserEntity.class);
+        q.setFirstResult(sanitizedPage * sanitizedPageSize);
+        q.setMaxResults(sanitizedPageSize);
+        return q.getResultList();
     }
 
     /**

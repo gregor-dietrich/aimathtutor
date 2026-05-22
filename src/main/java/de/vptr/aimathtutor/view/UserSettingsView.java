@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -97,6 +98,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.currentEmail = user.email;
 
         this.buildUi();
+    }
+
+    @Override
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadCurrentSettings();
     }
 

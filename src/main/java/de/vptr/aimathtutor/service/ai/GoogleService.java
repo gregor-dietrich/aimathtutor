@@ -84,6 +84,8 @@ public class GoogleService extends AbstractProviderService {
                     "GoogleService: missing configuration — " + (model == null ? "google.model" : "google.base-url"));
         }
 
+        this.requireSafeProviderUrl(baseUrl, AiConfigService.ProviderType.GOOGLE);
+
         try {
             // Create request DTO
             final var requestDto = GoogleRequestDto.createTextRequest(prompt, temperature, maxTokens);

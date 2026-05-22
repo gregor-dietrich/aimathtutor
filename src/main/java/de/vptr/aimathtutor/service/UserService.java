@@ -15,6 +15,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
@@ -45,6 +46,9 @@ public class UserService {
 
     @Inject
     PermissionService permissionService;
+
+    @Inject
+    AuthService authService;
 
     /**
      * Retrieves all users in the system.
@@ -181,7 +185,7 @@ public class UserService {
         user.email = normalizedEmail;
         user.banned = userDto.banned != null ? userDto.banned : false;
         user.activated = userDto.activated != null ? userDto.activated : false;
-        user.activationKey = userDto.activationKey != null ? userDto.activationKey : UUID.randomUUID().toString();
+        user.activationKey = UUID.randomUUID().toString();
 
         // Hash password with bcrypt
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
@@ -253,18 +257,24 @@ public class UserService {
             throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
         }
 
+        final String oldUsername = existingUser.username;
         // Complete replacement (PUT semantics)
         existingUser.username = userDto.username;
         existingUser.email = normalizedEmail;
         existingUser.banned = userDto.banned != null ? userDto.banned : false;
         existingUser.activated = userDto.activated != null ? userDto.activated : false;
-        existingUser.activationKey = userDto.activationKey;
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
         this.applyRankToUser(existingUser, userDto.rankPublicId, true);
 
         this.userRepository.persist(existingUser);
+        if (oldUsername != null) {
+            this.authService.evictCache(oldUsername);
+        }
+        if (existingUser.username != null && !existingUser.username.equals(oldUsername)) {
+            this.authService.evictCache(existingUser.username);
+        }
         return new UserViewDto(existingUser);
     }
 
@@ -307,6 +317,7 @@ public class UserService {
             }
         }
 
+        final String oldUsername = existingUser.username;
         // Partial update (PATCH semantics) - only update provided fields
         if (userDto.username != null && !userDto.username.isBlank()) {
             existingUser.username = userDto.username;
@@ -320,9 +331,6 @@ public class UserService {
         if (userDto.activated != null) {
             existingUser.activated = userDto.activated;
         }
-        if (userDto.activationKey != null) {
-            existingUser.activationKey = userDto.activationKey;
-        }
 
         // Handle password and rank updates (PATCH: only if provided)
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
@@ -331,6 +339,12 @@ public class UserService {
         }
 
         this.userRepository.persist(existingUser);
+        if (oldUsername != null) {
+            this.authService.evictCache(oldUsername);
+        }
+        if (existingUser.username != null && !existingUser.username.equals(oldUsername)) {
+            this.authService.evictCache(existingUser.username);
+        }
         return new UserViewDto(existingUser);
     }
 
@@ -344,6 +358,10 @@ public class UserService {
     @Transactional
     public boolean deleteUser(final String publicId) {
         this.permissionService.requireUserDelete();
+        final var user = this.userRepository.findByPublicId(publicId);
+        if (user.isPresent() && user.get().username != null) {
+            this.authService.evictCache(user.get().username);
+        }
         return this.userRepository.deleteByPublicId(publicId);
     }
 
@@ -370,7 +388,8 @@ public class UserService {
         if (query == null || query.isBlank()) {
             return this.getAllUsers();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var trimmedQuery = query.trim().toLowerCase(Locale.ROOT);
+        final var searchTerm = trimmedQuery.contains("@") ? trimmedQuery : "%" + trimmedQuery + "%";
         final List<UserEntity> users = this.userRepository.search(searchTerm);
         return users.stream().map(UserViewDto::new).toList();
     }
@@ -420,6 +439,10 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(newPassword);
         user.password = hashedPassword;
         this.userRepository.persist(user);
+
+        if (user.username != null) {
+            this.authService.evictCache(user.username);
+        }
     }
 
     /**

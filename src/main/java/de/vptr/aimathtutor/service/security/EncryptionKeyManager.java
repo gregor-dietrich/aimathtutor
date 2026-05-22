@@ -6,9 +6,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -99,37 +106,68 @@ public class EncryptionKeyManager {
             final byte[] key = new byte[KEY_BYTES];
             SECURE_RANDOM.nextBytes(key);
 
-            final Path parent = path.getParent();
-            if (parent != null) {
-                Files.createDirectories(parent);
+            final Path resolved = path.toAbsolutePath().normalize();
+            final Path parent = resolved.getParent();
+            if (parent == null) {
+                // Refuse to write to an unspecified directory: createTempFile would land
+                // the unencrypted master key in the system temp dir before atomic move,
+                // which on multi-user hosts may be readable by others.
+                throw new IllegalStateException(
+                        "Encryption key path must have an explicit parent directory: " + resolved);
             }
+            Files.createDirectories(parent);
 
-            // Write to a temp file in the same directory, set 0600 permissions before writing,
+            // Write to a temp file in the same directory, restrict permissions before writing,
             // then atomically move to the target path to avoid a window of world-readable exposure.
-            final Path tmp = parent != null ? Files.createTempFile(parent, ".key-", ".tmp")
-                    : Files.createTempFile(".key-", ".tmp");
+            final Path tmp = Files.createTempFile(parent, ".key-", ".tmp");
             try {
-                try {
-                    Files.setPosixFilePermissions(tmp,
-                            Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-                } catch (final UnsupportedOperationException e) {
-                    LOG.warnf("Cannot set POSIX permissions on %s (non-POSIX filesystem)", path);
-                }
+                restrictToOwner(tmp);
                 Files.write(tmp, Base64.getEncoder().encode(key));
                 try {
-                    Files.move(tmp, path, StandardCopyOption.ATOMIC_MOVE);
+                    Files.move(tmp, resolved, StandardCopyOption.ATOMIC_MOVE);
                 } catch (final FileAlreadyExistsException e) {
                     LOG.info("Encryption key file created concurrently; loading existing key");
-                    return loadKey(path);
+                    return loadKey(resolved);
                 }
             } finally {
                 Files.deleteIfExists(tmp);
             }
 
-            LOG.infof("Generated new encryption key at: %s", path);
+            LOG.infof("Generated new encryption key at: %s", resolved);
             return key;
         } catch (final IOException e) {
             throw new IllegalStateException("Failed to generate and save encryption key at: " + path, e);
         }
+    }
+
+    /**
+     * Restricts a freshly-created file so only the current OS user can read or write it. Tries POSIX 0600 first; on
+     * filesystems that don't support POSIX (Windows NTFS) it falls back to an ACL granting only the file owner. If
+     * neither mechanism is supported, refuses to write the file — leaving an unprotected AES-256 master key on disk
+     * silently is worse than a startup failure that operators can fix.
+     */
+    private static void restrictToOwner(final Path file) throws IOException {
+        try {
+            Files.setPosixFilePermissions(file,
+                    Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+            return;
+        } catch (final UnsupportedOperationException posixUnsupported) {
+            LOG.debugf("POSIX permissions unsupported for %s; trying ACL fallback", file);
+        }
+        final AclFileAttributeView aclView = Files.getFileAttributeView(file, AclFileAttributeView.class);
+        if (aclView == null) {
+            throw new IllegalStateException("Cannot restrict permissions on encryption key file " + file
+                    + ". Neither POSIX nor ACL attribute views are supported by this filesystem. "
+                    + "Move the key to a protected location and set app.security.encryption-key-file.");
+        }
+        final UserPrincipal owner = Files.getOwner(file);
+        final AclEntry entry = AclEntry.newBuilder().setType(AclEntryType.ALLOW).setPrincipal(owner)
+                .setPermissions(EnumSet.of(AclEntryPermission.READ_DATA, AclEntryPermission.WRITE_DATA,
+                        AclEntryPermission.APPEND_DATA, AclEntryPermission.READ_ATTRIBUTES,
+                        AclEntryPermission.WRITE_ATTRIBUTES, AclEntryPermission.READ_ACL,
+                        AclEntryPermission.SYNCHRONIZE, AclEntryPermission.DELETE))
+                .build();
+        aclView.setAcl(List.of(entry));
+        LOG.infof("Applied owner-only ACL to encryption key file %s (POSIX unavailable)", file);
     }
 }

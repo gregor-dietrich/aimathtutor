@@ -1,10 +1,12 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -40,6 +42,7 @@ import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
@@ -61,6 +64,8 @@ public class AdminCommentsView extends AbstractAdminView {
 
     @Inject
     private transient CommentService commentService;
+    @Inject
+    private transient ExerciseService exerciseService;
     @Inject
     private transient DateTimeFormatterUtil dateTimeFormatter;
 
@@ -90,6 +95,9 @@ public class AdminCommentsView extends AbstractAdminView {
     @Nullable
     private transient CommentDto currentComment;
 
+    @Nullable
+    private transient String queryExercisePublicId;
+
     /**
      * Construct the admin comments view and initialize layout properties.
      */
@@ -100,36 +108,33 @@ public class AdminCommentsView extends AbstractAdminView {
     }
 
     /**
-     * Lifecycle callback invoked before entering the view. Ensures the user is authenticated and initializes the UI and
-     * data loading.
+     * Hook invoked before entering the view. Extracts query parameters.
      */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
-
-        // If navigated with an exerciseId query parameter, filter comments
+    protected void onBeforeEnter(final BeforeEnterEvent event) {
+        // If navigated with an exerciseId query parameter, store it for onAttach
         final var params = event.getLocation().getQueryParameters().getParameters();
         if (params.containsKey("exerciseId")) {
-            try {
-                final Long exerciseId = Long.valueOf(params.get("exerciseId").get(0));
-                if (exerciseId == null || exerciseId <= 0) {
-                    LOG.warn("Invalid exerciseId parameter: not a positive number");
-                } else {
-                    // Load comments for that exercise only
-                    AsyncDataLoader.load(() -> this.commentService.findByExerciseId(exerciseId), this,
-                            comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
-                    return;
-                }
-            } catch (final Exception ex) {
-                LOG.warnf(ex, "Invalid exerciseId parameter: %s", params.get("exerciseId"));
-            }
+            this.queryExercisePublicId = params.get("exerciseId").get(0);
         }
+    }
 
-        this.loadCommentsAsync();
+    @Override
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
+        final var publicId = this.queryExercisePublicId;
+        if (publicId != null && !publicId.isBlank()) {
+            AsyncDataLoader.load(() -> {
+                final var exercise = this.exerciseService.findByPublicId(publicId).orElse(null);
+                if (exercise == null) {
+                    return Collections.<CommentViewDto>emptyList();
+                }
+                return this.commentService.findByExerciseId(exercise.id);
+            }, this, comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
+            this.queryExercisePublicId = null; // Clear it so it doesn't reload on every re-attach
+        } else {
+            this.loadCommentsAsync();
+        }
     }
 
     private void loadCommentsAsync() {
@@ -139,7 +144,11 @@ public class AdminCommentsView extends AbstractAdminView {
                 "Failed to load comments. Please try again.");
     }
 
-    private void buildUi() {
+    /**
+     * Construct the UI for the admin comments view.
+     */
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("Comments");
@@ -475,6 +484,10 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
                 final var currentUserId = this.authService.getUserId();
+                if (currentUserId == null) {
+                    NotificationUtil.showError("Session expired, please log in again");
+                    return;
+                }
                 this.commentService.moderateComment(comment.publicId, "HIDE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment hidden successfully");
                 this.loadCommentsAsync();
@@ -495,6 +508,10 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
                 final var currentUserId = this.authService.getUserId();
+                if (currentUserId == null) {
+                    NotificationUtil.showError("Session expired, please log in again");
+                    return;
+                }
                 this.commentService.moderateComment(comment.publicId, "SHOW", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment shown successfully");
                 this.loadCommentsAsync();
@@ -515,6 +532,10 @@ public class AdminCommentsView extends AbstractAdminView {
                     return;
                 }
                 final var currentUserId = this.authService.getUserId();
+                if (currentUserId == null) {
+                    NotificationUtil.showError("Session expired, please log in again");
+                    return;
+                }
                 this.commentService.moderateComment(comment.publicId, "RESTORE", currentUserId, reason);
                 NotificationUtil.showSuccess("Comment restored successfully");
                 this.loadCommentsAsync();

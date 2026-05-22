@@ -5,12 +5,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
@@ -68,15 +68,13 @@ public class AdminDashboardView extends AbstractAdminView {
     private transient VerticalLayout topStudentsContainer;
 
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadDashboardData();
     }
 
-    private void buildUi() {
+    @Override
+    protected void buildUi() {
         this.removeAll();
         this.setSizeFull();
         this.setPadding(true);

@@ -16,10 +16,15 @@ AIMathTutor is a full-stack web application for interactive math learning, built
 
 See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
+### Deployment
+
+When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
+
 ### Common Development Commands (via Makefile)
 
 - `make dev` – Start Quarkus in dev mode
-- `make test` – Execute the Maven test suite
+- `make test` – Execute unit tests (skips integration tests)
+- `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
 - `make build` – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
 - `make password` – Generate a salt+hash for a password (for init.sql)

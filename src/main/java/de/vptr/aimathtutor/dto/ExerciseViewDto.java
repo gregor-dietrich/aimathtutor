@@ -75,7 +75,7 @@ public class ExerciseViewDto {
             this.commentable = entity.commentable;
             this.created = entity.created;
             this.lastEdit = entity.lastEdit;
-            this.commentsCount = entity.comments != null ? (long) entity.comments.size() : 0L;
+            this.commentsCount = entity.commentsCount != null ? entity.commentsCount : 0L;
 
             // Graspable Math fields
             this.graspableEnabled = entity.graspableEnabled;

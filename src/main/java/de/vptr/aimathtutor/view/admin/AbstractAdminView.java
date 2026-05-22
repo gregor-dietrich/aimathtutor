@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
+import org.jboss.logging.Logger;
+
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -19,6 +21,8 @@ import jakarta.inject.Inject;
  */
 public abstract class AbstractAdminView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final Logger LOG = Logger.getLogger(AbstractAdminView.class);
+
     @Inject
     protected transient AuthService authService;
 
@@ -27,15 +31,35 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
-     * login page and unauthorised users to the home page.
+     * login page and unauthorised users to the home page. If authorized, triggers the {@link #onBeforeEnter} hook and
+     * {@link #buildUi()}.
      *
      * @param event
      *            the before-enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        this.isAuthOk(event);
+        if (this.isAuthOk(event)) {
+            this.onBeforeEnter(event);
+            this.buildUi();
+        }
     }
+
+    /**
+     * Hook for subclasses to perform logic before UI construction (e.g. extracting route parameters).
+     *
+     * @param event
+     *            the before-enter navigation event
+     */
+    protected void onBeforeEnter(final BeforeEnterEvent event) {
+        LOG.tracef("Entering admin view: %s", this.getClass().getSimpleName());
+    }
+
+    /**
+     * Constructs the UI for this admin view. Called automatically by {@link #beforeEnter(BeforeEnterEvent)} after
+     * security checks pass.
+     */
+    protected abstract void buildUi();
 
     /**
      * Checks authentication and authorization. Returns {@code true} if the user may proceed, otherwise forwards the

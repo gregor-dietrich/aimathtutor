@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -24,7 +25,6 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -78,16 +78,9 @@ public class AdminUsersView extends AbstractAdminView {
         this.setSpacing(true);
     }
 
-    /**
-     * Lifecycle callback executed before the view is entered. Verifies the user is authenticated and triggers UI
-     * construction and data loading.
-     */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadRanksAsync();
         this.loadUsersAsync();
     }
@@ -108,7 +101,11 @@ public class AdminUsersView extends AbstractAdminView {
         }, "Failed to load ranks. Please try again.");
     }
 
-    private void buildUi() {
+    /**
+     * Construct the UI for the admin users view.
+     */
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("Users");

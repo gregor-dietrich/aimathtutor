@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -26,7 +27,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.binder.ValidationResult;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 
@@ -94,16 +94,9 @@ public class AdminExercisesView extends AbstractAdminView {
         this.setSpacing(true);
     }
 
-    /**
-     * Verify authentication and set up the exercise management UI before the view is displayed.
-     */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadLessons();
         this.loadExercises();
     }
@@ -137,7 +130,8 @@ public class AdminExercisesView extends AbstractAdminView {
     /**
      * Build the UI for exercise management, including header, search and grid.
      */
-    private void buildUi() {
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("Exercises");

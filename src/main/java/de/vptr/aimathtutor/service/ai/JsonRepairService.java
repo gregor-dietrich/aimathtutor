@@ -74,12 +74,21 @@ public class JsonRepairService {
             return feedback;
 
         } catch (final IOException e) {
-            LOG.warn("Failed to parse AI provider response as JSON, creating simple feedback", e);
+            final String trimmed = jsonResponse.trim();
+            if (trimmed.startsWith("{") && !trimmed.contains("<")
+                    && (trimmed.contains("\"message\"") || trimmed.endsWith(","))) {
+                LOG.warn("Failed to parse AI provider response as JSON, creating simple feedback", e);
 
-            // Fallback: try to extract the message field from truncated JSON
-            final var feedback = this.extractFeedbackFromTruncatedResponse(jsonResponse);
-            feedback.confidence = 0.7;
-            return feedback;
+                // Fallback: try to extract the message field from truncated JSON
+                final var feedback = this.extractFeedbackFromTruncatedResponse(jsonResponse);
+                feedback.confidence = 0.7;
+                return feedback;
+            } else {
+                final int length = jsonResponse.length();
+                final String hash = Integer.toHexString(jsonResponse.hashCode());
+                LOG.warnf("Malformed AI response from provider. length=%d, hash=%s", length, hash);
+                return AiFeedbackDto.error("The AI provider returned an invalid response. Please try again.");
+            }
         }
     }
 

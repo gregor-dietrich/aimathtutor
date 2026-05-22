@@ -89,6 +89,7 @@ CREATE TABLE users (
 
 CREATE INDEX idx_user_public_id ON users (public_id);
 CREATE INDEX idx_user_email_blind_index ON users (email_blind_index);
+CREATE INDEX users_created_idx ON users (created DESC);
 
 --
 -- Inserts for table `users`

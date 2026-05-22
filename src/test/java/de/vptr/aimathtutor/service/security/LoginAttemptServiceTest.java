@@ -101,4 +101,71 @@ class LoginAttemptServiceTest {
         } while (cappedLockout < 3600);
         assertEquals(3600, cappedLockout, "Lockout should be capped at exactly 3600 seconds");
     }
+
+    @Test
+    @DisplayName("Should lock out account after max failed attempts")
+    void shouldLockOutAccountAfterMaxFailedAttempts() {
+        final String account = "bruteaccount";
+
+        for (int i = 0; i < 24; i++) {
+            assertFalse(this.loginAttemptService.isAccountLockedOut(account));
+            this.loginAttemptService.recordFailedAccountAttempt(account);
+        }
+
+        // This covers the branch `if (this.count >= ACCOUNT_MAX_ATTEMPTS)`
+        // being false in `isExpired` during cleanup/checks
+        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds(account));
+
+        this.loginAttemptService.recordFailedAccountAttempt(account);
+        assertTrue(this.loginAttemptService.isAccountLockedOut(account));
+        assertTrue(this.loginAttemptService.getRemainingAccountLockoutSeconds(account) > 0);
+    }
+
+    @Test
+    @DisplayName("Should clear account lockout on successful login")
+    void shouldClearAccountLockoutOnSuccessfulLogin() {
+        final String account = "legitaccount";
+
+        for (int i = 0; i < 25; i++) {
+            this.loginAttemptService.recordFailedAccountAttempt(account);
+        }
+        assertTrue(this.loginAttemptService.isAccountLockedOut(account));
+
+        this.loginAttemptService.recordSuccessfulAccountLogin(account);
+        assertFalse(this.loginAttemptService.isAccountLockedOut(account));
+        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds(account));
+    }
+
+    @Test
+    @DisplayName("Should enforce account max cache size")
+    void shouldEnforceAccountMaxCacheSize() {
+        final String target = "user_target";
+        // Record enough attempts to cause a lockout
+        for (int i = 0; i < 30; i++) {
+            this.loginAttemptService.recordFailedAccountAttempt(target);
+        }
+        assertTrue(this.loginAttemptService.getRemainingAccountLockoutSeconds(target) > 0);
+
+        // Flood the cache with many distinct accounts to trigger eviction
+        for (int i = 0; i < 10_005; i++) {
+            this.loginAttemptService.recordFailedAccountAttempt("user_" + i);
+        }
+
+        // Target should have been evicted, so lockout is now 0
+        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds(target),
+                "Target account should have been evicted from the bounded cache");
+    }
+
+    @Test
+    @DisplayName("Should handle clock skew at 3600s boundary")
+    void shouldHandleClockSkewAt3600sBoundary() {
+        final String key = "skewuser";
+        // Record 100 attempts to ensure we hit the 3600 limit
+        for (int i = 0; i < 100; i++) {
+            this.loginAttemptService.recordFailedAttempt(key);
+        }
+        final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(key);
+        // Should be exactly 3600
+        assertEquals(3600, remaining, "Lockout should be exactly capped at 3600s");
+    }
 }

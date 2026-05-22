@@ -167,6 +167,12 @@
       <artifactId>quarkus-logging-json</artifactId>
     </dependency>
 
+    <!-- In-memory cache for read-mostly reference data (e.g. user ranks) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+    </dependency>
+
     <!-- Line Awesome for icons -->
     <dependency>
       <groupId>org.parttio</groupId>
@@ -355,7 +361,9 @@
             --enable-native-access=ALL-UNNAMED
             --sun-misc-unsafe-memory-access=allow
             -XX:+EnableDynamicAgentLoading
-            -Xshare:off</jvmArgs>
+            -Xshare:off
+            -Dio.netty.tryReflectionSetAccessible=true
+            -Dio.netty.allocator.useCacheForAllThreads=false</jvmArgs>
         </configuration>
       </plugin>
       <plugin>
@@ -529,8 +537,10 @@
         </configuration>
         <executions>
           <execution>
+            <id>spotless-check</id>
+            <phase>verify</phase>
             <goals>
-              <goal>apply</goal>
+              <goal>check</goal>
             </goals>
           </execution>
         </executions>

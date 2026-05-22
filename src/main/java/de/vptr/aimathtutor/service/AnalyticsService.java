@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -533,12 +532,12 @@ public class AnalyticsService {
 
     /**
      * Get completion rate histogram across individual sessions, bucketed by session accuracy (correct_actions /
-     * actions_count): 0%, 1-25%, 26-50%, 51-75%, 76-99%, 100%.
+     * actions_count): 0%, 1-25%, 26-50%, 51-75%, 76-99%, 100%. Aggregation runs in SQL via GROUP BY so the full
+     * sessions table is never materialised in memory.
      */
     @Transactional
     public Map<String, Integer> getCompletionRateHistogram() {
         LOG.trace("Getting completion rate histogram");
-        final var sessions = this.studentSessionRepository.findAll();
         final var buckets = new LinkedHashMap<String, Integer>();
         buckets.put("0%", 0);
         buckets.put("1-25%", 0);
@@ -546,80 +545,81 @@ public class AnalyticsService {
         buckets.put("51-75%", 0);
         buckets.put("76-99%", 0);
         buckets.put("100%", 0);
-
-        for (final var session : sessions) {
-            final int actions = session.actionsCount;
-            if (actions == 0) {
-                buckets.merge("0%", 1, (a, b) -> a + b);
-                continue;
-            }
-            final double rate = (double) session.correctActions / actions;
-            if (rate == 0.0) {
-                buckets.merge("0%", 1, (a, b) -> a + b);
-            } else if (rate <= 0.25) {
-                buckets.merge("1-25%", 1, (a, b) -> a + b);
-            } else if (rate <= 0.50) {
-                buckets.merge("26-50%", 1, (a, b) -> a + b);
-            } else if (rate <= 0.75) {
-                buckets.merge("51-75%", 1, (a, b) -> a + b);
-            } else if (rate < 1.0) {
-                buckets.merge("76-99%", 1, (a, b) -> a + b);
-            } else {
-                buckets.merge("100%", 1, (a, b) -> a + b);
+        for (final Object[] row : this.studentSessionRepository.findCompletionRateBuckets()) {
+            final String label = (String) row[0];
+            final int count = ((Number) row[1]).intValue();
+            if (label != null && buckets.containsKey(label)) {
+                buckets.put(label, count);
             }
         }
         return buckets;
     }
 
     /**
-     * Get hint usage distribution across individual sessions: 0 hints, 1-3, 4-7, 8+.
+     * Get hint usage distribution across individual sessions: 0 hints, 1-3, 4-7, 8+. Aggregation runs in SQL.
      */
     @Transactional
     public Map<String, Integer> getHintUsageBuckets() {
         LOG.trace("Getting hint usage buckets");
-        final var sessions = this.studentSessionRepository.findAll();
         final var buckets = new LinkedHashMap<String, Integer>();
         buckets.put("0 hints", 0);
         buckets.put("1-3 hints", 0);
         buckets.put("4-7 hints", 0);
         buckets.put("8+ hints", 0);
-
-        for (final var session : sessions) {
-            final int h = session.hintsUsed;
-            if (h == 0) {
-                buckets.merge("0 hints", 1, (a, b) -> a + b);
-            } else if (h <= 3) {
-                buckets.merge("1-3 hints", 1, (a, b) -> a + b);
-            } else if (h <= 7) {
-                buckets.merge("4-7 hints", 1, (a, b) -> a + b);
-            } else {
-                buckets.merge("8+ hints", 1, (a, b) -> a + b);
+        for (final Object[] row : this.studentSessionRepository.findHintUsageBuckets()) {
+            final String label = (String) row[0];
+            final int count = ((Number) row[1]).intValue();
+            if (label != null && buckets.containsKey(label)) {
+                buckets.put(label, count);
             }
         }
         return buckets;
     }
 
     /**
-     * Get recent sessions within the last 7 days, limited to the given count.
+     * Get recent sessions within the last 7 days, limited to the given count. Uses {@code LIMIT} at the database so the
+     * full 7-day window is never materialised in memory.
      */
     @Transactional
     public List<StudentSessionViewDto> getRecentSessions(final int limit) {
         LOG.tracef("Getting recent sessions, limit %d", limit);
         final var now = LocalDateTime.now(ZoneId.systemDefault());
         final var weekAgo = now.minusDays(7);
-        final var sessions = this.studentSessionRepository.findByStartTimeBetween(weekAgo, now);
-        return sessions.stream().map(StudentSessionViewDto::new).limit(limit).toList();
+        final var sessions = this.studentSessionRepository.findRecentByStartTimeBetween(weekAgo, now, limit);
+        return sessions.stream().map(StudentSessionViewDto::new).toList();
     }
 
     /**
-     * Get top students by completed sessions count, limited to the given count.
+     * Get top students by completed sessions count, limited to the given count. Resolves the top user IDs via a SQL
+     * {@code GROUP BY ... ORDER BY ... LIMIT} query and then computes per-user progress summaries for that small set
+     * only — bounded by {@code limit}, not by total user/session counts.
      */
     @Transactional
     public List<StudentProgressSummaryDto> getTopStudentsByCompletion(final int limit) {
         LOG.tracef("Getting top students by completion, limit %d", limit);
-        return this.getAllUsersProgressSummary().stream()
-                .filter(s -> s.completedSessions != null && s.completedSessions > 0)
-                .sorted(Comparator.comparingInt((final StudentProgressSummaryDto s) -> s.completedSessions).reversed())
-                .limit(limit).toList();
+        if (limit <= 0) {
+            return List.of();
+        }
+        final List<Object[]> topRows = this.studentSessionRepository.findTopUsersByCompletion(limit);
+        if (topRows.isEmpty()) {
+            return List.of();
+        }
+        final List<Long> userIds = topRows.stream().map(row -> ((Number) row[0]).longValue()).toList();
+        final List<UserEntity> users =
+                userIds.stream().map(this.userRepository::findById).filter(u -> u != null).toList();
+        if (users.isEmpty()) {
+            return List.of();
+        }
+        final List<StudentSessionEntity> userSessions = this.studentSessionRepository.findByUserIdIn(userIds);
+        final Map<Long, List<StudentSessionEntity>> sessionsByUser = userSessions.stream()
+                .filter(session -> session.user != null).collect(Collectors.groupingBy(session -> session.user.id));
+
+        final Map<Long, UserEntity> userById = users.stream().collect(Collectors.toMap(u -> u.id, u -> u));
+
+        // Preserve the SQL ordering (highest completion count first)
+        return userIds.stream().map(uid -> {
+            final UserEntity user = userById.get(uid);
+            return user == null ? null : this.computeProgressSummary(user, sessionsByUser.getOrDefault(uid, List.of()));
+        }).filter(summary -> summary != null).toList();
     }
 }

@@ -12,6 +12,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+    contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,10 +26,14 @@ jobs:
           distribution: "temurin"
           java-version: "25"
       - name: Run tests
-        run: ./mvnw verify
+        run: ./mvnw verify -DskipITs=false
 
   security:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
     steps:
       - uses: actions/checkout@v6
         with:

@@ -16,6 +16,19 @@ window.initializeGraspableMath = function () {
         return;
     }
 
+    // Load CSS
+    var loadCss = function(url) {
+        if (document.querySelector('link[href="' + url + '"]')) return;
+        var link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = url;
+        link.setAttribute("crossorigin", "anonymous");
+        document.head.appendChild(link);
+    };
+
+    loadCss("https://graspablemath.com/shared/fonts/fonts.css");
+    loadCss("https://graspablemath.com/shared/css/canvas.css");
+
     // If canvas already exists, clear it and reinitialize
     if (window.graspableCanvas) {
         console.log(
@@ -64,6 +77,12 @@ function initializeCanvas() {
         return;
     }
 
+    // Set resource path for assets
+    if (window.gmath.ui) {
+        window.gmath.ui.resource_path = "https://graspablemath.com/shared/";
+        console.log("[GM] Set resource_path to:", window.gmath.ui.resource_path);
+    }
+
     console.log("[GM] gmath API found:", window.gmath);
 
     var canvasElement = document.getElementById("graspable-canvas");
@@ -90,6 +109,7 @@ function initializeCanvas() {
             use_toolbar: true,
             vertical_scroll: true,
             horizontal_scroll: false,
+            server: "https://graspablemath.com",
         });
 
         window.graspableCanvas = canvas;

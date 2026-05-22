@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -22,7 +23,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.provider.Query;
-import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -81,16 +81,9 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.setSpacing(true);
     }
 
-    /**
-     * Verify authentication and initialize the view before navigation.
-     */
     @Override
-    public void beforeEnter(final BeforeEnterEvent event) {
-        if (!this.isAuthOk(event)) {
-            return;
-        }
-
-        this.buildUi();
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
         this.loadGroupsAsync();
     }
 
@@ -101,7 +94,11 @@ public class AdminUserGroupsView extends AbstractAdminView {
                 "Failed to load groups. Please try again.");
     }
 
-    private void buildUi() {
+    /**
+     * Construct the UI for managing user groups.
+     */
+    @Override
+    protected void buildUi() {
         this.removeAll();
 
         final var header = new H2("User Groups");

@@ -221,10 +221,16 @@ make install   # Installs dependencies, skips tests
 
 ### 🧪 Tests
 
-Run the full test suite:
+Run unit tests (skips integration tests):
 
 ```sh
 make test
+```
+
+Run all tests (unit + integration) and generate a coverage report:
+
+```sh
+make coverage
 ```
 
 ## 🚀 Running the application

@@ -515,6 +515,91 @@ class AiConfigServiceTest {
     }
 
     @Test
+    @DisplayName("validateProviderApiUrl - rejects blank URL")
+    void testValidateProviderApiUrlRejectsBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.validateProviderApiUrl("", AiConfigService.ProviderType.OLLAMA));
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.validateProviderApiUrl(null, AiConfigService.ProviderType.GOOGLE));
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - rejects URL without a host")
+    void testValidateProviderApiUrlRejectsHostlessUri() {
+        // file:/// has no host; URI.create accepts it
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
+                .validateProviderApiUrl("file:///etc/passwd", AiConfigService.ProviderType.OLLAMA));
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - allowlisted Ollama host passes")
+    void testValidateProviderApiUrlOllamaAllowed() {
+        assertDoesNotThrow(() -> this.aiConfigService.validateProviderApiUrl("http://ollama:11434",
+                AiConfigService.ProviderType.OLLAMA));
+        assertDoesNotThrow(() -> this.aiConfigService.validateProviderApiUrl("http://localhost:11434",
+                AiConfigService.ProviderType.OLLAMA));
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - non-allowlisted host rejected for every provider")
+    void testValidateProviderApiUrlRejectsUnknownHost() {
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
+                .validateProviderApiUrl("http://evil.example.com", AiConfigService.ProviderType.OLLAMA));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
+                .validateProviderApiUrl("https://evil.example.com", AiConfigService.ProviderType.GOOGLE));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
+                .validateProviderApiUrl("https://evil.example.com", AiConfigService.ProviderType.OPENAI));
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - HTTPS required for external providers")
+    void testValidateProviderApiUrlExternalRequiresHttps() {
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.validateProviderApiUrl("http://generativelanguage.googleapis.com",
+                        AiConfigService.ProviderType.GOOGLE));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
+                .validateProviderApiUrl("http://api.openai.com", AiConfigService.ProviderType.OPENAI));
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - malformed URI rejected")
+    void testValidateProviderApiUrlMalformedUri() {
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.validateProviderApiUrl("not a url", AiConfigService.ProviderType.OLLAMA));
+    }
+
+    @Test
+    @DisplayName("updateConfig - non-provider URL key falls through to generic loopback check")
+    @Transactional
+    void testUpdateConfigGenericUrlKeyRejectsLoopback() {
+        // 'custom.url' does not match any provider keyword, so the generic-URL fallback is exercised.
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.updateConfig("custom.url", "http://127.0.0.1:8080/", this.adminUser.id));
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - SSRF bypass attempts are rejected")
+    void testValidateProviderApiUrlSsrfBypassAttempts() {
+        // Mixed-case host (should be normalized and checked against allowlist)
+        assertDoesNotThrow(() -> this.aiConfigService.validateProviderApiUrl(
+                "https://GENERATIVELANGUAGE.googleapis.com", AiConfigService.ProviderType.GOOGLE));
+
+        // URL-encoded host
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.validateProviderApiUrl("https://generativelanguage%2Egoogleapis%2Ecom",
+                        AiConfigService.ProviderType.GOOGLE));
+
+        // Host with trailing dot (FQDN) - should be normalized/handled
+        assertThrows(IllegalArgumentException.class,
+                () -> this.aiConfigService.validateProviderApiUrl("https://generativelanguage.googleapis.com.",
+                        AiConfigService.ProviderType.GOOGLE));
+
+        // IPv6 address as host for external provider
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.validateProviderApiUrl("https://[::1]",
+                AiConfigService.ProviderType.GOOGLE));
+    }
+
+    @Test
     @DisplayName("Range validation - max-tokens out of bounds")
     @Transactional
     void testValidateMaxTokensRange() {

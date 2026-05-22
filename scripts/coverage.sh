@@ -21,7 +21,7 @@ REPORT=".coverage.md"
 echo "Running tests with JaCoCo coverage..."
 
 maven_status=0
-${MVN_CMD} -q verify -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}" -Dmaven.test.failure.ignore=true || maven_status=$?
+${MVN_CMD} -q verify -DskipITs=false -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}" -Dmaven.test.failure.ignore=true || maven_status=$?
 
 echo "Generating coverage report..."
 

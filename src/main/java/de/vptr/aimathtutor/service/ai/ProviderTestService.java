@@ -56,6 +56,12 @@ public class ProviderTestService {
         final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL,
                 "https://generativelanguage.googleapis.com");
         try {
+            this.aiConfigService.validateProviderApiUrl(baseUrl, AiConfigService.ProviderType.GOOGLE);
+        } catch (final IllegalArgumentException e) {
+            LOG.warnf("Google base URL rejected by SSRF guard: %s", e.getMessage());
+            return ProviderTestResultDto.fail("Google base URL rejected: " + e.getMessage());
+        }
+        try {
             final HttpResponse<String> response = this.doGetRequest(baseUrl + "/v1beta/models");
 
             if (response.statusCode() == 401 || response.statusCode() == 403) {
@@ -88,6 +94,12 @@ public class ProviderTestService {
 
         final String baseUrl =
                 this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1");
+        try {
+            this.aiConfigService.validateProviderApiUrl(baseUrl, AiConfigService.ProviderType.OPENAI);
+        } catch (final IllegalArgumentException e) {
+            LOG.warnf("OpenAI base URL rejected by SSRF guard: %s", e.getMessage());
+            return ProviderTestResultDto.fail("OpenAI base URL rejected: " + e.getMessage());
+        }
         try {
             final HttpResponse<String> response = this.doGetRequest(baseUrl + "/models");
 

@@ -369,4 +369,32 @@ class AuthServiceTest {
 
         this.loginAttemptService.recordSuccessfulLogin(compositeKey);
     }
+
+    @Test
+    @DisplayName("isAuthenticated should re-validate against DB after cache eviction")
+    @TestTransaction
+    void testIsAuthenticated_afterEviction() {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            final String username = "admin";
+            final long now = System.currentTimeMillis();
+
+            when(mockSess.getAttribute(USERNAME_KEY)).thenReturn(username);
+            when(mockSess.getAttribute(AUTHENTICATED_KEY)).thenReturn(true);
+            // Valid cache (within TTL)
+            when(mockSess.getAttribute(LAST_DB_CHECK_KEY)).thenReturn(now);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            // 1. Initially should be authenticated via cache
+            assertTrue(this.authService.isAuthenticated());
+
+            // 2. Evict cache for this user
+            this.authService.evictCache(username);
+
+            // 3. Should now hit the DB even though lastCheck is recent
+            assertTrue(this.authService.isAuthenticated());
+            // Verify DB hit caused a new lastCheck to be set
+            verify(mockSess).setAttribute(eq(LAST_DB_CHECK_KEY), any(Long.class));
+        }
+    }
 }
