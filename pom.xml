@@ -25,7 +25,7 @@
     <!-- Quarkus Platform -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.33.1.1</quarkus.platform.version>
+    <quarkus.platform.version>3.33.2</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
@@ -41,10 +41,10 @@
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
     <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
-    <spotless-plugin.version>3.5.1</spotless-plugin.version>
-    <surefire-plugin.version>3.5.5</surefire-plugin.version>
+    <spotless-plugin.version>3.6.0</spotless-plugin.version>
+    <surefire-plugin.version>3.5.6</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
-    <vaadin.version>25.1.5</vaadin.version>
+    <vaadin.version>25.1.6</vaadin.version>
 
     <!-- Pin transitive dependencies to fix CVEs -->
     <netty.version>4.2.14.Final</netty.version>
