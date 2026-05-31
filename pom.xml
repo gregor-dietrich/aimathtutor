@@ -47,24 +47,11 @@
     <vaadin.version>25.1.6</vaadin.version>
 
     <!-- Pin transitive dependencies to fix CVEs -->
-    <netty.version>4.2.14.Final</netty.version>
     <postgresql.version>42.7.11</postgresql.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-      <!-- Pin to fix Netty vulnerabilities:
-                 - CVE-2026-41417: via com.vaadin:vaadin-quarkus-extension
-                 - CVE-2026-42587, CVE-2026-42579, CVE-2026-42578: via io.quarkus:quarkus-rest-jackson
-                 - CVE-2026-42583: via io.quarkus:quarkus-smallrye-health -->
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-bom</artifactId>
-        <version>${netty.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
       <!-- Pin to fix CVE-2026-42198 (CPU exhaustion DoS via unbounded PBKDF2 iterations in
             SCRAM auth); transitive via io.quarkus:quarkus-jdbc-postgresql -->
       <dependency>
