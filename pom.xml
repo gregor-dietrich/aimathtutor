@@ -37,7 +37,7 @@
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
-    <nullaway.version>0.13.4</nullaway.version>
+    <nullaway.version>0.13.5</nullaway.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.9.8</spotbugs-annotations.version>
     <spotbugs-plugin.version>4.9.8.3</spotbugs-plugin.version>
