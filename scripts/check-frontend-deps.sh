@@ -24,7 +24,13 @@ fail=0
 
 check_version() {
     local label="$1" pkg="$2" min="$3" found="$4"
-    [ -z "$found" ] && return 0
+    # Fail closed: a pinned dependency with no concrete version found is a problem,
+    # not a pass.
+    if [ -z "$found" ]; then
+        echo "ERROR: $pkg missing version in $label (require >= $min)." >&2
+        fail=1
+        return 0
+    fi
     if ! version_ge "$found" "$min"; then
         echo "ERROR: $pkg is $found in $label (require >= $min)." >&2
         fail=1
@@ -35,11 +41,17 @@ while read -r pkg min; do
     [ -z "$pkg" ] && continue
 
     # Every concrete (non "$var") version declared for the package in package.json:
-    # the top-level dependencies block and the vaadin.dependencies block.
-    while read -r v; do
-        check_version "package.json" "$pkg" "$min" "$v"
-    done < <(grep -oE "\"$pkg\"[[:space:]]*:[[:space:]]*\"[0-9][^\"]*\"" package.json \
+    # the top-level dependencies block and the vaadin.dependencies block. If none is
+    # found the dependency is treated as missing and rejected (fail closed).
+    pkg_versions=$(grep -oE "\"$pkg\"[[:space:]]*:[[:space:]]*\"[0-9][^\"]*\"" package.json \
         | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+    if [ -z "$pkg_versions" ]; then
+        check_version "package.json" "$pkg" "$min" ""
+    else
+        while read -r v; do
+            check_version "package.json" "$pkg" "$min" "$v"
+        done <<< "$pkg_versions"
+    fi
 
     # Resolved version recorded in the lockfile (node_modules/<pkg> entry).
     if [ -f package-lock.json ]; then

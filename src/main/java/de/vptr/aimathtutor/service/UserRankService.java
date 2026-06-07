@@ -134,15 +134,19 @@ public class UserRankService {
     }
 
     /**
-     * Retrieves a user rank by its name.
+     * Retrieves a user rank by its name. The query term is normalized with the same routine used when persisting ranks,
+     * so lookups match the canonical names stored in the database.
      *
      * @param name
      *            the name of the rank to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
+     * @throws ValidationException
+     *             if the name is null/blank or outside the allowed length bounds after normalization
      */
     @Transactional
     public Optional<UserRankViewDto> findByName(final String name) {
-        return this.userRankRepository.findByName(name).map(UserRankViewDto::new);
+        final String normalizedName = this.normalizeAndValidateRankName(name);
+        return this.userRankRepository.findByName(normalizedName).map(UserRankViewDto::new);
     }
 
     /**
@@ -404,13 +408,15 @@ public class UserRankService {
 
     /**
      * Normalizes a rank name to canonical plain text and validates it: surrounding whitespace is trimmed and internal
-     * whitespace runs are collapsed to single spaces, then a null or blank result is rejected.
+     * whitespace runs are collapsed to single spaces, then null/blank and out-of-bounds lengths are rejected. The
+     * length check enforces the same {@code @Size} bounds declared on {@link UserRankDto#name} against the normalized
+     * value, so persisted names always satisfy them even though normalization can shrink the input.
      *
      * @param name
      *            the raw rank name from the DTO
      * @return the normalized, non-blank rank name
      * @throws ValidationException
-     *             if the name is null or blank after normalization
+     *             if the name is null/blank after normalization, or outside the allowed length bounds
      */
     private String normalizeAndValidateRankName(@Nullable final String name) {
         if (name == null) {
@@ -419,6 +425,11 @@ public class UserRankService {
         final String normalized = WHITESPACE_PATTERN.matcher(name).replaceAll(" ").trim();
         if (normalized.isEmpty()) {
             throw new ValidationException("Name is required");
+        }
+        if (normalized.length() < AppConstants.USERRANK_NAME_MIN_LENGTH
+                || normalized.length() > AppConstants.USERRANK_NAME_MAX_LENGTH) {
+            throw new ValidationException("Name must be between " + AppConstants.USERRANK_NAME_MIN_LENGTH + " and "
+                    + AppConstants.USERRANK_NAME_MAX_LENGTH + " characters");
         }
         return normalized;
     }
