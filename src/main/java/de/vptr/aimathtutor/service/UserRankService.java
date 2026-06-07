@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import com.vaadin.flow.server.VaadinSession;
 
@@ -22,6 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -48,6 +50,9 @@ public class UserRankService {
     PermissionService permissionService;
 
     private static final String USERNAME_KEY = AppConstants.SESSION_KEY_USERNAME;
+
+    /** Matches runs of whitespace, used to collapse rank names to canonical single-spaced plain text. */
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     /**
      * Retrieves the rank of the currently authenticated user.
@@ -174,10 +179,10 @@ public class UserRankService {
 
         final UserRankEntity rank = new UserRankEntity();
 
-        // Set properties from DTO. Store the name as canonical plain text: it is used for equality
-        // lookups (findByName) and search, and is rendered as a Vaadin text node (escaped at output).
-        // HTML-encoding it here would corrupt those lookups and the displayed value.
-        rank.name = rankDto.name;
+        // Store the name as canonical plain text: it is used for equality lookups (findByName) and
+        // search, and is rendered as a Vaadin text node (escaped at output). HTML-encoding it here
+        // would corrupt those lookups and the displayed value.
+        rank.name = this.normalizeAndValidateRankName(rankDto.name);
 
         this.applyAllPermissions(rank, rankDto);
 
@@ -205,7 +210,7 @@ public class UserRankService {
         final UserRankEntity existingRank = this.requireRankFound(publicId);
 
         // Complete replacement (PUT semantics)
-        existingRank.name = rankDto.name;
+        existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         this.applyAllPermissions(existingRank, rankDto);
 
         this.userRankRepository.persist(existingRank);
@@ -231,9 +236,10 @@ public class UserRankService {
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
 
-        // Partial update (PATCH semantics) - only update provided fields
+        // Partial update (PATCH semantics) - only update provided fields. A provided name is still
+        // normalized and rejected when blank; a null name leaves the existing value untouched.
         if (rankDto.name != null) {
-            existingRank.name = rankDto.name;
+            existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         }
         this.applyProvidedPermissions(existingRank, rankDto);
 
@@ -394,6 +400,27 @@ public class UserRankService {
         if (!patch || source.userRankDelete != null) {
             target.userRankDelete = Boolean.TRUE.equals(source.userRankDelete);
         }
+    }
+
+    /**
+     * Normalizes a rank name to canonical plain text and validates it: surrounding whitespace is trimmed and internal
+     * whitespace runs are collapsed to single spaces, then a null or blank result is rejected.
+     *
+     * @param name
+     *            the raw rank name from the DTO
+     * @return the normalized, non-blank rank name
+     * @throws ValidationException
+     *             if the name is null or blank after normalization
+     */
+    private String normalizeAndValidateRankName(@Nullable final String name) {
+        if (name == null) {
+            throw new ValidationException("Name is required");
+        }
+        final String normalized = WHITESPACE_PATTERN.matcher(name).replaceAll(" ").trim();
+        if (normalized.isEmpty()) {
+            throw new ValidationException("Name is required");
+        }
+        return normalized;
     }
 
     private UserRankEntity requireRankFound(final String publicId) {
