@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.owasp.html.HtmlPolicyBuilder;
-import org.owasp.html.PolicyFactory;
-
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserRankDto;
@@ -40,10 +37,6 @@ public class UserRankService {
      * page loads, so we cache aggressively and invalidate on every write.
      */
     private static final String RANK_CACHE = "user-ranks";
-
-    // Strict policy: drop all HTML and escape residual <, >, & — yields safe plain text. Applied to
-    // rank names for parity with how lesson/exercise content is sanitized.
-    private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
 
     @Inject
     UserRankRepository userRankRepository;
@@ -181,8 +174,10 @@ public class UserRankService {
 
         final UserRankEntity rank = new UserRankEntity();
 
-        // Set properties from DTO
-        rank.name = sanitizeName(rankDto.name);
+        // Set properties from DTO. Store the name as canonical plain text: it is used for equality
+        // lookups (findByName) and search, and is rendered as a Vaadin text node (escaped at output).
+        // HTML-encoding it here would corrupt those lookups and the displayed value.
+        rank.name = rankDto.name;
 
         this.applyAllPermissions(rank, rankDto);
 
@@ -210,7 +205,7 @@ public class UserRankService {
         final UserRankEntity existingRank = this.requireRankFound(publicId);
 
         // Complete replacement (PUT semantics)
-        existingRank.name = sanitizeName(rankDto.name);
+        existingRank.name = rankDto.name;
         this.applyAllPermissions(existingRank, rankDto);
 
         this.userRankRepository.persist(existingRank);
@@ -238,7 +233,7 @@ public class UserRankService {
 
         // Partial update (PATCH semantics) - only update provided fields
         if (rankDto.name != null) {
-            existingRank.name = sanitizeName(rankDto.name);
+            existingRank.name = rankDto.name;
         }
         this.applyProvidedPermissions(existingRank, rankDto);
 
@@ -399,11 +394,6 @@ public class UserRankService {
         if (!patch || source.userRankDelete != null) {
             target.userRankDelete = Boolean.TRUE.equals(source.userRankDelete);
         }
-    }
-
-    @Nullable
-    private static String sanitizeName(@Nullable final String name) {
-        return name == null ? null : STRICT_HTML_POLICY.sanitize(name);
     }
 
     private UserRankEntity requireRankFound(final String publicId) {
