@@ -25,7 +25,7 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "UserGroup.findByPublicId", query = "FROM UserGroupEntity WHERE publicId = :p"),
         @NamedQuery(name = "UserGroup.findByName", query = "FROM UserGroupEntity WHERE name = :n"),
         @NamedQuery(name = "UserGroup.searchByName",
-                query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ORDER BY created DESC") })
+                query = "FROM UserGroupEntity WHERE LOWER(name) LIKE :s ESCAPE '!' ORDER BY created DESC") })
 public class UserGroupEntity extends BaseEntity {
 
     @NotBlank

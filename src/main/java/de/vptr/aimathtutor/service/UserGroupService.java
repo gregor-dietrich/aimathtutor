@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
@@ -16,6 +18,8 @@ import de.vptr.aimathtutor.repository.UserGroupMetaRepository;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -31,6 +35,10 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class UserGroupService {
+
+    // Strict policy: drop all HTML and escape residual <, >, & — yields safe plain text. Applied to
+    // group names for parity with how lesson/exercise content is sanitized.
+    private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
 
     @Inject
     UserGroupRepository userGroupRepository;
@@ -129,7 +137,7 @@ public class UserGroupService {
         }
 
         final UserGroupEntity group = new UserGroupEntity();
-        group.name = groupDto.name;
+        group.name = sanitizeName(groupDto.name);
         this.userGroupRepository.persist(group);
 
         return new UserGroupViewDto(group);
@@ -162,7 +170,7 @@ public class UserGroupService {
         }
 
         // Complete replacement (PUT semantics)
-        existingGroup.name = groupDto.name;
+        existingGroup.name = sanitizeName(groupDto.name);
         this.userGroupRepository.persist(existingGroup);
 
         return new UserGroupViewDto(existingGroup);
@@ -191,7 +199,7 @@ public class UserGroupService {
 
         // Partial update (PATCH semantics) - only update provided fields
         if (groupDto.name != null && !groupDto.name.isBlank()) {
-            existingGroup.name = groupDto.name;
+            existingGroup.name = sanitizeName(groupDto.name);
         }
 
         this.userGroupRepository.persist(existingGroup);
@@ -300,7 +308,12 @@ public class UserGroupService {
         if (query == null || query.isBlank()) {
             return this.getAllGroups();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var searchTerm = SearchPatternUtil.containsPattern(query.trim().toLowerCase(Locale.ROOT));
         return this.userGroupRepository.search(searchTerm).stream().map(UserGroupViewDto::new).toList();
+    }
+
+    @Nullable
+    private static String sanitizeName(@Nullable final String name) {
+        return name == null ? null : STRICT_HTML_POLICY.sanitize(name);
     }
 }

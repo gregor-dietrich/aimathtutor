@@ -46,7 +46,7 @@ import jakarta.validation.constraints.NotBlank;
                 query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.rank.id = :r ORDER BY u.created DESC"),
         @NamedQuery(name = "User.searchByTerm",
                 query = "FROM UserEntity u LEFT JOIN FETCH u.rank "
-                        + "WHERE LOWER(u.username) LIKE :s ORDER BY u.created DESC"),
+                        + "WHERE LOWER(u.username) LIKE :s ESCAPE '!' ORDER BY u.created DESC"),
         @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r") })
 @Entity
 @Table(name = "users",

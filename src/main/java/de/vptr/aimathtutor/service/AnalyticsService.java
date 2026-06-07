@@ -22,6 +22,7 @@ import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -367,7 +368,7 @@ public class AnalyticsService {
         if (searchTerm == null || searchTerm.isBlank()) {
             return List.of();
         }
-        final String pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
+        final String pattern = SearchPatternUtil.containsPattern(searchTerm.trim().toLowerCase(Locale.ROOT));
         final List<StudentSessionEntity> sessions = this.studentSessionRepository.searchByUserOrExerciseTerm(pattern);
         return sessions.stream().map(StudentSessionViewDto::new).toList();
     }
@@ -429,7 +430,7 @@ public class AnalyticsService {
             return this.getAllUsersProgressSummary();
         }
 
-        final String pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
+        final String pattern = SearchPatternUtil.containsPattern(searchTerm.trim().toLowerCase(Locale.ROOT));
         final List<UserEntity> users = this.userRepository.search(pattern);
         if (users.isEmpty()) {
             return List.of();

@@ -264,6 +264,10 @@ public class AiConfigService {
             throw new IllegalArgumentException("Configuration key cannot be null");
         }
 
+        // Authorize before validating values or resolving any host names, so an unauthorized caller
+        // can never trigger DNS resolution of an attacker-supplied host via a generic URL key.
+        this.permissionService.requireAiConfigEdit(userId);
+
         this.validateConfigValue(configKey, configValue);
 
         // Perform URL validation outside of any DB transaction to avoid holding
@@ -321,6 +325,10 @@ public class AiConfigService {
         if (updates == null || updates.isEmpty()) {
             return;
         }
+
+        // Authorize before validating values or resolving any host names, so an unauthorized caller
+        // can never trigger DNS resolution of an attacker-supplied host via a generic URL key.
+        this.permissionService.requireAiConfigEdit(userId);
 
         // Validate all updates first (outside any DB transaction)
         for (final AiConfigUpdateDto update : updates) {

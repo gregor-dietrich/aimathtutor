@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -214,7 +215,7 @@ public class ExerciseRepository extends AbstractRepository {
         if (query == null || query.isBlank()) {
             return this.findAllOrdered();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var searchTerm = SearchPatternUtil.containsPattern(query.trim().toLowerCase(Locale.ROOT));
         final var q = this.em.createNamedQuery("Exercise.searchByTerm", ExerciseEntity.class);
         q.setParameter("s", searchTerm);
         return q.getResultList();

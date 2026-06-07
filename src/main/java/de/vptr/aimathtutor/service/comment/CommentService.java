@@ -27,6 +27,7 @@ import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -537,7 +538,7 @@ public class CommentService {
         if (query == null || query.isBlank()) {
             return List.of();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var searchTerm = SearchPatternUtil.containsPattern(query.trim().toLowerCase(Locale.ROOT));
         final List<CommentEntity> comments = this.commentRepository.search(searchTerm);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }

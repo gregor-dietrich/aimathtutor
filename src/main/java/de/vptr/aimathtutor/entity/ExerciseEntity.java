@@ -59,7 +59,8 @@ import jakarta.validation.constraints.NotBlank;
                         + "ORDER BY e.created DESC"),
         @NamedQuery(name = "Exercise.searchByTerm",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.lesson "
-                        + "WHERE LOWER(e.title) LIKE :s OR LOWER(e.content) LIKE :s ORDER BY e.created DESC"),
+                        + "WHERE LOWER(e.title) LIKE :s ESCAPE '!' OR LOWER(e.content) LIKE :s ESCAPE '!' "
+                        + "ORDER BY e.created DESC"),
         @NamedQuery(name = "Exercise.findByDateRange",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
                         + "LEFT JOIN FETCH e.lesson WHERE e.created BETWEEN :s AND :e ORDER BY e.created DESC"),

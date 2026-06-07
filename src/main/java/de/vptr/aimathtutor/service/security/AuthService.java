@@ -100,7 +100,7 @@ public class AuthService {
 
     /**
      * Authenticates a user with the provided credentials. Validates username and password, checks user activation and
-     * ban status, updates last login time, and stores authentication information in the session.
+     * ban status, and stores authentication information in the session.
      *
      * @param username
      *            the username to authenticate
@@ -191,14 +191,6 @@ public class AuthService {
                     this.loginAttemptService.recordFailedAttempt(clientIp);
                 }
                 return AuthResultDto.invalidCredentials();
-            }
-
-            // Persist the user entity if needed
-            try {
-                this.userRepository.persist(user);
-            } catch (final PersistenceException e) {
-                LOG.warnf(e, "Failed to persist user during login: %s", e.getMessage());
-                // continue with login even if persist failed
             }
 
             try {

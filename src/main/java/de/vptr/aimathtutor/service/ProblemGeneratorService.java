@@ -11,6 +11,7 @@ import org.jboss.logging.Logger;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.ai.AiTutorService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
@@ -25,15 +26,24 @@ public class ProblemGeneratorService {
 
     private static final Logger LOG = Logger.getLogger(ProblemGeneratorService.class);
 
-    private final Random random;
+    // Null when no Random was injected: in that case random() resolves ThreadLocalRandom.current()
+    // on the calling thread. Do NOT cache ThreadLocalRandom.current() in a field — its seed is
+    // per-thread and only initialized by current(), so a cached instance reused from other threads
+    // can produce correlated sequences.
+    @Nullable
+    private final Random injectedRandom;
 
     public ProblemGeneratorService() {
-        this.random = ThreadLocalRandom.current();
+        this.injectedRandom = null;
     }
 
     public ProblemGeneratorService(final Random random) {
         Objects.requireNonNull(random, "random must not be null");
-        this.random = new Random(random.nextLong());
+        this.injectedRandom = new Random(random.nextLong());
+    }
+
+    private Random random() {
+        return this.injectedRandom != null ? this.injectedRandom : ThreadLocalRandom.current();
     }
 
     /**
@@ -59,7 +69,7 @@ public class ProblemGeneratorService {
         // - ThreadLocalRandom is more efficient for concurrent access
         // - Each thread has its own random instance, avoiding contention
         // - No initialization overhead compared to SecureRandom
-        final var random = this.random;
+        final var random = this.random();
 
         // Difficulty-based parameter scaling
         final int coefMax = switch (difficulty) {

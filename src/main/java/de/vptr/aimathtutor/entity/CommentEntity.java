@@ -70,9 +70,11 @@ import jakarta.validation.constraints.NotBlank;
                 + "WHERE exercise.id = :e AND parentComment IS NULL AND status = 'VISIBLE' " + "ORDER BY created DESC"),
         @NamedQuery(name = "Comment.countByUserSince",
                 query = "SELECT COUNT(c) FROM CommentEntity c WHERE c.user.id = :u AND c.created >= :s"),
-        @NamedQuery(name = "Comment.searchByTerm", query = "SELECT c FROM CommentEntity c "
-                + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                + "WHERE LOWER(c.content) LIKE LOWER(:s) AND c.status != 'DELETED' " + "ORDER BY c.created DESC"),
+        @NamedQuery(name = "Comment.searchByTerm",
+                query = "SELECT c FROM CommentEntity c "
+                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
+                        + "WHERE LOWER(c.content) LIKE LOWER(:s) ESCAPE '!' AND c.status != 'DELETED' "
+                        + "ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findByDateRange",
                 query = "FROM CommentEntity WHERE created BETWEEN :s AND :e ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findByStatus",
