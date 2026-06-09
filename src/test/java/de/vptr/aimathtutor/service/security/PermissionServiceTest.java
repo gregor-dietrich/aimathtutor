@@ -2,25 +2,36 @@ package de.vptr.aimathtutor.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
+import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
+import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
+@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
 class PermissionServiceTest {
 
     @InjectMock
     UserRankService userRankService;
+
+    @InjectMock
+    UserRepository userRepository;
 
     @Inject
     PermissionService permissionService;
@@ -359,5 +370,46 @@ class PermissionServiceTest {
         when(this.userRankService.getCurrentUserRank()).thenReturn(null);
         final var ex = assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireExerciseAdd());
         assertEquals("You do not have permission to perform this action", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireAiConfigEdit reads the permission flag without touching the lazy users collection")
+    void requireAiConfigEditDoesNotInitializeLazyUsers() {
+        // Regression: requireAiConfigEdit runs in the non-transactional, possibly background-thread pre-DNS
+        // check in AiConfigService. Building a UserRankViewDto there used to read the lazy `users`
+        // collection and fail with a LazyInitializationException on the detached rank. Simulate that
+        // detached collection and assert the authorization check no longer touches it.
+        @SuppressWarnings("unchecked")
+        final List<UserEntity> detachedUsers = mock(List.class);
+        when(detachedUsers.size()).thenThrow(new LazyInitializationException("simulated detached users collection"));
+
+        final var rank = new UserRankEntity();
+        rank.aiConfigEdit = true;
+        rank.users = detachedUsers;
+        final var user = new UserEntity();
+        user.rank = rank;
+        when(this.userRepository.findById(1L)).thenReturn(user);
+
+        final var result = assertDoesNotThrow(() -> this.permissionService.requireAiConfigEdit(1L));
+        assertSame(user, result);
+    }
+
+    @Test
+    @DisplayName("requireAiConfigEdit throws when the rank lacks the permission")
+    void requireAiConfigEditThrowsWhenNotPermitted() {
+        final var rank = new UserRankEntity();
+        rank.aiConfigEdit = false;
+        final var user = new UserEntity();
+        user.rank = rank;
+        when(this.userRepository.findById(2L)).thenReturn(user);
+
+        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(2L));
+    }
+
+    @Test
+    @DisplayName("requireAiConfigEdit throws when the user does not exist")
+    void requireAiConfigEditThrowsWhenUserMissing() {
+        when(this.userRepository.findById(3L)).thenReturn(null);
+        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
     }
 }
