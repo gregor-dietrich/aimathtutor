@@ -16,6 +16,7 @@ import de.vptr.aimathtutor.repository.UserGroupMetaRepository;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -129,6 +130,9 @@ public class UserGroupService {
         }
 
         final UserGroupEntity group = new UserGroupEntity();
+        // Store the name as canonical plain text: it is used for equality lookups (findByName) and
+        // search, and is rendered as a Vaadin text node (escaped at output). HTML-encoding it here
+        // would corrupt those lookups and the displayed value.
         group.name = groupDto.name;
         this.userGroupRepository.persist(group);
 
@@ -300,7 +304,7 @@ public class UserGroupService {
         if (query == null || query.isBlank()) {
             return this.getAllGroups();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var searchTerm = SearchPatternUtil.containsPattern(query.trim().toLowerCase(Locale.ROOT));
         return this.userGroupRepository.search(searchTerm).stream().map(UserGroupViewDto::new).toList();
     }
 }

@@ -91,6 +91,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-
       - name: Build with Maven
         run: ./mvnw clean install package -DskipTests -Pproduction
+      - name: Verify pinned frontend dependencies
+        run: scripts/check-frontend-deps.sh
 
   # publish:
   #   runs-on: ubuntu-latest

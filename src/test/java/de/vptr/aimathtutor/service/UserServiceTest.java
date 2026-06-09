@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -263,6 +264,17 @@ class UserServiceTest {
     @TestTransaction
     void testSearchUsers_noMatch() {
         final var results = this.userService.searchUsers("zzz_no_match_xyz_999");
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchUsers with an email-like term containing '!' does not fail the query")
+    @TestTransaction
+    void testSearchUsers_emailWithEscapeChar() {
+        // Regression: User.searchByTerm declares ESCAPE '!', and the "@" branch must escape the term so a
+        // '!' in an email local-part does not form an invalid escape sequence (PostgreSQL SQLSTATE 22025).
+        final var results = assertDoesNotThrow(() -> this.userService.searchUsers("foo!bar@example.com"));
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }

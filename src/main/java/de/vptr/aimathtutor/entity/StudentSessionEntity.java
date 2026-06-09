@@ -59,7 +59,7 @@ import jakarta.validation.constraints.NotNull;
         @NamedQuery(name = "StudentSession.countAll", query = "SELECT COUNT(s) FROM StudentSessionEntity s"),
         @NamedQuery(name = "StudentSession.searchByUserOrExercise",
                 query = "FROM StudentSessionEntity "
-                        + "WHERE lower(user.username) like :p or lower(exercise.title) like :p "
+                        + "WHERE lower(user.username) like :p escape '!' or lower(exercise.title) like :p escape '!' "
                         + "ORDER BY startTime DESC, publicId DESC"),
         @NamedQuery(name = "StudentSession.findAllWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
@@ -101,7 +101,8 @@ import jakarta.validation.constraints.NotNull;
                         + "WHERE s.user.id IN :ids ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.searchByUserOrExerciseWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
-                        + "WHERE lower(s.user.username) like :p or lower(s.exercise.title) like :p "
+                        + "WHERE lower(s.user.username) like :p escape '!' "
+                        + "or lower(s.exercise.title) like :p escape '!' "
                         + "ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.countActiveStudents",
                 query = "SELECT COUNT(DISTINCT s.user.id) FROM StudentSessionEntity s WHERE s.startTime >= :t"),

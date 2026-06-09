@@ -13,6 +13,10 @@ echo "Running lint checks..."
 
 ${MVN_CMD} -q compile test-compile spotless:check checkstyle:check spotbugs:check pmd:check pmd:cpd-check ${PL_ARG} -Drevision="${REVISION}"
 
+echo "Checking pinned frontend dependencies..."
+
+"$DIR/check-frontend-deps.sh"
+
 echo "Lint checks completed."
 
 cd - > /dev/null

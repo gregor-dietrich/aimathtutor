@@ -59,6 +59,10 @@ public class AdminConfigView extends AbstractAdminView {
 
     @Override
     protected boolean isAuthorized() {
+        // Intentional: viewing the AI configuration is allowed for admins and for any teacher with
+        // exercise or lesson permissions, so they can see which provider/model/prompts are active.
+        // This grants read access only — saving still requires the dedicated aiConfigEdit permission
+        // (enforced in AiConfigService), and API keys are never shown (masked, read-only fields).
         final var userRank = this.userRankService.getCurrentUserRank();
         return userRank != null && (userRank.canAdminView() || userRank.hasAnyExercisePermission()
                 || userRank.hasAnyLessonPermission());

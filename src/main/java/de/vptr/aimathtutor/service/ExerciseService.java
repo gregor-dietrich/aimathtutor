@@ -154,9 +154,24 @@ public class ExerciseService {
      */
     @Transactional
     public Map<String, List<ExerciseViewDto>> findPublishedExercisesByLessonMap() {
+        return this.findPublishedExercisesByLessonMap(this.authService.getUserId());
+    }
+
+    /**
+     * Retrieves all published exercises grouped by lesson ID, enriched with completion data for the given user. Use
+     * this overload from background threads (e.g. {@code AsyncDataLoader} suppliers): resolve the user id on the UI
+     * thread first, because {@code VaadinSession} is unavailable off the UI thread.
+     *
+     * @param userId
+     *            the id of the user whose completion data should be applied; null leaves it unset
+     * @return a map of lesson ID to list of published {@link ExerciseViewDto}s
+     */
+    @Transactional
+    public Map<String, List<ExerciseViewDto>> findPublishedExercisesByLessonMap(@Nullable final Long userId) {
         final List<ExerciseViewDto> dtos =
                 this.exerciseRepository.findPublished().stream().map(ExerciseViewDto::new).toList();
-        final List<ExerciseViewDto> enriched = this.exerciseCompletionService.enrichListWithCompletionData(dtos);
+        final List<ExerciseViewDto> enriched =
+                this.exerciseCompletionService.enrichListWithCompletionData(dtos, userId);
         return enriched.stream().collect(HashMap::new,
                 (map, dto) -> map.computeIfAbsent(dto.lessonPublicId, ignored -> new ArrayList<>()).add(dto),
                 Map::putAll);

@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -389,7 +390,12 @@ public class UserService {
             return this.getAllUsers();
         }
         final var trimmedQuery = query.trim().toLowerCase(Locale.ROOT);
-        final var searchTerm = trimmedQuery.contains("@") ? trimmedQuery : "%" + trimmedQuery + "%";
+        // Both branches must escape LIKE metacharacters: User.searchByTerm declares ESCAPE '!', so an
+        // unescaped term (e.g. an email local-part containing '!') would form an invalid escape sequence and
+        // fail the query. The "@" branch matches the term exactly (no surrounding wildcards); the default
+        // branch is a "contains" match.
+        final var searchTerm = trimmedQuery.contains("@") ? SearchPatternUtil.escapeLike(trimmedQuery)
+                : SearchPatternUtil.containsPattern(trimmedQuery);
         final List<UserEntity> users = this.userRepository.search(searchTerm);
         return users.stream().map(UserViewDto::new).toList();
     }

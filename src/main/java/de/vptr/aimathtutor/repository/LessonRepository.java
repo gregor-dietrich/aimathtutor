@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.LessonEntity;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
@@ -122,9 +123,9 @@ public class LessonRepository extends AbstractRepository {
         if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAllOrdered();
         }
-        final var pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
+        final var pattern = SearchPatternUtil.containsPattern(searchTerm.trim().toLowerCase(Locale.ROOT));
         final TypedQuery<LessonEntity> q =
-                this.em.createQuery("FROM LessonEntity WHERE LOWER(name) LIKE :s", LessonEntity.class);
+                this.em.createQuery("FROM LessonEntity WHERE LOWER(name) LIKE :s ESCAPE '!'", LessonEntity.class);
         q.setParameter("s", pattern);
         return q.getResultList();
     }

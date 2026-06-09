@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import com.vaadin.flow.server.VaadinSession;
 
@@ -13,6 +14,7 @@ import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import io.quarkus.cache.CacheInvalidateAll;
 import io.quarkus.cache.CacheResult;
 import jakarta.annotation.Nullable;
@@ -21,6 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -47,6 +50,9 @@ public class UserRankService {
     PermissionService permissionService;
 
     private static final String USERNAME_KEY = AppConstants.SESSION_KEY_USERNAME;
+
+    /** Matches runs of whitespace, used to collapse rank names to canonical single-spaced plain text. */
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     /**
      * Retrieves the rank of the currently authenticated user.
@@ -128,15 +134,21 @@ public class UserRankService {
     }
 
     /**
-     * Retrieves a user rank by its name.
+     * Retrieves a user rank by its name. The query term is normalized with the same whitespace routine used when
+     * persisting ranks, so lookups match the canonical names stored in the database. A null/blank term cannot match any
+     * stored rank, so it yields an empty result rather than an error.
      *
      * @param name
      *            the name of the rank to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
      */
     @Transactional
-    public Optional<UserRankViewDto> findByName(final String name) {
-        return this.userRankRepository.findByName(name).map(UserRankViewDto::new);
+    public Optional<UserRankViewDto> findByName(@Nullable final String name) {
+        final String normalizedName = this.normalizeRankName(name);
+        if (normalizedName.isEmpty()) {
+            return Optional.empty();
+        }
+        return this.userRankRepository.findByName(normalizedName).map(UserRankViewDto::new);
     }
 
     /**
@@ -151,7 +163,7 @@ public class UserRankService {
         if (query == null || query.isBlank()) {
             return this.getAllRanks();
         }
-        final var searchTerm = "%" + query.trim().toLowerCase(Locale.ROOT) + "%";
+        final var searchTerm = SearchPatternUtil.containsPattern(query.trim().toLowerCase(Locale.ROOT));
         final List<UserRankEntity> ranks = this.userRankRepository.search(searchTerm);
         return ranks.stream().map(UserRankViewDto::new).toList();
     }
@@ -173,8 +185,10 @@ public class UserRankService {
 
         final UserRankEntity rank = new UserRankEntity();
 
-        // Set properties from DTO
-        rank.name = rankDto.name;
+        // Store the name as canonical plain text: it is used for equality lookups (findByName) and
+        // search, and is rendered as a Vaadin text node (escaped at output). HTML-encoding it here
+        // would corrupt those lookups and the displayed value.
+        rank.name = this.normalizeAndValidateRankName(rankDto.name);
 
         this.applyAllPermissions(rank, rankDto);
 
@@ -202,7 +216,7 @@ public class UserRankService {
         final UserRankEntity existingRank = this.requireRankFound(publicId);
 
         // Complete replacement (PUT semantics)
-        existingRank.name = rankDto.name;
+        existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         this.applyAllPermissions(existingRank, rankDto);
 
         this.userRankRepository.persist(existingRank);
@@ -228,9 +242,10 @@ public class UserRankService {
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
 
-        // Partial update (PATCH semantics) - only update provided fields
+        // Partial update (PATCH semantics) - only update provided fields. A provided name is still
+        // normalized and rejected when blank; a null name leaves the existing value untouched.
         if (rankDto.name != null) {
-            existingRank.name = rankDto.name;
+            existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         }
         this.applyProvidedPermissions(existingRank, rankDto);
 
@@ -391,6 +406,47 @@ public class UserRankService {
         if (!patch || source.userRankDelete != null) {
             target.userRankDelete = Boolean.TRUE.equals(source.userRankDelete);
         }
+    }
+
+    /**
+     * Normalizes a rank name to canonical plain text: surrounding whitespace is trimmed and internal whitespace runs
+     * are collapsed to single spaces. A null input yields an empty string. Does not validate length or blankness — the
+     * write paths use {@link #normalizeAndValidateRankName(String)} for that.
+     *
+     * @param name
+     *            the raw rank name
+     * @return the normalized name, or an empty string if {@code name} is null or whitespace-only
+     */
+    private String normalizeRankName(@Nullable final String name) {
+        if (name == null) {
+            return "";
+        }
+        return WHITESPACE_PATTERN.matcher(name).replaceAll(" ").trim();
+    }
+
+    /**
+     * Normalizes a rank name with {@link #normalizeRankName(String)} and validates it: null/blank and out-of-bounds
+     * lengths are rejected. The length check enforces the same {@code @Size} bounds declared on
+     * {@link UserRankDto#name} against the normalized value, so persisted names always satisfy them even though
+     * normalization can shrink the input.
+     *
+     * @param name
+     *            the raw rank name from the DTO
+     * @return the normalized, non-blank rank name
+     * @throws ValidationException
+     *             if the name is null/blank after normalization, or outside the allowed length bounds
+     */
+    private String normalizeAndValidateRankName(@Nullable final String name) {
+        final String normalized = this.normalizeRankName(name);
+        if (normalized.isEmpty()) {
+            throw new ValidationException("Name is required");
+        }
+        if (normalized.length() < AppConstants.USERRANK_NAME_MIN_LENGTH
+                || normalized.length() > AppConstants.USERRANK_NAME_MAX_LENGTH) {
+            throw new ValidationException("Name must be between " + AppConstants.USERRANK_NAME_MIN_LENGTH + " and "
+                    + AppConstants.USERRANK_NAME_MAX_LENGTH + " characters");
+        }
+        return normalized;
     }
 
     private UserRankEntity requireRankFound(final String publicId) {

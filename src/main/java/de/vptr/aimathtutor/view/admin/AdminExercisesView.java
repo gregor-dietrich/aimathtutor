@@ -111,6 +111,8 @@ public class AdminExercisesView extends AbstractAdminView {
 
     private void loadPublishedExercises() {
         LOG.info("Loading published exercises");
+        // Admin management grid: lists all published exercises and does not display per-user completion
+        // badges, so the per-user completion enrichment in findPublishedExercises is not relied upon here.
         AsyncDataLoader.load(() -> this.exerciseService.findPublishedExercises(), this, exercises -> {
             LOG.infof("Successfully loaded %s published exercises", exercises.size());
             this.grid.setItems(exercises);

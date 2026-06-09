@@ -74,10 +74,14 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     @Override
     protected void onAttach(final AttachEvent event) {
         super.onAttach(event);
+        // Resolve the user id on the UI thread: AsyncDataLoader runs its supplier on a background
+        // thread where VaadinSession.getCurrent() (and thus AuthService.getUserId()) is null, which
+        // would otherwise drop the per-user completion badges.
+        final Long userId = this.authService.getUserId();
         AsyncDataLoader.load(() -> {
             final List<LessonViewDto> lessons = this.lessonService.getAllLessons();
             final Map<String, List<ExerciseViewDto>> exercisesByLesson =
-                    this.exerciseService.findPublishedExercisesByLessonMap();
+                    this.exerciseService.findPublishedExercisesByLessonMap(userId);
             return new LessonsPayload(lessons, exercisesByLesson);
         }, this, this::renderLessons, "Failed to load lessons. Please try again.");
     }

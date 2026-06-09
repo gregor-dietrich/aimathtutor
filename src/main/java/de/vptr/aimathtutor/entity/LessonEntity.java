@@ -30,7 +30,7 @@ import jakarta.validation.constraints.NotBlank;
                 query = "FROM LessonEntity WHERE parent IS NULL ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "Lesson.findByParentId",
                 query = "FROM LessonEntity WHERE parent.id = :p ORDER BY created DESC, id DESC"),
-        @NamedQuery(name = "Lesson.searchByName", query = "FROM LessonEntity WHERE LOWER(name) LIKE :s") })
+        @NamedQuery(name = "Lesson.searchByName", query = "FROM LessonEntity WHERE LOWER(name) LIKE :s ESCAPE '!'") })
 public class LessonEntity extends BaseEntity {
 
     @NotBlank
