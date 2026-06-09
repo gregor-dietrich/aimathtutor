@@ -121,11 +121,12 @@ public class PermissionService {
      */
     public UserEntity requireAiConfigEdit(final Long userId) {
         final UserEntity user = this.userRepository.findById(userId);
-        if (user == null || user.rank == null) {
-            throw new PermissionDeniedException("You do not have permission to edit AI configuration");
-        }
-        final var rank = new UserRankViewDto(user.rank);
-        if (!rank.canAiConfigEdit()) {
+        // Read the permission flag straight off the (eagerly fetched) rank rather than building a
+        // UserRankViewDto: that DTO's constructor counts the lazy `users` collection, which throws a
+        // LazyInitializationException when this runs outside a Hibernate session — e.g. the pre-DNS
+        // authorization check in AiConfigService, which is intentionally non-transactional and may run on a
+        // background thread.
+        if (user == null || user.rank == null || !user.rank.aiConfigEdit) {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");
         }
         return user;
