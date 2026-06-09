@@ -412,4 +412,13 @@ class PermissionServiceTest {
         when(this.userRepository.findById(3L)).thenReturn(null);
         assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
     }
+
+    @Test
+    @DisplayName("requireAiConfigEdit throws when the user has a null rank")
+    void requireAiConfigEditThrowsWhenRankIsNull() {
+        final var user = new UserEntity();
+        user.rank = null;
+        when(this.userRepository.findById(3L)).thenReturn(user);
+        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
+    }
 }
