@@ -128,6 +128,16 @@ class UserRankServiceTest {
     }
 
     @Test
+    @DisplayName("findByName with a blank term returns empty instead of throwing")
+    @Transactional
+    void testFindByNameBlankReturnsEmpty() {
+        // A blank or whitespace-only term cannot match a stored rank, so the lookup yields an empty result
+        // rather than a ValidationException (which is reserved for the write paths).
+        assertTrue(this.userRankService.findByName("").isEmpty());
+        assertTrue(this.userRankService.findByName("   ").isEmpty());
+    }
+
+    @Test
     @DisplayName("Get all ranks")
     @Transactional
     void testGetAllRanks() {

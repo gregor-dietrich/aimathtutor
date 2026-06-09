@@ -282,6 +282,9 @@ public class AiConfigService {
 
     @Transactional
     void persistConfigUpdate(final String configKey, final String configValue, final Long userId) {
+        // Re-authorize inside the transaction (not redundant with the caller's pre-DNS check): this guards
+        // against permission revocation between that check and the write (TOCTOU) and yields the managed
+        // user entity recorded as lastUpdatedBy.
         final UserEntity user = this.requireConfigEditPermission(userId);
 
         // Find existing or create new
@@ -347,6 +350,9 @@ public class AiConfigService {
 
     @Transactional
     void persistMultipleConfigUpdates(final List<AiConfigUpdateDto> updates, final Long userId) {
+        // Re-authorize inside the transaction (not redundant with the caller's pre-DNS check): this guards
+        // against permission revocation between that check and the write (TOCTOU) and yields the managed
+        // user entity recorded as lastUpdatedBy.
         final UserEntity user = this.requireConfigEditPermission(userId);
 
         // Persist all updates

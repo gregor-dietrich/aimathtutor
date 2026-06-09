@@ -134,18 +134,20 @@ public class UserRankService {
     }
 
     /**
-     * Retrieves a user rank by its name. The query term is normalized with the same routine used when persisting ranks,
-     * so lookups match the canonical names stored in the database.
+     * Retrieves a user rank by its name. The query term is normalized with the same whitespace routine used when
+     * persisting ranks, so lookups match the canonical names stored in the database. A null/blank term cannot match any
+     * stored rank, so it yields an empty result rather than an error.
      *
      * @param name
      *            the name of the rank to search for
      * @return an {@link Optional} containing the rank if found, empty otherwise
-     * @throws ValidationException
-     *             if the name is null/blank or outside the allowed length bounds after normalization
      */
     @Transactional
-    public Optional<UserRankViewDto> findByName(final String name) {
-        final String normalizedName = this.normalizeAndValidateRankName(name);
+    public Optional<UserRankViewDto> findByName(@Nullable final String name) {
+        final String normalizedName = this.normalizeRankName(name);
+        if (normalizedName.isEmpty()) {
+            return Optional.empty();
+        }
         return this.userRankRepository.findByName(normalizedName).map(UserRankViewDto::new);
     }
 
@@ -407,10 +409,26 @@ public class UserRankService {
     }
 
     /**
-     * Normalizes a rank name to canonical plain text and validates it: surrounding whitespace is trimmed and internal
-     * whitespace runs are collapsed to single spaces, then null/blank and out-of-bounds lengths are rejected. The
-     * length check enforces the same {@code @Size} bounds declared on {@link UserRankDto#name} against the normalized
-     * value, so persisted names always satisfy them even though normalization can shrink the input.
+     * Normalizes a rank name to canonical plain text: surrounding whitespace is trimmed and internal whitespace runs
+     * are collapsed to single spaces. A null input yields an empty string. Does not validate length or blankness — the
+     * write paths use {@link #normalizeAndValidateRankName(String)} for that.
+     *
+     * @param name
+     *            the raw rank name
+     * @return the normalized name, or an empty string if {@code name} is null or whitespace-only
+     */
+    private String normalizeRankName(@Nullable final String name) {
+        if (name == null) {
+            return "";
+        }
+        return WHITESPACE_PATTERN.matcher(name).replaceAll(" ").trim();
+    }
+
+    /**
+     * Normalizes a rank name with {@link #normalizeRankName(String)} and validates it: null/blank and out-of-bounds
+     * lengths are rejected. The length check enforces the same {@code @Size} bounds declared on
+     * {@link UserRankDto#name} against the normalized value, so persisted names always satisfy them even though
+     * normalization can shrink the input.
      *
      * @param name
      *            the raw rank name from the DTO
@@ -419,10 +437,7 @@ public class UserRankService {
      *             if the name is null/blank after normalization, or outside the allowed length bounds
      */
     private String normalizeAndValidateRankName(@Nullable final String name) {
-        if (name == null) {
-            throw new ValidationException("Name is required");
-        }
-        final String normalized = WHITESPACE_PATTERN.matcher(name).replaceAll(" ").trim();
+        final String normalized = this.normalizeRankName(name);
         if (normalized.isEmpty()) {
             throw new ValidationException("Name is required");
         }
