@@ -51,7 +51,7 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUIL
 
 - [Quickstart](docs/QUICKSTART.md)
 - [Build Guide](docs/BUILD_GUIDE.md)
-- [Project Instructions](.github/instructions/aimathtutor.instructions.md)
+- [Project Instructions](AGENTS.md)
 
 ## 🛠️ Project Structure & Workflow
 
@@ -60,4 +60,4 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUIL
 - Graspable Math workspace embedded via Vaadin and JavaScript API
 - AI Tutor layer supports Google, OpenAI, Ollama, and mock providers
 - Entities, DTOs, services and views organized by resource type
-- See [Project Instructions](.github/instructions/aimathtutor.instructions.md) for coding standards and architecture
+- See [Project Instructions](AGENTS.md) for coding standards and architecture

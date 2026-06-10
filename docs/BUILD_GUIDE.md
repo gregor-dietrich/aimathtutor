@@ -292,7 +292,7 @@ If you want to learn more about building Docker images, please consult <https://
 ## 📖 Related Guides & Docs
 
 - [Quickstart](QUICKSTART.md)
-- [Project Instructions](../.github/instructions/aimathtutor.instructions.md)
+- [Project Instructions](../AGENTS.md)
 
 - Quarkus ([guide](https://quarkus.io/guides/)): The main framework for building Java applications with a focus on cloud-native and microservices architectures.
 - Vaadin Flow ([guide](https://vaadin.com/docs/latest/flow/integrations/quarkus)): Vaadin Flow is a unique framework that lets you build web apps without writing HTML or JavaScript

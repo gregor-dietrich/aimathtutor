@@ -152,7 +152,7 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion `email
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts — configured via Admin Settings UI at `/admin/config`.
 
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
-- **Test profile:** Disables `@Retry` delays on Ollama calls, sets 1s connect/read timeouts.
+- **Test profile:** Disables `@Retry` delays on AI provider calls, sets 1s connect/read timeouts for Ollama.
 
 ## Changelog
 
