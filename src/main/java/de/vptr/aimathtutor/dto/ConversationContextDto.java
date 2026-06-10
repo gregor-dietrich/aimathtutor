@@ -98,6 +98,15 @@ public class ConversationContextDto {
     }
 
     /**
+     * Clears all stored context (actions, questions, and AI messages).
+     */
+    public void clear() {
+        this.recentActions.clear();
+        this.recentQuestions.clear();
+        this.recentAiMessages.clear();
+    }
+
+    /**
      * Return a compact summary of the conversation context for logging.
      */
     @Override

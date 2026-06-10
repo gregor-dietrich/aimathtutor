@@ -164,6 +164,10 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     }
 
     private void initializeView() {
+        // Cancel callbacks from the previous exercise so they cannot touch the rebuilt
+        // UI or log with a stale sessionId, and drop the old AI conversation history.
+        this.cancelPendingAsyncFutures();
+        this.conversationContext.clear();
         this.removeAll();
         this.hintCount = 0;
         this.currentExpression = null;
@@ -363,18 +367,22 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     @Override
     protected void onDetach(final DetachEvent detachEvent) {
         // Use detachEvent.getUI(), NOT getUI() — may return empty during detach.
-        this.pendingAsyncFutures.values().forEach(future -> {
-            if (future != null && !future.isDone()) {
-                future.cancel(true);
-            }
-        });
-        this.pendingAsyncFutures.clear();
+        this.cancelPendingAsyncFutures();
         // Nullify the JS connector to prevent stale callbacks
         final var ui = detachEvent.getUI();
         if (ui != null) {
             ui.getPage().executeJs("if (window.graspableViewConnector) { window.graspableViewConnector = null; }");
         }
         super.onDetach(detachEvent);
+    }
+
+    private void cancelPendingAsyncFutures() {
+        this.pendingAsyncFutures.values().forEach(future -> {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
+        });
+        this.pendingAsyncFutures.clear();
     }
 
     /**
