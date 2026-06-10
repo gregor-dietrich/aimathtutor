@@ -363,7 +363,7 @@ CREATE TABLE ai_interactions (
   feedback_type VARCHAR(50) NOT NULL,
   feedback_message TEXT,
   confidence_score DOUBLE PRECISION DEFAULT NULL,
-  action_correct BOOLEAN NOT NULL DEFAULT NULL,
+  action_correct BOOLEAN NOT NULL,
   conversation_context TEXT,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_edit TIMESTAMP
@@ -423,7 +423,6 @@ INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, cat
 (13, '01ARZ3NDEKTSV4RRFFQ69G5FGC', 'ollama.model', 'llama3.2:3b', 'STRING', 'OLLAMA', 'Ollama model name', false, 1),
 (14, '01ARZ3NDEKTSV4RRFFQ69G5FGD', 'ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', false, 1),
 (15, '01ARZ3NDEKTSV4RRFFQ69G5FGE', 'ollama.max-tokens', '2000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, 1),
-(16, '01ARZ3NDEKTSV4RRFFQ69G5FGF', 'ollama.timeout-seconds', '30', 'INTEGER', 'OLLAMA', 'Ollama API timeout in seconds', false, 1),
 
 -- Prompt settings
 (17, '01ARZ3NDEKTSV4RRFFQ69G5FGG', 'ai.prompt.question.answering.prefix', 'You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', false, 1),

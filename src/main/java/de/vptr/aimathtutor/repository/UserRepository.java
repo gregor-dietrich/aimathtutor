@@ -1,10 +1,12 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.service.security.EncryptionService;
+import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -226,21 +228,25 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Searches for users matching the given search term.
+     * Searches for users matching the given search term. Takes the RAW user-entered term: terms containing {@code @}
+     * are treated as an exact email lookup via the blind index (which requires the unmodified plaintext email), all
+     * other terms become a case-insensitive "contains" match on the username with LIKE metacharacters escaped.
      *
      * @param searchTerm
-     *            the search term to match against user properties; if null or empty, returns all users
+     *            the raw search term; if null or empty, returns all users
      * @return a list of {@link UserEntity} objects matching the search term
      */
     public List<UserEntity> search(final String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAll();
         }
-        if (searchTerm.contains("@")) {
-            return this.findByEmailOptional(searchTerm).map(List::of).orElse(List.of());
+        final String trimmed = searchTerm.trim();
+        if (trimmed.contains("@")) {
+            return this.findByEmailOptional(trimmed).map(List::of).orElse(List.of());
         }
+        final var pattern = SearchPatternUtil.containsPattern(trimmed.toLowerCase(Locale.ROOT));
         final var q = this.em.createNamedQuery("User.searchByTerm", UserEntity.class);
-        q.setParameter("s", searchTerm);
+        q.setParameter("s", pattern);
         return q.getResultList();
     }
 

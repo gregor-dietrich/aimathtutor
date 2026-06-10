@@ -19,7 +19,6 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
-import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -145,6 +144,15 @@ public class UserService {
     }
 
     /**
+     * Normalizes a username to the canonical form stored in the database: trimmed and lower-cased.
+     * {@code AuthService.authenticate} lower-cases the login name before its exact-match lookup, so usernames must be
+     * persisted in lower case or the account can never authenticate.
+     */
+    private String normalizeUsername(final String username) {
+        return username.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
      * Creates a new user account with provided information. Validates required fields (username, password), checks for
      * duplicate username/email, hashes password with bcrypt, and assigns default rank if not specified.
      *
@@ -171,8 +179,9 @@ public class UserService {
         this.validatePassword(password);
 
         // Check for duplicate username
-        if (this.findByUsername(userDto.username).isPresent()) {
-            throw new ValidationException("Username '" + userDto.username + "' is already taken");
+        final String normalizedUsername = this.normalizeUsername(userDto.username);
+        if (this.findByUsername(normalizedUsername).isPresent()) {
+            throw new ValidationException("Username '" + normalizedUsername + "' is already taken");
         }
 
         // Normalize email and check for duplicate email only if email is provided
@@ -182,7 +191,7 @@ public class UserService {
         }
 
         final UserEntity user = new UserEntity();
-        user.username = userDto.username;
+        user.username = normalizedUsername;
         user.email = normalizedEmail;
         user.banned = userDto.banned != null ? userDto.banned : false;
         user.activated = userDto.activated != null ? userDto.activated : false;
@@ -246,8 +255,9 @@ public class UserService {
         }
 
         // Check for duplicate username (only if username is different from current)
-        if (!userDto.username.equals(existingUser.username) && this.findByUsername(userDto.username).isPresent()) {
-            throw new ValidationException("Username '" + userDto.username + "' is already taken");
+        final String normalizedUsername = this.normalizeUsername(userDto.username);
+        if (!normalizedUsername.equals(existingUser.username) && this.findByUsername(normalizedUsername).isPresent()) {
+            throw new ValidationException("Username '" + normalizedUsername + "' is already taken");
         }
 
         // Normalize email and check for duplicate email (only if email is different
@@ -260,7 +270,7 @@ public class UserService {
 
         final String oldUsername = existingUser.username;
         // Complete replacement (PUT semantics)
-        existingUser.username = userDto.username;
+        existingUser.username = normalizedUsername;
         existingUser.email = normalizedEmail;
         existingUser.banned = userDto.banned != null ? userDto.banned : false;
         existingUser.activated = userDto.activated != null ? userDto.activated : false;
@@ -304,9 +314,11 @@ public class UserService {
         }
 
         // Check for duplicate username if username is being updated
-        if (userDto.username != null && !userDto.username.isBlank() && !userDto.username.equals(existingUser.username)
-                && this.findByUsername(userDto.username).isPresent()) {
-            throw new ValidationException("Username '" + userDto.username + "' is already taken");
+        final String normalizedUsername = userDto.username != null && !userDto.username.isBlank()
+                ? this.normalizeUsername(userDto.username) : null;
+        if (normalizedUsername != null && !normalizedUsername.equals(existingUser.username)
+                && this.findByUsername(normalizedUsername).isPresent()) {
+            throw new ValidationException("Username '" + normalizedUsername + "' is already taken");
         }
 
         // Check for duplicate email if email is being updated
@@ -320,8 +332,8 @@ public class UserService {
 
         final String oldUsername = existingUser.username;
         // Partial update (PATCH semantics) - only update provided fields
-        if (userDto.username != null && !userDto.username.isBlank()) {
-            existingUser.username = userDto.username;
+        if (normalizedUsername != null) {
+            existingUser.username = normalizedUsername;
         }
         if (userDto.email != null) {
             existingUser.email = this.normalizeEmail(userDto.email);
@@ -389,14 +401,9 @@ public class UserService {
         if (query == null || query.isBlank()) {
             return this.getAllUsers();
         }
-        final var trimmedQuery = query.trim().toLowerCase(Locale.ROOT);
-        // Both branches must escape LIKE metacharacters: User.searchByTerm declares ESCAPE '!', so an
-        // unescaped term (e.g. an email local-part containing '!') would form an invalid escape sequence and
-        // fail the query. The "@" branch matches the term exactly (no surrounding wildcards); the default
-        // branch is a "contains" match.
-        final var searchTerm = trimmedQuery.contains("@") ? SearchPatternUtil.escapeLike(trimmedQuery)
-                : SearchPatternUtil.containsPattern(trimmedQuery);
-        final List<UserEntity> users = this.userRepository.search(searchTerm);
+        // The repository takes the RAW term: it routes "@"-containing terms to the blind-index email
+        // lookup (which needs the unmodified plaintext) and escapes/wraps everything else itself.
+        final List<UserEntity> users = this.userRepository.search(query.trim());
         return users.stream().map(UserViewDto::new).toList();
     }
 

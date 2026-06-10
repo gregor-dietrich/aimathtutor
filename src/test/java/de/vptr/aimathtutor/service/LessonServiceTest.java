@@ -179,6 +179,25 @@ class LessonServiceTest {
     }
 
     @Test
+    @DisplayName("Should reject a lesson as its own parent")
+    @TestTransaction
+    void shouldRejectSelfParentReference() {
+        // Regression: the descendant walk previously skipped the parent candidate itself, so a
+        // lesson could be persisted as its own parent, creating a self-cycle.
+        final LessonViewDto lesson = this.lessonService.createLesson(this.buildLesson("self"));
+
+        final LessonEntity update = new LessonEntity();
+        update.publicId = lesson.publicId;
+        update.name = "renamed";
+        final LessonEntity selfParent = new LessonEntity();
+        selfParent.publicId = lesson.publicId;
+        update.parent = selfParent;
+
+        final var thrown = assertThrows(WebApplicationException.class, () -> this.lessonService.updateLesson(update));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
     @DisplayName("Should delete lesson by id")
     @TestTransaction
     void shouldDeleteLesson() {

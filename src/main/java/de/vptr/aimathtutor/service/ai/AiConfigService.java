@@ -622,12 +622,13 @@ public class AiConfigService {
     }
 
     /**
-     * Resets all known AI configuration values to their factory defaults.
+     * Resets all known AI configuration values to their factory defaults. Deliberately NOT {@code @Transactional}:
+     * {@link #updateMultipleConfigs} validates URLs (including DNS resolution) before opening its own transaction, and
+     * wrapping the whole reset in a transaction would hold a DB connection during that resolution.
      *
      * @param userId
      *            the ID of the user performing the reset
      */
-    @Transactional
     public void resetToDefaults(final Long userId) {
         final var updates =
                 DEFAULT_VALUES.entrySet().stream().map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue())).toList();

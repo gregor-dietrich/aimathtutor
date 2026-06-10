@@ -434,8 +434,8 @@ public class AnalyticsService {
             return this.getAllUsersProgressSummary();
         }
 
-        final String pattern = SearchPatternUtil.containsPattern(searchTerm.trim().toLowerCase(Locale.ROOT));
-        final List<UserEntity> users = this.userRepository.search(pattern);
+        // The repository takes the RAW term and builds the LIKE pattern (or email lookup) itself.
+        final List<UserEntity> users = this.userRepository.search(searchTerm.trim());
         if (users.isEmpty()) {
             return List.of();
         }

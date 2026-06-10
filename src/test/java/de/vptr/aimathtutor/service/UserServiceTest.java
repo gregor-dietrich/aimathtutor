@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -272,11 +273,55 @@ class UserServiceTest {
     @DisplayName("searchUsers with an email-like term containing '!' does not fail the query")
     @TestTransaction
     void testSearchUsers_emailWithEscapeChar() {
-        // Regression: User.searchByTerm declares ESCAPE '!', and the "@" branch must escape the term so a
-        // '!' in an email local-part does not form an invalid escape sequence (PostgreSQL SQLSTATE 22025).
+        // "@"-containing terms go to the blind-index equality lookup, which must receive the raw term;
+        // a '!' in the local-part must neither fail the query nor be escaped away.
         final var results = assertDoesNotThrow(() -> this.userService.searchUsers("foo!bar@example.com"));
         assertNotNull(results);
         assertTrue(results.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchUsers finds a user by exact email containing LIKE metacharacters")
+    @TestTransaction
+    void testSearchUsers_byEmailWithUnderscore() {
+        // Regression: the email branch previously received a LIKE-escaped term (john!_doe@...), which
+        // corrupted the blind-index lookup so emails containing '_', '!' or '%' were unfindable.
+        final var suffix = UUID.randomUUID().toString().substring(0, 8);
+        final UserDto dto = this.buildValidDto();
+        dto.email = "john_doe_" + suffix + "@example.com";
+        this.userService.createUser(dto);
+
+        final var results = this.userService.searchUsers(dto.email);
+        assertEquals(1, results.size(), "Exact email search should find the user");
+        assertEquals(dto.username, results.get(0).username);
+    }
+
+    @Test
+    @DisplayName("createUser normalizes mixed-case usernames to lower case")
+    @TestTransaction
+    void testCreateUser_normalizesUsernameCase() {
+        // AuthService.authenticate lower-cases the login name before its exact-match lookup, so
+        // usernames must be stored lower-cased or the account could never log in.
+        final var suffix = UUID.randomUUID().toString().substring(0, 8);
+        final UserDto dto = this.buildValidDto();
+        dto.username = "  MixedCase_" + suffix + "  ";
+
+        final UserViewDto created = this.userService.createUser(dto);
+
+        assertEquals("mixedcase_" + suffix, created.username);
+    }
+
+    @Test
+    @DisplayName("createUser rejects duplicate usernames regardless of case")
+    @TestTransaction
+    void testCreateUser_duplicateUsernameCaseInsensitive() {
+        final UserDto dto = this.buildValidDto();
+        this.userService.createUser(dto);
+
+        final UserDto duplicate = this.buildValidDto();
+        duplicate.username = dto.username.toUpperCase(Locale.ROOT);
+
+        assertThrows(ValidationException.class, () -> this.userService.createUser(duplicate));
     }
 
     @Test
