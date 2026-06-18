@@ -22,6 +22,11 @@ updates:
         versions: [">=3.34.0"]
       - dependency-name: "io.quarkus.platform:*"
         versions: [">=3.34.0"]
+      # jacoco-maven-plugin must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco
+      # (0.8.14 in Quarkus 3.33.x). A newer plugin cannot read the exec data quarkus-jacoco writes
+      # for @QuarkusTest coverage, zeroing it and failing the coverage gate. Bumped manually in
+      # lockstep with Quarkus, so Dependabot must not propose it.
+      - dependency-name: "org.jacoco:jacoco-maven-plugin"
 
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -34,7 +34,10 @@
     <eclipse-formatter.version>4.35</eclipse-formatter.version>
     <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260313.1</html-sanitizer.version>
-    <jacoco-plugin.version>0.8.15</jacoco-plugin.version>
+    <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
+    3.33.2.1). quarkus-jacoco writes @QuarkusTest coverage with its org.jacoco agent; a mismatched
+    jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%. -->
+    <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
     <nullaway.version>0.13.6</nullaway.version>
