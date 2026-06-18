@@ -46,6 +46,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -56,6 +57,8 @@ import jakarta.inject.Inject;
 @Route(value = "exercise/:exerciseId", layout = MainLayout.class)
 @PageTitle("Exercise Workspace")
 @SuppressWarnings("NullAway")
+@SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+        justification = "Vaadin lifecycle: fields are built before these methods run")
 public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnterObserver {
     private static final Logger LOG = Logger.getLogger(ExerciseWorkspaceView.class);
 

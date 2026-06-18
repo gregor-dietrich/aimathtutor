@@ -49,6 +49,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -58,6 +59,8 @@ import jakarta.inject.Inject;
  */
 @Route(value = "admin/comments", layout = AdminMainLayout.class)
 @SuppressWarnings("NullAway")
+@SuppressFBWarnings(value = { "NP_NULL_ON_SOME_PATH", "NP_NULL_PARAM_DEREF" },
+        justification = "Vaadin lifecycle: fields are built before these methods run")
 public class AdminCommentsView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminCommentsView.class);

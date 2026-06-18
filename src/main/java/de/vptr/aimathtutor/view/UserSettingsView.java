@@ -24,6 +24,7 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -33,6 +34,8 @@ import jakarta.inject.Inject;
 @Route(value = "settings", layout = MainLayout.class)
 @PageTitle("Settings")
 @SuppressWarnings("NullAway")
+@SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+        justification = "Vaadin lifecycle: fields are built before these methods run")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
 
     @Inject

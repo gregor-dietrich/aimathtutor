@@ -232,10 +232,11 @@ public class AdminSessionView extends AbstractAdminView {
         final var duration = this.session.getFormattedDuration() != null ? this.session.getFormattedDuration() : "N/A";
         this.headerSubtitle.setText("(" + duration + ") Session ID: " + this.session.sessionId);
 
-        this.statusBadge.setText(this.session.completed ? "Completed" : "In Progress");
+        this.statusBadge.setText(Boolean.TRUE.equals(this.session.completed) ? "Completed" : "In Progress");
         this.statusBadge.getElement().getThemeList().clear();
         this.statusBadge.getElement().getThemeList().add("badge");
-        this.statusBadge.getElement().getThemeList().add(this.session.completed ? "success" : "contrast");
+        this.statusBadge.getElement().getThemeList()
+                .add(Boolean.TRUE.equals(this.session.completed) ? "success" : "contrast");
 
         this.actionsCard.setValue(String.valueOf(this.session.actionsCount));
         this.correctActionsCard.setValue(String.valueOf(this.session.correctActions));

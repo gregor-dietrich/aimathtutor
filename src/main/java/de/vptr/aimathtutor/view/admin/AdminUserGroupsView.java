@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -390,7 +391,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         // Check if user is already in the group
         final var currentUsers = this.userGrid.getDataProvider().fetch(new Query<>()).collect(Collectors.toList());
         final boolean alreadyInGroup =
-                currentUsers.stream().anyMatch(user -> user.publicId.equals(selectedUser.publicId));
+                currentUsers.stream().anyMatch(user -> Objects.equals(user.publicId, selectedUser.publicId));
 
         if (alreadyInGroup) {
             NotificationUtil.showWarning("User is already a member of this group");

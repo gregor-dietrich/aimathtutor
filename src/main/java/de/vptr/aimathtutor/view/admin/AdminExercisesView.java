@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jboss.logging.Logger;
 
@@ -320,8 +321,9 @@ public class AdminExercisesView extends AbstractAdminView {
         // Lesson binding - convert between LessonViewDto and lessonPublicId
         this.binder.bind(lessonField, exercise1 -> {
             if (exercise1.lessonPublicId != null && this.availableLessons != null) {
-                return this.availableLessons.stream().filter(cat -> cat.getPublicId().equals(exercise1.lessonPublicId))
-                        .findFirst().orElse(null);
+                return this.availableLessons.stream()
+                        .filter(cat -> Objects.equals(cat.getPublicId(), exercise1.lessonPublicId)).findFirst()
+                        .orElse(null);
             }
             return null;
         }, (exercise1, value) -> {

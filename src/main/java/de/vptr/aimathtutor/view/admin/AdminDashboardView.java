@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.Div;
@@ -24,6 +25,7 @@ import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -159,7 +161,7 @@ public class AdminDashboardView extends AbstractAdminView {
 
             final var summaries = this.analyticsService.getAllUsersProgressSummary();
             final var avgSuccessRate = summaries.stream().filter(s -> s.successRate != null)
-                    .mapToDouble(s -> s.successRate).average().orElse(0.0);
+                    .mapToDouble(s -> Objects.requireNonNull(s.successRate)).average().orElse(0.0);
 
             final var dailyCounts = this.analyticsService.getDailySessionCounts(30);
             final var topExercises = this.analyticsService.getProblemCategoryStats();
@@ -176,6 +178,8 @@ public class AdminDashboardView extends AbstractAdminView {
     }
 
     @SuppressWarnings("NullAway")
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+            justification = "Vaadin lifecycle: cards and charts are built before render")
     private void renderDashboard(final DashboardData data) {
         this.totalSessionsCard.setValue(formatNumber(data.totalSessions));
         this.totalSessionsCard.setTrend(data.trends.totalSessionsChange());

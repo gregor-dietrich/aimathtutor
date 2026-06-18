@@ -96,7 +96,8 @@ public class AdminSessionsView extends AbstractAdminView {
 
         this.grid.addColumn(StudentSessionViewDto::getFormattedDuration).setHeader("Duration").setFlexGrow(0);
 
-        this.grid.addColumn(session -> session.completed ? "✓" : "✗").setHeader("Completed").setFlexGrow(0);
+        this.grid.addColumn(session -> Boolean.TRUE.equals(session.completed) ? "✓" : "✗").setHeader("Completed")
+                .setFlexGrow(0);
 
         this.add(this.grid);
     }

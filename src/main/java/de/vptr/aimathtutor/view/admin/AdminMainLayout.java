@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Objects;
+
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
@@ -220,8 +222,9 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.sidebar.getStyle().set("height", "100%");
         this.sidebar.getStyle().set("overflow-y", "auto");
 
-        // Create navigation tabs
-        final var userRank = this.userRankService.getCurrentUserRank();
+        // Create navigation tabs; the admin layout is auth-gated upstream, so a rank is always present here
+        final var userRank = Objects.requireNonNull(this.userRankService.getCurrentUserRank(),
+                "current user rank must be present in the admin layout");
         this.navigationTabs = new AdminNavigationTabs(userRank);
         this.sidebar.add(this.navigationTabs);
 

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
@@ -260,8 +261,9 @@ public class AnalyticsService {
 
     private List<StudentProgressSummaryDto> buildProgressSummaries(final List<UserEntity> users,
             final List<StudentSessionEntity> sessions) {
-        final Map<Long, List<StudentSessionEntity>> sessionsByUser = sessions.stream()
-                .filter(session -> session.user != null).collect(Collectors.groupingBy(session -> session.user.id));
+        final Map<Long, List<StudentSessionEntity>> sessionsByUser =
+                sessions.stream().filter(session -> session.user != null)
+                        .collect(Collectors.groupingBy(session -> Objects.requireNonNull(session.user).id));
         return users.stream()
                 .map(user -> this.computeProgressSummary(user, sessionsByUser.getOrDefault(user.id, List.of())))
                 .filter(summary -> summary != null).toList();
@@ -402,13 +404,15 @@ public class AnalyticsService {
             return List.of();
         }
 
-        final Map<Long, List<StudentSessionEntity>> sessionsByUser = rangeSessions.stream()
-                .filter(session -> session.user != null).collect(Collectors.groupingBy(session -> session.user.id));
+        final Map<Long, List<StudentSessionEntity>> sessionsByUser =
+                rangeSessions.stream().filter(session -> session.user != null)
+                        .collect(Collectors.groupingBy(session -> Objects.requireNonNull(session.user).id));
 
         final List<Long> userIds = sessionsByUser.keySet().stream().toList();
         final List<StudentSessionEntity> allUserSessions = this.studentSessionRepository.findByUserIdIn(userIds);
-        final Map<Long, List<StudentSessionEntity>> allSessionsByUser = allUserSessions.stream()
-                .filter(session -> session.user != null).collect(Collectors.groupingBy(session -> session.user.id));
+        final Map<Long, List<StudentSessionEntity>> allSessionsByUser =
+                allUserSessions.stream().filter(session -> session.user != null)
+                        .collect(Collectors.groupingBy(session -> Objects.requireNonNull(session.user).id));
 
         return sessionsByUser.entrySet().stream().map(entry -> {
             final UserEntity user =
@@ -612,8 +616,9 @@ public class AnalyticsService {
             return List.of();
         }
         final List<StudentSessionEntity> userSessions = this.studentSessionRepository.findByUserIdIn(userIds);
-        final Map<Long, List<StudentSessionEntity>> sessionsByUser = userSessions.stream()
-                .filter(session -> session.user != null).collect(Collectors.groupingBy(session -> session.user.id));
+        final Map<Long, List<StudentSessionEntity>> sessionsByUser =
+                userSessions.stream().filter(session -> session.user != null)
+                        .collect(Collectors.groupingBy(session -> Objects.requireNonNull(session.user).id));
 
         final Map<Long, UserEntity> userById = users.stream().collect(Collectors.toMap(u -> u.id, u -> u));
 

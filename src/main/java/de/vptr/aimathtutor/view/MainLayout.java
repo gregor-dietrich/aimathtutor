@@ -157,6 +157,8 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     @SuppressWarnings("NullAway")
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+            justification = "Vaadin lifecycle: topBar is built before this method runs")
     private void addButtonsToTopBar() {
         if (this.topBar == null) {
             return;

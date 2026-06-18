@@ -156,18 +156,18 @@ public class AdminUserRanksView extends AbstractAdminView {
         }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
 
         // CRUD permission columns share the same add/edit/delete icon pattern
-        this.addCrudPermissionColumn("Exercises", "Exercises", rank -> rank.exerciseAdd, rank -> rank.exerciseEdit,
-                rank -> rank.exerciseDelete);
-        this.addCrudPermissionColumn("Lessons", "Lessons", rank -> rank.lessonAdd, rank -> rank.lessonEdit,
-                rank -> rank.lessonDelete);
-        this.addCrudPermissionColumn("Comments", "Comments", rank -> rank.commentAdd, rank -> rank.commentEdit,
-                rank -> rank.commentDelete);
-        this.addCrudPermissionColumn("Users", "Users", rank -> rank.userAdd, rank -> rank.userEdit,
-                rank -> rank.userDelete);
-        this.addCrudPermissionColumn("User Groups", "User Groups", rank -> rank.userGroupAdd,
-                rank -> rank.userGroupEdit, rank -> rank.userGroupDelete);
-        this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> rank.userRankAdd, rank -> rank.userRankEdit,
-                rank -> rank.userRankDelete);
+        this.addCrudPermissionColumn("Exercises", "Exercises", rank -> Boolean.TRUE.equals(rank.exerciseAdd),
+                rank -> Boolean.TRUE.equals(rank.exerciseEdit), rank -> Boolean.TRUE.equals(rank.exerciseDelete));
+        this.addCrudPermissionColumn("Lessons", "Lessons", rank -> Boolean.TRUE.equals(rank.lessonAdd),
+                rank -> Boolean.TRUE.equals(rank.lessonEdit), rank -> Boolean.TRUE.equals(rank.lessonDelete));
+        this.addCrudPermissionColumn("Comments", "Comments", rank -> Boolean.TRUE.equals(rank.commentAdd),
+                rank -> Boolean.TRUE.equals(rank.commentEdit), rank -> Boolean.TRUE.equals(rank.commentDelete));
+        this.addCrudPermissionColumn("Users", "Users", rank -> Boolean.TRUE.equals(rank.userAdd),
+                rank -> Boolean.TRUE.equals(rank.userEdit), rank -> Boolean.TRUE.equals(rank.userDelete));
+        this.addCrudPermissionColumn("User Groups", "User Groups", rank -> Boolean.TRUE.equals(rank.userGroupAdd),
+                rank -> Boolean.TRUE.equals(rank.userGroupEdit), rank -> Boolean.TRUE.equals(rank.userGroupDelete));
+        this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> Boolean.TRUE.equals(rank.userRankAdd),
+                rank -> Boolean.TRUE.equals(rank.userRankEdit), rank -> Boolean.TRUE.equals(rank.userRankDelete));
 
         // AI configuration permission column
         this.grid.addComponentColumn(rank -> {

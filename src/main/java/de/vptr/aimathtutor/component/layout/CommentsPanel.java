@@ -31,6 +31,7 @@ import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.spi.CDI;
 
@@ -127,6 +128,8 @@ public class CommentsPanel extends VerticalLayout {
         bridge.addListener(this.commentCreatedListener);
     }
 
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+            justification = "Vaadin lifecycle: UI fields are assigned in buildUi() from the constructor before use")
     private Div createCommentForm() {
         final Div formContainer = new Div();
         formContainer.addClassName("comment-form");
@@ -162,6 +165,8 @@ public class CommentsPanel extends VerticalLayout {
         }
     }
 
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+            justification = "Vaadin lifecycle: UI fields are assigned in buildUi() from the constructor before use")
     private void displayComments(final List<CommentViewDto> comments) {
         if (this.currentPage == 0 && this.commentsContainer != null) {
             this.commentsContainer.removeAll();
@@ -312,6 +317,8 @@ public class CommentsPanel extends VerticalLayout {
         return commentDiv;
     }
 
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+            justification = "Vaadin lifecycle: UI fields are assigned in buildUi() from the constructor before use")
     private void onCommentSubmitted() {
         if (this.commentTextArea == null) {
             return;

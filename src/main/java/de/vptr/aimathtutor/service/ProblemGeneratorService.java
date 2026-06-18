@@ -11,6 +11,7 @@ import org.jboss.logging.Logger;
 import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.service.ai.AiTutorService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -37,6 +38,8 @@ public class ProblemGeneratorService {
         this.injectedRandom = null;
     }
 
+    @SuppressFBWarnings(value = "CT_CONSTRUCTOR_THROW",
+            justification = "CDI bean cannot be final; no field is written before the validating throw")
     public ProblemGeneratorService(final Random random) {
         Objects.requireNonNull(random, "random must not be null");
         this.injectedRandom = new Random(random.nextLong());
