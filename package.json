@@ -14,7 +14,7 @@
     "lit": "3.3.3",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "react-router": "7.15.1"
+    "react-router": "7.17.0"
   },
   "devDependencies": {
     "@babel/preset-react": "7.28.5",
@@ -48,7 +48,7 @@
       "lit": "3.3.3",
       "react": "19.2.7",
       "react-dom": "19.2.7",
-      "react-router": "7.15.1"
+      "react-router": "7.17.0"
     },
     "devDependencies": {
       "@babel/preset-react": "7.28.5",
@@ -69,7 +69,7 @@
       "vite": "7.3.5",
       "vite-plugin-checker": "0.12.0"
     },
-    "hash": "d23115e0593749f2119386d51e385bed62f57b9c5bf2b59cc5ff2fcc5afd5287",
+    "hash": "d20d057c8b8f42af140db6ad69bbd4fb166d7f6e0bc2032989be9e8a818eca5f",
     "overrides": {
       "@vaadin/a11y-base": "25.1.4",
       "@vaadin/accordion": "25.1.4",
