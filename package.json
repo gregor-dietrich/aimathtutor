@@ -14,7 +14,7 @@
     "lit": "3.3.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-router": "7.15.0"
+    "react-router": "7.15.1"
   },
   "devDependencies": {
     "@babel/preset-react": "7.28.5",
@@ -25,14 +25,14 @@
     "@types/node": "25.5.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "5.1.4",
+    "@vitejs/plugin-react": "5.2.0",
     "magic-string": "0.30.21",
     "rollup-plugin-brotli": "3.1.0",
     "rollup-plugin-visualizer": "7.0.1",
     "strip-css-comments": "5.0.0",
     "transform-ast": "2.4.4",
     "typescript": "5.9.3",
-    "vite": "7.3.2",
+    "vite": "8.0.16",
     "vite-plugin-checker": "0.12.0"
   },
   "vaadin": {
@@ -48,7 +48,7 @@
       "lit": "3.3.2",
       "react": "19.2.4",
       "react-dom": "19.2.4",
-      "react-router": "7.15.0"
+      "react-router": "7.15.1"
     },
     "devDependencies": {
       "@babel/preset-react": "7.28.5",
@@ -59,14 +59,14 @@
       "@types/node": "25.5.0",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3",
-      "@vitejs/plugin-react": "5.1.4",
+      "@vitejs/plugin-react": "5.2.0",
       "magic-string": "0.30.21",
       "rollup-plugin-brotli": "3.1.0",
       "rollup-plugin-visualizer": "7.0.1",
       "strip-css-comments": "5.0.0",
       "transform-ast": "2.4.4",
       "typescript": "5.9.3",
-      "vite": "7.3.2",
+      "vite": "8.0.16",
       "vite-plugin-checker": "0.12.0"
     },
     "hash": "338c400742c60498f84c56fec675c2ff8c8779f678862c735d214fd1a54c8f12",
