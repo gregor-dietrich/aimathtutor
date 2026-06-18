@@ -19,6 +19,6 @@ import com.vaadin.flow.theme.lumo.Lumo;
 // every prepare/build-frontend; this application-level @NpmPackage is re-applied
 // afterwards, so the pinned version survives the build instead of being reverted.
 // The "$react-router" entry in package.json overrides then cascades it to transitives.
-@NpmPackage(value = "react-router", version = "7.15.0")
+@NpmPackage(value = "react-router", version = "7.15.1")
 public class AppConfig implements AppShellConfigurator {
 }
