@@ -9,7 +9,6 @@ import org.owasp.html.PolicyFactory;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
-import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.LessonRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.annotation.Nullable;
@@ -31,9 +30,6 @@ public class LessonService {
 
     @Inject
     LessonRepository lessonRepository;
-
-    @Inject
-    ExerciseRepository exerciseRepository;
 
     @Inject
     PermissionService permissionService;
@@ -166,7 +162,7 @@ public class LessonService {
             }
             // Prevent circular references
             if (this.isDescendantOf(newParent, existingLesson)) {
-                throw new WebApplicationException("Cannot set parent to a descendant lesson",
+                throw new WebApplicationException("Cannot set parent to the lesson itself or one of its descendants",
                         Response.Status.BAD_REQUEST);
             }
             existingLesson.parent = newParent;
@@ -209,7 +205,8 @@ public class LessonService {
                 }
                 // Prevent circular references
                 if (this.isDescendantOf(newParent, existingLesson)) {
-                    throw new WebApplicationException("Cannot set parent to a descendant lesson",
+                    throw new WebApplicationException(
+                            "Cannot set parent to the lesson itself or one of its descendants",
                             Response.Status.BAD_REQUEST);
                 }
                 existingLesson.parent = newParent;
@@ -224,10 +221,10 @@ public class LessonService {
     }
 
     /**
-     * Check if potential parent is a descendant of the lesson (to prevent circular references)
+     * Check if potential parent is the lesson itself or one of its descendants (to prevent circular references)
      */
     private boolean isDescendantOf(final LessonEntity potentialParent, final LessonEntity lesson) {
-        var current = potentialParent.parent;
+        var current = potentialParent;
         while (current != null) {
             if (Objects.equals(current.id, lesson.id)) {
                 return true;

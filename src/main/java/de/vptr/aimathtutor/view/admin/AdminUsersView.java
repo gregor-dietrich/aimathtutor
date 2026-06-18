@@ -341,6 +341,7 @@ public class AdminUsersView extends AbstractAdminView {
             }
 
             if (!newPassword.equals(confirmPassword)) {
+                NotificationUtil.showError("Passwords do not match");
                 return;
             }
 

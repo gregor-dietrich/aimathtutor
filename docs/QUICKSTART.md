@@ -346,7 +346,6 @@ After starting the application:
    - **Model**: `qwen3:8b`, `qwen3:4b`, `llama3.1:8b`, `llama3.2:3b`, etc.
    - **Temperature**: `0.7` (0.0 = deterministic, 2.0 = creative)
    - **Max Tokens**: `2000` (response length limit)
-   - **Timeout**: `30` seconds (increase to 60-90s for CPU mode with larger models)
 
 #### Model Recommendations (2025)
 
@@ -386,7 +385,6 @@ After starting the application:
 - **CPU Mode:** Normal for larger models (8B+). Use smaller models: `qwen3:4b` (2.5GB), `llama3.2:3b` (2GB), `qwen3:1.7b` (1.3GB)
 - **Enable GPU:** If you have an NVIDIA GPU, uncomment the GPU configuration in `docker-compose.yml` for 5-10x speedup
 - Reduce max tokens in Admin Settings (try 1000 instead of 2000)
-- Increase timeout to 60-90 seconds for large models on CPU
 
 **Model not found:**
 

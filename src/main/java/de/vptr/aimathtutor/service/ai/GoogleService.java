@@ -4,8 +4,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.vptr.aimathtutor.dto.GoogleRequestDto;
 import de.vptr.aimathtutor.dto.GoogleResponseDto;
 import de.vptr.aimathtutor.exception.NonRetryableProviderException;
@@ -13,7 +11,6 @@ import de.vptr.aimathtutor.exception.ProviderException;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -31,9 +28,6 @@ public class GoogleService extends AbstractProviderService {
     @ConfigProperty(name = "app.google.api.key", defaultValue = "")
     @Nullable
     private String apiKey; // API key is always read from environment variable, never from database
-
-    @Inject
-    ObjectMapper objectMapper;
 
     @Override
     protected String getConfigPrefix() {

@@ -34,6 +34,8 @@ jobs:
       contents: read
       actions: read
       security-events: write
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -63,8 +65,6 @@ jobs:
         uses: github/codeql-action/analyze@v4
       - name: Run OWASP Dependency-Check
         if: env.NVD_API_KEY != ''
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
       - name: Upload Dependency-Check results
         if: env.NVD_API_KEY != ''

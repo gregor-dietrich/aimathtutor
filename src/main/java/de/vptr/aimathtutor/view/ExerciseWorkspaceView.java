@@ -99,6 +99,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     private transient Button backButton;
     @Nullable
     private transient String currentExpression;
+    // Re-entry guard: Vaadin reuses this view instance when navigating between two
+    // /exercise/:exerciseId routes (only the parameter changes), so beforeEnter fires
+    // again on the same instance. Tracks which exercise the UI was built for.
+    @Nullable
+    private transient String initializedExercisePublicId;
     private final transient ConcurrentHashMap<String, CompletableFuture<?>> pendingAsyncFutures =
             new ConcurrentHashMap<>();
 
@@ -147,11 +152,26 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
+        // Skip rebuilding when re-entering the same exercise on this instance; a different
+        // exercise id rebuilds the UI from scratch (initializeView clears previous content).
+        if (exercisePublicId.equals(this.initializedExercisePublicId)) {
+            return;
+        }
+        this.initializedExercisePublicId = exercisePublicId;
+
         // Initialize the view (supports both Graspable and non-Graspable exercises)
         this.initializeView();
     }
 
     private void initializeView() {
+        // Cancel callbacks from the previous exercise so they cannot touch the rebuilt
+        // UI or log with a stale sessionId, and drop the old AI conversation history.
+        this.cancelPendingAsyncFutures();
+        this.conversationContext.clear();
+        this.removeAll();
+        this.hintCount = 0;
+        this.currentExpression = null;
+
         this.setWidthFull();
         this.setSpacing(false);
         this.setPadding(false);
@@ -347,18 +367,22 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     @Override
     protected void onDetach(final DetachEvent detachEvent) {
         // Use detachEvent.getUI(), NOT getUI() — may return empty during detach.
-        this.pendingAsyncFutures.values().forEach(future -> {
-            if (future != null && !future.isDone()) {
-                future.cancel(true);
-            }
-        });
-        this.pendingAsyncFutures.clear();
+        this.cancelPendingAsyncFutures();
         // Nullify the JS connector to prevent stale callbacks
         final var ui = detachEvent.getUI();
         if (ui != null) {
             ui.getPage().executeJs("if (window.graspableViewConnector) { window.graspableViewConnector = null; }");
         }
         super.onDetach(detachEvent);
+    }
+
+    private void cancelPendingAsyncFutures() {
+        this.pendingAsyncFutures.values().forEach(future -> {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
+        });
+        this.pendingAsyncFutures.clear();
     }
 
     /**
