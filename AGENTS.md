@@ -104,7 +104,7 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 
 ## Database
 
-- **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.4-alpine3.23` on port `55432`).
+- **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.4-alpine3.24` on port `55432`).
 - **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist).
 - **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
 - **Password utility:** `make password` generates salt+hash for `init.sql`.
