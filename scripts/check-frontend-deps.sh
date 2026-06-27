@@ -64,6 +64,42 @@ done <<EOF
 $PINS
 EOF
 
+# Vaadin platform component version uniformity.
+# Every @vaadin/* npm package on the platform version line (same major as
+# <vaadin.version> in pom.xml) must match that exact version. Guards against
+# Vaadin's frontend generator freezing stale component versions in the npm
+# "overrides" block: it adds new entries at the current version but never re-bumps
+# existing ones, so a platform upgrade can silently leave components pinned to the
+# old minor (a mixed, unsupported frontend). Independently-versioned @vaadin
+# packages (common-frontend, router, vaadin-usage-statistics, ...) use a different
+# major and are intentionally excluded.
+platform_version=$(grep -oE '<vaadin\.version>[0-9]+\.[0-9]+\.[0-9]+</vaadin\.version>' pom.xml \
+    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+if [ -z "$platform_version" ]; then
+    echo "ERROR: could not read <vaadin.version> from pom.xml." >&2
+    fail=1
+else
+    platform_major="${platform_version%%.*}"
+    # package.json: literal "@vaadin/<name>": "<ver>" declarations (dependencies + overrides).
+    json_drift=$(grep -oE '"@vaadin/[a-z0-9-]+"[[:space:]]*:[[:space:]]*"'"$platform_major"'\.[0-9]+\.[0-9]+"' package.json 2>/dev/null \
+        | grep -oE "$platform_major"'\.[0-9]+\.[0-9]+' | sort -u | grep -vxF "$platform_version" || true)
+    if [ -n "$json_drift" ]; then
+        echo "ERROR: package.json has @vaadin/* platform components not at ${platform_version}: $(echo "$json_drift" | tr '\n' ' ')" >&2
+        echo "       Run 'make regen-frontend' to regenerate the manifest at the current Vaadin version." >&2
+        fail=1
+    fi
+    # package-lock.json: resolved versions taken from the tarball URLs.
+    if [ -f package-lock.json ]; then
+        lock_drift=$(grep -oE '/@vaadin/[a-z0-9-]+/-/[a-z0-9-]+-'"$platform_major"'\.[0-9]+\.[0-9]+\.tgz' package-lock.json \
+            | grep -oE "$platform_major"'\.[0-9]+\.[0-9]+' | sort -u | grep -vxF "$platform_version" || true)
+        if [ -n "$lock_drift" ]; then
+            echo "ERROR: package-lock.json has resolved @vaadin/* platform components not at ${platform_version}: $(echo "$lock_drift" | tr '\n' ' ')" >&2
+            echo "       Run 'make regen-frontend' to regenerate the manifest at the current Vaadin version." >&2
+            fail=1
+        fi
+    fi
+fi
+
 if [ "$fail" -ne 0 ]; then
     echo "Frontend dependency check FAILED." >&2
     cd - > /dev/null
