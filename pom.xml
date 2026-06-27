@@ -561,5 +561,37 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <!--
+        Regenerates the committed frontend manifest (package.json / package-lock.json)
+        on demand via `make regen-frontend`. Unlike the production profile, this forces
+        a full frontend build (forceProductionBuild) so npm actually resolves
+        dependencies, and keeps the generated files (cleanFrontendFiles=false) instead
+        of deleting them after bundling. Not part of the normal CI/production build.
+      -->
+      <id>regen-frontend</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-maven-plugin</artifactId>
+            <version>${vaadin.version}</version>
+            <configuration>
+              <forceProductionBuild>true</forceProductionBuild>
+              <cleanFrontendFiles>false</cleanFrontendFiles>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>compile</phase>
+                <goals>
+                  <goal>prepare-frontend</goal>
+                  <goal>build-frontend</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 </project>
