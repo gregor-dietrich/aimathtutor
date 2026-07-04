@@ -13,6 +13,7 @@ echo "Cleaning build artifacts..."
 
 ${MVN_CMD} -q clean -Drevision="${REVISION}"
 
+rm -f package.json package-lock.json
 rm -rf logs
 rm -rf node_modules
 rm -rf src/main/frontend/generated
