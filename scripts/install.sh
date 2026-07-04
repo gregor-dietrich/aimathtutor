@@ -15,6 +15,10 @@ REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
 ${MVN_CMD} -q clean install -DskipTests -Drevision="${REVISION}"
 
+scripts/regen-frontend.sh
+
+python3 "scripts/check_frontend_deps.py"
+
 echo "Install completed."
 
 cd - > /dev/null

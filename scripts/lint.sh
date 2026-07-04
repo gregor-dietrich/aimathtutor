@@ -15,7 +15,7 @@ ${MVN_CMD} -q compile test-compile spotless:check checkstyle:check spotbugs:chec
 
 echo "Checking pinned frontend dependencies..."
 
-"$DIR/check-frontend-deps.sh"
+python3 "scripts/check_frontend_deps.py"
 
 echo "Lint checks completed."
 

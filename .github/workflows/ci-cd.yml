@@ -92,7 +92,7 @@ jobs:
       - name: Build with Maven
         run: ./mvnw clean install package -DskipTests -Pproduction
       - name: Verify pinned frontend dependencies
-        run: scripts/check-frontend-deps.sh
+        run: python3 scripts/check_frontend_deps.py
 
   # publish:
   #   runs-on: ubuntu-latest
