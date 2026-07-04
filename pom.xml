@@ -36,8 +36,8 @@
     <html-sanitizer.version>20260313.1</html-sanitizer.version>
     <!-- Jackson security pins (transitive). 2.x via Quarkus (com.fasterxml.jackson),
     3.x via Vaadin/flow-server (tools.jackson). See dependencyManagement for the CVE list. -->
-    <jackson.version>2.22.0</jackson.version>
-    <jackson3.version>3.2.0</jackson3.version>
+    <jackson.version>2.21.4</jackson.version>
+    <jackson3.version>3.1.4</jackson3.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
     3.33.2.1). quarkus-jacoco writes @QuarkusTest coverage with its org.jacoco agent; a mismatched
     jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%. -->
