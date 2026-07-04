@@ -34,10 +34,10 @@
     <eclipse-formatter.version>4.35</eclipse-formatter.version>
     <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260313.1</html-sanitizer.version>
-    <!-- Jackson security pins (transitive). 2.x via Quarkus (com.fasterxml.jackson),
-    3.x via Vaadin/flow-server (tools.jackson). See dependencyManagement for the CVE list. -->
+    <!-- Jackson security pin (transitive via Quarkus, com.fasterxml.jackson). See
+    dependencyManagement for the CVE list. Vaadin/flow-server (tools.jackson, 3.x) ships
+    the fixed 3.1.4 natively as of Vaadin 25.2.1; no pin needed there anymore. -->
     <jackson.version>2.21.4</jackson.version>
-    <jackson3.version>3.1.4</jackson3.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
     3.33.2.1). quarkus-jacoco writes @QuarkusTest coverage with its org.jacoco agent; a mismatched
     jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%. -->
@@ -56,9 +56,9 @@
 
   <dependencyManagement>
     <dependencies>
-      <!-- Pin Jackson to fix CVEs. Declared first so these BOMs win version resolution over
-      the Quarkus (2.x) and Vaadin/flow-server (3.x) managed/declared versions.
-        Jackson 2.x (com.fasterxml.jackson) 2.21.2 -> 2.21.4, transitive via Quarkus, fixes:
+      <!-- Pin Jackson 2.x (com.fasterxml.jackson) to fix CVEs. Declared first so this BOM wins
+      version resolution over the Quarkus managed version.
+        2.21.2 -> 2.21.4, transitive via Quarkus, fixes:
           - CVE-2026-54512: PolymorphicTypeValidator bypass via generic type parameters (high)
           - CVE-2026-54513: BasicPolymorphicTypeValidator array subtype allowlist bypass (high)
           - CVE-2026-54514: InetSocketAddress deserialization eager DNS resolution / SSRF
@@ -69,20 +69,11 @@
           2.x fix yet (lands in 2.21.5 / 2.22.1) and is not exploitable here (case-insensitive
           deserialization is not enabled). Do NOT jump to 2.22.0, which also lacks the fix.
           Tracked in issue #119.
-        Jackson 3.x (tools.jackson) 3.1.3 -> 3.1.4, transitive via Vaadin, fixes all of the
-        above CVE-2026-54512..54518 (incl. CVE-2026-54515).
-      Remove these pins once Quarkus/Vaadin ship the fixed versions. -->
+      Remove this pin once Quarkus ships a fixed version. -->
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>tools.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${jackson3.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
