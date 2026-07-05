@@ -377,6 +377,17 @@
         <configuration>
           <parameters>true</parameters>
           <compilerArgs>
+            <!--
+              -Werror: any compiler warning (javac lint or Error Prone) fails the build.
+              -Xlint:all with three deliberate exclusions:
+                -serial: Vaadin components are Serializable by inheritance; adding serialVersionUID
+                         is unwanted boilerplate (same decision as the SE_ exclusion in spotbugs-exclude.xml)
+                -this-escape: flags the standard Vaadin constructor-builds-UI idiom, not actual bugs
+                -classfile: noise from third-party jars referencing optional annotations (e.g. OSGi
+                            metadata in microprofile-config); not fixable in this repository
+            -->
+            <arg>-Werror</arg>
+            <arg>-Xlint:all,-serial,-this-escape,-classfile</arg>
             <arg>-XDcompilePolicy=simple</arg>
             <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR
               -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor

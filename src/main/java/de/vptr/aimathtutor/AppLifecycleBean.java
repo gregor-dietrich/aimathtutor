@@ -18,11 +18,16 @@ public class AppLifecycleBean {
 
     private static final Logger LOG = Logger.getLogger(AppLifecycleBean.class);
 
-    @Inject
-    LaunchMode launchMode;
+    private final LaunchMode launchMode;
 
-    @ConfigProperty(name = "quarkus.datasource.password", defaultValue = "")
-    String dbPassword = "";
+    private final String dbPassword;
+
+    @Inject
+    AppLifecycleBean(final LaunchMode launchMode,
+            @ConfigProperty(name = "quarkus.datasource.password", defaultValue = "") final String dbPassword) {
+        this.launchMode = launchMode;
+        this.dbPassword = dbPassword;
+    }
 
     /**
      * ASCII art for the application logo. This is displayed in the console when the application starts.

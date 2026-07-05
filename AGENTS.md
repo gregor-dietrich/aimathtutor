@@ -90,6 +90,9 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 CI order: `test` → `security` (CodeQL) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
 
+- **Compiler warnings are build failures.** `maven-compiler-plugin` passes `-Werror` and `-Xlint:all,-serial,-this-escape,-classfile`, so every javac lint warning and every Error Prone warning (any severity) fails compilation. The three excluded lint categories are deliberate and documented in `pom.xml`; do not exclude further categories to work around a warning — fix the code.
+- **Known upstream build-log noise (do not try to fix):** during `quarkus:build`, Vaadin logs `[WARNING] Addon 'flow-react-*.jar' / 'flow-dnd-*.jar' contains frontend sources under META-INF/resources/frontend/`. These come from Vaadin's own published jars (Vaadin 25.2.1), are not fixable in this repository, and will disappear with a future Vaadin upgrade.
+
 ### ⚠️ Never Change Quality Gate Thresholds
 
 **Never modify** any quality gate threshold, tolerance, or exclusion count in `pom.xml`, checkstyle, PMD, CPD, SpotBugs, or any other configuration. This includes, but is not limited to:

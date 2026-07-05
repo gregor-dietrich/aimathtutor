@@ -52,6 +52,5 @@ class ProviderExceptionTest {
         final var ex = new NonRetryableProviderException("MyProvider", "Config error", cause);
         assertEquals("MyProvider", ex.getProviderName());
         assertEquals(cause, ex.getCause());
-        assertTrue(ex instanceof ProviderException);
     }
 }

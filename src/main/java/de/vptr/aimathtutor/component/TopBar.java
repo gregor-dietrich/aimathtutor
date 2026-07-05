@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.component;
 
+import java.util.Objects;
+
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
@@ -54,7 +56,7 @@ public class TopBar extends HorizontalLayout {
      * (justified to the end).
      */
     public void setLeftContent(@Nullable final Component leftContent) {
-        this.getChildren().filter(c -> c != this.rightSide).toList().forEach(this::remove);
+        this.getChildren().filter(c -> !Objects.equals(c, this.rightSide)).toList().forEach(this::remove);
 
         if (leftContent != null) {
             this.addComponentAsFirst(leftContent);
