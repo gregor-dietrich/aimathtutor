@@ -289,6 +289,21 @@ make release  # Build and push Docker image tag to registry
 
 If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.
 
+## ⚠️ Known Build Warnings
+
+### Java compilation: warnings fail the build
+
+Java compilation runs with a fail-on-warning policy: any javac lint or Error Prone warning aborts the build (a small allowlist of non-actionable lint categories is documented in `pom.xml`). If your build fails with `warnings found and -Werror specified`, fix the reported warning — do not suppress it or exclude the lint category. See the Code Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
+
+### Frontend build: expected non-fatal warnings
+
+The frontend toolchain (`prepare-frontend`/`build-frontend`, run with `-Pproduction`) is **not** covered by the fail-on-warning policy. Warnings you may see there are expected and harmless:
+
+- **Addon frontend-source warnings** during `quarkus:build`, e.g. `[WARNING] Addon 'flow-react-*.jar' contains frontend sources under META-INF/resources/frontend/` — these come from Vaadin's own published jars (Vaadin 25.2.1).
+- On a fresh checkout, **npm may print deprecation or peer-dependency notices** for bundled `@vaadin/*` packages while installing `node_modules`.
+
+These warnings originate in Vaadin's published packages, cannot be fixed in this repository, and do not fail the build. They will disappear with future Vaadin upgrades — do not try to suppress or "fix" them locally.
+
 ## 📖 Related Guides & Docs
 
 - [Quickstart](QUICKSTART.md)
