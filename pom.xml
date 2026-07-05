@@ -544,6 +544,13 @@
             <eclipse>
               <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
               <version>${eclipse-formatter.version}</version>
+              <!-- download.eclipse.org suffers recurring outages; provision P2 from a mirror -->
+              <p2Mirrors>
+                <p2Mirror>
+                  <prefix>https://download.eclipse.org/</prefix>
+                  <url>https://ftp.halifax.rwth-aachen.de/eclipse/</url>
+                </p2Mirror>
+              </p2Mirrors>
             </eclipse>
             <importOrder>
               <order>java,javax,org,com,#</order>
