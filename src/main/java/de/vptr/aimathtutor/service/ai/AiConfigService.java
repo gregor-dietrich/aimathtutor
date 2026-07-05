@@ -65,15 +65,12 @@ public class AiConfigService {
     @Inject
     private PermissionService permissionService;
 
-    @Inject
     @ConfigProperty(name = "app.security.allowed-ollama-hosts", defaultValue = "ollama,localhost")
     Set<String> allowedOllamaHosts = Set.of("ollama", "localhost");
 
-    @Inject
     @ConfigProperty(name = "app.security.allowed-google-hosts", defaultValue = "generativelanguage.googleapis.com")
     Set<String> allowedGoogleHosts = Set.of("generativelanguage.googleapis.com");
 
-    @Inject
     @ConfigProperty(name = "app.security.allowed-openai-hosts", defaultValue = "api.openai.com")
     Set<String> allowedOpenAiHosts = Set.of("api.openai.com");
 

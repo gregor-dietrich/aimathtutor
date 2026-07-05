@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.view;
 
+import java.util.Objects;
+
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.AttachEvent;
@@ -165,7 +167,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         }
         // Avoid adding twice
         if (this.logoutButton != null
-                && this.topBar.getRightSide().getChildren().anyMatch(c -> c == this.logoutButton)) {
+                && this.topBar.getRightSide().getChildren().anyMatch(c -> Objects.equals(c, this.logoutButton))) {
             return;
         }
 

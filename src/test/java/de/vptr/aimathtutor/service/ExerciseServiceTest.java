@@ -423,7 +423,7 @@ class ExerciseServiceTest {
 
         final ExerciseViewDto patched = this.exerciseService.patchExercise(created.publicId, patch);
 
-        assertEquals(Boolean.TRUE, patched.graspableEnabled);
+        assertEquals(true, patched.graspableEnabled);
         assertEquals("x = 5", patched.graspableTargetExpression);
     }
 

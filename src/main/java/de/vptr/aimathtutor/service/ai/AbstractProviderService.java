@@ -51,7 +51,7 @@ public abstract class AbstractProviderService {
     protected void setClient(final Client client) {
         synchronized (this) {
             final Client previous = this.client;
-            if (previous != null && previous != client) {
+            if (previous != null && !previous.equals(client)) {
                 try {
                     previous.close();
                 } catch (final Exception e) {
