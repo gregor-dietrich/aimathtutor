@@ -37,7 +37,7 @@
     <!-- Jackson security pin (transitive via Quarkus, com.fasterxml.jackson). See
     dependencyManagement for the CVE list. Vaadin/flow-server (tools.jackson, 3.x) ships
     the fixed 3.1.4 natively as of Vaadin 25.2.1; no pin needed there anymore. -->
-    <jackson.version>2.22.1</jackson.version>
+    <jackson.version>2.21.5</jackson.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
     3.33.2.1). quarkus-jacoco writes @QuarkusTest coverage with its org.jacoco agent; a mismatched
     jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%. -->
