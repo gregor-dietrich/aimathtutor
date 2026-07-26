@@ -554,12 +554,12 @@
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.87</minimum>
+                      <minimum>0.89</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.74</minimum>
+                      <minimum>0.76</minimum>
                     </limit>
                   </limits>
                 </rule>
