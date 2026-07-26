@@ -44,8 +44,9 @@
     the fixed 3.1.4 natively as of Vaadin 25.2.1; no pin needed there anymore. -->
     <jackson.version>2.21.5</jackson.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
-    3.33.2.1). quarkus-jacoco writes @QuarkusTest coverage with its org.jacoco agent; a mismatched
-    jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%.
+    3.33.2.1). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
+    what records @QuarkusTest coverage; a mismatched jacoco-maven-plugin cannot map that exec data,
+    dropping all @QuarkusTest coverage to 0%.
     Bumped manually in lockstep with Quarkus only; scripts/version_check.py reporting a newer
     JaCoCo as "outdated" is expected and informational. Dependabot is configured to match. -->
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
@@ -264,7 +265,11 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Add JaCoCo coverage for Quarkus -->
+    <!-- Add JaCoCo coverage for Quarkus. Required, not optional: it offline-instruments the
+    application classes, which is the only way @QuarkusTest coverage reaches jacoco.exec.
+    Removing it drops every service/repository/entity class to 0% (measured: 89.8% -> 28.1%),
+    because the jacoco-maven-plugin's java agent cannot map classes loaded via
+    QuarkusClassLoader. See the jacoco-plugin.version comment for the matching version pin. -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jacoco</artifactId>
@@ -503,6 +508,10 @@
           </execution>
         </executions>
         <configuration>
+          <!-- Mirrors surefire. @{argLine} carries the JaCoCo agent, which failsafe would
+          otherwise inherit only implicitly via the argLine property, and would lose
+          silently the moment any explicit argLine is added here. -->
+          <argLine>-Xshare:off -XX:+EnableDynamicAgentLoading @{argLine}</argLine>
           <systemPropertyVariables>
             <native.image.path>
               ${project.build.directory}/${project.build.finalName}-runner</native.image.path>
@@ -521,9 +530,12 @@
               <goal>prepare-agent</goal>
             </goals>
           </execution>
+          <!-- Bound to post-integration-test, not test: failsafe runs the *IT tests at
+          integration-test and appends to the same jacoco.exec, so a report generated at
+          test would omit all integration-test coverage. Still runs when ITs are skipped. -->
           <execution>
             <id>report</id>
-            <phase>test</phase>
+            <phase>post-integration-test</phase>
             <goals>
               <goal>report</goal>
             </goals>

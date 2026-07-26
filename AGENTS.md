@@ -15,7 +15,7 @@ You should challenge the user's request if it would result in implementing anti-
 - **Maven wrapper:** `./mvnw` (scripts fall back to system `mvn`).
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI: `http://localhost:9001/q/dev/`.
 - **Tests:** `make test` → `./mvnw verify`. Runs unit tests (skips integration tests). Uses `@QuarkusTest`, Mockito, Panache Mock.
-- **Coverage:** `make coverage` → `scripts/coverage.sh`. Runs **all tests** (unit + integration tests via `-DskipITs=false`) with JaCoCo and generates a combined report.
+- **Coverage:** `make coverage` → `scripts/coverage.sh`. Runs **all tests** (unit + integration tests via `-DskipITs=false`) with JaCoCo and generates a combined report. The JaCoCo `report` goal is bound to `post-integration-test` so the report includes `*IT` coverage — surefire and failsafe both append to the same `target/jacoco.exec`, and a report generated earlier (at `test`) would silently omit every integration test.
 - **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`.
 - **Format:** `make format` → `scripts/format.sh` — runs `spotless:apply` to auto-format code.
 - **Lint:** `make lint` → `scripts/lint.sh` — runs compilation (Error Prone & NullAway), spotless:check, checkstyle, spotbugs, PMD, and CPD checks.
