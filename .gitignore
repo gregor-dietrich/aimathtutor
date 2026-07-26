@@ -83,3 +83,7 @@ vite.config.ts
 
 # Ollama
 ollama/payload
+
+# Python
+__pyache__/
+*.pyc

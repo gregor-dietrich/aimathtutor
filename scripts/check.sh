@@ -66,4 +66,10 @@ fi
 echo "Maven version check passed. (>= ${REQUIRED_MAVEN_VERSION})"
 echo "Environment checks completed."
 
+echo "Checking dependency version pins..."
+
+python3 scripts/version_check.py
+
+echo "Dependency version pin checks completed."
+
 cd - > /dev/null
