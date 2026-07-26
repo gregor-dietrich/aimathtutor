@@ -86,6 +86,65 @@ class ProblemGeneratorServiceTest {
         assertTrue(expressions.size() > 1, "Expected randomized expressions, got " + expressions.size());
     }
 
+    // The four tests below pin every branch that generateProblem takes on a *random* value:
+    // the "a == 1" and "b >= 0" ternaries in LINEAR_EQUATIONS, and the "bIneq >= 0" ternary
+    // plus the "reducedDen == 1" if/else in INEQUALITIES. Without them those arms are only
+    // reached when the dice happen to land there, which leaves the rendering unverified and
+    // makes the JaCoCo branch count fluctuate between runs.
+    //
+    // The seeds are hard-coded because the constructor re-seeds from the supplied Random
+    // (new Random(random.nextLong())), so a stub returning scripted values cannot be injected
+    // -- the seed is the only lever. The JDK's Random is a contractually specified linear
+    // congruential generator, so a seed always yields the same sequence on every JVM.
+
+    @Test
+    @DisplayName("Should omit the coefficient when the linear coefficient is 1")
+    void shouldOmitCoefficientWhenLinearCoefficientIsOne() {
+        // seed 1 -> a=1, b=-5, x=2: exercises the "a == 1" and "b < 0" arms
+        final ProblemGeneratorService seeded = new ProblemGeneratorService(new Random(1L));
+        final GraspableProblemDto problem =
+                seeded.generateProblem(DifficultyLevel.BEGINNER, ProblemCategory.LINEAR_EQUATIONS);
+
+        assertEquals("x - 5 = -3", problem.initialExpression);
+        assertEquals("x = 2", problem.targetExpression);
+    }
+
+    @Test
+    @DisplayName("Should render the coefficient and a plus sign when the linear coefficient exceeds 1")
+    void shouldRenderCoefficientWhenLinearCoefficientExceedsOne() {
+        // seed 2 -> a=4, b=4, x=-2: exercises the "a != 1" and "b >= 0" arms
+        final ProblemGeneratorService seeded = new ProblemGeneratorService(new Random(2L));
+        final GraspableProblemDto problem =
+                seeded.generateProblem(DifficultyLevel.BEGINNER, ProblemCategory.LINEAR_EQUATIONS);
+
+        assertEquals("4x + 4 = -4", problem.initialExpression);
+        assertEquals("x = -2", problem.targetExpression);
+    }
+
+    @Test
+    @DisplayName("Should render a whole-number bound when the inequality divides evenly")
+    void shouldRenderWholeNumberBoundForInequality() {
+        // seed 1 -> a=1, b=-5, c=6: exercises the "bIneq < 0" and "reducedDen == 1" arms
+        final ProblemGeneratorService seeded = new ProblemGeneratorService(new Random(1L));
+        final GraspableProblemDto problem =
+                seeded.generateProblem(DifficultyLevel.BEGINNER, ProblemCategory.INEQUALITIES);
+
+        assertEquals("1x - 5 < 6", problem.initialExpression);
+        assertEquals("x < 11", problem.targetExpression);
+    }
+
+    @Test
+    @DisplayName("Should render a reduced fraction bound when the inequality does not divide evenly")
+    void shouldRenderFractionalBoundForInequality() {
+        // seed 4 -> a=4, b=0, c=3: exercises the "bIneq >= 0" and "reducedDen != 1" arms
+        final ProblemGeneratorService seeded = new ProblemGeneratorService(new Random(4L));
+        final GraspableProblemDto problem =
+                seeded.generateProblem(DifficultyLevel.BEGINNER, ProblemCategory.INEQUALITIES);
+
+        assertEquals("4x + 0 < 3", problem.initialExpression);
+        assertEquals("x < 3/4", problem.targetExpression);
+    }
+
     @Test
     @DisplayName("Should produce factorable quadratic with matching factored form")
     void shouldGenerateFactorableQuadratic() {
