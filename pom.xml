@@ -22,7 +22,12 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <pmd-cpd.minTokens>65</pmd-cpd.minTokens>
 
-    <!-- Quarkus Platform -->
+    <!-- Quarkus Platform. Tracks the latest LTS line, NOT the latest stable release: LTS
+    lines receive patch releases for far longer, which is what a project that ships releases
+    needs. 3.33.x is the current LTS, so newer stable releases are deliberately not adopted;
+    scripts/version_check.py reporting one as "outdated" is expected and informational, and
+    .github/dependabot.yml ignores io.quarkus(.platform):* >=3.34.0 to match. Move to a new
+    LTS line only, and raise the Dependabot bound in the same change. -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.version>3.33.2.1</quarkus.platform.version>
@@ -40,7 +45,9 @@
     <jackson.version>2.21.5</jackson.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
     3.33.2.1). quarkus-jacoco writes @QuarkusTest coverage with its org.jacoco agent; a mismatched
-    jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%. -->
+    jacoco-maven-plugin cannot map that exec data, dropping all @QuarkusTest coverage to 0%.
+    Bumped manually in lockstep with Quarkus only; scripts/version_check.py reporting a newer
+    JaCoCo as "outdated" is expected and informational. Dependabot is configured to match. -->
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
@@ -63,17 +70,20 @@
     <dependencies>
       <!-- Pin Jackson 2.x (com.fasterxml.jackson) to fix CVEs. Declared first so this BOM wins
       version resolution over the Quarkus managed version.
-        2.21.2 -> 2.21.4, transitive via Quarkus, fixes:
+        2.21.2 -> 2.21.5, transitive via Quarkus, fixes:
           - CVE-2026-54512: PolymorphicTypeValidator bypass via generic type parameters (high)
           - CVE-2026-54513: BasicPolymorphicTypeValidator array subtype allowlist bypass (high)
           - CVE-2026-54514: InetSocketAddress deserialization eager DNS resolution / SSRF
           - CVE-2026-54516: renamed @JsonIgnore'd setters deserialize via private fields
           - CVE-2026-54517: @JsonView bypass for setterless creator properties
           - CVE-2026-54518: @JsonView bypass for unwrapped creator parameters
-          NOTE: CVE-2026-54515 (@JsonIgnoreProperties case-insensitive bypass) has no released
-          2.x fix yet (lands in 2.21.5 / 2.22.1) and is not exploitable here (case-insensitive
-          deserialization is not enabled). Do NOT jump to 2.22.0, which also lacks the fix.
-          Tracked in issue #119.
+          - CVE-2026-54515: @JsonIgnoreProperties case-insensitive bypass (closed by 2.21.5;
+            was tracked in issue #119)
+      STAY ON THE 2.21.x LINE. 2.22.x exists but is not what Quarkus 3.33.x ships, and every
+      CVE above is already fixed in 2.21.5, so the line jump buys nothing and diverges from
+      the platform's tested version. scripts/version_check.py reporting 2.22.1 as "outdated"
+      is expected and informational. Dependabot is configured to match: it still proposes
+      2.21.x patches (so a future Jackson CVE is not masked) but not the line jump.
       Remove this pin once Quarkus ships a fixed version. -->
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>

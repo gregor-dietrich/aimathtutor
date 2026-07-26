@@ -18,6 +18,12 @@ updates:
     patterns: ["*"]
     multi-ecosystem-group: "infrastructure"
     ignore:
+      # Quarkus tracks the latest LTS line, NOT the latest stable release: LTS lines get
+      # patch releases for far longer, which is what a project that ships releases needs.
+      # 3.33.x is the current LTS, so anything >=3.34.0 is ignored even though newer stable
+      # releases exist (scripts/version_check.py will still report them -- that output is
+      # informational and expected, not a prompt to upgrade). Raise this bound only when a
+      # new LTS line ships, and bump the pins below in the same change.
       - dependency-name: "io.quarkus:*"
         versions: [">=3.34.0"]
       - dependency-name: "io.quarkus.platform:*"
@@ -27,6 +33,13 @@ updates:
       # for @QuarkusTest coverage, zeroing it and failing the coverage gate. Bumped manually in
       # lockstep with Quarkus, so Dependabot must not propose it.
       - dependency-name: "org.jacoco:jacoco-maven-plugin"
+      # Jackson 2.x is pinned ahead of Quarkus for CVE fixes (see dependencyManagement in
+      # pom.xml), but must stay on the 2.21.x line that Quarkus 3.33.x ships. Jumping to
+      # 2.22.x diverges from the platform's tested version for no security benefit -- the
+      # CVEs that motivated the pin are all fixed in 2.21.5. Only the line jump is ignored:
+      # 2.21.x patch releases are still proposed, so a future Jackson CVE is not masked.
+      - dependency-name: "com.fasterxml.jackson:jackson-bom"
+        versions: [">=2.22.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
