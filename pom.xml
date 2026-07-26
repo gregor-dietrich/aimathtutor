@@ -44,7 +44,12 @@
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
+    <!-- Netty security pin (transitive via Quarkus). See dependencyManagement. -->
+    <netty.version>4.1.136.Final</netty.version>
     <nullaway.version>0.13.8</nullaway.version>
+    <!-- PostgreSQL JDBC security pin (transitive via quarkus-jdbc-postgresql). See
+    dependencyManagement. -->
+    <postgresql.version>42.7.12</postgresql.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.3</spotbugs-annotations.version>
     <spotbugs-plugin.version>4.10.3.0</spotbugs-plugin.version>
@@ -76,6 +81,49 @@
         <version>${jackson.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- Pin Netty to fix CVEs. Declared before the Quarkus BOM so this BOM wins version
+      resolution over the Quarkus managed version.
+        4.1.135.Final -> 4.1.136.Final, transitive via Quarkus, fixes:
+          Reachable here (codecs Vert.x actually wires for the HTTP listener):
+          - CVE-2026-56746: CORS short-circuit failure allows a security control bypass
+          - CVE-2026-59900: missing Host header deduplication in HTTP/2 -> HTTP/1.x translation
+          - CVE-2026-59898: WebSocket V07/V08 handshaker skips Connection/Upgrade validation
+          - CVE-2026-59899: unbounded per-connection queue growth in HttpContentEncoder
+          - CVE-2026-59921: CRLF injection via multipart filename in HttpPostRequestEncoder
+          - GHSA-mfg7-5gfp-c4w3: DNS record decoder memory leak on malformed domains (no CVE)
+          Not reachable here — these codecs are on the classpath but never instantiated by
+          Quarkus/Vert.x, so they are cleared for hygiene rather than exposure:
+          - CVE-2026-59901: Bzip2Decoder infinite loop in RLE state machine (high)
+          - CVE-2026-56745: SpdyHttpDecoder ByteBuf leak on RST_STREAM (high)
+          - CVE-2026-55851, CVE-2026-59919: HAProxyMessageDecoder sentinel collision (high),
+            CRLF injection via AF_UNIX address
+          - CVE-2026-55833, CVE-2026-55831: SPDY zlib header expansion past maxHeaderSize and
+            unbounded SETTINGS map (both high)
+      Quarkus cannot resolve this by platform bump: 3.33.2.1 is the newest 3.33.x, and
+      dependabot.yml deliberately ignores io.quarkus:* >= 3.34.0. Tracked in issue #127.
+      Remove this pin once Quarkus ships a fixed version. -->
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Pin the PostgreSQL JDBC driver to fix a CVE. Declared before the Quarkus BOM so this
+      wins version resolution over the version managed by quarkus-jdbc-postgresql.
+        42.7.11 -> 42.7.12, transitive via Quarkus, fixes:
+          - CVE-2026-54291: silent channel-binding authentication downgrade via an
+            unsupported certificate type (high)
+          NOTE: not exploitable as deployed — the app connects over plain
+          jdbc:postgresql://db:5432/... with neither TLS nor channel binding.
+      Tracked in issue #127. Remove this pin once Quarkus ships a fixed version. -->
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.version}</version>
       </dependency>
 
       <!-- Quarkus -->
