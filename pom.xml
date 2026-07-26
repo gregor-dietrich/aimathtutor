@@ -49,7 +49,7 @@
     <nullaway.version>0.13.8</nullaway.version>
     <!-- PostgreSQL JDBC security pin (transitive via quarkus-jdbc-postgresql). See
     dependencyManagement. -->
-    <postgresql.version>42.7.12</postgresql.version>
+    <postgresql.version>42.7.13</postgresql.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.3</spotbugs-annotations.version>
     <spotbugs-plugin.version>4.10.3.0</spotbugs-plugin.version>
