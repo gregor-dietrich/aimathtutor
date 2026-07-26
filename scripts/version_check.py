@@ -14,7 +14,10 @@ from typing import NamedTuple
 
 import requests
 
-POM_PATH = Path(__file__).resolve().parent / "../pom.xml"
+# Repo root is the parent of the scripts/ directory holding this file, so the
+# check works regardless of the caller's current working directory.
+REPO_ROOT: Path = Path(__file__).resolve().parent.parent
+POM_PATH: Path = REPO_ROOT / "pom.xml"
 
 POM_NS = {"m": "http://maven.apache.org/POM/4.0.0"}
 
