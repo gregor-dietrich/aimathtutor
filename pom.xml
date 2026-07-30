@@ -53,7 +53,7 @@
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
     <!-- Netty security pin (transitive via Quarkus). See dependencyManagement. -->
-    <netty.version>4.1.136.Final</netty.version>
+    <netty.version>4.2.16.Final</netty.version>
     <nullaway.version>0.13.8</nullaway.version>
     <!-- PostgreSQL JDBC security pin (transitive via quarkus-jdbc-postgresql). See
     dependencyManagement. -->
