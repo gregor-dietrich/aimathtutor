@@ -45,6 +45,35 @@
             value="^package.*|^import.*|a href|href|http://|https://|ftp://|^\s+&quot;SELECT|^\s+&quot;FROM" />
     </module>
 
+    <!--
+        Ban concatenating a runtime value into a log message: it builds the string eagerly even
+        when the level is disabled, and replaces the reusable message template with a unique
+        string per call, so aggregators can no longer group occurrences of the same event.
+        Use the *f methods with printf-style %s placeholders instead.
+
+        Checker-level (RegexpMultiline) rather than RegexpSinglelineJava so that calls wrapped
+        across lines are caught — 15% of log calls here span more than one line.
+
+        The regex anchors on the FIRST argument of the call, which is what keeps it precise:
+          - "msg " + value        -> flagged (literal, then +, then a non-literal)
+          - prefix + "msg"        -> flagged (identifier, then +)
+          - "long msg "
+                + "continued %s"  -> NOT flagged; the trailing [^"\s] requires the right-hand
+                                     operand to be a non-literal. Literal-to-literal wrapping is
+                                     constant-folded at compile time and keeps the template.
+          - "count %s", a + b     -> NOT flagged; a '+' past the first argument is arithmetic in
+                                     an argument, not message building.
+          - "1 + 2 = %s", sum     -> NOT flagged; a '+' inside the literal cannot match, because
+                                     the literal must be consumed whole before the '+'.
+    -->
+    <module name="RegexpMultiline">
+        <property name="fileExtensions" value="java" />
+        <property name="format"
+            value="\bLOG\.(trace|debug|info|warn|error|fatal)f?\(\s*(?:&quot;[^&quot;]*&quot;\s*\+\s*[^&quot;\s]|[A-Za-z_][A-Za-z0-9_.]*(?:\([^()]*\)|\[[^\]]*\])*\s*\+)" />
+        <property name="message"
+            value="Do not concatenate into a log message — use *f methods (infof, debugf, etc.) with printf-style %s placeholders so the message template is preserved." />
+    </module>
+
     <module name="TreeWalker">
         <module name="OuterTypeFilename" />
         <!-- Ban fully-qualified class names in source (use imports instead) -->
