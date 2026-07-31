@@ -46,10 +46,29 @@
     </module>
 
     <!--
-        Ban concatenating a runtime value into a log message: it builds the string eagerly even
-        when the level is disabled, and replaces the reusable message template with a unique
-        string per call, so aggregators can no longer group occurrences of the same event.
-        Use the *f methods with printf-style %s placeholders instead.
+        Ban concatenating a runtime value into a log message. Use the *f methods with
+        printf-style %s placeholders instead. Three reasons, in increasing order of impact:
+
+        1. Cost. Concatenation builds the string eagerly, before the call, so it is paid even
+           when the level is disabled and the message is discarded.
+
+        2. Observability. It replaces the reusable message template with a unique string per
+           call. Aggregators fingerprint on the template, so a million occurrences of one event
+           can no longer collapse into one row.
+
+        3. Log flooding. (1) and (2) compound under attacker-driven volume. Because of (1) a
+           disabled level stops acting as a throttle: a hot path that only logs at DEBUG still
+           pays full string construction per request with DEBUG off. Because of (2) the
+           downstream defences degrade exactly when they are needed, since dedup, sampling and
+           rate limiting all key on the fingerprint, and a flood of unique strings becomes a
+           high-cardinality ingest problem for the logging backend itself.
+
+        Scope limit, so this rule is not over-trusted: it is defence in depth, not the control.
+        At an ENABLED level a flood costs the same either way. The levers that actually bound
+        flooding are sampling and rate limiting at the emit site, level discipline on hot paths,
+        and bounding attacker-controlled values before they are logged. See AiInteractionLogger,
+        which logs questionLen/answerLen rather than the question and answer text; no linter
+        enforces that, and it matters more than this rule does.
 
         Checker-level (RegexpMultiline) rather than RegexpSinglelineJava so that calls wrapped
         across lines are caught — 15% of log calls here span more than one line.
