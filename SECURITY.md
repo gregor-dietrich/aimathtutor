@@ -5,7 +5,7 @@
 **Please do _not_ report security vulnerabilities through public GitHub
 issues.**
 
-Instead, [report it privately](https://github.com/Carpenter-Softworks/Workshop/security/advisories/new).
+Instead, [report it privately](https://github.com/gregor-dietrich/aimathtutor/security/advisories/new).
 
 ## Supported Versions
 
