@@ -68,7 +68,7 @@ jobs:
       - name: Compile project
         run: ./mvnw clean install package -DskipTests
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4.37.3
+        uses: github/codeql-action/analyze@v4
       - name: Run OWASP Dependency-Check
         if: env.NVD_API_KEY != ''
         run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
