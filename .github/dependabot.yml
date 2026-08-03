@@ -33,13 +33,6 @@ updates:
       # for @QuarkusTest coverage, zeroing it and failing the coverage gate. Bumped manually in
       # lockstep with Quarkus, so Dependabot must not propose it.
       - dependency-name: "org.jacoco:jacoco-maven-plugin"
-      # Jackson 2.x is pinned ahead of Quarkus for CVE fixes (see dependencyManagement in
-      # pom.xml), but must stay on the 2.21.x line that Quarkus 3.33.x ships. Jumping to
-      # 2.22.x diverges from the platform's tested version for no security benefit -- the
-      # CVEs that motivated the pin are all fixed in 2.21.5. Only the line jump is ignored:
-      # 2.21.x patch releases are still proposed, so a future Jackson CVE is not masked.
-      - dependency-name: "com.fasterxml.jackson:jackson-bom"
-        versions: [">=2.22.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

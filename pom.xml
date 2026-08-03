@@ -30,21 +30,17 @@
     LTS line only, and raise the Dependabot bound in the same change. -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.33.2.1</quarkus.platform.version>
+    <quarkus.platform.version>3.33.3</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
     <compiler-plugin.version>3.15.0</compiler-plugin.version>
-    <dependency-check-plugin.version>12.2.2</dependency-check-plugin.version>
+    <dependency-check-plugin.version>13.0.0</dependency-check-plugin.version>
     <eclipse-formatter.version>4.35</eclipse-formatter.version>
     <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260313.1</html-sanitizer.version>
-    <!-- Jackson security pin (transitive via Quarkus, com.fasterxml.jackson). See
-    dependencyManagement for the CVE list. Vaadin/flow-server (tools.jackson, 3.x) ships
-    the fixed 3.1.4 natively as of Vaadin 25.2.1; no pin needed there anymore. -->
-    <jackson.version>2.21.5</jackson.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
-    3.33.2.1). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
+    3.33.3). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
     what records @QuarkusTest coverage; a mismatched jacoco-maven-plugin cannot map that exec data,
     dropping all @QuarkusTest coverage to 0%.
     Bumped manually in lockstep with Quarkus only; scripts/version_check.py reporting a newer
@@ -52,91 +48,18 @@
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
-    <!-- Netty security pin (transitive via Quarkus). See dependencyManagement. -->
-    <netty.version>4.1.136.Final</netty.version>
     <nullaway.version>0.13.8</nullaway.version>
-    <!-- PostgreSQL JDBC security pin (transitive via quarkus-jdbc-postgresql). See
-    dependencyManagement. -->
-    <postgresql.version>42.7.13</postgresql.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.3</spotbugs-annotations.version>
     <spotbugs-plugin.version>4.10.3.0</spotbugs-plugin.version>
-    <spotless-plugin.version>3.8.0</spotless-plugin.version>
+    <spotless-plugin.version>3.9.0</spotless-plugin.version>
     <surefire-plugin.version>3.5.6</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
-    <vaadin.version>25.2.3</vaadin.version>
+    <vaadin.version>25.2.5</vaadin.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-      <!-- Pin Jackson 2.x (com.fasterxml.jackson) to fix CVEs. Declared first so this BOM wins
-      version resolution over the Quarkus managed version.
-        2.21.2 -> 2.21.5, transitive via Quarkus, fixes:
-          - CVE-2026-54512: PolymorphicTypeValidator bypass via generic type parameters (high)
-          - CVE-2026-54513: BasicPolymorphicTypeValidator array subtype allowlist bypass (high)
-          - CVE-2026-54514: InetSocketAddress deserialization eager DNS resolution / SSRF
-          - CVE-2026-54516: renamed @JsonIgnore'd setters deserialize via private fields
-          - CVE-2026-54517: @JsonView bypass for setterless creator properties
-          - CVE-2026-54518: @JsonView bypass for unwrapped creator parameters
-          - CVE-2026-54515: @JsonIgnoreProperties case-insensitive bypass (closed by 2.21.5;
-            was tracked in issue #119)
-      STAY ON THE 2.21.x LINE. 2.22.x exists but is not what Quarkus 3.33.x ships, and every
-      CVE above is already fixed in 2.21.5, so the line jump buys nothing and diverges from
-      the platform's tested version. scripts/version_check.py reporting 2.22.1 as "outdated"
-      is expected and informational. Dependabot is configured to match: it still proposes
-      2.21.x patches (so a future Jackson CVE is not masked) but not the line jump.
-      Remove this pin once Quarkus ships a fixed version. -->
-      <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${jackson.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
-      <!-- Pin Netty to fix CVEs. Declared before the Quarkus BOM so this BOM wins version
-      resolution over the Quarkus managed version.
-        4.1.135.Final -> 4.1.136.Final, transitive via Quarkus, fixes:
-          Reachable here (codecs Vert.x actually wires for the HTTP listener):
-          - CVE-2026-56746: CORS short-circuit failure allows a security control bypass
-          - CVE-2026-59900: missing Host header deduplication in HTTP/2 -> HTTP/1.x translation
-          - CVE-2026-59898: WebSocket V07/V08 handshaker skips Connection/Upgrade validation
-          - CVE-2026-59899: unbounded per-connection queue growth in HttpContentEncoder
-          - CVE-2026-59921: CRLF injection via multipart filename in HttpPostRequestEncoder
-          - GHSA-mfg7-5gfp-c4w3: DNS record decoder memory leak on malformed domains (no CVE)
-          Not reachable here — these codecs are on the classpath but never instantiated by
-          Quarkus/Vert.x, so they are cleared for hygiene rather than exposure:
-          - CVE-2026-59901: Bzip2Decoder infinite loop in RLE state machine (high)
-          - CVE-2026-56745: SpdyHttpDecoder ByteBuf leak on RST_STREAM (high)
-          - CVE-2026-55851, CVE-2026-59919: HAProxyMessageDecoder sentinel collision (high),
-            CRLF injection via AF_UNIX address
-          - CVE-2026-55833, CVE-2026-55831: SPDY zlib header expansion past maxHeaderSize and
-            unbounded SETTINGS map (both high)
-      Quarkus cannot resolve this by platform bump: 3.33.2.1 is the newest 3.33.x, and
-      dependabot.yml deliberately ignores io.quarkus:* >= 3.34.0. Tracked in issue #127.
-      Remove this pin once Quarkus ships a fixed version. -->
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-bom</artifactId>
-        <version>${netty.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
-      <!-- Pin the PostgreSQL JDBC driver to fix a CVE. Declared before the Quarkus BOM so this
-      wins version resolution over the version managed by quarkus-jdbc-postgresql.
-        42.7.11 -> 42.7.12, transitive via Quarkus, fixes:
-          - CVE-2026-54291: silent channel-binding authentication downgrade via an
-            unsupported certificate type (high)
-          NOTE: not exploitable as deployed — the app connects over plain
-          jdbc:postgresql://db:5432/... with neither TLS nor channel binding.
-      Tracked in issue #127. Remove this pin once Quarkus ships a fixed version. -->
-      <dependency>
-        <groupId>org.postgresql</groupId>
-        <artifactId>postgresql</artifactId>
-        <version>${postgresql.version}</version>
-      </dependency>
-
       <!-- Quarkus -->
       <dependency>
         <groupId>${quarkus.platform.group-id}</groupId>
