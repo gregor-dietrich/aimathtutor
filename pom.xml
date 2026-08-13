@@ -36,7 +36,7 @@
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
     <compiler-plugin.version>3.15.0</compiler-plugin.version>
     <dependency-check-plugin.version>13.0.0</dependency-check-plugin.version>
-    <eclipse-formatter.version>4.35</eclipse-formatter.version>
+    <eclipse-formatter.version>4.40</eclipse-formatter.version>
     <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260313.1</html-sanitizer.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
