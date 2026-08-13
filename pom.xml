@@ -471,6 +471,10 @@
               <goal>report</goal>
             </goals>
           </execution>
+          <!-- Skipped when integration tests are skipped. These minima are calibrated against a
+          run that includes the *IT tests, which are the only coverage of the repository package
+          Running the check against unit-test-only data therefore fails on a threshold it can
+          never reach. -->
           <execution>
             <id>check</id>
             <phase>verify</phase>
@@ -478,6 +482,7 @@
               <goal>check</goal>
             </goals>
             <configuration>
+              <skip>${skipITs}</skip>
               <rules>
                 <rule>
                   <element>BUNDLE</element>
