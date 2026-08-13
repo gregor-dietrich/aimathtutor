@@ -56,7 +56,7 @@
     <spotless-plugin.version>3.9.0</spotless-plugin.version>
     <surefire-plugin.version>3.5.6</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
-    <vaadin.version>25.2.5</vaadin.version>
+    <vaadin.version>25.2.6</vaadin.version>
   </properties>
 
   <dependencyManagement>
