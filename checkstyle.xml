@@ -17,6 +17,8 @@
 <module name="Checker">
     <property name="charset" value="UTF-8" />
 
+    <!-- Violations break the build. Deliberate exceptions belong in checkstyle-suppressions.xml,
+         as narrowly as possible (prefer a rule id over a check name), not in a lowered severity. -->
     <property name="severity" value="error" />
 
     <property name="fileExtensions" value="java, properties, xml" />
@@ -26,10 +28,12 @@
         <property name="fileNamePattern" value="module\-info\.java$" />
     </module>
     <!-- https://checkstyle.org/config_filters.html#SuppressionFilter -->
+    <!-- optional=false: the file exists and is load-bearing (it carries the UlidUtil exemption), so
+         a rename or a move must fail the build rather than quietly widen the rule set. -->
     <module name="SuppressionFilter">
         <property name="file" value="${org.checkstyle.google.suppressionfilter.config}"
             default="checkstyle-suppressions.xml" />
-        <property name="optional" value="true" />
+        <property name="optional" value="false" />
     </module>
 
     <!-- Checks for whitespace                               -->
@@ -38,11 +42,16 @@
         <property name="eachLine" value="true" />
     </module>
 
+    <!-- Backstop behind the formatter, not a second opinion on it: eclipse-formatter.xml wraps at
+         120 too, so the only lines that can reach the limit are the ones it cannot break — long
+         string literals, URLs and JPQL. The stock Google pattern carries a bare "href" alternative
+         next to "a href"; it is dropped here because "a href" already covers the anchor case, while
+         the bare form would exempt any line merely containing the word from the length check. -->
     <module name="LineLength">
         <property name="fileExtensions" value="java" />
         <property name="max" value="120" />
         <property name="ignorePattern"
-            value="^package.*|^import.*|a href|href|http://|https://|ftp://|^\s+&quot;SELECT|^\s+&quot;FROM" />
+            value="^package.*|^import.*|a href|http://|https://|ftp://|^\s+&quot;SELECT|^\s+&quot;FROM" />
     </module>
 
     <!--
@@ -86,6 +95,7 @@
                                      the literal must be consumed whole before the '+'.
     -->
     <module name="RegexpMultiline">
+        <property name="id" value="RegexpMultiline.LogConcatenation" />
         <property name="fileExtensions" value="java" />
         <property name="format"
             value="\bLOG\.(trace|debug|info|warn|error|fatal)f?\(\s*(?:&quot;[^&quot;]*&quot;\s*\+\s*[^&quot;\s]|[A-Za-z_][A-Za-z0-9_.]*(?:\([^()]*\)|\[[^\]]*\])*\s*\+)" />
@@ -95,10 +105,14 @@
 
     <module name="TreeWalker">
         <module name="OuterTypeFilename" />
-        <!-- Ban fully-qualified class names in source (use imports instead) -->
+        <!-- Ban fully-qualified class names in source (use imports instead).
+             The lookahead requires whitespace after the keyword, so only a real import/package
+             declaration is exempted — an identifier that merely starts with those letters
+             (importedCount, packageName) stays subject to the check. -->
         <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.FullyQualifiedName" />
             <property name="format"
-                value="^(?!\s*(import|package)).*\b(java|javax|jakarta|org|de|com|net|io|edu)\.[a-zA-Z]" />
+                value="^(?!\s*(import|package)\s).*\b(java|javax|jakarta|org|de|com|net|io|edu)\.[a-zA-Z]" />
             <property name="ignoreComments" value="false" />
             <property name="message"
                 value="Use imports instead of Fully Qualified Class Names (FQCN)." />
@@ -115,13 +129,32 @@
             <message key="import.illegal"
                 value="Import UlidCreator directly is not allowed — use UlidUtil instead." />
         </module>
+        <!-- The logging facade is fixed by AGENTS.md: org.jboss.logging.Logger. SLF4J and
+             java.util.logging both resolve on the classpath through transitive Quarkus
+             dependencies, so nothing but this rule stops one from being imported by accident.
+             The whole SLF4J package is banned, not just Logger/LoggerFactory: MDC is the class
+             one imports next to the logger, and it resolves transitively just the same. -->
         <module name="IllegalImport">
-            <property name="illegalClasses"
-                value="org.slf4j.Logger, org.slf4j.LoggerFactory" />
+            <property name="id" value="IllegalImport.Logging" />
+            <property name="illegalPkgs" value="org.slf4j" />
+            <property name="illegalClasses" value="java.util.logging.Logger" />
             <message key="import.illegal"
-                value="Use org.jboss.logging.Logger instead of SLF4J Logger/LoggerFactory." />
+                value="Use org.jboss.logging.Logger instead." />
+        </module>
+        <!-- Both log-template rules below key on a field named LOG, so a logger called LOGGER or
+             log would silently switch them off for the whole class — the gate would report
+             conformance it never checked. This rule is what actually holds the name. It is scoped
+             to the static field the convention prescribes: an injected Logger cannot be named LOG
+             anyway, because MemberName requires camelCase on a non-static field. -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.LoggerFieldName" />
+            <property name="format" value="static\s+final\s+Logger\s+(?!LOG\b)" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="Name the logger field LOG (private static final Logger LOG = Logger.getLogger(...)) — the log-template checks key on that name." />
         </module>
         <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.LogMessageFormat" />
             <property name="format"
                 value="\bLOG\.(infov|debugv|warnv|errorv|tracev)\(" />
             <property name="ignoreComments" value="true" />
@@ -129,12 +162,14 @@
                 value="Use *f methods (infof, debugf, etc.) with printf-style %s placeholders instead of *v MessageFormat-style methods." />
         </module>
         <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.LocalDateNow" />
             <property name="format" value="LocalDate\.now\(\s*\)" />
             <property name="ignoreComments" value="true" />
             <property name="message"
                 value="Use LocalDate.now(ZoneId.systemDefault()) instead for explicit timezone handling." />
         </module>
         <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.LocalDateTimeNow" />
             <property name="format" value="LocalDateTime\.now\(\s*\)" />
             <property name="ignoreComments" value="true" />
             <property name="message"
@@ -147,6 +182,7 @@
             new collection fields here when they are introduced.
         -->
         <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.JoinFetchCollection" />
             <property name="format"
                 value="(?i)JOIN\s+FETCH\s+\w+\.(comments|exercises|commentFlags|userGroupMetas|users|interactions|sessions|members|replies|flags|metas|tags|children|parents)\b" />
             <property name="ignoreComments" value="true" />
@@ -447,6 +483,9 @@
             <property name="tokens" value="SINGLE_LINE_COMMENT, BLOCK_COMMENT_BEGIN" />
         </module>
         <!-- https://checkstyle.org/config_filters.html#SuppressionXpathFilter -->
+        <!-- Stays optional=true, unlike the SuppressionFilter above: no
+             checkstyle-xpath-suppressions.xml exists in this repository, so requiring one would
+             fail the build. Flip it to false if that file is ever added. -->
         <module name="SuppressionXpathFilter">
             <property name="file" value="${org.checkstyle.google.suppressionxpathfilter.config}"
                 default="checkstyle-xpath-suppressions.xml" />

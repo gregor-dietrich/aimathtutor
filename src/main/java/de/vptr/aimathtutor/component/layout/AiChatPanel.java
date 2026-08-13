@@ -30,7 +30,7 @@ import jakarta.annotation.Nullable;
  */
 public class AiChatPanel extends VerticalLayout {
 
-    private static final Logger LOGGER = Logger.getLogger(AiChatPanel.class);
+    private static final Logger LOG = Logger.getLogger(AiChatPanel.class);
 
     private final VerticalLayout chatHistoryPanel;
     private final TextField chatInput;
@@ -318,7 +318,7 @@ public class AiChatPanel extends VerticalLayout {
                     try {
                         this.chatHistoryPanel.remove(indicatorToRemove);
                     } catch (final Exception e) {
-                        LOGGER.tracef("Typing indicator removal race: %s", indicatorToRemove);
+                        LOG.tracef("Typing indicator removal race: %s", indicatorToRemove);
                     }
                 });
 
