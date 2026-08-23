@@ -13,6 +13,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 # check works regardless of the caller's current working directory.
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 
+# Directory holding package.json, package-lock.json and the pom that declares
+# <vaadin.version>. Single-module projects leave this at the repo root; multi-module
+# ones pass the Vaadin module (e.g. "midas-gui") as the first argument. Keeping the
+# path a parameter is what lets this file stay byte-identical across both projects.
+FRONTEND_DIR: Path = REPO_ROOT / (sys.argv[1] if len(sys.argv) > 1 else ".")
+
 # Security-sensitive Flow "default dependencies" that Vaadin's frontend generator
 # can silently re-pin below a safe minimum on rebuild. One "<npm-package>": "<min>".
 MIN_PINS: Dict[str, str] = {"react-router": "7.15.0"}
@@ -22,8 +28,9 @@ SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+")
 
 # Remedy printed when a @vaadin/* component has drifted off its manifest version.
 REGEN_HINT = (
-    "Run 'scripts/regen-frontend.sh' to regenerate the manifest at the current Vaadin "
-    "version, or just run 'make install', which now does this automatically."
+    "Regenerate the committed frontend manifest at the pinned Vaadin version "
+    "(scripts/regen-frontend.sh where present, otherwise a Vaadin build-frontend run), "
+    "or move <vaadin.version> to the version the manifest was generated from."
 )
 
 
@@ -196,9 +203,9 @@ def main() -> None:
     errors: List[str] = []
     drift = False
 
-    pkg_json_path = REPO_ROOT / "package.json"
-    pkg_lock_path = REPO_ROOT / "package-lock.json"
-    pom_path = REPO_ROOT / "pom.xml"
+    pkg_json_path = FRONTEND_DIR / "package.json"
+    pkg_lock_path = FRONTEND_DIR / "package-lock.json"
+    pom_path = FRONTEND_DIR / "pom.xml"
 
     print("Checking pinned frontend dependencies...")
     pkg_json: Dict[str, Any] = json.loads(pkg_json_path.read_text(encoding="utf-8"))

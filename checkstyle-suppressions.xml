@@ -5,4 +5,23 @@
     <suppress checks="AbbreviationAsWordInName" files=".*IT\.java$" />
     <!-- UlidCreator may only be imported by UlidUtil itself -->
     <suppress id="IllegalImport.UlidCreator" files="UlidUtil\.java$" />
+    <!-- REST Assured may only be imported by TestUtil itself -->
+    <suppress id="IllegalImport.RestAssured" files="TestUtil\.java$" />
+    <!-- @SuppressWarnings("NullAway") is banned in main source; test sources
+         legitimately use it for Mockito/builder setup. -->
+    <suppress id="SuppressWarningsNullAway" files="[/\\]src[/\\]test[/\\]" />
+    <!-- Jackson response DTOs: the no-arg deserialization constructor legitimately
+         leaves fields unset until Jackson populates them via setters; marking every
+         field @Nullable would be pessimistic for the hundreds of reliably-populated
+         read sites. -->
+    <suppress id="SuppressWarningsNullAway"
+        files="[/\\]de[/\\]vptr[/\\]aimathtutor[/\\]dto[/\\]" />
+    <!-- EXISTING DEBT, not an exemption on the merits: 18 class- and method-level
+         @SuppressWarnings("NullAway") remain across 16 Vaadin view/component classes.
+         The sibling Midas project closed the equivalent hole by annotating the
+         lazily-built UI fields @Nullable and reading them through locals; the same
+         burn-down applies here. Narrow this pattern as files are converted, and
+         delete it when the last one is gone. -->
+    <suppress id="SuppressWarningsNullAway"
+        files="[/\\]de[/\\]vptr[/\\]aimathtutor[/\\](view|component)[/\\]" />
 </suppressions>

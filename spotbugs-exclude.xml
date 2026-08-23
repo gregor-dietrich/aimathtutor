@@ -1,58 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   SpotBugs Exclusion Filter
-  
-  This filter excludes false positives and intentional design patterns that SpotBugs flags.
-  
-  SE_NO_SERIALVERSIONID:
-    Vaadin Flow components are UI components that are never serialized. They are ephemeral
-    and created per-request/session. Adding serialVersionUID to suppress this warning is
-    unnecessary boilerplate and creates a false sense of serialization support.
-  
-  SE_TRANSIENT_FIELD_NOT_RESTORED:
-    Similar to above - transient fields in Vaadin components are never deserialized
-    because the components themselves are never serialized.
+
+  Structure, kept parallel across the Midas and AIMathTutor projects so that drift
+  is visible in a plain diff:
+
+    1. SHARED BASELINE  - framework idioms (Panache, Jackson) that hold in every
+                          module. Byte-identical everywhere but for the package name.
+    2. VAADIN UI        - idioms that only hold where Vaadin Flow is on the classpath.
+    3. PROJECT-SPECIFIC - narrowly class-scoped entries, each with its own reason.
+
+  Every entry must carry a reason. A pattern that is merely inconvenient does not
+  belong here; fix the code instead.
+
+  Deliberately NOT excluded: NP_NULL_ON_SOME_PATH and
+  NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE. SpotBugs 4.10 reports every read of a
+  @Nullable-annotated field, including reads already guarded by an explicit null
+  check. That is noisy, but the fix is cheap and improves the code: read the field
+  (or the getter) once into a local and branch on the local. Both projects are clean
+  under these detectors; keep them that way rather than switching them off.
 -->
 <FindBugsFilter xmlns="http://findbugs.sourceforge.net/filter/3.0.0">
-  <!-- Suppress all SE_ pattern warnings (serialization issues) for the entire project -->
-  <Match>
-    <Bug pattern="SE_NO_SERIALVERSIONID" />
-  </Match>
 
-  <Match>
-    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED" />
-  </Match>
+  <!-- ============================ 1. SHARED BASELINE ============================ -->
 
   <!--
     PA_PUBLIC_PRIMITIVE_ATTRIBUTE:
-    Entity fields are intentionally public for direct access in Panache Active Record pattern.
-    This is the standard Quarkus Panache design. The publicId field follows the same pattern
-    as the existing id field and other entity fields.
+    Entity fields are intentionally public for direct access in the Panache Active
+    Record pattern. This is the standard Quarkus Panache design; publicId follows the
+    same pattern as id and the other entity fields.
   -->
   <Match>
     <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" />
     <Class name="~de\.vptr\.aimathtutor\.entity\..*Entity" />
     <Field name="publicId" />
-  </Match>
-
-  <!--
-    EI_EXPOSE_REP:
-    SearchFilterBar intentionally exposes its UI components (DatePicker, Button) for parent
-    views to configure listeners and styling. This is the standard Vaadin component pattern.
-  -->
-  <Match>
-    <Bug pattern="EI_EXPOSE_REP" />
-    <Class name="de.vptr.aimathtutor.component.layout.SearchFilterBar" />
-  </Match>
-
-  <!--
-    MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR:
-    Vaadin components commonly call setSizeFull(), setWidthFull(), getElement(), etc.
-    in constructors. This is the standard Vaadin pattern and not a real issue since
-    these classes are not designed for subclassing.
-  -->
-  <Match>
-    <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR" />
   </Match>
 
   <!--
@@ -70,54 +51,13 @@
   </Match>
 
   <!--
-    SE_BAD_FIELD:
-    Vaadin components store non-serializable fields (listeners, services) that are
-    never serialized in practice.
-  -->
-  <Match>
-    <Bug pattern="SE_BAD_FIELD" />
-  </Match>
-
-  <!--
-    REC_CATCH_EXCEPTION:
-    Intentional broad exception catching in error handling utilities.
-  -->
-  <Match>
-    <Bug pattern="REC_CATCH_EXCEPTION" />
-    <Class name="de.vptr.aimathtutor.util.ErrorMessageUtil" />
-  </Match>
-
-  <!--
-    DM_EXIT:
-    PasswordUtil is a CLI utility where System.exit is appropriate.
-  -->
-  <Match>
-    <Bug pattern="DM_EXIT" />
-    <Class name="de.vptr.aimathtutor.util.PasswordUtil" />
-  </Match>
-
-  <!--
-    NP_NULL_ON_SOME_PATH:
-    Lambda null dereference in AdminLessonsView — DTOs are validated before use.
-  -->
-  <Match>
-    <Bug pattern="NP_NULL_ON_SOME_PATH" />
-    <Class name="~de\.vptr\.aimathtutor\.view\.admin\.AdminLessonsView.*" />
-  </Match>
-
-  <!--
-    UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR:
-    DTO fields are populated by Jackson deserialization, not constructors.
+    UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR / UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD:
+    DTO fields are populated by Jackson deserialization, not by constructors.
   -->
   <Match>
     <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" />
     <Class name="~de\.vptr\.aimathtutor\.dto\..*" />
   </Match>
-
-  <!--
-    UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD:
-    Response DTO fields are populated by Jackson deserialization from API responses.
-  -->
   <Match>
     <Bug pattern="UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD" />
     <Class name="~de\.vptr\.aimathtutor\.dto\..*" />
@@ -125,17 +65,55 @@
 
   <!--
     THROWS_METHOD_THROWS_RUNTIMEEXCEPTION:
-    Intentional pattern for validation and error handling methods.
+    Intentional pattern for validation and error-handling methods.
   -->
   <Match>
     <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION" />
   </Match>
 
   <!--
+    DM_EXIT:
+    PasswordUtil is a CLI utility (make password) where System.exit is appropriate.
+  -->
+  <Match>
+    <Bug pattern="DM_EXIT" />
+    <Class name="de.vptr.aimathtutor.util.PasswordUtil" />
+  </Match>
+
+  <!-- ============================== 2. VAADIN UI =============================== -->
+
+  <!--
+    SE_NO_SERIALVERSIONID / SE_TRANSIENT_FIELD_NOT_RESTORED / SE_BAD_FIELD:
+    Vaadin Flow components are Serializable by inheritance but are never actually
+    serialized here - they are ephemeral and created per request/session. Adding
+    serialVersionUID would be boilerplate that implies a serialization contract the
+    application does not have. Same decision as -Xlint:-serial in the compiler args.
+  -->
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID" />
+  </Match>
+  <Match>
+    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED" />
+  </Match>
+  <Match>
+    <Bug pattern="SE_BAD_FIELD" />
+  </Match>
+
+  <!--
+    MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR:
+    Vaadin components routinely call setSizeFull(), setWidthFull(), getElement() etc.
+    in constructors. This is the standard Vaadin pattern, and these classes are not
+    designed for subclassing. Same decision as -Xlint:-this-escape.
+  -->
+  <Match>
+    <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR" />
+  </Match>
+
+  <!--
     CT_CONSTRUCTOR_THROW:
-    Vaadin components commonly throw from constructors during initialization
-    (e.g., setIcon, addThemeVariants). The object is fully initialized before
-    any throwable call, and these classes are not designed for subclassing.
+    Vaadin components can throw from constructors during initialization (setIcon,
+    addThemeVariants). The object is fully initialized before any throwing call and
+    the class is not designed for subclassing.
   -->
   <Match>
     <Bug pattern="CT_CONSTRUCTOR_THROW" />
@@ -143,11 +121,31 @@
   </Match>
 
   <!--
+    REC_CATCH_EXCEPTION:
+    Intentional broad exception catching in the error-handling utility.
+  -->
+  <Match>
+    <Bug pattern="REC_CATCH_EXCEPTION" />
+    <Class name="de.vptr.aimathtutor.util.ErrorMessageUtil" />
+  </Match>
+
+  <!-- ========================= 3. PROJECT-SPECIFIC ========================== -->
+
+  <!--
+    EI_EXPOSE_REP:
+    SearchFilterBar intentionally exposes its UI components (DatePicker, Button) so
+    parent views can attach listeners and styling. Standard Vaadin component pattern.
+  -->
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP" />
+    <Class name="de.vptr.aimathtutor.component.layout.SearchFilterBar" />
+  </Match>
+
+  <!--
     DLS_DEAD_LOCAL_STORE:
-    Future return values from ui.access() and async chains are assigned to
-    variables named `ignored` to satisfy Error Prone's
-    FutureReturnValueIgnored check. The assignment signals fire-and-forget intent.
-    Excluded per-class for the specific methods that intentionally discard futures.
+    Futures returned by ui.access() and async chains are assigned to locals named
+    `ignored` to satisfy Error Prone's FutureReturnValueIgnored check. The assignment
+    signals fire-and-forget intent. Scoped per class to the methods that do this.
   -->
   <Match>
     <Bug pattern="DLS_DEAD_LOCAL_STORE" />
@@ -181,4 +179,5 @@
     <Bug pattern="DLS_DEAD_LOCAL_STORE" />
     <Class name="de.vptr.aimathtutor.view.admin.AdminConfigView" />
   </Match>
+
 </FindBugsFilter>

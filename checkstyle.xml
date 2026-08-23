@@ -129,6 +129,14 @@
             <message key="import.illegal"
                 value="Import UlidCreator directly is not allowed — use UlidUtil instead." />
         </module>
+        <!-- REST Assured is centralised behind TestUtil so that base URI, auth and
+             content-type defaults cannot drift per test class. -->
+        <module name="IllegalImport">
+            <property name="id" value="IllegalImport.RestAssured" />
+            <property name="illegalPkgs" value="io.restassured" />
+            <message key="import.illegal"
+                value="Importing from io.restassured directly is not allowed — use TestUtil instead to ensure consistent testing patterns." />
+        </module>
         <!-- The logging facade is fixed by AGENTS.md: org.jboss.logging.Logger. SLF4J and
              java.util.logging both resolve on the classpath through transitive Quarkus
              dependencies, so nothing but this rule stops one from being imported by accident.
@@ -184,10 +192,66 @@
         <module name="RegexpSinglelineJava">
             <property name="id" value="RegexpSinglelineJava.JoinFetchCollection" />
             <property name="format"
-                value="(?i)JOIN\s+FETCH\s+\w+\.(comments|exercises|commentFlags|userGroupMetas|users|interactions|sessions|members|replies|flags|metas|tags|children|parents)\b" />
+                value="(?i)JOIN\s+FETCH\s+\w+\.(userAccountMetas|userGroupMetas|outgoingPayments|incomingPayments|commentFlags|interactions|exercises|sessions|comments|children|parents|payments|replies|members|metas|posts|flags|tags|users)\b" />
             <property name="ignoreComments" value="true" />
             <property name="message"
-                value="JOIN FETCH on a collection cannot coexist with setMaxResults. Use @BatchSize, a second 'WHERE id IN :ids' query, or remove the JOIN FETCH." />
+                value="JOIN FETCH on a collection cannot coexist with pagination (HHH000104, in-memory paging). Use @BatchSize, a second 'WHERE id IN :ids' query, or drop the JOIN FETCH." />
+        </module>
+
+        <!--
+            The blanket escape hatches below are banned outright rather than suppressed
+            case by case: each one switches a whole gate off for a file, which makes the
+            gate report a conformance it never checked. Narrow, justified exemptions
+            belong in this project's suppression files, where they are reviewable.
+        -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.SuppressWarningsPmd" />
+            <property name="format"
+                value="@SuppressWarnings\s*\(\s*&quot;PMD&quot;\s*\)" />
+            <property name="ignoreComments" value="false" />
+            <property name="message"
+                value="@SuppressWarnings(&quot;PMD&quot;) is banned - refactor the code to eliminate PMD warnings properly." />
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.SuppressWarningsPmdUnusedImports" />
+            <property name="format"
+                value="@SuppressWarnings\s*\(\s*&quot;PMD\.UnusedImports&quot;\s*\)" />
+            <property name="ignoreComments" value="false" />
+            <property name="message"
+                value="@SuppressWarnings(&quot;PMD.UnusedImports&quot;) is banned - refactor the code to eliminate unused imports properly." />
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.SuppressWarningsPmdDuplicatedCode" />
+            <property name="format"
+                value="@SuppressWarnings\s*\(\s*&quot;PMD\.DuplicatedCode&quot;\s*\)" />
+            <property name="ignoreComments" value="false" />
+            <property name="message"
+                value="@SuppressWarnings(&quot;PMD.DuplicatedCode&quot;) is banned - refactor the code to eliminate duplication properly." />
+        </module>
+        <!-- Scoped exceptions live in each project's checkstyle-suppressions.xml: the
+             Jackson response DTOs whose no-arg deserialization constructors legitimately
+             leave fields unset, and test sources (Mockito/builder setup). -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="SuppressWarningsNullAway" />
+            <property name="format"
+                value="@SuppressWarnings\s*\(\s*\{?[^)]*&quot;NullAway&quot;" />
+            <property name="ignoreComments" value="false" />
+            <property name="message"
+                value="@SuppressWarnings(&quot;NullAway&quot;) is banned - fix nullability with @Nullable annotations and Objects.requireNonNull guards instead." />
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.CpdOff" />
+            <property name="format" value="//\s*CPD-OFF" />
+            <property name="ignoreComments" value="false" />
+            <property name="message"
+                value="// CPD-OFF is banned - refactor the code to eliminate duplication properly." />
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.CpdOn" />
+            <property name="format" value="//\s*CPD-ON" />
+            <property name="ignoreComments" value="false" />
+            <property name="message"
+                value="// CPD-ON is banned - refactor the code to eliminate duplication properly." />
         </module>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL" />

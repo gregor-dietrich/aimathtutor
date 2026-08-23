@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ruleset name="AIMathTutor PMD Rules"
+<ruleset name="Shared PMD Rules"
     xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
-    <description>Minimal PMD rules for AIMathTutor. Focus on critical issues only.</description>
+    <description>Minimal PMD rules shared by the Midas and AIMathTutor projects.
+        Focus on critical issues only; keep this file byte-identical across both.</description>
 
     <!-- Error Prone: Only critical rules -->
     <rule ref="category/java/errorprone.xml">
@@ -36,6 +37,7 @@
         <exclude name="SystemPrintln" />
         <exclude name="UnitTestShouldUseTestAnnotation" />
         <exclude name="UnitTestContainsTooManyAsserts" />
+        <exclude name="UnitTestShouldIncludeAssert" />
         <exclude name="LooseCoupling" />
         <exclude name="MethodReturnsInternalArray" />
         <exclude name="MissingOverride" />
@@ -47,6 +49,23 @@
         <exclude name="UnitTestAssertionsShouldIncludeMessage" />
         <exclude name="UseCollectionIsEmpty" />
         <exclude name="UseVarargs" />
+    </rule>
+
+    <!--
+        UnitTestShouldIncludeAssert, taught this codebase's assertion vocabulary rather
+        than switched off. The rule only recognises assert*/verify* by default, so two
+        common shapes here look assertion-free to it:
+          - REST Assured chains, whose terminal assertion is .then().statusCode(...)
+          - resource tests that delegate the whole request-and-assert to a TestUtil
+            test* helper
+        Both really do assert; naming them here keeps the rule live for tests that
+        genuinely assert nothing. Add new shared assertion helpers to this list.
+    -->
+    <rule ref="category/java/bestpractices.xml/UnitTestShouldIncludeAssert">
+        <properties>
+            <property name="extraAssertMethodNames"
+                value="statusCode,assertRateLimitResponse,testAuthorizedDeleteWithNotFound,testAuthorizedDeleteWithSuccess,testAuthorizedGetWithExistingResource,testAuthorizedGetWithExistingResourceAndJson,testAuthorizedGetWithJson,testAuthorizedGetWithNonExistentResource,testAuthorizedPatchWithJson,testAuthorizedPostWithConflict,testAuthorizedPostWithCreation,testAuthorizedPostWithInsufficientRole,testAuthorizedPostWithSyntaxError,testAuthorizedPostWithValidationError,testAuthorizedPutWithJson,testAuthorizedRequestWithInsufficientRole,testAuthorizedRequestWithRateLimit,testAuthorizedSearchWithJson,testPermitAllGetWithJson,testUnauthorizedAccess,testUnauthorizedDelete,testUnauthorizedPatch,testUnauthorizedPost,testUnauthorizedPut" />
+        </properties>
     </rule>
 
     <!-- Design: Only critical rules -->
@@ -105,6 +124,7 @@
         <exclude name="CommentDefaultAccessModifier" />
         <exclude name="ConfusingTernary" />
         <exclude name="LambdaCanBeMethodReference" />
+        <exclude name="LinguisticNaming" />
         <exclude name="FieldDeclarationsShouldBeAtStartOfClass" />
         <exclude name="ForLoopShouldBeWhileLoop" />
         <exclude name="LocalVariableCouldBeFinal" />
@@ -127,6 +147,23 @@
         <exclude name="UseExplicitTypes" />
         <exclude name="UselessParentheses" />
         <exclude name="UselessQualifiedThis" />
+    </rule>
+
+    <!--
+        LinguisticNaming, narrowed to the checks that hold here rather than switched
+        off entirely. See the property comments below.
+    -->
+    <rule ref="category/java/codestyle.xml/LinguisticNaming">
+        <properties>
+            <!-- The field/variable check is the part that earns its keep here (it catches
+                 a Map named isSomethingFlags). The getter and transform-method checks are
+                 switched off because they fire on the test naming convention rather than
+                 on real antipatterns: a test named methodUnderTest_expectedOutcome reads
+                 as a getter (getAccountBalance_restrictsToDateRange) or as a transform
+                 method (toLongCountMap_shouldMapCorrectly) and is void by definition. -->
+            <property name="checkGetters" value="false" />
+            <property name="checkPrefixedTransformMethods" value="false" />
+        </properties>
     </rule>
 
     <!-- Performance: Only critical rules -->

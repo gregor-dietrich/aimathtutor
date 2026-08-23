@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
@@ -237,7 +238,7 @@ public class AdminLessonsView extends AbstractAdminView {
             // Only show lessons that are not descendants of the current lesson
             final var availableParents = this.allLessons.stream().map(LessonViewDto::toLessonDto)
                     .filter(cat -> lesson == null || !this.isDescendantOf(cat, lesson))
-                    .filter(cat -> lesson == null || !cat.publicId.equals(lesson.publicId)).toList();
+                    .filter(cat -> lesson == null || !Objects.equals(cat.publicId, lesson.publicId)).toList();
             parentField.setItems(availableParents);
         }
         // Allow clearing the selection to make it a root lesson
@@ -248,10 +249,11 @@ public class AdminLessonsView extends AbstractAdminView {
                 .bind(cat -> cat.name, (cat, value) -> cat.name = value);
         this.binder.forField(parentField).bind(cat -> {
             // Convert from DTO parent field
-            if (cat.parent != null && cat.parent.publicId != null && this.allLessons != null) {
+            final var catParent = cat.parent;
+            if (catParent != null && catParent.publicId != null && this.allLessons != null) {
                 // Find the LessonDto from available parents
                 return this.allLessons.stream().map(LessonViewDto::toLessonDto)
-                        .filter(c -> c.publicId.equals(cat.parent.publicId)).findFirst().orElse(null);
+                        .filter(c -> Objects.equals(c.publicId, catParent.publicId)).findFirst().orElse(null);
             }
             return null;
         }, (cat, value) -> {
@@ -296,15 +298,17 @@ public class AdminLessonsView extends AbstractAdminView {
     }
 
     private boolean isDescendantOf(final LessonDto potential, final LessonDto ancestor) {
-        if (potential.parent == null) {
+        final var parentRef = potential.parent;
+        if (parentRef == null) {
             return false;
         }
-        if (potential.parent.publicId.equals(ancestor.publicId)) {
+        final var parentPublicId = parentRef.publicId;
+        if (Objects.equals(parentPublicId, ancestor.publicId)) {
             return true;
         }
 
         // Find the parent in the list and check recursively
-        final var parent = this.allLessons.stream().filter(cat -> cat.publicId.equals(potential.parent.publicId))
+        final var parent = this.allLessons.stream().filter(cat -> Objects.equals(cat.publicId, parentPublicId))
                 .map(LessonViewDto::toLessonDto).findFirst().orElse(null);
 
         return parent != null && this.isDescendantOf(parent, ancestor);

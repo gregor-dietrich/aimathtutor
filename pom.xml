@@ -14,6 +14,11 @@
 
     <!-- Project Settings -->
     <skipITs>true</skipITs>
+    <!-- The coverage minima below are calibrated against a run that includes the *IT
+    tests, which are the only coverage of the repository package, so the check has to
+    stand down when ITs are skipped. The sibling Midas project sets this to a literal
+    false because it has no *IT classes and its minima are unit-test-only. -->
+    <jacoco.check.skip>${skipITs}</jacoco.check.skip>
     <java.version>25</java.version>
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -341,6 +346,8 @@
         </executions>
         <configuration>
           <configLocation>checkstyle.xml</configLocation>
+          <propertyExpansion>
+            org.checkstyle.google.suppressionfilter.config=${project.basedir}/checkstyle-suppressions.xml</propertyExpansion>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -394,6 +401,7 @@
               -Xep:StringSplitter:ERROR
               -Xep:StringConcatToTextBlock:ERROR
               -Xep:StatementSwitchToExpressionSwitch:ERROR
+              -Xep:UnnecessaryAssignment:ERROR
               -Xep:UnnecessaryMethodReference:ERROR
               -Xep:UnusedVariable:ERROR
               -Xep:EffectivelyPrivate:ERROR</arg>
@@ -457,9 +465,16 @@
         <version>${jacoco-plugin.version}</version>
         <executions>
           <execution>
+            <id>prepare-agent</id>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
+            <configuration>
+              <excludes>
+                <exclude>org/jboss/**</exclude>
+                <exclude>io/netty/**</exclude>
+              </excludes>
+            </configuration>
           </execution>
           <!-- Bound to post-integration-test, not test: failsafe runs the *IT tests at
           integration-test and appends to the same jacoco.exec, so a report generated at
@@ -482,7 +497,7 @@
               <goal>check</goal>
             </goals>
             <configuration>
-              <skip>${skipITs}</skip>
+              <skip>${jacoco.check.skip}</skip>
               <rules>
                 <rule>
                   <element>BUNDLE</element>
@@ -538,6 +553,17 @@
             <goals>
               <goal>add-third-party</goal>
             </goals>
+            <configuration>
+              <!-- Without these the report is generated but nothing fails, so a
+              commercial or source-available dependency slips in silently. -->
+              <failOnMissing>true</failOnMissing>
+              <failOnBlacklist>true</failOnBlacklist>
+              <excludedLicenses>
+                Commercial||Proprietary||SSPL||Elastic License||Business Source
+                License||Commons Clause||Elastic License 2.0||Server Side Public
+                License||BUSL-1.1||Polyform||PolyForm
+              </excludedLicenses>
+            </configuration>
           </execution>
         </executions>
       </plugin>
