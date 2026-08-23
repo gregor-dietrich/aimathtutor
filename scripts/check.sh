@@ -50,7 +50,8 @@ if ! command -v ${MVN_CMD} &> /dev/null; then
     echo "Please install Maven version ${REQUIRED_MAVEN_VERSION} or higher and add it to PATH."
     exit 5
 fi
-MAVEN_VERSION=$(${MVN_CMD} -version | head -n 1 | awk '{print $3}')
+MVN_VERSION_OUTPUT=$(${MVN_CMD} -version)
+MAVEN_VERSION=$(head -n 1 <<< "${MVN_VERSION_OUTPUT}" | awk '{print $3}')
 if [[ -z "$MAVEN_VERSION" ]]; then
     echo "ERROR: Could not determine Maven version. Exiting."
     exit 6
@@ -64,6 +65,33 @@ if [[ $versions != "$(sort -V <<< "$versions")" ]]; then
     exit 7
 fi
 echo "Maven version check passed. (>= ${REQUIRED_MAVEN_VERSION})"
+
+# The JDK running Maven can differ from `java` on PATH (e.g. Homebrew's mvn
+# wrapper picks its own bundled JDK when JAVA_HOME is unset). The build tooling
+# (PMD, Error Prone, ...) is only guaranteed to work on the pinned JDK, so the
+# JVM Maven actually runs on must match the required major version exactly.
+MVN_JAVA_VERSION=$(awk '/^Java version:/ {print $3}' <<< "${MVN_VERSION_OUTPUT}" | tr -d ',')
+if [[ -z "$MVN_JAVA_VERSION" ]]; then
+    echo "ERROR: Could not determine the JDK Maven runs on. Exiting."
+    exit 8
+fi
+echo "Detected Maven JDK version: ${MVN_JAVA_VERSION}"
+
+if [[ $MVN_JAVA_VERSION =~ ^1\.([0-9]+) ]]; then
+    MVN_JAVA_MAJOR_VERSION=${BASH_REMATCH[1]}
+elif [[ $MVN_JAVA_VERSION =~ ^([0-9]+) ]]; then
+    MVN_JAVA_MAJOR_VERSION=${BASH_REMATCH[1]}
+else
+    echo "ERROR: Could not parse the Maven JDK version format. Exiting."
+    exit 9
+fi
+
+if [[ $MVN_JAVA_MAJOR_VERSION -ne $REQUIRED_JDK_VERSION ]]; then
+    echo "ERROR: Maven (${MVN_CMD}) runs on JDK ${MVN_JAVA_VERSION}, but exactly JDK ${REQUIRED_JDK_VERSION} is required. Exiting."
+    echo "Point JAVA_HOME at a JDK ${REQUIRED_JDK_VERSION} installation, e.g. on macOS: export JAVA_HOME=\"\$(/usr/libexec/java_home -v ${REQUIRED_JDK_VERSION})\"."
+    exit 10
+fi
+echo "Maven JDK version check passed. (== ${REQUIRED_JDK_VERSION})"
 echo "Environment checks completed."
 
 echo "Checking dependency version pins..."
