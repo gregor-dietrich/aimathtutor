@@ -4,6 +4,10 @@
 A version property is the unit of work: it is what you edit to bump, and one property can
 pin several artifacts (${vaadin.version} covers three). The artifacts behind each property
 are resolved from the pom so Maven Central can be queried by real groupId:artifactId.
+
+Multi-module projects are scanned as the root pom plus every <modules> pom; module poms
+inherit the root pom's properties, and dependencies between the project's own modules are
+skipped (they are not published to Maven Central).
 """
 
 import re
@@ -104,68 +108,110 @@ def child_text(element: ET.Element, name: str) -> str | None:
     return text or None
 
 
-def get_version_pins(pom_path: Path) -> PomScan:
-    """Group every version-pinned artifact in the pom under the property that pins it.
+def project_coordinate(root: ET.Element) -> Coordinate | None:
+    """The pom's own groupId:artifactId, with the groupId inherited from <parent> if absent."""
+    artifact = child_text(root, "artifactId")
+    group = child_text(root, "groupId")
+    if group is None:
+        parent = root.find("m:parent", POM_NS)
+        if parent is not None:
+            group = child_text(parent, "groupId")
+    return Coordinate(group, artifact) if group and artifact else None
+
+
+def find_pom_paths(root_pom: Path) -> list[Path]:
+    """The root pom followed by the pom of every <modules> entry it declares."""
+    poms = [root_pom]
+    root = ET.parse(root_pom).getroot()
+    for module in root.iterfind(".//m:modules/m:module", POM_NS):
+        module_pom = root_pom.parent / (module.text or "").strip() / "pom.xml"
+        if module_pom.is_file() and module_pom not in poms:
+            poms.append(module_pom)
+    return poms
+
+
+def get_version_pins(pom_paths: list[Path]) -> PomScan:
+    """Group every version-pinned artifact in the poms under the property that pins it.
 
     Artifacts without a version of their own are managed by an imported BOM and cannot be
     bumped here; those and any unresolvable declaration are summarised in the notes instead.
     """
-    root = ET.parse(pom_path).getroot()
-    properties = get_properties(root)
+    roots = [ET.parse(path).getroot() for path in pom_paths]
+    # Module poms inherit the root pom's properties; a module's own definition wins.
+    base_properties = get_properties(roots[0])
+    # The reactor's own modules are not published to Maven Central; dependencies between
+    # them are skipped rather than looked up.
+    reactor = {c for c in (project_coordinate(root) for root in roots) if c is not None}
 
     pins: dict[str, Pin] = {}
     notes: list[str] = []
+    all_properties: dict[str, str] = dict(base_properties)
     artifacts = 0
     managed = 0
+    internal = 0
 
-    for element in root.iter():
-        tag = element.tag.split("}")[-1]
-        if tag not in COORDINATE_TAGS:
-            continue
+    for root in roots:
+        properties = {**base_properties, **get_properties(root)}
+        all_properties.update(properties)
 
-        raw_artifact = child_text(element, "artifactId")
-        if raw_artifact is None:
-            continue  # e.g. spotless' <eclipse> block, which is not a coordinate
-
-        raw_version = child_text(element, "version")
-        if raw_version is None:
-            managed += 1  # version comes from an imported BOM; nothing to bump here
-            continue
-
-        raw_group = child_text(element, "groupId")
-        if raw_group is None:
-            if tag != "plugin":
+        for element in root.iter():
+            tag = element.tag.split("}")[-1]
+            if tag not in COORDINATE_TAGS:
                 continue
-            raw_group = DEFAULT_PLUGIN_GROUP
 
-        group = resolve(raw_group, properties)
-        artifact = resolve(raw_artifact, properties)
-        version = resolve(raw_version, properties)
-        if group is None or artifact is None or version is None:
-            notes.append(f"{raw_group}:{raw_artifact}:{raw_version} — unresolved property, skipped")
-            continue
+            raw_artifact = child_text(element, "artifactId")
+            if raw_artifact is None:
+                continue  # e.g. spotless' <eclipse> block, which is not a coordinate
 
-        coordinate = Coordinate(group, artifact)
-        match = SINGLE_PLACEHOLDER.match(raw_version)
-        # A hardcoded version has no property to bump, so the coordinate itself is the edit site.
-        name = match.group(1) if match else str(coordinate)
+            raw_version = child_text(element, "version")
+            if raw_version is None:
+                managed += 1  # version comes from an imported BOM; nothing to bump here
+                continue
 
-        pin = pins.get(name)
-        if pin is None:
-            pins[name] = Pin(name, version, [coordinate], match is not None)
-            artifacts += 1
-        elif coordinate not in pin.coordinates:
-            # The same property legitimately pins several artifacts; a differing version under
-            # one name means a profile overrode the property, which changes what a bump means.
-            if version != pin.version:
-                notes.append(f"{name} resolves to both {pin.version} and {version}, checking {pin.version}")
-            pin.coordinates.append(coordinate)
-            artifacts += 1
+            raw_group = child_text(element, "groupId")
+            if raw_group is None:
+                if tag != "plugin":
+                    continue
+                raw_group = DEFAULT_PLUGIN_GROUP
+
+            group = resolve(raw_group, properties)
+            artifact = resolve(raw_artifact, properties)
+            if group is None or artifact is None:
+                notes.append(f"{raw_group}:{raw_artifact}:{raw_version} — unresolved property, skipped")
+                continue
+
+            coordinate = Coordinate(group, artifact)
+            if coordinate in reactor:
+                internal += 1
+                continue
+
+            version = resolve(raw_version, properties)
+            if version is None:
+                notes.append(f"{raw_group}:{raw_artifact}:{raw_version} — unresolved property, skipped")
+                continue
+
+            match = SINGLE_PLACEHOLDER.match(raw_version)
+            # A hardcoded version has no property to bump, so the coordinate itself is the edit site.
+            name = match.group(1) if match else str(coordinate)
+
+            pin = pins.get(name)
+            if pin is None:
+                pins[name] = Pin(name, version, [coordinate], match is not None)
+                artifacts += 1
+            elif coordinate not in pin.coordinates:
+                # The same property legitimately pins several artifacts; a differing version under
+                # one name means a profile overrode the property, which changes what a bump means.
+                if version != pin.version:
+                    notes.append(f"{name} resolves to both {pin.version} and {version}, checking {pin.version}")
+                pin.coordinates.append(coordinate)
+                artifacts += 1
 
     if managed:
         notes.append(f"{managed} artifact(s) without an explicit version (managed by a BOM), skipped")
+    if internal:
+        notes.append(f"{internal} dependency declaration(s) on the project's own modules, skipped")
 
-    unmapped = sorted(name for name in properties if name.endswith(".version") and name not in pins)
+    unmapped = sorted(name for name in all_properties if name.endswith(".version") and name not in pins)
     return PomScan(sorted(pins.values()), artifacts, notes, unmapped)
 
 
@@ -276,7 +322,7 @@ def main() -> None:
         print(f"ERROR: {POM_PATH} not found.", file=sys.stderr)
         sys.exit(1)
 
-    scan = get_version_pins(POM_PATH)
+    scan = get_version_pins(find_pom_paths(POM_PATH))
     print(
         f"Checking {len(scan.pins)} version properties "
         f"({scan.artifact_count} artifacts) against Maven Central...\n"
