@@ -38,9 +38,9 @@
     <quarkus.platform.version>3.33.3.1</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
-    <checkstyle.version>14.0.0</checkstyle.version>
+    <checkstyle.version>14.1.0</checkstyle.version>
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
-    <compiler-plugin.version>3.15.0</compiler-plugin.version>
+    <compiler-plugin.version>3.16.0</compiler-plugin.version>
     <dependency-check-plugin.version>13.0.0</dependency-check-plugin.version>
     <eclipse-formatter.version>4.40</eclipse-formatter.version>
     <error-prone.version>2.50.0</error-prone.version>
@@ -54,11 +54,11 @@
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
-    <nullaway.version>0.14.0</nullaway.version>
+    <nullaway.version>0.14.1</nullaway.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.4</spotbugs-annotations.version>
     <spotbugs-plugin.version>4.10.4.0</spotbugs-plugin.version>
-    <spotless-plugin.version>3.10.0</spotless-plugin.version>
+    <spotless-plugin.version>3.10.1</spotless-plugin.version>
     <surefire-plugin.version>3.5.6</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
     <vaadin.version>25.2.6</vaadin.version>
