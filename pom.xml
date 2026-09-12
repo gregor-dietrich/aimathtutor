@@ -35,7 +35,7 @@
     LTS line only, and raise the Dependabot bound in the same change. -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.33.3.1</quarkus.platform.version>
+    <quarkus.platform.version>3.33.3.2</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
     <checkstyle.version>14.0.0</checkstyle.version>
