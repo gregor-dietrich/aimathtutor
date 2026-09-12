@@ -78,7 +78,7 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
-FROM eclipse-temurin:25.0.3_9-jre-noble
+FROM eclipse-temurin:25.0.4_7-jre-resolute
 
 ENV LANGUAGE='en_US:en'
 
