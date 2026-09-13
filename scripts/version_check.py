@@ -12,11 +12,11 @@ skipped (they are not published to Maven Central).
 
 import re
 import sys
+import urllib.error
+import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import NamedTuple
-
-import requests
 
 # Repo root is the parent of the scripts/ directory holding this file, so the
 # check works regardless of the caller's current working directory.
@@ -225,7 +225,7 @@ def parse_version(version: str) -> tuple[int, ...]:
     return tuple(int(chunk) for chunk in version.split("."))
 
 
-def get_latest_version(group: str, artifact: str, session: requests.Session | None = None) -> str | None:
+def get_latest_version(group: str, artifact: str) -> str | None:
     """Return the newest stable version of an artifact on Maven Central, or None on failure.
 
     Central's <latest>/<release> markers routinely point at pre-releases (maven-compiler-plugin
@@ -234,18 +234,18 @@ def get_latest_version(group: str, artifact: str, session: requests.Session | No
     publish no purely numeric version at all.
     """
     url = f"{MAVEN_CENTRAL}/{group.replace('.', '/')}/{artifact}/maven-metadata.xml"
-    get = session.get if session is not None else requests.get
     try:
-        response = get(url, timeout=REQUEST_TIMEOUT)
-    except requests.RequestException as exc:
-        print(f"Error: {group}:{artifact} — {exc}", file=sys.stderr)
+        with urllib.request.urlopen(url, timeout=REQUEST_TIMEOUT) as response:
+            content = response.read()
+    except urllib.error.HTTPError as exc:
+        print(f"Error: status {exc.code} for {group}:{artifact}", file=sys.stderr)
         return None
-    if response.status_code != 200:
-        print(f"Error: status {response.status_code} for {group}:{artifact}", file=sys.stderr)
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"Error: {group}:{artifact} — {exc}", file=sys.stderr)
         return None
 
     try:
-        versioning = ET.fromstring(response.content).find("versioning")
+        versioning = ET.fromstring(content).find("versioning")
     except ET.ParseError as exc:
         print(f"Error: {group}:{artifact} — malformed metadata ({exc})", file=sys.stderr)
         return None
@@ -270,7 +270,7 @@ def get_latest_version(group: str, artifact: str, session: requests.Session | No
     return None
 
 
-def get_bump_target(pin: Pin, session: requests.Session) -> tuple[str | None, list[str]]:
+def get_bump_target(pin: Pin) -> tuple[str | None, list[str]]:
     """Find the newest version publishable for every artifact a pin covers, plus any notes.
 
     One property bumped to a version that not all of its artifacts have released would break
@@ -279,7 +279,7 @@ def get_bump_target(pin: Pin, session: requests.Session) -> tuple[str | None, li
     notes: list[str] = []
     latest_per_artifact: dict[Coordinate, str] = {}
     for coordinate in pin.coordinates:
-        latest = get_latest_version(coordinate.group, coordinate.artifact, session)
+        latest = get_latest_version(coordinate.group, coordinate.artifact)
         if latest is None:
             notes.append(f"could not check {coordinate}")
             continue
@@ -332,14 +332,13 @@ def main() -> None:
     unchecked: list[Pin] = []
     notes = list(scan.notes)
 
-    with requests.Session() as session:
-        for pin in scan.pins:
-            target, pin_notes = get_bump_target(pin, session)
-            notes.extend(pin_notes)
-            if target is None:
-                unchecked.append(pin)
-                continue
-            results.append((pin, target, compare(pin.version, target)))
+    for pin in scan.pins:
+        target, pin_notes = get_bump_target(pin)
+        notes.extend(pin_notes)
+        if target is None:
+            unchecked.append(pin)
+            continue
+        results.append((pin, target, compare(pin.version, target)))
 
     outdated = [entry for entry in results if entry[2] == "outdated"]
     if outdated:
