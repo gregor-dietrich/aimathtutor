@@ -46,7 +46,7 @@
     <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260313.1</html-sanitizer.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
-    3.33.3.1). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
+    3.33.3.2). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
     what records @QuarkusTest coverage; a mismatched jacoco-maven-plugin cannot map that exec data,
     dropping all @QuarkusTest coverage to 0%.
     Bumped manually in lockstep with Quarkus only; scripts/version_check.py reporting a newer
@@ -54,6 +54,8 @@
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
+    <!-- Netty security pin (transitive via Quarkus). See dependencyManagement. -->
+    <netty.version>4.1.138.Final</netty.version>
     <nullaway.version>0.14.1</nullaway.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.4</spotbugs-annotations.version>
@@ -66,6 +68,34 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Pin Netty to fix CVEs. Declared before the Quarkus BOM so this BOM wins version
+      resolution over the Quarkus managed version.
+        4.1.136.Final -> 4.1.138.Final, transitive via Quarkus, fixes:
+          Published advisories (open Dependabot alerts):
+          - CVE-2026-75595 (critical): SNI routing bypass via fragmented TLS ClientHello falls
+            back to the default SslContext (netty-handler)
+          - CVE-2026-75596: fragmented ClientHello records trigger quadratic pre-handshake
+            reassembly in SNI parsing (netty-handler)
+          - CVE-2026-59903: CORS Vary header overwrite enables cache poisoning (netty-codec-http)
+          Additionally, 4.1.138.Final fixes a batch of advisories whose CVE IDs were not yet
+          assigned at the time of this pin: request smuggling and header validation gaps in the
+          HTTP/1.1 and HTTP/2 codecs, unbounded resource usage in HTTP/1.1, SPDY, SMTP, MQTT and
+          Redis codecs, a HAProxy decoder memory leak, and OCSP certificate validation. Pinning
+          4.1.137.Final (the first patched version for the three published CVEs) would leave
+          that batch to reopen as alerts once published.
+          Reachability was not assessed per CVE; the TLS/SNI ones only matter when TLS terminates
+          in-app rather than at a reverse proxy.
+      Quarkus cannot resolve this by platform bump: 3.33.3.2 is the newest 3.33.x and manages
+      Netty at 4.1.136.Final, and dependabot.yml deliberately ignores io.quarkus:* >= 3.34.0.
+      Remove this pin once Quarkus 3.33.x manages Netty >= 4.1.138.Final. -->
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
       <!-- Quarkus -->
       <dependency>
         <groupId>${quarkus.platform.group-id}</groupId>
