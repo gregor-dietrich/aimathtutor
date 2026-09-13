@@ -3,14 +3,27 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "redhat.java"
   },
-  "java.format.settings.url": "eclipse-formatter.xml",
-  "java.format.settings.profile": "AIMathTutor",
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
   },
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
   },
+  "editor.formatOnSave": true,
   "java.autobuild.enabled": false,
   "java.cleanup.actions": [
     // Specifies a list of cleanup actions applied automatically to improve code quality.
@@ -24,7 +37,6 @@
     "organizeImports", // Organizes imports to remove unused ones and sort them according to the project's import order.
     "qualifyMembers", // Qualifies field and method accesses with 'this' or the class name when necessary.
     "renameFileToType", // Renames the file to match the class name, ensuring consistency between file and class names.
-    "renameUnusedLocalVariables", // Renames unused local variables to improve readability and reduce confusion.
     "switchExpression", // Converts traditional switch statements to modern switch expressions where applicable.
     "tryWithResource", // Converts try-finally blocks into try-with-resources statements where applicable.
     "useSwitchForInstanceofPattern" // Uses switch expressions for instanceof pattern matching to enhance readability.
@@ -43,15 +55,28 @@
   // does not bound total RSS.
   "java.jdt.ls.vmargs": "-XX:+UseG1GC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30 -XX:G1PeriodicGCInterval=60000 -XX:MaxMetaspaceSize=512m -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m -Xlog:disable",
   "java.edit.validateAllOpenBuffersOnChanges": true, // Validates all open Java files when changes occur, ensuring real-time error detection.
+  "java.format.settings.url": "eclipse-formatter.xml",
+  "java.format.settings.profile": "AIMathTutor",
   "java.sources.organizeImports.starThreshold": 9999,
   "java.sources.organizeImports.staticStarThreshold": 9999,
+  "json.schemaDownload.enable": false,
   "microprofile.tools.validation.unknown.excluded": [
     "quarkus.log.*",
     "quarkus.datasource.*",
     "quarkus.hibernate-orm.*",
     "openai.organization-id"
   ],
+  "python.analysis.autoIndent": true,
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.enablePytestSupport": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/midas-test/src"],
+  "python.analysis.generateWithTypeAnnotation": true,
+  "python.analysis.indexing": true,
+  "python.analysis.typeCheckingMode": "strict",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.testing.pytestEnabled": true,
   "quarkus.tools.alwaysShowWelcomePage": false,
   "redhat.telemetry.enabled": false,
-  "workbench.startupEditor": "none"
+  "workbench.startupEditor": "none",
+  "java.debug.settings.hotCodeReplace": "auto"
 }
