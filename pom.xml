@@ -55,7 +55,7 @@
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
     <!-- Netty security pin (transitive via Quarkus). See dependencyManagement. -->
-    <netty.version>4.1.138.Final</netty.version>
+    <netty.version>4.2.18.Final</netty.version>
     <nullaway.version>0.14.1</nullaway.version>
     <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.4</spotbugs-annotations.version>
