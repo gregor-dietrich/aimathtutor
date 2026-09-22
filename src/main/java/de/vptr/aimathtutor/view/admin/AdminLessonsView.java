@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -21,6 +22,10 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider.HierarchyFormat;
+import com.vaadin.flow.data.provider.hierarchy.TreeData;
+import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
@@ -88,7 +93,7 @@ public class AdminLessonsView extends AbstractAdminView {
         // Find root lessons (lessons without parent)
         final var rootLessons = this.allLessons.stream().filter(LessonViewDto::isRootLesson).toList();
 
-        this.treeGrid.setItems(rootLessons, this::getChildrenOfLesson);
+        this.setTreeItems(rootLessons, this::getChildrenOfLesson);
         this.treeGrid.expandRecursively(rootLessons, 2); // Expand up to 2 levels
     }
 
@@ -115,11 +120,28 @@ public class AdminLessonsView extends AbstractAdminView {
                 .filter(cat -> cat.parentPublicId == null || !lessonPublicIdsInResults.contains(cat.parentPublicId))
                 .toList();
 
-        this.treeGrid.setItems(topLevelLessons, lesson -> searchResults.stream()
+        this.setTreeItems(topLevelLessons, lesson -> searchResults.stream()
                 .filter(cat -> cat.parentPublicId != null && cat.parentPublicId.equals(lesson.publicId)).toList());
 
         // Expand all search results for better visibility
         this.treeGrid.expandRecursively(topLevelLessons, 10);
+    }
+
+    /**
+     * Populate the tree grid from the given root lessons, recursively resolving children.
+     * {@link HierarchyFormat#NESTED} is passed explicitly because the shorthand
+     * {@code TreeGrid.setItems(Collection, ValueProvider)} is deprecated and switches to
+     * {@link HierarchyFormat#FLATTENED} in Vaadin 26.
+     *
+     * @param rootLessons
+     *            the lessons to show at the top level
+     * @param childProvider
+     *            provides the children of a lesson
+     */
+    private void setTreeItems(final List<LessonViewDto> rootLessons,
+            final ValueProvider<LessonViewDto, Collection<LessonViewDto>> childProvider) {
+        this.treeGrid.setDataProvider(new TreeDataProvider<>(
+                new TreeData<LessonViewDto>().addItems(rootLessons, childProvider), HierarchyFormat.NESTED));
     }
 
     /**

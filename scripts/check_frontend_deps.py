@@ -26,6 +26,13 @@ MIN_PINS: Dict[str, str] = {"react-router": "7.15.0"}
 # A concrete dotted version (e.g. "25.2.0"); excludes npm "$ref" overrides and "$var".
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+")
 
+# Location of the core versions manifest inside vaadin-core-internal, newest layout first:
+# Vaadin 25.3 moved it from the jar root into META-INF/VAADIN/versions/.
+CORE_MANIFEST_MEMBERS: Tuple[str, ...] = (
+    "META-INF/VAADIN/versions/vaadin-core-versions.json",
+    "vaadin-core-versions.json",
+)
+
 # Remedy printed when a @vaadin/* component has drifted off its manifest version.
 REGEN_HINT = (
     "Regenerate the committed frontend manifest at the pinned Vaadin version "
@@ -95,7 +102,11 @@ def load_expected_versions(repo: Path, version: str) -> Dict[str, str]:
         )
     expected: Dict[str, str] = {}
     with zipfile.ZipFile(core_jar) as jar:
-        collect_manifest_versions(json.loads(jar.read("vaadin-core-versions.json")), expected)
+        names = set(jar.namelist())
+        member = next((m for m in CORE_MANIFEST_MEMBERS if m in names), None)
+        if member is None:
+            raise KeyError(f"None of {list(CORE_MANIFEST_MEMBERS)} found in {core_jar}.")
+        collect_manifest_versions(json.loads(jar.read(member)), expected)
 
     # A few @vaadin/* packages (e.g. common-frontend, vaadin-themable-mixin) are shipped
     # by Vaadin but omitted from vaadin-core-versions.json. Vaadin's pre-built bundle jar
