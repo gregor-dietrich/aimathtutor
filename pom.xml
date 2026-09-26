@@ -35,7 +35,7 @@
     LTS line only, and raise the Dependabot bound in the same change. -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.33.3.2</quarkus.platform.version>
+    <quarkus.platform.version>3.33.3.3</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
     <checkstyle.version>14.1.0</checkstyle.version>
@@ -46,7 +46,7 @@
     <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260922.1</html-sanitizer.version>
     <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
-    3.33.3.2). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
+    3.33.3.3). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
     what records @QuarkusTest coverage; a mismatched jacoco-maven-plugin cannot map that exec data,
     dropping all @QuarkusTest coverage to 0%.
     Bumped manually in lockstep with Quarkus only; scripts/version_check.py reporting a newer
@@ -85,7 +85,7 @@
           that batch to reopen as alerts once published.
           Reachability was not assessed per CVE; the TLS/SNI ones only matter when TLS terminates
           in-app rather than at a reverse proxy.
-      Quarkus cannot resolve this by platform bump: 3.33.3.2 is the newest 3.33.x and manages
+      Quarkus cannot resolve this by platform bump: 3.33.3.3 is the newest 3.33.x and manages
       Netty at 4.1.136.Final, and dependabot.yml deliberately ignores io.quarkus:* >= 3.34.0.
       Remove this pin once Quarkus 3.33.x manages Netty >= 4.1.138.Final. -->
       <dependency>
