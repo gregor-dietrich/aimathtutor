@@ -10,7 +10,6 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -23,7 +22,7 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing lessons in the system.
  */
 @Entity
-@Table(name = "lessons", indexes = { @Index(name = "idx_lesson_parent", columnList = "parent_id") })
+@Table(name = "lessons")
 @NamedQueries({ @NamedQuery(name = "Lesson.findAllOrdered", query = "FROM LessonEntity ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "Lesson.findByPublicId", query = "FROM LessonEntity WHERE publicId = :p"),
         @NamedQuery(name = "Lesson.findRootLessons",

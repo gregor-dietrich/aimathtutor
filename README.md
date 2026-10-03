@@ -27,7 +27,7 @@ When deploying to production, it is **critical** to override the default databas
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
 - `make build` – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
-- `make password` – Generate a salt+hash for a password (for init.sql)
+- `make password` – Generate a salt+hash for a password (for seed data)
 - `make release` – Pull from origin/main, `make build`, `make tag`, and push Docker image tag to registry
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 

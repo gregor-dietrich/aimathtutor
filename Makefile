@@ -14,7 +14,7 @@ help:
 	@echo "  make install          - make check, mvn clean install -DskipTests, regenerate frontend manifest"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
 	@echo "  make lint             - run quality gate plugins"
-	@echo "  make password         - generate a salt+hash for a password (for init.sql)"
+	@echo "  make password         - generate a salt+hash for a password (for seed data)"
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
 	@echo "  make release          - pull from origin/main, make build, make tag, and push Docker image to registry"
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"

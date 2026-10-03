@@ -110,9 +110,18 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
-- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist).
-- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
-- **Password utility:** `make password` generates salt+hash for `init.sql`.
+- **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is `validate`-only. Migrations live in `src/main/resources/db/migration`, and dev/test demo data lives in `db/demo/R__demo_data.sql`.
+- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`. Production seeds only `admin`.
+- **Password utility:** `make password` generates salt+hash for seed data.
+
+### Migrations
+
+- Name files `V<n>__<snake_case>.sql`, with `n` = the next integer.
+- **Never edit a migration that has been merged to main**, because checksum validation fails on every deployed DB. Fix it with a new migration.
+- Every entity change that alters the schema ships with its migration in the same PR.
+- Indexes and constraints are declared only in migrations, never via `@Table(indexes/uniqueConstraints)`.
+- Update `R__demo_data.sql` when the migration touches seeded tables.
+- Migrations must be safe on a populated production DB. For example, a new `NOT NULL` column needs a `DEFAULT` or a backfill.
 
 ## Encrypt-at-Rest
 
