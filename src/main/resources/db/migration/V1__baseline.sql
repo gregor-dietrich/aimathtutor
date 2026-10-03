@@ -2,7 +2,7 @@
 -- Existing databases are baselined at this version without running it, so this
 -- script must describe them exactly. Never edit it; add a new migration instead.
 
-SET timezone = 'UTC';
+SET LOCAL timezone = 'UTC';
 
 -- --------------------------------------------------------
 

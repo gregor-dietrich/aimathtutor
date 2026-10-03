@@ -1,8 +1,10 @@
 -- Demo data for the dev and test profiles only (never loaded in production).
 -- Repeatable migration: runs after all versioned migrations. Update it in the same
 -- PR as any migration that changes a table seeded here.
+-- Re-runs skip rows that already exist (matched by public_id); a row whose fixed id
+-- is taken by other data still fails loudly. Sequences continue after the highest id.
 
-SET timezone = 'UTC';
+SET LOCAL timezone = 'UTC';
 
 --
 -- Inserts for table `users`
@@ -11,10 +13,10 @@ SET timezone = 'UTC';
 INSERT INTO users (id, public_id, username, password, rank_id, activated) VALUES
 (2, '01ARZ3NDEKTSV4RRFFQ69G5FB1', 'teacher', '$2a$10$yvvtRbAoD6FH3wcXZw9QSuc8YSV1CbM/PJMY2lSTrJO2BzbXLC6ly', 2, TRUE),
 (3, '01ARZ3NDEKTSV4RRFFQ69G5FB2', 'student1', '$2a$10$oa6TbPoMnJlG/O5kDo.pVerJCfkA1.G0YN/gv2lLAwVQrrBTRK8MC', 3, TRUE),
-(4, '01ARZ3NDEKTSV4RRFFQ69G5FB3', 'student2', '$2a$10$i8vt4KcKh/ajw5xGHldP8.lrXX0rrG94S0cJ/XUg.svAajTcZvkeC', 3, TRUE);
+(4, '01ARZ3NDEKTSV4RRFFQ69G5FB3', 'student2', '$2a$10$i8vt4KcKh/ajw5xGHldP8.lrXX0rrG94S0cJ/XUg.svAajTcZvkeC', 3, TRUE)
+ON CONFLICT (public_id) DO NOTHING;
 
--- Set sequence to 4 so next value is 5
-SELECT setval('users_id_seq', 4, true);
+SELECT setval('users_id_seq', (SELECT max(id) FROM users));
 
 -- Inserts for table `lessons`
 
@@ -22,10 +24,10 @@ INSERT INTO lessons (id, public_id, name, parent_id) VALUES
 (1, '01ARZ3NDEKTSV4RRFFQ69G5FC0', 'Algebra', NULL),
 (2, '01ARZ3NDEKTSV4RRFFQ69G5FC1', 'Linear Equations', 1),
 (3, '01ARZ3NDEKTSV4RRFFQ69G5FC2', 'Quadratic Equations', 1),
-(4, '01ARZ3NDEKTSV4RRFFQ69G5FC3', 'Polynomials', 1);
+(4, '01ARZ3NDEKTSV4RRFFQ69G5FC3', 'Polynomials', 1)
+ON CONFLICT (public_id) DO NOTHING;
 
--- Set sequence to 4 so next value is 5
-SELECT setval('lessons_id_seq', 4, true);
+SELECT setval('lessons_id_seq', (SELECT max(id) FROM lessons));
 
 -- Seed exercises for lessons
 
@@ -37,14 +39,15 @@ VALUES
   (4, '01ARZ3NDEKTSV4RRFFQ69G5FD3', 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'INTERMEDIATE', '["Use distributive property","Combine like terms"]'),
   (5, '01ARZ3NDEKTSV4RRFFQ69G5FD4', 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'INTERMEDIATE', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]'),
   (6, '01ARZ3NDEKTSV4RRFFQ69G5FD5', 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'ADVANCED', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
-  (7, '01ARZ3NDEKTSV4RRFFQ69G5FD6', 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'ADVANCED', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]');
+  (7, '01ARZ3NDEKTSV4RRFFQ69G5FD6', 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'ADVANCED', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]')
+ON CONFLICT (public_id) DO NOTHING;
 
 INSERT INTO exercises (id, public_id, title, content, user_id, lesson_id, published, commentable, graspable_enabled)
 VALUES
-  (8, '01ARZ3NDEKTSV4RRFFQ69G5FD7', 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE);
+  (8, '01ARZ3NDEKTSV4RRFFQ69G5FD7', 'Standalone Exercise', 'This exercise is not in any category and does not have Graspable Math enabled. Just for testing.', 2, NULL, TRUE, TRUE, FALSE)
+ON CONFLICT (public_id) DO NOTHING;
 
--- Set sequence to 8 so next value is 9
-SELECT setval('exercises_id_seq', 8, true);
+SELECT setval('exercises_id_seq', (SELECT max(id) FROM exercises));
 
 --
 -- Inserts for table `user_groups`
@@ -55,10 +58,10 @@ INSERT INTO user_groups (id, public_id, name) VALUES
 (2, '01ARZ3NDEKTSV4RRFFQ69G5FE1', 'Class 8A'),
 (3, '01ARZ3NDEKTSV4RRFFQ69G5FE2', 'Class 8B'),
 (4, '01ARZ3NDEKTSV4RRFFQ69G5FE3', 'Class 9A'),
-(5, '01ARZ3NDEKTSV4RRFFQ69G5FE4', 'Class 9B');
+(5, '01ARZ3NDEKTSV4RRFFQ69G5FE4', 'Class 9B')
+ON CONFLICT (public_id) DO NOTHING;
 
--- Set sequence to 5 so next value is 6
-SELECT setval('user_groups_id_seq', 5, true);
+SELECT setval('user_groups_id_seq', (SELECT max(id) FROM user_groups));
 
 --
 -- Inserts for table `user_groups_meta`
@@ -67,10 +70,10 @@ SELECT setval('user_groups_id_seq', 5, true);
 INSERT INTO user_groups_meta (id, public_id, user_id, group_id) VALUES
 (1, '01ARZ3NDEKTSV4RRFFQ69G5FF0', 2, 1),
 (2, '01ARZ3NDEKTSV4RRFFQ69G5FF1', 3, 4),
-(3, '01ARZ3NDEKTSV4RRFFQ69G5FF2', 4, 4);
+(3, '01ARZ3NDEKTSV4RRFFQ69G5FF2', 4, 4)
+ON CONFLICT (public_id) DO NOTHING;
 
--- Set sequence to 3 so next value is 4
-SELECT setval('user_groups_meta_id_seq', 3, true);
+SELECT setval('user_groups_meta_id_seq', (SELECT max(id) FROM user_groups_meta));
 
 --
 -- Seed data for `student_sessions`
@@ -170,6 +173,7 @@ INSERT INTO student_sessions (id, public_id, session_id, user_id, exercise_id, s
   (91, '01ARZ3NDEKTSV4RRFFQ69G5F2T', 'c2c0f2c6-4da3-4e82-aee9-a1c9cee06c43', 4, 7, CURRENT_TIMESTAMP - INTERVAL '29 days' + INTERVAL '1 hour', CURRENT_TIMESTAMP - INTERVAL '29 days' + INTERVAL '1 hour 37 minutes', FALSE, 7, 2, 5),
   (92, '01ARZ3NDEKTSV4RRFFQ69G5F2V', 'c9b19bb6-4676-4a87-9bfe-b3d378b51b99', 4, 3, CURRENT_TIMESTAMP - INTERVAL '29 days' + INTERVAL '11 hours', CURRENT_TIMESTAMP - INTERVAL '29 days' + INTERVAL '11 hours 33 minutes', TRUE, 27, 13, 2),
   (93, '01ARZ3NDEKTSV4RRFFQ69G5F2W', '147b2760-d746-4fbf-8562-53c7a6cc1717', 4, 6, CURRENT_TIMESTAMP - INTERVAL '30 days' + INTERVAL '7 hours', CURRENT_TIMESTAMP - INTERVAL '30 days' + INTERVAL '7 hours 37 minutes', FALSE, 28, 13, 4),
-  (94, '01ARZ3NDEKTSV4RRFFQ69G5F2X', '0477a373-e104-4888-aec1-fe128019ae4c', 4, 7, CURRENT_TIMESTAMP - INTERVAL '30 days' + INTERVAL '3 hours', CURRENT_TIMESTAMP - INTERVAL '30 days' + INTERVAL '3 hours 12 minutes', FALSE, 13, 7, 5);
+  (94, '01ARZ3NDEKTSV4RRFFQ69G5F2X', '0477a373-e104-4888-aec1-fe128019ae4c', 4, 7, CURRENT_TIMESTAMP - INTERVAL '30 days' + INTERVAL '3 hours', CURRENT_TIMESTAMP - INTERVAL '30 days' + INTERVAL '3 hours 12 minutes', FALSE, 13, 7, 5)
+ON CONFLICT (public_id) DO NOTHING;
 
-SELECT setval('student_sessions_id_seq', 94, true);
+SELECT setval('student_sessions_id_seq', (SELECT max(id) FROM student_sessions));
