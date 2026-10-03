@@ -11,6 +11,7 @@
     "@vaadin/vaadin-themable-mixin": "25.3.0",
     "@vaadin/vaadin-usage-statistics": "2.1.3",
     "date-fns": "4.4.0",
+    "dompurify": "3.4.16",
     "lit": "3.3.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -49,6 +50,7 @@
       "@vaadin/vaadin-themable-mixin": "25.3.0",
       "@vaadin/vaadin-usage-statistics": "2.1.3",
       "date-fns": "4.4.0",
+      "dompurify": "3.4.16",
       "lit": "3.3.3",
       "react": "19.3.0",
       "react-dom": "19.3.0",
@@ -77,7 +79,7 @@
       "vite": "8.3.0",
       "vite-plugin-checker": "0.14.5"
     },
-    "hash": "19284635381626bc8a12d151923db8c83d0fec1191427863b575cd049e81ff08"
+    "hash": "204d6fded47427691774c3f99e2bf0021620633347ed93a62301de4d78eaaeab"
   },
   "overrides": {
     "@vaadin/a11y-base": "25.3.0",
@@ -151,6 +153,7 @@
     "@vaadin/vertical-layout": "25.3.0",
     "@vaadin/virtual-list": "25.3.0",
     "date-fns": "$date-fns",
+    "dompurify": "$dompurify",
     "lit": "$lit",
     "react": "$react",
     "react-dom": "$react-dom",
