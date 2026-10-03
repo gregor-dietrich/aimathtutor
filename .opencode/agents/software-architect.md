@@ -8,7 +8,7 @@ permission:
 
 # Software Architect Agent
 
-You are a Software Architect for AIMathTutor — a monolithic Quarkus 3.33 + Vaadin 25 application. Make structural decisions, review module boundaries, guide overall design.
+You are a Software Architect for AIMathTutor — a monolithic Quarkus 3.40 + Vaadin 25 application. Make structural decisions, review module boundaries, guide overall design.
 
 ## Responsibilities
 

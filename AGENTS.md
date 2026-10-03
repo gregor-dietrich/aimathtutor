@@ -25,7 +25,7 @@ You should challenge the user's request if it would result in implementing anti-
 
 ## Architecture
 
-- **Monolithic Quarkus 3.33 + Vaadin 25.** No REST boundary between views and services.
+- **Monolithic Quarkus 3.40 + Vaadin 25.** No REST boundary between views and services.
 - **Base package:** `de.vptr.aimathtutor`. Views inject services via CDI (`@Inject`). REST clients are **only** for external AI APIs.
 - **Packages:** `entity/` (Panache Active Record), `repository/`, `service/` (`@ApplicationScoped`), `view/` (Vaadin), `dto/`, `security/`, `event/`, `exception/`, `util/`, `component/`.
 - **Graspable Math** workspace embedded via Vaadin + JavaScript API.
