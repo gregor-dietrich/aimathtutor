@@ -21,10 +21,14 @@ FRONTEND_DIR: Path = REPO_ROOT / (sys.argv[1] if len(sys.argv) > 1 else ".")
 
 # Security-sensitive Flow "default dependencies" that Vaadin's frontend generator
 # can silently re-pin below a safe minimum on rebuild. One "<npm-package>": "<min>".
-MIN_PINS: Dict[str, str] = {"react-router": "7.15.0"}
+MIN_PINS: Dict[str, str] = {"react-router": "7.15.0", "dompurify": "3.4.16"}
 
 # A concrete dotted version (e.g. "25.2.0"); excludes npm "$ref" overrides and "$var".
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+")
+
+# MIN_PINS accept stable releases only: a prerelease such as "3.4.16-rc.1" sorts below its release
+# and may lack the fix, but parse_version() would rank it at or above the minimum.
+STABLE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 # Location of the core versions manifest inside vaadin-core-internal, newest layout first:
 # Vaadin 25.3 moved it from the jar root into META-INF/VAADIN/versions/.
@@ -181,16 +185,16 @@ def check_min_pins(pkg_json: Dict[str, Any], pkg_lock: Optional[Dict[str, Any]])
         if not json_versions:
             errors.append(f"{pkg} missing version in package.json (require >= {minimum}).")
         for found in sorted(json_versions):
-            if parse_version(found) < parse_version(minimum):
-                errors.append(f"{pkg} is {found} in package.json (require >= {minimum}).")
+            if not STABLE.match(found) or parse_version(found) < parse_version(minimum):
+                errors.append(f"{pkg} is {found} in package.json (require stable >= {minimum}).")
 
         if pkg_lock is not None:
             lock_versions = collect_lock_versions(pkg_lock, pkg).get(pkg, set())
             if not lock_versions:
                 errors.append(f"{pkg} missing version in package-lock.json (require >= {minimum}).")
             for found in sorted(lock_versions):
-                if parse_version(found) < parse_version(minimum):
-                    errors.append(f"{pkg} is {found} in package-lock.json (require >= {minimum}).")
+                if not STABLE.match(found) or parse_version(found) < parse_version(minimum):
+                    errors.append(f"{pkg} is {found} in package-lock.json (require stable >= {minimum}).")
     return errors
 
 
