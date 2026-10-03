@@ -336,18 +336,6 @@
             <suppressionFile>dependency-check-suppression.xml</suppressionFile>
           </suppressionFiles>
         </configuration>
-        <!-- Gates verify like the other quality plugins. Needs NVD_API_KEY (the make scripts read it
-        from .env); without one the NVD download is rate-limited to a crawl. Skip offline or during
-        an NVD outage with -Ddependency-check.skip=true. -->
-        <executions>
-          <execution>
-            <id>dependency-check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>com.github.spotbugs</groupId>

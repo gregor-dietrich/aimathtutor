@@ -12,12 +12,6 @@ if command -v java &> /dev/null; then
   fi
 fi
 
-# dependency-check (bound to verify) needs an NVD API key; take it from the gitignored .env unless set
-if [[ -z "${NVD_API_KEY:-}" && -f "$DIR/../.env" ]]; then
-  NVD_API_KEY=$(grep -m1 '^NVD_API_KEY=' "$DIR/../.env" | cut -d= -f2- | tr -d "\r\"'")
-  export NVD_API_KEY
-fi
-
 if ! command -v mvn &> /dev/null; then
     MVN_CMD="./mvnw"
 else
