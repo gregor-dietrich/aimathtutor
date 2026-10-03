@@ -29,13 +29,13 @@
 
     <!-- Quarkus Platform. Tracks the latest LTS line, NOT the latest stable release: LTS
     lines receive patch releases for far longer, which is what a project that ships releases
-    needs. 3.33.x is the current LTS, so newer stable releases are deliberately not adopted;
+    needs. 3.40.x is the current LTS, so newer stable releases are deliberately not adopted;
     scripts/version_check.py reporting one as "outdated" is expected and informational, and
-    .github/dependabot.yml ignores io.quarkus(.platform):* >=3.34.0 to match. Move to a new
+    .github/dependabot.yml ignores io.quarkus(.platform):* >=3.41.0 to match. Move to a new
     LTS line only, and raise the Dependabot bound in the same change. -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.33.4</quarkus.platform.version>
+    <quarkus.platform.version>3.40.1</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
     <checkstyle.version>14.3.0</checkstyle.version>
@@ -47,13 +47,8 @@
     <html-sanitizer.version>20260924.2</html-sanitizer.version>
     <!-- Jackson 3 security pin (transitive via Vaadin). See dependencyManagement. -->
     <jackson3.version>3.1.7</jackson3.version>
-    <!-- Must match the org.jacoco version bundled by io.quarkus:quarkus-jacoco (0.8.14 in Quarkus
-    3.33.4). quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is
-    what records @QuarkusTest coverage; a mismatched jacoco-maven-plugin cannot map that exec data,
-    dropping all @QuarkusTest coverage to 0%.
-    Bumped manually in lockstep with Quarkus only; scripts/version_check.py reporting a newer
-    JaCoCo as "outdated" is expected and informational. Dependabot is configured to match. -->
-    <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
+    <!-- Also drives the org.jacoco artifacts quarkus-jacoco uses. See dependencyManagement. -->
+    <jacoco-plugin.version>0.8.15</jacoco-plugin.version>
     <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
     <nullaway.version>0.14.2</nullaway.version>
@@ -99,9 +94,10 @@
           CVE-2026-91777 (quadratic forward-reference resolution), which had no Dependabot alerts
           at the time of this pin. Pinning 3.1.6 (the first patched version for the three alerts
           above) would leave those to reopen as alerts.
-          Stays on the 3.1.x line Vaadin 25.3 is built against rather than moving to 3.2.x.
+          Stays on the 3.1.x line Vaadin 25.3 is built against rather than moving to 3.2.x, which
+          needs com.fasterxml.jackson.core:jackson-annotations 2.22 (Quarkus manages 2.21).
           Not reachable in this app as far as assessed: no @ClientCallable or event data binds
-          the affected types. Jackson 2 (via Quarkus) is already patched at 2.21.6.
+          the affected types. Jackson 2 (via Quarkus) is already patched at 2.21.7.
       Vaadin cannot resolve this by version bump: 25.3.0 is the newest release and ships 3.1.5.
       Remove this pin once Vaadin manages tools.jackson.core >= 3.1.7. -->
       <dependency>
@@ -110,6 +106,33 @@
         <version>${jackson3.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- Align the org.jacoco artifacts of io.quarkus:quarkus-jacoco with jacoco-maven-plugin.
+      quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is what
+      records @QuarkusTest coverage; if that version differs from the plugin's, the plugin cannot
+      map the exec data and coverage collapses (measured: 89.8% -> 7%). Managing them here lets
+      JaCoCo update independently of the version the Quarkus BOM bundles. -->
+      <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.core</artifactId>
+        <version>${jacoco-plugin.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.report</artifactId>
+        <version>${jacoco-plugin.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.agent</artifactId>
+        <version>${jacoco-plugin.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.agent</artifactId>
+        <version>${jacoco-plugin.version}</version>
+        <classifier>runtime</classifier>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -226,7 +249,7 @@
     application classes, which is the only way @QuarkusTest coverage reaches jacoco.exec.
     Removing it drops every service/repository/entity class to 0% (measured: 89.8% -> 28.1%),
     because the jacoco-maven-plugin's java agent cannot map classes loaded via
-    QuarkusClassLoader. See the jacoco-plugin.version comment for the matching version pin. -->
+    QuarkusClassLoader. Its org.jacoco version is aligned with the plugin in dependencyManagement. -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jacoco</artifactId>

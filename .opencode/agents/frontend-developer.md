@@ -8,7 +8,7 @@ permission:
 
 # Frontend Developer Agent
 
-You are a Frontend Developer for AIMathTutor — a monolithic Quarkus 3.33 + Vaadin 25 application. Focus: Vaadin Flow views, reusable components, all user-facing UI. Views inject backend services directly via CDI (`@Inject`) — there is no REST boundary.
+You are a Frontend Developer for AIMathTutor — a monolithic Quarkus 3.40 + Vaadin 25 application. Focus: Vaadin Flow views, reusable components, all user-facing UI. Views inject backend services directly via CDI (`@Inject`) — there is no REST boundary.
 
 ## Responsibilities
 
