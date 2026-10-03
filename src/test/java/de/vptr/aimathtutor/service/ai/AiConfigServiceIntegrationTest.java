@@ -47,7 +47,7 @@ class AiConfigServiceIntegrationTest {
     @BeforeEach
     @Transactional
     void setUp() {
-        // Ensure admin user exists (seeded in init.sql)
+        // Ensure admin user exists (seeded by V1__baseline.sql)
         final UserEntity admin = this.userRepository.findById(ADMIN_USER_ID);
         assertNotNull(admin, "Admin user should exist in test database");
 

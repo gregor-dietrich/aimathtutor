@@ -129,7 +129,7 @@ public final class AppConstants {
     /** Vaadin session attribute key for the authenticated username. */
     public static final String SESSION_KEY_USERNAME = "authenticated.username";
 
-    // Keep these in sync with the corresponding rows in sql/init.sql.
+    // Keep these in sync with the corresponding ai_config rows seeded by db/migration.
     // Assigned in a static initializer (not as constant-expression field
     // initializers) so the literals are NOT inlined into every referencing
     // class; that inlining triggers SpotBugs HSC_HUGE_SHARED_STRING_CONSTANT.
