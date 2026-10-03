@@ -17,7 +17,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -30,10 +29,7 @@ import jakarta.validation.constraints.NotBlank;
  * Entity representing math exercises in the system.
  */
 @Entity
-@Table(name = "exercises",
-        indexes = { @Index(name = "idx_exercise_lesson_published", columnList = "lesson_id, published"),
-                @Index(name = "idx_exercise_public_id", columnList = "public_id"),
-                @Index(name = "idx_exercise_user_id", columnList = "user_id, created DESC") })
+@Table(name = "exercises")
 @NamedQueries({
         @NamedQuery(name = "Exercise.findAllOrdered",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "

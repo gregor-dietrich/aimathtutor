@@ -9,20 +9,17 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 /**
  * Entity representing metadata for user group memberships.
  */
 @Entity
-@Table(name = "user_groups_meta", indexes = { @Index(name = "idx_ugm_group_user", columnList = "group_id, user_id") },
-        uniqueConstraints = { @UniqueConstraint(name = "uk_ugm_group_user", columnNames = { "group_id", "user_id" }) })
+@Table(name = "user_groups_meta")
 @NamedQueries({ @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
         @NamedQuery(name = "UserGroupMeta.findByPublicId", query = "FROM UserGroupMetaEntity WHERE publicId = :p"),
         @NamedQuery(name = "UserGroupMeta.findByUserAndGroup",

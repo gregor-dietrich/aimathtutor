@@ -66,5 +66,5 @@ Full-stack compose:
 ## Production Notes
 
 - JVM args required: `--add-opens java.base/java.lang=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.ref=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.misc=ALL-UNNAMED`, `--add-opens java.base/java.nio=ALL-UNNAMED`, `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`, `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`, and `-XX:+EnableDynamicAgentLoading` (set in `JAVA_OPTS_APPEND` in both Dockerfiles)
-- Schema strategy: `validate` (production) — schema must already exist
+- Schema: Flyway creates and upgrades it on startup in every profile; Hibernate only validates (`validate`)
 - AI runtime config: DB-backed, managed via Admin Settings UI at `/admin/config`
