@@ -17,7 +17,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -49,10 +48,7 @@ import jakarta.validation.constraints.NotBlank;
                         + "WHERE LOWER(u.username) LIKE :s ESCAPE '!' ORDER BY u.created DESC"),
         @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r") })
 @Entity
-@Table(name = "users",
-        indexes = { @Index(name = "idx_user_rank", columnList = "rank_id"),
-                @Index(name = "idx_user_activated_banned", columnList = "activated, banned"),
-                @Index(name = "idx_user_created", columnList = "created DESC") })
+@Table(name = "users")
 public class UserEntity extends BaseEntity {
 
     @NotBlank

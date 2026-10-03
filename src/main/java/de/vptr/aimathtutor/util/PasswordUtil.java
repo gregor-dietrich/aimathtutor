@@ -7,7 +7,7 @@ import jakarta.enterprise.inject.spi.CDI;
 
 /**
  * Small CLI utility to generate a bcrypt hash for a password using the project's PasswordHashingService. Intended for
- * local/dev use to create seeded passwords for `init.sql`.
+ * local/dev use to create seeded passwords for `db/demo/R__demo_data.sql`.
  */
 public final class PasswordUtil {
 

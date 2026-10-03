@@ -163,6 +163,16 @@
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
     </dependency>
 
+    <!-- Flyway schema migrations -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-flyway-postgresql</artifactId>
+    </dependency>
+
     <!-- Bean Validator for entity validation -->
     <dependency>
       <groupId>io.quarkus</groupId>
