@@ -157,7 +157,9 @@ public final class AppConstants {
      */
     public static final String SESSION_KEY_CREDENTIAL_STAMP = "authenticated.credentialStamp";
 
-    // Keep these in sync with the corresponding rows in sql/init.sql.
+    // Fallbacks for missing ai_config rows and the admin "reset to defaults" values. V1 seeded
+    // ai_config with these values on fresh installs only; never add a migration that syncs edits
+    // here into ai_config, it would overwrite admin-customised prompts. Diverging is expected.
     // Assigned in a static initializer (not as constant-expression field
     // initializers) so the literals are NOT inlined into every referencing
     // class; that inlining triggers SpotBugs HSC_HUGE_SHARED_STRING_CONSTANT.

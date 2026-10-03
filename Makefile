@@ -14,7 +14,7 @@ help:
 	@echo "  make install          - make check, mvn clean install -DskipTests"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
 	@echo "  make lint             - run quality gate plugins"
-	@echo "  make password         - generate a bcrypt hash for a password (for init.sql or an admin reset)"
+	@echo "  make password         - generate a bcrypt hash for a password (for seed data or an admin reset)"
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
 	@echo "  make regen-frontend   - regenerate frontend manifests for the current Vaadin version"
 	@echo "  make release          - pull from origin/main, test, make tag, and buildx-push multi-platform Docker images"

@@ -73,7 +73,7 @@ If logging in fails with a server error after the reset, check that the app stil
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
 - `make build` – Build the Docker images for the local image store (`make check`, `mvn package`, native-platform `docker build`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
-- `make password` – Generate a bcrypt hash for a password (for init.sql or an administrator reset)
+- `make password` – Generate a bcrypt hash for a password (for seed data or an administrator reset)
 - `make release` – Pull from origin/main, test, `make tag`, and build and push multi-platform Docker images with `docker buildx`
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 

@@ -121,9 +121,18 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
-- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts. `SchemaManagementGuard` refuses one whose schema action is anything but `none`/`validate` under the names it checks: `schema-management.strategy`, the deprecated `database.generation`, and `jakarta.persistence.schema-generation.database.action` and `hibernate.hbm2ddl.auto` via `unsupported-properties`, each under the plain, `"<default>"` and `<default>` persistence-unit names. A new name Hibernate takes the schema action from needs adding there.
-- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
-- **Password utility:** `make password` generates a bcrypt hash for `init.sql` or an administrator reset (README).
+- **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is `validate`-only. Migrations live in `src/main/resources/db/migration`, and dev/test demo data lives in `db/demo/R__demo_data.sql`. Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Flyway and Hibernate start. `SchemaManagementGuard` refuses one whose Hibernate schema action is anything but `none`/`validate` under the names it checks: `schema-management.strategy`, the deprecated `database.generation`, and `jakarta.persistence.schema-generation.database.action` and `hibernate.hbm2ddl.auto` via `unsupported-properties`, each under the plain, `"<default>"` and `<default>` persistence-unit names. A new name Hibernate takes the schema action from needs adding there.
+- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`. Production seeds only `admin`.
+- **Password utility:** `make password` generates a bcrypt hash for seed data or an administrator reset (README).
+
+### Migrations
+
+- Name files `V<n>__<snake_case>.sql`, with `n` = the next integer.
+- **Never edit a migration that has been merged to main**, because checksum validation fails on every deployed DB. Fix it with a new migration.
+- Every entity change that alters the schema ships with its migration in the same PR.
+- Indexes and constraints are declared only in migrations, never via `@Table(indexes/uniqueConstraints)`.
+- Update `R__demo_data.sql` when the migration touches seeded tables.
+- Migrations must be safe on a populated production DB. For example, a new `NOT NULL` column needs a `DEFAULT` or a backfill.
 
 ## Encrypt-at-Rest
 
