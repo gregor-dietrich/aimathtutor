@@ -11,4 +11,17 @@
             <cve>CVE-XXXX-XXXXX</cve>
         </suppress>
     -->
+    <suppress>
+        <notes>False positive: cpe:/a:line:line is the LINE messenger app, not the
+        org.parttio:line-awesome icon font (matched only on the name; flagged CVE-2015-0897).</notes>
+        <packageUrl regex="true">^pkg:maven/org\.parttio/line-awesome@.*$</packageUrl>
+        <cpe>cpe:/a:line:line</cpe>
+    </suppress>
+    <suppress>
+        <notes>False positive: cpe:/a:postgresql:postgresql is the PostgreSQL server, not the
+        io.quarkus:quarkus-flyway-postgresql extension (matched only on the name and the Quarkus
+        version). Its cpe:/a:quarkus:quarkus match stays active.</notes>
+        <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus-flyway-postgresql@.*$</packageUrl>
+        <cpe>cpe:/a:postgresql:postgresql</cpe>
+    </suppress>
 </suppressions>

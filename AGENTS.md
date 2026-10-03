@@ -85,7 +85,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 | Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml`                                                                                                         |
 | PMD             | `./mvnw pmd:check`                              | Unused code, complexity, style rules                                                                                                                  |
 | CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY). Property `pmd-cpd.minTokens` in `pom.xml` (default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
-| OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Requires `NVD_API_KEY`; `failBuildOnCVSS=7`                                                                                                           |
+| OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Bound to `verify`; `failBuildOnCVSS=7`. Needs `NVD_API_KEY` (`make` scripts read it from `.env`). Skip: `-Ddependency-check.skip=true`                |
 | License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                                                                                                                                |
 
 CI order: `test` → `security` (CodeQL) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
