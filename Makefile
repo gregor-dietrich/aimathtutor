@@ -1,9 +1,10 @@
-.PHONY: help branch build check clean coverage dev format install kill lint password rebase regen-frontend release tag test untag
+.PHONY: help audit branch build check clean coverage dev format install kill lint password rebase regen-frontend release tag test untag
 
 MAKEFLAGS += --no-print-directory
 
 help:
 	@echo "AIMathTutor - Available commands:"
+	@echo "  make audit            - run OWASP dependency-check (NVD_API_KEY from environment or .env.build)"
 	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
 	@echo "  make build            - make check, mvn package, build native-platform Docker images into the local store"
 	@echo "  make check            - verify local environment (JDK >=25 and Maven >=3.9.9)"
@@ -21,6 +22,9 @@ help:
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
 	@echo "  make test             - run unit tests (skips ITs)"
 	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
+
+audit:
+	@scripts/audit.sh
 
 branch:
 	@scripts/branch.sh
