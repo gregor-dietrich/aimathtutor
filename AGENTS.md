@@ -87,10 +87,10 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 | Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml`                                                                                                         |
 | PMD             | `./mvnw pmd:check`                              | Unused code, complexity, style rules                                                                                                                  |
 | CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY). Property `pmd-cpd.minTokens` in `pom.xml` (default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
-| OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Requires `NVD_API_KEY`; `failBuildOnCVSS=7`                                                                                                           |
+| OWASP dep-check | `make audit`                                    | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)    |
 | License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                                                                                                                                |
 
-CI order: `test` → `security` (CodeQL) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
+CI order: `test` → `security` (gitleaks + CodeQL + OWASP dep-check) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
 
 - **Compiler warnings are build failures.** `maven-compiler-plugin` passes `-Werror` and `-Xlint:all,-serial,-this-escape,-classfile`, so every javac lint warning and every Error Prone warning (any severity) fails compilation. The three excluded lint categories are deliberate and documented in `pom.xml`; do not exclude further categories to work around a warning — fix the code.
 - **Known upstream build-log noise (do not try to fix):** during `quarkus:build`, Vaadin logs `[WARNING] Addon 'flow-react-*.jar' / 'flow-dnd-*.jar' contains frontend sources under META-INF/resources/frontend/`. These come from Vaadin's own published jars (Vaadin 25.2.1), are not fixable in this repository, and will disappear with a future Vaadin upgrade.
