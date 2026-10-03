@@ -14,16 +14,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 /**
  * CommentFlagEntity: Tracks which users have flagged which comments. Prevents users from flagging the same comment
  * multiple times.
  */
 @Entity
-@Table(name = "comment_flags",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = { "comment_id", "flagger_id" }, name = "uk_comment_flags_unique") })
+@Table(name = "comment_flags")
 @NamedQueries({
         @NamedQuery(name = "CommentFlag.countByCommentAndFlagger",
                 query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u"),

@@ -9,7 +9,6 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -21,10 +20,7 @@ import jakarta.validation.constraints.NotBlank;
  * Entity to log AI interactions and feedback. Useful for analytics, improving AI responses, and debugging.
  */
 @Entity
-@Table(name = "ai_interactions",
-        indexes = { @Index(name = "idx_ai_session", columnList = "session_id"),
-                @Index(name = "idx_ai_user", columnList = "user_id"),
-                @Index(name = "idx_ai_exercise", columnList = "exercise_id") })
+@Table(name = "ai_interactions")
 @NamedQueries({
         @NamedQuery(name = "AiInteraction.findAll", query = "FROM AiInteractionEntity ORDER BY created DESC, id DESC"),
         @NamedQuery(name = "AiInteraction.findByPublicId", query = "FROM AiInteractionEntity WHERE publicId = :p"),

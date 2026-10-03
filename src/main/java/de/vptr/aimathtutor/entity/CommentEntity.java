@@ -12,7 +12,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -82,13 +81,7 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Comment.findFlaggedComments",
                 query = "FROM CommentEntity WHERE flagsCount >= :m AND status = 'VISIBLE' ORDER BY flagsCount DESC"), })
 @Entity
-@Table(name = "comments",
-        indexes = { @Index(name = "idx_comment_exercise_status_created", columnList = "exercise_id, status, created"),
-                @Index(name = "idx_comment_user_created", columnList = "user_id, created"),
-                @Index(name = "idx_comment_parent_status_created", columnList = "parent_comment_id, status, created"),
-                @Index(name = "idx_comment_status_created", columnList = "status, created"),
-                @Index(name = "idx_comment_session_created", columnList = "session_id, created"),
-                @Index(name = "idx_comment_flags_status", columnList = "flags_count, status") })
+@Table(name = "comments")
 public class CommentEntity extends BaseEntity {
 
     @Column(columnDefinition = "TEXT", nullable = false)
