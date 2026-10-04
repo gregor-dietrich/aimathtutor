@@ -19,8 +19,8 @@
 ## Running Tests
 
 ```shell
-make test                                    # all tests (needs Docker)
-./mvnw test                                  # equivalent
+make test                                    # unit tests, skips *IT (needs Docker)
+./mvnw verify -DskipITs=false                # unit + integration tests, as CI runs them
 ./mvnw test -Dtest=AiTutorServiceTest        # single class
 ./mvnw test -Dtest=AiTutorServiceTest#testGenerateHint  # single method
 ```

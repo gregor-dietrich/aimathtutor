@@ -14,8 +14,9 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 
 /**
  * quarkus.flyway.locations is fixed at build time, so a {@code @QuarkusTest}, which builds under the test profile,
- * never sees the production value. This resolves application.properties per profile the way the build does, so a
- * misplaced profile prefix that ships {@code db/demo}'s demo accounts to production fails here.
+ * never sees the production value. This resolves application.properties per profile, as SmallRye Config does at build
+ * time, so a misplaced profile prefix that ships {@code db/demo}'s demo accounts to production fails here. Build-time
+ * overrides from system properties or the environment are out of its reach.
  */
 class FlywayLocationsTest {
 

@@ -18,19 +18,20 @@ import jakarta.persistence.EntityManager;
 @QuarkusTest
 class ForeignKeyIndexIT {
 
-    // An index covers a foreign key when each of the key's n columns sits among the index's first n columns.
-    // No array slices: Hibernate would read the slice's ":" as a named parameter.
+    // A valid, non-partial index covers a foreign key when each of the key's n columns sits among its first n key
+    // columns (indkey lists INCLUDE columns after the indnkeyatts key columns). No array slices: Hibernate would read
+    // the slice's ":" as a named parameter.
     private static final String UNINDEXED_FOREIGN_KEYS = """
             SELECT c.conrelid::regclass || '.' || c.conname
             FROM pg_constraint c
             WHERE c.contype = 'f'
               AND NOT EXISTS (
                 SELECT 1 FROM pg_index i
-                WHERE i.indrelid = c.conrelid
+                WHERE i.indrelid = c.conrelid AND i.indisvalid AND i.indpred IS NULL
                   AND NOT EXISTS (
                     SELECT 1 FROM unnest(c.conkey) AS k(attnum)
                     WHERE coalesce(array_position(string_to_array(i.indkey::text, ' ')::int2[], k.attnum),
-                                   cardinality(c.conkey) + 1) > cardinality(c.conkey)))
+                                   cardinality(c.conkey) + 1) > least(cardinality(c.conkey), i.indnkeyatts)))
             ORDER BY 1
             """;
 
