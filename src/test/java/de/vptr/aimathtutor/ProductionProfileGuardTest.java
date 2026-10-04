@@ -1,8 +1,6 @@
 package de.vptr.aimathtutor;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -14,11 +12,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.quarkus.runtime.LaunchMode;
-import jakarta.annotation.Priority;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.Initialized;
-import jakarta.enterprise.event.Observes;
-import jakarta.interceptor.Interceptor;
 
 class ProductionProfileGuardTest {
 
@@ -51,14 +44,6 @@ class ProductionProfileGuardTest {
     @Test
     @DisplayName("The guard observes container initialization, which runs before Hibernate, not StartupEvent")
     void guardRunsBeforeHibernate() throws NoSuchMethodException {
-        final var parameter =
-                ProductionProfileGuard.class.getDeclaredMethod("checkProfiles", Object.class).getParameters()[0];
-        assertNotNull(parameter.getAnnotation(Observes.class));
-        final var initialized = parameter.getAnnotation(Initialized.class);
-        assertNotNull(initialized);
-        assertEquals(ApplicationScoped.class, initialized.value());
-        final var priority = parameter.getAnnotation(Priority.class);
-        assertNotNull(priority);
-        assertEquals(Interceptor.Priority.PLATFORM_BEFORE, priority.value());
+        StartupGuardAssertions.assertRunsBeforeHibernate(ProductionProfileGuard.class, "checkProfiles");
     }
 }

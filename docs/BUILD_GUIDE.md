@@ -312,7 +312,7 @@ Java compilation runs with a fail-on-warning policy: any javac lint or Error Pro
 
 ### Quarkus build: intentional observer warning
 
-Every build logs `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. This is deliberate: the guard has to run before Hibernate's schema management, which `StartupEvent` does not. Do not "fix" it.
+Every build logs `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. The same warning is logged for `SchemaManagementGuard#checkStrategy`. This is deliberate: both guards have to run before Hibernate's schema management, which `StartupEvent` does not. Do not "fix" it.
 
 ### Frontend build: expected non-fatal warnings
 
