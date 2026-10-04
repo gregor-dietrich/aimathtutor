@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 
@@ -35,6 +37,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
@@ -358,42 +361,62 @@ class UserRankServiceTest {
         rankDto.name = "ConflictRank_" + UUID.randomUUID().toString().substring(0, 8);
         rankDto.commentAdd = true;
         final UserRankViewDto rank = this.userRankService.createRank(rankDto);
-
-        final UserDto userDto = new UserDto();
-        final String suffix = UUID.randomUUID().toString().substring(0, 8);
-        userDto.username = "rankuser_" + suffix;
-        userDto.password = "P@ssw0rd1";
-        userDto.email = "rankuser_" + suffix + "@example.com";
-        userDto.rankPublicId = rank.publicId;
-        userDto.activated = true;
-        this.userService.createUser(userDto);
+        this.createActiveUser(rank.publicId);
 
         final var ex =
                 assertThrows(WebApplicationException.class, () -> this.userRankService.deleteRank(rank.publicId));
         assertEquals(Response.Status.CONFLICT.getStatusCode(), ex.getResponse().getStatus());
     }
 
-    @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = { "updateRank", "patchRank" })
+    @ParameterizedTest(name = "{0} without {1}")
+    @CsvSource({ "updateRank, adminView", "updateRank, userEdit", "updateRank, userRankEdit", "patchRank, adminView",
+            "patchRank, userEdit", "patchRank, userRankEdit" })
     @DisplayName("The rank holding the last active administrators cannot lose an administration permission")
     @TestTransaction
-    void lastAdministratorRankKeepsAdministration(final String method) {
+    void lastAdministratorRankKeepsAdministration(final String method, final String permission) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
 
-        final var e = assertThrows(ValidationException.class, this.removeUserEdit(rank, method));
-        assertTrue(e.getMessage().contains("administrator"));
+        final var e = assertThrows(ValidationException.class, this.editRank(rank, method, permission));
+        assertEquals(AppConstants.LAST_ADMINISTRATOR_MESSAGE, e.getMessage());
     }
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "updateRank", "patchRank" })
+    @DisplayName("The rank holding the last active administrators can be edited when it keeps every permission")
+    @TestTransaction
+    void lastAdministratorRankCanBeEditedWithoutStripping(final String method) {
+        final UserRankViewDto rank = this.createAdministratorRankWithUser();
+
+        assertDoesNotThrow(this.editRank(rank, method, "none"));
+        assertTrue(UserRepository
+                .grantsAdministration(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow()));
+    }
+
+    @ParameterizedTest(name = "{0} without {1}")
+    @CsvSource({ "updateRank, adminView", "updateRank, userEdit", "updateRank, userRankEdit", "patchRank, adminView",
+            "patchRank, userEdit", "patchRank, userRankEdit" })
     @DisplayName("A rank can lose an administration permission while an administrator outside it remains")
     @TestTransaction
-    void administratorRankCanLoseAdministrationWhileAnotherRemains(final String method) {
+    void administratorRankCanLoseAdministrationWhileAnotherRemains(final String method, final String permission) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
         this.createActiveUser(ADMIN_RANK_PUBLIC_ID);
 
-        assertDoesNotThrow(this.removeUserEdit(rank, method));
-        assertFalse(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow().userEdit);
+        assertDoesNotThrow(this.editRank(rank, method, permission));
+        assertFalse(UserRepository
+                .grantsAdministration(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow()));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "updateRank", "patchRank" })
+    @DisplayName("A rank can lose an administration permission when there is no active administrator to protect")
+    @TestTransaction
+    void administratorRankCanLoseAdministrationWithoutActiveAdministrators(final String method) {
+        final UserRankViewDto rank = this.createAdministratorRankWithUser();
+        this.banActiveAdministrators(null);
+
+        assertDoesNotThrow(this.editRank(rank, method, "userEdit"));
+        assertFalse(UserRepository
+                .grantsAdministration(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow()));
     }
 
     /**
@@ -408,9 +431,15 @@ class UserRankServiceTest {
         rankDto.userRankEdit = true;
         final UserRankViewDto rank = this.userRankService.createRank(rankDto);
         this.createActiveUser(rank.publicId);
-        this.userRepository.findAll().stream().filter(u -> u.rank != null && !rank.publicId.equals(u.rank.publicId)
-                && UserRepository.isActiveAdministrator(u)).forEach(u -> u.banned = true);
+        this.banActiveAdministrators(rank.publicId);
         return rank;
+    }
+
+    /** Bans every active administrator, except those holding the given rank if it is not null. */
+    private void banActiveAdministrators(@Nullable final String keptRankPublicId) {
+        this.userRepository.findAll().stream().filter(
+                u -> UserRepository.isActiveAdministrator(u) && !Objects.equals(keptRankPublicId, u.rank.publicId))
+                .forEach(u -> u.banned = true);
     }
 
     private void createActiveUser(final String rankPublicId) {
@@ -423,15 +452,24 @@ class UserRankServiceTest {
         this.userService.createUser(userDto);
     }
 
-    private Executable removeUserEdit(final UserRankViewDto rank, final String method) {
+    /**
+     * Builds the call that edits a rank granting every administration permission. The update sends the whole rank under
+     * a new name, the patch switches on {@code aiConfigEdit}; both also switch off {@code stripped}, unless it is
+     * {@code "none"}.
+     */
+    private Executable editRank(final UserRankViewDto rank, final String method, final String stripped) {
         final UserRankDto dto = new UserRankDto();
-        dto.userEdit = false;
         if ("patchRank".equals(method)) {
+            dto.aiConfigEdit = true;
+            dto.adminView = "adminView".equals(stripped) ? Boolean.FALSE : null;
+            dto.userEdit = "userEdit".equals(stripped) ? Boolean.FALSE : null;
+            dto.userRankEdit = "userRankEdit".equals(stripped) ? Boolean.FALSE : null;
             return () -> this.userRankService.patchRank(rank.publicId, dto);
         }
-        dto.name = rank.name;
-        dto.adminView = true;
-        dto.userRankEdit = true;
+        dto.name = "Renamed_" + UUID.randomUUID().toString().substring(0, 8);
+        dto.adminView = !"adminView".equals(stripped);
+        dto.userEdit = !"userEdit".equals(stripped);
+        dto.userRankEdit = !"userRankEdit".equals(stripped);
         return () -> this.userRankService.updateRank(rank.publicId, dto);
     }
 }

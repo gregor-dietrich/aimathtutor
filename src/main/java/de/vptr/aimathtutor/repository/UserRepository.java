@@ -22,7 +22,7 @@ public class UserRepository extends AbstractRepository {
 
     /**
      * Counts active Administrators (alias {@code u}); the JPQL form of {@link #isActiveAdministrator(UserEntity)}.
-     * Callers append further {@code AND} conditions.
+     * Callers may append further {@code AND} conditions.
      */
     private static final String COUNT_ACTIVE_ADMINISTRATORS =
             "SELECT COUNT(u) FROM UserEntity u WHERE u.activated = true AND u.banned = false"
@@ -229,7 +229,7 @@ public class UserRepository extends AbstractRepository {
     /**
      * Whether a rank makes its active users Administrators: it grants {@code adminView}, {@code userEdit} and
      * {@code userRankEdit}. That set can reach the admin area, reassign any user's rank and grant any permission back,
-     * so a user holding it can recover the system. {@link #COUNT_ACTIVE_ADMINISTRATORS} is the same definition in JPQL.
+     * so a user holding it can recover the system. The count queries below apply the same definition in JPQL.
      *
      * @param rank
      *            the rank to test, may be null

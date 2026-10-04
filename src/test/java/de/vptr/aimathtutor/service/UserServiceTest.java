@@ -21,12 +21,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserDto;
+import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -58,6 +60,9 @@ class UserServiceTest {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private UserRankService userRankService;
 
     @Inject
     private PasswordHashingService passwordHashingService;
@@ -859,7 +864,44 @@ class UserServiceTest {
         final UserViewDto admin = this.createSoleAdministrator();
 
         final var e = assertThrows(ValidationException.class, this.removeAdministrator(admin, method, change));
-        assertTrue(e.getMessage().contains("administrator"));
+        assertEquals(AppConstants.LAST_ADMINISTRATOR_MESSAGE, e.getMessage());
+    }
+
+    @ParameterizedTest(name = "other user's rank without {0}")
+    @ValueSource(strings = { "adminView", "userEdit", "userRankEdit" })
+    @DisplayName("An active user whose rank lacks one administration permission does not count as an administrator")
+    @TestTransaction
+    void userMissingOneAdministrationPermissionIsNoAdministrator(final String missing) {
+        final UserViewDto admin = this.createSoleAdministrator();
+        final UserDto other = this.buildValidDto();
+        other.rankPublicId = this.createRankWithout(missing);
+        other.activated = true;
+        this.userService.createUser(other);
+        final UserDto ban = new UserDto();
+        ban.banned = true;
+
+        final var e = assertThrows(ValidationException.class, () -> this.userService.patchUser(admin.publicId, ban));
+        assertEquals(AppConstants.LAST_ADMINISTRATOR_MESSAGE, e.getMessage());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "updateUser", "patchUser" })
+    @DisplayName("The last active administrator can move to another rank granting every administration permission")
+    @TestTransaction
+    void lastAdministratorCanMoveToAnotherAdministratorRank(final String method) {
+        final UserViewDto admin = this.createSoleAdministrator();
+        final UserDto dto = new UserDto();
+        dto.rankPublicId = this.createRankWithout("none");
+        if ("updateUser".equals(method)) {
+            dto.username = admin.username;
+            dto.activated = true;
+        }
+
+        assertDoesNotThrow("updateUser".equals(method) ? () -> this.userService.updateUser(admin.publicId, dto)
+                : () -> this.userService.patchUser(admin.publicId, dto));
+        final UserEntity moved = this.userRepository.findByPublicId(admin.publicId).orElseThrow();
+        assertEquals(dto.rankPublicId, moved.rank.publicId);
+        assertTrue(UserRepository.isActiveAdministrator(moved));
     }
 
     @ParameterizedTest(name = "{0} ({1})")
@@ -909,6 +951,19 @@ class UserServiceTest {
         }
         return "updateUser".equals(method) ? () -> this.userService.updateUser(admin.publicId, dto)
                 : () -> this.userService.patchUser(admin.publicId, dto);
+    }
+
+    /**
+     * Creates a rank granting every administration permission except {@code missing}, or all of them for
+     * {@code "none"}.
+     */
+    private String createRankWithout(final String missing) {
+        final UserRankDto dto = new UserRankDto();
+        dto.name = "Rank_" + UUID.randomUUID().toString().substring(0, 8);
+        dto.adminView = !"adminView".equals(missing);
+        dto.userEdit = !"userEdit".equals(missing);
+        dto.userRankEdit = !"userRankEdit".equals(missing);
+        return this.userRankService.createRank(dto).publicId;
     }
 
     private UserViewDto createAdministrator() {

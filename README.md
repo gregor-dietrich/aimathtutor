@@ -22,18 +22,26 @@ When deploying to production, it is **critical** to override the default databas
 
 ### Recovering administrator access
 
-The app refuses to delete, ban, deactivate or demote its last active administrator. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database:
+The app refuses to delete, ban, deactivate or demote its last active administrator. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches Maven); the checkout you run `docker compose` from will do.
 
-1. From a checkout, run `make password` and copy the printed `hash=` value.
+1. Run `make password` and copy the printed `hash=` value. Choose a password that meets the app's rules, which `make password` doesn't enforce: 8 to 72 characters, with an uppercase and a lowercase letter, a digit and a symbol.
 2. Open psql in the database container. These are the `docker-compose.yml` defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
 
    ```sh
    docker compose exec db psql -U aimathtutor -d aimathtutor
    ```
 
-3. In psql, restore the Admin rank's administration permissions and reset the account (replace `<hash>` and `<name>`):
+3. List the users holding the Admin rank. Restoring its permissions makes every active one of them an administrator, so review the list, especially after a compromise:
 
    ```sql
+   SELECT u.username, u.activated, u.banned FROM users u JOIN user_ranks r ON r.id = u.rank_id
+     WHERE r.public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+   ```
+
+4. Restore the Admin rank's administration permissions and reset the account (replace `<hash>` and `<name>`; usernames are stored in lower case):
+
+   ```sql
+   BEGIN;
    UPDATE user_ranks SET admin_view = TRUE, user_edit = TRUE, user_rank_edit = TRUE
      WHERE public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
    UPDATE users SET password = '<hash>', banned = FALSE, activated = TRUE,
@@ -41,9 +49,13 @@ The app refuses to delete, ban, deactivate or demote its last active administrat
      WHERE username = '<name>';
    ```
 
-   The hash contains `$`, so type it inside psql or single quotes, never inside a double-quoted shell string, where the shell would expand it.
+   Run `COMMIT;` only if the users `UPDATE` reported `UPDATE 1`; otherwise run `ROLLBACK;` and fix the name. The hash contains `$`, so type it inside psql or single quotes, never inside a double-quoted shell string, where the shell would expand it.
 
-The new password works immediately. Run `docker compose restart app` as well to clear failed-login lockouts and sign out every open session.
+   If the Admin rank was deleted, the rank `UPDATE` reports `UPDATE 0` and the users `UPDATE` fails on a NULL `rank_id`. Run `ROLLBACK;`, pick another rank from `SELECT public_id, name FROM user_ranks;`, and repeat steps 3 and 4 with its `public_id`.
+
+5. Restart the app with `docker compose restart app`. This step is required: it clears the failed-login lockouts that the forgotten password has probably triggered, ends every open session (a password change alone doesn't), and drops the cached rank list, so the Ranks page doesn't show, and re-save, the old permissions.
+
+If logging in fails with a server error after the reset, check that the app still mounts its original encryption key volume: a reset doesn't help when the key is lost.
 
 ### Common Development Commands (via Makefile)
 
@@ -52,7 +64,7 @@ The new password works immediately. Run `docker compose restart app` as well to 
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
 - `make build` – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
-- `make password` – Generate a salt+hash for a password (for init.sql)
+- `make password` – Generate a bcrypt hash for a password (for init.sql or an administrator reset)
 - `make release` – Pull from origin/main, `make build`, `make tag`, and push Docker image tag to registry
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 

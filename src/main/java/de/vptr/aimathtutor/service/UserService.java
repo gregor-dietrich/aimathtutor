@@ -371,6 +371,8 @@ public class UserService {
      * @param oldUsername
      *            the username before the modification
      * @return the updated {@link UserViewDto}
+     * @throws ValidationException
+     *             if the user was the last active Administrator and no longer is
      */
     private UserViewDto saveUpdatedUser(final UserEntity user, final boolean wasAdministrator,
             @Nullable final String oldUsername) {
@@ -386,7 +388,7 @@ public class UserService {
     }
 
     /**
-     * Refuses a change that would leave no active Administrator (see {@link UserRepository#grantsAdministration}): one
+     * Refuses a change that would leave no active Administrator (see {@link UserRepository#isActiveAdministrator}): one
      * that takes the status from a user while no other user holds it. The caller's transaction rolls back on the
      * exception, discarding changes already applied to the entity.
      *
