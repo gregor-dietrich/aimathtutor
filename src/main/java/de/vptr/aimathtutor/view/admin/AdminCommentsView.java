@@ -49,6 +49,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -368,12 +369,15 @@ public class AdminCommentsView extends AbstractAdminView {
                 NotificationUtil.showError("You must be logged in to edit comments");
                 return;
             }
-            this.commentService.editComment(Objects.requireNonNull(this.currentComment.publicId), this.currentComment,
-                    editorId);
-            NotificationUtil.showSuccess("Comment updated successfully");
-
-            this.commentDialog.close();
-            this.loadCommentsAsync();
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
+                this.commentService.editComment(Objects.requireNonNull(this.currentComment.publicId),
+                        this.currentComment, editorId);
+                NotificationUtil.showSuccess("Comment updated successfully");
+            });
+            if (saved) {
+                this.commentDialog.close();
+                this.loadCommentsAsync();
+            }
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
