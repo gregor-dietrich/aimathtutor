@@ -20,6 +20,31 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
 
+### Recovering administrator access
+
+The app refuses to delete, ban, deactivate or demote its last active administrator. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database:
+
+1. From a checkout, run `make password` and copy the printed `hash=` value.
+2. Open psql in the database container. These are the `docker-compose.yml` defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
+
+   ```sh
+   docker compose exec db psql -U aimathtutor -d aimathtutor
+   ```
+
+3. In psql, restore the Admin rank's administration permissions and reset the account (replace `<hash>` and `<name>`):
+
+   ```sql
+   UPDATE user_ranks SET admin_view = TRUE, user_edit = TRUE, user_rank_edit = TRUE
+     WHERE public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+   UPDATE users SET password = '<hash>', banned = FALSE, activated = TRUE,
+     rank_id = (SELECT id FROM user_ranks WHERE public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV')
+     WHERE username = '<name>';
+   ```
+
+   The hash contains `$`, so type it inside psql or single quotes, never inside a double-quoted shell string, where the shell would expand it.
+
+The new password works immediately. Run `docker compose restart app` as well to clear failed-login lockouts and sign out every open session.
+
 ### Common Development Commands (via Makefile)
 
 - `make dev` – Start Quarkus in dev mode

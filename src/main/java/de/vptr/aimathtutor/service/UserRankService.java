@@ -207,6 +207,8 @@ public class UserRankService {
      * @return the updated {@link UserRankViewDto}
      * @throws WebApplicationException
      *             if rank is not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if the change would leave no active Administrator
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -214,10 +216,12 @@ public class UserRankService {
         this.permissionService.requireUserRankEdit();
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
+        final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Complete replacement (PUT semantics)
         existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         this.applyAllPermissions(existingRank, rankDto);
+        requireAdministrationKept(existingRank, holdsLastAdministrators);
 
         this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
@@ -234,6 +238,8 @@ public class UserRankService {
      * @return the updated {@link UserRankViewDto}
      * @throws WebApplicationException
      *             if rank is not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if the change would leave no active Administrator
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -241,6 +247,7 @@ public class UserRankService {
         this.permissionService.requireUserRankEdit();
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
+        final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Partial update (PATCH semantics) - only update provided fields. A provided name is still
         // normalized and rejected when blank; a null name leaves the existing value untouched.
@@ -248,6 +255,7 @@ public class UserRankService {
             existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         }
         this.applyProvidedPermissions(existingRank, rankDto);
+        requireAdministrationKept(existingRank, holdsLastAdministrators);
 
         this.userRankRepository.persist(existingRank);
         return new UserRankViewDto(existingRank);
@@ -290,6 +298,38 @@ public class UserRankService {
                     "Cannot delete rank because users are assigned to this rank. "
                             + "Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
+        }
+    }
+
+    /**
+     * Whether every active Administrator holds this rank, and there is at least one, so that taking one of the
+     * administration permissions from the rank (see {@link UserRepository#grantsAdministration}) would leave none. Must
+     * run before the rank is modified: Hibernate flushes pending changes before the count queries.
+     *
+     * @param rank
+     *            the unmodified rank
+     * @return true if the rank's users are all the active Administrators there are
+     */
+    private boolean holdsLastAdministrators(final UserRankEntity rank) {
+        return UserRepository.grantsAdministration(rank) && rank.id != null
+                && this.userRepository.countActiveAdministratorsOutsideRank(rank.id) == 0
+                && this.userRepository.countActiveAdministrators() > 0;
+    }
+
+    /**
+     * Refuses a rank change that takes administration from the rank holding the last active Administrators. The
+     * caller's transaction rolls back on the exception, discarding the changes already applied to the rank.
+     *
+     * @param rank
+     *            the modified rank
+     * @param holdsLastAdministrators
+     *            the result of {@link #holdsLastAdministrators} before the modification
+     * @throws ValidationException
+     *             if the rank held the last active Administrators and no longer grants administration
+     */
+    private static void requireAdministrationKept(final UserRankEntity rank, final boolean holdsLastAdministrators) {
+        if (holdsLastAdministrators && !UserRepository.grantsAdministration(rank)) {
+            throw new ValidationException(AppConstants.LAST_ADMINISTRATOR_MESSAGE);
         }
     }
 

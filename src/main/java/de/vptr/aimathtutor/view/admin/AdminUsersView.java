@@ -422,12 +422,14 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void deleteUser(final UserViewDto user) {
         try {
-            if (user.publicId != null && this.userService.deleteUser(user.publicId)) {
-                NotificationUtil.showSuccess("User deleted successfully");
-                this.loadUsersAsync();
-            } else {
-                NotificationUtil.showError("Failed to delete user");
-            }
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (user.publicId != null && this.userService.deleteUser(user.publicId)) {
+                    NotificationUtil.showSuccess("User deleted successfully");
+                    this.loadUsersAsync();
+                } else {
+                    NotificationUtil.showError("Failed to delete user");
+                }
+            });
         } catch (final PermissionDeniedException e) {
             LOG.warn("Permission denied deleting user", e);
             NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");

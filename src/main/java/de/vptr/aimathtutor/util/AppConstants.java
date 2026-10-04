@@ -126,6 +126,10 @@ public final class AppConstants {
     /** Message shown when an exercise is solved correctly. */
     public static final String EXERCISE_SOLVED_MESSAGE = "🎉 Congratulations! You've solved the problem correctly!";
 
+    /** Rejection message for a user or rank change that would leave no active administrator. */
+    public static final String LAST_ADMINISTRATOR_MESSAGE =
+            "This change would leave no active administrator. Make another user an administrator first.";
+
     /** Vaadin session attribute key for the authenticated username. */
     public static final String SESSION_KEY_USERNAME = "authenticated.username";
 

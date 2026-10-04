@@ -228,7 +228,8 @@ public class UserService {
      * @throws WebApplicationException
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if username/email is duplicate or required fields missing
+     *             if username/email is duplicate, required fields missing, or the change would leave no active
+     *             Administrator
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
@@ -258,6 +259,7 @@ public class UserService {
             throw new ValidationException("Email '" + normalizedEmail + "' is already in use");
         }
 
+        final boolean wasAdministrator = UserRepository.isActiveAdministrator(existingUser);
         final String oldUsername = existingUser.username;
         // Complete replacement (PUT semantics)
         existingUser.username = normalizedUsername;
@@ -268,15 +270,7 @@ public class UserService {
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
         this.applyRankToUser(existingUser, userDto.rankPublicId);
-
-        this.userRepository.persist(existingUser);
-        if (oldUsername != null) {
-            this.authService.evictCache(oldUsername);
-        }
-        if (existingUser.username != null && !existingUser.username.equals(oldUsername)) {
-            this.authService.evictCache(existingUser.username);
-        }
-        return new UserViewDto(existingUser);
+        return this.saveUpdatedUser(existingUser, wasAdministrator, oldUsername);
     }
 
     /**
@@ -292,7 +286,7 @@ public class UserService {
      * @throws WebApplicationException
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if username/email is duplicate
+     *             if username/email is duplicate, or the change would leave no active Administrator
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
@@ -320,6 +314,7 @@ public class UserService {
             }
         }
 
+        final boolean wasAdministrator = UserRepository.isActiveAdministrator(existingUser);
         final String oldUsername = existingUser.username;
         // Partial update (PATCH semantics) - only update provided fields
         if (normalizedUsername != null) {
@@ -340,15 +335,7 @@ public class UserService {
         if (userDto.rankPublicId != null) {
             this.applyRankToUser(existingUser, userDto.rankPublicId);
         }
-
-        this.userRepository.persist(existingUser);
-        if (oldUsername != null) {
-            this.authService.evictCache(oldUsername);
-        }
-        if (existingUser.username != null && !existingUser.username.equals(oldUsername)) {
-            this.authService.evictCache(existingUser.username);
-        }
-        return new UserViewDto(existingUser);
+        return this.saveUpdatedUser(existingUser, wasAdministrator, oldUsername);
     }
 
     /**
@@ -357,15 +344,68 @@ public class UserService {
      * @param publicId
      *            the user public ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if user not found
+     * @throws ValidationException
+     *             if the user is the last active Administrator
      */
     @Transactional
     public boolean deleteUser(final String publicId) {
         this.permissionService.requireUserDelete();
-        final var user = this.userRepository.findByPublicId(publicId);
-        if (user.isPresent() && user.get().username != null) {
-            this.authService.evictCache(user.get().username);
+        final var user = this.userRepository.findByPublicId(publicId).orElse(null);
+        if (user == null) {
+            return false;
+        }
+        this.requireAdministratorRemains(user, UserRepository.isActiveAdministrator(user), false);
+        if (user.username != null) {
+            this.authService.evictCache(user.username);
         }
         return this.userRepository.deleteByPublicId(publicId);
+    }
+
+    /**
+     * Finishes an update: refuses it if it would leave no active Administrator, persists the user, and evicts the
+     * authentication cache under the old and new username.
+     *
+     * @param user
+     *            the modified user
+     * @param wasAdministrator
+     *            whether the user was an active Administrator before the modification
+     * @param oldUsername
+     *            the username before the modification
+     * @return the updated {@link UserViewDto}
+     */
+    private UserViewDto saveUpdatedUser(final UserEntity user, final boolean wasAdministrator,
+            @Nullable final String oldUsername) {
+        this.requireAdministratorRemains(user, wasAdministrator, UserRepository.isActiveAdministrator(user));
+        this.userRepository.persist(user);
+        if (oldUsername != null) {
+            this.authService.evictCache(oldUsername);
+        }
+        if (user.username != null && !user.username.equals(oldUsername)) {
+            this.authService.evictCache(user.username);
+        }
+        return new UserViewDto(user);
+    }
+
+    /**
+     * Refuses a change that would leave no active Administrator (see {@link UserRepository#grantsAdministration}): one
+     * that takes the status from a user while no other user holds it. The caller's transaction rolls back on the
+     * exception, discarding changes already applied to the entity.
+     *
+     * @param user
+     *            the user being changed or deleted
+     * @param wasAdministrator
+     *            whether the user was an active Administrator before the change
+     * @param isAdministrator
+     *            whether the user is one after it; false for a deletion
+     * @throws ValidationException
+     *             if the user was the last active Administrator and no longer is
+     */
+    private void requireAdministratorRemains(final UserEntity user, final boolean wasAdministrator,
+            final boolean isAdministrator) {
+        if (wasAdministrator && !isAdministrator && user.id != null
+                && this.userRepository.countOtherActiveAdministrators(user.id) == 0) {
+            throw new ValidationException(AppConstants.LAST_ADMINISTRATOR_MESSAGE);
+        }
     }
 
     /**

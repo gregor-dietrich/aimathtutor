@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.service.security.EncryptionService;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
@@ -18,6 +19,14 @@ import jakarta.transaction.Transactional;
  */
 @ApplicationScoped
 public class UserRepository extends AbstractRepository {
+
+    /**
+     * Counts active Administrators (alias {@code u}); the JPQL form of {@link #isActiveAdministrator(UserEntity)}.
+     * Callers append further {@code AND} conditions.
+     */
+    private static final String COUNT_ACTIVE_ADMINISTRATORS =
+            "SELECT COUNT(u) FROM UserEntity u WHERE u.activated = true AND u.banned = false"
+                    + " AND u.rank.adminView = true AND u.rank.userEdit = true AND u.rank.userRankEdit = true";
 
     @Inject
     EncryptionService encryptionService;
@@ -215,6 +224,67 @@ public class UserRepository extends AbstractRepository {
         final var q = this.em.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.rank.publicId = :r", Long.class);
         q.setParameter("r", rankPublicId);
         return q.getSingleResult();
+    }
+
+    /**
+     * Whether a rank makes its active users Administrators: it grants {@code adminView}, {@code userEdit} and
+     * {@code userRankEdit}. That set can reach the admin area, reassign any user's rank and grant any permission back,
+     * so a user holding it can recover the system. {@link #COUNT_ACTIVE_ADMINISTRATORS} is the same definition in JPQL.
+     *
+     * @param rank
+     *            the rank to test, may be null
+     * @return true if the rank grants all three permissions
+     */
+    public static boolean grantsAdministration(@Nullable final UserRankEntity rank) {
+        return rank != null && rank.adminView && rank.userEdit && rank.userRankEdit;
+    }
+
+    /**
+     * Whether a user is an active Administrator: activated, not banned, and holding a rank for which
+     * {@link #grantsAdministration(UserRankEntity)} holds.
+     *
+     * @param user
+     *            the user to test
+     * @return true if the user is an active Administrator
+     */
+    public static boolean isActiveAdministrator(final UserEntity user) {
+        return user.activated && !user.banned && grantsAdministration(user.rank);
+    }
+
+    /**
+     * Counts active Administrators other than the given user. The excluded user's own pending changes, which Hibernate
+     * flushes before running the query, therefore never affect the result.
+     *
+     * @param userId
+     *            the ID of the user to leave out
+     * @return the number of other active Administrators
+     */
+    public long countOtherActiveAdministrators(final long userId) {
+        final var q = this.em.createQuery(COUNT_ACTIVE_ADMINISTRATORS + " AND u.id <> :id", Long.class);
+        q.setParameter("id", userId);
+        return q.getSingleResult();
+    }
+
+    /**
+     * Counts active Administrators whose rank is not the given one.
+     *
+     * @param rankId
+     *            the ID of the rank whose users to leave out
+     * @return the number of active Administrators holding another rank
+     */
+    public long countActiveAdministratorsOutsideRank(final long rankId) {
+        final var q = this.em.createQuery(COUNT_ACTIVE_ADMINISTRATORS + " AND u.rank.id <> :id", Long.class);
+        q.setParameter("id", rankId);
+        return q.getSingleResult();
+    }
+
+    /**
+     * Counts all active Administrators.
+     *
+     * @return the number of active Administrators
+     */
+    public long countActiveAdministrators() {
+        return this.em.createQuery(COUNT_ACTIVE_ADMINISTRATORS, Long.class).getSingleResult();
     }
 
     /**
