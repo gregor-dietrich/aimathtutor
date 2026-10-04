@@ -75,6 +75,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **AdminConfigView save methods must null-check `authService.getUserId()`.** Use `requireUserId()` helper.
 - **Do NOT move `ProductionProfileGuard` to `StartupEvent`**, even though every build logs a Quarkus warning recommending it. Hibernate's `%dev,test` drop-and-create runs before `StartupEvent`, so a production jar started with a dev/test profile would empty the database first. The guard observes `@Initialized(ApplicationScoped.class)`, which fires during static init; `ProductionProfileGuardTest` pins that.
 - **Security is session-based via `VaadinSession`, not Quarkus `SecurityIdentity`.** Permission checks via `PermissionService` in service layer. Do **not** add `@RolesAllowed` or `@Authenticated` to views. `MainLayout` and `AdminMainLayout` enforce auth via `BeforeEnterObserver`.
+- **Every user or rank write path must enforce the privilege ceiling.** Read the caller's permissions with `UserRankService.requireCallerPermissions()` before writing (before editing a rank, which may be the caller's own), and call `UserRankService.requireWithin()` on every rank the write touches, assigns or produces. A caller may never create, change, assign or delete a user or rank holding a permission their own rank lacks.
 
 ## Code Quality Gates
 

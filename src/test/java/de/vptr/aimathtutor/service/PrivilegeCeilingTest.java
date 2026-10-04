@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
@@ -19,6 +21,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
+import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
@@ -48,6 +51,9 @@ class PrivilegeCeilingTest {
 
     @Inject
     UserRankRepository userRankRepository;
+
+    @Inject
+    UserRepository userRepository;
 
     // require* checks do nothing; the ceiling reads the caller's rank from findCurrentUserRank
     @InjectMock
@@ -80,7 +86,8 @@ class PrivilegeCeilingTest {
     void updateHigherUserIsRefused() {
         final UserViewDto admin = this.userService.createUser(userDto(ADMIN_RANK_PUBLIC_ID));
         this.actAsManager();
-        final UserDto change = userDto(ADMIN_RANK_PUBLIC_ID);
+        // Assign the caller's own rank, so only the check of the user's current rank can refuse
+        final UserDto change = userDto(this.callerRank.publicId);
         change.username = admin.username;
 
         assertRefused(() -> this.userService.updateUser(admin.publicId, change));
@@ -126,6 +133,9 @@ class PrivilegeCeilingTest {
     void assignHigherRankToSelfIsRefused() {
         this.actAsManager();
         final UserViewDto self = this.userService.createUser(userDto(this.callerRank.publicId));
+        // The caller is this user: their ceiling is whatever rank they hold at the moment it is read
+        when(this.permissionService.findCurrentUserRank())
+                .thenAnswer(call -> this.userRepository.findByPublicId(self.publicId).orElseThrow().rank);
         final UserDto promote = userDto(ADMIN_RANK_PUBLIC_ID);
         promote.username = self.username;
 
@@ -179,6 +189,26 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userRankService.patchRank(ADMIN_RANK_PUBLIC_ID, strip));
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "updateRank", "patchRank" })
+    @DisplayName("Lowering a higher rank to exactly the caller's permissions is refused")
+    @TestTransaction
+    void lowerHigherRankToCallerLevelIsRefused(final String method) {
+        this.actAsManager();
+        // After either edit the Admin rank holds exactly the caller's permissions, so only the check of the rank
+        // before the edit can refuse
+        final UserRankDto dto;
+        if ("updateRank".equals(method)) {
+            dto = rankDto(true);
+            dto.name = this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow().name;
+        } else {
+            dto = withoutPermissionsBeyondCaller();
+        }
+
+        assertRefused("updateRank".equals(method) ? () -> this.userRankService.updateRank(ADMIN_RANK_PUBLIC_ID, dto)
+                : () -> this.userRankService.patchRank(ADMIN_RANK_PUBLIC_ID, dto));
+    }
+
     @Test
     @DisplayName("Deleting a higher rank is refused")
     @TestTransaction
@@ -191,13 +221,17 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userRankService.deleteRank(higher.publicId));
     }
 
-    @Test
-    @DisplayName("Without a current user rank, every ceiling-checked change is refused")
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "createUser", "createRank" })
+    @DisplayName("Without a current user rank, user and rank writes are refused")
     @TestTransaction
-    void noCurrentRankIsRefused() {
+    void noCurrentRankIsRefused(final String method) {
+        final String lowerRank = this.userRankService.createRank(rankDto(false)).publicId;
         when(this.permissionService.findCurrentUserRank()).thenReturn(null);
 
-        assertThrows(PermissionDeniedException.class, () -> this.userRankService.createRank(rankDto(false)));
+        assertThrows(PermissionDeniedException.class,
+                "createUser".equals(method) ? () -> this.userService.createUser(userDto(lowerRank))
+                        : () -> this.userRankService.createRank(rankDto(false)));
     }
 
     // Equal or lower level
@@ -219,6 +253,8 @@ class PrivilegeCeilingTest {
 
         assertDoesNotThrow(() -> this.userService.patchUser(peer.publicId, demote));
         assertDoesNotThrow(() -> this.userService.updateUser(lower.publicId, promote));
+        // lower now holds the caller's rank, peer a lower one
+        assertDoesNotThrow(() -> this.userService.deleteUser(lower.publicId));
         assertDoesNotThrow(() -> this.userService.deleteUser(peer.publicId));
     }
 
@@ -260,6 +296,25 @@ class PrivilegeCeilingTest {
         dto.userRankAdd = manager;
         dto.userRankEdit = manager;
         dto.userRankDelete = manager;
+        return dto;
+    }
+
+    /** A PATCH that switches off every permission the seeded Admin rank holds beyond the caller's rank. */
+    private static UserRankDto withoutPermissionsBeyondCaller() {
+        final UserRankDto dto = new UserRankDto();
+        dto.exerciseAdd = false;
+        dto.exerciseDelete = false;
+        dto.exerciseEdit = false;
+        dto.lessonAdd = false;
+        dto.lessonDelete = false;
+        dto.lessonEdit = false;
+        dto.commentAdd = false;
+        dto.commentDelete = false;
+        dto.commentEdit = false;
+        dto.userGroupAdd = false;
+        dto.userGroupDelete = false;
+        dto.userGroupEdit = false;
+        dto.aiConfigEdit = false;
         return dto;
     }
 

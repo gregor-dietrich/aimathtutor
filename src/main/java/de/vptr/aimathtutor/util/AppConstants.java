@@ -136,7 +136,7 @@ public final class AppConstants {
 
     /** Rejection message for a change to, or assignment of, a user or rank above the caller's own rank. */
     public static final String PRIVILEGE_CEILING_MESSAGE =
-            "You can't change a user or rank that has permissions your rank doesn't have.";
+            "You can't create, change, assign or delete a user or rank with permissions your rank doesn't have.";
 
     /** Vaadin session attribute key for the authenticated username. */
     public static final String SESSION_KEY_USERNAME = "authenticated.username";

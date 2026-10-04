@@ -40,6 +40,7 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Admin view for creating, editing and deleting user ranks (permission sets).
@@ -454,8 +455,14 @@ public class AdminUserRanksView extends AbstractAdminView {
         } catch (final PermissionDeniedException e) {
             NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final WebApplicationException e) {
-            LOG.error("Error deleting rank", e);
-            NotificationUtil.showError("Failed to delete rank. Please try again.");
+            // CONFLICT carries a user-facing reason (users still assigned); other statuses are unexpected
+            final String reason = e.getMessage();
+            if (e.getResponse().getStatus() == Response.Status.CONFLICT.getStatusCode() && reason != null) {
+                NotificationUtil.showError(reason);
+            } else {
+                LOG.error("Error deleting rank", e);
+                NotificationUtil.showError("Failed to delete rank. Please try again.");
+            }
         } catch (final Exception e) {
             LOG.error("Unexpected error deleting rank", e);
             NotificationUtil.showError("Unexpected error occurred");

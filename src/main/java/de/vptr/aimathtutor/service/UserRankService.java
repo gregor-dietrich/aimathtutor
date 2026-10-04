@@ -68,9 +68,11 @@ public class UserRankService {
     }
 
     /**
-     * Retrieves the rank entity of the currently authenticated user.
+     * Retrieves the rank entity of the currently authenticated user. Fails closed: a user who was banned or deactivated
+     * while a page was open gets no rank, so every permission check and the privilege ceiling refuse them.
      *
-     * @return the current user's {@link UserRankEntity}, or null if not authenticated
+     * @return the current user's {@link UserRankEntity}, or null if no user is authenticated, the user no longer
+     *         exists, has no rank, or is banned or not activated
      */
     @Transactional
     @Nullable
@@ -86,7 +88,7 @@ public class UserRankService {
         }
         // Use UserRepository to look up the user by username
         final var user = this.userRepository.findByUsername(username);
-        return user != null ? user.rank : null; // null instead of throwing when user or rank not found
+        return user != null && user.activated && !user.banned ? user.rank : null;
     }
 
     /**
@@ -184,8 +186,8 @@ public class UserRankService {
      * @param rankDto
      *            the rank data including name and permissions
      * @return the newly created {@link UserRankViewDto}
-     * @throws IllegalArgumentException
-     *             if rank name is invalid
+     * @throws ValidationException
+     *             if the rank name is invalid, or the rank grants a permission the caller's rank lacks
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -219,7 +221,8 @@ public class UserRankService {
      * @throws WebApplicationException
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if the change would leave no active Administrator
+     *             if the rank, before or after the change, grants a permission the caller's rank lacks, or the change
+     *             would leave no active Administrator
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -254,7 +257,8 @@ public class UserRankService {
      * @throws WebApplicationException
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if the change would leave no active Administrator
+     *             if the rank, before or after the change, grants a permission the caller's rank lacks, or the change
+     *             would leave no active Administrator
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -288,6 +292,8 @@ public class UserRankService {
      * @return {@code true} if deletion succeeded, {@code false} if rank not found
      * @throws WebApplicationException
      *             if rank has assigned users (CONFLICT status)
+     * @throws ValidationException
+     *             if the rank grants a permission the caller's rank lacks
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)

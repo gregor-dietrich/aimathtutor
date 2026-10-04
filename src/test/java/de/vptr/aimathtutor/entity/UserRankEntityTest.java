@@ -19,6 +19,8 @@ class UserRankEntityTest {
 
     /**
      * Every permission flag: the entity's boolean instance fields, found by reflection so a new flag can't be missed.
+     * Every primitive {@code boolean} field of the rank counts as a permission; a non-permission boolean would need to
+     * be excluded here.
      */
     static Stream<String> permissionFlags() {
         return Arrays.stream(UserRankEntity.class.getDeclaredFields())

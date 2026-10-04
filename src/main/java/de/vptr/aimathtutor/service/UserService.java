@@ -163,13 +163,15 @@ public class UserService {
      *            the user data transfer object with creation details
      * @return the created {@link UserViewDto}
      * @throws ValidationException
-     *             if username/email is duplicate or required fields are missing
+     *             if username/email is duplicate, required fields are missing, or the rank grants a permission the
+     *             caller's rank lacks
      * @throws WebApplicationException
      *             if password hashing fails
      */
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
         this.permissionService.requireUserAdd();
+        final List<Boolean> ceiling = this.userRankService.requireCallerPermissions();
 
         // Validate required fields for POST
         if (userDto.username == null || userDto.username.isBlank()) {
@@ -204,7 +206,7 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
         user.password = hashedPassword;
 
-        this.applyRankToUser(user, userDto.rankPublicId, this.userRankService.requireCallerPermissions());
+        this.applyRankToUser(user, userDto.rankPublicId, ceiling);
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
@@ -231,8 +233,8 @@ public class UserService {
      * @throws WebApplicationException
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if username/email is duplicate, required fields missing, or the change would leave no active
-     *             Administrator
+     *             if username/email is duplicate, required fields missing, the user's current or new rank grants a
+     *             permission the caller's rank lacks, or the change would leave no active Administrator
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
@@ -290,7 +292,8 @@ public class UserService {
      * @throws WebApplicationException
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if username/email is duplicate, or the change would leave no active Administrator
+     *             if username/email is duplicate, the user's current or new rank grants a permission the caller's rank
+     *             lacks, or the change would leave no active Administrator
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
@@ -350,7 +353,8 @@ public class UserService {
      *            the user public ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if user not found
      * @throws ValidationException
-     *             if the user is the last active Administrator
+     *             if the user's rank grants a permission the caller's rank lacks, or the user is the last active
+     *             Administrator
      */
     @Transactional
     public boolean deleteUser(final String publicId) {
