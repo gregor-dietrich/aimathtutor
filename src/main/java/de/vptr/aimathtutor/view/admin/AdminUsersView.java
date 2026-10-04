@@ -41,9 +41,9 @@ import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
 
 /**
  * Admin view for managing users: list, edit, create and remove user accounts.
@@ -389,32 +389,28 @@ public class AdminUsersView extends AbstractAdminView {
         try {
             this.binder.writeBean(this.currentUser);
 
-            if (this.currentUser.publicId == null) {
-                if (this.currentUser.password == null || this.currentUser.password.isBlank()) {
-                    NotificationUtil.showError("Password is required for new users");
-                    return;
-                }
-                this.userService.createUser(this.currentUser);
-                NotificationUtil.showSuccess("User created successfully.");
-            } else {
-                this.userService.updateUser(this.currentUser.publicId, this.currentUser);
-                NotificationUtil.showSuccess("User updated successfully");
+            if (this.currentUser.publicId == null
+                    && (this.currentUser.password == null || this.currentUser.password.isBlank())) {
+                NotificationUtil.showError("Password is required for new users");
+                return;
             }
 
-            this.userDialog.close();
-            this.loadUsersAsync();
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.currentUser.publicId == null) {
+                    this.userService.createUser(this.currentUser);
+                    NotificationUtil.showSuccess("User created successfully.");
+                } else {
+                    this.userService.updateUser(this.currentUser.publicId, this.currentUser);
+                    NotificationUtil.showSuccess("User updated successfully");
+                }
+            });
+            if (saved) {
+                this.userDialog.close();
+                this.loadUsersAsync();
+            }
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
-        } catch (final ConstraintViolationException e) {
-            final var messages = e.getConstraintViolations().stream().map(v -> {
-                String fieldName = null;
-                for (final var node : v.getPropertyPath()) {
-                    fieldName = node.getName();
-                }
-                return (fieldName != null ? fieldName : "field") + ": " + v.getMessage();
-            }).reduce((a, b) -> a + "; " + b).orElse("Invalid input");
-            NotificationUtil.showError(messages);
         } catch (final PermissionDeniedException e) {
             LOG.warn("Permission denied saving user", e);
             NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");

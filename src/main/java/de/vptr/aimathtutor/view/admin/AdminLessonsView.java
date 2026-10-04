@@ -42,6 +42,7 @@ import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import jakarta.inject.Inject;
 
 /**
@@ -355,16 +356,19 @@ public class AdminLessonsView extends AbstractAdminView {
                 lessonEntity.parent = parentEntity;
             }
 
-            if (this.currentLesson.publicId == null) {
-                this.lessonService.createLesson(lessonEntity);
-                NotificationUtil.showSuccess("Lesson created successfully");
-            } else {
-                this.lessonService.updateLesson(lessonEntity);
-                NotificationUtil.showSuccess("Lesson updated successfully");
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.currentLesson.publicId == null) {
+                    this.lessonService.createLesson(lessonEntity);
+                    NotificationUtil.showSuccess("Lesson created successfully");
+                } else {
+                    this.lessonService.updateLesson(lessonEntity);
+                    NotificationUtil.showSuccess("Lesson updated successfully");
+                }
+            });
+            if (saved) {
+                this.lessonDialog.close();
+                this.loadLessonsAsync();
             }
-
-            this.lessonDialog.close();
-            this.loadLessonsAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");

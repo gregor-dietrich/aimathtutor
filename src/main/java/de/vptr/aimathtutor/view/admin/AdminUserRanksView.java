@@ -37,6 +37,7 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.WebApplicationException;
 
@@ -416,16 +417,19 @@ public class AdminUserRanksView extends AbstractAdminView {
 
             this.binder.writeBean(this.currentRank);
 
-            if (this.currentRank.publicId == null) {
-                this.userRankService.createRank(this.currentRank);
-                NotificationUtil.showSuccess("Rank created successfully");
-            } else {
-                this.userRankService.updateRank(this.currentRank.publicId, this.currentRank);
-                NotificationUtil.showSuccess("Rank updated successfully");
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.currentRank.publicId == null) {
+                    this.userRankService.createRank(this.currentRank);
+                    NotificationUtil.showSuccess("Rank created successfully");
+                } else {
+                    this.userRankService.updateRank(this.currentRank.publicId, this.currentRank);
+                    NotificationUtil.showSuccess("Rank updated successfully");
+                }
+            });
+            if (saved) {
+                this.rankDialog.close();
+                this.loadRanksAsync();
             }
-
-            this.rankDialog.close();
-            this.loadRanksAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");

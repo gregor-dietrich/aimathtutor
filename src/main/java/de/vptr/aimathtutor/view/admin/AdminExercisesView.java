@@ -52,6 +52,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -464,18 +465,21 @@ public class AdminExercisesView extends AbstractAdminView {
             this.currentExercise.created = null;
             this.currentExercise.lastEdit = null;
 
-            if (this.currentExercise.publicId == null) {
-                this.exerciseService.createExercise(this.currentExercise);
-                NotificationUtil.showSuccess("Exercise created successfully");
-            } else {
-                this.exerciseService.updateExercise(this.currentExercise.publicId, this.currentExercise);
-                NotificationUtil.showSuccess("Exercise updated successfully");
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.currentExercise.publicId == null) {
+                    this.exerciseService.createExercise(this.currentExercise);
+                    NotificationUtil.showSuccess("Exercise created successfully");
+                } else {
+                    this.exerciseService.updateExercise(this.currentExercise.publicId, this.currentExercise);
+                    NotificationUtil.showSuccess("Exercise updated successfully");
+                }
+            });
+            if (saved) {
+                this.exerciseDialog.close();
+                // Refresh exercises and lessons so computed columns (exercise counts) update
+                this.loadExercises();
+                this.loadLessons();
             }
-
-            this.exerciseDialog.close();
-            // Refresh exercises and lessons so computed columns (exercise counts) update
-            this.loadExercises();
-            this.loadLessons();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");

@@ -42,6 +42,7 @@ import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import de.vptr.aimathtutor.util.UlidUtil;
 import jakarta.inject.Inject;
 
@@ -250,16 +251,19 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
             this.binder.writeBean(this.currentGroup);
 
-            if (this.currentGroup.publicId == null) {
-                this.groupService.createGroup(this.currentGroup);
-                NotificationUtil.showSuccess("Group created successfully");
-            } else {
-                this.groupService.updateGroup(this.currentGroup.publicId, this.currentGroup);
-                NotificationUtil.showSuccess("Group updated successfully");
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.currentGroup.publicId == null) {
+                    this.groupService.createGroup(this.currentGroup);
+                    NotificationUtil.showSuccess("Group created successfully");
+                } else {
+                    this.groupService.updateGroup(this.currentGroup.publicId, this.currentGroup);
+                    NotificationUtil.showSuccess("Group updated successfully");
+                }
+            });
+            if (saved) {
+                this.groupDialog.close();
+                this.loadGroupsAsync();
             }
-
-            this.groupDialog.close();
-            this.loadGroupsAsync();
 
         } catch (final ValidationException e) {
             NotificationUtil.showError("Please check the form for errors");
