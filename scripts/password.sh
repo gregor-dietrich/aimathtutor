@@ -30,9 +30,9 @@ else
 	PASSWORD="$PASS1"
 fi
 
-# Pass the password as the second token after "generate" (the Java CLI expects args[1])
+# Pass the password on stdin: exec:java splits exec.args on whitespace, and arguments show up in ps
 echo "Generating salt+hash..."
-${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args="generate ${PASSWORD}" exec:java
+printf '%s\n' "$PASSWORD" | ${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args=generate exec:java
 echo "Password hash generated."
 
 cd - > /dev/null
