@@ -55,9 +55,12 @@ On its first start against a database without users, the application creates an 
 | `APP_BOOTSTRAP_ADMIN_USERNAME` | `admin` | Stored in lower case                                  |
 | `APP_BOOTSTRAP_ADMIN_PASSWORD` | (none)  | Required on first start; regular password rules apply |
 
-Without a password, startup fails. Once the admin exists, the password is no longer read and can be removed from the configuration; change it after logging in.
+Without a password, startup fails. Once the admin exists, the password can be removed from the configuration; change it after logging in.
 
-Databases upgraded from 4.x may still contain the `admin` account with its published password `admin`. Startup fails until `APP_BOOTSTRAP_ADMIN_PASSWORD` is set, which then replaces that password once.
+Databases upgraded from 4.x may still contain accounts with their published passwords:
+
+- `admin` / `admin`: startup fails until `APP_BOOTSTRAP_ADMIN_PASSWORD` is set, which then replaces that password once.
+- `teacher`, `student1`, `student2` (password = username): each start deactivates them. Set new passwords before reactivating them.
 
 ### Using Docker
 
@@ -89,7 +92,7 @@ SQL_DATABASE=aimathtutor
 SQL_USERNAME=aimathtutor
 SQL_PASSWORD=changeit
 
-# Initial admin account (only read while the database has no users)
+# Initial admin account (needed on the first start; see docs/QUICKSTART.md#initial-admin-account)
 APP_BOOTSTRAP_ADMIN_USERNAME=admin
 APP_BOOTSTRAP_ADMIN_PASSWORD=your_initial_admin_password
 
