@@ -11,7 +11,8 @@ SET LOCAL timezone = 'UTC';
 --
 
 INSERT INTO users (id, public_id, username, password, rank_id, activated) VALUES
-(2, '01ARZ3NDEKTSV4RRFFQ69G5FB1', 'teacher', '$2a$10$yvvtRbAoD6FH3wcXZw9QSuc8YSV1CbM/PJMY2lSTrJO2BzbXLC6ly', 2, TRUE),
+(1, '01ARZ3NDEKTSV4RRFFQ69G5FB0', 'admin', '$2a$10$oPZWHADXmDcVvg1sf5AZq.UyaigCbI3IcB0TvUDnudPMLhRIOz6yq', 1, TRUE),
+(2,'01ARZ3NDEKTSV4RRFFQ69G5FB1', 'teacher', '$2a$10$yvvtRbAoD6FH3wcXZw9QSuc8YSV1CbM/PJMY2lSTrJO2BzbXLC6ly', 2, TRUE),
 (3, '01ARZ3NDEKTSV4RRFFQ69G5FB2', 'student1', '$2a$10$oa6TbPoMnJlG/O5kDo.pVerJCfkA1.G0YN/gv2lLAwVQrrBTRK8MC', 3, TRUE),
 (4, '01ARZ3NDEKTSV4RRFFQ69G5FB3', 'student2', '$2a$10$i8vt4KcKh/ajw5xGHldP8.lrXX0rrG94S0cJ/XUg.svAajTcZvkeC', 3, TRUE)
 ON CONFLICT (public_id) DO NOTHING;
