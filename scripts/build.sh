@@ -67,6 +67,10 @@ TAG="gregordietrich/aimathtutor:${REVISION}"
 # Clean before building to avoid corrupted workspace files
 ${MVN_CMD} -q clean -Drevision="${REVISION}"
 
+# Vaadin reuses prod.bundle and node_modules while package.json is unchanged,
+# ignoring lockfile-only changes; remove both so npm installs from the lockfile
+rm -rf src/main/bundles/prod.bundle node_modules
+
 ${MVN_CMD} -q package -DskipTests -Pproduction -Drevision="${REVISION}"
 
 # Alpine-based image
