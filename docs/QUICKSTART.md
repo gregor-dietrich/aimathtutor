@@ -13,7 +13,7 @@ See the [Makefile](../Makefile) or use `make help` for all available commands.
 
 ## Test accounts
 
-Dev and test profiles load a small set of seed accounts from `src/main/resources/db/demo/R__demo_data.sql` for local testing. Passwords are stored as salted hashes in the database. Production installations only contain the `admin` account.
+Dev and test profiles load a small set of seed accounts from `src/main/resources/db/demo/R__demo_data.sql` for local testing. Passwords are stored as salted hashes in the database. Production installations contain no accounts; the first admin is created from configuration (see [Initial admin account](#initial-admin-account)).
 
 | Username | Password | Role    | Notes                    |
 | -------- | -------- | ------- | ------------------------ |
@@ -46,6 +46,19 @@ make coverage  # Runs all tests (unit + ITs) and generates report
 
 ## 🏭 Production Mode
 
+### Initial admin account
+
+On its first start against a database without users, the application creates an admin account from these settings:
+
+| Environment variable           | Default | Notes                                                 |
+| ------------------------------ | ------- | ----------------------------------------------------- |
+| `APP_BOOTSTRAP_ADMIN_USERNAME` | `admin` | Stored in lower case                                  |
+| `APP_BOOTSTRAP_ADMIN_PASSWORD` | (none)  | Required on first start; regular password rules apply |
+
+Without a password, startup fails. Once the admin exists, the password is no longer read and can be removed from the configuration; change it after logging in.
+
+Databases upgraded from 4.x may still contain the `admin` account with its published password `admin`. Startup fails until `APP_BOOTSTRAP_ADMIN_PASSWORD` is set, which then replaces that password once.
+
 ### Using Docker
 
 > **_NOTE:_** Change `localhost` to the actual hostname where your PostgreSQL instance is running. The database may be empty: the application creates and upgrades the schema automatically on startup.
@@ -56,6 +69,7 @@ docker run -d --name aimathtutor \
   -e quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/aimathtutor \
   -e quarkus.datasource.username=aimathtutor \
   -e quarkus.datasource.password=changeit \
+  -e APP_BOOTSTRAP_ADMIN_PASSWORD=your_initial_admin_password \
   -e app.google.api.key=your_google_api_key \
   -e app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key \
   -v aimathtutor_keys:/etc/aimathtutor/keys \
@@ -74,6 +88,10 @@ docker run -d --name aimathtutor \
 SQL_DATABASE=aimathtutor
 SQL_USERNAME=aimathtutor
 SQL_PASSWORD=changeit
+
+# Initial admin account (only read while the database has no users)
+APP_BOOTSTRAP_ADMIN_USERNAME=admin
+APP_BOOTSTRAP_ADMIN_PASSWORD=your_initial_admin_password
 
 # AI API Keys (required only for cloud AI providers)
 # Get API keys from: https://aistudio.google.com/app/apikey (Google)
@@ -179,7 +197,7 @@ docker compose up -d
 
 #### 4. Configure AI Provider Settings
 
-After the stack is running, log in to the application with admin credentials (default: `admin` / `admin`) and navigate to **Admin Settings** (`/admin/config`) to:
+After the stack is running, log in to the application with the [initial admin account](#initial-admin-account) and navigate to **Admin Settings** (`/admin/config`) to:
 
 - Select your AI provider (Google, OpenAI, or Ollama)
 - Set the model name
@@ -330,7 +348,7 @@ If you prefer running Ollama directly on your host machine:
 
 After starting the application:
 
-1. Log in as admin (default: `admin` / `admin`)
+1. Log in as admin (see [Initial admin account](#initial-admin-account))
 2. Navigate to **Admin Settings** (`/admin/config`)
 3. Configure Ollama:
    - **AI Provider**: `ollama`

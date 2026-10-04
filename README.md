@@ -18,7 +18,7 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
-When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
+When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles. On the first start, also set `APP_BOOTSTRAP_ADMIN_PASSWORD` to create the initial admin account (see [Quickstart](docs/QUICKSTART.md#initial-admin-account)).
 
 ### Common Development Commands (via Makefile)
 
