@@ -1,7 +1,5 @@
 -- PostgreSQL initialization script
 
-SET timezone = 'UTC';
-
 DROP TABLE IF EXISTS ai_config CASCADE;
 DROP TABLE IF EXISTS ai_interactions CASCADE;
 DROP TABLE IF EXISTS student_sessions CASCADE;
