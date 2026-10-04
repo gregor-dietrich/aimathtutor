@@ -51,10 +51,26 @@ Full-stack compose:
 
 `scripts/build.sh` (invoked via `make build`):
 
-1. Runs `make check` (JDK + Maven version verification)
-2. Runs `./mvnw clean install package -DskipTests -Pproduction`
-3. Runs `docker buildx` with multi-platform support (QEMU fallback)
-4. Tags image with project revision
+1. Runs `scripts/check.sh` (JDK + Maven version verification)
+2. Runs `mvn clean`, removes `src/main/bundles/prod.bundle` and `node_modules`, then
+   `mvn package -DskipTests -Pproduction`
+3. Builds both images for the host's platform into the local image store (`docker buildx build --load`, or plain
+   `docker build` without buildx): `<revision>-alpine` (also tagged `<revision>`) and `<revision>-ubuntu`
+
+## Release Script
+
+`scripts/release.sh` (invoked via `make release`):
+
+1. Refuses a `-SNAPSHOT` version, pulls `main` and reruns itself from the pulled scripts
+2. Fails unless the current buildx builder lists `linux/amd64` and `linux/arm64` (the `docker` driver also needs the
+   containerd image store), then runs `docker login`
+3. Cleans, installs, lints, tests and packages, then builds each Dockerfile for both platforms into the buildx cache
+   only, so only a push can fail after the git tag
+4. Runs `scripts/tag.sh`, then one `docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile
+   with all of its tags: Alpine `<version>-alpine`, `alpine`, `<version>`, `latest`; Ubuntu `<version>-ubuntu`,
+   `ubuntu`. Nothing is pushed from the local image store
+
+Shared helpers live in `scripts/lib/images.sh`.
 
 ## Logging
 

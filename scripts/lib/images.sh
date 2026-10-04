@@ -49,6 +49,14 @@ register_qemu() {
     fi
 }
 
+# Fail unless $1 is valid both as an image tag (Docker's tag grammar) and as a git tag name.
+require_valid_revision() {
+    if [[ ! $1 =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || ! git check-ref-format "tags/$1"; then
+        echo "Error: '$1' is not a valid image and git tag." >&2
+        return 1
+    fi
+}
+
 # Package the application as version $REVISION: the target/quarkus-app the Dockerfiles copy.
 package_app() {
     # Clean before building to avoid corrupted workspace files
@@ -84,14 +92,43 @@ require_multiplatform_builder() {
     fi
 }
 
-# push_image <context_dir> <dockerfile> <tag> [<tag>...]: build for every platform in $PLATFORMS and
-# push under every tag, straight from buildx. Nothing goes through the local image store, so neither a
-# stale nor a single-platform image can be published.
+# set_tag_args <tag>...: set TAG_ARGS to one -t option per tag.
+set_tag_args() {
+    local tag
+    TAG_ARGS=()
+    for tag in "$@"; do TAG_ARGS+=(-t "$tag"); done
+}
+
+# build_local_image <dockerfile> <tag> [<tag>...]: build for the host's platform into the local image
+# store, under every tag.
+build_local_image() {
+    local dockerfile=$1
+    shift
+    set_tag_args "$@"
+    if docker buildx version >/dev/null 2>&1; then
+        docker buildx build --load "${TAG_ARGS[@]}" -f "$dockerfile" .
+    else
+        echo "buildx not available; performing plain docker build."
+        docker build "${TAG_ARGS[@]}" -f "$dockerfile" .
+    fi
+}
+
+# prebuild_image <dockerfile>: build for every platform in $PLATFORMS into the buildx cache only, so a
+# release fails on a broken build before it tags anything, and push_image reuses the cached result.
+# Without the explicit cacheonly output, the docker driver would load an untagged image into the store.
+prebuild_image() {
+    echo "Building $1 for ${PLATFORMS}..."
+    docker buildx build --platform "$PLATFORMS" --output type=cacheonly -f "$1" .
+}
+
+# push_image <dockerfile> <tag> [<tag>...]: build for every platform in $PLATFORMS and push under every
+# tag, straight from buildx. Nothing goes through the local image store, so neither a stale nor a
+# single-platform image can be published.
 push_image() {
-    (( $# >= 3 )) || { echo "usage: push_image <context_dir> <dockerfile> <tag> [<tag>...]" >&2; return 2; }
-    local context=$1 dockerfile=$2 tag tag_args=()
-    shift 2
-    for tag in "$@"; do tag_args+=(-t "$tag"); done
+    (( $# >= 2 )) || { echo "usage: push_image <dockerfile> <tag> [<tag>...]" >&2; return 2; }
+    local dockerfile=$1
+    shift
+    set_tag_args "$@"
     echo "Building and pushing $*..."
-    docker buildx build --platform "$PLATFORMS" --push "${tag_args[@]}" -f "$dockerfile" "$context"
+    docker buildx build --platform "$PLATFORMS" --push "${TAG_ARGS[@]}" -f "$dockerfile" .
 }
