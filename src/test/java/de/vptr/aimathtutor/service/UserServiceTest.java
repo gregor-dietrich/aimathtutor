@@ -47,6 +47,8 @@ import jakarta.ws.rs.core.Response;
 class UserServiceTest {
 
     private static final String VALID_PASSWORD = "P@ssw0rd1";
+    private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+    private static final String TEACHER_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW";
     private static final String STUDENT_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX";
     // No rank has this ID, like a rank deleted while an admin's edit dialog still offered it
     private static final String UNKNOWN_RANK_PUBLIC_ID = "00000000000000000000000000";
@@ -823,6 +825,86 @@ class UserServiceTest {
         patch.rankPublicId = "00000000000000000000000000";
 
         assertThrows(ValidationException.class, () -> this.userService.patchUser(created.publicId, patch));
+    }
+
+    @ParameterizedTest(name = "{0} ({1})")
+    @CsvSource({ "deleteUser, delete", "updateUser, ban", "updateUser, deactivate", "updateUser, demote",
+            "patchUser, ban", "patchUser, deactivate", "patchUser, demote" })
+    @DisplayName("The last active administrator cannot be deleted, banned, deactivated or demoted")
+    @TestTransaction
+    void lastAdministratorCannotBeRemoved(final String method, final String change) {
+        final UserViewDto admin = this.createSoleAdministrator();
+
+        final var e = assertThrows(ValidationException.class, this.removeAdministrator(admin, method, change));
+        assertTrue(e.getMessage().contains("administrator"));
+    }
+
+    @ParameterizedTest(name = "{0} ({1})")
+    @CsvSource({ "deleteUser, delete", "updateUser, ban", "updateUser, deactivate", "updateUser, demote",
+            "patchUser, ban", "patchUser, deactivate", "patchUser, demote" })
+    @DisplayName("An administrator can be removed while another active administrator remains")
+    @TestTransaction
+    void administratorCanBeRemovedWhileAnotherRemains(final String method, final String change) {
+        final UserViewDto admin = this.createSoleAdministrator();
+        this.createAdministrator();
+
+        assertDoesNotThrow(this.removeAdministrator(admin, method, change));
+        assertFalse(this.userRepository.findByPublicId(admin.publicId).filter(UserRepository::isActiveAdministrator)
+                .isPresent());
+    }
+
+    @Test
+    @DisplayName("The last active administrator can still be edited when the change keeps them one")
+    @TestTransaction
+    void lastAdministratorCanBeEditedWithoutLosingStatus() {
+        final UserViewDto admin = this.createSoleAdministrator();
+        final UserDto patch = new UserDto();
+        patch.email = "admin_" + UUID.randomUUID().toString().substring(0, 8) + "@example.com";
+
+        assertDoesNotThrow(() -> this.userService.patchUser(admin.publicId, patch));
+    }
+
+    /**
+     * Builds the call that takes administrator status from {@code admin}: deleting, banning, deactivating, or moving
+     * them to the Teacher rank, which grants the admin view but not user or rank editing.
+     */
+    private Executable removeAdministrator(final UserViewDto admin, final String method, final String change) {
+        if ("deleteUser".equals(method)) {
+            return () -> this.userService.deleteUser(admin.publicId);
+        }
+        final UserDto dto = new UserDto();
+        if ("updateUser".equals(method)) {
+            dto.username = admin.username;
+            dto.rankPublicId = ADMIN_RANK_PUBLIC_ID;
+            dto.activated = true;
+            dto.banned = false;
+        }
+        switch (change) {
+            case "ban" -> dto.banned = true;
+            case "deactivate" -> dto.activated = false;
+            default -> dto.rankPublicId = TEACHER_RANK_PUBLIC_ID;
+        }
+        return "updateUser".equals(method) ? () -> this.userService.updateUser(admin.publicId, dto)
+                : () -> this.userService.patchUser(admin.publicId, dto);
+    }
+
+    private UserViewDto createAdministrator() {
+        final UserDto dto = this.buildValidDto();
+        dto.rankPublicId = ADMIN_RANK_PUBLIC_ID;
+        dto.activated = true;
+        return this.userService.createUser(dto);
+    }
+
+    /**
+     * Creates an active administrator and bans every other one, so the test does not depend on which administrators the
+     * seed data or other tests left behind. The test transaction rolls the bans back.
+     */
+    private UserViewDto createSoleAdministrator() {
+        final UserViewDto admin = this.createAdministrator();
+        this.userRepository.findAll().stream()
+                .filter(u -> !admin.publicId.equals(u.publicId) && UserRepository.isActiveAdministrator(u))
+                .forEach(u -> u.banned = true);
+        return admin;
     }
 
     private UserEntity createAndFetchUser() {
