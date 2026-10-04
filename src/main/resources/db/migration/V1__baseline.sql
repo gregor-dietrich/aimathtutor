@@ -1,4 +1,4 @@
--- V1 baseline: schema and reference data (user ranks, AI config, admin account).
+-- V1 baseline: schema and reference data (user ranks, AI config).
 -- Existing databases are baselined at this version without running it, so this
 -- script must describe them exactly. Never edit it; add a new migration instead.
 
@@ -80,16 +80,6 @@ CREATE TABLE users (
 CREATE INDEX idx_user_public_id ON users (public_id);
 CREATE INDEX idx_user_email_blind_index ON users (email_blind_index);
 CREATE INDEX users_created_idx ON users (created DESC);
-
---
--- Inserts for table `users`
---
-
-INSERT INTO users (id, public_id, username, password, rank_id, activated) VALUES
-(1, '01ARZ3NDEKTSV4RRFFQ69G5FB0', 'admin', '$2a$10$oPZWHADXmDcVvg1sf5AZq.UyaigCbI3IcB0TvUDnudPMLhRIOz6yq', 1, TRUE);
-
--- Set sequence to 1 so next value is 2
-SELECT setval('users_id_seq', 1, true);
 
 -- --------------------------------------------------------
 
@@ -333,30 +323,30 @@ CREATE INDEX idx_ai_config_public_id ON ai_config (public_id);
 -- Seed AI configuration with defaults from application.properties and hardcoded prompts
 INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, category, description, is_optional, last_updated_by) VALUES
 -- General settings
-(1, '01ARZ3NDEKTSV4RRFFQ69G5FG0', 'ai.tutor.enabled', 'true', 'BOOLEAN', 'GENERAL', 'Enable or disable AI tutor functionality', false, 1),
-(2, '01ARZ3NDEKTSV4RRFFQ69G5FG1', 'ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, google, openai, or ollama', false, 1),
+(1, '01ARZ3NDEKTSV4RRFFQ69G5FG0', 'ai.tutor.enabled', 'true', 'BOOLEAN', 'GENERAL', 'Enable or disable AI tutor functionality', false, NULL),
+(2, '01ARZ3NDEKTSV4RRFFQ69G5FG1', 'ai.tutor.provider', 'mock', 'STRING', 'GENERAL', 'AI provider to use: mock, google, openai, or ollama', false, NULL),
 
 -- Google settings
-(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'google.model', 'gemini-3.1-flash-lite', 'STRING', 'GOOGLE', 'Google model name', false, 1),
-(4, '01ARZ3NDEKTSV4RRFFQ69G5FG3', 'google.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GOOGLE', 'Google API base URL', false, 1),
-(5, '01ARZ3NDEKTSV4RRFFQ69G5FG4', 'google.temperature', '0.7', 'DOUBLE', 'GOOGLE', 'Google temperature setting (0.0-2.0)', false, 1),
-(6, '01ARZ3NDEKTSV4RRFFQ69G5FG5', 'google.max-tokens', '2000', 'INTEGER', 'GOOGLE', 'Google maximum tokens for responses', false, 1),
+(3, '01ARZ3NDEKTSV4RRFFQ69G5FG2', 'google.model', 'gemini-3.1-flash-lite', 'STRING', 'GOOGLE', 'Google model name', false, NULL),
+(4, '01ARZ3NDEKTSV4RRFFQ69G5FG3', 'google.api.base-url', 'https://generativelanguage.googleapis.com', 'STRING', 'GOOGLE', 'Google API base URL', false, NULL),
+(5, '01ARZ3NDEKTSV4RRFFQ69G5FG4', 'google.temperature', '0.7', 'DOUBLE', 'GOOGLE', 'Google temperature setting (0.0-2.0)', false, NULL),
+(6, '01ARZ3NDEKTSV4RRFFQ69G5FG5', 'google.max-tokens', '2000', 'INTEGER', 'GOOGLE', 'Google maximum tokens for responses', false, NULL),
 
 -- OpenAI settings
-(7, '01ARZ3NDEKTSV4RRFFQ69G5FG6', 'openai.model', 'gpt-5-nano', 'STRING', 'OPENAI', 'OpenAI model name', false, 1),
-(8, '01ARZ3NDEKTSV4RRFFQ69G5FG7', 'openai.organization-id', '', 'STRING', 'OPENAI', 'OpenAI organization ID (optional)', true, 1),
-(9, '01ARZ3NDEKTSV4RRFFQ69G5FG8', 'openai.api.base-url', 'https://api.openai.com/v1', 'STRING', 'OPENAI', 'OpenAI API base URL', false, 1),
-(10, '01ARZ3NDEKTSV4RRFFQ69G5FG9', 'openai.temperature', '0.7', 'DOUBLE', 'OPENAI', 'OpenAI temperature setting (0.0-2.0)', false, 1),
-(11, '01ARZ3NDEKTSV4RRFFQ69G5FGA', 'openai.max-tokens', '2000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', false, 1),
+(7, '01ARZ3NDEKTSV4RRFFQ69G5FG6', 'openai.model', 'gpt-5-nano', 'STRING', 'OPENAI', 'OpenAI model name', false, NULL),
+(8, '01ARZ3NDEKTSV4RRFFQ69G5FG7', 'openai.organization-id', '', 'STRING', 'OPENAI', 'OpenAI organization ID (optional)', true, NULL),
+(9, '01ARZ3NDEKTSV4RRFFQ69G5FG8', 'openai.api.base-url', 'https://api.openai.com/v1', 'STRING', 'OPENAI', 'OpenAI API base URL', false, NULL),
+(10, '01ARZ3NDEKTSV4RRFFQ69G5FG9', 'openai.temperature', '0.7', 'DOUBLE', 'OPENAI', 'OpenAI temperature setting (0.0-2.0)', false, NULL),
+(11, '01ARZ3NDEKTSV4RRFFQ69G5FGA', 'openai.max-tokens', '2000', 'INTEGER', 'OPENAI', 'OpenAI maximum tokens for responses', false, NULL),
 
 -- Ollama settings
-(12, '01ARZ3NDEKTSV4RRFFQ69G5FGB', 'ollama.api.url', 'http://ollama:11434', 'STRING', 'OLLAMA', 'Ollama API URL', false, 1),
-(13, '01ARZ3NDEKTSV4RRFFQ69G5FGC', 'ollama.model', 'llama3.2:3b', 'STRING', 'OLLAMA', 'Ollama model name', false, 1),
-(14, '01ARZ3NDEKTSV4RRFFQ69G5FGD', 'ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', false, 1),
-(15, '01ARZ3NDEKTSV4RRFFQ69G5FGE', 'ollama.max-tokens', '2000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, 1),
+(12, '01ARZ3NDEKTSV4RRFFQ69G5FGB', 'ollama.api.url', 'http://ollama:11434', 'STRING', 'OLLAMA', 'Ollama API URL', false, NULL),
+(13, '01ARZ3NDEKTSV4RRFFQ69G5FGC', 'ollama.model', 'llama3.2:3b', 'STRING', 'OLLAMA', 'Ollama model name', false, NULL),
+(14, '01ARZ3NDEKTSV4RRFFQ69G5FGD', 'ollama.temperature', '0.7', 'DOUBLE', 'OLLAMA', 'Ollama temperature setting (0.0-2.0)', false, NULL),
+(15, '01ARZ3NDEKTSV4RRFFQ69G5FGE', 'ollama.max-tokens', '2000', 'INTEGER', 'OLLAMA', 'Ollama maximum tokens for responses', false, NULL),
 
 -- Prompt settings
-(17, '01ARZ3NDEKTSV4RRFFQ69G5FGG', 'ai.prompt.question.answering.prefix', 'You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', false, 1),
+(17, '01ARZ3NDEKTSV4RRFFQ69G5FGG', 'ai.prompt.question.answering.prefix', 'You are a helpful AI math tutor. A student is working on an algebra problem and has asked you a question.', 'TEXT', 'PROMPTS', 'Prefix prompt for question answering', false, NULL),
 (18, '01ARZ3NDEKTSV4RRFFQ69G5FGH', 'ai.prompt.question.answering.postfix', 'Provide a helpful, encouraging answer that:
 - Guides the student''s thinking without solving it for them
 - Is concise (2-3 sentences max)
@@ -365,8 +355,8 @@ INSERT INTO ai_config (id, public_id, config_key, config_value, config_type, cat
 - Encourages them to try the next step
 - Writes mathematical expressions in LaTeX: wrap inline math in single $...$ and display math in $$...$$; do not use other math notations
 
-Your answer:', 'TEXT', 'PROMPTS', 'Postfix prompt for question answering', false, 1),
-(19, '01ARZ3NDEKTSV4RRFFQ69G5FGJ', 'ai.prompt.math.tutoring.prefix', 'You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student''s action and provide brief, helpful feedback.', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', false, 1),
+Your answer:', 'TEXT', 'PROMPTS', 'Postfix prompt for question answering', false, NULL),
+(19, '01ARZ3NDEKTSV4RRFFQ69G5FGJ', 'ai.prompt.math.tutoring.prefix', 'You are an encouraging but concise AI math tutor helping a student learn algebra. Analyze the student''s action and provide brief, helpful feedback.', 'TEXT', 'PROMPTS', 'Prefix prompt for math tutoring', false, NULL),
 (20, '01ARZ3NDEKTSV4RRFFQ69G5FGK', 'ai.prompt.math.tutoring.postfix', 'Provide feedback in the following JSON format:
 {
   "type": "POSITIVE" or "CORRECTIVE" or "HINT" or "SUGGESTION",
@@ -385,7 +375,7 @@ IMPORTANT Guidelines:
 - Do NOT provide hints for correct actions
 - Leave suggestedNextSteps empty unless specifically needed
 - Be specific about what they did, not generic
-- In the "message" field, write mathematical expressions in LaTeX: wrap inline math in single $...$ and display math in $$...$$', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', false, 1);
+- In the "message" field, write mathematical expressions in LaTeX: wrap inline math in single $...$ and display math in $$...$$', 'TEXT', 'PROMPTS', 'Postfix prompt for math tutoring', false, NULL);
 
 -- Set sequence to 20 so next value is 21
 SELECT setval('ai_config_id_seq', 20, true);
