@@ -11,6 +11,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.UserDto;
+import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import io.quarkus.test.InjectMock;
@@ -21,10 +22,14 @@ import jakarta.inject.Inject;
 @QuarkusTest
 class ServiceRejectionUtilTest {
 
+    private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
     private static final String STUDENT_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX";
 
     @Inject
     private UserService userService;
+
+    @Inject
+    private UserRankRepository userRankRepository;
 
     // Quarkus injects the mock, which NullAway cannot see
     @InjectMock
@@ -36,6 +41,8 @@ class ServiceRejectionUtilTest {
     @TestTransaction
     void duplicateUsernameShowsServiceMessage() {
         Mockito.doNothing().when(this.permissionService).requireUserAdd();
+        Mockito.when(this.permissionService.findCurrentUserRank())
+                .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
         final var username = "user_" + UUID.randomUUID().toString().substring(0, 8);
         this.userService.createUser(buildDto(username));
 

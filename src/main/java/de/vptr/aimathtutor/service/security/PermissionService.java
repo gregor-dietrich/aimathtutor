@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.security;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
@@ -34,6 +35,20 @@ public class PermissionService {
             throw new PermissionDeniedException("You do not have permission to perform this action");
         }
         return rank;
+    }
+
+    /**
+     * Returns the current user's rank entity, the ceiling for the users and ranks they may change, assign or grant.
+     * This only delegates to {@link UserRankService#getCurrentUserRankEntity()}; it exists as the seam that service
+     * tests stub, since they mock this service. It joins the caller's transaction, so it returns the same managed rank
+     * the caller may be about to edit.
+     *
+     * @return the current user's {@link UserRankEntity}, or null if no user is authenticated, the user no longer
+     *         exists, has no rank, or is banned or not activated
+     */
+    @Nullable
+    public UserRankEntity findCurrentUserRank() {
+        return this.userRankService.getCurrentUserRankEntity();
     }
 
     // Exercise permissions
@@ -117,7 +132,8 @@ public class PermissionService {
      *            the ID of the user to authorise
      * @return the resolved {@link UserEntity}
      * @throws PermissionDeniedException
-     *             if the user does not exist, has no rank, or lacks the required permissions
+     *             if the user does not exist, is banned or not activated, has no rank, or lacks the required
+     *             permissions
      */
     public UserEntity requireAiConfigEdit(final Long userId) {
         final UserEntity user = this.userRepository.findById(userId);
@@ -126,7 +142,7 @@ public class PermissionService {
         // LazyInitializationException when this runs outside a Hibernate session — e.g. the pre-DNS
         // authorization check in AiConfigService, which is intentionally non-transactional and may run on a
         // background thread.
-        if (user == null || user.rank == null || !user.rank.aiConfigEdit) {
+        if (user == null || !user.activated || user.banned || user.rank == null || !user.rank.aiConfigEdit) {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");
         }
         return user;

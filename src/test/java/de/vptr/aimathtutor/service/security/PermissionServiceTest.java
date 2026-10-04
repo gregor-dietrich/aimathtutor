@@ -12,6 +12,8 @@ import java.util.List;
 import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
@@ -387,6 +389,7 @@ class PermissionServiceTest {
         rank.aiConfigEdit = true;
         rank.users = detachedUsers;
         final var user = new UserEntity();
+        user.activated = true;
         user.rank = rank;
         when(this.userRepository.findById(1L)).thenReturn(user);
 
@@ -400,10 +403,26 @@ class PermissionServiceTest {
         final var rank = new UserRankEntity();
         rank.aiConfigEdit = false;
         final var user = new UserEntity();
+        user.activated = true;
         user.rank = rank;
         when(this.userRepository.findById(2L)).thenReturn(user);
 
         assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(2L));
+    }
+
+    @ParameterizedTest(name = "banned={0}, activated={1}")
+    @CsvSource({ "true, true", "false, false" })
+    @DisplayName("requireAiConfigEdit throws for a banned or deactivated user whose rank holds the permission")
+    void requireAiConfigEditThrowsWhenBannedOrInactive(final boolean banned, final boolean activated) {
+        final var rank = new UserRankEntity();
+        rank.aiConfigEdit = true;
+        final var user = new UserEntity();
+        user.banned = banned;
+        user.activated = activated;
+        user.rank = rank;
+        when(this.userRepository.findById(4L)).thenReturn(user);
+
+        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(4L));
     }
 
     @Test
@@ -420,5 +439,13 @@ class PermissionServiceTest {
         user.rank = null;
         when(this.userRepository.findById(3L)).thenReturn(user);
         assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
+    }
+
+    @Test
+    @DisplayName("findCurrentUserRank returns the current user's rank entity")
+    void findCurrentUserRankReturnsCurrentRank() {
+        final var rank = new UserRankEntity();
+        when(this.userRankService.getCurrentUserRankEntity()).thenReturn(rank);
+        assertSame(rank, this.permissionService.findCurrentUserRank());
     }
 }

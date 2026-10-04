@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
@@ -115,4 +116,30 @@ public class UserRankEntity extends BaseEntity {
     @Column(name = "last_edit")
     @Nullable
     public LocalDateTime lastEdit;
+
+    /**
+     * Every permission flag of this rank, in declaration order, so two ranks' lists can be compared position by
+     * position. A new permission flag must be added here, or {@link #grantsBeyond(List)} ignores it.
+     *
+     * @return the permission flags in a fixed order
+     */
+    public List<Boolean> permissions() {
+        return List.of(this.adminView, this.exerciseAdd, this.exerciseDelete, this.exerciseEdit, this.lessonAdd,
+                this.lessonDelete, this.lessonEdit, this.commentAdd, this.commentDelete, this.commentEdit, this.userAdd,
+                this.userDelete, this.userEdit, this.userGroupAdd, this.userGroupDelete, this.userGroupEdit,
+                this.userRankAdd, this.userRankDelete, this.userRankEdit, this.aiConfigEdit);
+    }
+
+    /**
+     * Whether this rank grants a permission that {@code ceiling} lacks. Takes the other rank's {@link #permissions()}
+     * rather than the rank itself, so a caller can capture its own permissions before editing its own rank.
+     *
+     * @param ceiling
+     *            the permissions to compare against, as returned by {@link #permissions()}
+     * @return true if some flag is set here but not in {@code ceiling}
+     */
+    public boolean grantsBeyond(final List<Boolean> ceiling) {
+        final List<Boolean> granted = this.permissions();
+        return IntStream.range(0, granted.size()).anyMatch(i -> granted.get(i) && !ceiling.get(i));
+    }
 }

@@ -72,6 +72,9 @@ class UserRankServiceTest {
     @BeforeEach
     @Transactional
     void setUp() {
+        // The caller is an administrator unless a test says otherwise, so the privilege ceiling never applies
+        when(this.permissionService.findCurrentUserRank())
+                .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
         // Clean up test ranks from previous runs
         final List<String> testRankNames =
                 List.of("TestRank", "TestRankToUpdate", "TestRankToDelete", "TestAdminRank123", "TestUserRank456");
@@ -339,6 +342,8 @@ class UserRankServiceTest {
 
         final var admin = this.userRepository.findByUsername("admin");
         assertNotNull(admin, "Seeded admin must exist");
+        admin.activated = true;
+        admin.banned = false;
         admin.rank = this.userRankRepository.findByPublicId(rank.publicId).orElseThrow();
         this.userRepository.persist(admin);
 
@@ -350,6 +355,26 @@ class UserRankServiceTest {
             final UserRankViewDto result = this.userRankService.getCurrentUserRank();
             assertNotNull(result);
             assertEquals(rank.name, result.name);
+        }
+    }
+
+    @ParameterizedTest(name = "banned={0}, activated={1}")
+    @CsvSource({ "true, true", "false, false" })
+    @DisplayName("getCurrentUserRankEntity returns null for a banned or deactivated current user")
+    @TestTransaction
+    void currentRankIsNullForBannedOrInactiveUser(final boolean banned, final boolean activated) {
+        final String username = this.createActiveUser(ADMIN_RANK_PUBLIC_ID);
+        final var user = this.userRepository.findByUsername(username);
+        assertNotNull(user);
+        user.banned = banned;
+        user.activated = activated;
+
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn(username);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            assertNull(this.userRankService.getCurrentUserRankEntity());
         }
     }
 
@@ -442,14 +467,14 @@ class UserRankServiceTest {
                 .forEach(u -> u.banned = true);
     }
 
-    private void createActiveUser(final String rankPublicId) {
+    private String createActiveUser(final String rankPublicId) {
         final UserDto userDto = new UserDto();
         final String suffix = UUID.randomUUID().toString().substring(0, 8);
         userDto.username = "rankuser_" + suffix;
         userDto.password = "P@ssw0rd1";
         userDto.rankPublicId = rankPublicId;
         userDto.activated = true;
-        this.userService.createUser(userDto);
+        return this.userService.createUser(userDto).username;
     }
 
     /**
