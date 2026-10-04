@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.quarkus.runtime.LaunchMode;
+import jakarta.interceptor.Interceptor;
 
 class ProductionProfileGuardTest {
 
@@ -44,6 +45,7 @@ class ProductionProfileGuardTest {
     @Test
     @DisplayName("The guard observes container initialization, which runs before Hibernate, not StartupEvent")
     void guardRunsBeforeHibernate() throws NoSuchMethodException {
-        StartupGuardAssertions.assertRunsBeforeHibernate(ProductionProfileGuard.class, "checkProfiles");
+        StartupGuardAssertions.assertRunsBeforeHibernate(ProductionProfileGuard.class, "checkProfiles",
+                Interceptor.Priority.PLATFORM_BEFORE);
     }
 }

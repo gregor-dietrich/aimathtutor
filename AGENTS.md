@@ -73,7 +73,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **LoginAttemptServiceTest must verify exact cap value of 3600.** Do not revert to weak `<= 3600`.
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded strings cause state leakage (`@ApplicationScoped`).
 - **AdminConfigView save methods must null-check `authService.getUserId()`.** Use `requireUserId()` helper.
-- **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to `StartupEvent`**, even though every build logs a Quarkus warning recommending it. Hibernate's `%dev,test` drop-and-create runs before `StartupEvent`, so a production jar started with a dev/test profile would empty the database first. The guard observes `@Initialized(ApplicationScoped.class)`, which fires during static init; `ProductionProfileGuardTest` and `SchemaManagementGuardTest` pin that. `SchemaManagementGuard` refuses a production launch whose schema-management strategy (or the deprecated `database.generation`) is anything but `none`/`validate`.
+- **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to `StartupEvent`**, even though every build logs a Quarkus warning recommending it. Hibernate's schema management runs before `StartupEvent`, so a `StartupEvent` guard would run after the tables are gone. Both guards observe `@Initialized(ApplicationScoped.class)`, which fires during static init; `ProductionProfileGuardTest` and `SchemaManagementGuardTest` pin that.
 - **Security is session-based via `VaadinSession`, not Quarkus `SecurityIdentity`.** Permission checks via `PermissionService` in service layer. Do **not** add `@RolesAllowed` or `@Authenticated` to views. `MainLayout` and `AdminMainLayout` enforce auth via `BeforeEnterObserver`.
 - **Every user or rank write path must enforce the privilege ceiling.** Read the caller's permissions with `UserRankService.requireCallerPermissions()` before writing (before editing a rank, which may be the caller's own), and call `UserRankService.requireWithin()` on every rank the write touches, assigns or produces. A caller may never create, change, assign or delete a user or rank holding a permission their own rank lacks.
 
@@ -113,7 +113,7 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
-- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts.
+- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts. `SchemaManagementGuard` refuses one whose schema action is anything but `none`/`validate` under any of the names Hibernate honours (`schema-management.strategy`, the deprecated `database.generation`, their `"<default>"` persistence-unit forms, and Jakarta's `schema-generation.database.action` via `unsupported-properties`).
 - **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
 - **Password utility:** `make password` generates a bcrypt hash for `init.sql` or an administrator reset (README).
 
