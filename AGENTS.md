@@ -111,7 +111,7 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
 - **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is `validate`-only. Migrations live in `src/main/resources/db/migration`, and dev/test demo data lives in `db/demo/R__demo_data.sql`.
-- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`. Production seeds no accounts: on startup in `LaunchMode.NORMAL`, `AppLifecycleBean` creates the first admin from `app.bootstrap.admin-username`/`-password` when `users` is empty, and replaces the password of a 4.x-seeded `admin` that still accepts `admin`. Both fail startup when no password is configured.
+- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`. Production seeds no accounts: on startup in `LaunchMode.NORMAL`, `AppLifecycleBean` creates the first admin from `app.bootstrap.admin-username`/`-password` when `users` is empty, and replaces the password of a 4.x-seeded `admin` that still accepts `admin`. Both fail startup when no password is configured. 4.x-seeded `teacher`/`student1`/`student2` that still accept their published passwords are deactivated on every production start.
 - **Password utility:** `make password` generates salt+hash for seed data.
 
 ### Migrations

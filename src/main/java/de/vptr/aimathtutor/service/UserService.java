@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -23,8 +24,10 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -38,10 +41,11 @@ public class UserService {
     /** The Admin rank seeded by V1. */
     private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
 
-    /** The admin account seeded by releases before 5.0.0, and its published password. */
-    private static final String SEEDED_ADMIN_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FB0";
+    /** The admin account seeded by releases before 5.0.0. Every seeded account's published password is its username. */
+    private static final String SEEDED_ADMIN_USERNAME = "admin";
 
-    private static final String SEEDED_ADMIN_PASSWORD = "admin";
+    /** The demo accounts seeded by releases before 5.0.0. */
+    private static final List<String> SEEDED_DEMO_USERNAMES = List.of("teacher", "student1", "student2");
 
     @Inject
     PasswordHashingService passwordHashingService;
@@ -57,6 +61,9 @@ public class UserService {
 
     @Inject
     AuthService authService;
+
+    @Inject
+    Validator validator;
 
     /**
      * Retrieves all users in the system.
@@ -205,7 +212,12 @@ public class UserService {
         if (this.hasUsers()) {
             return false;
         }
-        this.insertUser(new UserDto(username, password, null, ADMIN_RANK_PUBLIC_ID, false, true));
+        final var admin = new UserDto(username, password, null, ADMIN_RANK_PUBLIC_ID, false, true);
+        final var violations = this.validator.validate(admin);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+        this.insertUser(admin);
         return true;
     }
 
@@ -216,7 +228,7 @@ public class UserService {
      */
     @Transactional
     public boolean hasSeededAdminPassword() {
-        return this.findSeededAdminWithPublishedPassword().isPresent();
+        return this.findWithPublishedPassword(SEEDED_ADMIN_USERNAME).isPresent();
     }
 
     /**
@@ -231,7 +243,7 @@ public class UserService {
      */
     @Transactional
     public boolean replaceSeededAdminPassword(final String password) {
-        final var admin = this.findSeededAdminWithPublishedPassword();
+        final var admin = this.findWithPublishedPassword(SEEDED_ADMIN_USERNAME);
         admin.ifPresent(user -> {
             this.validatePassword(password);
             user.password = this.passwordHashingService.hashPassword(password);
@@ -239,9 +251,27 @@ public class UserService {
         return admin.isPresent();
     }
 
-    private Optional<UserEntity> findSeededAdminWithPublishedPassword() {
-        return this.userRepository.findByPublicId(SEEDED_ADMIN_PUBLIC_ID)
-                .filter(user -> this.passwordHashingService.verifyPassword(SEEDED_ADMIN_PASSWORD, user.password));
+    /**
+     * Deactivates the demo accounts seeded by releases before 5.0.0 that still accept their published passwords. An
+     * admin can set new passwords and reactivate them.
+     *
+     * @return the usernames of the accounts deactivated by this call
+     */
+    @Transactional
+    public List<String> deactivateSeededDemoAccounts() {
+        final var deactivated = new ArrayList<String>();
+        for (final String username : SEEDED_DEMO_USERNAMES) {
+            this.findWithPublishedPassword(username).filter(user -> user.activated).ifPresent(user -> {
+                user.activated = false;
+                deactivated.add(username);
+            });
+        }
+        return deactivated;
+    }
+
+    private Optional<UserEntity> findWithPublishedPassword(final String seededUsername) {
+        return this.userRepository.findByUsernameOptional(seededUsername)
+                .filter(user -> this.passwordHashingService.verifyPassword(seededUsername, user.password));
     }
 
     private UserViewDto insertUser(final UserDto userDto) {

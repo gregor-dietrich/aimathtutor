@@ -78,6 +78,7 @@ public class AppLifecycleBean {
         }
         if (launchMode == LaunchMode.NORMAL) {
             bootstrapAdmin();
+            deactivateSeededDemoAccounts();
         }
     }
 
@@ -98,6 +99,17 @@ public class AppLifecycleBean {
             LOG.infof("Created the initial admin account '%s'. %s", bootstrapAdminUsername, BOOTSTRAP_DONE_HINT);
         } else if (userService.replaceSeededAdminPassword(password)) {
             LOG.warnf("Replaced the published password of the seeded 'admin' account. %s", BOOTSTRAP_DONE_HINT);
+        }
+    }
+
+    /**
+     * Deactivates the demo accounts seeded by releases before 5.0.0 while they still accept their published passwords.
+     */
+    private void deactivateSeededDemoAccounts() {
+        final var usernames = userService.deactivateSeededDemoAccounts();
+        if (!usernames.isEmpty()) {
+            LOG.warnf("Deactivated the seeded accounts %s because they still accept their published passwords. "
+                    + "Set new passwords before reactivating them.", usernames);
         }
     }
 

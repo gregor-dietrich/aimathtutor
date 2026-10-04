@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -94,6 +95,17 @@ class AppLifecycleBeanTest {
 
         assertDoesNotThrow(() -> appLifecycleBean.onStart(new StartupEvent()));
         verify(this.userService).replaceSeededAdminPassword(BOOTSTRAP_PASSWORD);
+    }
+
+    @Test
+    @DisplayName("onStart deactivates the seeded demo accounts in production")
+    void onStart_normalMode_deactivatesSeededDemoAccounts() {
+        when(this.userService.hasUsers()).thenReturn(true);
+        when(this.userService.deactivateSeededDemoAccounts()).thenReturn(List.of("teacher"));
+        final var appLifecycleBean = this.productionBean(Optional.empty());
+
+        assertDoesNotThrow(() -> appLifecycleBean.onStart(new StartupEvent()));
+        verify(this.userService).deactivateSeededDemoAccounts();
     }
 
     @Test
