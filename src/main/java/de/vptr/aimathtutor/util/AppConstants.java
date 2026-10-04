@@ -69,8 +69,8 @@ public final class AppConstants {
     /** Minimum password length. */
     public static final int PASSWORD_MIN_LENGTH = 8;
 
-    /** Maximum password length. */
-    public static final int PASSWORD_MAX_LENGTH = 100;
+    /** Maximum password length, in characters and in UTF-8 bytes: bcrypt uses only the first 72 bytes. */
+    public static final int PASSWORD_MAX_LENGTH = 72;
 
     /** Minimum userrank name length. */
     public static final int USERRANK_NAME_MIN_LENGTH = 1;

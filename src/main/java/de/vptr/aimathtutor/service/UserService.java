@@ -108,8 +108,6 @@ public class UserService {
         return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
     }
 
-    private static final int PASSWORD_MAX_LENGTH = 100;
-
     /**
      * Validates password strength: minimum length, and complexity (uppercase, lowercase, digit, symbol).
      */
@@ -117,13 +115,14 @@ public class UserService {
         if (password == null || password.isBlank()) {
             throw new ValidationException("Password is required");
         }
-        if (password.length() < AppConstants.PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
+        if (password.length() < AppConstants.PASSWORD_MIN_LENGTH
+                || password.length() > AppConstants.PASSWORD_MAX_LENGTH) {
             throw new ValidationException("Password must be between " + AppConstants.PASSWORD_MIN_LENGTH + " and "
-                    + PASSWORD_MAX_LENGTH + " characters");
+                    + AppConstants.PASSWORD_MAX_LENGTH + " characters");
         }
-        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw new ValidationException("Password must not exceed 72 bytes when encoded as UTF-8 "
-                    + "(some Unicode characters use multiple bytes)");
+        if (password.getBytes(StandardCharsets.UTF_8).length > AppConstants.PASSWORD_MAX_LENGTH) {
+            throw new ValidationException("Password must not exceed " + AppConstants.PASSWORD_MAX_LENGTH
+                    + " bytes when encoded as UTF-8 (some Unicode characters use multiple bytes)");
         }
         if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]).+$")) {
             throw new ValidationException("Password must contain at least one uppercase letter, one lowercase letter, "
