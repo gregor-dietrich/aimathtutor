@@ -142,6 +142,28 @@ class PasswordHashingServiceTest {
     }
 
     @Test
+    @DisplayName("Should hash a password of exactly 72 bytes, bcrypt's input limit")
+    void shouldHash72BytePassword() {
+        final String password = "a".repeat(72);
+        assertTrue(this.passwordHashingService.verifyPassword(password,
+                this.passwordHashingService.hashPassword(password)));
+    }
+
+    @Test
+    @DisplayName("Should reject a password of 73 bytes, which bcrypt would truncate")
+    void shouldReject73BytePassword() {
+        assertThrows(IllegalArgumentException.class, () -> this.passwordHashingService.hashPassword("a".repeat(73)));
+    }
+
+    @Test
+    @DisplayName("Should reject a multi-byte password under 72 characters but over 72 bytes")
+    void shouldRejectMultiBytePasswordOver72Bytes() {
+        // 37 characters, 73 UTF-8 bytes
+        assertThrows(IllegalArgumentException.class,
+                () -> this.passwordHashingService.hashPassword("a" + "ä".repeat(36)));
+    }
+
+    @Test
     @DisplayName("Should handle Unicode characters in password")
     void shouldHandleUnicodeCharactersInPassword() {
         // Given

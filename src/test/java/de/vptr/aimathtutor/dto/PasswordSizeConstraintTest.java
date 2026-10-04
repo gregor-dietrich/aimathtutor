@@ -37,12 +37,4 @@ class PasswordSizeConstraintTest {
         dto.password = PASSWORD_72;
         assertTrue(this.validator.validateProperty(dto, "password").isEmpty());
     }
-
-    @Test
-    @DisplayName("UserSettingsDto rejects a 73-character new password")
-    void userSettingsDto_rejects73Characters() {
-        final var dto = new UserSettingsDto();
-        dto.newPassword = PASSWORD_72 + "a";
-        assertEquals(1, this.validator.validateProperty(dto, "newPassword").size());
-    }
 }

@@ -373,9 +373,11 @@ public class AdminUsersView extends AbstractAdminView {
             passwordUpdateDto.publicId = userPublicId;
             passwordUpdateDto.password = newPassword;
 
-            this.userService.patchUser(userPublicId, passwordUpdateDto);
-            NotificationUtil.showSuccess("Password changed successfully");
-            this.passwordDialog.close();
+            if (ServiceRejectionUtil
+                    .runOrShowRejection(() -> this.userService.patchUser(userPublicId, passwordUpdateDto))) {
+                NotificationUtil.showSuccess("Password changed successfully");
+                this.passwordDialog.close();
+            }
         } catch (final PermissionDeniedException e) {
             LOG.warnf("Permission denied changing password: %s", e.getMessage() != null ? e.getMessage() : "");
             NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
