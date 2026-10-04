@@ -66,6 +66,10 @@
     Bump together with vaadin.version, to the new release's FrontendTools.DEFAULT_NODE_VERSION. -->
     <vaadin.node.version>v24.21.0</vaadin.node.version>
     <vaadin.require.home.node>true</vaadin.require.home.node>
+    <!-- npm ci instead of npm install: installs exactly what package-lock.json records and fails
+    the build when package.json and the lockfile disagree, instead of rewriting the lockfile.
+    Off only in the regen-frontend profile, which recreates the lockfile from scratch. -->
+    <vaadin.ci.build>true</vaadin.ci.build>
   </properties>
 
   <dependencyManagement>
@@ -432,6 +436,7 @@
             <!-- vaadin.build.*: Quarkus build step; vaadin.*: dev mode's runtime dev server -->
             <vaadin.build.node-version>${vaadin.node.version}</vaadin.build.node-version>
             <vaadin.build.require-home-node-exec>${vaadin.require.home.node}</vaadin.build.require-home-node-exec>
+            <vaadin.build.ci-build>${vaadin.ci.build}</vaadin.build.ci-build>
             <vaadin.node.version>${vaadin.node.version}</vaadin.node.version>
             <vaadin.require.home.node>${vaadin.require.home.node}</vaadin.require.home.node>
           </systemProperties>
@@ -707,8 +712,10 @@
         Regenerates the committed frontend manifest (package.json / package-lock.json)
         on demand via `make regen-frontend`. Unlike the production profile, this forces
         a full frontend build (forceProductionBuild) so npm actually resolves
-        dependencies, and keeps the generated files (cleanFrontendFiles=false) instead
-        of deleting them after bundling. Not part of the normal CI/production build.
+        dependencies, keeps the generated files (cleanFrontendFiles=false) instead
+        of deleting them after bundling, and runs npm install rather than npm ci
+        (ciBuild=false), because there is no lockfile yet to install from. Not part of
+        the normal CI/production build.
       -->
       <id>regen-frontend</id>
       <build>
@@ -720,6 +727,7 @@
             <configuration>
               <forceProductionBuild>true</forceProductionBuild>
               <cleanFrontendFiles>false</cleanFrontendFiles>
+              <ciBuild>false</ciBuild>
             </configuration>
             <executions>
               <execution>
