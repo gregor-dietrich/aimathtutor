@@ -31,6 +31,7 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
@@ -65,16 +66,23 @@ class UserServiceTest {
     private UserRankService userRankService;
 
     @Inject
+    private UserRankRepository userRankRepository;
+
+    @Inject
     private PasswordHashingService passwordHashingService;
 
     @InjectMock
     private PermissionService permissionService;
 
     @BeforeEach
+    @Transactional
     void setUpPermissionService() {
         Mockito.doNothing().when(this.permissionService).requireUserAdd();
         Mockito.doNothing().when(this.permissionService).requireUserEdit();
         Mockito.doNothing().when(this.permissionService).requireUserDelete();
+        // The caller is an administrator unless a test says otherwise, so the privilege ceiling never applies
+        when(this.permissionService.findCurrentUserRank())
+                .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
     }
 
     private UserDto buildValidDto() {

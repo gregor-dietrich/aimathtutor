@@ -421,4 +421,12 @@ class PermissionServiceTest {
         when(this.userRepository.findById(3L)).thenReturn(user);
         assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
     }
+
+    @Test
+    @DisplayName("findCurrentUserRank returns the current user's rank entity")
+    void findCurrentUserRankReturnsCurrentRank() {
+        final var rank = new UserRankEntity();
+        when(this.userRankService.getCurrentUserRankEntity()).thenReturn(rank);
+        assertSame(rank, this.permissionService.findCurrentUserRank());
+    }
 }

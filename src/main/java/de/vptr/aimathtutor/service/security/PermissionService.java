@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.security;
 
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
@@ -34,6 +35,16 @@ public class PermissionService {
             throw new PermissionDeniedException("You do not have permission to perform this action");
         }
         return rank;
+    }
+
+    /**
+     * Returns the current user's rank entity, the ceiling for the users and ranks they may change, assign or grant.
+     *
+     * @return the current user's {@link UserRankEntity}, or null if no user is authenticated
+     */
+    @Nullable
+    public UserRankEntity findCurrentUserRank() {
+        return this.userRankService.getCurrentUserRankEntity();
     }
 
     // Exercise permissions

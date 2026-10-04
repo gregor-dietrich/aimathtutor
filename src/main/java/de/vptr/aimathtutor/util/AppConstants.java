@@ -134,6 +134,10 @@ public final class AppConstants {
             "This would leave no active user whose rank has Admin View, Can Edit Users and Can Edit User Ranks. "
                     + "Give another active user such a rank first.";
 
+    /** Rejection message for a change to, or assignment of, a user or rank above the caller's own rank. */
+    public static final String PRIVILEGE_CEILING_MESSAGE =
+            "You can't change a user or rank that has permissions your rank doesn't have.";
+
     /** Vaadin session attribute key for the authenticated username. */
     public static final String SESSION_KEY_USERNAME = "authenticated.username";
 

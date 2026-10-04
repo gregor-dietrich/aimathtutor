@@ -72,6 +72,9 @@ class UserRankServiceTest {
     @BeforeEach
     @Transactional
     void setUp() {
+        // The caller is an administrator unless a test says otherwise, so the privilege ceiling never applies
+        when(this.permissionService.findCurrentUserRank())
+                .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
         // Clean up test ranks from previous runs
         final List<String> testRankNames =
                 List.of("TestRank", "TestRankToUpdate", "TestRankToDelete", "TestAdminRank123", "TestUserRank456");

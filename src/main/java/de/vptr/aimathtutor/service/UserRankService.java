@@ -10,6 +10,7 @@ import com.vaadin.flow.server.VaadinSession;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
@@ -62,6 +63,18 @@ public class UserRankService {
     @Transactional
     @Nullable
     public UserRankViewDto getCurrentUserRank() {
+        final UserRankEntity rank = this.getCurrentUserRankEntity();
+        return rank != null ? new UserRankViewDto(rank) : null;
+    }
+
+    /**
+     * Retrieves the rank entity of the currently authenticated user.
+     *
+     * @return the current user's {@link UserRankEntity}, or null if not authenticated
+     */
+    @Transactional
+    @Nullable
+    public UserRankEntity getCurrentUserRankEntity() {
         final var session = VaadinSession.getCurrent();
         if (session == null) {
             return null; // Return null instead of throwing when no session
@@ -73,11 +86,7 @@ public class UserRankService {
         }
         // Use UserRepository to look up the user by username
         final var user = this.userRepository.findByUsername(username);
-        if (user == null || user.rank == null) {
-            return null; // Return null instead of throwing when user or rank not found
-        }
-
-        return new UserRankViewDto(user.rank);
+        return user != null ? user.rank : null; // null instead of throwing when user or rank not found
     }
 
     /**
@@ -182,6 +191,7 @@ public class UserRankService {
     @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto createRank(final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankAdd();
+        final List<Boolean> ceiling = this.requireCallerPermissions();
 
         final UserRankEntity rank = new UserRankEntity();
 
@@ -191,6 +201,7 @@ public class UserRankService {
         rank.name = this.normalizeAndValidateRankName(rankDto.name);
 
         this.applyAllPermissions(rank, rankDto);
+        requireWithin(rank, ceiling);
 
         this.userRankRepository.persist(rank);
         return new UserRankViewDto(rank);
@@ -216,11 +227,15 @@ public class UserRankService {
         this.permissionService.requireUserRankEdit();
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
+        // Read before the edit: the caller's own rank may be the one being edited
+        final List<Boolean> ceiling = this.requireCallerPermissions();
+        requireWithin(existingRank, ceiling);
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Complete replacement (PUT semantics)
         existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         this.applyAllPermissions(existingRank, rankDto);
+        requireWithin(existingRank, ceiling);
         requireAdministrationKept(existingRank, holdsLastAdministrators);
 
         this.userRankRepository.persist(existingRank);
@@ -247,6 +262,9 @@ public class UserRankService {
         this.permissionService.requireUserRankEdit();
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
+        // Read before the edit: the caller's own rank may be the one being edited
+        final List<Boolean> ceiling = this.requireCallerPermissions();
+        requireWithin(existingRank, ceiling);
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Partial update (PATCH semantics) - only update provided fields. A provided name is still
@@ -255,6 +273,7 @@ public class UserRankService {
             existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         }
         this.applyProvidedPermissions(existingRank, rankDto);
+        requireWithin(existingRank, ceiling);
         requireAdministrationKept(existingRank, holdsLastAdministrators);
 
         this.userRankRepository.persist(existingRank);
@@ -279,6 +298,7 @@ public class UserRankService {
         if (rank == null) {
             return false;
         }
+        requireWithin(rank, this.requireCallerPermissions());
 
         // Check if rank has associated users using COUNT query
         final long userCount = this.userRepository.countByRankPublicId(publicId);
@@ -298,6 +318,39 @@ public class UserRankService {
                     "Cannot delete rank because users are assigned to this rank. "
                             + "Please reassign these users to a different rank before deleting.",
                     Response.Status.CONFLICT);
+        }
+    }
+
+    /**
+     * Returns the current user's permissions: the ceiling for the users and ranks they may change, assign or grant.
+     * Callers editing a rank must read it before the edit, because the rank may be the caller's own.
+     *
+     * @return the current user's rank permissions, as returned by {@link UserRankEntity#permissions()}
+     * @throws PermissionDeniedException
+     *             if there is no current user with a rank; the permission check that runs first makes that unexpected
+     */
+    public List<Boolean> requireCallerPermissions() {
+        final UserRankEntity rank = this.permissionService.findCurrentUserRank();
+        if (rank == null) {
+            throw new PermissionDeniedException("You do not have permission to perform this action");
+        }
+        return rank.permissions();
+    }
+
+    /**
+     * Refuses a rank that grants a permission outside the caller's {@code ceiling}: one the caller may not create,
+     * edit, delete or assign.
+     *
+     * @param rank
+     *            the rank to check; null passes
+     * @param ceiling
+     *            the caller's permissions, from {@link #requireCallerPermissions()}
+     * @throws ValidationException
+     *             if the rank grants a permission the caller's rank lacks
+     */
+    public static void requireWithin(@Nullable final UserRankEntity rank, final List<Boolean> ceiling) {
+        if (rank != null && rank.grantsBeyond(ceiling)) {
+            throw new ValidationException(AppConstants.PRIVILEGE_CEILING_MESSAGE);
         }
     }
 

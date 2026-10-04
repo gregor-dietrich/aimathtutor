@@ -443,12 +443,14 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void deleteRank(final UserRankViewDto rank) {
         try {
-            if (rank.publicId != null && this.userRankService.deleteRank(rank.publicId)) {
-                NotificationUtil.showSuccess("Rank deleted successfully");
-                this.loadRanksAsync();
-            } else {
-                NotificationUtil.showError("Failed to delete rank");
-            }
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (rank.publicId != null && this.userRankService.deleteRank(rank.publicId)) {
+                    NotificationUtil.showSuccess("Rank deleted successfully");
+                    this.loadRanksAsync();
+                } else {
+                    NotificationUtil.showError("Failed to delete rank");
+                }
+            });
         } catch (final PermissionDeniedException e) {
             NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final WebApplicationException e) {

@@ -13,6 +13,7 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -43,6 +44,9 @@ public class UserService {
 
     @Inject
     UserRankRepository userRankRepository;
+
+    @Inject
+    UserRankService userRankService;
 
     @Inject
     PermissionService permissionService;
@@ -200,7 +204,7 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
         user.password = hashedPassword;
 
-        this.applyRankToUser(user, userDto.rankPublicId);
+        this.applyRankToUser(user, userDto.rankPublicId, this.userRankService.requireCallerPermissions());
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
@@ -243,6 +247,7 @@ public class UserService {
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
+        final List<Boolean> ceiling = this.requireWithinCaller(existingUser);
 
         // Check for duplicate username (only if username is different from current)
         final String normalizedUsername = this.normalizeUsername(userDto.username);
@@ -268,7 +273,7 @@ public class UserService {
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        this.applyRankToUser(existingUser, userDto.rankPublicId);
+        this.applyRankToUser(existingUser, userDto.rankPublicId, ceiling);
         return this.saveUpdatedUser(existingUser, wasAdministrator, oldUsername);
     }
 
@@ -295,6 +300,7 @@ public class UserService {
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
+        final List<Boolean> ceiling = this.requireWithinCaller(existingUser);
 
         // Check for duplicate username if username is being updated
         final String normalizedUsername = userDto.username != null && !userDto.username.isBlank()
@@ -332,7 +338,7 @@ public class UserService {
         // Handle password and rank updates (PATCH: only if provided)
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
         if (userDto.rankPublicId != null) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId);
+            this.applyRankToUser(existingUser, userDto.rankPublicId, ceiling);
         }
         return this.saveUpdatedUser(existingUser, wasAdministrator, oldUsername);
     }
@@ -353,6 +359,7 @@ public class UserService {
         if (user == null) {
             return false;
         }
+        this.requireWithinCaller(user);
         this.requireAdministratorRemains(user, UserRepository.isActiveAdministrator(user), false);
         if (user.username != null) {
             this.authService.evictCache(user.username);
@@ -562,14 +569,35 @@ public class UserService {
      *            the user to update
      * @param rankPublicId
      *            the rank public ID
+     * @param ceiling
+     *            the caller's permissions; the rank may not grant more
      * @throws ValidationException
-     *             if {@code rankPublicId} is null or no rank has it
+     *             if {@code rankPublicId} is null, no rank has it, or the rank grants a permission the caller lacks
      */
-    private void applyRankToUser(final UserEntity user, @Nullable final String rankPublicId) {
+    private void applyRankToUser(final UserEntity user, @Nullable final String rankPublicId,
+            final List<Boolean> ceiling) {
         if (rankPublicId == null) {
             throw new ValidationException("Rank is required");
         }
-        user.rank = this.userRankRepository.findByPublicId(rankPublicId)
+        final UserRankEntity rank = this.userRankRepository.findByPublicId(rankPublicId)
                 .orElseThrow(() -> new ValidationException("Rank with public ID " + rankPublicId + " not found"));
+        UserRankService.requireWithin(rank, ceiling);
+        user.rank = rank;
+    }
+
+    /**
+     * Refuses to act on a user whose current rank grants a permission the caller's rank lacks. A user's own rank never
+     * exceeds itself, so this never blocks changes to one's own account.
+     *
+     * @param user
+     *            the user about to be changed or deleted
+     * @return the caller's permissions, for checking a newly assigned rank
+     * @throws ValidationException
+     *             if the user's rank grants a permission the caller's rank lacks
+     */
+    private List<Boolean> requireWithinCaller(final UserEntity user) {
+        final List<Boolean> ceiling = this.userRankService.requireCallerPermissions();
+        UserRankService.requireWithin(user.rank, ceiling);
+        return ceiling;
     }
 }
