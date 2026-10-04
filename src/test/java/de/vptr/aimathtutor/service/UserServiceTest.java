@@ -53,6 +53,7 @@ import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
@@ -83,6 +84,9 @@ class UserServiceTest {
 
     @InjectSpy
     private PasswordHashingService passwordHashingService;
+
+    @Inject
+    private EntityManager em;
 
     @Inject
     private AuthService authService;
@@ -242,6 +246,60 @@ class UserServiceTest {
         final var found = this.userService.findByUsername("admin");
         assertTrue(found.isPresent(), "Seeded admin user should exist");
         assertEquals("admin", found.get().username);
+    }
+
+    @Test
+    @DisplayName("createInitialAdmin does nothing while users exist")
+    @TestTransaction
+    void createInitialAdmin_usersExist_returnsFalse() {
+        assertTrue(this.userService.hasUsers());
+        assertFalse(this.userService.createInitialAdmin("root", VALID_PASSWORD));
+        assertTrue(this.userService.findByUsername("root").isEmpty());
+    }
+
+    @Test
+    @DisplayName("createInitialAdmin creates an activated admin when no user exists")
+    @TestTransaction
+    void createInitialAdmin_noUsers_createsAdmin() {
+        this.em.createQuery("DELETE FROM UserEntity").executeUpdate();
+        assertFalse(this.userService.hasUsers());
+
+        assertTrue(this.userService.createInitialAdmin("Root", VALID_PASSWORD));
+
+        final UserEntity admin = this.userRepository.findByUsernameOptional("root").orElseThrow();
+        assertTrue(admin.activated);
+        assertEquals("Admin", admin.rank.name);
+        assertTrue(this.passwordHashingService.verifyPassword(VALID_PASSWORD, admin.password));
+    }
+
+    @Test
+    @DisplayName("createInitialAdmin rejects a weak password")
+    @TestTransaction
+    void createInitialAdmin_weakPassword_throws() {
+        this.em.createQuery("DELETE FROM UserEntity").executeUpdate();
+
+        assertThrows(ValidationException.class, () -> this.userService.createInitialAdmin("root", "admin"));
+    }
+
+    @Test
+    @DisplayName("replaceSeededAdminPassword replaces the published password of the seeded admin only once")
+    @TestTransaction
+    void replaceSeededAdminPassword_replacesPublishedPassword() {
+        assertTrue(this.userService.hasSeededAdminPassword());
+
+        assertTrue(this.userService.replaceSeededAdminPassword(VALID_PASSWORD));
+
+        assertFalse(this.userService.hasSeededAdminPassword());
+        final UserEntity admin = this.userRepository.findByUsernameOptional("admin").orElseThrow();
+        assertTrue(this.passwordHashingService.verifyPassword(VALID_PASSWORD, admin.password));
+        assertFalse(this.userService.replaceSeededAdminPassword("An0ther!Pass"));
+    }
+
+    @Test
+    @DisplayName("replaceSeededAdminPassword rejects a weak password")
+    @TestTransaction
+    void replaceSeededAdminPassword_weakPassword_throws() {
+        assertThrows(ValidationException.class, () -> this.userService.replaceSeededAdminPassword(""));
     }
 
     @Test
