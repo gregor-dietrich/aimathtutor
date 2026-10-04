@@ -295,6 +295,10 @@ If you want to learn more about building Docker images, please consult <https://
 
 Java compilation runs with a fail-on-warning policy: any javac lint or Error Prone warning aborts the build (a small allowlist of non-actionable lint categories is documented in `pom.xml`). If your build fails with `warnings found and -Werror specified`, fix the reported warning — do not suppress it or exclude the lint category. See the Code Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
 
+### Quarkus build: intentional observer warning
+
+Every build logs `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. This is deliberate: the guard has to run before Hibernate's schema management, which `StartupEvent` does not. Do not "fix" it.
+
 ### Frontend build: expected non-fatal warnings
 
 The frontend toolchain (`prepare-frontend`/`build-frontend`, run with `-Pproduction`) is **not** covered by the fail-on-warning policy. Warnings you may see there are expected and harmless:

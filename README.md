@@ -20,6 +20,8 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
 
+Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop and recreate the database tables, so the app refuses to start with one. The reason appears in `docker compose logs app`, not in the log file, which those profiles disable.
+
 ### Recovering administrator access
 
 The app refuses to delete, ban, deactivate or demote its last active administrator. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches Maven); the checkout you run `docker compose` from will do.
