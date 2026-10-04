@@ -42,8 +42,8 @@ public class UserDto {
     /**
      * Constructs a UserDto with the specified parameters.
      */
-    public UserDto(final String username, final String password, final String email, final String rankPublicId,
-            final Boolean banned, final Boolean activated) {
+    public UserDto(final String username, final String password, @Nullable final String email,
+            final String rankPublicId, final Boolean banned, final Boolean activated) {
         this.username = username;
         this.password = password;
         this.email = email;
