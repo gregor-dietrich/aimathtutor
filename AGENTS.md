@@ -131,6 +131,7 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 - **Never edit a migration that has been merged to main**, because checksum validation fails on every deployed DB. Fix it with a new migration.
 - Every entity change that alters the schema ships with its migration in the same PR.
 - Indexes and constraints are declared only in migrations, never via `@Table(indexes/uniqueConstraints)`.
+- Every foreign key needs an index whose leading columns are the key's columns. `ForeignKeyIndexIT` enforces this; it runs with the integration tests, not under `make test`.
 - Update `R__demo_data.sql` when the migration touches seeded tables.
 - Migrations must be safe on a populated production DB. For example, a new `NOT NULL` column needs a `DEFAULT` or a backfill.
 
