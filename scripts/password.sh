@@ -15,11 +15,11 @@ if [ "$#" -ge 1 ] && [ -n "$1" ]; then
 	PASSWORD="$1"
 else
 	# Prompt for password (hidden)
-	echo -n "Enter password to generate salt+hash: "
-	read -s PASS1
+	echo -n "Enter password to hash: "
+	IFS= read -rs PASS1
 	echo
 	echo -n "Confirm password: "
-	read -s PASS2
+	IFS= read -rs PASS2
 	echo
 
 	if [ "$PASS1" != "$PASS2" ]; then
@@ -30,9 +30,10 @@ else
 	PASSWORD="$PASS1"
 fi
 
-# Pass the password on stdin: exec:java splits exec.args on whitespace, and arguments show up in ps
-echo "Generating salt+hash..."
-printf '%s\n' "$PASSWORD" | ${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args=generate exec:java
+# Pass the password on stdin: exec:java splits exec.args on whitespace, and arguments show up in ps.
+# Compile first: exec:java runs from target/classes, which a fresh checkout doesn't have.
+echo "Generating bcrypt hash..."
+printf '%s\n' "$PASSWORD" | ${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args=generate compile exec:java
 echo "Password hash generated."
 
 cd - > /dev/null

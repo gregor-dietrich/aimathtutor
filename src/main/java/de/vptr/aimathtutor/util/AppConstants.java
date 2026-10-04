@@ -126,9 +126,13 @@ public final class AppConstants {
     /** Message shown when an exercise is solved correctly. */
     public static final String EXERCISE_SOLVED_MESSAGE = "🎉 Congratulations! You've solved the problem correctly!";
 
-    /** Rejection message for a user or rank change that would leave no active administrator. */
+    /**
+     * Rejection message for a user or rank change that would leave no active administrator. Names the rank checkboxes
+     * of the admin UI that make up an administrator.
+     */
     public static final String LAST_ADMINISTRATOR_MESSAGE =
-            "This change would leave no active administrator. Make another user an administrator first.";
+            "This would leave no active user whose rank has Admin View, Can Edit Users and Can Edit User Ranks. "
+                    + "Give another active user such a rank first.";
 
     /** Vaadin session attribute key for the authenticated username. */
     public static final String SESSION_KEY_USERNAME = "authenticated.username";

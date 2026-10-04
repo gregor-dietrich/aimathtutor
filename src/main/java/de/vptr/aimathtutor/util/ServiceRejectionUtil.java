@@ -7,8 +7,9 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 
 /**
- * Shows why a service rejected a save. Services reject invalid input with {@link ValidationException}, which shares its
- * simple name with the binder's exception that the views import, so the views catch it through this helper.
+ * Shows why a service rejected a write, such as a save or delete. Services reject invalid input with
+ * {@link ValidationException}, which shares its simple name with the binder's exception that the views import, so the
+ * views catch it through this helper.
  */
 public final class ServiceRejectionUtil {
 
@@ -22,7 +23,7 @@ public final class ServiceRejectionUtil {
      * user input, so it is logged at DEBUG only, and without the message, which can contain user data.
      *
      * @param serviceCall
-     *            the call that saves the form's data
+     *            the call that writes, such as saving the form's data or deleting an item
      * @return true if the call completed, false if the service rejected it
      */
     public static boolean runOrShowRejection(final Runnable serviceCall) {
@@ -46,7 +47,7 @@ public final class ServiceRejectionUtil {
     }
 
     private static boolean showRejection(final String message) {
-        LOG.debug("Service rejected a save");
+        LOG.debug("Service rejected a write");
         NotificationUtil.showError(message);
         return false;
     }

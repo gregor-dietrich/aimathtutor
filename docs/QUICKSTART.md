@@ -26,13 +26,13 @@ If you need to set a known password for local testing, update the `users` table 
 
 ### Using the password utility
 
-You can generate a password hash and salt for local testing using:
+You can generate a bcrypt password hash using:
 
 ```sh
 make password
 ```
 
-The utility prints `salt=` and `hash=` values and an example `INSERT` statement you can paste into `src/main/resources/sql/init.sql` for local testing. Do NOT use it to distribute real credentials.
+The utility prints a `hash=` value (bcrypt stores its salt inside the hash) and an example `INSERT` statement you can paste into `src/main/resources/sql/init.sql` for local testing. To reset an administrator's password on a deployment, see [Recovering administrator access](../README.md#recovering-administrator-access).
 
 ### 🧪 Running Tests
 
