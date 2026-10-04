@@ -59,6 +59,13 @@
     <surefire-plugin.version>3.6.0</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
     <vaadin.version>25.3.0</vaadin.version>
+    <!-- Node.js for every Vaadin frontend build. vaadin-maven-plugin reads these two properties
+    directly; quarkus-maven-plugin passes them to the Quarkus build step and to dev mode (see its
+    systemProperties). Vaadin downloads this version to ~/.vaadin instead of using a node on PATH,
+    so the npm bundled with it, and with that package-lock.json, is the same on every machine.
+    Bump together with vaadin.version, to the new release's FrontendTools.DEFAULT_NODE_VERSION. -->
+    <vaadin.node.version>v24.21.0</vaadin.node.version>
+    <vaadin.require.home.node>true</vaadin.require.home.node>
   </properties>
 
   <dependencyManagement>
@@ -421,6 +428,13 @@
             -Xshare:off
             -Dio.netty.tryReflectionSetAccessible=true
             -Dio.netty.allocator.useCacheForAllThreads=false</jvmArgs>
+          <systemProperties>
+            <!-- vaadin.build.*: Quarkus build step; vaadin.*: dev mode's runtime dev server -->
+            <vaadin.build.node-version>${vaadin.node.version}</vaadin.build.node-version>
+            <vaadin.build.require-home-node-exec>${vaadin.require.home.node}</vaadin.build.require-home-node-exec>
+            <vaadin.node.version>${vaadin.node.version}</vaadin.node.version>
+            <vaadin.require.home.node>${vaadin.require.home.node}</vaadin.require.home.node>
+          </systemProperties>
         </configuration>
       </plugin>
       <plugin>
