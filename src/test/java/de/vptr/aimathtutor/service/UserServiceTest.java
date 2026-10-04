@@ -423,6 +423,29 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("changePassword rejects a 73-character password with the 72-character limit")
+    @TestTransaction
+    void testChangePassword_73Characters_namesLimit() {
+        final var entity = this.createAndFetchUser();
+
+        final var e = assertThrows(ValidationException.class,
+                () -> this.userService.changePassword(entity.id, VALID_PASSWORD, "A1!" + "a".repeat(70)));
+        assertEquals("Password must be between 8 and 72 characters", e.getMessage());
+    }
+
+    @Test
+    @DisplayName("changePassword rejects a multi-byte password under 72 characters but over 72 bytes")
+    @TestTransaction
+    void testChangePassword_over72Bytes_rejected() {
+        final var entity = this.createAndFetchUser();
+
+        // 38 characters, 73 UTF-8 bytes
+        final var e = assertThrows(ValidationException.class,
+                () -> this.userService.changePassword(entity.id, VALID_PASSWORD, "A1!" + "ä".repeat(35)));
+        assertTrue(e.getMessage().startsWith("Password must not exceed 72 bytes"), e.getMessage());
+    }
+
+    @Test
     @DisplayName("updateAvatars persists emoji values")
     @TestTransaction
     void testUpdateAvatars_success() {
