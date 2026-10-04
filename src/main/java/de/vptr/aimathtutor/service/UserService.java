@@ -35,6 +35,14 @@ import jakarta.ws.rs.core.Response;
 @ApplicationScoped
 public class UserService {
 
+    /** The Admin rank seeded by V1. */
+    private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+
+    /** The admin account seeded by releases before 5.0.0, and its published password. */
+    private static final String SEEDED_ADMIN_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FB0";
+
+    private static final String SEEDED_ADMIN_PASSWORD = "admin";
+
     @Inject
     PasswordHashingService passwordHashingService;
 
@@ -167,7 +175,76 @@ public class UserService {
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
         this.permissionService.requireUserAdd();
+        return this.insertUser(userDto);
+    }
 
+    /**
+     * Tells whether any user account exists.
+     *
+     * @return true if at least one user exists
+     */
+    @Transactional
+    public boolean hasUsers() {
+        return this.userRepository.countAll() > 0;
+    }
+
+    /**
+     * Creates the initial admin account, but only while no user exists. It needs no permission check because there is
+     * nobody yet who could hold one; once any account exists, it does nothing.
+     *
+     * @param username
+     *            the admin username
+     * @param password
+     *            the admin password; must satisfy the regular password rules
+     * @return true if the admin was created, false if users already exist
+     * @throws ValidationException
+     *             if the username or password is invalid
+     */
+    @Transactional
+    public boolean createInitialAdmin(final String username, final String password) {
+        if (this.hasUsers()) {
+            return false;
+        }
+        this.insertUser(new UserDto(username, password, null, ADMIN_RANK_PUBLIC_ID, false, true));
+        return true;
+    }
+
+    /**
+     * Tells whether the admin account seeded by releases before 5.0.0 still accepts its published password.
+     *
+     * @return true if the seeded admin exists and its password is still {@code admin}
+     */
+    @Transactional
+    public boolean hasSeededAdminPassword() {
+        return this.findSeededAdminWithPublishedPassword().isPresent();
+    }
+
+    /**
+     * Replaces the published password of the admin account seeded by releases before 5.0.0. It needs no permission
+     * check because the replaced password is public; accounts with any other password are left alone.
+     *
+     * @param password
+     *            the new password; must satisfy the regular password rules
+     * @return true if the password was replaced, false if the seeded admin is gone or already has another password
+     * @throws ValidationException
+     *             if the password is invalid
+     */
+    @Transactional
+    public boolean replaceSeededAdminPassword(final String password) {
+        final var admin = this.findSeededAdminWithPublishedPassword();
+        admin.ifPresent(user -> {
+            this.validatePassword(password);
+            user.password = this.passwordHashingService.hashPassword(password);
+        });
+        return admin.isPresent();
+    }
+
+    private Optional<UserEntity> findSeededAdminWithPublishedPassword() {
+        return this.userRepository.findByPublicId(SEEDED_ADMIN_PUBLIC_ID)
+                .filter(user -> this.passwordHashingService.verifyPassword(SEEDED_ADMIN_PASSWORD, user.password));
+    }
+
+    private UserViewDto insertUser(final UserDto userDto) {
         // Validate required fields for POST
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for creating a user");

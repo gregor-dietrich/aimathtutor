@@ -1,11 +1,15 @@
 package de.vptr.aimathtutor;
 
+import java.util.Optional;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import de.vptr.aimathtutor.service.UserService;
 import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -18,15 +22,32 @@ public class AppLifecycleBean {
 
     private static final Logger LOG = Logger.getLogger(AppLifecycleBean.class);
 
+    private static final String BOOTSTRAP_DONE_HINT =
+            "APP_BOOTSTRAP_ADMIN_PASSWORD is no longer needed and can be removed from the configuration.";
+
     private final LaunchMode launchMode;
 
     private final String dbPassword;
 
+    private final UserService userService;
+
+    private final String bootstrapAdminUsername;
+
+    @Nullable
+    private final String bootstrapAdminPassword;
+
     @Inject
     AppLifecycleBean(final LaunchMode launchMode,
-            @ConfigProperty(name = "quarkus.datasource.password", defaultValue = "") final String dbPassword) {
+            @ConfigProperty(name = "quarkus.datasource.password", defaultValue = "") final String dbPassword,
+            final UserService userService,
+            @ConfigProperty(name = "app.bootstrap.admin-username",
+                    defaultValue = "admin") final String bootstrapAdminUsername,
+            @ConfigProperty(name = "app.bootstrap.admin-password") final Optional<String> bootstrapAdminPassword) {
         this.launchMode = launchMode;
         this.dbPassword = dbPassword;
+        this.userService = userService;
+        this.bootstrapAdminUsername = bootstrapAdminUsername;
+        this.bootstrapAdminPassword = bootstrapAdminPassword.orElse(null);
     }
 
     /**
@@ -55,6 +76,35 @@ public class AppLifecycleBean {
             LOG.error("Please set the QUARKUS_DATASOURCE_PASSWORD environment variable to a strong password.");
             throw new IllegalStateException("Default database password 'changeit' in use in production");
         }
+        if (launchMode == LaunchMode.NORMAL) {
+            bootstrapAdmin();
+        }
+    }
+
+    /**
+     * Creates the initial admin from configuration when no user exists, and replaces the published password of the
+     * admin seeded by releases before 5.0.0. Fails startup when either is needed but no password is configured.
+     */
+    private void bootstrapAdmin() {
+        final String password = bootstrapAdminPassword;
+        if (password == null) {
+            if (!userService.hasUsers()) {
+                failBootstrap("No user account exists, so there is no admin to log in with.");
+            }
+            if (userService.hasSeededAdminPassword()) {
+                failBootstrap("The seeded 'admin' account still accepts its published password 'admin'.");
+            }
+        } else if (userService.createInitialAdmin(bootstrapAdminUsername, password)) {
+            LOG.infof("Created the initial admin account '%s'. %s", bootstrapAdminUsername, BOOTSTRAP_DONE_HINT);
+        } else if (userService.replaceSeededAdminPassword(password)) {
+            LOG.warnf("Replaced the published password of the seeded 'admin' account. %s", BOOTSTRAP_DONE_HINT);
+        }
+    }
+
+    private static void failBootstrap(final String reason) {
+        LOG.errorf("FATAL: %s", reason);
+        LOG.error("Please set the APP_BOOTSTRAP_ADMIN_PASSWORD environment variable to a strong password.");
+        throw new IllegalStateException(reason);
     }
 
     void onStop(@Observes final ShutdownEvent ev) {
