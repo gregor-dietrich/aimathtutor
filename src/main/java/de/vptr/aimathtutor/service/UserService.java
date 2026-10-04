@@ -169,7 +169,7 @@ public class UserService {
 
     /**
      * Creates a new user account with provided information. Validates required fields (username, password), checks for
-     * duplicate username/email, hashes password with bcrypt, and assigns default rank if not specified.
+     * duplicate username/email, hashes password with bcrypt, and requires an existing rank.
      *
      * @param userDto
      *            the user data transfer object with creation details
@@ -308,17 +308,7 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
         user.password = hashedPassword;
 
-        // Set rank if provided, otherwise default to rank 1
-        if (userDto.rankPublicId != null) {
-            final String rankId = userDto.rankPublicId;
-            final var rank = this.userRankRepository.findByPublicId(rankId).orElse(null);
-            if (rank == null) {
-                throw new ValidationException("Rank with public ID " + rankId + " not found");
-            }
-            user.rank = rank;
-        } else {
-            user.rank = this.userRankRepository.findById(1L);
-        }
+        this.applyRankToUser(user, userDto.rankPublicId);
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
@@ -384,7 +374,7 @@ public class UserService {
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        this.applyRankToUser(existingUser, userDto.rankPublicId, true);
+        this.applyRankToUser(existingUser, userDto.rankPublicId);
 
         this.userRepository.persist(existingUser);
         if (oldUsername != null) {
@@ -455,7 +445,7 @@ public class UserService {
         // Handle password and rank updates (PATCH: only if provided)
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
         if (userDto.rankPublicId != null) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId, false);
+            this.applyRankToUser(existingUser, userDto.rankPublicId);
         }
 
         this.userRepository.persist(existingUser);
@@ -631,30 +621,21 @@ public class UserService {
     }
 
     /**
-     * Applies a rank to a user by public ID. When {@code rankPublicId} is null or not found and {@code resetToDefault}
-     * is {@code true}, falls back to the default rank ({@code userRankRepository.findById(1L)}). When
-     * {@code rankPublicId} is null or not found and {@code resetToDefault} is {@code false}, throws a
-     * {@link ValidationException}.
+     * Applies a rank to a user by public ID. There is deliberately no default rank: the old fallback was row 1, the
+     * Admin rank, so a caller that omitted the rank, or sent one deleted in the meantime, created an admin.
      *
      * @param user
      *            the user to update
      * @param rankPublicId
-     *            the rank public ID; may be null (triggers default/error path)
-     * @param resetToDefault
-     *            if {@code true} and rank lookup fails, assign default rank; if {@code false} and rank lookup fails,
-     *            throw {@link ValidationException}
+     *            the rank public ID
+     * @throws ValidationException
+     *             if {@code rankPublicId} is null or no rank has it
      */
-    private void applyRankToUser(final UserEntity user, @Nullable final String rankPublicId,
-            final boolean resetToDefault) {
-        final var rank = this.userRankRepository.findByPublicId(rankPublicId).orElse(null);
-        if (rank == null) {
-            if (resetToDefault) {
-                user.rank = this.userRankRepository.findById(1L);
-            } else {
-                throw new ValidationException("Rank with public ID " + rankPublicId + " not found");
-            }
-        } else {
-            user.rank = rank;
+    private void applyRankToUser(final UserEntity user, @Nullable final String rankPublicId) {
+        if (rankPublicId == null) {
+            throw new ValidationException("Rank is required");
         }
+        user.rank = this.userRankRepository.findByPublicId(rankPublicId)
+                .orElseThrow(() -> new ValidationException("Rank with public ID " + rankPublicId + " not found"));
     }
 }

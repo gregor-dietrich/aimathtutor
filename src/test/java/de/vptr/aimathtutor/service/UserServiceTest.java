@@ -19,6 +19,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -46,6 +49,9 @@ import jakarta.ws.rs.core.Response;
 class UserServiceTest {
 
     private static final String VALID_PASSWORD = "P@ssw0rd1";
+    private static final String STUDENT_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX";
+    // No rank has this ID, like a rank deleted while an admin's edit dialog still offered it
+    private static final String UNKNOWN_RANK_PUBLIC_ID = "00000000000000000000000000";
 
     @Inject
     private UserService userService;
@@ -75,6 +81,7 @@ class UserServiceTest {
         dto.username = "user_" + suffix;
         dto.password = VALID_PASSWORD;
         dto.email = "user_" + suffix + "@example.com";
+        dto.rankPublicId = STUDENT_RANK_PUBLIC_ID;
         return dto;
     }
 
@@ -155,7 +162,37 @@ class UserServiceTest {
         assertNotNull(created.publicId);
         assertEquals(dto.username, created.username);
         assertEquals(dto.email, created.email);
-        assertNotNull(created.rankPublicId);
+        assertEquals(STUDENT_RANK_PUBLIC_ID, created.rankPublicId);
+    }
+
+    @ParameterizedTest(name = "{0} with {1} rank")
+    @CsvSource({ "createUser, missing, true", "createUser, unknown, true", "updateUser, missing, true",
+            "updateUser, unknown, true", "patchUser, missing, false", "patchUser, unknown, true" })
+    @DisplayName("No create or update path falls back to the Admin rank")
+    @TestTransaction
+    void noWritePathYieldsAdminRank(final String method, final String rank, final boolean rejected) {
+        final String rankPublicId = "missing".equals(rank) ? null : UNKNOWN_RANK_PUBLIC_ID;
+        final UserDto dto = this.buildValidDto();
+        if ("createUser".equals(method)) {
+            dto.rankPublicId = rankPublicId;
+            assertThrows(ValidationException.class, () -> this.userService.createUser(dto));
+            assertTrue(this.userRepository.findByUsernameOptional(dto.username).isEmpty());
+            return;
+        }
+        final UserViewDto student = this.userService.createUser(dto);
+        final UserDto change = new UserDto();
+        change.username = student.username;
+        change.rankPublicId = rankPublicId;
+        final Executable write =
+                "updateUser".equals(method) ? () -> this.userService.updateUser(student.publicId, change)
+                        : () -> this.userService.patchUser(student.publicId, change);
+        if (rejected) {
+            assertThrows(ValidationException.class, write);
+        } else {
+            assertDoesNotThrow(write);
+        }
+        assertEquals(STUDENT_RANK_PUBLIC_ID,
+                this.userRepository.findByPublicId(student.publicId).orElseThrow().rank.publicId);
     }
 
     @Test
@@ -560,6 +597,7 @@ class UserServiceTest {
         update.email = "updated_" + newSuffix + "@example.com";
         update.password = VALID_PASSWORD;
         update.activated = true;
+        update.rankPublicId = STUDENT_RANK_PUBLIC_ID;
 
         final UserViewDto updated = this.userService.updateUser(created.publicId, update);
 
