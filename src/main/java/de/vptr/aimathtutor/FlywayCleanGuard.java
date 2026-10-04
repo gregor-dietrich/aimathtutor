@@ -10,7 +10,8 @@ import jakarta.inject.Singleton;
 /**
  * Disables Flyway's clean on a production launch. The {@code %dev,test} profile enables clean-at-start, and profiles
  * are chosen at runtime: a production jar started with {@code QUARKUS_PROFILE=dev} would otherwise wipe the production
- * schema before any startup check runs. With clean disabled, that start fails instead.
+ * schema before any startup check runs. With clean disabled, that start fails instead. An unqualified customizer
+ * applies to the default datasource only; a named datasource would need its own {@code @FlywayDataSource} one.
  */
 @Singleton
 public class FlywayCleanGuard implements FlywayConfigurationCustomizer {
