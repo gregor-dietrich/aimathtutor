@@ -73,7 +73,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **LoginAttemptServiceTest must verify exact cap value of 3600.** Do not revert to weak `<= 3600`.
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded strings cause state leakage (`@ApplicationScoped`).
 - **AdminConfigView save methods must null-check `authService.getUserId()`.** Use `requireUserId()` helper.
-- **Do NOT move `ProductionProfileGuard` to `StartupEvent`**, even though every build logs a Quarkus warning recommending it. Hibernate's `%dev,test` drop-and-create runs before `StartupEvent`, so a production jar started with a dev/test profile would empty the database first. The guard observes `@Initialized(ApplicationScoped.class)`, which fires during static init; `ProductionProfileGuardTest` pins that.
+- **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to `StartupEvent`**, even though every build logs a Quarkus warning recommending it. Hibernate's schema management runs before `StartupEvent`, so a `StartupEvent` guard would run after the tables are gone. Both guards observe `@Initialized(ApplicationScoped.class)`, which fires during static init; `ProductionProfileGuardTest` and `SchemaManagementGuardTest` pin that.
 - **Security is session-based via `VaadinSession`, not Quarkus `SecurityIdentity`.** Permission checks via `PermissionService` in service layer. Do **not** add `@RolesAllowed` or `@Authenticated` to views. `MainLayout` and `AdminMainLayout` enforce auth via `BeforeEnterObserver`.
 - **Every user or rank write path must enforce the privilege ceiling.** Read the caller's permissions with `UserRankService.requireCallerPermissions()` before writing (before editing a rank, which may be the caller's own), and call `UserRankService.requireWithin()` on every rank the write touches, assigns or produces. A caller may never create, change, assign or delete a user or rank holding a permission their own rank lacks.
 
@@ -96,7 +96,7 @@ CI order: `test` → `security` (CodeQL) → `build` (package + spotless + SpotB
 
 - **Compiler warnings are build failures.** `maven-compiler-plugin` passes `-Werror` and `-Xlint:all,-serial,-this-escape,-classfile`, so every javac lint warning and every Error Prone warning (any severity) fails compilation. The three excluded lint categories are deliberate and documented in `pom.xml`; do not exclude further categories to work around a warning — fix the code.
 - **Known upstream build-log noise (do not try to fix):** during `quarkus:build`, Vaadin logs `[WARNING] Addon 'flow-react-*.jar' / 'flow-dnd-*.jar' contains frontend sources under META-INF/resources/frontend/`. These come from Vaadin's own published jars (Vaadin 25.2.1), are not fixable in this repository, and will disappear with a future Vaadin upgrade.
-- **Intentional build warning (do not fix):** `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. See the `ProductionProfileGuard` anti-pattern above.
+- **Intentional build warning (do not fix):** `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. The same warning is logged for `SchemaManagementGuard#checkStrategy`. See the `ProductionProfileGuard` anti-pattern above.
 
 ### ⚠️ Never Change Quality Gate Thresholds
 
@@ -113,7 +113,7 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
-- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts.
+- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts. `SchemaManagementGuard` refuses one whose schema action is anything but `none`/`validate` under the names it checks: `schema-management.strategy`, the deprecated `database.generation`, and `jakarta.persistence.schema-generation.database.action` and `hibernate.hbm2ddl.auto` via `unsupported-properties`, each under the plain, `"<default>"` and `<default>` persistence-unit names. A new name Hibernate takes the schema action from needs adding there.
 - **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
 - **Password utility:** `make password` generates a bcrypt hash for `init.sql` or an administrator reset (README).
 

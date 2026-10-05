@@ -20,7 +20,7 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
 
-Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop and recreate the database tables, so the app refuses to start with one. The reason appears in `docker compose logs app`, not in the log file, which those profiles disable.
+Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop and recreate the database tables, so the app refuses to start with one. Likewise, never override Hibernate's schema management (`QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY`, the deprecated `QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION`, or their `quarkus.hibernate-orm...` property forms): anything but `validate` or `none` makes the app refuse to start. In both cases the reason appears in `docker compose logs app`.
 
 ### Recovering administrator access
 
