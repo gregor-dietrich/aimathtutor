@@ -64,10 +64,10 @@ If logging in fails with a server error after the reset, check that the app stil
 - `make dev` – Start Quarkus in dev mode
 - `make test` – Execute unit tests (skips integration tests)
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
-- `make build` – Build the Docker image (`make check`, `mvn package`, `docker buildx`)
+- `make build` – Build the Docker images for the local image store (`make check`, `mvn package`, native-platform `docker build`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
 - `make password` – Generate a bcrypt hash for a password (for init.sql or an administrator reset)
-- `make release` – Pull from origin/main, `make build`, `make tag`, and push Docker image tag to registry
+- `make release` – Pull from origin/main, test, `make tag`, and build and push multi-platform Docker images with `docker buildx`
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 
 See the [Makefile](Makefile) or use `make help` for all available commands and scripts.

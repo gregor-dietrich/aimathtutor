@@ -248,7 +248,7 @@ make dev
 First, package the application for production:
 
 ```sh
-make build    # Build the JVM Docker image (runs tests/install and Maven package)
+make build    # Build the JVM Docker images for the local image store (runs Maven package)
 ```
 
 Then run with Docker Compose:
@@ -283,9 +283,24 @@ The application, packaged as an _über-jar_, is now runnable using `java -jar ta
 You can create a Docker image using:
 
 ```sh
-make build    # Build the JVM Docker image
-make release  # Build and push Docker image tag to registry
+make build    # Build the JVM Docker images for the local image store
+make release  # Test, tag, and build and push multi-platform images
 ```
+
+`make build` builds `gregordietrich/aimathtutor:<version>-alpine` (also tagged `<version>`) and `<version>-ubuntu` for
+the host's own platform and loads them into the local image store.
+
+`make release` asks for a version (a `-SNAPSHOT` version is refused) and pulls `main`. Then it checks that the current
+buildx builder can build both `linux/amd64` and `linux/arm64` (the default `docker` driver needs the containerd image
+store for that; a `docker-container` builder works on either store) and logs in to the registry. It cleans, installs,
+lints, tests and packages the application, and builds both images for both platforms into the buildx cache only.
+Then it runs `make tag`. Last, one `docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile
+publishes all of its tags together from the cached build: `<version>-alpine`, `alpine`, `<version>` and `latest` for
+Alpine, `<version>-ubuntu` and `ubuntu` for Ubuntu.
+
+A release pushes nothing from the local image store. Any failure stops it with an error. Up to the cache-only builds,
+nothing has been tagged or pushed. After the git tag only a push can fail: an image pushed before the failure stays
+published, and the git tag stays in place (`make untag` removes it).
 
 If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.
 

@@ -171,6 +171,7 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion `email
 
 - **Production:** `docker-compose.yml` (app + PostgreSQL; optional pgadmin/Ollama).
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu` (port 9001, healthcheck `/q/health/ready`).
-- **Build:** `scripts/build.sh` via `make build` — multi-platform `docker buildx` with QEMU fallback.
+- **Build:** `scripts/build.sh` via `make build` — host-platform images into the local image store (`docker buildx build --load`, or plain `docker build` without buildx).
+- **Release:** `scripts/release.sh` via `make release` — one `docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile with all of its tags; nothing is pushed from the local image store. It refuses `-SNAPSHOT` versions, and fails before testing unless the current buildx builder lists both platforms (the `docker` driver also needs the containerd image store). A cache-only multi-platform build of each Dockerfile runs before the git tag, so only a push can fail after it. Helpers shared with `make build` live in `scripts/lib/images.sh`.
 - Named volume `aimathtutor_keys` mounted at `/etc/aimathtutor/keys`; property `app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key`.
 - **Back up the key volume.** Losing the key makes all encrypted data permanently unrecoverable.
