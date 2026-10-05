@@ -3,14 +3,16 @@ package de.vptr.aimathtutor;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.hibernate.cfg.AvailableSettings;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.quarkus.runtime.LaunchMode;
@@ -26,25 +28,32 @@ class SchemaManagementGuardTest {
         return new SchemaManagementGuard(launchMode, key -> Optional.ofNullable(settings.get(key)));
     }
 
-    @ParameterizedTest(name = "{0}={1}")
-    @CsvSource({ "schema-management.strategy, drop-and-create", "schema-management.strategy, create",
-            "schema-management.strategy, drop", "schema-management.strategy, update",
-            "schema-management.strategy, create-drop", "schema-management.strategy, unknown",
-            "schema-management.strategy, DROP-AND-CREATE", "database.generation, drop-and-create",
-            "'\"<default>\".schema-management.strategy', drop-and-create",
-            "'\"<default>\".database.generation', drop-and-create" })
-    @DisplayName("A production launch refuses any schema action but none or validate, under every key")
-    void productionLaunchRefusesSchemaAction(final String key, final String value) {
-        final var refused = guard(LaunchMode.NORMAL, Map.of("quarkus.hibernate-orm." + key, value));
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(
+            strings = { "drop-and-create", "create", "drop", "update", "create-drop", "unknown", "DROP-AND-CREATE" })
+    @DisplayName("A production launch refuses any schema action but none or validate")
+    void productionLaunchRefusesSchemaAction(final String value) {
+        final var refused = guard(LaunchMode.NORMAL, Map.of("quarkus.hibernate-orm.schema-management.strategy", value));
         assertThrows(IllegalStateException.class, () -> refused.checkStrategy(EVENT));
     }
 
-    @Test
-    @DisplayName("A production launch refuses Jakarta's database action passed through unsupported-properties")
-    void productionLaunchRefusesUnsupportedDatabaseAction() {
-        final var refused = guard(LaunchMode.NORMAL, Map.of("quarkus.hibernate-orm.unsupported-properties.\""
-                + AvailableSettings.JAKARTA_HBM2DDL_DATABASE_ACTION + "\"", "drop-and-create"));
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("everyKey")
+    @DisplayName("A production launch refuses drop-and-create under every name Hibernate takes the schema action from")
+    void productionLaunchRefusesEveryKey(final String key) {
+        final var refused = guard(LaunchMode.NORMAL, Map.of(key, "drop-and-create"));
         assertThrows(IllegalStateException.class, () -> refused.checkStrategy(EVENT));
+    }
+
+    /** Spelled out rather than read from the guard, so a key dropped from the guard fails here. */
+    static Stream<String> everyKey() {
+        final var settings = List.of("schema-management.strategy", "database.generation",
+                "unsupported-properties.\"" + AvailableSettings.JAKARTA_HBM2DDL_DATABASE_ACTION + "\"",
+                "unsupported-properties.\"" + AvailableSettings.HBM2DDL_AUTO + "\"");
+        return Stream
+                .of("quarkus.hibernate-orm.", "quarkus.hibernate-orm.\"<default>\".",
+                        "quarkus.hibernate-orm.<default>.")
+                .flatMap(prefix -> settings.stream().map(setting -> prefix + setting));
     }
 
     @ParameterizedTest(name = "{0}")

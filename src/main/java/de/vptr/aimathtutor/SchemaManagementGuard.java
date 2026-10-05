@@ -26,10 +26,11 @@ import jakarta.inject.Inject;
  * {@code validate}. A production deployment can override {@code validate} with a single setting, such as
  * {@code QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY=drop-and-create}, which drops and recreates every table under
  * the {@code prod} profile, out of {@link ProductionProfileGuard}'s reach. The same setting has several names that
- * Hibernate honours and that don't show through each other, so each one is checked: the deprecated
- * {@code database.generation}, the explicit {@code "<default>"} persistence-unit form of both, and Jakarta's
- * {@code schema-generation.database.action} passed through {@code unsupported-properties}. Their environment-variable
- * forms resolve to the same keys.
+ * Hibernate honours and that don't show through each other, so the guard checks {@code schema-management.strategy}, the
+ * deprecated {@code database.generation}, and Jakarta's {@code schema-generation.database.action} and
+ * {@code hibernate.hbm2ddl.auto} passed through {@code unsupported-properties}, each for the default persistence unit
+ * under its plain, quoted {@code "<default>"} and unquoted {@code <default>} names. Their environment-variable forms
+ * resolve to the same keys.
  * <p>
  * Runs at the same point as {@link ProductionProfileGuard}, before Hibernate starts; see there for why it is not a
  * {@code StartupEvent} observer. Its priority is one after that guard's, so a dev/test profile, which also sets
@@ -44,15 +45,18 @@ public class SchemaManagementGuard {
 
     private static final String DEFAULT_UNIT = "quarkus.hibernate-orm.\"<default>\".";
 
+    /** The same unit with the map key unquoted, which Quarkus also accepts. */
+    private static final String DEFAULT_UNIT_UNQUOTED = "quarkus.hibernate-orm.<default>.";
+
     private static final String DATABASE_ACTION =
             "unsupported-properties.\"" + AvailableSettings.JAKARTA_HBM2DDL_DATABASE_ACTION + "\"";
 
     private static final String HBM2DDL_AUTO = "unsupported-properties.\"" + AvailableSettings.HBM2DDL_AUTO + "\"";
 
     /** Every key that sets Hibernate's schema action for the default persistence unit. */
-    static final List<String> KEYS =
-            List.of("schema-management.strategy", "database.generation", DATABASE_ACTION, HBM2DDL_AUTO).stream()
-                    .flatMap(key -> List.of(PREFIX + key, DEFAULT_UNIT + key).stream()).toList();
+    private static final List<String> KEYS = List
+            .of("schema-management.strategy", "database.generation", DATABASE_ACTION, HBM2DDL_AUTO).stream()
+            .flatMap(key -> List.of(PREFIX + key, DEFAULT_UNIT + key, DEFAULT_UNIT_UNQUOTED + key).stream()).toList();
 
     private static final Set<String> ALLOWED_STRATEGIES = Set.of("none", "validate");
 

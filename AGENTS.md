@@ -113,7 +113,7 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
-- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts. `SchemaManagementGuard` refuses one whose schema action is anything but `none`/`validate` under any of the names Hibernate honours (`schema-management.strategy`, the deprecated `database.generation`, their `"<default>"` persistence-unit forms, and Jakarta's `schema-generation.database.action` via `unsupported-properties`).
+- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts. `SchemaManagementGuard` refuses one whose schema action is anything but `none`/`validate` under the names it checks: `schema-management.strategy`, the deprecated `database.generation`, and `jakarta.persistence.schema-generation.database.action` and `hibernate.hbm2ddl.auto` via `unsupported-properties`, each under the plain, `"<default>"` and `<default>` persistence-unit names. A new name Hibernate takes the schema action from needs adding there.
 - **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
 - **Password utility:** `make password` generates a bcrypt hash for `init.sql` or an administrator reset (README).
 
