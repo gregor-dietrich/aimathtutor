@@ -21,7 +21,7 @@ FRONTEND_DIR: Path = REPO_ROOT / (sys.argv[1] if len(sys.argv) > 1 else ".")
 
 # Security-sensitive Flow "default dependencies" that Vaadin's frontend generator
 # can silently re-pin below a safe minimum on rebuild. One "<npm-package>": "<min>".
-MIN_PINS: Dict[str, str] = {"react-router": "7.15.0", "dompurify": "3.4.16"}
+MIN_PINS: Dict[str, str] = {"react-router": "7.15.0", "dompurify": "3.4.16", "source-map-js": "1.2.2"}
 
 # A concrete dotted version (e.g. "25.2.0"); excludes npm "$ref" overrides and "$var".
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+")
