@@ -38,7 +38,7 @@ import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
-import de.vptr.aimathtutor.util.TestRankFactory;
+import de.vptr.aimathtutor.util.TestUserRankFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -458,7 +458,7 @@ class UserRankServiceTest {
      * so that user is the only one. The test transaction rolls the bans back.
      */
     private UserRankViewDto createAdministratorRankWithUser() {
-        final UserRankViewDto rank = this.userRankService.createRank(TestRankFactory.rankWithout("none"));
+        final UserRankViewDto rank = this.userRankService.createRank(TestUserRankFactory.rankWithout("none"));
         this.createActiveUser(rank.publicId);
         this.banActiveAdministrators(rank.publicId);
         return rank;
@@ -483,17 +483,20 @@ class UserRankServiceTest {
 
     /**
      * Builds the call that edits a rank granting every permission. The update sends the whole rank under a new name,
-     * switching off {@code stripped}; the patch sends only {@code stripped} switched off, or {@code aiConfigEdit}
-     * switched on for {@code "none"}.
+     * switching off {@code stripped}; the patch sends only {@code stripped} switched off, or only a new name for
+     * {@code "none"}, since the rank already grants every permission.
      */
     private Executable editRank(final UserRankViewDto rank, final String method, final String stripped) {
         if ("patchRank".equals(method)) {
             final UserRankDto dto = new UserRankDto();
-            final boolean none = "none".equals(stripped);
-            TestRankFactory.setFlag(dto, none ? "aiConfigEdit" : stripped, none);
+            if ("none".equals(stripped)) {
+                dto.name = "Renamed_" + UUID.randomUUID().toString().substring(0, 8);
+            } else {
+                TestUserRankFactory.setFlag(dto, stripped, false);
+            }
             return () -> this.userRankService.patchRank(rank.publicId, dto);
         }
-        final UserRankDto dto = TestRankFactory.rankWithout(stripped);
+        final UserRankDto dto = TestUserRankFactory.rankWithout(stripped);
         return () -> this.userRankService.updateRank(rank.publicId, dto);
     }
 }

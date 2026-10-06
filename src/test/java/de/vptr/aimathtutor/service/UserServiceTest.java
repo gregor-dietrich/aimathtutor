@@ -38,7 +38,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
-import de.vptr.aimathtutor.util.TestRankFactory;
+import de.vptr.aimathtutor.util.TestUserRankFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -882,7 +882,7 @@ class UserServiceTest {
     @MethodSource("permissionFlags")
     @DisplayName("An active user whose rank lacks one permission does not count as an administrator")
     @TestTransaction
-    void userMissingOneAdministrationPermissionIsNoAdministrator(final String missing) {
+    void userMissingOnePermissionIsNoAdministrator(final String missing) {
         final UserViewDto admin = this.createSoleAdministrator();
         final UserDto other = this.buildValidDto();
         other.rankPublicId = this.createRankWithout(missing);
@@ -970,7 +970,7 @@ class UserServiceTest {
 
     /** Creates a rank granting every permission except {@code missing}, or all of them for {@code "none"}. */
     private String createRankWithout(final String missing) {
-        return this.userRankService.createRank(TestRankFactory.rankWithout(missing)).publicId;
+        return this.userRankService.createRank(TestUserRankFactory.rankWithout(missing)).publicId;
     }
 
     private UserViewDto createAdministrator() {

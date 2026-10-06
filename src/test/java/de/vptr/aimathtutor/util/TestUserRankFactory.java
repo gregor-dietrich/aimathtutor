@@ -7,11 +7,11 @@ import de.vptr.aimathtutor.dto.UserRankPermissions;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 
 /**
- * Builds rank DTOs by permission flag name, for tests that cover every flag.
+ * Factory for creating test rank DTOs by permission flag name, for tests that cover every flag.
  */
-public final class TestRankFactory {
+public final class TestUserRankFactory {
 
-    private TestRankFactory() {
+    private TestUserRankFactory() {
     }
 
     /**
@@ -23,7 +23,10 @@ public final class TestRankFactory {
      * @return the rank DTO
      */
     public static UserRankDto rankWithout(final String missing) {
-        final UserRankDto dto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
+        if (!"none".equals(missing) && !UserRankEntity.PERMISSION_FIELDS.contains(missing)) {
+            throw new IllegalArgumentException("No permission flag " + missing);
+        }
+        final var dto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
         UserRankEntity.PERMISSION_FIELDS.forEach(flag -> setFlag(dto, flag, !flag.equals(missing)));
         return dto;
     }
