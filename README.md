@@ -24,7 +24,7 @@ Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_
 
 ### Recovering administrator access
 
-The app refuses to delete, ban, deactivate or demote its last active administrator. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches Maven); the checkout you run `docker compose` from will do.
+The app refuses to delete, ban, deactivate or demote its last active administrator, or to remove a permission from their rank. An administrator is an activated, unbanned user whose rank has every permission: nobody can grant a permission their own rank lacks, so only such a user can give a rank back a permission it lost. If no active user's rank has every permission, for example because one was removed from the Admin rank before 4.0.14, the app protects nobody and can't fix that itself; open psql (step 2), run the `user_ranks` `UPDATE` from step 4 on its own and then `COMMIT;`. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches Maven); the checkout you run `docker compose` from will do.
 
 1. Run `make password` and copy the printed `hash=` value. Choose a password that meets the app's rules, which `make password` doesn't enforce: 8 to 72 characters, with an uppercase and a lowercase letter, a digit and a symbol.
 2. Open psql in the database container. These are the `docker-compose.yml` defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
@@ -33,18 +33,25 @@ The app refuses to delete, ban, deactivate or demote its last active administrat
    docker compose exec db psql -U aimathtutor -d aimathtutor
    ```
 
-3. List the users holding the Admin rank. Restoring its permissions makes every active one of them an administrator, so review the list, especially after a compromise:
+3. List the users holding the Admin rank. Restoring every permission makes every active one of them an administrator, so review the list, especially after a compromise. To leave someone out, add `UPDATE users SET activated = FALSE WHERE username = '<other>';` to the transaction in step 4:
 
    ```sql
    SELECT u.username, u.activated, u.banned FROM users u JOIN user_ranks r ON r.id = u.rank_id
      WHERE r.public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
    ```
 
-4. Restore the Admin rank's administration permissions and reset the account (replace `<hash>` and `<name>`; usernames are stored in lower case):
+4. Restore every permission of the Admin rank and reset the account (replace `<hash>` and `<name>`; usernames are stored in lower case):
 
    ```sql
    BEGIN;
-   UPDATE user_ranks SET admin_view = TRUE, user_edit = TRUE, user_rank_edit = TRUE
+   UPDATE user_ranks SET admin_view = TRUE,
+     exercise_add = TRUE, exercise_delete = TRUE, exercise_edit = TRUE,
+     lesson_add = TRUE, lesson_delete = TRUE, lesson_edit = TRUE,
+     comment_add = TRUE, comment_delete = TRUE, comment_edit = TRUE,
+     user_add = TRUE, user_delete = TRUE, user_edit = TRUE,
+     user_group_add = TRUE, user_group_delete = TRUE, user_group_edit = TRUE,
+     user_rank_add = TRUE, user_rank_delete = TRUE, user_rank_edit = TRUE,
+     ai_config_edit = TRUE
      WHERE public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
    UPDATE users SET password = '<hash>', banned = FALSE, activated = TRUE,
      rank_id = (SELECT id FROM user_ranks WHERE public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV')
@@ -53,7 +60,7 @@ The app refuses to delete, ban, deactivate or demote its last active administrat
 
    Run `COMMIT;` only if the users `UPDATE` reported `UPDATE 1`; otherwise run `ROLLBACK;` and fix the name. The hash contains `$`, so type it inside psql or single quotes, never inside a double-quoted shell string, where the shell would expand it.
 
-   If the Admin rank was deleted, the rank `UPDATE` reports `UPDATE 0` and the users `UPDATE` fails on a NULL `rank_id`. Run `ROLLBACK;`, pick another rank from `SELECT public_id, name FROM user_ranks;`, and repeat steps 3 and 4 with its `public_id`.
+   If the Admin rank was deleted, the rank `UPDATE` reports `UPDATE 0` and the users `UPDATE` fails on a NULL `rank_id`. Run `ROLLBACK;`, pick another rank from `SELECT public_id, name FROM user_ranks;` that no other active user holds, since every active holder becomes an administrator, and repeat steps 3 and 4 with its `public_id`.
 
 5. Restart the app with `docker compose restart app`. This step is required: it clears the failed-login lockouts that the forgotten password has probably triggered, ends every open session (a password change alone doesn't), and drops the cached rank list, so the Ranks page doesn't show, and re-save, the old permissions.
 

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -28,14 +30,15 @@ import org.mockito.Mockito;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserDto;
-import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestUserRankFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -876,10 +879,10 @@ class UserServiceTest {
     }
 
     @ParameterizedTest(name = "other user's rank without {0}")
-    @ValueSource(strings = { "adminView", "userEdit", "userRankEdit" })
-    @DisplayName("An active user whose rank lacks one administration permission does not count as an administrator")
+    @MethodSource("permissionFlags")
+    @DisplayName("An active user whose rank lacks one permission does not count as an administrator")
     @TestTransaction
-    void userMissingOneAdministrationPermissionIsNoAdministrator(final String missing) {
+    void userMissingOnePermissionIsNoAdministrator(final String missing) {
         final UserViewDto admin = this.createSoleAdministrator();
         final UserDto other = this.buildValidDto();
         other.rankPublicId = this.createRankWithout(missing);
@@ -894,7 +897,7 @@ class UserServiceTest {
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "updateUser", "patchUser" })
-    @DisplayName("The last active administrator can move to another rank granting every administration permission")
+    @DisplayName("The last active administrator can move to another rank granting every permission")
     @TestTransaction
     void lastAdministratorCanMoveToAnotherAdministratorRank(final String method) {
         final UserViewDto admin = this.createSoleAdministrator();
@@ -939,7 +942,7 @@ class UserServiceTest {
 
     /**
      * Builds the call that takes administrator status from {@code admin}: deleting, banning, deactivating, or moving
-     * them to the Teacher rank, which grants the admin view but not user or rank editing.
+     * them to the Teacher rank, which lacks user and rank editing.
      */
     private Executable removeAdministrator(final UserViewDto admin, final String method, final String change) {
         if ("deleteUser".equals(method)) {
@@ -961,17 +964,13 @@ class UserServiceTest {
                 : () -> this.userService.patchUser(admin.publicId, dto);
     }
 
-    /**
-     * Creates a rank granting every administration permission except {@code missing}, or all of them for
-     * {@code "none"}.
-     */
+    static Stream<String> permissionFlags() {
+        return UserRankEntity.PERMISSION_FIELDS.stream();
+    }
+
+    /** Creates a rank granting every permission except {@code missing}, or all of them for {@code "none"}. */
     private String createRankWithout(final String missing) {
-        final UserRankDto dto = new UserRankDto();
-        dto.name = "Rank_" + UUID.randomUUID().toString().substring(0, 8);
-        dto.adminView = !"adminView".equals(missing);
-        dto.userEdit = !"userEdit".equals(missing);
-        dto.userRankEdit = !"userRankEdit".equals(missing);
-        return this.userRankService.createRank(dto).publicId;
+        return this.userRankService.createRank(TestUserRankFactory.rankWithout(missing)).publicId;
     }
 
     private UserViewDto createAdministrator() {

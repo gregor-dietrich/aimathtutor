@@ -30,6 +30,12 @@ import jakarta.validation.constraints.NotBlank;
                 query = "FROM UserRankEntity WHERE LOWER(name) LIKE :s ESCAPE '!' ORDER BY created DESC, id DESC") })
 public class UserRankEntity extends BaseEntity {
 
+    /** The names of the permission flags, in the order of {@link #permissions()}, for building queries over them. */
+    public static final List<String> PERMISSION_FIELDS = List.of("adminView", "exerciseAdd", "exerciseDelete",
+            "exerciseEdit", "lessonAdd", "lessonDelete", "lessonEdit", "commentAdd", "commentDelete", "commentEdit",
+            "userAdd", "userDelete", "userEdit", "userGroupAdd", "userGroupDelete", "userGroupEdit", "userRankAdd",
+            "userRankDelete", "userRankEdit", "aiConfigEdit");
+
     @NotBlank
     @Column(nullable = false)
     @Nullable
@@ -119,7 +125,11 @@ public class UserRankEntity extends BaseEntity {
 
     /**
      * Every permission flag of this rank, in declaration order, so two ranks' lists can be compared position by
-     * position. A new permission flag must be added here, or {@link #grantsBeyond(List)} ignores it.
+     * position. A new permission flag must be added here and to {@link #PERMISSION_FIELDS}, or
+     * {@link #grantsBeyond(List)} and the administrator definition ignore it. Because an administrator holds every
+     * flag, the same change must also set the new flag on every rank that held all the others, existing databases
+     * included, and add it to the README's administrator recovery SQL; otherwise nobody is an administrator any more
+     * and nobody can grant the new flag.
      *
      * @return the permission flags in a fixed order
      */

@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +32,22 @@ class UserRankEntityTest {
     @DisplayName("permissions() lists every boolean flag of the rank")
     void permissionsCoverEveryFlag() {
         assertEquals(permissionFlags().count(), new UserRankEntity().permissions().size());
+    }
+
+    @Test
+    @DisplayName("PERMISSION_FIELDS names every boolean flag of the rank")
+    void permissionFieldsNameEveryFlag() {
+        assertEquals(permissionFlags().sorted().toList(), UserRankEntity.PERMISSION_FIELDS.stream().sorted().toList());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("permissionFlags")
+    @DisplayName("PERMISSION_FIELDS names each flag at its position in permissions()")
+    void permissionFieldsMatchPermissionsOrder(final String flag) throws ReflectiveOperationException {
+        final List<Boolean> permissions = rankWith(List.of(flag)).permissions();
+
+        assertEquals(List.of(UserRankEntity.PERMISSION_FIELDS.indexOf(flag)),
+                IntStream.range(0, permissions.size()).filter(permissions::get).boxed().toList());
     }
 
     @ParameterizedTest(name = "{0}")

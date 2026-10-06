@@ -361,9 +361,9 @@ public class UserRankService {
     }
 
     /**
-     * Whether every active Administrator holds this rank, and there is at least one, so that taking one of the
-     * administration permissions from the rank (see {@link UserRepository#grantsAdministration}) would leave none. Must
-     * run before the rank is modified: Hibernate flushes pending changes before the count queries.
+     * Whether every active Administrator holds this rank, and there is at least one, so that taking any permission from
+     * the rank (see {@link UserRepository#grantsAdministration}) would leave none. Must run before the rank is
+     * modified: Hibernate flushes pending changes before the count queries.
      *
      * @param rank
      *            the unmodified rank
