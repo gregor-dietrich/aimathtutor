@@ -15,13 +15,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 
@@ -30,10 +33,12 @@ import com.vaadin.flow.server.VaadinSession;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
+import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestRankFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -394,9 +399,8 @@ class UserRankServiceTest {
     }
 
     @ParameterizedTest(name = "{0} without {1}")
-    @CsvSource({ "updateRank, adminView", "updateRank, userEdit", "updateRank, userRankEdit", "patchRank, adminView",
-            "patchRank, userEdit", "patchRank, userRankEdit" })
-    @DisplayName("The rank holding the last active administrators cannot lose an administration permission")
+    @MethodSource("editsStrippingOneFlag")
+    @DisplayName("The rank holding the last active administrators cannot lose a permission")
     @TestTransaction
     void lastAdministratorRankKeepsAdministration(final String method, final String permission) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
@@ -418,9 +422,8 @@ class UserRankServiceTest {
     }
 
     @ParameterizedTest(name = "{0} without {1}")
-    @CsvSource({ "updateRank, adminView", "updateRank, userEdit", "updateRank, userRankEdit", "patchRank, adminView",
-            "patchRank, userEdit", "patchRank, userRankEdit" })
-    @DisplayName("A rank can lose an administration permission while an administrator outside it remains")
+    @MethodSource("editsStrippingOneFlag")
+    @DisplayName("A rank can lose a permission while an administrator outside it remains")
     @TestTransaction
     void administratorRankCanLoseAdministrationWhileAnotherRemains(final String method, final String permission) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
@@ -433,7 +436,7 @@ class UserRankServiceTest {
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "updateRank", "patchRank" })
-    @DisplayName("A rank can lose an administration permission when there is no active administrator to protect")
+    @DisplayName("A rank can lose a permission when there is no active administrator to protect")
     @TestTransaction
     void administratorRankCanLoseAdministrationWithoutActiveAdministrators(final String method) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
@@ -444,17 +447,18 @@ class UserRankServiceTest {
                 .grantsAdministration(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow()));
     }
 
+    /** Every rank edit paired with every flag it can strip. */
+    static Stream<Arguments> editsStrippingOneFlag() {
+        return Stream.of("updateRank", "patchRank")
+                .flatMap(method -> UserRankEntity.PERMISSION_FIELDS.stream().map(flag -> Arguments.of(method, flag)));
+    }
+
     /**
-     * Creates a rank granting every administration permission, with one active user, and bans every active
-     * administrator outside it, so that user is the only one. The test transaction rolls the bans back.
+     * Creates a rank granting every permission, with one active user, and bans every active administrator outside it,
+     * so that user is the only one. The test transaction rolls the bans back.
      */
     private UserRankViewDto createAdministratorRankWithUser() {
-        final UserRankDto rankDto = new UserRankDto();
-        rankDto.name = "AdminRank_" + UUID.randomUUID().toString().substring(0, 8);
-        rankDto.adminView = true;
-        rankDto.userEdit = true;
-        rankDto.userRankEdit = true;
-        final UserRankViewDto rank = this.userRankService.createRank(rankDto);
+        final UserRankViewDto rank = this.userRankService.createRank(TestRankFactory.rankWithout("none"));
         this.createActiveUser(rank.publicId);
         this.banActiveAdministrators(rank.publicId);
         return rank;
@@ -478,23 +482,18 @@ class UserRankServiceTest {
     }
 
     /**
-     * Builds the call that edits a rank granting every administration permission. The update sends the whole rank under
-     * a new name, the patch switches on {@code aiConfigEdit}; both also switch off {@code stripped}, unless it is
-     * {@code "none"}.
+     * Builds the call that edits a rank granting every permission. The update sends the whole rank under a new name,
+     * switching off {@code stripped}; the patch sends only {@code stripped} switched off, or {@code aiConfigEdit}
+     * switched on for {@code "none"}.
      */
     private Executable editRank(final UserRankViewDto rank, final String method, final String stripped) {
-        final UserRankDto dto = new UserRankDto();
         if ("patchRank".equals(method)) {
-            dto.aiConfigEdit = true;
-            dto.adminView = "adminView".equals(stripped) ? Boolean.FALSE : null;
-            dto.userEdit = "userEdit".equals(stripped) ? Boolean.FALSE : null;
-            dto.userRankEdit = "userRankEdit".equals(stripped) ? Boolean.FALSE : null;
+            final UserRankDto dto = new UserRankDto();
+            final boolean none = "none".equals(stripped);
+            TestRankFactory.setFlag(dto, none ? "aiConfigEdit" : stripped, none);
             return () -> this.userRankService.patchRank(rank.publicId, dto);
         }
-        dto.name = "Renamed_" + UUID.randomUUID().toString().substring(0, 8);
-        dto.adminView = !"adminView".equals(stripped);
-        dto.userEdit = !"userEdit".equals(stripped);
-        dto.userRankEdit = !"userRankEdit".equals(stripped);
+        final UserRankDto dto = TestRankFactory.rankWithout(stripped);
         return () -> this.userRankService.updateRank(rank.publicId, dto);
     }
 }

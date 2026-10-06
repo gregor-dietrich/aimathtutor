@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.repository;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
@@ -26,7 +27,8 @@ public class UserRepository extends AbstractRepository {
      */
     private static final String COUNT_ACTIVE_ADMINISTRATORS =
             "SELECT COUNT(u) FROM UserEntity u WHERE u.activated = true AND u.banned = false"
-                    + " AND u.rank.adminView = true AND u.rank.userEdit = true AND u.rank.userRankEdit = true";
+                    + UserRankEntity.PERMISSION_FIELDS.stream().map(f -> " AND u.rank." + f + " = true")
+                            .collect(Collectors.joining());
 
     @Inject
     EncryptionService encryptionService;
@@ -227,16 +229,16 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Whether a rank makes its active users Administrators: it grants {@code adminView}, {@code userEdit} and
-     * {@code userRankEdit}. That set can reach the admin area, reassign any user's rank and grant any permission back,
-     * so a user holding it can recover the system. The count queries below apply the same definition in JPQL.
+     * Whether a rank makes its active users Administrators: it grants every permission. Under the privilege ceiling
+     * nobody can grant a permission their own rank lacks, so only a user holding every permission can restore any rank
+     * and recover the system. The count queries below apply the same definition in JPQL.
      *
      * @param rank
      *            the rank to test, may be null
-     * @return true if the rank grants all three permissions
+     * @return true if the rank grants every permission
      */
     public static boolean grantsAdministration(@Nullable final UserRankEntity rank) {
-        return rank != null && rank.adminView && rank.userEdit && rank.userRankEdit;
+        return rank != null && !rank.permissions().contains(false);
     }
 
     /**

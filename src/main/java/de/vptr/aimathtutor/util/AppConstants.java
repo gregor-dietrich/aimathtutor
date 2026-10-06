@@ -127,11 +127,11 @@ public final class AppConstants {
     public static final String EXERCISE_SOLVED_MESSAGE = "🎉 Congratulations! You've solved the problem correctly!";
 
     /**
-     * Rejection message for a user or rank change that would leave no active administrator. Names the rank checkboxes
-     * of the admin UI that make up an administrator.
+     * Rejection message for a user or rank change that would leave no active administrator: an active user whose rank
+     * has every permission checkbox of the admin UI ticked.
      */
     public static final String LAST_ADMINISTRATOR_MESSAGE =
-            "This would leave no active user whose rank has Admin View, Can Edit Users and Can Edit User Ranks. "
+            "This would leave no active user whose rank has every permission. "
                     + "Give another active user such a rank first.";
 
     /** Rejection message for a change to, or assignment of, a user or rank above the caller's own rank. */
