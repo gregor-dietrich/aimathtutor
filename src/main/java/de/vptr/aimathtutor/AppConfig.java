@@ -21,8 +21,9 @@ import com.vaadin.flow.theme.lumo.Lumo;
 // ships >= 3.4.16 itself.
 @NpmPackage(value = "dompurify", version = "3.4.16")
 // Security pin: Vite's postcss pulls in source-map-js, which Vaadin's tested lock pins at 1.2.1. Pinned
-// here for the same reason as dompurify. 1.2.2 fixes GHSA-68fv-2mgg-jv7q; scripts/check_frontend_deps.py
-// enforces the minimum. Remove once Vaadin ships >= 1.2.2 itself.
+// here for the same reason as dompurify; it is build-only, and nothing imports it, so declaring it here
+// doesn't bundle it. 1.2.2 fixes GHSA-68fv-2mgg-jv7q; scripts/check_frontend_deps.py enforces the minimum.
+// Remove once Vaadin ships >= 1.2.2 itself.
 @NpmPackage(value = "source-map-js", version = "1.2.2")
 public class AppConfig implements AppShellConfigurator {
 }
