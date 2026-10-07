@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -36,9 +37,6 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class UserService {
-
-    /** Prefix of the {@link LoginAttemptService} key throttling {@link #changePassword}, apart from the login keys. */
-    private static final String CHANGE_PASSWORD_KEY_PREFIX = "change-password:";
 
     @Inject
     PasswordHashingService passwordHashingService;
@@ -458,7 +456,12 @@ public class UserService {
     }
 
     /**
-     * Get current user from session
+     * Returns the user the current session belongs to.
+     *
+     * @return the current user as a {@link UserViewDto}
+     * @throws WebApplicationException
+     *             with status UNAUTHORIZED if there is no current user: the session's credentials were revoked, the
+     *             user is gone, or there is no session
      */
     @Transactional
     public UserViewDto getCurrentUser() {
@@ -470,41 +473,41 @@ public class UserService {
     }
 
     /**
-     * Change user password after verifying current password. The check is throttled per account with its own
-     * {@link LoginAttemptService} key, so guessing the current password through a hijacked session is slowed down
-     * without locking the account out of the login form.
+     * Change user password after verifying current password. The caller's session is verified inside the transaction
+     * (the user still exists, is active and the session's credential stamp is current), so a session revoked while a
+     * page stayed open cannot change the password. The current-password check is throttled per session, apart from the
+     * login throttles, so guessing it through a hijacked session is slowed down without locking the account out of the
+     * login form.
      * 
-     * @param userId
-     *            The user ID
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param currentPassword
      *            The current password for verification
      * @param newPassword
      *            The new password to set
      * @return the account's new credential stamp, to hand to {@link AuthService#renewCredentialStamp}
      * @throws ValidationException
-     *             if too many wrong guesses were made recently, the current password is wrong, or the new password is
-     *             invalid
-     * @throws WebApplicationException
-     *             if the user is not found (NOT_FOUND status)
+     *             if the session has ended, too many wrong guesses were made recently, the current password is wrong,
+     *             or the new password is invalid
      */
     @Transactional
-    public String changePassword(final Long userId, final String currentPassword, final String newPassword) {
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null) {
-            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
+    public String changePassword(final SessionCredentials credentials, final String currentPassword,
+            final String newPassword) {
+        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
+        if (user == null || !user.activated || user.banned
+                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
+            throw new ValidationException("Your session has ended. Please sign in again.");
         }
 
-        final var throttleKey = CHANGE_PASSWORD_KEY_PREFIX + user.publicId;
-        if (this.loginAttemptService.isLockedOut(throttleKey)) {
+        if (!this.loginAttemptService.tryRecordPasswordChangeAttempt(credentials.throttleKey())) {
             throw new ValidationException("Too many failed attempts. Try again later.");
         }
 
         // Verify current password
         if (user.password == null || !this.passwordHashingService.verifyPassword(currentPassword, user.password)) {
-            this.loginAttemptService.recordFailedAttempt(throttleKey);
             throw new ValidationException("Current password is incorrect");
         }
-        this.loginAttemptService.recordSuccessfulLogin(throttleKey);
+        this.loginAttemptService.clearPasswordChangeAttempts(credentials.throttleKey());
 
         // Validate new password
         this.validatePassword(newPassword);

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.security;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -7,8 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.vptr.aimathtutor.util.ExecutorShutdownUtil;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,13 +29,21 @@ public class LoginAttemptService {
     private static final int MAX_CACHE_SIZE = 10_000;
     private static final long CLEANUP_INTERVAL_SECONDS = 300; // 5 minutes
 
-    // Account-wide limits
-    private static final int ACCOUNT_MAX_ATTEMPTS = 25;
-    private static final long ACCOUNT_SOFT_LOCK_SECONDS = 600; // 10 minutes
-    private static final long ACCOUNT_WINDOW_SECONDS = 900; // 15 minutes
+    // Windowed limits: at most maxAttempts from the first attempt of a window, then locked for lockSeconds after the
+    // last one; the window restarts once it or the lock has passed.
+    private static final Policy ACCOUNT_POLICY = new Policy(25, 600, 900); // 10 min lock, 15 min window
+    // Password changes, per session: 5 guesses per 15 minutes, so the cap cannot reset every minute
+    private static final Policy PASSWORD_CHANGE_POLICY = new Policy(5, 900, 900);
 
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();
-    private final Map<String, AccountLoginAttempt> accountAttempts = new ConcurrentHashMap<>();
+    private final Map<String, WindowedAttempt> accountAttempts = new ConcurrentHashMap<>();
+    // Own key space: login keys include client-supplied X-Forwarded-For text, so they must never share a map with the
+    // per-session password-change tokens.
+    private final Map<String, WindowedAttempt> passwordChangeAttempts = new ConcurrentHashMap<>();
+
+    /** Time source; replaced in tests to cross the throttle windows without waiting. */
+    Clock clock = Clock.systemUTC();
+
     private ScheduledExecutorService cleanupExecutor;
 
     @PostConstruct
@@ -56,7 +67,10 @@ public class LoginAttemptService {
      */
     private void cleanupExpiredEntries() {
         this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired());
-        this.accountAttempts.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        final var now = this.clock.instant();
+        this.accountAttempts.entrySet().removeIf(entry -> entry.getValue().isExpired(ACCOUNT_POLICY, now));
+        this.passwordChangeAttempts.entrySet()
+                .removeIf(entry -> entry.getValue().isExpired(PASSWORD_CHANGE_POLICY, now));
 
         // If still over limit after cleanup, remove oldest entries
         if (this.attempts.size() > MAX_CACHE_SIZE) {
@@ -65,11 +79,14 @@ public class LoginAttemptService {
                     .limit(this.attempts.size() - MAX_CACHE_SIZE)
                     .forEach(entry -> this.attempts.remove(entry.getKey(), entry.getValue()));
         }
-        if (this.accountAttempts.size() > MAX_CACHE_SIZE) {
-            this.accountAttempts.entrySet().stream()
-                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
-                    .limit(this.accountAttempts.size() - MAX_CACHE_SIZE)
-                    .forEach(entry -> this.accountAttempts.remove(entry.getKey(), entry.getValue()));
+        trimOldest(this.accountAttempts);
+        trimOldest(this.passwordChangeAttempts);
+    }
+
+    private static void trimOldest(final Map<String, WindowedAttempt> map) {
+        if (map.size() > MAX_CACHE_SIZE) {
+            map.entrySet().stream().sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
+                    .limit(map.size() - MAX_CACHE_SIZE).forEach(entry -> map.remove(entry.getKey(), entry.getValue()));
         }
     }
 
@@ -108,16 +125,46 @@ public class LoginAttemptService {
             this.cleanupExpiredEntries();
         }
 
-        this.accountAttempts.compute(username, (k, v) -> {
-            if (v == null || v.isExpired()) {
-                return new AccountLoginAttempt(1, Instant.now(), Instant.now());
+        final var now = this.clock.instant();
+        this.accountAttempts.compute(username, (k, v) -> WindowedAttempt.after(v, ACCOUNT_POLICY, now));
+    }
+
+    /**
+     * Counts a password-change attempt of a session, unless the session is locked out. Check and count happen in one
+     * atomic step, so concurrent attempts cannot exceed the cap. Each session has its own bucket, apart from the login
+     * throttles: at most 5 attempts per 15 minutes from the first, and once 5 are used the session is locked until 15
+     * minutes after the last.
+     *
+     * @param sessionToken
+     *            the random per-session token
+     * @return true if the attempt may proceed, false if the session is locked out (nothing is counted then)
+     */
+    public boolean tryRecordPasswordChangeAttempt(final String sessionToken) {
+        if (this.passwordChangeAttempts.size() >= MAX_CACHE_SIZE
+                && !this.passwordChangeAttempts.containsKey(sessionToken)) {
+            this.cleanupExpiredEntries();
+        }
+        final var now = this.clock.instant();
+        final var allowed = new AtomicBoolean();
+        this.passwordChangeAttempts.compute(sessionToken, (k, v) -> {
+            if (v != null && !v.isExpired(PASSWORD_CHANGE_POLICY, now)
+                    && v.count >= PASSWORD_CHANGE_POLICY.maxAttempts) {
+                return v;
             }
-            // If the window has passed since the *first* attempt in this window, reset
-            if (ChronoUnit.SECONDS.between(v.firstAttempt, Instant.now()) > ACCOUNT_WINDOW_SECONDS) {
-                return new AccountLoginAttempt(1, Instant.now(), Instant.now());
-            }
-            return new AccountLoginAttempt(v.count + 1, v.firstAttempt, Instant.now());
+            allowed.set(true);
+            return WindowedAttempt.after(v, PASSWORD_CHANGE_POLICY, now);
         });
+        return allowed.get();
+    }
+
+    /**
+     * Clears the password-change attempts of a session, after it proved the current password.
+     *
+     * @param sessionToken
+     *            the random per-session token
+     */
+    public void clearPasswordChangeAttempts(final String sessionToken) {
+        this.passwordChangeAttempts.remove(sessionToken);
     }
 
     /**
@@ -167,15 +214,15 @@ public class LoginAttemptService {
      * @return true if locked out
      */
     public boolean isAccountLockedOut(final String username) {
-        final AccountLoginAttempt attempt = this.accountAttempts.get(username);
+        final WindowedAttempt attempt = this.accountAttempts.get(username);
         if (attempt == null) {
             return false;
         }
-        if (attempt.isExpired()) {
+        if (attempt.isExpired(ACCOUNT_POLICY, this.clock.instant())) {
             this.accountAttempts.remove(username, attempt);
             return false;
         }
-        return attempt.count >= ACCOUNT_MAX_ATTEMPTS;
+        return attempt.count >= ACCOUNT_POLICY.maxAttempts;
     }
 
     /**
@@ -203,12 +250,13 @@ public class LoginAttemptService {
      * @return remaining lockout seconds, or 0 if not locked out
      */
     public long getRemainingAccountLockoutSeconds(final String username) {
-        final AccountLoginAttempt attempt = this.accountAttempts.get(username);
-        if (attempt == null || attempt.isExpired() || attempt.count < ACCOUNT_MAX_ATTEMPTS) {
+        final var now = this.clock.instant();
+        final WindowedAttempt attempt = this.accountAttempts.get(username);
+        if (attempt == null || attempt.isExpired(ACCOUNT_POLICY, now) || attempt.count < ACCOUNT_POLICY.maxAttempts) {
             return 0;
         }
-        final long elapsed = ChronoUnit.SECONDS.between(attempt.lastAttempt, Instant.now());
-        return Math.max(0, ACCOUNT_SOFT_LOCK_SECONDS - elapsed);
+        final long elapsed = ChronoUnit.SECONDS.between(attempt.lastAttempt, now);
+        return Math.max(0, ACCOUNT_POLICY.lockSeconds - elapsed);
     }
 
     private long calculateLockoutSeconds(final int attemptCount) {
@@ -243,25 +291,35 @@ public class LoginAttemptService {
         }
     }
 
-    private static final class AccountLoginAttempt {
+    /** Limits of a windowed throttle. */
+    private record Policy(int maxAttempts, long lockSeconds, long windowSeconds) {
+    }
+
+    private static final class WindowedAttempt {
         final int count;
         final Instant firstAttempt;
         final Instant lastAttempt;
 
-        AccountLoginAttempt(final int count, final Instant firstAttempt, final Instant lastAttempt) {
+        WindowedAttempt(final int count, final Instant firstAttempt, final Instant lastAttempt) {
             this.count = count;
             this.firstAttempt = firstAttempt;
             this.lastAttempt = lastAttempt;
         }
 
-        boolean isExpired() {
-            if (this.count >= ACCOUNT_MAX_ATTEMPTS) {
-                final long elapsed = ChronoUnit.SECONDS.between(this.lastAttempt, Instant.now());
-                return elapsed > ACCOUNT_SOFT_LOCK_SECONDS;
-            } else {
-                final long elapsed = ChronoUnit.SECONDS.between(this.firstAttempt, Instant.now());
-                return elapsed > ACCOUNT_WINDOW_SECONDS;
+        /** The state after one more attempt at {@code now}, restarting the window if the previous one is over. */
+        static WindowedAttempt after(@Nullable final WindowedAttempt previous, final Policy policy, final Instant now) {
+            if (previous == null || previous.isExpired(policy, now)
+                    || ChronoUnit.SECONDS.between(previous.firstAttempt, now) > policy.windowSeconds) {
+                return new WindowedAttempt(1, now, now);
             }
+            return new WindowedAttempt(previous.count + 1, previous.firstAttempt, now);
+        }
+
+        boolean isExpired(final Policy policy, final Instant now) {
+            if (this.count >= policy.maxAttempts) {
+                return ChronoUnit.SECONDS.between(this.lastAttempt, now) > policy.lockSeconds;
+            }
+            return ChronoUnit.SECONDS.between(this.firstAttempt, now) > policy.windowSeconds;
         }
     }
 }

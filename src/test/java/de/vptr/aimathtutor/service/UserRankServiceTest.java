@@ -330,7 +330,7 @@ class UserRankServiceTest {
 
     @Test
     @DisplayName("getCurrentUserRank returns null when session has no user public ID attribute")
-    void testCurrentUserRank_withNullUsername() {
+    void testCurrentUserRank_withNullPublicId() {
         try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
             final VaadinSession mockSess = mock(VaadinSession.class);
             when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(null);
@@ -340,7 +340,7 @@ class UserRankServiceTest {
     }
 
     @Test
-    @DisplayName("getCurrentUserRank returns rank DTO when session has username and user has a rank")
+    @DisplayName("getCurrentUserRank returns rank DTO when session has a user public ID and user has a rank")
     @TestTransaction
     void testCurrentUserRank_withValidSessionAndRank() {
         final UserRankDto rankDto = new UserRankDto();
@@ -406,7 +406,7 @@ class UserRankServiceTest {
 
     private static void stubSessionUser(final VaadinSession session, final UserEntity user) {
         when(session.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(user.publicId);
-        when(session.getAttribute("authenticated.credentialStamp"))
+        when(session.getAttribute(AppConstants.SESSION_KEY_CREDENTIAL_STAMP))
                 .thenReturn(AuthService.credentialStamp(user.password));
     }
 

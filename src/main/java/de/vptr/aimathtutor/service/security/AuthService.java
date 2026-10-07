@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,7 @@ import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.AuthResultDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.UserAccountChangedEvent;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -64,7 +66,8 @@ public class AuthService {
     }
 
     private static final String USER_PUBLIC_ID_KEY = AppConstants.SESSION_KEY_USER_PUBLIC_ID;
-    private static final String CREDENTIAL_STAMP_KEY = "authenticated.credentialStamp";
+    private static final String CREDENTIAL_STAMP_KEY = AppConstants.SESSION_KEY_CREDENTIAL_STAMP;
+    private static final String SESSION_TOKEN_KEY = "authenticated.sessionToken";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
     private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
 
@@ -126,16 +129,28 @@ public class AuthService {
         }
     }
 
-    private static boolean stampsMatch(@Nullable final String a, @Nullable final String b) {
-        return a != null && b != null
-                && MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
+    /**
+     * Tells whether a credential stamp is the current one of the user, comparing in constant time.
+     *
+     * @param user
+     *            the user
+     * @param stamp
+     *            the stamp a session holds, or null
+     * @return true if the stamp equals the stamp of the user's current password hash; false if either is null
+     */
+    public static boolean holdsStamp(final UserEntity user, @Nullable final String stamp) {
+        final var current = credentialStamp(user.password);
+        return current != null && stamp != null && MessageDigest.isEqual(current.getBytes(StandardCharsets.UTF_8),
+                stamp.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
      * Reacts to a committed change of a user account: evicts the cached authentication state of the account in every
-     * session, and lets the session that changed its own account's password stay signed in. It runs after the
-     * transaction commits: an eviction recorded before the commit lets a concurrent {@link #isAuthenticated()} read the
-     * old state and cache it again for up to the TTL, and a rolled-back change must evict nothing.
+     * session, and re-stamps the acting session on any change of its own account that carries a stamp (equal to the
+     * current one unless the password changed), so the session that changed its own password stays signed in. It runs
+     * after the transaction commits: an eviction recorded before the commit lets a concurrent
+     * {@link #isAuthenticated()} read the old state and cache it again for up to the TTL, and a rolled-back change must
+     * evict nothing.
      *
      * @param event
      *            the committed account change
@@ -153,9 +168,10 @@ public class AuthService {
 
     /**
      * Gives the current session the new credential stamp after a self-service password change, which runs off the UI
-     * thread where {@link #onUserAccountChanged} sees no session. The stamp is only accepted if it equals the current
-     * stamp of the session's user; otherwise nothing happens. The stamp is the capability: only
-     * {@code UserService.changePassword} hands one out.
+     * thread where {@link #onUserAccountChanged} sees no session. It is called through {@code VaadinSession.access}
+     * after {@code UserService.changePassword}. This is safe because it only installs a stamp equal to the account's
+     * current one, which cannot be derived without the stored hash, and the DB check refuses a stamp that a concurrent
+     * change has already replaced; otherwise nothing happens.
      *
      * @param credentialStamp
      *            the stamp returned by {@code UserService.changePassword}
@@ -166,8 +182,7 @@ public class AuthService {
         if (session == null || !(session.getAttribute(USER_PUBLIC_ID_KEY) instanceof final String publicId)) {
             return;
         }
-        this.userRepository.findByPublicId(publicId)
-                .filter(user -> stampsMatch(credentialStamp(user.password), credentialStamp))
+        this.userRepository.findByPublicId(publicId).filter(user -> holdsStamp(user, credentialStamp))
                 .ifPresent(ignored -> session.setAttribute(CREDENTIAL_STAMP_KEY, credentialStamp));
     }
 
@@ -282,6 +297,7 @@ public class AuthService {
                 if (session != null) {
                     session.setAttribute(USER_PUBLIC_ID_KEY, user.publicId);
                     session.setAttribute(CREDENTIAL_STAMP_KEY, credentialStamp(user.password));
+                    session.setAttribute(SESSION_TOKEN_KEY, UUID.randomUUID().toString());
                     session.setAttribute(AUTHENTICATED_KEY, true);
                     session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
                 }
@@ -320,6 +336,14 @@ public class AuthService {
         return this.trustedProxyIps.contains(remoteAddr);
     }
 
+    private static void clearAuthAttributes(final VaadinSession session) {
+        session.setAttribute(USER_PUBLIC_ID_KEY, null);
+        session.setAttribute(CREDENTIAL_STAMP_KEY, null);
+        session.setAttribute(SESSION_TOKEN_KEY, null);
+        session.setAttribute(AUTHENTICATED_KEY, false);
+        session.setAttribute(LAST_DB_CHECK_KEY, null);
+    }
+
     /**
      * Clears the current user's authentication session. Removes the stored user public ID, credential stamp, and
      * authentication status from the session.
@@ -331,10 +355,7 @@ public class AuthService {
         if (session == null) {
             return;
         }
-        session.setAttribute(USER_PUBLIC_ID_KEY, null);
-        session.setAttribute(CREDENTIAL_STAMP_KEY, null);
-        session.setAttribute(AUTHENTICATED_KEY, false);
-        session.setAttribute(LAST_DB_CHECK_KEY, null);
+        clearAuthAttributes(session);
 
         // Regenerate session ID after logout so a leaked pre-logout ID cannot
         // be reused by an attacker on a future login from the same browser.
@@ -385,9 +406,31 @@ public class AuthService {
         final var result = user != null && user.activated && !user.banned;
         // Store the time taken before the read: a read that began before a commit must not outlive an eviction
         // recorded after that commit.
-        session.setAttribute(LAST_DB_CHECK_KEY, result ? now : null);
+        if (result) {
+            session.setAttribute(LAST_DB_CHECK_KEY, now);
+        } else {
+            // A revoked session stays revoked: a later unban or re-activation must not revive it.
+            clearAuthAttributes(session);
+        }
         LOG.tracef("Checking authentication status (DB hit): %s", result);
         return result;
+    }
+
+    /**
+     * Captures the credentials of the current session for work that runs off the UI thread. Reads the session only, no
+     * database access; the receiver verifies them in its own transaction.
+     *
+     * @return the session's credentials, or null if there is no session or it is not signed in
+     */
+    @Nullable
+    public SessionCredentials currentSessionCredentials() {
+        final var session = VaadinSession.getCurrent();
+        if (session != null && session.getAttribute(USER_PUBLIC_ID_KEY) instanceof final String publicId
+                && session.getAttribute(CREDENTIAL_STAMP_KEY) instanceof final String stamp
+                && session.getAttribute(SESSION_TOKEN_KEY) instanceof final String token) {
+            return new SessionCredentials(publicId, stamp, token);
+        }
+        return null;
     }
 
     /**
@@ -434,7 +477,6 @@ public class AuthService {
             return null;
         }
         final var stamp = (String) session.getAttribute(CREDENTIAL_STAMP_KEY);
-        return this.userRepository.findByPublicId(publicId)
-                .filter(user -> stampsMatch(credentialStamp(user.password), stamp)).orElse(null);
+        return this.userRepository.findByPublicId(publicId).filter(user -> holdsStamp(user, stamp)).orElse(null);
     }
 }

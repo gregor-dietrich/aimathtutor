@@ -73,7 +73,7 @@ public class UserRankService {
      * revoked by a password change gets no rank either.
      *
      * @return the current user's {@link UserRankEntity}, or null if no user is authenticated, the user no longer
-     *         exists, has no rank, or is banned or not activated
+     *         exists, has no rank, is banned or not activated, or the session's credentials are revoked
      */
     @Transactional
     @Nullable

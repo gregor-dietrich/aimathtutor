@@ -17,6 +17,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.UserService;
@@ -319,28 +320,39 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         if (this.passwordChangeInProgress) {
             return;
         }
+        // Captured here on the UI thread: the supplier runs off it, and the stamp renewal must not depend on this view
+        // still being attached when it finishes.
+        final var credentials = this.authService.currentSessionCredentials();
+        final var session = VaadinSession.getCurrent();
+        if (credentials == null || session == null) {
+            NotificationUtil.showError("Your session has ended. Please sign in again.");
+            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
+            return;
+        }
         this.passwordChangeInProgress = true;
         this.currentPasswordField.setEnabled(false);
         this.newPasswordField.setEnabled(false);
         this.confirmPasswordField.setEnabled(false);
 
-        AsyncDataLoader.load(() -> this.userService.changePassword(this.currentUserId, currentPassword, newPassword),
-                this, stamp -> {
-                    this.authService.renewCredentialStamp(stamp);
-                    NotificationUtil.showSuccess("Password changed successfully");
-                    this.currentPasswordField.clear();
-                    this.newPasswordField.clear();
-                    this.confirmPasswordField.clear();
-                    this.passwordChangeInProgress = false;
-                    this.currentPasswordField.setEnabled(true);
-                    this.newPasswordField.setEnabled(true);
-                    this.confirmPasswordField.setEnabled(true);
-                }, () -> {
-                    this.passwordChangeInProgress = false;
-                    this.currentPasswordField.setEnabled(true);
-                    this.newPasswordField.setEnabled(true);
-                    this.confirmPasswordField.setEnabled(true);
-                }, "Failed to change password");
+        AsyncDataLoader.load(() -> {
+            final String stamp = this.userService.changePassword(credentials, currentPassword, newPassword);
+            final var _ = session.access(() -> this.authService.renewCredentialStamp(stamp));
+            return stamp;
+        }, this, ignored -> {
+            NotificationUtil.showSuccess("Password changed successfully");
+            this.currentPasswordField.clear();
+            this.newPasswordField.clear();
+            this.confirmPasswordField.clear();
+            this.passwordChangeInProgress = false;
+            this.currentPasswordField.setEnabled(true);
+            this.newPasswordField.setEnabled(true);
+            this.confirmPasswordField.setEnabled(true);
+        }, () -> {
+            this.passwordChangeInProgress = false;
+            this.currentPasswordField.setEnabled(true);
+            this.newPasswordField.setEnabled(true);
+            this.confirmPasswordField.setEnabled(true);
+        }, "Failed to change password");
     }
 
     private void handleAvatarChange() {

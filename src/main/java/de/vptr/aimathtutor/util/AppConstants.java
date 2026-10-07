@@ -144,6 +144,12 @@ public final class AppConstants {
      */
     public static final String SESSION_KEY_USER_PUBLIC_ID = "authenticated.userPublicId";
 
+    /**
+     * Vaadin session attribute key for the credential stamp the session was issued, which the stamp of the account's
+     * current password hash must still equal for the session to stay valid.
+     */
+    public static final String SESSION_KEY_CREDENTIAL_STAMP = "authenticated.credentialStamp";
+
     // Keep these in sync with the corresponding rows in sql/init.sql.
     // Assigned in a static initializer (not as constant-expression field
     // initializers) so the literals are NOT inlined into every referencing
