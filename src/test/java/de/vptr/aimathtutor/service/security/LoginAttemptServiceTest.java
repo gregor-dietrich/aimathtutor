@@ -255,6 +255,23 @@ class LoginAttemptServiceTest {
     }
 
     @Test
+    @DisplayName("Flooding the password-change map past its size cap never lifts a session's lock")
+    void sizeCapNeverEvictsLockedPasswordChangeBucket() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        for (int i = 0; i < 5; i++) {
+            assertTrue(service.tryRecordPasswordChangeAttempt("locked"));
+        }
+        clock.advance(Duration.ofSeconds(1));
+        // Past the 10,000-entry cap, all newer than the locked bucket
+        for (int i = 0; i <= 10_000; i++) {
+            service.tryRecordPasswordChangeAttempt("flood-" + i);
+        }
+
+        assertFalse(service.tryRecordPasswordChangeAttempt("locked"));
+    }
+
+    @Test
     @DisplayName("Clearing the password-change attempts frees only that session")
     void clearingPasswordChangeAttemptsIsPerSession() {
         final var a = UUID.randomUUID().toString();

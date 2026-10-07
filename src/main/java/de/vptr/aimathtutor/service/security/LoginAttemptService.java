@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import de.vptr.aimathtutor.util.ExecutorShutdownUtil;
 import jakarta.annotation.Nullable;
@@ -79,13 +80,16 @@ public class LoginAttemptService {
                     .limit(this.attempts.size() - MAX_CACHE_SIZE)
                     .forEach(entry -> this.attempts.remove(entry.getKey(), entry.getValue()));
         }
-        trimOldest(this.accountAttempts);
-        trimOldest(this.passwordChangeAttempts);
+        trimOldest(this.accountAttempts, attempt -> true);
+        // Never lift a password-change lock: a locked bucket stops updating, so it would be the oldest, and fresh
+        // sessions could flood it out. Its entries need a signed-in session each, so keeping them stays bounded.
+        trimOldest(this.passwordChangeAttempts, attempt -> attempt.count < PASSWORD_CHANGE_POLICY.maxAttempts);
     }
 
-    private static void trimOldest(final Map<String, WindowedAttempt> map) {
+    private static void trimOldest(final Map<String, WindowedAttempt> map, final Predicate<WindowedAttempt> evictable) {
         if (map.size() > MAX_CACHE_SIZE) {
-            map.entrySet().stream().sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
+            map.entrySet().stream().filter(entry -> evictable.test(entry.getValue()))
+                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
                     .limit(map.size() - MAX_CACHE_SIZE).forEach(entry -> map.remove(entry.getKey(), entry.getValue()));
         }
     }

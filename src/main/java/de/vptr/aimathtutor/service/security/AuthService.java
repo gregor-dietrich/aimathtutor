@@ -167,23 +167,37 @@ public class AuthService {
     }
 
     /**
-     * Gives the current session the new credential stamp after a self-service password change, which runs off the UI
-     * thread where {@link #onUserAccountChanged} sees no session. It is called through {@code VaadinSession.access}
-     * after {@code UserService.changePassword}. This is safe because it only installs a stamp equal to the account's
-     * current one, which cannot be derived without the stored hash, and the DB check refuses a stamp that a concurrent
-     * change has already replaced; otherwise nothing happens.
+     * Gives a session the new credential stamp after its own self-service password change, which runs off the UI thread
+     * where {@link #onUserAccountChanged} sees no session. Called on that thread after
+     * {@code UserService.changePassword}: the database check runs there, and only the attribute write takes the session
+     * lock, so the UI never waits on the database. This is safe because it only installs a stamp equal to the account's
+     * current one, which cannot be derived without the stored hash, and the check refuses a stamp that a concurrent
+     * change has already replaced; otherwise nothing happens. A change racing the write leaves a stale stamp, which
+     * fails closed.
      *
+     * @param session
+     *            the session that made the change, captured on the UI thread
+     * @param userPublicId
+     *            the public ID of the account the session belonged to when it made the change
      * @param credentialStamp
      *            the stamp returned by {@code UserService.changePassword}
      */
     @Transactional
-    public void renewCredentialStamp(final String credentialStamp) {
-        final var session = VaadinSession.getCurrent();
-        if (session == null || !(session.getAttribute(USER_PUBLIC_ID_KEY) instanceof final String publicId)) {
+    public void renewCredentialStamp(final VaadinSession session, final String userPublicId,
+            final String credentialStamp) {
+        if (this.userRepository.findByPublicId(userPublicId).filter(user -> holdsStamp(user, credentialStamp))
+                .isEmpty()) {
             return;
         }
-        this.userRepository.findByPublicId(publicId).filter(user -> holdsStamp(user, credentialStamp))
-                .ifPresent(ignored -> session.setAttribute(CREDENTIAL_STAMP_KEY, credentialStamp));
+        session.lock();
+        try {
+            // The session may have signed out or into another account meanwhile
+            if (userPublicId.equals(session.getAttribute(USER_PUBLIC_ID_KEY))) {
+                session.setAttribute(CREDENTIAL_STAMP_KEY, credentialStamp);
+            }
+        } finally {
+            session.unlock();
+        }
     }
 
     /**

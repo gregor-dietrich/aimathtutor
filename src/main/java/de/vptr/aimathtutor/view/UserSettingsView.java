@@ -336,7 +336,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         AsyncDataLoader.load(() -> {
             final String stamp = this.userService.changePassword(credentials, currentPassword, newPassword);
-            final var _ = session.access(() -> this.authService.renewCredentialStamp(stamp));
+            this.authService.renewCredentialStamp(session, credentials.userPublicId(), stamp);
             return stamp;
         }, this, ignored -> {
             NotificationUtil.showSuccess("Password changed successfully");

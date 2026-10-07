@@ -133,21 +133,6 @@ class AuthServiceSessionTest {
         }
     }
 
-    @TestTransaction
-    void isAuthenticatedFalseForDeletedUserWithReusedName() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final var admin = this.userRepository.findByUsername("admin");
-            final VaadinSession mockSess = AuthServiceTest.sessionFor(admin);
-            when(mockSess.getAttribute(USER_PUBLIC_ID_KEY)).thenReturn("01STALEPUBLICIDOFADELETEDUSER");
-            when(mockSess.getAttribute(AUTHENTICATED_KEY)).thenReturn(true);
-            when(mockSess.getAttribute(LAST_DB_CHECK_KEY)).thenReturn(null);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
-
-            assertFalse(this.authService.isAuthenticated());
-            assertNull(this.authService.getUsername());
-        }
-    }
-
     @Test
     @DisplayName("a renamed user with the same public ID and hash stays authenticated")
     @TestTransaction
@@ -201,18 +186,17 @@ class AuthServiceSessionTest {
     @DisplayName("renewCredentialStamp sets the stamp only when it matches the DB")
     @TestTransaction
     void renewCredentialStampOnlyWhenMatching() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final var user = this.userRepository.findByUsername("student1");
-            final VaadinSession mockSess = unstampedSessionFor(user);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+        final var user = this.userRepository.findByUsername("student1");
+        final VaadinSession mockSess = unstampedSessionFor(user);
 
-            this.authService.renewCredentialStamp("not-the-stamp");
-            verify(mockSess, never()).setAttribute(eq(CREDENTIAL_STAMP_KEY), any());
+        this.authService.renewCredentialStamp(mockSess, user.publicId, "not-the-stamp");
+        verify(mockSess, never()).setAttribute(eq(CREDENTIAL_STAMP_KEY), any());
 
-            final var stamp = AuthService.credentialStamp(user.password);
-            this.authService.renewCredentialStamp(stamp);
-            verify(mockSess).setAttribute(CREDENTIAL_STAMP_KEY, stamp);
-        }
+        final var stamp = AuthService.credentialStamp(user.password);
+        this.authService.renewCredentialStamp(mockSess, user.publicId, stamp);
+        verify(mockSess).setAttribute(CREDENTIAL_STAMP_KEY, stamp);
+        verify(mockSess).lock();
+        verify(mockSess).unlock();
     }
 
     @Test
@@ -326,22 +310,31 @@ class AuthServiceSessionTest {
     }
 
     @Test
-    @DisplayName("renewCredentialStamp does nothing without a session")
-    void renewCredentialStampWithoutSession() {
-        assertDoesNotThrow(() -> this.authService.renewCredentialStamp("stamp"));
+    @DisplayName("renewCredentialStamp sets nothing once the session signed out or into another account")
+    @TestTransaction
+    void renewCredentialStampSkipsChangedSession() {
+        final var user = this.userRepository.findByUsername("student1");
+        final var stamp = AuthService.credentialStamp(user.password);
+        final VaadinSession signedOut = mock(VaadinSession.class);
+        final VaadinSession otherAccount = mock(VaadinSession.class);
+        when(otherAccount.getAttribute(USER_PUBLIC_ID_KEY)).thenReturn("01SOMEOTHERACCOUNTPUBLICID");
+
+        this.authService.renewCredentialStamp(signedOut, user.publicId, stamp);
+        this.authService.renewCredentialStamp(otherAccount, user.publicId, stamp);
+
+        verify(signedOut, never()).setAttribute(any(String.class), any());
+        verify(otherAccount, never()).setAttribute(any(String.class), any());
     }
 
     @Test
-    @DisplayName("renewCredentialStamp sets nothing when the session has no public ID")
-    void renewCredentialStampWithoutPublicId() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+    @DisplayName("renewCredentialStamp does nothing for an unknown account")
+    @TestTransaction
+    void renewCredentialStampUnknownAccount() {
+        final VaadinSession mockSess = mock(VaadinSession.class);
 
-            this.authService.renewCredentialStamp("stamp");
+        assertDoesNotThrow(() -> this.authService.renewCredentialStamp(mockSess, "01NOSUCHPUBLICID", "stamp"));
 
-            verify(mockSess, never()).setAttribute(any(String.class), any());
-        }
+        verify(mockSess, never()).lock();
     }
 
     @Test
