@@ -138,8 +138,11 @@ public final class AppConstants {
     public static final String PRIVILEGE_CEILING_MESSAGE =
             "You can't create, change, assign or delete a user or rank with permissions your rank doesn't have.";
 
-    /** Vaadin session attribute key for the authenticated username. */
-    public static final String SESSION_KEY_USERNAME = "authenticated.username";
+    /**
+     * Vaadin session attribute key for the authenticated user's public ID. The public ID, unlike the username, survives
+     * a rename and is never re-used by another account.
+     */
+    public static final String SESSION_KEY_USER_PUBLIC_ID = "authenticated.userPublicId";
 
     // Keep these in sync with the corresponding rows in sql/init.sql.
     // Assigned in a static initializer (not as constant-expression field

@@ -5,14 +5,13 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import com.vaadin.flow.server.VaadinSession;
-
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
@@ -50,7 +49,8 @@ public class UserRankService {
     @Inject
     PermissionService permissionService;
 
-    private static final String USERNAME_KEY = AppConstants.SESSION_KEY_USERNAME;
+    @Inject
+    AuthService authService;
 
     /** Matches runs of whitespace, used to collapse rank names to canonical single-spaced plain text. */
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
@@ -69,7 +69,8 @@ public class UserRankService {
 
     /**
      * Retrieves the rank entity of the currently authenticated user. Fails closed: a user who was banned or deactivated
-     * while a page was open gets no rank, so every permission check and the privilege ceiling refuse them.
+     * while a page was open gets no rank, so every permission check and the privilege ceiling refuse them. A session
+     * revoked by a password change gets no rank either.
      *
      * @return the current user's {@link UserRankEntity}, or null if no user is authenticated, the user no longer
      *         exists, has no rank, or is banned or not activated
@@ -77,17 +78,7 @@ public class UserRankService {
     @Transactional
     @Nullable
     public UserRankEntity getCurrentUserRankEntity() {
-        final var session = VaadinSession.getCurrent();
-        if (session == null) {
-            return null; // Return null instead of throwing when no session
-        }
-
-        final var username = (String) session.getAttribute(USERNAME_KEY);
-        if (username == null) {
-            return null; // Return null instead of throwing when not authenticated
-        }
-        // Use UserRepository to look up the user by username
-        final var user = this.userRepository.findByUsername(username);
+        final var user = this.authService.getCurrentUserEntity();
         return user != null && user.activated && !user.banned ? user.rank : null;
     }
 

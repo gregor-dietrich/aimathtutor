@@ -92,11 +92,6 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         final var user = this.userService.getCurrentUser();
-        if (user == null) {
-            NotificationUtil.showError("Could not load user information");
-            event.rerouteTo(LessonsView.class);
-            return;
-        }
         this.currentUsername = user.username;
         this.currentEmail = user.email;
 
@@ -329,24 +324,23 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.newPasswordField.setEnabled(false);
         this.confirmPasswordField.setEnabled(false);
 
-        AsyncDataLoader.load(() -> {
-            this.userService.changePassword(this.currentUserId, currentPassword, newPassword);
-            return null;
-        }, this, ignored -> {
-            NotificationUtil.showSuccess("Password changed successfully");
-            this.currentPasswordField.clear();
-            this.newPasswordField.clear();
-            this.confirmPasswordField.clear();
-            this.passwordChangeInProgress = false;
-            this.currentPasswordField.setEnabled(true);
-            this.newPasswordField.setEnabled(true);
-            this.confirmPasswordField.setEnabled(true);
-        }, () -> {
-            this.passwordChangeInProgress = false;
-            this.currentPasswordField.setEnabled(true);
-            this.newPasswordField.setEnabled(true);
-            this.confirmPasswordField.setEnabled(true);
-        }, "Failed to change password");
+        AsyncDataLoader.load(() -> this.userService.changePassword(this.currentUserId, currentPassword, newPassword),
+                this, stamp -> {
+                    this.authService.renewCredentialStamp(stamp);
+                    NotificationUtil.showSuccess("Password changed successfully");
+                    this.currentPasswordField.clear();
+                    this.newPasswordField.clear();
+                    this.confirmPasswordField.clear();
+                    this.passwordChangeInProgress = false;
+                    this.currentPasswordField.setEnabled(true);
+                    this.newPasswordField.setEnabled(true);
+                    this.confirmPasswordField.setEnabled(true);
+                }, () -> {
+                    this.passwordChangeInProgress = false;
+                    this.currentPasswordField.setEnabled(true);
+                    this.newPasswordField.setEnabled(true);
+                    this.confirmPasswordField.setEnabled(true);
+                }, "Failed to change password");
     }
 
     private void handleAvatarChange() {

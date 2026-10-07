@@ -8,8 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Locale;
@@ -35,13 +40,17 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.service.security.LoginAttemptService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.TestUserRankFactory;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
@@ -71,8 +80,14 @@ class UserServiceTest {
     @Inject
     private UserRankRepository userRankRepository;
 
-    @Inject
+    @InjectSpy
     private PasswordHashingService passwordHashingService;
+
+    @Inject
+    private LoginAttemptService loginAttemptService;
+
+    @Inject
+    private AuthService authService;
 
     @InjectMock
     private PermissionService permissionService;
@@ -462,6 +477,156 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("changePassword returns the credential stamp of the new hash")
+    @TestTransaction
+    void testChangePassword_returnsStamp() {
+        final var entity = this.createAndFetchUser();
+
+        final var stamp = this.userService.changePassword(entity.id, VALID_PASSWORD, "N3wP@ssword!");
+
+        assertEquals(AuthService.credentialStamp(entity.password), stamp);
+    }
+
+    @Test
+    @DisplayName("changePassword refuses the 6th attempt after 5 wrong guesses without checking the password")
+    @TestTransaction
+    void testChangePassword_throttledAfterFiveWrongGuesses() {
+        final var entity = this.createAndFetchUser();
+        for (int i = 0; i < 5; i++) {
+            final var e = assertThrows(ValidationException.class,
+                    () -> this.userService.changePassword(entity.id, "WrongP@ss1", "N3wP@ssword!"));
+            assertEquals("Current password is incorrect", e.getMessage());
+        }
+        verify(this.passwordHashingService, times(5)).verifyPassword(eq("WrongP@ss1"), any());
+
+        final var e = assertThrows(ValidationException.class,
+                () -> this.userService.changePassword(entity.id, VALID_PASSWORD, "N3wP@ssword!"));
+
+        assertEquals("Too many failed attempts. Try again later.", e.getMessage());
+        verify(this.passwordHashingService, never()).verifyPassword(eq(VALID_PASSWORD), any());
+    }
+
+    @Test
+    @DisplayName("a correct current password clears the failed changePassword attempts")
+    @TestTransaction
+    void testChangePassword_successClearsFailedAttempts() {
+        final var entity = this.createAndFetchUser();
+        for (int i = 0; i < 4; i++) {
+            assertThrows(ValidationException.class,
+                    () -> this.userService.changePassword(entity.id, "WrongP@ss1", "N3wP@ssword!"));
+        }
+        this.userService.changePassword(entity.id, VALID_PASSWORD, "N3wP@ssword!");
+
+        for (int i = 0; i < 4; i++) {
+            final var e = assertThrows(ValidationException.class,
+                    () -> this.userService.changePassword(entity.id, "WrongP@ss1", "N3wP@ssword!"));
+            assertEquals("Current password is incorrect", e.getMessage());
+        }
+    }
+
+    @Test
+    @DisplayName("the changePassword throttle is per account and leaves the login lockout alone")
+    @TestTransaction
+    void testChangePassword_throttleIsPerAccountAndSeparateFromLogin() {
+        final var locked = this.createAndFetchUser();
+        final var other = this.createAndFetchUser();
+        for (int i = 0; i < 5; i++) {
+            assertThrows(ValidationException.class,
+                    () -> this.userService.changePassword(locked.id, "WrongP@ss1", "N3wP@ssword!"));
+        }
+
+        assertFalse(this.loginAttemptService.isAccountLockedOut(locked.username));
+        assertFalse(this.loginAttemptService.isLockedOut(locked.username));
+        assertDoesNotThrow(() -> this.userService.changePassword(other.id, VALID_PASSWORD, "N3wP@ssword!"));
+    }
+
+    /** Runs the work in a committed transaction, like a UI request would, so after-commit observers fire. */
+    private static void inCommittedTransaction(final Runnable work) {
+        QuarkusTransaction.requiringNew().run(work);
+    }
+
+    /**
+     * Whether an eviction forced {@code isAuthenticated} to re-check the DB for a session that cached it a second ago.
+     */
+    private boolean isEvicted(final UserEntity user) {
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            final VaadinSession mockSess = mock(VaadinSession.class);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(user.publicId);
+            when(mockSess.getAttribute("authenticated.credentialStamp"))
+                    .thenReturn(AuthService.credentialStamp(user.password));
+            when(mockSess.getAttribute("authenticated.status")).thenReturn(true);
+            when(mockSess.getAttribute("authenticated.lastDbCheck")).thenReturn(System.currentTimeMillis() - 1000);
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+
+            this.authService.isAuthenticated();
+
+            return Mockito.mockingDetails(mockSess).getInvocations().stream()
+                    .anyMatch(i -> "setAttribute".equals(i.getMethod().getName())
+                            && "authenticated.lastDbCheck".equals(i.getArgument(0)));
+        }
+    }
+
+    private UserEntity createCommittedUser() {
+        final var created = new UserEntity[1];
+        inCommittedTransaction(() -> {
+            final var publicId = this.userService.createUser(this.buildValidDto()).publicId;
+            created[0] = this.userRepository.findByPublicId(publicId).orElseThrow();
+        });
+        return created[0];
+    }
+
+    private void deleteCommittedUser(final UserEntity user) {
+        inCommittedTransaction(() -> this.userRepository.deleteByPublicId(user.publicId));
+    }
+
+    /**
+     * Runs the work in a committed transaction and tells whether the eviction was already visible before the commit.
+     */
+    private boolean evictedBeforeCommit(final UserEntity user, final Runnable work) {
+        final var evicted = new boolean[1];
+        inCommittedTransaction(() -> {
+            work.run();
+            evicted[0] = this.isEvicted(user);
+        });
+        return evicted[0];
+    }
+
+    @Test
+    @DisplayName("patchUser evicts the account's cached authentication only after commit")
+    void testPatchUser_evictsAfterCommit() {
+        final var user = this.createCommittedUser();
+        try {
+            final var dto = new UserDto();
+            dto.banned = true;
+
+            assertFalse(this.evictedBeforeCommit(user, () -> this.userService.patchUser(user.publicId, dto)),
+                    "must not be evicted before the commit");
+            assertTrue(this.isEvicted(user), "must be evicted after the commit");
+        } finally {
+            this.deleteCommittedUser(user);
+        }
+    }
+
+    @Test
+    @DisplayName("deleteUser evicts only after commit, and a rolled-back deleteUser evicts nothing")
+    void testDeleteUser_evictsOnlyAfterCommit() {
+        final var user = this.createCommittedUser();
+        try {
+            assertThrows(IllegalStateException.class, () -> inCommittedTransaction(() -> {
+                this.userService.deleteUser(user.publicId);
+                throw new IllegalStateException("roll back");
+            }));
+            assertFalse(this.isEvicted(user), "a rolled-back delete must evict nothing");
+
+            assertFalse(this.evictedBeforeCommit(user, () -> this.userService.deleteUser(user.publicId)),
+                    "must not be evicted before the commit");
+            assertTrue(this.isEvicted(user), "must be evicted after the commit");
+        } finally {
+            this.deleteCommittedUser(user);
+        }
+    }
+
+    @Test
     @DisplayName("updateAvatars persists emoji values")
     @TestTransaction
     void testUpdateAvatars_success() {
@@ -694,11 +859,11 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("getCurrentUser throws UNAUTHORIZED when session has no username attribute")
+    @DisplayName("getCurrentUser throws UNAUTHORIZED when session has no user public ID attribute")
     void testGetCurrentUser_nullUsername_throwsUnauthorized() {
         try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
             final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn(null);
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(null);
             mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
             final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
             assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), ex.getResponse().getStatus());
@@ -706,11 +871,15 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("getCurrentUser returns user DTO when session has valid username")
+    @DisplayName("getCurrentUser returns user DTO when session has a valid user public ID and stamp")
+    @TestTransaction
     void testGetCurrentUser_validSession_returnsUser() {
         try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
             final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn("admin");
+            final var admin = this.userRepository.findByUsername("admin");
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(admin.publicId);
+            when(mockSess.getAttribute("authenticated.credentialStamp"))
+                    .thenReturn(AuthService.credentialStamp(admin.password));
             mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
             final UserViewDto result = this.userService.getCurrentUser();
             assertNotNull(result);
@@ -719,14 +888,14 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("getCurrentUser throws NOT_FOUND when session username has no matching user")
-    void testGetCurrentUser_userNotFound_throwsNotFound() {
+    @DisplayName("getCurrentUser throws UNAUTHORIZED when the session's public ID has no matching user")
+    void testGetCurrentUser_userNotFound_throwsUnauthorized() {
         try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
             final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USERNAME)).thenReturn("no_such_user_xyz999");
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn("no-such-public-id");
             mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
             final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
-            assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
+            assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), ex.getResponse().getStatus());
         }
     }
 
