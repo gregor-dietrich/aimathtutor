@@ -62,7 +62,7 @@ The app refuses to delete, ban, deactivate or demote its last active administrat
 
    If the Admin rank was deleted, the rank `UPDATE` reports `UPDATE 0` and the users `UPDATE` fails on a NULL `rank_id`. Run `ROLLBACK;`, pick another rank from `SELECT public_id, name FROM user_ranks;` that no other active user holds, since every active holder becomes an administrator, and repeat steps 3 and 4 with its `public_id`.
 
-5. Restart the app with `docker compose restart app`. This step is required: it clears the failed-login lockouts that the forgotten password has probably triggered, ends every open session (a password change alone doesn't), and drops the cached rank list, so the Ranks page doesn't show, and re-save, the old permissions.
+5. Restart the app with `docker compose restart app`. This step is required: it clears the failed-login lockouts that the forgotten password has probably triggered, ends every open session at once (the new password ends the account's other sessions too, but only once their 30-second sign-in cache lapses, since a database edit doesn't notify the app), and drops the cached rank list, so the Ranks page doesn't show, and re-save, the old permissions.
 
 If logging in fails with a server error after the reset, check that the app still mounts its original encryption key volume: a reset doesn't help when the key is lost.
 

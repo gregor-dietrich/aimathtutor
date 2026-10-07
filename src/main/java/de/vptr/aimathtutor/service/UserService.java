@@ -7,21 +7,23 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.vaadin.flow.server.VaadinSession;
-
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import de.vptr.aimathtutor.event.UserAccountChangedEvent;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.service.security.LoginAttemptService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -53,6 +55,12 @@ public class UserService {
 
     @Inject
     AuthService authService;
+
+    @Inject
+    LoginAttemptService loginAttemptService;
+
+    @Inject
+    Event<UserAccountChangedEvent> accountChangedEvent;
 
     /**
      * Retrieves all users in the system.
@@ -266,7 +274,6 @@ public class UserService {
         }
 
         final boolean wasAdministrator = UserRepository.isActiveAdministrator(existingUser);
-        final String oldUsername = existingUser.username;
         // Complete replacement (PUT semantics)
         existingUser.username = normalizedUsername;
         existingUser.email = normalizedEmail;
@@ -276,7 +283,7 @@ public class UserService {
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
         this.applyRankToUser(existingUser, userDto.rankPublicId, ceiling);
-        return this.saveUpdatedUser(existingUser, wasAdministrator, oldUsername);
+        return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
 
     /**
@@ -323,7 +330,6 @@ public class UserService {
         }
 
         final boolean wasAdministrator = UserRepository.isActiveAdministrator(existingUser);
-        final String oldUsername = existingUser.username;
         // Partial update (PATCH semantics) - only update provided fields
         if (normalizedUsername != null) {
             existingUser.username = normalizedUsername;
@@ -343,7 +349,7 @@ public class UserService {
         if (userDto.rankPublicId != null) {
             this.applyRankToUser(existingUser, userDto.rankPublicId, ceiling);
         }
-        return this.saveUpdatedUser(existingUser, wasAdministrator, oldUsername);
+        return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
 
     /**
@@ -365,37 +371,37 @@ public class UserService {
         }
         this.requireWithinCaller(user);
         this.requireAdministratorRemains(user, UserRepository.isActiveAdministrator(user), false);
-        if (user.username != null) {
-            this.authService.evictCache(user.username);
-        }
-        return this.userRepository.deleteByPublicId(publicId);
+        final var deleted = this.userRepository.deleteByPublicId(publicId);
+        this.fireAccountChanged(user, null);
+        return deleted;
     }
 
     /**
-     * Finishes an update: refuses it if it would leave no active Administrator, persists the user, and evicts the
-     * authentication cache under the old and new username.
+     * Finishes an update: refuses it if it would leave no active Administrator, persists the user, and fires a
+     * {@link UserAccountChangedEvent}, which evicts the authentication cache after the transaction commits.
      *
      * @param user
      *            the modified user
      * @param wasAdministrator
      *            whether the user was an active Administrator before the modification
-     * @param oldUsername
-     *            the username before the modification
      * @return the updated {@link UserViewDto}
      * @throws ValidationException
      *             if the user was the last active Administrator and no longer is
      */
-    private UserViewDto saveUpdatedUser(final UserEntity user, final boolean wasAdministrator,
-            @Nullable final String oldUsername) {
+    private UserViewDto saveUpdatedUser(final UserEntity user, final boolean wasAdministrator) {
         this.requireAdministratorRemains(user, wasAdministrator, UserRepository.isActiveAdministrator(user));
         this.userRepository.persist(user);
-        if (oldUsername != null) {
-            this.authService.evictCache(oldUsername);
-        }
-        if (user.username != null && !user.username.equals(oldUsername)) {
-            this.authService.evictCache(user.username);
-        }
+        this.fireAccountChanged(user, AuthService.credentialStamp(user.password));
         return new UserViewDto(user);
+    }
+
+    /**
+     * Fires a {@link UserAccountChangedEvent} for the user; observers run after the transaction commits.
+     */
+    private void fireAccountChanged(final UserEntity user, @Nullable final String credentialStamp) {
+        if (user.publicId != null) {
+            this.accountChangedEvent.fire(new UserAccountChangedEvent(user.publicId, credentialStamp));
+        }
     }
 
     /**
@@ -450,42 +456,58 @@ public class UserService {
     }
 
     /**
-     * Get current user from session
+     * Returns the user the current session belongs to.
+     *
+     * @return the current user as a {@link UserViewDto}
+     * @throws WebApplicationException
+     *             with status UNAUTHORIZED if there is no current user: the session's credentials were revoked, the
+     *             user is gone, or there is no session
      */
+    @Transactional
     public UserViewDto getCurrentUser() {
-        final var session = VaadinSession.getCurrent();
-        if (session == null) {
-            throw new WebApplicationException("No active session", Response.Status.UNAUTHORIZED);
-        }
-        final var username = (String) session.getAttribute(AppConstants.SESSION_KEY_USERNAME);
-        if (username == null) {
+        final var user = this.authService.getCurrentUserEntity();
+        if (user == null) {
             throw new WebApplicationException("User not authenticated", Response.Status.UNAUTHORIZED);
         }
-        return this.findByUsername(username)
-                .orElseThrow(() -> new WebApplicationException("User not found", Response.Status.NOT_FOUND));
+        return new UserViewDto(user);
     }
 
     /**
-     * Change user password after verifying current password.
+     * Change user password after verifying current password. The caller's session is verified inside the transaction
+     * (the user still exists, is active and the session's credential stamp is current), so a session revoked while a
+     * page stayed open cannot change the password. The current-password check is throttled per session, apart from the
+     * login throttles, so guessing it through a hijacked session is slowed down without locking the account out of the
+     * login form.
      * 
-     * @param userId
-     *            The user ID
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param currentPassword
      *            The current password for verification
      * @param newPassword
      *            The new password to set
+     * @return the account's new credential stamp, to hand to {@link AuthService#renewCredentialStamp}
+     * @throws ValidationException
+     *             if the session has ended, too many wrong guesses were made recently, the current password is wrong,
+     *             or the new password is invalid
      */
     @Transactional
-    public void changePassword(final Long userId, final String currentPassword, final String newPassword) {
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null) {
-            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
+    public String changePassword(final SessionCredentials credentials, final String currentPassword,
+            final String newPassword) {
+        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
+        if (user == null || !user.activated || user.banned
+                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
+            throw new ValidationException("Your session has ended. Please sign in again.");
+        }
+
+        if (!this.loginAttemptService.tryRecordPasswordChangeAttempt(credentials.throttleKey())) {
+            throw new ValidationException("Too many failed attempts. Try again later.");
         }
 
         // Verify current password
         if (user.password == null || !this.passwordHashingService.verifyPassword(currentPassword, user.password)) {
             throw new ValidationException("Current password is incorrect");
         }
+        this.loginAttemptService.clearPasswordChangeAttempts(credentials.throttleKey());
 
         // Validate new password
         this.validatePassword(newPassword);
@@ -495,9 +517,9 @@ public class UserService {
         user.password = hashedPassword;
         this.userRepository.persist(user);
 
-        if (user.username != null) {
-            this.authService.evictCache(user.username);
-        }
+        final var stamp = Objects.requireNonNull(AuthService.credentialStamp(hashedPassword));
+        this.fireAccountChanged(user, stamp);
+        return stamp;
     }
 
     /**
