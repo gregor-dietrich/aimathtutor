@@ -721,34 +721,69 @@ class UserServiceTest {
         }
     }
 
-    @ParameterizedTest(name = "own account: {0}")
-    @ValueSource(booleans = { true, false })
-    @DisplayName("a committed password patch renews the stamp of the acting session only for its own account")
-    void testPatchPassword_renewsStampOnlyForOwnAccount(final boolean ownAccount) {
+    /** Mocks a current session signed in as the user, so the services see them as the caller. */
+    private static MockedStatic<VaadinSession> signedInAs(final UserEntity user) {
+        final MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class);
+        final VaadinSession mockSess = mock(VaadinSession.class);
+        when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(user.publicId);
+        when(mockSess.getAttribute(AppConstants.SESSION_KEY_CREDENTIAL_STAMP))
+                .thenReturn(AuthService.credentialStamp(user.password));
+        mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+        return mockedSession;
+    }
+
+    @Test
+    @DisplayName("a committed password patch of another account leaves the acting session's stamp alone")
+    void testPatchPassword_leavesActingSessionStampAlone() {
         final var user = this.createCommittedUser();
         final var other = this.createCommittedUser();
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final var actingAs = ownAccount ? user : other;
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(actingAs.publicId);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+        try (var _ = signedInAs(other)) {
             final var dto = new UserDto();
             dto.password = "N3wP@ssword!";
 
             inCommittedTransaction(() -> this.userService.patchUser(user.publicId, dto));
 
-            if (ownAccount) {
-                final var newStamp = new String[1];
-                inCommittedTransaction(() -> newStamp[0] = AuthService
-                        .credentialStamp(this.userRepository.findByPublicId(user.publicId).orElseThrow().password));
-                verify(mockSess).setAttribute(AppConstants.SESSION_KEY_CREDENTIAL_STAMP, newStamp[0]);
-            } else {
-                verify(mockSess, never()).setAttribute(eq(AppConstants.SESSION_KEY_CREDENTIAL_STAMP), any());
-            }
+            verify(VaadinSession.getCurrent(), never()).setAttribute(eq(AppConstants.SESSION_KEY_CREDENTIAL_STAMP),
+                    any());
         } finally {
             this.deleteCommittedUser(user);
             this.deleteCommittedUser(other);
         }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "patchUser", "updateUser" })
+    @DisplayName("the admin path refuses to change the caller's own password, which needs the current one")
+    @TestTransaction
+    void testAdminPath_refusesOwnPassword(final String method) {
+        final var dto = this.buildValidDto();
+        final var user = this.userRepository.findByPublicId(this.userService.createUser(dto).publicId).orElseThrow();
+        final String hash = user.password;
+        dto.password = "N3wP@ssword!";
+        try (var _ = signedInAs(user)) {
+            final Executable write = "updateUser".equals(method) ? () -> this.userService.updateUser(user.publicId, dto)
+                    : () -> this.userService.patchUser(user.publicId, dto);
+            final var e = assertThrows(ValidationException.class, write);
+            assertEquals(AppConstants.OWN_PASSWORD_MESSAGE, e.getMessage());
+        }
+        assertEquals(hash, user.password);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "patchUser", "updateUser" })
+    @DisplayName("the admin path still saves the caller's own account when no password is given")
+    @TestTransaction
+    void testAdminPath_savesOwnAccountWithoutPassword(final String method) {
+        final var dto = this.buildValidDto();
+        final var user = this.userRepository.findByPublicId(this.userService.createUser(dto).publicId).orElseThrow();
+        dto.username = "renamed_" + UUID.randomUUID().toString().substring(0, 8);
+        dto.password = null;
+        try (var _ = signedInAs(user)) {
+            final Executable write = "updateUser".equals(method) ? () -> this.userService.updateUser(user.publicId, dto)
+                    : () -> this.userService.patchUser(user.publicId, dto);
+            assertDoesNotThrow(write);
+        }
+        assertEquals(dto.username, user.username);
     }
 
     @Test
@@ -991,13 +1026,7 @@ class UserServiceTest {
     @DisplayName("getCurrentUser returns user DTO when session has a valid user public ID and stamp")
     @TestTransaction
     void testGetCurrentUser_validSession_returnsUser() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            final var admin = this.userRepository.findByUsername("admin");
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(admin.publicId);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_CREDENTIAL_STAMP))
-                    .thenReturn(AuthService.credentialStamp(admin.password));
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+        try (var _ = signedInAs(this.userRepository.findByUsername("admin"))) {
             final UserViewDto result = this.userService.getCurrentUser();
             assertNotNull(result);
             assertEquals("admin", result.username);

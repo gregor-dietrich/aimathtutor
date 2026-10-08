@@ -146,8 +146,9 @@ public class AuthService {
 
     /**
      * Reacts to a committed change of a user account: evicts the cached authentication state of the account in every
-     * session, and re-stamps the acting session on any change of its own account that carries a stamp (equal to the
-     * current one unless the password changed), so the session that changed its own password stays signed in. It runs
+     * session, and re-stamps the acting session on any change of its own account that carries a stamp. Nothing changes
+     * one's own password on the UI thread (the admin paths refuse it, and {@code UserService.changePassword} runs off
+     * it and calls {@link #renewCredentialStamp}), so this re-installs the stamp the session already holds. It runs
      * after the transaction commits: an eviction recorded before the commit lets a concurrent
      * {@link #isAuthenticated()} read the old state and cache it again for up to the TTL, and a rolled-back change must
      * evict nothing.
@@ -158,8 +159,7 @@ public class AuthService {
     void onUserAccountChanged(@Observes(during = TransactionPhase.AFTER_SUCCESS) final UserAccountChangedEvent event) {
         this.evictCache(event.publicId());
         final var session = VaadinSession.getCurrent();
-        // The session that changed its own account's password stays signed in; it passed the permission checks with
-        // its old stamp.
+        // The acting session passed the permission checks with this stamp; a password change would replace it.
         if (event.credentialStamp() != null && session != null
                 && event.publicId().equals(session.getAttribute(USER_PUBLIC_ID_KEY))) {
             session.setAttribute(CREDENTIAL_STAMP_KEY, event.credentialStamp());
@@ -431,8 +431,9 @@ public class AuthService {
     }
 
     /**
-     * Captures the credentials of the current session for work that runs off the UI thread. Reads the session only, no
-     * database access; the receiver verifies them in its own transaction.
+     * Captures the credentials of the current session for work that runs off the UI thread, or for telling which
+     * account the session belongs to without a database access. Reads the session only; a receiver that acts on them
+     * verifies them in its own transaction.
      *
      * @return the session's credentials, or null if there is no session or it is not signed in
      */

@@ -38,10 +38,12 @@ import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
+import de.vptr.aimathtutor.view.UserSettingsView;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -242,9 +244,19 @@ public class AdminUsersView extends AbstractAdminView {
             passwordLabel.getStyle().set("color", "var(--lumo-secondary-text-color)");
             passwordLabel.getStyle().set("margin-bottom", "var(--lumo-space-xs)");
 
-            final var passwordButton = new Button("Change Password");
+            final var credentials = this.authService.currentSessionCredentials();
+            final boolean ownAccount = credentials != null && credentials.userPublicId().equals(user.publicId);
+            final var passwordButton = new Button(ownAccount ? AppConstants.OWN_PASSWORD_MESSAGE : "Change Password");
             passwordButton.setPrefixComponent(LineAwesomeIcon.LOCK_SOLID.create());
-            passwordButton.addClickListener(e -> this.openPasswordDialog(user));
+            passwordButton.addClickListener(e -> {
+                if (ownAccount) {
+                    // Close it first: the modal dialog is attached to the UI, not to this view
+                    this.userDialog.close();
+                    this.getUI().ifPresent(ui -> ui.navigate(UserSettingsView.class));
+                } else {
+                    this.openPasswordDialog(user);
+                }
+            });
 
             passwordLayout.add(passwordLabel, passwordButton);
             form.add(passwordLayout);

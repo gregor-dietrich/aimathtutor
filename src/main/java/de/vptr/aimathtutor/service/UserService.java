@@ -242,7 +242,8 @@ public class UserService {
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
      *             if username/email is duplicate, required fields missing, the user's current or new rank grants a
-     *             permission the caller's rank lacks, or the change would leave no active Administrator
+     *             permission the caller's rank lacks, the change would leave no active Administrator, or it sets the
+     *             caller's own password
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
@@ -301,7 +302,7 @@ public class UserService {
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
      *             if username/email is duplicate, the user's current or new rank grants a permission the caller's rank
-     *             lacks, or the change would leave no active Administrator
+     *             lacks, the change would leave no active Administrator, or it sets the caller's own password
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
@@ -581,10 +582,22 @@ public class UserService {
     }
 
     /**
-     * Applies a new password to a user if provided and non-blank.
+     * Applies a new password to a user if provided and non-blank. The caller's own password is refused: only
+     * {@link #changePassword} changes it, after checking the current one with a per-session attempt limit, so a
+     * hijacked session can't reset its own account's password through the admin path.
+     *
+     * @param user
+     *            the user to update
+     * @param password
+     *            the new password; null or blank leaves it unchanged
+     * @throws ValidationException
+     *             if a password is given and the user is the caller, or the password is invalid
      */
     private void applyPasswordToUser(final UserEntity user, final String password) {
         if (password != null && !password.isBlank()) {
+            if (Objects.equals(user.id, this.authService.getUserId())) {
+                throw new ValidationException(AppConstants.OWN_PASSWORD_MESSAGE);
+            }
             this.validatePassword(password);
             user.password = this.passwordHashingService.hashPassword(password);
         }
