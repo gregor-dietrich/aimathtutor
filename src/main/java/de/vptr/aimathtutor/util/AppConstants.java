@@ -134,6 +134,12 @@ public final class AppConstants {
             "This would leave no active user whose rank has every permission. "
                     + "Give another active user such a rank first.";
 
+    /**
+     * Rejection message for an admin-area password change on the caller's own account. Only the settings page changes
+     * it, after checking the current password.
+     */
+    public static final String OWN_PASSWORD_MESSAGE = "Change your own password on the Settings page";
+
     /** Rejection message for a change to, or assignment of, a user or rank above the caller's own rank. */
     public static final String PRIVILEGE_CEILING_MESSAGE =
             "You can't create, change, assign or delete a user or rank with permissions your rank doesn't have.";

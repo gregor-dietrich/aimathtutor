@@ -26,6 +26,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
 import de.vptr.aimathtutor.component.button.DeleteButton;
@@ -38,10 +39,12 @@ import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
+import de.vptr.aimathtutor.view.UserSettingsView;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
@@ -246,7 +249,10 @@ public class AdminUsersView extends AbstractAdminView {
             passwordButton.setPrefixComponent(LineAwesomeIcon.LOCK_SOLID.create());
             passwordButton.addClickListener(e -> this.openPasswordDialog(user));
 
-            passwordLayout.add(passwordLabel, passwordButton);
+            // Only the settings page changes one's own password, after checking the current one
+            final var credentials = this.authService.currentSessionCredentials();
+            passwordLayout.add(passwordLabel, credentials != null && credentials.userPublicId().equals(user.publicId)
+                    ? new RouterLink(AppConstants.OWN_PASSWORD_MESSAGE, UserSettingsView.class) : passwordButton);
             form.add(passwordLayout);
         }
 
