@@ -246,6 +246,7 @@ public class UserService {
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
+        this.userRepository.lockAdministrators();
         this.permissionService.requireUserEdit();
 
         // Validate required fields for PUT
@@ -304,6 +305,7 @@ public class UserService {
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
+        this.userRepository.lockAdministrators();
         this.permissionService.requireUserEdit();
 
         final UserEntity existingUser = this.userRepository.findByPublicId(publicId).orElse(null);
@@ -364,6 +366,7 @@ public class UserService {
      */
     @Transactional
     public boolean deleteUser(final String publicId) {
+        this.userRepository.lockAdministrators();
         this.permissionService.requireUserDelete();
         final var user = this.userRepository.findByPublicId(publicId).orElse(null);
         if (user == null) {

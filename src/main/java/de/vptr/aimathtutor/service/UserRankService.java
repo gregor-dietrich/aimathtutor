@@ -218,6 +218,7 @@ public class UserRankService {
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
+        this.userRepository.lockAdministrators();
         this.permissionService.requireUserRankEdit();
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
@@ -254,6 +255,7 @@ public class UserRankService {
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
+        this.userRepository.lockAdministrators();
         this.permissionService.requireUserRankEdit();
 
         final UserRankEntity existingRank = this.requireRankFound(publicId);
