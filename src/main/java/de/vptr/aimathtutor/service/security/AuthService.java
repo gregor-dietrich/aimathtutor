@@ -146,29 +146,21 @@ public class AuthService {
 
     /**
      * Reacts to a committed change of a user account: evicts the cached authentication state of the account in every
-     * session, and re-stamps the acting session on any change of its own account that carries a stamp. Nothing changes
-     * one's own password on the UI thread (the admin paths refuse it, and {@code UserService.changePassword} runs off
-     * it and calls {@link #renewCredentialStamp}), so this re-installs the stamp the session already holds. It runs
-     * after the transaction commits: an eviction recorded before the commit lets a concurrent
-     * {@link #isAuthenticated()} read the old state and cache it again for up to the TTL, and a rolled-back change must
-     * evict nothing.
+     * session. It never re-stamps a session: only {@code UserService.changePassword} changes one's own password, and
+     * its caller renews the stamp through {@link #renewCredentialStamp}. It runs after the transaction commits: an
+     * eviction recorded before the commit lets a concurrent {@link #isAuthenticated()} read the old state and cache it
+     * again for up to the TTL, and a rolled-back change must evict nothing.
      *
      * @param event
      *            the committed account change
      */
     void onUserAccountChanged(@Observes(during = TransactionPhase.AFTER_SUCCESS) final UserAccountChangedEvent event) {
         this.evictCache(event.publicId());
-        final var session = VaadinSession.getCurrent();
-        // The acting session passed the permission checks with this stamp; a password change would replace it.
-        if (event.credentialStamp() != null && session != null
-                && event.publicId().equals(session.getAttribute(USER_PUBLIC_ID_KEY))) {
-            session.setAttribute(CREDENTIAL_STAMP_KEY, event.credentialStamp());
-        }
     }
 
     /**
-     * Gives a session the new credential stamp after its own self-service password change, which runs off the UI thread
-     * where {@link #onUserAccountChanged} sees no session. Called on that thread after
+     * Gives a session the new credential stamp after its own self-service password change, the only path that renews a
+     * stamp; {@link #onUserAccountChanged} only evicts. The change runs off the UI thread. Called on that thread after
      * {@code UserService.changePassword}: the database check runs there, and only the attribute write takes the session
      * lock, so the UI never waits on the database. This is safe because it only installs a stamp equal to the account's
      * current one, which cannot be derived without the stored hash, and the check refuses a stamp that a concurrent

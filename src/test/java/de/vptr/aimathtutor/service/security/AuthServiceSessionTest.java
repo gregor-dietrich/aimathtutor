@@ -200,9 +200,9 @@ class AuthServiceSessionTest {
     }
 
     @Test
-    @DisplayName("the account-changed observer evicts and renews only the session of its own account")
+    @DisplayName("the account-changed observer evicts only its own account, and never re-stamps a session")
     @TestTransaction
-    void observerEvictsAndRenewsOnlyOwnAccount() {
+    void observerEvictsOnlyOwnAccount() {
         try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
             final var user = this.userRepository.findByUsername("student1");
             final VaadinSession mockSess = cachedSessionFor(user);
@@ -210,30 +210,15 @@ class AuthServiceSessionTest {
             assertTrue(this.authService.isAuthenticated());
             verify(mockSess, never()).setAttribute(eq(LAST_DB_CHECK_KEY), any());
 
-            this.authService.onUserAccountChanged(new UserAccountChangedEvent("another-account", "other-stamp"));
-            verify(mockSess, never()).setAttribute(eq(CREDENTIAL_STAMP_KEY), any());
+            this.authService.onUserAccountChanged(new UserAccountChangedEvent("another-account"));
             assertTrue(this.authService.isAuthenticated());
             verify(mockSess, never()).setAttribute(eq(LAST_DB_CHECK_KEY), any());
 
-            this.authService.onUserAccountChanged(new UserAccountChangedEvent(user.publicId, "new-stamp"));
-            verify(mockSess).setAttribute(CREDENTIAL_STAMP_KEY, "new-stamp");
+            this.authService.onUserAccountChanged(new UserAccountChangedEvent(user.publicId));
+            verify(mockSess, never()).setAttribute(eq(CREDENTIAL_STAMP_KEY), any());
             // the eviction forced a DB re-check inside the TTL
             this.authService.isAuthenticated();
             verify(mockSess).setAttribute(eq(LAST_DB_CHECK_KEY), any());
-        }
-    }
-
-    @Test
-    @DisplayName("the account-changed observer for a deletion renews nothing")
-    void observerDeletionRenewsNothing() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(USER_PUBLIC_ID_KEY)).thenReturn("pid");
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
-
-            this.authService.onUserAccountChanged(new UserAccountChangedEvent("pid", null));
-
-            verify(mockSess, never()).setAttribute(eq(CREDENTIAL_STAMP_KEY), any());
         }
     }
 
