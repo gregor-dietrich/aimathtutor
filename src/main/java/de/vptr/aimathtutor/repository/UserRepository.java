@@ -30,6 +30,12 @@ public class UserRepository extends AbstractRepository {
                     + UserRankEntity.PERMISSION_FIELDS.stream().map(f -> " AND u.rank." + f + " = true")
                             .collect(Collectors.joining());
 
+    /**
+     * Key of the advisory lock taken by {@link #lockAdministrators()}, ASCII {@code AIMTADMN}. Any constant works as
+     * long as no other code takes an advisory lock with it.
+     */
+    private static final long ADMINISTRATOR_LOCK_KEY = 0x4149_4D54_4144_4D4EL;
+
     @Inject
     EncryptionService encryptionService;
 
@@ -287,6 +293,19 @@ public class UserRepository extends AbstractRepository {
      */
     public long countActiveAdministrators() {
         return this.em.createQuery(COUNT_ACTIVE_ADMINISTRATORS, Long.class).getSingleResult();
+    }
+
+    /**
+     * Takes the transaction-scoped PostgreSQL advisory lock that serializes every write able to remove an active
+     * Administrator; it is held until the transaction ends. Without it, two transactions each removing a different one
+     * of the last two Administrators would each still count the other and both commit. Callers take it first, before
+     * loading the target or the caller's rank, so that under READ COMMITTED everything they read afterwards includes
+     * the previous holder's committed change. Logins and other writes don't take it.
+     */
+    @Transactional(Transactional.TxType.MANDATORY)
+    public void lockAdministrators() {
+        this.em.createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(?1)").setParameter(1, ADMINISTRATOR_LOCK_KEY)
+                .getSingleResult();
     }
 
     /**
