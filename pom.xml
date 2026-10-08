@@ -58,7 +58,7 @@
     <spotless-plugin.version>3.10.3</spotless-plugin.version>
     <surefire-plugin.version>3.6.0</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
-    <vaadin.version>25.3.0</vaadin.version>
+    <vaadin.version>25.3.1</vaadin.version>
     <!-- Node.js for every Vaadin frontend build. vaadin-maven-plugin reads these two properties
     directly; quarkus-maven-plugin passes them to the Quarkus build step and to dev mode (see its
     systemProperties). Vaadin downloads this version to ~/.vaadin instead of using a node on PATH,
