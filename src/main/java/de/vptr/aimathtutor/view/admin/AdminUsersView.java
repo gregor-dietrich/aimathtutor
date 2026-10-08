@@ -26,7 +26,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouterLink;
 
 import de.vptr.aimathtutor.component.button.CreateButton;
 import de.vptr.aimathtutor.component.button.DeleteButton;
@@ -245,14 +244,21 @@ public class AdminUsersView extends AbstractAdminView {
             passwordLabel.getStyle().set("color", "var(--lumo-secondary-text-color)");
             passwordLabel.getStyle().set("margin-bottom", "var(--lumo-space-xs)");
 
-            final var passwordButton = new Button("Change Password");
-            passwordButton.setPrefixComponent(LineAwesomeIcon.LOCK_SOLID.create());
-            passwordButton.addClickListener(e -> this.openPasswordDialog(user));
-
-            // Only the settings page changes one's own password, after checking the current one
             final var credentials = this.authService.currentSessionCredentials();
-            passwordLayout.add(passwordLabel, credentials != null && credentials.userPublicId().equals(user.publicId)
-                    ? new RouterLink(AppConstants.OWN_PASSWORD_MESSAGE, UserSettingsView.class) : passwordButton);
+            final boolean ownAccount = credentials != null && credentials.userPublicId().equals(user.publicId);
+            final var passwordButton = new Button(ownAccount ? AppConstants.OWN_PASSWORD_MESSAGE : "Change Password");
+            passwordButton.setPrefixComponent(LineAwesomeIcon.LOCK_SOLID.create());
+            passwordButton.addClickListener(e -> {
+                if (ownAccount) {
+                    // Close it first: the modal dialog is attached to the UI, not to this view
+                    this.userDialog.close();
+                    this.getUI().ifPresent(ui -> ui.navigate(UserSettingsView.class));
+                } else {
+                    this.openPasswordDialog(user);
+                }
+            });
+
+            passwordLayout.add(passwordLabel, passwordButton);
             form.add(passwordLayout);
         }
 

@@ -138,6 +138,8 @@ class PrivilegeCeilingTest {
                 .thenAnswer(call -> this.userRepository.findByPublicId(self.publicId).orElseThrow().rank);
         final UserDto promote = userDto(ADMIN_RANK_PUBLIC_ID);
         promote.username = self.username;
+        // A password on one's own account is refused before the rank is checked
+        promote.password = null;
 
         assertRefused(() -> this.userService.updateUser(self.publicId, promote));
     }

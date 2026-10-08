@@ -584,10 +584,14 @@ public class UserService {
     /**
      * Applies a new password to a user if provided and non-blank. The caller's own password is refused: only
      * {@link #changePassword} changes it, after checking the current one with a per-session attempt limit, so a
-     * hijacked session can't take the account over with {@code userEdit}.
+     * hijacked session can't reset its own account's password through the admin path.
      *
+     * @param user
+     *            the user to update
+     * @param password
+     *            the new password; null or blank leaves it unchanged
      * @throws ValidationException
-     *             if the user is the caller, or the password is invalid
+     *             if a password is given and the user is the caller, or the password is invalid
      */
     private void applyPasswordToUser(final UserEntity user, final String password) {
         if (password != null && !password.isBlank()) {

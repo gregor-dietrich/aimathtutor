@@ -135,8 +135,9 @@ public final class AppConstants {
                     + "Give another active user such a rank first.";
 
     /**
-     * Rejection message for an admin-area password change on the caller's own account. Only the settings page changes
-     * it, after checking the current password.
+     * Rejection message for an admin-area password change on the caller's own account, and the label of the admin user
+     * dialog's button that leads to the settings page instead, hence no closing period. Only the settings page changes
+     * one's own password, after checking the current one.
      */
     public static final String OWN_PASSWORD_MESSAGE = "Change your own password on the Settings page";
 
