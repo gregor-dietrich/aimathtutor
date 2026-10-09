@@ -11,6 +11,8 @@ REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
 echo "Running tests..."
 
+python3 -B -m unittest discover -s scripts/tests -v
+
 ${MVN_CMD} -q verify -Dquarkus.log.console.enabled=false -Dquarkus.log.file.enabled=false -Drevision="${REVISION}"
 
 echo "Tests completed."

@@ -13,11 +13,12 @@ make check
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
-${MVN_CMD} -q clean install -DskipTests -Drevision="${REVISION}"
-
+# Refresh the lockfile before the Quarkus build runs npm ci.
 scripts/regen-frontend.sh
 
 python3 "scripts/check_frontend_deps.py"
+
+${MVN_CMD} -q clean install -DskipTests -Drevision="${REVISION}"
 
 echo "Install completed."
 

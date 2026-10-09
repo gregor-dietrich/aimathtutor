@@ -1,4 +1,4 @@
-.PHONY: help branch build check clean coverage dev format install kill lint password rebase release tag test untag
+.PHONY: help branch build check clean coverage dev format install kill lint password rebase regen-frontend release tag test untag
 
 MAKEFLAGS += --no-print-directory
 
@@ -11,11 +11,12 @@ help:
 	@echo "  make coverage         - run all tests (including ITs) and generate coverage report"
 	@echo "  make dev              - start Quarkus in dev mode"
 	@echo "  make format           - run spotless to format code"
-	@echo "  make install          - make check, mvn clean install -DskipTests, regenerate frontend manifest"
+	@echo "  make install          - make check, regenerate frontend manifest, mvn clean install -DskipTests"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
 	@echo "  make lint             - run quality gate plugins"
 	@echo "  make password         - generate a bcrypt hash for a password (for init.sql or an admin reset)"
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
+	@echo "  make regen-frontend   - regenerate frontend manifests for the current Vaadin version"
 	@echo "  make release          - pull from origin/main, test, make tag, and buildx-push multi-platform Docker images"
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
 	@echo "  make test             - run unit tests (skips ITs)"
@@ -56,6 +57,9 @@ password:
 
 rebase:
 	@scripts/rebase.sh
+
+regen-frontend:
+	@scripts/regen-frontend.sh
 
 release:
 	@scripts/release.sh

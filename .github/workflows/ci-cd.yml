@@ -39,6 +39,8 @@ jobs:
         with:
           path: ~/.vaadin/node-${{ steps.node.outputs.version }}
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
+      - name: Test frontend lifecycle scripts
+        run: python3 -B -m unittest discover -s scripts/tests -v
       - name: Run tests
         run: ./mvnw verify -DskipITs=false
 
