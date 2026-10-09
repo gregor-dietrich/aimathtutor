@@ -58,7 +58,7 @@
     <spotless-plugin.version>3.10.3</spotless-plugin.version>
     <surefire-plugin.version>3.6.0</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
-    <vaadin.version>25.3.0</vaadin.version>
+    <vaadin.version>25.3.1</vaadin.version>
     <!-- Node.js for every Vaadin frontend build. vaadin-maven-plugin reads these two properties
     directly; quarkus-maven-plugin passes them to the Quarkus build step and to dev mode (see its
     systemProperties). Vaadin downloads this version to ~/.vaadin instead of using a node on PATH,
@@ -109,7 +109,7 @@
           needs com.fasterxml.jackson.core:jackson-annotations 2.22 (Quarkus manages 2.21).
           Not reachable in this app as far as assessed: no @ClientCallable or event data binds
           the affected types. Jackson 2 (via Quarkus) is already patched at 2.21.7.
-      Vaadin cannot resolve this by version bump: 25.3.0 is the newest release and ships 3.1.5.
+      Vaadin cannot resolve this by version bump: 25.3.1 is the newest release and ships 3.1.5.
       Remove this pin once Vaadin manages tools.jackson.core >= 3.1.7. -->
       <dependency>
         <groupId>tools.jackson</groupId>
