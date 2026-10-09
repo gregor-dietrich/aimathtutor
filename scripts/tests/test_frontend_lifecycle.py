@@ -67,11 +67,67 @@ esac
         self.assertFalse((self.root / "node_modules").exists())
         self.assertFalse((self.root / "target").exists())
 
-    def test_install_bootstraps_missing_manifests_before_build(self):
+    def test_install_builds_from_committed_manifests(self):
+        for name in ("package.json", "package-lock.json"):
+            (self.root / name).write_text("committed contents\n")
+
         result = self.run_script("install")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((self.root / "installed").is_file())
+        # The fake regen build would overwrite both files.
+        for name in ("package.json", "package-lock.json"):
+            self.assertEqual((self.root / name).read_text(), "committed contents\n")
+
+    def test_install_refuses_missing_manifests(self):
+        result = self.run_script("install")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("make regen-frontend", result.stderr)
+        self.assertFalse((self.root / "installed").exists())
+        self.assertFalse((self.root / "package-lock.json").exists())
+
+    def check_committed_manifest(self):
+        return subprocess.run(
+            ["bash", "-c", ". scripts/lib/frontend.sh && require_committed_frontend_manifest"],
+            cwd=self.root,
+            env=self.environment,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def commit_manifests(self):
+        for name in ("package.json", "package-lock.json"):
+            (self.root / name).write_text("committed contents\n")
+        git = ["git", "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false"]
+        subprocess.run(["git", "init", "-q"], cwd=self.root, check=True)
+        subprocess.run(["git", "add", "package.json", "package-lock.json"], cwd=self.root, check=True)
+        subprocess.run([*git, "commit", "-q", "-m", "manifests"], cwd=self.root, check=True)
+
+    def test_release_accepts_committed_manifests(self):
+        self.commit_manifests()
+
+        result = self.check_committed_manifest()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_release_refuses_changed_lockfile(self):
+        self.commit_manifests()
+        (self.root / "package-lock.json").write_text("regenerated contents\n")
+
+        result = self.check_committed_manifest()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("committed lockfile", result.stderr)
+
+    def test_release_refuses_missing_lockfile(self):
+        self.commit_manifests()
+        (self.root / "package-lock.json").unlink()
+
+        result = self.check_committed_manifest()
+
+        self.assertNotEqual(result.returncode, 0)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
 . "$(dirname "$0")"/lib/get_dir.sh
 . "$DIR/lib/get_maven.sh"
 . "$DIR/lib/images.sh"
+. "$DIR/lib/frontend.sh"
 
 set -e
 
@@ -34,11 +35,14 @@ fi
 register_qemu
 require_multiplatform_builder || abort_untagged
 docker login || abort_untagged
+require_committed_frontend_manifest || abort_untagged
 
 . scripts/clean.sh
 . scripts/install.sh
 . scripts/lint.sh
 . scripts/test.sh
+# Nothing above may have rewritten the lockfile that package_app's npm ci installs from.
+require_committed_frontend_manifest || abort_untagged
 package_app
 
 # Build every platform into the buildx cache before the git tag, so only a push can fail after it.

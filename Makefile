@@ -11,7 +11,7 @@ help:
 	@echo "  make coverage         - run all tests (including ITs) and generate coverage report"
 	@echo "  make dev              - start Quarkus in dev mode"
 	@echo "  make format           - run spotless to format code"
-	@echo "  make install          - make check, regenerate frontend manifest, mvn clean install -DskipTests"
+	@echo "  make install          - make check, mvn clean install -DskipTests"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
 	@echo "  make lint             - run quality gate plugins"
 	@echo "  make password         - generate a bcrypt hash for a password (for init.sql or an admin reset)"
