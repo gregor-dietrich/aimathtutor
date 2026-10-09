@@ -52,10 +52,14 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
     @Inject
     private transient ExerciseService exerciseService;
 
+    // Welcome header rendered immediately so the user has feedback while lessons/exercises load in the background.
+    private final H2 welcomeLabel = new H2();
+
     /**
      * Constructs the LessonsView with alignment and padding.
      */
     public LessonsView() {
+        this.welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
         this.setAlignItems(Alignment.START);
         this.setJustifyContentMode(JustifyContentMode.START);
         this.setPadding(true);
@@ -68,6 +72,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
+        // Resolve the username here, on the request thread: it is a database lookup, and renderLessons runs inside
+        // ui.access() from a background thread, where no CDI request context is active.
+        this.welcomeLabel.setText("Welcome, " + this.authService.getUsername() + "!");
         this.buildUi();
     }
 
@@ -88,12 +95,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     private void buildUi() {
         this.removeAll();
-
-        // Welcome header rendered immediately so the user has feedback while
-        // lessons/exercises load in the background.
-        final var welcomeLabel = new H2("Welcome, " + this.authService.getUsername() + "!");
-        welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
-        this.add(welcomeLabel);
+        this.add(this.welcomeLabel);
     }
 
     private void renderLessons(final LessonsPayload payload) {
