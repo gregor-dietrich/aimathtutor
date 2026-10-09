@@ -376,7 +376,7 @@ public class UserService {
         this.requireWithinCaller(user);
         this.requireAdministratorRemains(user, UserRepository.isActiveAdministrator(user), false);
         final var deleted = this.userRepository.deleteByPublicId(publicId);
-        this.fireAccountChanged(user, null);
+        this.fireAccountChanged(user);
         return deleted;
     }
 
@@ -395,16 +395,16 @@ public class UserService {
     private UserViewDto saveUpdatedUser(final UserEntity user, final boolean wasAdministrator) {
         this.requireAdministratorRemains(user, wasAdministrator, UserRepository.isActiveAdministrator(user));
         this.userRepository.persist(user);
-        this.fireAccountChanged(user, AuthService.credentialStamp(user.password));
+        this.fireAccountChanged(user);
         return new UserViewDto(user);
     }
 
     /**
      * Fires a {@link UserAccountChangedEvent} for the user; observers run after the transaction commits.
      */
-    private void fireAccountChanged(final UserEntity user, @Nullable final String credentialStamp) {
+    private void fireAccountChanged(final UserEntity user) {
         if (user.publicId != null) {
-            this.accountChangedEvent.fire(new UserAccountChangedEvent(user.publicId, credentialStamp));
+            this.accountChangedEvent.fire(new UserAccountChangedEvent(user.publicId));
         }
     }
 
@@ -522,7 +522,7 @@ public class UserService {
         this.userRepository.persist(user);
 
         final var stamp = Objects.requireNonNull(AuthService.credentialStamp(hashedPassword));
-        this.fireAccountChanged(user, stamp);
+        this.fireAccountChanged(user);
         return stamp;
     }
 

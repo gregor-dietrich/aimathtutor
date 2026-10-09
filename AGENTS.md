@@ -68,7 +68,7 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **Do NOT make LoginView async.** `authService.authenticate()` in `CompletableFuture.supplyAsync()` causes `ContextNotActiveException` — `ui.access()` has no CDI request context and `MainLayout.beforeEnter()` needs EntityManager. Keep login synchronous.
 - **CommentsPanel must NOT have `@Observes` methods.** Instantiated with `new`, not CDI. Real-time refresh uses `CommentCreatedEventBridge` with programmatic listeners.
 - **ConversationContextDto fields must stay `private final` with unmodifiable getters.**
-- **`VaadinSession.getCurrent()` can be null.** Always null-check. Applies to `AuthService.getCurrentUserEntity()`, `currentSessionCredentials()`, `renewCredentialStamp()`, `onUserAccountChanged()`, `logout()`, `isAuthenticated()`.
+- **`VaadinSession.getCurrent()` can be null.** Always null-check. Applies to `AuthService.getCurrentUserEntity()`, `currentSessionCredentials()`, `renewCredentialStamp()`, `logout()`, `isAuthenticated()`.
 - **MathWorkspaceView request ID staleness checks must stay.** `problemRequestId` counter, `pendingProblemFuture.cancel()`, and JS `window.currentProblemRequestId` prevent race conditions on rapid problem generation.
 - **LoginAttemptServiceTest must verify exact cap value of 3600.** Do not revert to weak `<= 3600`.
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded strings cause state leakage (`@ApplicationScoped`).
