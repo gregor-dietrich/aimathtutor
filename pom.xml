@@ -3,6 +3,14 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>de.vptr.devkit</groupId>
+    <artifactId>devkit-parent</artifactId>
+    <version>0.5.0</version>
+    <relativePath>.devkit/java/parent/pom.xml</relativePath>
+  </parent>
+
   <groupId>de.vptr</groupId>
   <artifactId>aimathtutor</artifactId>
   <version>${revision}</version>
@@ -16,21 +24,22 @@
     <skipITs>true</skipITs>
     <!-- The coverage minima below are calibrated against a run that includes the *IT
     tests, which are the only coverage of the repository package, so the check has to
-    stand down when ITs are skipped. The sibling Midas project sets this to a literal
-    false because it has no *IT classes and its minima are unit-test-only. -->
+    stand down when ITs are skipped. -->
     <jacoco.check.skip>${skipITs}</jacoco.check.skip>
+    <jacoco.check.lineMinimum>0.89</jacoco.check.lineMinimum>
+    <jacoco.check.branchMinimum>0.76</jacoco.check.branchMinimum>
+    <nullaway.annotated.packages>de.vptr.aimathtutor</nullaway.annotated.packages>
     <java.version>25</java.version>
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <pmd-cpd.minTokens>65</pmd-cpd.minTokens>
 
     <!-- Quarkus Platform. Tracks the latest LTS line, NOT the latest stable release: LTS
     lines receive patch releases for far longer, which is what a project that ships releases
     needs. 3.40.x is the current LTS, so newer stable releases are deliberately not adopted;
-    scripts/version_check.py reporting one as "outdated" is expected and informational, and
+    `make check` reporting one as "outdated" is expected and informational, and
     .github/dependabot.yml ignores io.quarkus(.platform):* >=3.41.0 to match. Move to a new
     LTS line only, and raise the Dependabot bound in the same change. -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -38,23 +47,9 @@
     <quarkus.platform.version>3.40.1</quarkus.platform.version>
 
     <!-- Other Dependencies & Plugins -->
-    <checkstyle.version>14.3.0</checkstyle.version>
-    <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
-    <compiler-plugin.version>3.16.0</compiler-plugin.version>
-    <dependency-check-plugin.version>13.0.0</dependency-check-plugin.version>
-    <eclipse-formatter.version>4.40</eclipse-formatter.version>
-    <error-prone.version>2.50.0</error-prone.version>
     <html-sanitizer.version>20260924.2</html-sanitizer.version>
-    <!-- Also drives the org.jacoco artifacts quarkus-jacoco uses. See dependencyManagement. -->
-    <jacoco-plugin.version>0.8.15</jacoco-plugin.version>
-    <license-plugin.version>2.7.1</license-plugin.version>
     <line-awesome.version>2.1.0</line-awesome.version>
-    <nullaway.version>0.14.2</nullaway.version>
-    <pmd-plugin.version>3.28.0</pmd-plugin.version>
     <spotbugs-annotations.version>4.10.4</spotbugs-annotations.version>
-    <spotbugs-plugin.version>4.10.4.1</spotbugs-plugin.version>
-    <spotless-plugin.version>3.10.4</spotless-plugin.version>
-    <surefire-plugin.version>3.6.0</surefire-plugin.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
     <vaadin.version>25.3.1</vaadin.version>
     <!-- Node.js for every Vaadin frontend build. vaadin-maven-plugin reads these two properties
@@ -88,33 +83,6 @@
         <version>${vaadin.version}</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-
-      <!-- Align the org.jacoco artifacts of io.quarkus:quarkus-jacoco with jacoco-maven-plugin.
-      quarkus-jacoco offline-instruments the app classes with its own org.jacoco, which is what
-      records @QuarkusTest coverage; if that version differs from the plugin's, the plugin cannot
-      map the exec data and coverage collapses (measured: 89.8% -> 7%). Managing them here lets
-      JaCoCo update independently of the version the Quarkus BOM bundles. -->
-      <dependency>
-        <groupId>org.jacoco</groupId>
-        <artifactId>org.jacoco.core</artifactId>
-        <version>${jacoco-plugin.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jacoco</groupId>
-        <artifactId>org.jacoco.report</artifactId>
-        <version>${jacoco-plugin.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jacoco</groupId>
-        <artifactId>org.jacoco.agent</artifactId>
-        <version>${jacoco-plugin.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jacoco</groupId>
-        <artifactId>org.jacoco.agent</artifactId>
-        <version>${jacoco-plugin.version}</version>
-        <classifier>runtime</classifier>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -241,7 +209,7 @@
     application classes, which is the only way @QuarkusTest coverage reaches jacoco.exec.
     Removing it drops every service/repository/entity class to 0% (measured: 89.8% -> 28.1%),
     because the jacoco-maven-plugin's java agent cannot map classes loaded via
-    QuarkusClassLoader. Its org.jacoco version is aligned with the plugin in dependencyManagement. -->
+    QuarkusClassLoader. Its org.jacoco version is aligned with the plugin in the devkit parent's dependencyManagement. -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jacoco</artifactId>
@@ -270,132 +238,12 @@
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>central</id>
-      <url>https://repo.maven.apache.org/maven2</url>
-    </repository>
-    <repository>
-      <id>vaadin-prereleases</id>
-      <url>https://maven.vaadin.com/vaadin-prereleases/</url>
-    </repository>
-    <repository>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>Vaadin Directory</id>
-      <url>https://maven.vaadin.com/vaadin-addons</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>central</id>
-      <url>https://repo.maven.apache.org/maven2</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>vaadin-prereleases</id>
-      <url>https://maven.vaadin.com/vaadin-prereleases/</url>
-    </pluginRepository>
-  </pluginRepositories>
+  <!-- No repositories besides Central (Maven's default): without the .devkit link, Maven asks
+  every declared repository for devkit's parent POM, and whatever answers would configure the
+  build. Every dependency resolves from Central. -->
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.owasp</groupId>
-        <artifactId>dependency-check-maven</artifactId>
-        <version>${dependency-check-plugin.version}</version>
-        <configuration>
-          <failBuildOnCVSS>7</failBuildOnCVSS>
-          <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
-          <suppressionFiles>
-            <suppressionFile>dependency-check-suppression.xml</suppressionFile>
-          </suppressionFiles>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-        <version>${spotbugs-plugin.version}</version>
-        <configuration>
-          <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
-          <effort>Max</effort>
-          <threshold>Low</threshold>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-        <version>${pmd-plugin.version}</version>
-        <configuration>
-          <minimumTokens>${pmd-cpd.minTokens}</minimumTokens>
-          <targetJdk>${java.version}</targetJdk>
-          <includeTests>true</includeTests>
-          <linkXRef>false</linkXRef>
-          <rulesets>
-            <ruleset>pmd-ruleset.xml</ruleset>
-          </rulesets>
-          <failOnViolation>true</failOnViolation>
-        </configuration>
-        <executions>
-          <execution>
-            <id>pmd-check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>cpd-check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>cpd-check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${checkstyle-plugin.version}</version>
-        <dependencies>
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.version}</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>checkstyle</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <configLocation>checkstyle.xml</configLocation>
-          <propertyExpansion>
-            org.checkstyle.google.suppressionfilter.config=${project.basedir}/checkstyle-suppressions.xml</propertyExpansion>
-          <consoleOutput>true</consoleOutput>
-          <failsOnError>true</failsOnError>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
@@ -424,151 +272,8 @@
         </configuration>
       </plugin>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>${compiler-plugin.version}</version>
-        <configuration>
-          <parameters>true</parameters>
-          <compilerArgs>
-            <!--
-              -Werror: any compiler warning (javac lint or Error Prone) fails the build.
-              -Xlint:all with three deliberate exclusions:
-                -serial: Vaadin components are Serializable by inheritance; adding serialVersionUID
-                         is unwanted boilerplate (same decision as the SE_ exclusion in spotbugs-exclude.xml)
-                -this-escape: flags the standard Vaadin constructor-builds-UI idiom, not actual bugs
-                -classfile: noise from third-party jars referencing optional annotations (e.g. OSGi
-                            metadata in microprofile-config); not fixable in this repository
-            -->
-            <arg>-Werror</arg>
-            <arg>-Xlint:all,-serial,-this-escape,-classfile</arg>
-            <arg>-XDcompilePolicy=simple</arg>
-            <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR
-              -XepOpt:NullAway:AnnotatedPackages=de.vptr.aimathtutor
-              -Xep:FutureReturnValueIgnored:ERROR
-              -Xep:NullablePrimitive:ERROR
-              -Xep:NonApiType:ERROR
-              -Xep:MultipleNullnessAnnotations:ERROR
-              -Xep:JavaDurationGetSecondsToToSeconds:ERROR
-              -Xep:JavaTimeDefaultTimeZone:ERROR
-              -Xep:StringSplitter:ERROR
-              -Xep:StringConcatToTextBlock:ERROR
-              -Xep:StatementSwitchToExpressionSwitch:ERROR
-              -Xep:UnnecessaryAssignment:ERROR
-              -Xep:UnnecessaryMethodReference:ERROR
-              -Xep:UnusedVariable:ERROR
-              -Xep:EffectivelyPrivate:ERROR</arg>
-            <arg>--should-stop=ifError=FLOW</arg>
-          </compilerArgs>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.google.errorprone</groupId>
-              <artifactId>error_prone_core</artifactId>
-              <version>${error-prone.version}</version>
-            </path>
-            <path>
-              <groupId>com.uber.nullaway</groupId>
-              <artifactId>nullaway</artifactId>
-              <version>${nullaway.version}</version>
-            </path>
-          </annotationProcessorPaths>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${surefire-plugin.version}</version>
-        <configuration>
-          <argLine>-Xshare:off -XX:+EnableDynamicAgentLoading @{argLine}</argLine>
-          <includes>
-            <include>**/*Test.java</include>
-          </includes>
-          <systemPropertyVariables>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <maven.home>${maven.home}</maven.home>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>${surefire-plugin.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <!-- Mirrors surefire. @{argLine} carries the JaCoCo agent, which failsafe would
-          otherwise inherit only implicitly via the argLine property, and would lose
-          silently the moment any explicit argLine is added here. -->
-          <argLine>-Xshare:off -XX:+EnableDynamicAgentLoading @{argLine}</argLine>
-          <systemPropertyVariables>
-            <native.image.path>
-              ${project.build.directory}/${project.build.finalName}-runner</native.image.path>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-            <maven.home>${maven.home}</maven.home>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>org/jboss/**</exclude>
-                <exclude>io/netty/**</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-          <!-- Bound to post-integration-test, not test: failsafe runs the *IT tests at
-          integration-test and appends to the same jacoco.exec, so a report generated at
-          test would omit all integration-test coverage. Still runs when ITs are skipped. -->
-          <execution>
-            <id>report</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
-          <!-- Skipped when integration tests are skipped. These minima are calibrated against a
-          run that includes the *IT tests, which are the only coverage of the repository package
-          Running the check against unit-test-only data therefore fails on a threshold it can
-          never reach. -->
-          <execution>
-            <id>check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <skip>${jacoco.check.skip}</skip>
-              <rules>
-                <rule>
-                  <element>BUNDLE</element>
-                  <limits>
-                    <limit>
-                      <counter>LINE</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.89</minimum>
-                    </limit>
-                    <limit>
-                      <counter>BRANCH</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.76</minimum>
-                    </limit>
-                  </limits>
-                </rule>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
         <configuration>
           <excludes>
             <exclude>de/vptr/aimathtutor/component/**</exclude>
@@ -592,64 +297,6 @@
             <exclude>de/vptr/aimathtutor/util/ExecutorShutdownUtil*</exclude>
           </excludes>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>${license-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>add-third-party</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>add-third-party</goal>
-            </goals>
-            <configuration>
-              <!-- Without these the report is generated but nothing fails, so a
-              commercial or source-available dependency slips in silently. -->
-              <failOnMissing>true</failOnMissing>
-              <failOnBlacklist>true</failOnBlacklist>
-              <excludedLicenses>
-                Commercial||Proprietary||SSPL||Elastic License||Business Source
-                License||Commons Clause||Elastic License 2.0||Server Side Public
-                License||BUSL-1.1||Polyform||PolyForm
-              </excludedLicenses>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <version>${spotless-plugin.version}</version>
-        <configuration>
-          <java>
-            <eclipse>
-              <file>${maven.multiModuleProjectDirectory}/eclipse-formatter.xml</file>
-              <version>${eclipse-formatter.version}</version>
-              <!-- download.eclipse.org suffers recurring outages; provision P2 from a mirror -->
-              <p2Mirrors>
-                <p2Mirror>
-                  <prefix>https://download.eclipse.org/</prefix>
-                  <url>https://ftp.halifax.rwth-aachen.de/eclipse/</url>
-                </p2Mirror>
-              </p2Mirrors>
-            </eclipse>
-            <importOrder>
-              <order>java,javax,org,com,#</order>
-            </importOrder>
-            <removeUnusedImports />
-          </java>
-        </configuration>
-        <executions>
-          <execution>
-            <id>spotless-check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

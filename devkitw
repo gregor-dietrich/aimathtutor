@@ -1,0 +1,85 @@
+#!/bin/sh
+# devkitw: fetch the devkit commit pinned in ./devkit.toml into a per-user
+# cache, point ./.devkit at it and print its path. A project commits this file
+# verbatim; `./devkitw self-check` notices a copy that has drifted.
+# Usage, from the project root: ./devkitw [path | self-check]
+set -eu
+
+die() {
+  echo "devkitw: $*" >&2
+  exit 1
+}
+
+case $#:${1-} in
+  0: | 1:path | 1:self-check) ;;
+  *)
+    echo "devkitw: unknown argument '$*'; usage: devkitw [path|self-check]" >&2
+    exit 2
+    ;;
+esac
+[ -f devkit.toml ] || die "no devkit.toml in $PWD; run from the project root"
+
+# key NAME: the double-quoted value of NAME in the [devkit] table, else empty.
+key() {
+  s='[[:space:]]*'
+  sed -n -e "/^$s\[devkit\]/,/^$s\[/!d" \
+    -e "s/^$s$1$s=$s\"\([^\"]*\)\".*/\1/p" devkit.toml | head -n 1
+}
+url=$(key url) mirror=$(key mirror) version=$(key version) commit=$(key commit)
+if [ -z "$url" ] || [ -z "$version" ]; then
+  die "devkit.toml: the [devkit] table needs url and version"
+fi
+printf '%s\n' "$commit" | grep -qx '[0-9a-f]\{40\}' ||
+  die "devkit.toml: commit must be 40 lowercase hex characters"
+[ -L .devkit ] || [ ! -e .devkit ] ||
+  die ".devkit exists and is not a symlink; move it out of the way"
+
+root=${XDG_CACHE_HOME:-$HOME/.cache}/devkit
+case $root in /*) ;; *) die "cache root $root is not an absolute path" ;; esac
+dir=$root/$commit mark=.devkit-commit # the marker holds "<commit> <version>"
+
+# g ARGS...: git in the temp dir, without hooks, credential helpers or stalls.
+g() {
+  git -c core.hooksPath=/dev/null -c credential.helper= \
+    -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=20 -C "$tmp" "$@"
+}
+
+cached=$(cat "$dir/$mark" 2>/dev/null || :)
+if [ -n "$cached" ] && [ "$cached" != "$commit $version" ]; then
+  die "version $version does not match cached commit $commit;" \
+    "check devkit.toml, or remove $dir to refetch"
+elif [ -z "$cached" ]; then
+  [ ! -e "$dir" ] || die "$dir has no $mark; remove it and retry"
+  # Never touch a calling git hook's repository (GIT_DIR, GIT_INDEX_FILE, ...).
+  # shellcheck disable=SC2046
+  unset $(git rev-parse --local-env-vars)
+  : "${GIT_SSH_COMMAND:=ssh -o BatchMode=yes -o ConnectTimeout=10}"
+  export GIT_SSH_COMMAND GIT_TERMINAL_PROMPT=0 # fail rather than prompt
+  mkdir -p "$root"
+  tmp=$(mktemp -d "$root/.tmp.XXXXXX")
+  trap 'rm -rf "$tmp"' EXIT
+  trap 'exit 1' HUP INT TERM
+  g init -q
+  for remote in "$url" ${mirror:+"$mirror"}; do
+    g fetch -q --depth 1 -- "$remote" "refs/tags/$version" 2>/dev/null && break
+  done
+  got=$(g rev-parse -q --verify 'FETCH_HEAD^{commit}') ||
+    die "cannot fetch tag $version from $url${mirror:+ or $mirror}"
+  [ "$got" = "$commit" ] || die "tag $version is $got, not the pinned $commit"
+  g checkout -q "$commit"
+  rm -rf "$tmp/.git"
+  echo "$commit $version" >"$tmp/$mark"
+  # Read-only, so an edit through .devkit cannot change every project's gates.
+  find "$tmp" -type f -exec chmod a-w {} +
+  mv "$tmp" "$dir"
+  rm -rf "${dir:?}/${tmp##*/}" # a concurrent run won: mv nested ours in it
+fi >&2 # only the path may reach stdout: not git's, nor a hook's
+
+[ "$(readlink .devkit 2>/dev/null)" = "$dir" ] || ln -sfn "$dir" .devkit
+
+if [ "${1-}" = self-check ]; then
+  cmp -s devkitw "$dir/devkitw" ||
+    die "./devkitw differs from devkit $version; copy $dir/devkitw over it"
+else
+  printf '%s\n' "$dir"
+fi

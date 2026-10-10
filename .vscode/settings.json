@@ -46,6 +46,16 @@
   "java.codeGeneration.generateComments": true, // Automatically generates comments for generated methods and classes.
   "java.codeGeneration.hashCodeEquals.useInstanceof": true, // Uses 'instanceof' instead of getClass() in hashCode() and equals() methods for better inheritance handling.
   "java.configuration.updateBuildConfiguration": "automatic",
+  // Keeps devkit's test fixtures (Maven projects under .devkit/tests/fixtures) out of the
+  // import, since .devkit links into the shared, read-only devkit cache. Replaces the extension
+  // default wholesale, so its four entries are carried over verbatim.
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "**/.devkit/**"
+  ],
   // Caps the language server's footprint on memory-constrained machines. Replaces the extension
   // default wholesale, so the non-memory flags below are carried over from it verbatim.
   // -Xmx1G: halves the default 2G ceiling; 1G is ample for this single-module project.
@@ -55,8 +65,8 @@
   // does not bound total RSS.
   "java.jdt.ls.vmargs": "-XX:+UseG1GC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=30 -XX:G1PeriodicGCInterval=60000 -XX:MaxMetaspaceSize=512m -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m -Xlog:disable",
   "java.edit.validateAllOpenBuffersOnChanges": true, // Validates all open Java files when changes occur, ensuring real-time error detection.
-  "java.format.settings.url": "eclipse-formatter.xml",
-  "java.format.settings.profile": "AIMathTutor",
+  "java.format.settings.url": ".devkit/java/config/eclipse-formatter.xml",
+  "java.format.settings.profile": "devkit",
   "java.sources.organizeImports.starThreshold": 9999,
   "java.sources.organizeImports.staticStarThreshold": 9999,
   "json.schemaDownload.enable": false,
@@ -69,7 +79,6 @@
   "python.analysis.autoIndent": true,
   "python.analysis.diagnosticMode": "workspace",
   "python.analysis.enablePytestSupport": true,
-  "python.analysis.extraPaths": ["${workspaceFolder}/midas-test/src"],
   "python.analysis.generateWithTypeAnnotation": true,
   "python.analysis.indexing": true,
   "python.analysis.typeCheckingMode": "strict",

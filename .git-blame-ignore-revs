@@ -1,0 +1,6 @@
+# Commits git blame skips: formatting-only changes. GitHub's blame view reads this
+# file; for local git blame, run once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Wrap Markdown at 80 columns for devkit's lint-md (whitespace only)
+e867383133b07c7ce502ab0ebb936cf4f571a9fd

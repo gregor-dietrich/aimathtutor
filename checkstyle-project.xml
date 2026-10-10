@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN" "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<!-- This project's own Checkstyle rules, run by devkit's parent POM as the checkstyle plugin's
+     execution "project", next to devkit's shared configuration. -->
+<module name="Checker">
+    <property name="charset" value="UTF-8" />
+    <property name="severity" value="error" />
+
+    <!-- No default: the file is found only through the propertyExpansion the execution inherits,
+         so the project's checkstyle-suppressions.xml applies here as well. -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${org.checkstyle.google.suppressionfilter.config}" />
+        <property name="optional" value="false" />
+    </module>
+
+    <module name="TreeWalker">
+        <module name="IllegalImport">
+            <property name="id" value="IllegalImport.UlidCreator" />
+            <property name="illegalClasses" value="com.github.f4b6a3.ulid.UlidCreator" />
+            <message key="import.illegal"
+                value="Import UlidCreator directly is not allowed — use UlidUtil instead." />
+        </module>
+        <!-- REST Assured is centralised behind TestUtil so that base URI, auth and
+             content-type defaults cannot drift per test class. -->
+        <module name="IllegalImport">
+            <property name="id" value="IllegalImport.RestAssured" />
+            <property name="illegalPkgs" value="io.restassured" />
+            <message key="import.illegal"
+                value="Importing from io.restassured directly is not allowed — use TestUtil instead to ensure consistent testing patterns." />
+        </module>
+        <!--
+            JOIN FETCH on a @OneToMany / @ManyToMany collection cannot coexist with
+            setMaxResults: Hibernate emits HHH000104 and paginates in memory, undoing the
+            LIMIT pushdown. The field names are the collection fields of the entities in
+            de.vptr.aimathtutor.entity; add new ones here when they are introduced.
+        -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.JoinFetchCollection" />
+            <property name="format"
+                value="(?i)JOIN\s+FETCH\s+\w+\.(userGroupMetas|commentFlags|exercises|children|comments|users)\b" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="JOIN FETCH on a collection cannot coexist with pagination (HHH000104, in-memory paging). Use @BatchSize, a second 'WHERE id IN :ids' query, or drop the JOIN FETCH." />
+        </module>
+    </module>
+</module>

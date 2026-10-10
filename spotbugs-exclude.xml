@@ -2,11 +2,10 @@
 <!--
   SpotBugs Exclusion Filter
 
-  Structure, kept parallel across the Midas and AIMathTutor projects so that drift
-  is visible in a plain diff:
+  Structure:
 
     1. SHARED BASELINE  - framework idioms (Panache, Jackson) that hold in every
-                          module. Byte-identical everywhere but for the package name.
+                          module. Not tied to any one class.
     2. VAADIN UI        - idioms that only hold where Vaadin Flow is on the classpath.
     3. PROJECT-SPECIFIC - narrowly class-scoped entries, each with its own reason.
 
@@ -17,7 +16,7 @@
   NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE. SpotBugs 4.10 reports every read of a
   @Nullable-annotated field, including reads already guarded by an explicit null
   check. That is noisy, but the fix is cheap and improves the code: read the field
-  (or the getter) once into a local and branch on the local. Both projects are clean
+  (or the getter) once into a local and branch on the local. This project is clean
   under these detectors; keep them that way rather than switching them off.
 -->
 <FindBugsFilter xmlns="http://findbugs.sourceforge.net/filter/3.0.0">

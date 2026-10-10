@@ -1,17 +1,13 @@
 #!/bin/bash
 
-. "$(dirname "$0")"/lib/get_dir.sh
-. "$DIR/lib/get_maven.sh"
-. "$DIR/lib/images.sh"
+# Run through make, which exports PROJECT_ROOT and DEVKIT (devkit's make/common.mk).
+cd "${PROJECT_ROOT:?run this through make}" || exit
+. "${DEVKIT:?run this through make}/scripts/lib/get_maven.sh"
+. scripts/lib/images.sh || exit
 
 set -e
 
-cd "$DIR/.."
-
 echo "Starting build..."
-
-# Run environment check first
-"$DIR/check.sh"
 
 if [[ -z "$REVISION" ]]; then
     read -r -p "Enter the new tag [1.0.0-SNAPSHOT]: " REVISION
@@ -28,5 +24,3 @@ build_local_image "$DOCKERFILE_ALPINE" "$TAG"-alpine "$TAG"
 build_local_image "$DOCKERFILE_UBUNTU" "$TAG"-ubuntu
 
 echo "Build completed."
-
-cd - > /dev/null

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Frontend manifest checks shared by install.sh and release.sh. Builds install the frontend with npm ci from
+# Frontend manifest checks shared by `make install` and release.sh. Builds install the frontend with npm ci from
 # the committed package-lock.json, so no build resolves npm dependencies nobody reviewed; only
 # `make regen-frontend` recreates the manifests. Source it and call its functions from the repository root.
 

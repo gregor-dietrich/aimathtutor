@@ -2,7 +2,8 @@
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+If you want to learn more about Quarkus, please visit its website:
+<https://quarkus.io/>.
 
 ## ⚠️ Requirements
 
@@ -11,6 +12,10 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | JDK 25 | ✅    | ❌  | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=25) |
 | Maven  | ✅    | ❌  | [Apache](https://maven.apache.org/download.cgi)                               |
 | Docker | ❌    | ✅  | (see below)                                                                   |
+
+`make check` and `make install` also need python3 ≥ 3.11. `make lint` and
+`make format` need node ≥ 22.22.2 with npm (the Markdown gate), and `make lint`
+needs curl, tar and sha256sum/shasum (the gitleaks download).
 
 For Docker, you have 2 options:
 
@@ -21,7 +26,8 @@ For Docker, you have 2 options:
 
 ### 1. Set Properties for AI API Keys
 
-For development, set the following properties (only needed if using cloud AI providers):
+For development, set the following properties (only needed if using cloud AI
+providers):
 
 ```sh
 export APP_GOOGLE_API_KEY=your_google_api_key_here
@@ -41,19 +47,33 @@ APP_OPENAI_ORGANIZATION_ID=your_openai_org_id_here
 source .env
 ```
 
-> **_NOTE:_** API keys are immutable configuration sourced from environment variables. All other AI settings (model, temperature, prompts, etc.) are configured at runtime via the Admin Settings UI (`/admin/config`) after logging in.
+> **_NOTE:_** API keys are immutable configuration sourced from environment
+> variables. All other AI settings (model, temperature, prompts, etc.) are
+> configured at runtime via the Admin Settings UI (`/admin/config`) after
+> logging in.
 
 ### 1a. Encryption Key Setup
 
-AIMathTutor encrypts PII fields (email) at rest using AES-256-GCM. The master key is stored in a file on disk.
+AIMathTutor encrypts PII fields (email) at rest using AES-256-GCM. The master
+key is stored in a file on disk.
 
-**Development (default):** No action required. On first startup the application auto-generates a 256-bit key at `~/.local/share/aimathtutor/encryption.key` (or `$XDG_DATA_HOME/aimathtutor/encryption.key` if set). Permissions are set to 600 (owner read/write only).
+**Development (default):** No action required. On first startup the application
+auto-generates a 256-bit key at `~/.local/share/aimathtutor/encryption.key` (or
+`$XDG_DATA_HOME/aimathtutor/encryption.key` if set). Permissions are set to 600
+(owner read/write only).
 
-**Production (Docker Compose):** The project `docker-compose.yml` already configures the `aimathtutor_keys` named volume and the `app.security.encryption-key-file` property. No extra steps needed.
+**Production (Docker Compose):** The compose file in the
+[Quickstart](QUICKSTART.md#using-docker-compose) already configures the
+`aimathtutor_keys` named volume and the `app.security.encryption-key-file`
+property. No extra steps needed.
 
-**Production (custom path):** Set `app.security.encryption-key-file` to an absolute path writable by the application process. The file must contain a Base64-encoded 32-byte key. The application generates it if absent.
+**Production (custom path):** Set `app.security.encryption-key-file` to an
+absolute path writable by the application process. The file must contain a
+Base64-encoded 32-byte key. The application generates it if absent.
 
-> **⚠️ Critical:** Back up the key file (or the `aimathtutor_keys` Docker volume). Losing the key renders all encrypted data permanently unrecoverable. Key resolution order:
+> **⚠️ Critical:** Back up the key file (or the `aimathtutor_keys` Docker
+> volume). Losing the key renders all encrypted data permanently unrecoverable.
+> Key resolution order:
 >
 > 1. `app.security.encryption-key-file` property (if set and non-empty)
 > 2. `$XDG_DATA_HOME/aimathtutor/encryption.key` (if file exists)
@@ -62,11 +82,13 @@ AIMathTutor encrypts PII fields (email) at rest using AES-256-GCM. The master ke
 
 ### 1b. Setting Up Ollama (Optional)
 
-If you want to use Ollama as your AI provider for local, privacy-focused LLM inference, you have two options:
+If you want to use Ollama as your AI provider for local, privacy-focused LLM
+inference, you have two options:
 
-#### Option 1: Docker Compose (Recommended for Production)
+#### Option 1: Docker Compose (Recommended)
 
-The project includes an Ollama service in `docker-compose.yml` that you can enable:
+The project includes an Ollama service in `docker-compose.yml` that you can
+enable:
 
 1. **Uncomment the Ollama service** in `docker-compose.yml`:
 
@@ -125,16 +147,21 @@ The project includes an Ollama service in `docker-compose.yml` that you can enab
    # Or: docker compose exec ollama ollama pull qwen3:4b
    ```
 
-5. **Configure AIMathTutor** to use `http://ollama:11434` as the Ollama API URL in Admin Settings.
+5. **Configure AIMathTutor** to use `http://ollama:11434` as the Ollama API URL
+   in Admin Settings.
 
 > **GPU Support:** By default, Ollama runs on CPU. For GPU acceleration:
 >
-> - **NVIDIA:** Uncomment the `deploy` section. Requires NVIDIA GPU, drivers, and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-> - **AMD:** Use `ollama/ollama:0.15.2-rocm` image and uncomment AMD device mappings. Requires AMD GPU with ROCm support (RX 6000/7000 series or newer)
+> - **NVIDIA:** Uncomment the `deploy` section. Requires NVIDIA GPU, drivers,
+>   and [NVIDIA Container
+>   Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+> - **AMD:** Use `ollama/ollama:0.15.2-rocm` image and uncomment AMD device
+>   mappings. Requires AMD GPU with ROCm support (RX 6000/7000 series or newer)
 
 #### Option 2: Host Installation (Development)
 
-Download and install Ollama from [ollama.com/download](https://ollama.com/download):
+Download and install Ollama from
+[ollama.com/download](https://ollama.com/download):
 
 **Linux:**
 
@@ -147,7 +174,9 @@ Download the installer from the website.
 
 #### Pull a Model
 
-Ollama requires you to download models before use. **Important:** The Ollama desktop app may not show all available models in its GUI - you need to pull models using the command line even if they don't appear in the app.
+Ollama requires you to download models before use. **Important:** The Ollama
+desktop app may not show all available models in its GUI - you need to pull
+models using the command line even if they don't appear in the app.
 
 Open a terminal/command prompt and run one of the following:
 
@@ -172,7 +201,8 @@ ollama pull gemma3:1b                   # Google's compact model, 0.7GB, efficie
 ollama pull gemma3:4b                   # Google's mid-size, 2.7GB, solid math performance
 ```
 
-After pulling, the models will appear in your Ollama app and be available for use.
+After pulling, the models will appear in your Ollama app and be available for
+use.
 
 #### Verify Ollama is Running
 
@@ -184,24 +214,33 @@ This should return a JSON list of installed models.
 
 #### Configure AIMathTutor to Use Ollama
 
-After starting the application, log in with admin credentials and navigate to **Admin Settings** (`/admin/config`):
+After starting the application, log in with admin credentials and navigate to
+**Admin Settings** (`/admin/config`):
 
 1. Set **AI Provider** to `ollama`
 2. Set **Ollama API URL**:
    - **Docker Compose:** `http://ollama:11434`
    - **Host Installation (dev mode):** `http://localhost:11434`
-   - **Host Installation (Docker, accessing host):** `http://host.docker.internal:11434`
-3. Set **Ollama Model** to the model you pulled (e.g., `qwen3:8b`, `deepseek-r1:8b`, `llama3.1:8b`)
+   - **Host Installation (Docker, accessing host):**
+     `http://host.docker.internal:11434`
+3. Set **Ollama Model** to the model you pulled (e.g., `qwen3:8b`,
+   `deepseek-r1:8b`, `llama3.1:8b`)
 4. Adjust temperature (0.0-2.0, default 0.7) and max tokens as needed
 
-> **_NOTE:_** Unlike cloud providers, Ollama runs locally and doesn't require API keys. All processing happens on your machine, ensuring data privacy.
+> **_NOTE:_** Unlike cloud providers, Ollama runs locally and doesn't require
+> API keys. All processing happens on your machine, ensuring data privacy.
 
 #### GPU vs CPU Performance
 
-- **CPU Mode (Default):** Works on any system, slower inference (~5-30 seconds per response depending on model size)
-- **NVIDIA GPU Mode:** Requires NVIDIA GPU + Container Toolkit, significantly faster (~1-5 seconds per response)
-- **AMD GPU Mode (ROCm):** Requires AMD GPU (RX 6000/7000 series or newer) with ROCm drivers, similar performance to NVIDIA
-- **Recommendation:** Start with CPU mode and smaller models (`qwen3:4b`, `llama3.2:3b`) for testing. If performance is critical and you have a compatible GPU, enable GPU support.
+- **CPU Mode (Default):** Works on any system, slower inference (~5-30 seconds
+  per response depending on model size)
+- **NVIDIA GPU Mode:** Requires NVIDIA GPU + Container Toolkit, significantly
+  faster (~1-5 seconds per response)
+- **AMD GPU Mode (ROCm):** Requires AMD GPU (RX 6000/7000 series or newer) with
+  ROCm drivers, similar performance to NVIDIA
+- **Recommendation:** Start with CPU mode and smaller models (`qwen3:4b`,
+  `llama3.2:3b`) for testing. If performance is critical and you have a
+  compatible GPU, enable GPU support.
 
 To check GPU availability in the Ollama container:
 
@@ -241,9 +280,15 @@ make coverage
 make dev
 ```
 
-> **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:9001/q/dev/>.
+> **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode
+> only at <http://localhost:9001/q/dev/>.
 
-### 🏭 Production mode
+### 🏭 Production build on the development stack
+
+This runs the production build locally with the repository's development
+compose file, which builds the app from the checkout. For a real deployment, use
+the compose file in the [Quickstart](QUICKSTART.md#using-docker-compose), which
+runs the published image.
 
 First, package the application for production:
 
@@ -266,9 +311,11 @@ make build
 ```
 
 It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+Be aware that it’s not an _über-jar_ as the dependencies are copied into the
+`target/quarkus-app/lib/` directory.
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+The application is now runnable using
+`java -jar target/quarkus-app/quarkus-run.jar`.
 
 If you want to build an _über-jar_, execute the following command:
 
@@ -276,7 +323,8 @@ If you want to build an _über-jar_, execute the following command:
 ./mvnw package -Dquarkus.package.jar.type=uber-jar -Pproduction
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+The application, packaged as an _über-jar_, is now runnable using
+`java -jar target/*-runner.jar`.
 
 ### 🐳 Creating a Docker image
 
@@ -287,50 +335,90 @@ make build    # Build the JVM Docker images for the local image store
 make release  # Test, tag, and build and push multi-platform images
 ```
 
-`make build` builds `gregordietrich/aimathtutor:<version>-alpine` (also tagged `<version>`) and `<version>-ubuntu` for
-the host's own platform and loads them into the local image store.
+`make build` builds `gregordietrich/aimathtutor:<version>-alpine` (also tagged
+`<version>`) and `<version>-ubuntu` for the host's own platform and loads them
+into the local image store.
 
-`make release` asks for a version (a `-SNAPSHOT` version is refused) and pulls `main`. Then it checks that the current
-buildx builder can build both `linux/amd64` and `linux/arm64` (the default `docker` driver needs the containerd image
-store for that; a `docker-container` builder works on either store) and logs in to the registry. It cleans, installs,
-lints, tests and packages the application, and builds both images for both platforms into the buildx cache only.
-Then it runs `make tag`. Last, one `docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile
-publishes all of its tags together from the cached build: `<version>-alpine`, `alpine`, `<version>` and `latest` for
-Alpine, `<version>-ubuntu` and `ubuntu` for Ubuntu.
+`make release` asks for a version (a `-SNAPSHOT` version is refused) and pulls
+`main`. Then it checks that the current buildx builder can build both
+`linux/amd64` and `linux/arm64` (the default `docker` driver needs the
+containerd image store for that; a `docker-container` builder works on either
+store) and logs in to the registry. It cleans, installs, lints, tests and
+packages the application, and builds both images for both platforms into the
+buildx cache only. Then it runs `make tag`. Last, one `docker buildx build
+--platform linux/amd64,linux/arm64 --push` per Dockerfile publishes all of its
+tags together from the cached build: `<version>-alpine`, `alpine`, `<version>`
+and `latest` for Alpine, `<version>-ubuntu` and `ubuntu` for Ubuntu.
 
-A release pushes nothing from the local image store. Any failure stops it with an error. Up to the cache-only builds,
-nothing has been tagged or pushed. After the git tag only a push can fail: an image pushed before the failure stays
+A release pushes nothing from the local image store. Any failure stops it with
+an error. Up to the cache-only builds, nothing has been tagged or pushed. After
+the git tag only a push can fail: an image pushed before the failure stays
 published, and the git tag stays in place (`make untag` removes it).
 
-If you want to learn more about building Docker images, please consult <https://quarkus.io/guides/container-image>.
+If you want to learn more about building Docker images, please consult
+<https://quarkus.io/guides/container-image>.
 
 ## ⚠️ Known Build Warnings
 
 ### Java compilation: warnings fail the build
 
-Java compilation runs with a fail-on-warning policy: any javac lint or Error Prone warning aborts the build (a small allowlist of non-actionable lint categories is documented in `pom.xml`). If your build fails with `warnings found and -Werror specified`, fix the reported warning — do not suppress it or exclude the lint category. See the Code Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
+Java compilation runs with a fail-on-warning policy: any javac lint or Error
+Prone warning aborts the build (a small allowlist of non-actionable lint
+categories is documented in devkit's parent POM, `.devkit/java/parent/pom.xml`).
+If your build fails with `warnings found and -Werror specified`, fix the
+reported warning — do not suppress it or exclude the lint category. See the Code
+Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
 
 ### Quarkus build: intentional observer warning
 
-Every build logs `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. The same warning is logged for `SchemaManagementGuard#checkStrategy`. This is deliberate: both guards have to run before Hibernate's schema management, which `StartupEvent` does not. Do not "fix" it.
+Every build logs `[WARNING]
+[io.quarkus.arc.deployment.ObserverValidationProcessor] The method
+de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for
+@Initialized(ApplicationScoped.class) ... We strongly recommend to observe
+StartupEvent instead`. The same warning is logged for
+`SchemaManagementGuard#checkStrategy`. This is deliberate: both guards have to
+run before Hibernate's schema management, which `StartupEvent` does not. Do not
+"fix" it.
 
 ### Frontend build: expected non-fatal warnings
 
-The frontend toolchain (`prepare-frontend`/`build-frontend`, run with `-Pproduction`) is **not** covered by the fail-on-warning policy. Warnings you may see there are expected and harmless:
+The frontend toolchain (`prepare-frontend`/`build-frontend`, run with
+`-Pproduction`) is **not** covered by the fail-on-warning policy. Warnings you
+may see there are expected and harmless:
 
-- **Addon frontend-source warnings** during `quarkus:build`, e.g. `[WARNING] Addon 'flow-react-*.jar' contains frontend sources under META-INF/resources/frontend/` — these come from Vaadin's own published jars (Vaadin 25.2.1).
-- On a fresh checkout, **npm may print deprecation or peer-dependency notices** for bundled `@vaadin/*` packages while installing `node_modules`.
+- **Addon frontend-source warnings** during `quarkus:build`, e.g. `[WARNING]
+  Addon 'flow-react-*.jar' contains frontend sources under
+  META-INF/resources/frontend/` — these come from Vaadin's own published jars
+  (Vaadin 25.2.1).
+- On a fresh checkout, **npm may print deprecation or peer-dependency notices**
+  for bundled `@vaadin/*` packages while installing `node_modules`.
 
-These warnings originate in Vaadin's published packages, cannot be fixed in this repository, and do not fail the build. They will disappear with future Vaadin upgrades — do not try to suppress or "fix" them locally.
+These warnings originate in Vaadin's published packages, cannot be fixed in this
+repository, and do not fail the build. They will disappear with future Vaadin
+upgrades — do not try to suppress or "fix" them locally.
 
 ## 📖 Related Guides & Docs
 
 - [Quickstart](QUICKSTART.md)
 - [Project Instructions](../AGENTS.md)
 
-- Quarkus ([guide](https://quarkus.io/guides/)): The main framework for building Java applications with a focus on cloud-native and microservices architectures.
-- Vaadin Flow ([guide](https://vaadin.com/docs/latest/flow/integrations/quarkus)): Vaadin Flow is a unique framework that lets you build web apps without writing HTML or JavaScript
-- ArC ([guide](https://quarkus.io/guides/cdi-reference)): A dependency injection framework that is part of Quarkus, providing support for CDI (Contexts and Dependency Injection).
-- Datasource ([guide](https://quarkus.io/guides/datasource)): A Quarkus extension for connecting to databases using JDBC, JPA, Hibernate ORM, and more.
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): A Quarkus extension that simplifies the use of Hibernate ORM with a focus on ease of use and productivity.
-- Hibernate Validator ([guide](https://quarkus.io/guides/hibernate-validator)): A Quarkus extension that integrates Hibernate Validator for bean validation, allowing you to validate your data models easily.
+- Quarkus ([guide](https://quarkus.io/guides/)): The main framework for building
+  Java applications with a focus on cloud-native and microservices
+  architectures.
+- Vaadin Flow
+  ([guide](https://vaadin.com/docs/latest/flow/integrations/quarkus)): Vaadin
+  Flow is a unique framework that lets you build web apps without writing HTML
+  or JavaScript
+- ArC ([guide](https://quarkus.io/guides/cdi-reference)): A dependency injection
+  framework that is part of Quarkus, providing support for CDI (Contexts and
+  Dependency Injection).
+- Datasource ([guide](https://quarkus.io/guides/datasource)): A Quarkus
+  extension for connecting to databases using JDBC, JPA, Hibernate ORM, and
+  more.
+- Hibernate ORM with Panache
+  ([guide](https://quarkus.io/guides/hibernate-orm-panache)): A Quarkus
+  extension that simplifies the use of Hibernate ORM with a focus on ease of use
+  and productivity.
+- Hibernate Validator ([guide](https://quarkus.io/guides/hibernate-validator)):
+  A Quarkus extension that integrates Hibernate Validator for bean validation,
+  allowing you to validate your data models easily.

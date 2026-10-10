@@ -18,9 +18,8 @@
         files="[/\\]de[/\\]vptr[/\\]aimathtutor[/\\]dto[/\\]" />
     <!-- EXISTING DEBT, not an exemption on the merits: 18 class- and method-level
          @SuppressWarnings("NullAway") remain across 16 Vaadin view/component classes.
-         The sibling Midas project closed the equivalent hole by annotating the
-         lazily-built UI fields @Nullable and reading them through locals; the same
-         burn-down applies here. Narrow this pattern as files are converted, and
+         The way to close the hole is to annotate the lazily-built UI fields
+         @Nullable and read them through locals. Narrow this pattern as files are converted, and
          delete it when the last one is gone. -->
     <suppress id="SuppressWarningsNullAway"
         files="[/\\]de[/\\]vptr[/\\]aimathtutor[/\\](view|component)[/\\]" />

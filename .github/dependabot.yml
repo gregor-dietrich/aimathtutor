@@ -13,6 +13,11 @@ updates:
     patterns: ["eclipse-temurin:25.*.*"]
     multi-ecosystem-group: "infrastructure"
 
+  - package-ecosystem: "docker"
+    directory: "/ollama"
+    patterns: ["*"]
+    multi-ecosystem-group: "infrastructure"
+
   - package-ecosystem: "maven"
     directory: "/"
     patterns: ["*"]
@@ -21,19 +26,13 @@ updates:
       # Quarkus tracks the latest LTS line, NOT the latest stable release: LTS lines get
       # patch releases for far longer, which is what a project that ships releases needs.
       # 3.40.x is the current LTS, so anything >=3.41.0 is ignored even though newer stable
-      # releases exist (scripts/version_check.py will still report them -- that output is
+      # releases exist (make check's version report will still list them -- that output is
       # informational and expected, not a prompt to upgrade). Raise this bound only when a
       # new LTS line ships.
       - dependency-name: "io.quarkus:*"
         versions: [">=3.41.0"]
       - dependency-name: "io.quarkus.platform:*"
         versions: [">=3.41.0"]
-      # The Jackson 3 security pin (pom.xml) must stay on 3.1.x: 3.2.x requires
-      # com.fasterxml.jackson.core:jackson-annotations 2.22, but Quarkus manages 2.21, which
-      # breaks Quarkus code generation (NoClassDefFoundError: JsonApplyView). Lift this once
-      # Quarkus manages jackson-annotations >= 2.22, or drop it together with the pin.
-      - dependency-name: "tools.jackson:jackson-bom"
-        versions: [">=3.2.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
