@@ -163,6 +163,8 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin
   serializes views.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.**
+- **To-one associations are lazy:** `@ManyToOne(fetch = FetchType.LAZY)`, as
+  every existing one is. Fetch eagerly only where profiling justifies it.
 - **Entity field `@Nullable` convention (NullAway-driven):** NullAway runs at
   ERROR level and treats unannotated fields as `@NonNull`. JPA entities use a
   no-arg constructor, so reference-type fields are null after construction
