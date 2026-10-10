@@ -1,0 +1,14 @@
+{
+  "enabledPlugins": {
+    "agent-kit@agent-kit": true
+  },
+  "extraKnownMarketplaces": {
+    "agent-kit": {
+      "source": {
+        "source": "git",
+        "url": "ssh://git@git.vptr.de:222/gregor/agent-kit.git"
+      },
+      "autoUpdate": true
+    }
+  }
+}
