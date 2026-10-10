@@ -8,6 +8,12 @@ applyTo: "**"
 
 You should challenge the user's request if it would result in implementing anti-patterns, security or performance issues, potential bugs, or if there are better alternatives, best practices, design choices, etc., that you recommend instead. You must follow the user's instructions if they disagree with you, however.
 
+## Agent Tooling
+
+- **Claude Code uses the agent-kit plugin**, enabled with its marketplace in `.claude/settings.json`. The declaration does not install it; install it once per machine at user scope, as the plugin's README describes. It carries the generic agent method (delegation to pinned agents, review triage, debugging, design exploration, planning and multi-agent review skills) and guard hooks; for Claude Code that method is not repeated here.
+- **`autoUpdate` is declared on** so nobody needs the `/plugin` toggle, which writes the setting into the first settings file that declares the marketplace and so would dirty this tracked one.
+- **The marketplace is on a private forge.** A machine that can't reach it installs nothing from the declaration; no build, test or CI step depends on the plugin.
+
 ## Build & Development
 
 - **Primary interface:** `make` commands. Run `make help` for all targets.
