@@ -169,9 +169,10 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **To-one associations are lazy:** `@ManyToOne(fetch = FetchType.LAZY)`, as
   every existing one is. Fetch eagerly only where profiling justifies it.
 - **Passwords** are hashed and verified only through `PasswordHashingService`
-  (bcrypt). `UserDto` caps them at 72 characters
-  (`AppConstants.PASSWORD_MAX_LENGTH`, pinned by `PasswordSizeConstraintTest`),
-  bcrypt's input limit.
+  (bcrypt). bcrypt reads at most 72 bytes, so `UserService` and
+  `PasswordHashingService` refuse a password over 72 UTF-8 bytes, and `UserDto`
+  caps it at 72 characters (`AppConstants.PASSWORD_MAX_LENGTH`, pinned by
+  `PasswordSizeConstraintTest`).
 - **Entity field `@Nullable` convention (NullAway-driven):** NullAway runs at
   ERROR level and treats unannotated fields as `@NonNull`. JPA entities use a
   no-arg constructor, so reference-type fields are null after construction

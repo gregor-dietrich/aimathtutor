@@ -14,8 +14,8 @@ The test-specific rules in `AGENTS.md` (`RateLimitServiceTest`,
 
 - A test that needs CDI is a `@QuarkusTest`; pure logic (utilities, DTOs) is
   plain JUnit 5. Every `@QuarkusTest`, `*Test` or `*IT`, boots the app against
-  the PostgreSQL that Dev Services starts, with Flyway migrating it, so tests
-  need Docker.
+  the PostgreSQL that Dev Services starts, with Flyway migrating it, so those
+  tests need Docker; plain JUnit tests do not.
 - **`*Test`** classes run under `make test` (surefire). **`*IT`** classes run
   only under failsafe, with `./mvnw verify -DskipITs=false`, as CI does.
 - One class or method: `./mvnw test -Dtest=AiTutorServiceTest[#method]`. A
