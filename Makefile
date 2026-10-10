@@ -29,7 +29,7 @@ release: ## pull from origin/main, test, make tag, and buildx-push multi-platfor
 # Builds install the frontend from the committed manifest, so refuse to build without one.
 install: frontend-manifest
 frontend-manifest:
-	@. scripts/lib/frontend.sh && require_frontend_manifest
+	@bash -c '. scripts/lib/frontend.sh && require_frontend_manifest'
 
 # The release-script tests need no Maven or network access, so they run before the Java tests.
 test: test-scripts

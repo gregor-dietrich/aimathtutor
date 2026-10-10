@@ -126,9 +126,13 @@ jobs:
           path: ~/.vaadin/node-${{ steps.node.outputs.version }}
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
       # make install builds without tests, then checks the pinned frontend dependencies;
-      # MAVEN_ARGS adds the production frontend build to its Maven call.
+      # MAVEN_ARGS adds the production frontend build to its Maven call. Only mvn's launcher
+      # script reads MAVEN_ARGS (./mvnw ignores it), and devkit runs mvn when it is on PATH,
+      # so the step refuses a runner without one rather than build without the profile.
       - name: Build with Maven
-        run: make install
+        run: |
+          command -v mvn > /dev/null || { echo "::error::mvn is not on PATH; MAVEN_ARGS would be ignored"; exit 1; }
+          make install
         env:
           MAVEN_ARGS: -Pproduction
 
