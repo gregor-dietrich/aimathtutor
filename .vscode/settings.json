@@ -79,7 +79,6 @@
   "python.analysis.autoIndent": true,
   "python.analysis.diagnosticMode": "workspace",
   "python.analysis.enablePytestSupport": true,
-  "python.analysis.extraPaths": ["${workspaceFolder}/midas-test/src"],
   "python.analysis.generateWithTypeAnnotation": true,
   "python.analysis.indexing": true,
   "python.analysis.typeCheckingMode": "strict",

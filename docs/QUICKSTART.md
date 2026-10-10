@@ -114,7 +114,7 @@ docker run -d --name aimathtutor \
 # Database
 SQL_DATABASE=aimathtutor
 SQL_USERNAME=aimathtutor
-SQL_PASSWORD=changeit
+SQL_PASSWORD=<a strong password>
 
 # Initial admin account (needed on the first start; see docs/QUICKSTART.md#initial-admin-account)
 APP_BOOTSTRAP_ADMIN_USERNAME=admin
@@ -128,9 +128,9 @@ app.google.api.key=your_google_api_key_here
 app.openai.api.key=your_openai_api_key_here
 app.openai.organization-id=your_openai_org_id_here
 
-# Admin UI
-PGADMIN_EMAIL=your@email.com
-PGADMIN_PASSWORD=safe_password_here
+# Admin UI (only needed if you enable pgAdmin in docker-compose.yml)
+PGADMIN_EMAIL=<your email address>
+PGADMIN_PASSWORD=<a strong password>
 ```
 
 > **_NOTE:_** The encryption key file path is configured in `docker-compose.yml`
@@ -188,30 +188,32 @@ services:
       retries: 3
       start_period: 5s
 
-  pgadmin:
-    image: dpage/pgadmin4:9.12.0
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
-    ports:
-      - "9001:80/tcp"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-    depends_on:
-      db:
-        condition: service_healthy
+  # Uncomment if you want to use pgAdmin. It listens on localhost only; set
+  # PGADMIN_EMAIL and PGADMIN_PASSWORD in .env first.
+  # pgadmin:
+  #   image: dpage/pgadmin4:9.12.0
+  #   restart: unless-stopped
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:?set PGADMIN_EMAIL in .env}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?set PGADMIN_PASSWORD in .env}
+  #   ports:
+  #     - "127.0.0.1:9001:80/tcp"
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
 
 volumes:
   aimathtutor_keys: # AES-256 master key — back this up; losing it = data unrecoverable
   aimathtutor_logs:
-  pgadmin_data:
+  # pgadmin_data: # Uncomment if you want to use pgAdmin
   postgres_data:
 ```
 
@@ -290,7 +292,7 @@ services:
 volumes:
   aimathtutor_logs:
   ollama_data: # Uncomment this line
-  pgadmin_data:
+  # pgadmin_data: # Uncomment if you want to use pgAdmin
   postgres_data:
 ```
 

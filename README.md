@@ -30,9 +30,14 @@ image. The repository's own `docker-compose.yml` builds the app from the
 checkout and is for development only.
 
 When deploying to production, it is **critical** to override the default
-database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to
-a strong password to replace the default `changeit` value used in dev/test
-profiles.
+database password. With the Quickstart compose file, set `SQL_PASSWORD` in
+`.env` to a strong password: it sets both the database's and the app's password.
+If you set the app's environment directly, use `QUARKUS_DATASOURCE_PASSWORD`.
+Either replaces the default `changeit` value used in dev/test profiles.
+
+On the first start, also set `APP_BOOTSTRAP_ADMIN_PASSWORD` to create the
+initial admin account (see
+[Quickstart](docs/QUICKSTART.md#initial-admin-account)).
 
 Never set a `dev` or `test` profile (`QUARKUS_PROFILE`,
 `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop

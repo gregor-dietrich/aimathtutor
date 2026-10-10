@@ -34,20 +34,25 @@ however.
   ≥3.11, and checks the devkit parent POM. `make lint` also needs node ≥22.22.2
   with npm (lint-md) and curl, tar and sha256sum/shasum (the gitleaks download).
   CI uses Temurin 25.
-- **Maven wrapper:** `./mvnw` (scripts fall back to system `mvn`).
+- **Maven:** devkit's scripts use `mvn` from `PATH` when it is ≥3.9.9 and fall
+  back to `./mvnw` otherwise.
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI:
   `http://localhost:9001/q/dev/`.
-- **Tests:** `make test` → `./mvnw verify`. Runs unit tests (skips integration
-  tests). Uses `@QuarkusTest`, Mockito, Panache Mock.
+- **Tests:** `make test` → `make test-scripts` (python unittest of
+  `scripts/tests`), then `mvn -q verify` with Quarkus console/file logging off.
+  Runs unit tests (skips integration tests). Uses `@QuarkusTest`, Mockito,
+  Panache Mock.
 - **Coverage:** `make coverage` (devkit) writes `.coverage.md`. Runs **all
   tests** (unit + integration tests via `-DskipITs=false`) with JaCoCo and
   generates a combined report. The JaCoCo `report` goal is bound to
   `post-integration-test` so the report includes `*IT` coverage — surefire and
   failsafe both append to the same `target/jacoco.exec`, and a report generated
   earlier (at `test`) would silently omit every integration test.
-- **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`.
-  It builds from the committed `package.json`/`package-lock.json` and fails if
-  either is missing; it never regenerates them.
+- **Install (skip tests):** `make install` → `make check`, the
+  `frontend-manifest` check, `mvn -q clean install -DskipTests`, then the
+  frontend pin check. It builds from the committed
+  `package.json`/`package-lock.json` and fails if either is missing; it never
+  regenerates them.
 - **Format:** `make format` — runs `format-md` (markdownlint fixes), then
   `spotless:apply` to auto-format code.
 - **Lint:** `make lint` — runs `lint-repo` first (`lint-pins`, `lint-decisions`,
@@ -58,6 +63,8 @@ however.
   the environment or gitignored `.env.build`).
 - **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` +
   `build-frontend`. CI: `make install` with `MAVEN_ARGS=-Pproduction`.
+  `MAVEN_ARGS` is read only by `mvn`'s launcher, so this works only through a
+  system `mvn` ≥3.9.9; `./mvnw` ignores it.
 - **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED`,
   `--add-opens java.base/jdk.internal.ref=ALL-UNNAMED`,
   `--add-opens java.base/jdk.internal.misc=ALL-UNNAMED`,
@@ -89,8 +96,10 @@ however.
   gate plugin and pins their versions) come from devkit, pinned by `version` and
   `commit` in `devkit.toml`. `./devkitw` fetches that pin into a read-only
   per-user cache and links it as `.devkit`. Any `make` target creates the link;
-  a bare `./mvnw` or an IDE import fails on a fresh clone (unresolvable parent
-  POM) until it exists.
+  a bare `./mvnw` or an IDE import fails on a fresh clone because Maven cannot
+  resolve the parent POM without the link. The pom therefore declares no
+  repository besides Central: any other repository would be asked for the
+  parent.
 - **Never edit `.devkit` or `devkitw`.** A shared gate changes in devkit and is
   released there. To adopt a release, edit `version` and `commit` in
   `devkit.toml` together with the root pom's `<parent><version>` (the tag
@@ -243,17 +252,19 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 | Tests           | `make test`                      | CI runs `./mvnw verify -DskipITs=false` (unit + ITs); `make test` runs unit tests only                                                                 |
 | Coverage        | `make coverage`                  | Runs all tests (including ITs) and generates report                                                                                                    |
 | SpotBugs        | `./mvnw spotbugs:check`          | Exclusions in `spotbugs-exclude.xml`                                                                                                                   |
-| Checkstyle      | `./mvnw checkstyle:check`        | Google Java Style; shared config from devkit, project rules in `checkstyle-project.xml`                                                                |
+| Checkstyle      | `make lint`                      | Google Java Style; shared config from devkit, project rules in `checkstyle-project.xml`; alone: `./mvnw checkstyle:check checkstyle:check@project`     |
 | PMD             | `./mvnw pmd:check`               | Unused code, complexity, style rules                                                                                                                   |
 | CPD             | `./mvnw pmd:cpd-check`           | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
 | OWASP dep-check | `make audit`                     | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)     |
 | License report  | `./mvnw license:add-third-party` | Runs at `verify` phase                                                                                                                                 |
 
-CI order: `test` (`make lint-repo`, `make test-scripts`,
-`./mvnw verify -DskipITs=false`) → `security` (CodeQL around `make install`,
-then `make audit` when `NVD_API_KEY` is set) → `build` (`make install` with
-`-Pproduction`: package + spotless + SpotBugs + Checkstyle + PMD + CPD). Secret
-scanning is `lint-secrets`, not a separate action.
+CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
+fails, then `make test-scripts` and `./mvnw verify -DskipITs=false`, which run
+regardless) → `security` (CodeQL around `make install`, then `make audit` when
+`NVD_API_KEY` is set) → `build` (`make install` with `MAVEN_ARGS=-Pproduction`:
+package + spotless + SpotBugs + Checkstyle + PMD + CPD). A push-only
+`dependency-submission` job submits the Maven dependency graph after
+`./devkitw path`. Secret scanning is `lint-secrets`, not a separate action.
 
 - **Compiler warnings are build failures.** `maven-compiler-plugin`, configured
   in devkit's parent POM, passes `-Werror` and
@@ -296,6 +307,10 @@ pass the existing gates, but do so meaningfully, i.e. do not try to game
 detection by making meaningless changes - refactor properly instead. Also,
 Suppressions and Exclusions should be used as rarely as possible while being as
 fine-grained as possible.
+
+Not threshold changes: bumping the devkit pin (`[devkit]` `version`/`commit`
+with the parent `<version>`) and changing `[frontend.min-pins]`, each as its
+issue directs (e.g. #165, #207).
 
 ## Database
 

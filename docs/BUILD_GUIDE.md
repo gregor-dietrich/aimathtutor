@@ -13,6 +13,10 @@ If you want to learn more about Quarkus, please visit its website:
 | Maven  | ✅    | ❌  | [Apache](https://maven.apache.org/download.cgi)                               |
 | Docker | ❌    | ✅  | (see below)                                                                   |
 
+`make check` and `make install` also need python3 ≥ 3.11. `make lint` and
+`make format` need node ≥ 22.22.2 with npm (the Markdown gate), and `make lint`
+needs curl, tar and sha256sum/shasum (the gitleaks download).
+
 For Docker, you have 2 options:
 
 - [Docker Engine](https://docs.docker.com/engine/install/)
@@ -279,7 +283,12 @@ make dev
 > **_NOTE:_** Quarkus now ships with a Dev UI, which is available in dev mode
 > only at <http://localhost:9001/q/dev/>.
 
-### 🏭 Production mode
+### 🏭 Production build on the development stack
+
+This runs the production build locally with the repository's development
+compose file, which builds the app from the checkout. For a real deployment, use
+the compose file in the [Quickstart](QUICKSTART.md#using-docker-compose), which
+runs the published image.
 
 First, package the application for production:
 

@@ -20,7 +20,7 @@ violations block build.
 ```shell
 make lint                            # repository gates, then spotless, checkstyle, spotbugs, pmd and cpd
 make test                            # run tests
-./mvnw checkstyle:check              # style check (Google Java Style)
+./mvnw checkstyle:check checkstyle:check@project  # style check (shared + project rules)
 ./mvnw spotbugs:check                # static analysis
 ./mvnw pmd:check                     # unused code, complexity, style
 ./mvnw pmd:cpd-check                 # code duplication (DRY)
@@ -28,8 +28,12 @@ make audit                           # CVE scan (needs NVD_API_KEY or .env.build
 ./mvnw license:add-third-party       # license report (verify phase)
 ```
 
-CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs +
-Checkstyle + PMD + CPD).
+CI order: `test` (`make -k lint-repo`, `make test-scripts`,
+`./mvnw verify -DskipITs=false`, each run even if an earlier one fails) →
+`security` (CodeQL around `make install`, then `make audit` when `NVD_API_KEY`
+is set) → `build` (`make install` with `MAVEN_ARGS=-Pproduction`: package +
+SpotBugs + Checkstyle + PMD + CPD). A push-only `dependency-submission` job
+submits the Maven dependency graph.
 
 ## Code Smell Checklist
 

@@ -25,7 +25,7 @@ to conventions.
 1. **Style**: Google Java Style enforced via Checkstyle (shared config from
    devkit plus `checkstyle-project.xml`, severity=error). 4-space indent, no
    tabs. SpotBugs clean (exclusions in `spotbugs-exclude.xml`). PMD clean
-   (unused code, complexity). CPD clean (no duplication ≥100 tokens).
+   (unused code, complexity). CPD clean (no duplication ≥65 tokens).
 2. **No FQCNs**: Always use imports. Enforced by Checkstyle
    `RegexpSinglelineJava`.
 3. **Logging**: Must use `org.jboss.logging.Logger` (not SLF4J). Must use `*f`

@@ -20,13 +20,15 @@ Located in `src/main/docker/`:
 
 ### Build Prerequisite
 
-Always package for production before building images:
+Always package for production before building images. `make build` does this
+itself; to package alone:
 
 ```shell
-./mvnw clean install package -DskipTests -Pproduction
+MAVEN_ARGS=-Pproduction make install
 ```
 
-The `-Pproduction` profile is **required** — it triggers Vaadin
+`MAVEN_ARGS` is read only by a system `mvn` ≥3.9.9 (`./mvnw` ignores it). The
+`-Pproduction` profile is **required** — it triggers Vaadin
 `prepare-frontend` + `build-frontend`.
 
 ## docker-compose.yml (project root)
@@ -35,10 +37,10 @@ Development stack: it builds the app from the checkout (`pull_policy: build`).
 Production deployments use the compose file in `docs/QUICKSTART.md`, which runs
 the published image.
 
-- **app** (AIMathTutor): port 9001, depends on `postgres` healthy
-- **postgres**: port 55432→5432 (DevServices default)
-- **pgadmin** (optional): port 42069→80
-- **ollama** (optional): for local Ollama AI provider
+- **app** (AIMathTutor): port 80→9001, depends on `db` healthy
+- **db** (PostgreSQL): no published port
+- **pgadmin** (commented out): port 42069→80
+- **ollama** (commented out): for local Ollama AI provider
 
 ## Environment Variables
 
@@ -61,7 +63,8 @@ the published image.
 
 `scripts/build.sh` (invoked via `make build`):
 
-1. Runs `make check` (JDK, Maven and Python version verification)
+1. Does not run `make check` itself; `make build` runs it as a prerequisite
+   (JDK, Maven and Python version verification)
 2. Runs `mvn clean`, removes `src/main/bundles/prod.bundle` and `node_modules`,
    then `mvn package -DskipTests -Pproduction`
 3. Builds both images for the host's platform into the local image store
