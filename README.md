@@ -18,7 +18,7 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
-When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles. On the first start, also set `APP_BOOTSTRAP_ADMIN_PASSWORD` to create the initial admin account (see [Quickstart](docs/QUICKSTART.md#initial-admin-account)).
+When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
 
 Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop and recreate the database tables, so the app refuses to start with one. Likewise, never override Hibernate's schema management (`QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY`, the deprecated `QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION`, or their `quarkus.hibernate-orm...` property forms): anything but `validate` or `none` makes the app refuse to start. In both cases the reason appears in `docker compose logs app`.
 
@@ -71,11 +71,19 @@ If logging in fails with a server error after the reset, check that the app stil
 - `make dev` – Start Quarkus in dev mode
 - `make test` – Execute unit tests (skips integration tests)
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
+- `make lint` – Repository gates (pins, decisions, secrets, Markdown), then the Java quality gates
+- `make format` – Fix Markdown, then format Java sources
+- `make audit` – OWASP dependency-check (needs `NVD_API_KEY` or `.env.build`)
 - `make build` – Build the Docker images for the local image store (`make check`, `mvn package`, native-platform `docker build`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
+- `make clean`, `make kill` – Remove build output; stop this project's JVMs and compose services
 - `make password` – Generate a bcrypt hash for a password (for seed data or an administrator reset)
+- `make regen-frontend` – Recreate `package.json` and `package-lock.json` at the current Vaadin version
 - `make release` – Pull from origin/main, test, `make tag`, and build and push multi-platform Docker images with `docker buildx`
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
+- `make hooks` – Install the git hooks (pre-commit `make lint-repo`, pre-push `make lint-repo test`); run once per clone
+
+Build and gate tooling comes from [devkit](devkit.toml), fetched by `./devkitw` and linked as `.devkit`; any `make` target creates the link, so run one before a bare `./mvnw`. Besides JDK 25, `make check` needs python3 ≥ 3.11, and `make lint` needs node ≥ 22.22.2 with npm, plus curl, tar and sha256sum/shasum.
 
 See the [Makefile](Makefile) or use `make help` for all available commands and scripts.
 

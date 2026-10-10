@@ -13,12 +13,11 @@
 # files afterwards. The regen-frontend profile sets forceProductionBuild=true (so
 # npm actually resolves) and cleanFrontendFiles=false (so the files are kept).
 
-. "$(dirname "$0")"/lib/get_dir.sh
-. "$DIR/lib/get_maven.sh"
+# Run through make, which exports PROJECT_ROOT and DEVKIT (devkit's make/common.mk).
+cd "${PROJECT_ROOT:?run this through make}" || exit
+. "${DEVKIT:?run this through make}/scripts/lib/get_maven.sh"
 
 set -e
-
-cd "$DIR/.."
 
 REVISION=${REVISION:-1.0.0-SNAPSHOT}
 
@@ -31,10 +30,7 @@ ${MVN_CMD} -q clean compile -Pregen-frontend -Drevision="${REVISION}"
 
 if [ ! -f package.json ] || [ ! -f package-lock.json ]; then
     echo "ERROR: frontend manifest was not generated." >&2
-    cd - > /dev/null
     exit 1
 fi
 
 echo "Frontend manifest regenerated. Review the diff before committing."
-
-cd - > /dev/null

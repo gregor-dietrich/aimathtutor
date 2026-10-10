@@ -1,11 +1,10 @@
 #!/bin/bash
 
-. "$(dirname "$0")"/lib/get_dir.sh
-. "$DIR/lib/get_maven.sh"
+# Run through make, which exports PROJECT_ROOT and DEVKIT (devkit's make/common.mk).
+cd "${PROJECT_ROOT:?run this through make}" || exit
+. "${DEVKIT:?run this through make}/scripts/lib/get_maven.sh"
 
 set -e
-
-cd "$DIR/.."
 
 # Usage: ./password.sh [password]
 # If a password is provided as the first argument, use it non-interactively.
@@ -35,5 +34,3 @@ fi
 echo "Generating bcrypt hash..."
 printf '%s\n' "$PASSWORD" | ${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args=generate compile exec:java
 echo "Password hash generated."
-
-cd - > /dev/null

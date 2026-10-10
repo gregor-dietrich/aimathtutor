@@ -1,6 +1,6 @@
 # GitHub Actions workflow for CI/CD
 # - test
-# - security (SAST, secret detection, dependency scanning)
+# - security (SAST, dependency scanning; secret detection runs in test, as make lint-repo)
 # - build
 # - publish
 
@@ -20,6 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # lint-secrets scans the full history; a shallow clone fails it
+      # devkit's Markdown gate needs node on PATH; Vaadin's own Node.js under ~/.vaadin is not on it.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22" # the newest 22.x, at or above devkit's 22.22.2 floor
+          check-latest: true # not an older 22.x the runner has cached
       - name: Set up JDK 25
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
@@ -39,8 +46,11 @@ jobs:
         with:
           path: ~/.vaadin/node-${{ steps.node.outputs.version }}
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
+      # devkit.toml's url is on a private network; devkitw falls back to its GitHub mirror.
+      - name: Repository gates (pins, decisions, secrets, Markdown)
+        run: make lint-repo
       - name: Test frontend lifecycle scripts
-        run: python3 -B -m unittest discover -s scripts/tests -v
+        run: make test-scripts
       - name: Run tests
         run: ./mvnw verify -DskipITs=false
 
@@ -54,17 +64,11 @@ jobs:
       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
       - name: Set up JDK 25
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: "temurin"
           java-version: "25"
-      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations,
       - name: Cache Maven packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -84,12 +88,12 @@ jobs:
         with:
           languages: java, javascript
       - name: Compile project
-        run: ./mvnw clean install package -DskipTests
+        run: make install
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
       - name: Run OWASP Dependency-Check
         if: env.NVD_API_KEY != ''
-        run: ./mvnw org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+        run: make audit
       - name: Upload Dependency-Check results
         if: ${{ !cancelled() && env.NVD_API_KEY != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -121,10 +125,12 @@ jobs:
         with:
           path: ~/.vaadin/node-${{ steps.node.outputs.version }}
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
+      # make install builds without tests, then checks the pinned frontend dependencies;
+      # MAVEN_ARGS adds the production frontend build to its Maven call.
       - name: Build with Maven
-        run: ./mvnw clean install package -DskipTests -Pproduction
-      - name: Verify pinned frontend dependencies
-        run: python3 scripts/check_frontend_deps.py
+        run: make install
+        env:
+          MAVEN_ARGS: -Pproduction
 
   # publish:
   #   runs-on: ubuntu-latest

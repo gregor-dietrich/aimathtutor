@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Image building shared by build.sh (`make build`: images in the local image store) and release.sh
-# (`make release`: multi-platform images that buildx pushes itself). Source it after get_maven.sh and
+# (`make release`: multi-platform images that buildx pushes itself). Source it and
 # call its functions from the repository root.
 
 # shellcheck disable=SC2034 # read by build.sh and release.sh

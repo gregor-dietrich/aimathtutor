@@ -1,78 +1,37 @@
-.PHONY: help audit branch build check clean coverage dev format install kill lint password rebase regen-frontend release tag test untag
+PROJECT      := aimathtutor
+JAVA_VERSION := 25
+MODULES      := # empty for a monolith
+FRONTEND_DIR := .
+DEVKIT := $(shell ./devkitw path)
+ifeq ($(DEVKIT),)
+$(error devkitw failed; see its message above)
+endif
+include .devkit/make/common.mk
+include .devkit/make/java-maven.mk
 
-MAKEFLAGS += --no-print-directory
+.PHONY: build dev password regen-frontend release frontend-manifest test-scripts
 
-help:
-	@echo "AIMathTutor - Available commands:"
-	@echo "  make audit            - run OWASP dependency-check (NVD_API_KEY from environment or .env.build)"
-	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
-	@echo "  make build            - make check, mvn package, build native-platform Docker images into the local store"
-	@echo "  make check            - verify local environment (JDK >=25 and Maven >=3.9.9)"
-	@echo "  make clean            - run mvn clean, and remove build artifacts"
-	@echo "  make coverage         - run all tests (including ITs) and generate coverage report"
-	@echo "  make dev              - start Quarkus in dev mode"
-	@echo "  make format           - run spotless to format code"
-	@echo "  make install          - make check, mvn clean install -DskipTests"
-	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
-	@echo "  make lint             - run quality gate plugins"
-	@echo "  make password         - generate a bcrypt hash for a password (for seed data or an admin reset)"
-	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
-	@echo "  make regen-frontend   - regenerate frontend manifests for the current Vaadin version"
-	@echo "  make release          - pull from origin/main, test, make tag, and buildx-push multi-platform Docker images"
-	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
-	@echo "  make test             - run unit tests (skips ITs)"
-	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
-
-audit:
-	@scripts/audit.sh
-
-branch:
-	@scripts/branch.sh
-
-build:
+build: check ## build the app and its Docker images for this host (prompts for the image tag)
 	@scripts/build.sh
 
-check:
-	@scripts/check.sh
-
-clean:
-	@scripts/clean.sh
-
-coverage:
-	@scripts/coverage.sh
-
-dev:
+dev: ## start Quarkus in dev mode (port 9001)
 	@scripts/dev.sh
 
-format:
-	@scripts/format.sh
-
-install:
-	@scripts/install.sh
-
-kill:
-	@scripts/kill.sh
-
-lint:
-	@scripts/lint.sh
-
-password:
+password: ## generate a bcrypt hash for seed data or an administrator reset
 	@scripts/password.sh
 
-rebase:
-	@scripts/rebase.sh
-
-regen-frontend:
+regen-frontend: ## recreate package.json and package-lock.json from scratch at the current Vaadin version
 	@scripts/regen-frontend.sh
 
-release:
+release: ## pull from origin/main, test, make tag, and buildx-push multi-platform images
 	@scripts/release.sh
 
-tag:
-	@scripts/tag.sh
+# Builds install the frontend from the committed manifest, so refuse to build without one.
+install: frontend-manifest
+frontend-manifest:
+	@. scripts/lib/frontend.sh && require_frontend_manifest
 
-test:
-	@scripts/test.sh
-
-untag:
-	@scripts/untag.sh
+# The release-script tests need no Maven or network access, so they run before the Java tests.
+test: test-scripts
+test-scripts: ## run the Python tests of the build scripts
+	@python3 -B -m unittest discover -s scripts/tests -v

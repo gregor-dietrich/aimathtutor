@@ -308,7 +308,7 @@ If you want to learn more about building Docker images, please consult <https://
 
 ### Java compilation: warnings fail the build
 
-Java compilation runs with a fail-on-warning policy: any javac lint or Error Prone warning aborts the build (a small allowlist of non-actionable lint categories is documented in `pom.xml`). If your build fails with `warnings found and -Werror specified`, fix the reported warning — do not suppress it or exclude the lint category. See the Code Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
+Java compilation runs with a fail-on-warning policy: any javac lint or Error Prone warning aborts the build (a small allowlist of non-actionable lint categories is documented in devkit's parent POM, `.devkit/java/parent/pom.xml`). If your build fails with `warnings found and -Werror specified`, fix the reported warning — do not suppress it or exclude the lint category. See the Code Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
 
 ### Quarkus build: intentional observer warning
 

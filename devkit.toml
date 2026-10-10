@@ -1,0 +1,14 @@
+[devkit]
+url = "ssh://git@git.vptr.de:222/gregor/devkit.git"
+mirror = "https://github.com/gregor-dietrich/devkit.git"
+version = "v0.5.0"
+commit = "a0c5412f99e49d6897d1848b3703f17a4bc9f36a"
+
+[frontend.min-pins]
+react-router = "7.15.0"
+dompurify = "3.4.16"
+source-map-js = "1.2.2"
+
+# The namespace make release publishes to; docker-compose.yml builds the app image (pull_policy: build) and tags it through ${REVISION}.
+[pins]
+first-party = ["docker.io/gregordietrich"]

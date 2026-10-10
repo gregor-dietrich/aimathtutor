@@ -21,7 +21,7 @@ updates:
       # Quarkus tracks the latest LTS line, NOT the latest stable release: LTS lines get
       # patch releases for far longer, which is what a project that ships releases needs.
       # 3.40.x is the current LTS, so anything >=3.41.0 is ignored even though newer stable
-      # releases exist (scripts/version_check.py will still report them -- that output is
+      # releases exist (make check's version report will still list them -- that output is
       # informational and expected, not a prompt to upgrade). Raise this bound only when a
       # new LTS line ships.
       - dependency-name: "io.quarkus:*"

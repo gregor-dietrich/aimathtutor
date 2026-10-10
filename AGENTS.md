@@ -17,19 +17,27 @@ You should challenge the user's request if it would result in implementing anti-
 ## Build & Development
 
 - **Primary interface:** `make` commands. Run `make help` for all targets.
-- **Java 25 required.** `make check` enforces JDK 25 + Maven ≥3.9.9. CI uses Temurin 25.
+- **Java 25 required.** `make check` enforces JDK 25 + Maven ≥3.9.9 + python3 ≥3.11, and checks the devkit parent POM. `make lint` also needs node ≥22.22.2 with npm (lint-md) and curl, tar and sha256sum/shasum (the gitleaks download). CI uses Temurin 25.
 - **Maven wrapper:** `./mvnw` (scripts fall back to system `mvn`).
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI: `http://localhost:9001/q/dev/`.
 - **Tests:** `make test` → `./mvnw verify`. Runs unit tests (skips integration tests). Uses `@QuarkusTest`, Mockito, Panache Mock.
-- **Coverage:** `make coverage` → `scripts/coverage.sh`. Runs **all tests** (unit + integration tests via `-DskipITs=false`) with JaCoCo and generates a combined report. The JaCoCo `report` goal is bound to `post-integration-test` so the report includes `*IT` coverage — surefire and failsafe both append to the same `target/jacoco.exec`, and a report generated earlier (at `test`) would silently omit every integration test.
+- **Coverage:** `make coverage` (devkit) writes `.coverage.md`. Runs **all tests** (unit + integration tests via `-DskipITs=false`) with JaCoCo and generates a combined report. The JaCoCo `report` goal is bound to `post-integration-test` so the report includes `*IT` coverage — surefire and failsafe both append to the same `target/jacoco.exec`, and a report generated earlier (at `test`) would silently omit every integration test.
 - **Install (skip tests):** `make install` → `./mvnw clean install -DskipTests`. It builds from the committed `package.json`/`package-lock.json` and fails if either is missing; it never regenerates them.
-- **Format:** `make format` → `scripts/format.sh` — runs `spotless:apply` to auto-format code.
-- **Lint:** `make lint` → `scripts/lint.sh` — runs compilation (Error Prone & NullAway), spotless:check, checkstyle, spotbugs, PMD, and CPD checks.
-- **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` + `build-frontend`. CI: `./mvnw clean install package -DskipTests -Pproduction`.
+- **Format:** `make format` — runs `format-md` (markdownlint fixes), then `spotless:apply` to auto-format code.
+- **Lint:** `make lint` — runs `lint-repo` first (`lint-pins`, `lint-decisions`, `lint-secrets`, `lint-md`), then compilation (Error Prone & NullAway), spotless:check, checkstyle (shared and project rules), spotbugs, PMD, CPD and the frontend pin check (minimums in `devkit.toml` `[frontend.min-pins]`).
+- **Audit:** `make audit` runs the OWASP dependency-check (`NVD_API_KEY` from the environment or gitignored `.env.build`).
+- **Production build:** Must pass `-Pproduction` for Vaadin `prepare-frontend` + `build-frontend`. CI: `make install` with `MAVEN_ARGS=-Pproduction`.
 - **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.ref=ALL-UNNAMED`, `--add-opens java.base/jdk.internal.misc=ALL-UNNAMED`, `--add-opens java.base/java.nio=ALL-UNNAMED`, `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`, `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`, and `-XX:+EnableDynamicAgentLoading`. Set consistently in `pom.xml` (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and Docker `JAVA_OPTS_APPEND`.
 - **Node.js is pinned:** `vaadin.node.version` in `pom.xml` (Vaadin's default for the current release) is used by every frontend build path (production and regen builds, the Quarkus build step, dev mode). Vaadin downloads it to `~/.vaadin` and ignores any `node` on `PATH`, so `package-lock.json` comes out the same everywhere. Bump it with `vaadin.version`.
 - **Frontend installs use `npm ci`** (`vaadin.ci.build` in `pom.xml`): builds install exactly what `package-lock.json` records and fail when `package.json` disagrees with it, e.g. after changing an `@NpmPackage`. Fix that with `make regen-frontend` (the only path that runs `npm install`, besides dev mode's runtime dev server, which Vaadin can't switch to `npm ci`), then commit the regenerated manifest.
 - **Versioning:** Maven property `${revision}` (default `1.0.0-SNAPSHOT`). Pass `-Drevision=X.Y.Z`.
+
+### Shared tooling (devkit)
+
+- **Pinned, not copied:** the shared Make targets, scripts, Checkstyle/PMD/formatter configs and the parent POM (`de.vptr.devkit:devkit-parent`, which configures and activates every Maven gate plugin and pins their versions) come from devkit, pinned by `version` and `commit` in `devkit.toml`. `./devkitw` fetches that pin into a read-only per-user cache and links it as `.devkit`. Any `make` target creates the link; a bare `./mvnw` or an IDE import fails on a fresh clone (unresolvable parent POM) until it exists.
+- **Never edit `.devkit` or `devkitw`.** A shared gate changes in devkit and is released there. To adopt a release, edit `version` and `commit` in `devkit.toml` together with the root pom's `<parent><version>` (the tag without the `v`), and copy the new `devkitw` when the release changed it (`make check` warns). Dependabot cannot bump the pin, so bumps are by hand.
+- **Project values stay here:** `pom.xml` keeps only overrides of the parent's properties (`jacoco.check.*`, `nullaway.annotated.packages`), `checkstyle-project.xml` (the project's own Checkstyle rules, run as checkstyle execution `project`), and the suppression/exclusion files (`checkstyle-suppressions.xml`, `spotbugs-exclude.xml`, `dependency-check-suppression.xml`).
+- **Hooks:** run `make hooks` once per clone: pre-commit runs `make lint-repo`, pre-push runs `make lint-repo test`. `make gate` runs the push gate and records a passing clean HEAD, so the next push skips it.
 
 ## Architecture
 
@@ -89,26 +97,27 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 | Gate            | Command                                         | Notes                                                                                                                                                 |
 | --------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lint (all)      | `make lint`                                     | Runs spotless:check + checkstyle + spotbugs + PMD + CPD                                                                                               |
+| Repository      | `make lint-repo`                                | `lint-pins` + `lint-decisions` + `lint-secrets` (gitleaks) + `lint-md` (markdownlint); `make format-md` fixes Markdown; `make lint` runs it first |
+| Lint (all)      | `make lint`                                     | Runs lint-repo, then spotless:check + checkstyle + spotbugs + PMD + CPD + frontend pin check                                                          |
 | Spotless        | `./mvnw spotless:check`                         | Enforces code formatting (runs at `verify` phase); use `make format` to fix                                                                           |
 | Tests           | `make test`                                     | CI runs `./mvnw verify -DskipITs=false` (unit + ITs); `make test` runs unit tests only                                                                |
 | Coverage        | `make coverage`                                 | Runs all tests (including ITs) and generates report                                                                                                   |
 | SpotBugs        | `./mvnw spotbugs:check`                         | Exclusions in `spotbugs-exclude.xml`                                                                                                                  |
-| Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml`                                                                                                         |
+| Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; shared config from devkit, project rules in `checkstyle-project.xml`                                                                                                         |
 | PMD             | `./mvnw pmd:check`                              | Unused code, complexity, style rules                                                                                                                  |
-| CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY). Property `pmd-cpd.minTokens` in `pom.xml` (default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
+| CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
 | OWASP dep-check | `make audit`                                    | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)    |
 | License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                                                                                                                                |
 
-CI order: `test` → `security` (gitleaks + CodeQL + OWASP dep-check) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
+CI order: `test` (`make lint-repo`, `make test-scripts`, `./mvnw verify -DskipITs=false`) → `security` (CodeQL around `make install`, then `make audit` when `NVD_API_KEY` is set) → `build` (`make install` with `-Pproduction`: package + spotless + SpotBugs + Checkstyle + PMD + CPD). Secret scanning is `lint-secrets`, not a separate action.
 
-- **Compiler warnings are build failures.** `maven-compiler-plugin` passes `-Werror` and `-Xlint:all,-serial,-this-escape,-classfile`, so every javac lint warning and every Error Prone warning (any severity) fails compilation. The three excluded lint categories are deliberate and documented in `pom.xml`; do not exclude further categories to work around a warning — fix the code.
+- **Compiler warnings are build failures.** `maven-compiler-plugin`, configured in devkit's parent POM, passes `-Werror` and `-Xlint:all,-serial,-this-escape,-classfile`, so every javac lint warning and every Error Prone warning (any severity) fails compilation. The three excluded lint categories are deliberate and documented in the parent POM; do not exclude further categories to work around a warning — fix the code.
 - **Known upstream build-log noise (do not try to fix):** during `quarkus:build`, Vaadin logs `[WARNING] Addon 'flow-react-*.jar' / 'flow-dnd-*.jar' contains frontend sources under META-INF/resources/frontend/`. These come from Vaadin's own published jars (Vaadin 25.2.1), are not fixable in this repository, and will disappear with a future Vaadin upgrade.
 - **Intentional build warning (do not fix):** `[WARNING] [io.quarkus.arc.deployment.ObserverValidationProcessor] The method de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for @Initialized(ApplicationScoped.class) ... We strongly recommend to observe StartupEvent instead`. The same warning is logged for `SchemaManagementGuard#checkStrategy`. See the `ProductionProfileGuard` anti-pattern above.
 
 ### ⚠️ Never Change Quality Gate Thresholds
 
-**Never modify** any quality gate threshold, tolerance, or exclusion count in `pom.xml`, checkstyle, PMD, CPD, SpotBugs, or any other configuration. This includes, but is not limited to:
+**Never modify** any quality gate threshold, tolerance, or exclusion count in `pom.xml`, `devkit.toml`, `checkstyle-project.xml`, the suppression files, or any other configuration. The thresholds live in devkit's parent POM and shared configs plus this pom's override properties (`jacoco.check.*`); never change either here, and a shared value changes only through a devkit release. This includes, but is not limited to:
 
 - `pmd-cpd.minTokens` (CPD minimum tokens)
 - Checkstyle severity levels

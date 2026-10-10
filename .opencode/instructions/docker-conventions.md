@@ -51,7 +51,7 @@ Full-stack compose:
 
 `scripts/build.sh` (invoked via `make build`):
 
-1. Runs `scripts/check.sh` (JDK + Maven version verification)
+1. Runs `make check` (JDK, Maven and Python version verification)
 2. Runs `mvn clean`, removes `src/main/bundles/prod.bundle` and `node_modules`, then
    `mvn package -DskipTests -Pproduction`
 3. Builds both images for the host's platform into the local image store (`docker buildx build --load`, or plain
@@ -66,7 +66,7 @@ Full-stack compose:
    containerd image store), then runs `docker login`
 3. Cleans, installs, lints, tests and packages, then builds each Dockerfile for both platforms into the buildx cache
    only, so only a push can fail after the git tag
-4. Runs `scripts/tag.sh`, then one `docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile
+4. Runs `make tag`, then one `docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile
    with all of its tags: Alpine `<version>-alpine`, `alpine`, `<version>`, `latest`; Ubuntu `<version>-ubuntu`,
    `ubuntu`. Nothing is pushed from the local image store
 
