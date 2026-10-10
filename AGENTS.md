@@ -20,6 +20,14 @@ however.
   generic agent method (delegation to pinned agents, review triage, debugging,
   design exploration, planning and multi-agent review skills) and guard hooks;
   for Claude Code that method is not repeated here.
+- **Agents are agent-kit's** (`agent-kit:backend-developer`,
+  `agent-kit:frontend-developer`, `agent-kit:code-reviewer`,
+  `agent-kit:software-architect`, `agent-kit:scout`); the project defines none.
+  Each reads this file and the scoped rules before acting.
+- **Scoped rules** live in `.claude/rules/`: `ai-providers.md`, `vaadin-ui.md`,
+  `test-conventions.md` and `docker-conventions.md`. Claude Code loads each for
+  the paths its frontmatter names; other agents read the one for the area they
+  touch.
 - **`autoUpdate` is declared on** so nobody needs the `/plugin` toggle, which
   writes the setting into the first settings file that declares the marketplace
   and so would dirty this tracked one.
