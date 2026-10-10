@@ -1,17 +1,21 @@
 # Code Quality, Maintainability & Security Standards — AIMathTutor
 
-Expected of all contributors. Before submitting, run quality gates. Reviewers verify before approving.
+Expected of all contributors. Before submitting, run quality gates. Reviewers
+verify before approving.
 
 ## Principles
 
 - Clarity over cleverness. Self-documenting code. Single Responsibility.
 - Eliminate duplication immediately. Extract shared logic. No copy-paste.
-- Security by default: validate all input, least-privilege, no hardcoded secrets.
-- Performance: avoid N+1 queries, use pagination/caching, profile before optimizing.
+- Security by default: validate all input, least-privilege, no hardcoded
+  secrets.
+- Performance: avoid N+1 queries, use pagination/caching, profile before
+  optimizing.
 
 ## Quality Gates
 
-**Never skip checkstyle or SpotBugs.** Checkstyle severity is `error` — violations block build.
+**Never skip checkstyle or SpotBugs.** Checkstyle severity is `error` —
+violations block build.
 
 ```shell
 make lint                            # repository gates, then spotless, checkstyle, spotbugs, pmd and cpd
@@ -24,7 +28,8 @@ make audit                           # CVE scan (needs NVD_API_KEY or .env.build
 ./mvnw license:add-third-party       # license report (verify phase)
 ```
 
-CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Checkstyle + PMD + CPD).
+CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs +
+Checkstyle + PMD + CPD).
 
 ## Code Smell Checklist
 
@@ -57,18 +62,27 @@ CI order: `test` → `security` (CodeQL) → `build` (package + SpotBugs + Check
 
 ## NullAway & Entity `@Nullable` Convention
 
-NullAway runs at ERROR level on `de.vptr.aimathtutor`. Entity reference-type fields are null after no-arg construction, before Hibernate populates them. Therefore:
+NullAway runs at ERROR level on `de.vptr.aimathtutor`. Entity reference-type
+fields are null after no-arg construction, before Hibernate populates them.
+Therefore:
 
-- **Never remove `@Nullable`** from an entity reference field — NullAway will assume it's `@NonNull` and create false negatives
+- **Never remove `@Nullable`** from an entity reference field — NullAway will
+  assume it's `@NonNull` and create false negatives
 - Primitives never get `@Nullable`
-- Pairing `@Nullable` + `@NotNull` (Bean Validation) is valid and recommended: `@Nullable` for NullAway, `@NotNull` for DB-level enforcement
-- See AGENTS.md "Entity field `@Nullable` convention" for the full decision matrix
+- Pairing `@Nullable` + `@NotNull` (Bean Validation) is valid and recommended:
+  `@Nullable` for NullAway, `@NotNull` for DB-level enforcement
+- See AGENTS.md "Entity field `@Nullable` convention" for the full decision
+  matrix
 
 ## PMD Suppressions
 
-Most suppressions are forbidden (see AGENTS.md "Never Change Quality Gate Thresholds"). The only known legitimate suppression in this codebase is:
+Most suppressions are forbidden (see AGENTS.md "Never Change Quality Gate
+Thresholds"). The only known legitimate suppression in this codebase is:
 
-- `@SuppressWarnings("PMD.HardCodedCryptoKey")` on `EncryptionService.init()`: PMD flags HKDF domain-separator strings (`"encrypt"`, `"blind-index"`) as hardcoded keys — they are not. The suppression comment must explain this. Do not add this suppression elsewhere.
+- `@SuppressWarnings("PMD.HardCodedCryptoKey")` on `EncryptionService.init()`:
+  PMD flags HKDF domain-separator strings (`"encrypt"`, `"blind-index"`) as
+  hardcoded keys — they are not. The suppression comment must explain this. Do
+  not add this suppression elsewhere.
 
 ## Security Checklist
 
@@ -81,7 +95,8 @@ Most suppressions are forbidden (see AGENTS.md "Never Change Quality Gate Thresh
 - [ ] Dependencies checked for CVEs
 - [ ] AI API keys from env vars only, never logged
 - [ ] All `@Inject` fields in Vaadin views are `transient`
-- [ ] Encrypted PII fields queried only via blind-index columns, never by column value
+- [ ] Encrypted PII fields queried only via blind-index columns, never by column
+  value
 
 ## Performance Checklist
 

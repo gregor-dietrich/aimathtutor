@@ -1,16 +1,22 @@
 # AIMathTutor
 
-AIMathTutor is a full-stack web application for interactive math learning, built with Quarkus (backend) and Vaadin (frontend). It features an embedded Graspable Math workspace, AI-powered tutoring, lesson/exercise management, analytics, and granular user roles.
+AIMathTutor is a full-stack web application for interactive math learning, built
+with Quarkus (backend) and Vaadin (frontend). It features an embedded Graspable
+Math workspace, AI-powered tutoring, lesson/exercise management, analytics, and
+granular user roles.
 
 ## 🌟 Features
 
-- Interactive Graspable Math workspace for symbolic manipulation and step-by-step actions
-- Real-time AI tutor feedback, hints, and adaptive problem generation (Google, OpenAI, Ollama, mock)
+- Interactive Graspable Math workspace for symbolic manipulation and
+  step-by-step actions
+- Real-time AI tutor feedback, hints, and adaptive problem generation (Google,
+  OpenAI, Ollama, mock)
 - Problem and lesson authoring, organization, and progress tracking
 - Threaded comments on exercises, moderation, and reporting
 - Session/event tracking and analytics dashboards for teachers/admins
 - Granular user management: users, groups, ranks, and permissions
-- Tight Quarkus + Vaadin integration: CDI-injected services, no REST boundary for core logic
+- Tight Quarkus + Vaadin integration: CDI-injected services, no REST boundary
+  for core logic
 
 ## 🚀 Getting Started
 
@@ -18,29 +24,56 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
-When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
+When deploying to production, it is **critical** to override the default
+database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to
+a strong password to replace the default `changeit` value used in dev/test
+profiles.
 
-Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop and recreate the database tables, so the app refuses to start with one. Likewise, never override Hibernate's schema management (`QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY`, the deprecated `QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION`, or their `quarkus.hibernate-orm...` property forms): anything but `validate` or `none` makes the app refuse to start. In both cases the reason appears in `docker compose logs app`.
+Never set a `dev` or `test` profile (`QUARKUS_PROFILE`,
+`QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop
+and recreate the database tables, so the app refuses to start with one.
+Likewise, never override Hibernate's schema management
+(`QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY`, the deprecated
+`QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION`, or their `quarkus.hibernate-orm...`
+property forms): anything but `validate` or `none` makes the app refuse to
+start. In both cases the reason appears in `docker compose logs app`.
 
 ### Recovering administrator access
 
-The app refuses to delete, ban, deactivate or demote its last active administrator, or to remove a permission from their rank. An administrator is an activated, unbanned user whose rank has every permission: nobody can grant a permission their own rank lacks, so only such a user can give a rank back a permission it lost. If no active user's rank has every permission, for example because one was removed from the Admin rank before 4.0.14, the app protects nobody and can't fix that itself; open psql (step 2), run the `user_ranks` `UPDATE` from step 4 on its own and then `COMMIT;`. If no administrator can log in anyway (for example after a forgotten password), reset one directly in the database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches Maven); the checkout you run `docker compose` from will do.
+The app refuses to delete, ban, deactivate or demote its last active
+administrator, or to remove a permission from their rank. An administrator is an
+activated, unbanned user whose rank has every permission: nobody can grant a
+permission their own rank lacks, so only such a user can give a rank back a
+permission it lost. If no active user's rank has every permission, for example
+because one was removed from the Admin rank before 4.0.14, the app protects
+nobody and can't fix that itself; open psql (step 2), run the `user_ranks`
+`UPDATE` from step 4 on its own and then `COMMIT;`. If no administrator can log
+in anyway (for example after a forgotten password), reset one directly in the
+database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches
+Maven); the checkout you run `docker compose` from will do.
 
-1. Run `make password` and copy the printed `hash=` value. Choose a password that meets the app's rules, which `make password` doesn't enforce: 8 to 72 characters, with an uppercase and a lowercase letter, a digit and a symbol.
-2. Open psql in the database container. These are the `docker-compose.yml` defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
+1. Run `make password` and copy the printed `hash=` value. Choose a password
+   that meets the app's rules, which `make password` doesn't enforce: 8 to 72
+   characters, with an uppercase and a lowercase letter, a digit and a symbol.
+2. Open psql in the database container. These are the `docker-compose.yml`
+   defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
 
    ```sh
    docker compose exec db psql -U aimathtutor -d aimathtutor
    ```
 
-3. List the users holding the Admin rank. Restoring every permission makes every active one of them an administrator, so review the list, especially after a compromise. To leave someone out, add `UPDATE users SET activated = FALSE WHERE username = '<other>';` to the transaction in step 4:
+3. List the users holding the Admin rank. Restoring every permission makes every
+   active one of them an administrator, so review the list, especially after a
+   compromise. To leave someone out, add `UPDATE users SET activated = FALSE
+   WHERE username = '<other>';` to the transaction in step 4:
 
    ```sql
    SELECT u.username, u.activated, u.banned FROM users u JOIN user_ranks r ON r.id = u.rank_id
      WHERE r.public_id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
    ```
 
-4. Restore every permission of the Admin rank and reset the account (replace `<hash>` and `<name>`; usernames are stored in lower case):
+4. Restore every permission of the Admin rank and reset the account (replace
+   `<hash>` and `<name>`; usernames are stored in lower case):
 
    ```sql
    BEGIN;
@@ -58,34 +91,61 @@ The app refuses to delete, ban, deactivate or demote its last active administrat
      WHERE username = '<name>';
    ```
 
-   Run `COMMIT;` only if the users `UPDATE` reported `UPDATE 1`; otherwise run `ROLLBACK;` and fix the name. The hash contains `$`, so type it inside psql or single quotes, never inside a double-quoted shell string, where the shell would expand it.
+   Run `COMMIT;` only if the users `UPDATE` reported `UPDATE 1`; otherwise run
+   `ROLLBACK;` and fix the name. The hash contains `$`, so type it inside psql
+   or single quotes, never inside a double-quoted shell string, where the shell
+   would expand it.
 
-   If the Admin rank was deleted, the rank `UPDATE` reports `UPDATE 0` and the users `UPDATE` fails on a NULL `rank_id`. Run `ROLLBACK;`, pick another rank from `SELECT public_id, name FROM user_ranks;` that no other active user holds, since every active holder becomes an administrator, and repeat steps 3 and 4 with its `public_id`.
+   If the Admin rank was deleted, the rank `UPDATE` reports `UPDATE 0` and the
+   users `UPDATE` fails on a NULL `rank_id`. Run `ROLLBACK;`, pick another rank
+   from `SELECT public_id, name FROM user_ranks;` that no other active user
+   holds, since every active holder becomes an administrator, and repeat steps 3
+   and 4 with its `public_id`.
 
-5. Restart the app with `docker compose restart app`. This step is required: it clears the failed-login lockouts that the forgotten password has probably triggered, ends every open session at once (the new password ends the account's other sessions too, but only once their 30-second sign-in cache lapses, since a database edit doesn't notify the app), and drops the cached rank list, so the Ranks page doesn't show, and re-save, the old permissions.
+5. Restart the app with `docker compose restart app`. This step is required: it
+   clears the failed-login lockouts that the forgotten password has probably
+   triggered, ends every open session at once (the new password ends the
+   account's other sessions too, but only once their 30-second sign-in cache
+   lapses, since a database edit doesn't notify the app), and drops the cached
+   rank list, so the Ranks page doesn't show, and re-save, the old permissions.
 
-If logging in fails with a server error after the reset, check that the app still mounts its original encryption key volume: a reset doesn't help when the key is lost.
+If logging in fails with a server error after the reset, check that the app
+still mounts its original encryption key volume: a reset doesn't help when the
+key is lost.
 
 ### Common Development Commands (via Makefile)
 
 - `make dev` – Start Quarkus in dev mode
 - `make test` – Execute unit tests (skips integration tests)
-- `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
-- `make lint` – Repository gates (pins, decisions, secrets, Markdown), then the Java quality gates
+- `make coverage` – Execute all tests (unit + integration) and generate JaCoCo
+  report
+- `make lint` – Repository gates (pins, decisions, secrets, Markdown), then the
+  Java quality gates
 - `make format` – Fix Markdown, then format Java sources
 - `make audit` – OWASP dependency-check (needs `NVD_API_KEY` or `.env.build`)
-- `make build` – Build the Docker images for the local image store (`make check`, `mvn package`, native-platform `docker build`)
+- `make build` – Build the Docker images for the local image store
+  (`make check`, `mvn package`, native-platform `docker build`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
-- `make clean`, `make kill` – Remove build output; stop this project's JVMs and compose services
-- `make password` – Generate a bcrypt hash for a password (for seed data or an administrator reset)
-- `make regen-frontend` – Recreate `package.json` and `package-lock.json` at the current Vaadin version
-- `make release` – Pull from origin/main, test, `make tag`, and build and push multi-platform Docker images with `docker buildx`
-- `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
-- `make hooks` – Install the git hooks (pre-commit `make lint-repo`, pre-push `make lint-repo test`); run once per clone
+- `make clean`, `make kill` – Remove build output; stop this project's JVMs and
+  compose services
+- `make password` – Generate a bcrypt hash for a password (for seed data or an
+  administrator reset)
+- `make regen-frontend` – Recreate `package.json` and `package-lock.json` at the
+  current Vaadin version
+- `make release` – Pull from origin/main, test, `make tag`, and build and push
+  multi-platform Docker images with `docker buildx`
+- `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag
+  management
+- `make hooks` – Install the git hooks (pre-commit `make lint-repo`, pre-push
+  `make lint-repo test`); run once per clone
 
-Build and gate tooling comes from [devkit](devkit.toml), fetched by `./devkitw` and linked as `.devkit`; any `make` target creates the link, so run one before a bare `./mvnw`. Besides JDK 25, `make check` needs python3 ≥ 3.11, and `make lint` needs node ≥ 22.22.2 with npm, plus curl, tar and sha256sum/shasum.
+Build and gate tooling comes from [devkit](devkit.toml), fetched by `./devkitw`
+and linked as `.devkit`; any `make` target creates the link, so run one before a
+bare `./mvnw`. Besides JDK 25, `make check` needs python3 ≥ 3.11, and
+`make lint` needs node ≥ 22.22.2 with npm, plus curl, tar and sha256sum/shasum.
 
-See the [Makefile](Makefile) or use `make help` for all available commands and scripts.
+See the [Makefile](Makefile) or use `make help` for all available commands and
+scripts.
 
 ## 🤖 Supported AI Providers
 
@@ -95,11 +155,20 @@ See the [Makefile](Makefile) or use `make help` for all available commands and s
 
 **Configuration:**
 
-- **API Keys**: Set properties `app.google.api.key`, `app.openai.api.key`, and `app.openai.organization-id` (immutable at runtime).
-- **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable, database-backed).
-- **Encryption key**: Resolution order: (1) `app.security.encryption-key-file` property, (2) `$XDG_DATA_HOME/aimathtutor/encryption.key`, (3) `~/.aimathtutor/encryption.key`, (4) auto-generate a 256-bit key at the XDG path with 0600 permissions. In Docker, mount the `aimathtutor_keys` volume at `/etc/aimathtutor/keys`. This key encrypts PII fields (such as user email) at rest.
+- **API Keys**: Set properties `app.google.api.key`, `app.openai.api.key`, and
+  `app.openai.organization-id` (immutable at runtime).
+- **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure
+  via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable,
+  database-backed).
+- **Encryption key**: Resolution order: (1) `app.security.encryption-key-file`
+  property, (2) `$XDG_DATA_HOME/aimathtutor/encryption.key`, (3)
+  `~/.aimathtutor/encryption.key`, (4) auto-generate a 256-bit key at the XDG
+  path with 0600 permissions. In Docker, mount the `aimathtutor_keys` volume at
+  `/etc/aimathtutor/keys`. This key encrypts PII fields (such as user email) at
+  rest.
 
-See [docs/QUICKSTART.md](docs/QUICKSTART.md) and [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
+See [docs/QUICKSTART.md](docs/QUICKSTART.md) and
+[docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
 
 ## 📖 Documentation
 
