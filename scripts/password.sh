@@ -6,28 +6,20 @@ cd "${PROJECT_ROOT:?run this through make}" || exit
 
 set -e
 
-# Usage: ./password.sh [password]
-# If a password is provided as the first argument, use it non-interactively.
-# Otherwise prompt the user (hidden input) and ask for confirmation.
+# Prompt for the password (hidden input) and ask for confirmation.
+echo -n "Enter password to hash: "
+IFS= read -rs PASS1
+echo
+echo -n "Confirm password: "
+IFS= read -rs PASS2
+echo
 
-if [ "$#" -ge 1 ] && [ -n "$1" ]; then
-	PASSWORD="$1"
-else
-	# Prompt for password (hidden)
-	echo -n "Enter password to hash: "
-	IFS= read -rs PASS1
-	echo
-	echo -n "Confirm password: "
-	IFS= read -rs PASS2
-	echo
-
-	if [ "$PASS1" != "$PASS2" ]; then
-		echo "Passwords do not match. Aborting." >&2
-		exit 1
-	fi
-
-	PASSWORD="$PASS1"
+if [ "$PASS1" != "$PASS2" ]; then
+	echo "Passwords do not match. Aborting." >&2
+	exit 1
 fi
+
+PASSWORD="$PASS1"
 
 # Pass the password on stdin: exec:java splits exec.args on whitespace, and arguments show up in ps.
 # Compile first: exec:java runs from target/classes, which a fresh checkout doesn't have.

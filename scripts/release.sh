@@ -8,6 +8,10 @@ cd "${PROJECT_ROOT:?run this through make}" || exit
 
 set -e
 
+# make passes its flags down through MAKEFLAGS: cleared, an outer `make -i release` cannot
+# ignore a failing gate below, nor can MAKEFILES inject makefiles (as devkit's gate.sh does).
+unset MAKEFLAGS MFLAGS MAKELEVEL MAKEFILES
+
 abort_untagged() {
     echo "Aborting the release; nothing was tagged or pushed." >&2
     exit 1
@@ -27,6 +31,9 @@ TAG="${IMAGE_NAME}:${REVISION}"
 if [[ "$1" != --pulled ]]; then
     git switch main
     git pull
+    # The pull may have bumped devkit: re-derive its path for the new run.
+    DEVKIT=$(./devkitw path) || abort_untagged
+    export DEVKIT
     exec scripts/release.sh --pulled
 fi
 

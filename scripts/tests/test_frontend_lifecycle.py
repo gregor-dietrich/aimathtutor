@@ -41,6 +41,33 @@ class FrontendLifecycleTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("make regen-frontend", result.stderr)
 
+    def run_makefile_recipe(self, makefile):
+        """Run the frontend-manifest recipe line as make does: through /bin/sh."""
+        lines = makefile.read_text().splitlines()
+        recipe = lines[lines.index("frontend-manifest:") + 1]
+        return subprocess.run(
+            ["/bin/sh", "-c", recipe.removeprefix("\t").removeprefix("@")],
+            cwd=self.root,
+            env=self.environment,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_makefile_recipe_accepts_committed_manifests(self):
+        for name in ("package.json", "package-lock.json"):
+            (self.root / name).write_text("committed contents\n")
+
+        result = self.run_makefile_recipe(Path(__file__).resolve().parents[2] / "Makefile")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_makefile_recipe_refuses_missing_manifests(self):
+        result = self.run_makefile_recipe(Path(__file__).resolve().parents[2] / "Makefile")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("make regen-frontend", result.stderr)
+
     def check_committed_manifest(self):
         return self.run_check("require_committed_frontend_manifest")
 
