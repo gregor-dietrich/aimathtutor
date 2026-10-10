@@ -2,6 +2,7 @@
 # - test
 # - security (SAST, dependency scanning; secret detection runs in test, as make lint-repo)
 # - build
+# - dependency-submission (push only)
 # - publish
 
 name: CI/CD Pipeline
@@ -19,8 +20,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # No later step pushes, so the token stays away from the build code.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0 # lint-secrets scans the full history; a shallow clone fails it
       # devkit's Markdown gate needs node on PATH; Vaadin's own Node.js under ~/.vaadin is not on it.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -47,11 +50,15 @@ jobs:
           path: ~/.vaadin/node-${{ steps.node.outputs.version }}
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
       # devkit.toml's url is on a private network; devkitw falls back to its GitHub mirror.
+      # -k runs every repository gate and reports each failure; the tests still run after a failed
+      # gate (the job stays red), so one push shows every problem.
       - name: Repository gates (pins, decisions, secrets, Markdown)
-        run: make lint-repo
+        run: make -k lint-repo
       - name: Test frontend lifecycle scripts
+        if: ${{ !cancelled() }}
         run: make test-scripts
       - name: Run tests
+        if: ${{ !cancelled() }}
         run: ./mvnw verify -DskipITs=false
 
   security:
@@ -64,6 +71,8 @@ jobs:
       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up JDK 25
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
@@ -106,6 +115,8 @@ jobs:
     needs: [test, security]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up JDK 25
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
@@ -127,11 +138,14 @@ jobs:
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
       # make install builds without tests, then checks the pinned frontend dependencies;
       # MAVEN_ARGS adds the production frontend build to its Maven call. Only mvn's launcher
-      # script reads MAVEN_ARGS (./mvnw ignores it), and devkit runs mvn when it is on PATH,
-      # so the step refuses a runner without one rather than build without the profile.
+      # script reads MAVEN_ARGS (./mvnw ignores it), and devkit runs mvn when it is on PATH and
+      # at least 3.9.9 (else ./mvnw), so the step refuses a runner without such an mvn rather
+      # than build without the profile.
       - name: Build with Maven
         run: |
-          command -v mvn > /dev/null || { echo "::error::mvn is not on PATH; MAVEN_ARGS would be ignored"; exit 1; }
+          mvn_version=$(mvn -B -version 2>/dev/null | head -n 1 | awk '{print $3}') || true
+          [[ -n "$mvn_version" && "$(printf '%s\n3.9.9\n' "$mvn_version" | sort -V | head -n 1)" == 3.9.9 ]] ||
+            { echo "::error::mvn is missing or older than 3.9.9; MAVEN_ARGS would be ignored"; exit 1; }
           make install
         env:
           MAVEN_ARGS: -Pproduction
@@ -154,7 +168,7 @@ jobs:
           distribution: "temurin"
           java-version: "25"
       - name: Cache Maven packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

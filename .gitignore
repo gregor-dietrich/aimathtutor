@@ -89,4 +89,6 @@ ollama/payload
 # Python
 __pyache__/
 *.pyc
+
+# devkit link (devkitw)
 /.devkit
