@@ -20,6 +20,14 @@ however.
   generic agent method (delegation to pinned agents, review triage, debugging,
   design exploration, planning and multi-agent review skills) and guard hooks;
   for Claude Code that method is not repeated here.
+- **Agents are agent-kit's** (`agent-kit:backend-developer`,
+  `agent-kit:frontend-developer`, `agent-kit:code-reviewer`,
+  `agent-kit:software-architect`, `agent-kit:scout`); the project defines none.
+  Each reads this file and the scoped rules before acting.
+- **Scoped rules** live in `.claude/rules/`: `ai-providers.md`, `vaadin-ui.md`,
+  `test-conventions.md` and `docker-conventions.md`. Claude Code loads each for
+  the paths its frontmatter names; other agents read the one for the area they
+  touch.
 - **`autoUpdate` is declared on** so nobody needs the `/plugin` toggle, which
   writes the setting into the first settings file that declares the marketplace
   and so would dirty this tracked one.
@@ -40,8 +48,8 @@ however.
   `http://localhost:9001/q/dev/`.
 - **Tests:** `make test` → `make test-scripts` (python unittest of
   `scripts/tests`), then `mvn -q verify` with Quarkus console/file logging off.
-  Runs unit tests (skips integration tests). Uses `@QuarkusTest`, Mockito,
-  Panache Mock.
+  Runs unit tests (skips integration tests). Uses `@QuarkusTest` and Mockito;
+  every `@QuarkusTest` gets the Dev Services database, so it needs Docker.
 - **Coverage:** `make coverage` (devkit) writes `.coverage.md`. Runs **all
   tests** (unit + integration tests via `-DskipITs=false`) with JaCoCo and
   generates a combined report. The JaCoCo `report` goal is bound to
@@ -136,8 +144,11 @@ however.
   Both enforced by Checkstyle.
 - **ULIDs:** Use `UlidUtil`, never import `com.github.f4b6a3.ulid.UlidCreator`
   directly. Enforced by Checkstyle `IllegalImport`.
-- **Vaadin UI threading:** Never block the UI thread. Use
-  `CompletableFuture.supplyAsync()` + `ui.access()` + `.exceptionally()`:
+- **Vaadin UI threading:** Never block the UI thread. Load view data through
+  `AsyncDataLoader.load(...)` (`util/`), which runs the call off the UI thread
+  with a timeout and applies the result or the error in `ui.access()`. Where it
+  doesn't fit, use `CompletableFuture.supplyAsync()` + `ui.access()` +
+  `.exceptionally()`:
 
 ```java
 final var ui = getUI().orElse(null);
@@ -155,6 +166,13 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin
   serializes views.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.**
+- **To-one associations are lazy:** `@ManyToOne(fetch = FetchType.LAZY)`, as
+  every existing one is. Fetch eagerly only where profiling justifies it.
+- **Passwords** are hashed and verified only through `PasswordHashingService`
+  (bcrypt). bcrypt reads at most 72 bytes, so `UserService` and
+  `PasswordHashingService` refuse a password over 72 UTF-8 bytes, and `UserDto`
+  caps it at 72 characters (`AppConstants.PASSWORD_MAX_LENGTH`, pinned by
+  `PasswordSizeConstraintTest`).
 - **Entity field `@Nullable` convention (NullAway-driven):** NullAway runs at
   ERROR level and treats unannotated fields as `@NonNull`. JPA entities use a
   no-arg constructor, so reference-type fields are null after construction
@@ -314,8 +332,8 @@ issue directs (e.g. #165, #207).
 
 ## Database
 
-- **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24`
-  on port `55432`).
+- **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24`,
+  dev on port `55432`, test on a random port).
 - **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is
   `validate`-only. Migrations live in `src/main/resources/db/migration`, and
   dev/test demo data lives in `db/demo/R__demo_data.sql`. Profiles are picked at
