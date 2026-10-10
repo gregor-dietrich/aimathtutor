@@ -1,5 +1,5 @@
 ---
-description: "Use when writing, modifying, or reviewing tests. Covers unit vs integration tests, mocking, naming and structure, test isolation, and the encryption test pattern."
+description: "Use when writing, modifying, or reviewing tests. Covers unit vs integration tests, mocking, naming, test isolation, and the encryption test pattern."
 paths:
   - "src/test/**"
 ---
@@ -12,11 +12,12 @@ The test-specific rules in `AGENTS.md` (`RateLimitServiceTest`,
 
 ## Unit and integration tests
 
-- **`*Test`** classes run under `make test`. A test that needs CDI is a
-  `@QuarkusTest`; pure logic (utilities, DTOs) is plain JUnit 5.
-- **`*IT`** classes are `@QuarkusTest`s against the real PostgreSQL that Dev
-  Services starts (Docker required). They run only with
-  `./mvnw verify -DskipITs=false`, as CI does.
+- A test that needs CDI is a `@QuarkusTest`; pure logic (utilities, DTOs) is
+  plain JUnit 5. Every `@QuarkusTest`, `*Test` or `*IT`, boots the app against
+  the PostgreSQL that Dev Services starts, with Flyway migrating it, so tests
+  need Docker.
+- **`*Test`** classes run under `make test` (surefire). **`*IT`** classes run
+  only under failsafe, with `./mvnw verify -DskipITs=false`, as CI does.
 - One class or method: `./mvnw test -Dtest=AiTutorServiceTest[#method]`. A
   bare `./mvnw` needs the `.devkit` link, which any `make` target creates.
 
@@ -24,26 +25,30 @@ The test-specific rules in `AGENTS.md` (`RateLimitServiceTest`,
 
 - Replace a CDI bean with Quarkus's `@InjectMock` (`quarkus-junit-mockito`),
   and stub with `Mockito.when(...)`.
-- Mock AI providers at the JAX-RS client (`AbstractJaxRsAiServiceTest`
-  mocks `Client`, `WebTarget` and `Invocation.Builder`), or run with
-  `ai.tutor.provider=mock` / `ai.tutor.enabled=false`; no test calls a real
-  AI API.
+- Mock AI providers at the JAX-RS client (`AbstractJaxRsAiServiceTest` mocks
+  `Client`, `WebTarget` and `Invocation.Builder`), or run with
+  `ai.tutor.provider=mock` / `ai.tutor.enabled=false`; no test calls a real AI
+  API.
 
 ## Naming
 
-Methods are `testMethodName` or `testMethodName_context`; most classes add a
-`@DisplayName` sentence.
+Methods are mostly `testMethodName` or `testMethodName_context`; some larger
+classes use behaviour names (`shouldLockOutAfterMaxFailedAttempts`). Most
+classes add a `@DisplayName` sentence.
 
 ## Isolation
 
-`@ApplicationScoped` services and the shared test database keep state across
-tests, so test data uses unique identifiers (`UUID.randomUUID()`, or ULIDs
-via `UlidUtil`), never fixed strings.
+- A test that writes to the database rolls back with `@TestTransaction`.
+- Where state outlives the test, use unique identifiers (`UUID.randomUUID()`,
+  or ULIDs via `UlidUtil`), never fixed strings: in-memory state of
+  `@ApplicationScoped` services (as in `RateLimitServiceTest`), and data a test
+  commits.
 
 ## Encryption tests
 
 `EncryptionIT` asserts on what is stored, not on what the entity returns:
 inject `DataSource`, read the raw column over JDBC, and check the versioned
 envelope (`1|...`) and the blind index, rolling back with `@TestTransaction`
-where the test writes. A test that deliberately passes `null` to a non-null
-parameter carries `@SuppressWarnings("NullAway")` on that method.
+where the test writes. Its one test that deliberately passes `null` to a
+non-null parameter carries `@SuppressWarnings("NullAway")` on that method;
+many other test classes carry the suppression at class level.

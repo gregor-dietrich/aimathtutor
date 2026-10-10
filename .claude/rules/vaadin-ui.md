@@ -8,7 +8,8 @@ paths:
 # Vaadin UI
 
 `AGENTS.md` ("Coding Conventions" and "Critical Anti-Patterns") holds the
-Vaadin rules that apply everywhere: transient injects, UI threading,
+Vaadin rules that apply everywhere: transient injects, UI threading through
+`AsyncDataLoader`,
 `detachEvent.getUI()`, the synchronous `LoginView`, `CommentsPanel` and the
 `MathWorkspaceView` staleness checks. This file adds how views are built
 here.
@@ -17,10 +18,6 @@ here.
   views, `layout = AdminMainLayout.class` for admin views. The layouts
   enforce authentication; views add no security annotations.
 - **Admin views** extend `AbstractAdminView`.
-- **Async loading:** use `AsyncDataLoader.load(...)` (`util/`), which wraps
-  the `supplyAsync` + `ui.access` + `exceptionally` pattern with a timeout
-  and error handling. Hand-roll the pattern only where the loader does not
-  fit.
 - **User messages** go through `NotificationUtil` (`showSuccess`,
   `showError`, `showWarning`, `showInfo`), not `Notification.show`.
 - **Reuse components** before adding one: `component/button/`,

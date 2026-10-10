@@ -3,6 +3,7 @@ description: "Use when modifying the Dockerfiles or docker-compose.yml. Covers k
 paths:
   - "src/main/docker/**"
   - "docker-compose.yml"
+  - "docs/QUICKSTART.md"
 ---
 
 # Docker Conventions
@@ -15,8 +16,9 @@ paths:
   `/deployments`, user `185`, port `9001`, the `/q/health/ready`
   healthcheck, and the `JAVA_OPTS_APPEND` list, which must match the JVM
   args in `AGENTS.md`.
-- **Compose defaults are placeholders:** every value comes from
-  `${VAR:-default}`, and a default is never a real secret (`changeit`,
-  `not-configured`).
+- **Compose defaults are placeholders:** every credential or
+  deployment-specific value comes from `${VAR:-default}`, and a default is
+  never a real secret (`changeit`, `not-configured`). The same holds for the
+  production compose file in `docs/QUICKSTART.md`.
 - **The encryption key** stays on the `aimathtutor_keys` volume at the
   `app.security.encryption-key-file` path; see `AGENTS.md`, "Docker".
