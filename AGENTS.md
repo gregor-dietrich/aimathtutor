@@ -10,9 +10,9 @@ You should challenge the user's request if it would result in implementing anti-
 
 ## Agent Tooling
 
-- **Claude Code loads the agent-kit plugin**, declared with its marketplace in `.claude/settings.json`. It carries the generic agent method (delegation to pinned agents, review triage, debugging, design exploration, planning and multi-agent review skills) and guard hooks, so this file keeps only what is specific to this project.
-- **`autoUpdate` is declared on** because the `/plugin` toggle writes it into the first settings file that declares the marketplace, which would dirty the tracked file. Override it per machine in `.claude/settings.local.json`.
-- **The marketplace is on a private forge.** A machine that can't reach it installs nothing from the declaration; no build, test or CI step depends on the plugin. OpenCode (`opencode.json`, `.opencode/`) does not read the declaration.
+- **Claude Code loads the agent-kit plugin**, declared with its marketplace in `.claude/settings.json`. It carries the generic agent method (delegation to pinned agents, review triage, debugging, design exploration, planning and multi-agent review skills) and guard hooks; for Claude Code that method is not repeated here.
+- **`autoUpdate` is declared on** so nobody needs the `/plugin` toggle, which writes the setting into the first settings file that declares the marketplace and so would dirty this tracked one.
+- **The marketplace is on a private forge.** A machine that can't reach it installs nothing from the declaration; no build, test or CI step depends on the plugin.
 
 ## Build & Development
 
