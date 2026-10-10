@@ -24,6 +24,11 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
+Deploy with the compose file in the
+[Quickstart](docs/QUICKSTART.md#using-docker-compose), which runs the published
+image. The repository's own `docker-compose.yml` builds the app from the
+checkout and is for development only.
+
 When deploying to production, it is **critical** to override the default
 database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to
 a strong password to replace the default `changeit` value used in dev/test
@@ -49,14 +54,15 @@ because one was removed from the Admin rank before 4.0.14, the app protects
 nobody and can't fix that itself; open psql (step 2), run the `user_ranks`
 `UPDATE` from step 4 on its own and then `COMMIT;`. If no administrator can log
 in anyway (for example after a forgotten password), reset one directly in the
-database. You need a checkout of this repository and JDK 25 (`./mvnw` fetches
-Maven); the checkout you run `docker compose` from will do.
+database. `make password` needs a checkout of this repository, JDK 25 and
+python3 3.11 or later (`./mvnw` fetches Maven); run the `docker compose`
+commands in the directory of your compose file.
 
 1. Run `make password` and copy the printed `hash=` value. Choose a password
    that meets the app's rules, which `make password` doesn't enforce: 8 to 72
    characters, with an uppercase and a lowercase letter, a digit and a symbol.
-2. Open psql in the database container. These are the `docker-compose.yml`
-   defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
+2. Open psql in the database container. These are the Quickstart compose
+   file's defaults; use your values if you set `SQL_USERNAME` or `SQL_DATABASE`:
 
    ```sh
    docker compose exec db psql -U aimathtutor -d aimathtutor

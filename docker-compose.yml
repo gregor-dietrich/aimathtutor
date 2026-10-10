@@ -1,3 +1,6 @@
+# Development stack: builds the app image from this checkout (pull_policy: build).
+# Not for production: deploy with the compose file in docs/QUICKSTART.md, which
+# runs the published image.
 services:
   app:
     image: gregordietrich/aimathtutor:${REVISION:-1.0.0-SNAPSHOT}

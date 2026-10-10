@@ -413,8 +413,10 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 
 ## Docker
 
-- **Production:** `docker-compose.yml` (app + PostgreSQL; optional
-  pgadmin/Ollama).
+- **Production:** the compose file in `docs/QUICKSTART.md`, which runs the
+  published image. The root `docker-compose.yml` (app + PostgreSQL; optional
+  pgadmin/Ollama) builds the app from the checkout (`pull_policy: build`) and is
+  for development only.
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu`
   (port 9001, healthcheck `/q/health/ready`).
 - **Build:** `scripts/build.sh` via `make build` — host-platform images into the

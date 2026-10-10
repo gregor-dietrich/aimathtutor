@@ -31,7 +31,9 @@ The `-Pproduction` profile is **required** — it triggers Vaadin
 
 ## docker-compose.yml (project root)
 
-Full-stack compose:
+Development stack: it builds the app from the checkout (`pull_policy: build`).
+Production deployments use the compose file in `docs/QUICKSTART.md`, which runs
+the published image.
 
 - **app** (AIMathTutor): port 9001, depends on `postgres` healthy
 - **postgres**: port 55432→5432 (DevServices default)

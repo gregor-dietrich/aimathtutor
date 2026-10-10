@@ -58,9 +58,10 @@ auto-generates a 256-bit key at `~/.local/share/aimathtutor/encryption.key` (or
 `$XDG_DATA_HOME/aimathtutor/encryption.key` if set). Permissions are set to 600
 (owner read/write only).
 
-**Production (Docker Compose):** The project `docker-compose.yml` already
-configures the `aimathtutor_keys` named volume and the
-`app.security.encryption-key-file` property. No extra steps needed.
+**Production (Docker Compose):** The compose file in the
+[Quickstart](QUICKSTART.md#using-docker-compose) already configures the
+`aimathtutor_keys` named volume and the `app.security.encryption-key-file`
+property. No extra steps needed.
 
 **Production (custom path):** Set `app.security.encryption-key-file` to an
 absolute path writable by the application process. The file must contain a
@@ -80,7 +81,7 @@ Base64-encoded 32-byte key. The application generates it if absent.
 If you want to use Ollama as your AI provider for local, privacy-focused LLM
 inference, you have two options:
 
-#### Option 1: Docker Compose (Recommended for Production)
+#### Option 1: Docker Compose (Recommended)
 
 The project includes an Ollama service in `docker-compose.yml` that you can
 enable:
