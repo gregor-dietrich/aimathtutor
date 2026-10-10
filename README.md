@@ -18,7 +18,7 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
-When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles.
+When deploying to production, it is **critical** to override the default database password. Set the `QUARKUS_DATASOURCE_PASSWORD` environment variable to a strong password to replace the default `changeit` value used in dev/test profiles. On the first start, also set `APP_BOOTSTRAP_ADMIN_PASSWORD` to create the initial admin account (see [Quickstart](docs/QUICKSTART.md#initial-admin-account)).
 
 Never set a `dev` or `test` profile (`QUARKUS_PROFILE`, `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop and recreate the database tables, so the app refuses to start with one. Likewise, never override Hibernate's schema management (`QUARKUS_HIBERNATE_ORM_SCHEMA_MANAGEMENT_STRATEGY`, the deprecated `QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION`, or their `quarkus.hibernate-orm...` property forms): anything but `validate` or `none` makes the app refuse to start. In both cases the reason appears in `docker compose logs app`.
 
@@ -73,7 +73,7 @@ If logging in fails with a server error after the reset, check that the app stil
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo report
 - `make build` – Build the Docker images for the local image store (`make check`, `mvn package`, native-platform `docker build`)
 - `make install` – `make check` and `mvn clean install -DskipTests`
-- `make password` – Generate a bcrypt hash for a password (for init.sql or an administrator reset)
+- `make password` – Generate a bcrypt hash for a password (for seed data or an administrator reset)
 - `make release` – Pull from origin/main, test, `make tag`, and build and push multi-platform Docker images with `docker buildx`
 - `make branch`, `make tag`, `make rebase`, `make untag` – Git branch/tag management
 

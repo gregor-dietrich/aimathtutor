@@ -9,7 +9,6 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -23,11 +22,7 @@ import jakarta.validation.constraints.NotNull;
  * exercise.
  */
 @Entity
-@Table(name = "student_sessions",
-        indexes = { @Index(name = "idx_session_user_start", columnList = "user_id, start_time"),
-                @Index(name = "idx_session_exercise_start", columnList = "exercise_id, start_time"),
-                @Index(name = "idx_session_completed_start", columnList = "completed, start_time"),
-                @Index(name = "idx_session_start_time", columnList = "start_time") })
+@Table(name = "student_sessions")
 @NamedQueries({
         @NamedQuery(name = "StudentSession.findBySessionId", query = "FROM StudentSessionEntity WHERE sessionId = :s"),
         @NamedQuery(name = "StudentSession.findByPublicId", query = "FROM StudentSessionEntity WHERE publicId = :p"),

@@ -97,10 +97,10 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 | Checkstyle      | `./mvnw checkstyle:check`                       | Google Java Style; config in `checkstyle.xml`                                                                                                         |
 | PMD             | `./mvnw pmd:check`                              | Unused code, complexity, style rules                                                                                                                  |
 | CPD             | `./mvnw pmd:cpd-check`                          | Code duplication detection (DRY). Property `pmd-cpd.minTokens` in `pom.xml` (default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
-| OWASP dep-check | `./mvnw org.owasp:dependency-check-maven:check` | Requires `NVD_API_KEY`; `failBuildOnCVSS=7`                                                                                                           |
+| OWASP dep-check | `make audit`                                    | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)    |
 | License report  | `./mvnw license:add-third-party`                | Runs at `verify` phase                                                                                                                                |
 
-CI order: `test` → `security` (CodeQL) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
+CI order: `test` → `security` (gitleaks + CodeQL + OWASP dep-check) → `build` (package + spotless + SpotBugs + Checkstyle + PMD + CPD).
 
 - **Compiler warnings are build failures.** `maven-compiler-plugin` passes `-Werror` and `-Xlint:all,-serial,-this-escape,-classfile`, so every javac lint warning and every Error Prone warning (any severity) fails compilation. The three excluded lint categories are deliberate and documented in `pom.xml`; do not exclude further categories to work around a warning — fix the code.
 - **Known upstream build-log noise (do not try to fix):** during `quarkus:build`, Vaadin logs `[WARNING] Addon 'flow-react-*.jar' / 'flow-dnd-*.jar' contains frontend sources under META-INF/resources/frontend/`. These come from Vaadin's own published jars (Vaadin 25.2.1), are not fixable in this repository, and will disappear with a future Vaadin upgrade.
@@ -121,9 +121,19 @@ These thresholds are deliberately set by the project maintainers. Changing them 
 ## Database
 
 - **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24` on port `55432`).
-- **Schema strategy:** Dev/Test = `drop-and-create` + `sql/init.sql`. Production = `validate` (schema must exist). Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Hibernate starts. `SchemaManagementGuard` refuses one whose schema action is anything but `none`/`validate` under the names it checks: `schema-management.strategy`, the deprecated `database.generation`, and `jakarta.persistence.schema-generation.database.action` and `hibernate.hbm2ddl.auto` via `unsupported-properties`, each under the plain, `"<default>"` and `<default>` persistence-unit names. A new name Hibernate takes the schema action from needs adding there.
-- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`.
-- **Password utility:** `make password` generates a bcrypt hash for `init.sql` or an administrator reset (README).
+- **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is `validate`-only. Migrations live in `src/main/resources/db/migration`, and dev/test demo data lives in `db/demo/R__demo_data.sql`. Profiles are picked at runtime, so `ProductionProfileGuard` refuses a production launch (`LaunchMode.NORMAL`) with a dev/test profile before Flyway and Hibernate start. `SchemaManagementGuard` refuses one whose Hibernate schema action is anything but `none`/`validate` under the names it checks: `schema-management.strategy`, the deprecated `database.generation`, and `jakarta.persistence.schema-generation.database.action` and `hibernate.hbm2ddl.auto` via `unsupported-properties`, each under the plain, `"<default>"` and `<default>` persistence-unit names. A new name Hibernate takes the schema action from needs adding there.
+- **Test accounts:** `admin`/`admin`, `teacher`/`teacher`, `student1`/`student1`, `student2`/`student2`. Production seeds no accounts: on startup in `LaunchMode.NORMAL`, `AppLifecycleBean` creates the first admin from `app.bootstrap.admin-username`/`-password` when `users` is empty, and replaces the password of a 4.x-seeded `admin` that still accepts `admin`. Both fail startup when no password is configured. 4.x-seeded `teacher`/`student1`/`student2` that still accept their published passwords are deactivated on every production start.
+- **Password utility:** `make password` generates a bcrypt hash for seed data or an administrator reset (README).
+
+### Migrations
+
+- Name files `V<n>__<snake_case>.sql`, with `n` = the next integer.
+- **Never edit a migration that has been merged to main**, because checksum validation fails on every deployed DB. Fix it with a new migration.
+- Every entity change that alters the schema ships with its migration in the same PR.
+- Indexes and constraints are declared only in migrations, never via `@Table(indexes/uniqueConstraints)`.
+- Every foreign key needs an index whose leading columns are the key's columns. `ForeignKeyIndexIT` enforces this; it runs with the integration tests, not under `make test`.
+- Update `R__demo_data.sql` when the migration touches seeded tables.
+- Migrations must be safe on a populated production DB. For example, a new `NOT NULL` column needs a `DEFAULT` or a backfill.
 
 ## Encrypt-at-Rest
 

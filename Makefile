@@ -1,9 +1,10 @@
-.PHONY: help branch build check clean coverage dev format install kill lint password rebase regen-frontend release tag test untag
+.PHONY: help audit branch build check clean coverage dev format install kill lint password rebase regen-frontend release tag test untag
 
 MAKEFLAGS += --no-print-directory
 
 help:
 	@echo "AIMathTutor - Available commands:"
+	@echo "  make audit            - run OWASP dependency-check (NVD_API_KEY from environment or .env.build)"
 	@echo "  make branch           - create or reset a git branch from a source (prompts for names and pushes)"
 	@echo "  make build            - make check, mvn package, build native-platform Docker images into the local store"
 	@echo "  make check            - verify local environment (JDK >=25 and Maven >=3.9.9)"
@@ -14,13 +15,16 @@ help:
 	@echo "  make install          - make check, mvn clean install -DskipTests"
 	@echo "  make kill             - stop/kill Quarkus and Maven processes and remove Docker containers"
 	@echo "  make lint             - run quality gate plugins"
-	@echo "  make password         - generate a bcrypt hash for a password (for init.sql or an admin reset)"
+	@echo "  make password         - generate a bcrypt hash for a password (for seed data or an admin reset)"
 	@echo "  make rebase           - interactive git rebase against a target (defaults to origin/main)"
 	@echo "  make regen-frontend   - regenerate frontend manifests for the current Vaadin version"
 	@echo "  make release          - pull from origin/main, test, make tag, and buildx-push multi-platform Docker images"
 	@echo "  make tag              - create, sign and push a new git tag (auto-increments latest tag suggestion)"
 	@echo "  make test             - run unit tests (skips ITs)"
 	@echo "  make untag            - delete a local and remote git tag (prompts for tag to delete)"
+
+audit:
+	@scripts/audit.sh
 
 branch:
 	@scripts/branch.sh
