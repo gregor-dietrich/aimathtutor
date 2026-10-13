@@ -26,8 +26,8 @@
     tests, which are the only coverage of the repository package, so the check has to
     stand down when ITs are skipped. -->
     <jacoco.check.skip>${skipITs}</jacoco.check.skip>
-    <jacoco.check.lineMinimum>0.89</jacoco.check.lineMinimum>
-    <jacoco.check.branchMinimum>0.76</jacoco.check.branchMinimum>
+    <jacoco.check.lineMinimum>0.90</jacoco.check.lineMinimum>
+    <jacoco.check.branchMinimum>0.79</jacoco.check.branchMinimum>
     <nullaway.annotated.packages>de.vptr.aimathtutor</nullaway.annotated.packages>
     <java.version>25</java.version>
     <maven.compiler.release>${java.version}</maven.compiler.release>
