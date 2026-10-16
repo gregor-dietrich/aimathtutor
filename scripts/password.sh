@@ -24,5 +24,5 @@ PASSWORD="$PASS1"
 # Pass the password on stdin: exec:java splits exec.args on whitespace, and arguments show up in ps.
 # Compile first: exec:java runs from target/classes, which a fresh checkout doesn't have.
 echo "Generating bcrypt hash..."
-printf '%s\n' "$PASSWORD" | ${MVN_CMD} -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args=generate compile exec:java
+printf '%s\n' "$PASSWORD" | "${MVN_CMD}" -q -Dexec.mainClass="de.vptr.aimathtutor.util.PasswordUtil" -Dexec.args=generate compile exec:java
 echo "Password hash generated."
