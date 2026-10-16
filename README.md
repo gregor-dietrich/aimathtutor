@@ -60,8 +60,8 @@ nobody and can't fix that itself; open psql (step 2), run the `user_ranks`
 `UPDATE` from step 4 on its own and then `COMMIT;`. If no administrator can log
 in anyway (for example after a forgotten password), reset one directly in the
 database. `make password` needs a checkout of this repository, JDK 25 and
-python3 3.11 or later (`./mvnw` fetches Maven); run the `docker compose`
-commands in the directory of your compose file.
+python3 3.11 or later (the first target downloads devkit's pinned Maven); run
+the `docker compose` commands in the directory of your compose file.
 
 1. Run `make password` and copy the printed `hash=` value. Choose a password
    that meets the app's rules, which `make password` doesn't enforce: 8 to 72
@@ -153,7 +153,9 @@ key is lost.
 Build and gate tooling comes from [devkit](devkit.toml), fetched by `./devkitw`
 and linked as `.devkit`; any `make` target creates the link, so run one before a
 bare `./mvnw`. Besides JDK 25, `make check` needs python3 ≥ 3.11, and
-`make lint` needs node ≥ 22.22.2 with npm, plus curl, tar and sha256sum/shasum.
+`make lint` needs node ≥ 22.22.2 with npm. The first target downloads devkit's
+pinned Maven and `make lint` the pinned gitleaks, so curl, tar and
+sha256sum/shasum are needed.
 
 See the [Makefile](Makefile) or use `make help` for all available commands and
 scripts.

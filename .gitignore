@@ -92,3 +92,6 @@ __pyache__/
 
 # devkit link (devkitw)
 /.devkit
+
+# Working plans of planning sessions
+/.plans/
