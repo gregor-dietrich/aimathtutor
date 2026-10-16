@@ -64,7 +64,15 @@ jobs:
         run: make -o test-scripts test
         env:
           MAVEN_ARGS: -DskipITs=false
-      # make test runs Maven quietly; the reports carry what its log leaves out.
+      # make test runs Maven quietly, and skipped ITs also skip the coverage check, so a green
+      # step alone does not show that the ITs ran.
+      - name: Check that the integration tests ran
+        run: |
+          shopt -s nullglob
+          reports=(target/failsafe-reports/TEST-*.xml)
+          echo "${#reports[@]} integration test classes reported"
+          (( ${#reports[@]} )) || { echo "::error::make test ran no integration tests"; exit 1; }
+      # The reports carry what make test's quiet log leaves out.
       - name: Upload test reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
