@@ -60,11 +60,11 @@ require_valid_revision() {
 # Package the application as version $REVISION: the target/quarkus-app the Dockerfiles copy.
 package_app() {
     # Clean before building to avoid corrupted workspace files
-    ${MVN_CMD} -q clean -Drevision="${REVISION}"
+    "${MVN_CMD}" -q clean -Drevision="${REVISION}"
     # Vaadin reuses prod.bundle and node_modules while package.json is unchanged,
     # ignoring lockfile-only changes; remove both so npm installs from the lockfile
     rm -rf src/main/bundles/prod.bundle node_modules
-    ${MVN_CMD} -q package -DskipTests -Pproduction -Drevision="${REVISION}"
+    "${MVN_CMD}" -q package -DskipTests -Pproduction -Drevision="${REVISION}"
 }
 
 # Fail unless the current buildx builder can build every platform in $PLATFORMS in one build and push

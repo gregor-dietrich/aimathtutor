@@ -60,8 +60,9 @@ nobody and can't fix that itself; open psql (step 2), run the `user_ranks`
 `UPDATE` from step 4 on its own and then `COMMIT;`. If no administrator can log
 in anyway (for example after a forgotten password), reset one directly in the
 database. `make password` needs a checkout of this repository, JDK 25 and
-python3 3.11 or later (`./mvnw` fetches Maven); run the `docker compose`
-commands in the directory of your compose file.
+python3 3.11 or later (the first target downloads devkit's pinned Maven), plus
+`ssh-keygen` (OpenSSH 8.1 or later) when devkit isn't cached yet; run the
+`docker compose` commands in the directory of your compose file.
 
 1. Run `make password` and copy the printed `hash=` value. Choose a password
    that meets the app's rules, which `make password` doesn't enforce: 8 to 72
@@ -130,8 +131,8 @@ key is lost.
 - `make test` – Execute unit tests (skips integration tests)
 - `make coverage` – Execute all tests (unit + integration) and generate JaCoCo
   report
-- `make lint` – Repository gates (pins, decisions, secrets, Markdown), then the
-  Java quality gates
+- `make lint` – Repository gates (devkitw, pins, decisions, secrets, Markdown),
+  then the Java quality gates
 - `make format` – Fix Markdown, then format Java sources
 - `make audit` – OWASP dependency-check (needs `NVD_API_KEY` or `.env.build`)
 - `make build` – Build the Docker images for the local image store
@@ -153,7 +154,11 @@ key is lost.
 Build and gate tooling comes from [devkit](devkit.toml), fetched by `./devkitw`
 and linked as `.devkit`; any `make` target creates the link, so run one before a
 bare `./mvnw`. Besides JDK 25, `make check` needs python3 ≥ 3.11, and
-`make lint` needs node ≥ 22.22.2 with npm, plus curl, tar and sha256sum/shasum.
+`make lint` needs node ≥ 22.22.2 with npm. The first target downloads devkit's
+pinned Maven and `make lint` the pinned gitleaks, so curl, tar and
+sha256sum/shasum are needed. Fetching a devkit release that isn't cached also
+needs `ssh-keygen` (OpenSSH 8.1 or later), which in a container needs the
+running UID to have a passwd entry.
 
 See the [Makefile](Makefile) or use `make help` for all available commands and
 scripts.

@@ -1,8 +1,9 @@
 #!/bin/sh
 # devkitw: fetch the devkit commit pinned in ./devkit.toml into a per-user
 # cache, point ./.devkit at it and print its path. A project commits this file
-# verbatim; `./devkitw self-check` notices a copy that has drifted.
-# Usage, from the project root: ./devkitw [path | self-check]
+# verbatim; `make lint-devkitw` notices a copy older than the pin's.
+# devkitw revision 2
+# Usage, from the project root: ./devkitw [path]
 set -eu
 
 die() {
@@ -10,10 +11,13 @@ die() {
   exit 1
 }
 
+# The release key: docs/contract.md ("devkitw") says what this line is.
+signers='devkit-release namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGBoBUp+KIF066cVVB6bU+oTkgs9bCQYJucUOUdUMNLK'
+
 case $#:${1-} in
-  0: | 1:path | 1:self-check) ;;
+  0: | 1:path) ;;
   *)
-    echo "devkitw: unknown argument '$*'; usage: devkitw [path|self-check]" >&2
+    echo "devkitw: unknown argument '$*'; usage: devkitw [path]" >&2
     exit 2
     ;;
 esac
@@ -38,48 +42,118 @@ root=${XDG_CACHE_HOME:-$HOME/.cache}/devkit
 case $root in /*) ;; *) die "cache root $root is not an absolute path" ;; esac
 dir=$root/$commit mark=.devkit-commit # the marker holds "<commit> <version>"
 
-# g ARGS...: git in the temp dir, without hooks, credential helpers or stalls.
+# g ARGS...: git in the temp dir, without hooks, credential helpers or prompts.
 g() {
   git -c core.hooksPath=/dev/null -c credential.helper= \
     -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=20 -C "$tmp" "$@"
 }
 
+# verify_release: die unless refs/tags/$version in the temp dir is an annotated
+# tag of $commit, named $version, and signed by the key in $signers. It does
+# not use git verify-tag, so no gpg.* setting, GNUPGHOME or ~/.ssh is read. The
+# scratch files go in .git, which is removed before the tree is sealed.
+verify_release() {
+  vr=$tmp/.git/devkitw-
+  [ "$(g cat-file -t "refs/tags/$version")" = tag ] ||
+    die "tag $version is not an annotated tag; refusing $commit"
+  g cat-file tag "refs/tags/$version" >"${vr}tag"
+  sed '/^$/q' "${vr}tag" >"${vr}head" # the header: up to the first empty line
+  # Each of object, type and tag occurs once, with the expected value, as text.
+  for pair in "object $commit" "type commit" "tag $version"; do
+    if [ "$(grep -c "^${pair%% *} " "${vr}head")" != 1 ] ||
+      [ "$(grep -Fxc "$pair" "${vr}head")" != 1 ]; then
+      die "tag $version is a tag of another name, commit or tag;" \
+        "refusing $commit"
+    fi
+  done
+  # Split at the last SSH signature line.
+  n=$(grep -n '^-----BEGIN SSH SIGNATURE-----$' "${vr}tag" | tail -n 1 |
+    cut -d: -f1)
+  [ -n "$n" ] || die "tag $version is not signed by devkit's release key;" \
+    "refusing $commit"
+  head -n "$((n - 1))" "${vr}tag" >"${vr}payload"
+  tail -n "+$n" "${vr}tag" >"${vr}sig"
+  printf '%s\n' "$signers" >"${vr}signers"
+  # A bad signature prints "Could not verify signature." and exits 255, but 255
+  # is also what ssh-keygen exits on a fault such as a UID without a passwd
+  # entry, so the verdict is read from that line. An ssh-keygen without -Y
+  # (before OpenSSH 8.1) exits 1 on its usage error.
+  rc=0
+  ssh-keygen -Y verify -f "${vr}signers" -I devkit-release -n git \
+    -s "${vr}sig" <"${vr}payload" >"${vr}out" 2>"${vr}err" || rc=$?
+  [ "$rc" != 0 ] || return 0
+  if grep -qx 'Could not verify signature\.' "${vr}out"; then
+    die "tag $version is not signed by devkit's release key; refusing $commit"
+  elif [ "$rc" = 1 ]; then
+    die "ssh-keygen cannot verify tag $version (it needs OpenSSH 8.1 or" \
+      "later); refusing $commit"
+  fi
+  msg=$(head -n 1 "${vr}err")
+  die "ssh-keygen failed verifying tag $version: ${msg:-exited $rc};" \
+    "refusing $commit"
+}
+
 cached=$(cat "$dir/$mark" 2>/dev/null || :)
 if [ -n "$cached" ] && [ "$cached" != "$commit $version" ]; then
   die "version $version does not match cached commit $commit;" \
-    "check devkit.toml, or remove $dir to refetch"
+    "check devkit.toml, or remove $dir" \
+    "(chmod -R u+w '$dir'; rm -rf '$dir') to refetch"
 elif [ -z "$cached" ]; then
-  [ ! -e "$dir" ] || die "$dir has no $mark; remove it and retry"
+  [ ! -e "$dir" ] || die "$dir has no $mark; remove it" \
+    "(chmod -R u+w '$dir'; rm -rf '$dir') and retry"
+  command -v ssh-keygen >/dev/null 2>&1 ||
+    die "verifying tag $version needs ssh-keygen (OpenSSH 8.1 or later)"
   # Never touch a calling git hook's repository (GIT_DIR, GIT_INDEX_FILE, ...).
   # shellcheck disable=SC2046
   unset $(git rev-parse --local-env-vars)
-  : "${GIT_SSH_COMMAND:=ssh -o BatchMode=yes -o ConnectTimeout=10}"
-  export GIT_SSH_COMMAND GIT_TERMINAL_PROMPT=0 # fail rather than prompt
+  # ConnectTimeout bounds the connect and handshake; the keepalives drop a
+  # connection whose server stops answering. A live server whose git stalls
+  # is not bounded, over ssh or (above 1000 bytes/s) over HTTPS.
+  : "${GIT_SSH_COMMAND:=ssh -o BatchMode=yes -o ConnectTimeout=10 \
+    -o ServerAliveInterval=10 -o ServerAliveCountMax=2}"
+  # Fail rather than prompt. GIT_TERMINAL_PROMPT=0 does not stop git asking an
+  # askpass (GIT_ASKPASS, core.askPass, SSH_ASKPASS); an empty GIT_ASKPASS does.
+  export GIT_SSH_COMMAND GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=
   mkdir -p "$root"
   tmp=$(mktemp -d "$root/.tmp.XXXXXX")
-  trap 'rm -rf "$tmp"' EXIT
+  trap 'chmod -R u+w "$tmp" 2>/dev/null || :; rm -rf "$tmp"' EXIT
   trap 'exit 1' HUP INT TERM
   g init -q
+  # Fetch main too: anyone who can push a tag can put it on any commit, so the
+  # commit must also be on main. The mirror stands in only for an unreachable
+  # url, never for one that lacks the tag or main.
   for remote in "$url" ${mirror:+"$mirror"}; do
-    g fetch -q --depth 1 -- "$remote" "refs/tags/$version" 2>/dev/null && break
+    g fetch -q --no-tags -- "$remote" "refs/tags/$version:refs/tags/$version" \
+      refs/heads/main:refs/devkit/main 2>/dev/null && break
+    [ "$remote" != "$url" ] || ! g ls-remote -q -- "$url" >/dev/null 2>&1 ||
+      die "$url serves no tag $version, or no main"
   done
-  got=$(g rev-parse -q --verify 'FETCH_HEAD^{commit}') ||
-    die "cannot fetch tag $version from $url${mirror:+ or $mirror}"
+  got=$(g rev-parse -q --verify "refs/tags/$version^{commit}") ||
+    die "cannot fetch tag $version and main from $url${mirror:+ or $mirror}"
   [ "$got" = "$commit" ] || die "tag $version is $got, not the pinned $commit"
+  verify_release
+  g merge-base --is-ancestor "$commit" refs/devkit/main ||
+    die "tag $version is not on devkit's main; refusing $commit"
   g checkout -q "$commit"
   rm -rf "$tmp/.git"
   echo "$commit $version" >"$tmp/$mark"
-  # Read-only, so an edit through .devkit cannot change every project's gates.
-  find "$tmp" -type f -exec chmod a-w {} +
-  mv "$tmp" "$dir"
-  rm -rf "${dir:?}/${tmp##*/}" # a concurrent run won: mv nested ours in it
+  # Read-only, directories too, so an edit through .devkit cannot change every
+  # project's gates.
+  chmod -R a-w "$tmp"
+  nested=$dir/${tmp##*/}
+  if mv "$tmp" "$dir" 2>/dev/null; then
+    # mv succeeded, yet ours landed inside a DIR that was there already: only
+    # root gets this, a read-only tmp does not stop it. The existing DIR wins.
+    # scripts/lib/sealed_dir.sh is the shared version of this logic.
+    if [ -e "$nested" ]; then
+      chmod -R u+w "$nested"
+      rm -rf "${nested:?}"
+    fi
+  elif [ ! -e "$dir" ]; then # else mv failed on an existing DIR (non-root): its copy wins
+    die "cannot move the fetched devkit into $dir"
+  fi
 fi >&2 # only the path may reach stdout: not git's, nor a hook's
 
 [ "$(readlink .devkit 2>/dev/null)" = "$dir" ] || ln -sfn "$dir" .devkit
 
-if [ "${1-}" = self-check ]; then
-  cmp -s devkitw "$dir/devkitw" ||
-    die "./devkitw differs from devkit $version; copy $dir/devkitw over it"
-else
-  printf '%s\n' "$dir"
-fi
+printf '%s\n' "$dir"

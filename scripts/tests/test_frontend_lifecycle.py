@@ -103,6 +103,35 @@ class FrontendLifecycleTest(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
 
+    def test_release_refuses_untaggable_versions_before_anything_runs(self):
+        devkit = self.root / "devkit"
+        (devkit / "scripts" / "lib").mkdir(parents=True)
+        (devkit / "scripts" / "lib" / "get_maven.sh").write_text("")
+        bin_dir = self.root / "bin"
+        bin_dir.mkdir()
+        git = bin_dir / "git"
+        git.write_text(f"#!/bin/sh\necho \"$@\" >> '{self.root}/git.log'\n")
+        git.chmod(0o755)
+        self.environment.update(PROJECT_ROOT=str(self.root), DEVKIT=str(devkit), PATH=f"{bin_dir}:{os.environ['PATH']}")
+
+        for version in ("5.1.0-beta1", "5.1.0-SNAPSHOT", "05.1.0"):
+            with self.subTest(version=version):
+                result = subprocess.run(
+                    ["bash", "scripts/release.sh"],
+                    cwd=self.root,
+                    env={**self.environment, "REVISION": version},
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(f"not '{version}'", result.stderr)
+                self.assertIn("nothing was tagged or pushed", result.stderr)
+                # Only require_valid_revision's check-ref-format may have run, no switch or pull.
+                calls = (self.root / "git.log").read_text().split("\n")
+                self.assertTrue(all(call.startswith("check-ref-format") for call in calls if call), calls)
+
 
 if __name__ == "__main__":
     unittest.main()

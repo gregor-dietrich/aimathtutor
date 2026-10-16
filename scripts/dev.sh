@@ -8,4 +8,4 @@ set -e
 
 echo "Starting Quarkus in dev mode..."
 
-${MVN_CMD} -q quarkus:dev
+"${MVN_CMD}" -q quarkus:dev

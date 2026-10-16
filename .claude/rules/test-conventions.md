@@ -17,7 +17,7 @@ The test-specific rules in `AGENTS.md` (`RateLimitServiceTest`,
   the PostgreSQL that Dev Services starts, with Flyway migrating it, so those
   tests need Docker; plain JUnit tests do not.
 - **`*Test`** classes run under `make test` (surefire). **`*IT`** classes run
-  only under failsafe, with `./mvnw verify -DskipITs=false`, as CI does.
+  only under failsafe, with `MAVEN_ARGS=-DskipITs=false make test`, as CI does.
 - One class or method: `./mvnw test -Dtest=AiTutorServiceTest[#method]`. A
   bare `./mvnw` needs the `.devkit` link, which any `make` target creates.
 

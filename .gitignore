@@ -87,8 +87,11 @@ vite.config.ts
 ollama/payload
 
 # Python
-__pyache__/
+__pycache__/
 *.pyc
 
 # devkit link (devkitw)
 /.devkit
+
+# Working plans of planning sessions
+/.plans/

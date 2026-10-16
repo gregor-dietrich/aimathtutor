@@ -26,7 +26,7 @@ echo "Regenerating frontend manifest (package.json / package-lock.json)..."
 rm -f package.json package-lock.json
 rm -rf node_modules
 
-${MVN_CMD} -q clean compile -Pregen-frontend -Drevision="${REVISION}"
+"${MVN_CMD}" -q clean compile -Pregen-frontend -Drevision="${REVISION}"
 
 if [ ! -f package.json ] || [ ! -f package-lock.json ]; then
     echo "ERROR: frontend manifest was not generated." >&2

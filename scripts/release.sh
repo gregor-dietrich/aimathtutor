@@ -24,7 +24,7 @@ if [[ -z "$REVISION" ]]; then
 fi
 export REVISION
 require_valid_revision "$REVISION" || abort_untagged
-[[ $REVISION != *-SNAPSHOT ]] || { echo "Error: a release needs a real version, not '$REVISION'." >&2; abort_untagged; }
+[[ $REVISION =~ ^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-?rc(0|[1-9][0-9]*))?$ ]] || { echo "Error: a release version is X.Y.Z, optionally prefixed v and followed by rcN or -rcN, not '$REVISION'." >&2; abort_untagged; }
 TAG="${IMAGE_NAME}:${REVISION}"
 
 # --pulled is private to this script: the run below, with the scripts just pulled
