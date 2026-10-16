@@ -52,16 +52,29 @@ jobs:
       # devkit.toml's url is on a private network; devkitw falls back to its GitHub mirror.
       # -k runs every repository gate and reports each failure; the tests still run after a failed
       # gate (the job stays red), so one push shows every problem.
-      - name: Repository gates (pins, decisions, secrets, Markdown)
+      - name: Repository gates (devkitw, pins, decisions, secrets, Markdown)
         run: make -k lint-repo
       - name: Test frontend lifecycle scripts
         if: ${{ !cancelled() }}
         run: make test-scripts
+      # -o skips make test's test-scripts prerequisite, which the step above ran, so a failing
+      # script test does not stop the Java tests.
       - name: Run tests
         if: ${{ !cancelled() }}
-        run: make test
+        run: make -o test-scripts test
         env:
           MAVEN_ARGS: -DskipITs=false
+      # make test runs Maven quietly; the reports carry what its log leaves out.
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+            target/generated-sources/license/THIRD-PARTY.txt
+          if-no-files-found: ignore
 
   security:
     runs-on: ubuntu-latest
@@ -69,8 +82,10 @@ jobs:
       contents: read
       actions: read
       security-events: write
+    # if: cannot read secrets, so the job carries only whether the key is set; the key itself
+    # reaches the audit step alone, not make install's plugins and npm scripts or CodeQL.
     env:
-      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      HAS_NVD_KEY: ${{ secrets.NVD_API_KEY != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -103,10 +118,12 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
       - name: Run OWASP Dependency-Check
-        if: env.NVD_API_KEY != ''
+        if: env.HAS_NVD_KEY == 'true'
         run: make audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
       - name: Upload Dependency-Check results
-        if: ${{ !cancelled() && env.NVD_API_KEY != '' }}
+        if: ${{ !cancelled() && env.HAS_NVD_KEY == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dependency-check-report
