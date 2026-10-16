@@ -10,12 +10,14 @@ If you want to learn more about Quarkus, please visit its website:
 | Name   | Build | Run | Download                                                                      |
 | ------ | ----- | --- | ----------------------------------------------------------------------------- |
 | JDK 25 | ✅    | ❌  | [Adoptium](https://adoptium.net/temurin/releases/?os=any&arch=any&version=25) |
-| Maven  | ✅    | ❌  | [Apache](https://maven.apache.org/download.cgi)                               |
 | Docker | ❌    | ✅  | (see below)                                                                   |
 
-`make check` and `make install` also need python3 ≥ 3.11. `make lint` and
-`make format` need node ≥ 22.22.2 with npm (the Markdown gate), and `make lint`
-needs curl, tar and sha256sum/shasum (the gitleaks download).
+Every Java `make` target needs python3 ≥ 3.11. The first target that runs Maven
+downloads devkit's pinned Maven, so it needs curl, tar and sha256sum/shasum (no
+system Maven is needed; `./mvnw` stays for IDE or bare use). `make lint` and
+`make format` need node ≥ 22.22.2 with npm (the Markdown gate). Fetching a
+devkit release that isn't cached needs `ssh-keygen` (OpenSSH 8.1 or later),
+which in a container needs the running UID to have a passwd entry.
 
 For Docker, you have 2 options:
 
@@ -339,16 +341,18 @@ make release  # Test, tag, and build and push multi-platform images
 `<version>`) and `<version>-ubuntu` for the host's own platform and loads them
 into the local image store.
 
-`make release` asks for a version (a `-SNAPSHOT` version is refused) and pulls
-`main`. Then it checks that the current buildx builder can build both
-`linux/amd64` and `linux/arm64` (the default `docker` driver needs the
-containerd image store for that; a `docker-container` builder works on either
-store) and logs in to the registry. It cleans, installs, lints, tests and
-packages the application, and builds both images for both platforms into the
-buildx cache only. Then it runs `make tag`. Last, one `docker buildx build
---platform linux/amd64,linux/arm64 --push` per Dockerfile publishes all of its
-tags together from the cached build: `<version>-alpine`, `alpine`, `<version>`
-and `latest` for Alpine, `<version>-ubuntu` and `ubuntu` for Ubuntu.
+`make release` asks for a version (it refuses up front anything `make tag`
+would: only `X.Y.Z`, optionally prefixed `v` and followed by `rcN` or `-rcN`,
+passes, so no `-SNAPSHOT`) and pulls `main`. Then it checks that the current
+buildx builder can build both `linux/amd64` and `linux/arm64` (the default
+`docker` driver needs the containerd image store for that; a `docker-container`
+builder works on either store) and logs in to the registry. It cleans,
+installs, lints, tests and packages the application, and builds both images for
+both platforms into the buildx cache only. Then it runs `make tag`. Last, one
+`docker buildx build --platform linux/amd64,linux/arm64 --push` per Dockerfile
+publishes all of its tags together from the cached build: `<version>-alpine`,
+`alpine`, `<version>` and `latest` for Alpine,
+`<version>-ubuntu` and `ubuntu` for Ubuntu.
 
 A release pushes nothing from the local image store. Any failure stops it with
 an error. Up to the cache-only builds, nothing has been tagged or pushed. After

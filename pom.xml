@@ -306,7 +306,8 @@
             <id>add-third-party</id>
             <configuration>
               <!-- Spellings of allowed licenses that the parent's allowlist omits, each redundant
-                   once devkit lists it, plus UPL-1.0 (org.graalvm.sdk), which this project accepts. -->
+                   once devkit lists it (devkit#153), plus UPL-1.0 (org.graalvm.sdk), an
+                   OSI-approved permissive license this project accepts. -->
               <includedLicenses combine.children="append">
                 <includedLicense>Apache License Version 2.0</includedLicense>
                 <includedLicense>Apache 2.0</includedLicense>

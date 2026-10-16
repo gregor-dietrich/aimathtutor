@@ -87,7 +87,7 @@ vite.config.ts
 ollama/payload
 
 # Python
-__pyache__/
+__pycache__/
 *.pyc
 
 # devkit link (devkitw)

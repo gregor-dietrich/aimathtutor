@@ -41,11 +41,17 @@ however.
 - **Java 25 required.** `make check` enforces JDK 25 + python3 ≥3.11, and checks
   the devkit parent POM; the parent's enforcer checks the JDK that Maven runs
   on. `make lint` also needs node ≥22.22.2 with npm (lint-md) and curl, tar and
-  sha256sum/shasum (the gitleaks download). CI uses Temurin 25.
-- **Maven:** every devkit target runs devkit's own pinned Maven, downloaded and
-  checksum-verified on first use into `~/.cache/devkit/tools` (needs curl, tar,
-  sha256sum/shasum); it never uses `mvn` on `PATH` or `./mvnw`. `./mvnw` stays
-  for IDE or bare use.
+  sha256sum/shasum (the gitleaks download). `devkitw` needs `ssh-keygen`
+  (OpenSSH 8.1 or later) whenever it fetches a devkit release it has not cached;
+  in a container, the running UID needs a passwd entry for it. CI uses Temurin
+  25.
+- **Maven:** every target that runs Maven, the project's own included, runs
+  devkit's pinned Maven, downloaded and checksum-verified on first use into
+  devkit's tools cache (`${XDG_CACHE_HOME:-~/.cache}/devkit/tools`; needs curl,
+  tar, sha256sum/shasum); it never uses `mvn` on `PATH` or `./mvnw`. That Maven
+  reads its own `conf/`, so a system Maven's global `settings.xml` does not
+  apply under make; use `~/.m2/settings.xml`, or `-gs <file>` in
+  `.mvn/maven.config`. `./mvnw` stays for IDE or bare use.
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI:
   `http://localhost:9001/q/dev/`.
 - **Tests:** `make test` → `make test-scripts` (python unittest of
@@ -106,23 +112,27 @@ however.
   (`de.vptr.devkit:devkit-parent`, which configures and activates every Maven
   gate plugin and pins their versions) come from devkit, pinned by `version` and
   `commit` in `devkit.toml`. `./devkitw` fetches that pin into a read-only
-  per-user cache and links it as `.devkit`. Any `make` target creates the link;
-  a bare `./mvnw` or an IDE import fails on a fresh clone because Maven cannot
-  resolve the parent POM without the link. The pom therefore declares no
-  repository besides Central: any other repository would be asked for the
-  parent.
+  per-user cache, after verifying the release tag's SSH signature and that the
+  commit is on devkit's `main`, and links it as `.devkit`. Any `make` target
+  creates the link; a bare `./mvnw` or an IDE import fails on a fresh clone
+  because Maven cannot resolve the parent POM without the link. The pom
+  therefore declares no repository besides Central: any other repository would
+  be asked for the parent.
 - **Never edit `.devkit` or `devkitw`.** A shared gate changes in devkit and is
   released there. To adopt a release, edit `version` and `commit` in
   `devkit.toml` together with the root pom's `<parent><version>` (the tag
   without the `v`), and copy the new `devkitw` when the release changed it
-  (`make check` warns, `lint-devkitw` fails until it is copied), then re-run
-  `make hooks`. Dependabot cannot bump the pin, so bumps are by hand.
-- **Project values stay here:** `pom.xml` keeps only overrides of the parent's
-  properties (`jacoco.check.*`, `nullaway.annotated.packages`),
-  `checkstyle-project.xml` (the project's own Checkstyle rules, run as
-  checkstyle execution `project`), and the suppression/exclusion files
-  (`checkstyle-suppressions.xml`, `spotbugs-exclude.xml`,
-  `dependency-check-suppression.xml`).
+  (`lint-devkitw` fails until it is copied), then re-run `make hooks`. Follow
+  the upgrade notes in `.devkit/README.md` for every release the bump crosses.
+  Dependabot cannot bump the pin, so bumps are by hand.
+- **Project values stay here:** `pom.xml` keeps overrides of the parent's
+  properties (`jacoco.check.*`, `nullaway.annotated.packages`), the project's
+  own plugin configuration (e.g. JaCoCo excludes) and names appended to the
+  parent's license allowlist (the `add-third-party` execution,
+  `combine.children="append"`). Beside it are `checkstyle-project.xml` (the
+  project's own Checkstyle rules, run as checkstyle execution `project`), and
+  the suppression/exclusion files (`checkstyle-suppressions.xml`,
+  `spotbugs-exclude.xml`, `dependency-check-suppression.xml`).
 - **Hooks:** run `make hooks` once per clone: pre-commit runs `make lint-repo`,
   pre-push runs `make lint-repo test`. `make gate` runs the push gate and
   records a passing clean HEAD, so the next push skips it.
@@ -266,26 +276,28 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 ## Code Quality Gates
 
-| Gate            | Command                          | Notes                                                                                                                                                  |
-| --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Repository      | `make lint-repo`                 | `lint-pins` + `lint-decisions` + `lint-secrets` (gitleaks) + `lint-md` (markdownlint); `make format-md` fixes Markdown; `make lint` runs it first      |
-| Lint (all)      | `make lint`                      | Runs lint-repo, then spotless:check + checkstyle + spotbugs + PMD + CPD + frontend pin check                                                           |
-| Spotless        | `./mvnw spotless:check`          | Enforces code formatting (runs at `verify` phase); use `make format` to fix                                                                            |
-| Tests           | `make test`                      | CI runs `make test` with `MAVEN_ARGS=-DskipITs=false` (unit + ITs); `make test` alone runs unit tests only                                             |
-| Coverage        | `make coverage`                  | Runs all tests (including ITs) and generates report                                                                                                    |
-| SpotBugs        | `./mvnw spotbugs:check`          | Exclusions in `spotbugs-exclude.xml`                                                                                                                   |
-| Checkstyle      | `make lint`                      | Google Java Style; shared config from devkit, project rules in `checkstyle-project.xml`; alone: `./mvnw checkstyle:check checkstyle:check@project`     |
-| PMD             | `./mvnw initialize pmd:check`    | Unused code, complexity, style rules                                                                                                                   |
-| CPD             | `./mvnw pmd:cpd-check`           | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6. |
-| OWASP dep-check | `make audit`                     | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)     |
-| License report  | `./mvnw license:add-third-party` | Runs at `verify` phase                                                                                                                                 |
+| Gate              | Command                                          | Notes                                                                                                                                                              |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Repository        | `make lint-repo`                                 | `lint-devkitw` + `lint-pins` + `lint-decisions` + `lint-secrets` (gitleaks) + `lint-md` (markdownlint); `make format-md` fixes Markdown; `make lint` runs it first |
+| Lint (all)        | `make lint`                                      | Runs lint-repo, then spotless:check + checkstyle + spotbugs + PMD + CPD + frontend pin check                                                                       |
+| Spotless          | `./mvnw spotless:check`                          | Enforces code formatting (runs at `verify` phase); use `make format` to fix                                                                                        |
+| Tests             | `make test`                                      | CI runs `make test` with `MAVEN_ARGS=-DskipITs=false` (unit + ITs); `make test` alone runs unit tests only                                                         |
+| Coverage          | `make coverage`                                  | Runs all tests (including ITs) and generates report                                                                                                                |
+| SpotBugs          | `./mvnw spotbugs:check`                          | Exclusions in `spotbugs-exclude.xml`                                                                                                                               |
+| Checkstyle        | `make lint`                                      | Google Java Style; shared config from devkit, project rules in `checkstyle-project.xml`; alone: `./mvnw checkstyle:check checkstyle:check@project`                 |
+| PMD               | `./mvnw initialize pmd:check`                    | Unused code, complexity, style rules                                                                                                                               |
+| CPD               | `./mvnw pmd:cpd-check`                           | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6.             |
+| OWASP dep-check   | `make audit`                                     | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)                 |
+| License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license the parent's allowlist and `pom.xml`'s appends don't name (`mvn verify` without `-q` lists each)             |
 
 CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
-fails, then `make test-scripts` and `make test` with
-`MAVEN_ARGS=-DskipITs=false`, which run regardless) → `security` (CodeQL around
-`make install`, then `make audit` when `NVD_API_KEY` is set) → `build`
-(`make install` with `MAVEN_ARGS=-Pproduction`: package + spotless + SpotBugs +
-Checkstyle + PMD + CPD). A push-only
+fails, then `make test-scripts`, then `make -o test-scripts test` with
+`MAVEN_ARGS=-DskipITs=false`; the `-o` skips the prerequisite already run, so a
+failing script test doesn't stop the Java tests; both run regardless of the
+gate's result) and `security` (CodeQL around `make install`, then `make audit`
+when `NVD_API_KEY` is set; only that step receives the key) run in parallel,
+then `build` (`make install` with `MAVEN_ARGS=-Pproduction`: package, spotless,
+SpotBugs, Checkstyle, PMD, CPD). A push-only
 `dependency-submission` job submits the Maven dependency graph after
 `./devkitw path`. Secret scanning is `lint-secrets`, not a separate action.
 
@@ -333,7 +345,9 @@ fine-grained as possible.
 
 Not threshold changes: bumping the devkit pin (`[devkit]` `version`/`commit`
 with the parent `<version>`) and changing `[frontend.min-pins]`, each as its
-issue directs (e.g. #165, #207).
+issue directs (e.g. #165, #207). Appending to `pom.xml`'s license allowlist a
+spelling of a license the parent already allows is not one either; admitting a
+new license (as UPL-1.0 was) needs the maintainer's approval.
 
 ## Database
 
@@ -462,13 +476,15 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   without buildx).
 - **Release:** `scripts/release.sh` via `make release` — one `docker buildx
   build --platform linux/amd64,linux/arm64 --push` per Dockerfile with all of
-  its tags; nothing is pushed from the local image store. It refuses `-SNAPSHOT`
-  versions, and fails before testing unless the current buildx builder lists
-  both platforms (the `docker` driver also needs the containerd image store). It
-  also refuses a `package.json` or `package-lock.json` that differs from HEAD,
-  both before the tests and again right before packaging, so the images ship the
-  committed lockfile (`scripts/lib/frontend.sh`). A cache-only multi-platform
-  build of each Dockerfile runs before the git tag, so only a push can fail
+  its tags; nothing is pushed from the local image store. It refuses up front any
+  version `make tag` would refuse (anything but `X.Y.Z`, optionally prefixed `v`
+  and followed by `rcN` or `-rcN`, which covers `-SNAPSHOT`), and fails before
+  testing unless the current buildx builder lists both platforms (the `docker`
+  driver also needs the containerd image store). It also refuses a
+  `package.json` or `package-lock.json` that differs from HEAD, both before the
+  tests and again right before packaging, so the images ship the committed
+  lockfile (`scripts/lib/frontend.sh`). A cache-only multi-platform build of
+  each Dockerfile runs before the git tag, so only a push can fail
   after it. Helpers shared with `make build` live in `scripts/lib/images.sh`.
 - Named volume `aimathtutor_keys` mounted at `/etc/aimathtutor/keys`; property
   `app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key`.
