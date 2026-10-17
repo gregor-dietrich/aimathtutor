@@ -30,15 +30,12 @@ public class ChartCard extends VerticalLayout {
         this.addClassNames(AppStyles.GLASS_CARD, AppStyles.LIFT_ON_HOVER);
         this.getStyle().set("overflow", "hidden");
 
-        final var accentBar = new GlassAccentBar();
-
+        this.add(new GlassAccentBar());
         if (title != null && !title.isEmpty()) {
             final var titleSpan = new Span(title);
             titleSpan.addClassName(AppStyles.CARD_TITLE);
             titleSpan.getStyle().set("padding", "12px 16px 0");
-            this.add(accentBar, titleSpan);
-        } else {
-            this.add(accentBar);
+            this.add(titleSpan);
         }
 
         this.chartContainer = new Div();
