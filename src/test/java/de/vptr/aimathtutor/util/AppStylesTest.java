@@ -13,14 +13,18 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@DisplayName("AppStyles - names defined in styles.css")
 class AppStylesTest {
 
     private static final Pattern TOKEN = Pattern.compile("var\\((--app-[\\w-]+)\\)");
 
+    private static final Pattern COMMENT = Pattern.compile("(?s)/\\*.*?\\*/");
+
+    /** The stylesheet without its comments, so a name that survives only in a comment does not count as defined. */
     private static String stylesheet() throws IOException {
         try (var in = AppStylesTest.class.getResourceAsStream("/META-INF/resources/styles.css")) {
             assertNotNull(in, "styles.css must be on the classpath");
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            return COMMENT.matcher(new String(in.readAllBytes(), StandardCharsets.UTF_8)).replaceAll("");
         }
     }
 
