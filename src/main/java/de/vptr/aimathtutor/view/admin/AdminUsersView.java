@@ -146,7 +146,7 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(UserViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Make the username column clickable
@@ -302,10 +302,10 @@ public class AdminUsersView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", e -> this.saveUser());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", e -> this.userDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 
@@ -363,10 +363,10 @@ public class AdminUsersView extends AbstractAdminView {
             }
             this.changeUserPassword(user.publicId, newPassword);
         });
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", e -> this.passwordDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 

@@ -75,7 +75,7 @@ public class AdminSessionsView extends AbstractAdminView {
 
         // Create grid
         this.grid = new Grid<>(StudentSessionViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Configure columns

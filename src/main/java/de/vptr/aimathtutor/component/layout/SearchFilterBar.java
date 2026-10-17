@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.component.layout;
 
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
 
 /**
@@ -31,7 +30,6 @@ public final class SearchFilterBar {
         this.endDatePicker = dateFilterLayout.getEndDatePicker();
 
         this.resetButton = new Button("Reset Filters", ignored -> onResetFilters.run());
-        this.resetButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         searchLayout.add(dateFilterLayout, this.resetButton);
     }

@@ -152,7 +152,7 @@ public class AdminSessionView extends AbstractAdminView {
                 .set("padding", "12px 16px 4px").set("display", "block");
 
         this.interactionsGrid = new Grid<>(AiInteractionViewDto.class, false);
-        this.interactionsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.interactionsGrid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.interactionsGrid.setWidthFull();
         this.interactionsGrid.getStyle().set("padding", "0 8px 8px");
 

@@ -163,7 +163,6 @@ public class AdminExercisesView extends AbstractAdminView {
         this.searchField = searchLayout.getTextfield();
 
         this.showPublishedButton = new Button("Show Published Only", ignored -> this.loadPublishedExercises());
-        this.showPublishedButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         // Date range filter
         final var dateFilterLayout = new DateFilterLayout(ignored -> this.filterByDateRange());
@@ -197,7 +196,7 @@ public class AdminExercisesView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(ExerciseViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Make the title column clickable
@@ -427,10 +426,10 @@ public class AdminExercisesView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", ignored -> this.saveExercise());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", ignored -> this.exerciseDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 

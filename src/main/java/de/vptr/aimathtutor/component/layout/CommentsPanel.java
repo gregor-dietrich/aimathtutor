@@ -145,7 +145,7 @@ public class CommentsPanel extends VerticalLayout {
 
         // Submit button
         this.submitButton = new Button("Post Comment");
-        this.submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        this.submitButton.addThemeVariants(ButtonVariant.PRIMARY);
         this.submitButton.addClickListener(e -> this.onCommentSubmitted());
         this.submitButton.addClickShortcut(Key.ENTER, KeyModifier.CONTROL);
 

@@ -22,7 +22,7 @@ public class CommentButton extends Button {
     public CommentButton(final ComponentEventListener<ClickEvent<Button>> addUserAction,
             @Nullable final String tooltipText) {
         super("", addUserAction);
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);
+        this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.WARNING);
         this.setIcon(LineAwesomeIcon.COMMENT_ALT_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
         this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);

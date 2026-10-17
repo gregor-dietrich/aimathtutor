@@ -21,7 +21,7 @@ public class HideButton extends Button {
      */
     public HideButton(final ComponentEventListener<ClickEvent<Button>> hideAction, @Nullable final String tooltipText) {
         super("", hideAction);
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);
+        this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.WARNING);
         this.setIcon(LineAwesomeIcon.EYE_SLASH_SOLID.create());
         final String resolvedTooltip = tooltipText != null && !tooltipText.isBlank() ? tooltipText : DEFAULT_TOOLTIP;
         this.setTooltipText(resolvedTooltip);

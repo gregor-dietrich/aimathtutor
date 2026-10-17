@@ -28,7 +28,7 @@ public class DeleteButton extends Button {
             throw new IllegalArgumentException("deleteAction must not be null");
         }
         this.deleteAction = deleteAction;
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
+        this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.ERROR);
         this.setIcon(LineAwesomeIcon.TRASH_ALT_SOLID.create());
         final String label =
                 (tooltipText != null && !tooltipText.trim().isEmpty()) ? tooltipText.trim() : DEFAULT_TOOLTIP;

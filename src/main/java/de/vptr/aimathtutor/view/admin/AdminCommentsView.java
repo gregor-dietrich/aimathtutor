@@ -226,7 +226,7 @@ public class AdminCommentsView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(CommentViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Exercise title column
@@ -340,10 +340,10 @@ public class AdminCommentsView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", ignored -> this.saveComment());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", ignored -> this.commentDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 
@@ -572,10 +572,10 @@ public class AdminCommentsView extends AbstractAdminView {
             onConfirm.accept(reasonField.getValue());
             dialog.close();
         });
-        confirmButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        confirmButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", ignored -> dialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(confirmButton, cancelButton);
 

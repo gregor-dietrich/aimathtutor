@@ -21,7 +21,7 @@ public class ManageUsersButton extends Button {
     public ManageUsersButton(final ComponentEventListener<ClickEvent<Button>> addUserAction,
             @Nullable final String tooltipText) {
         super("", addUserAction);
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_WARNING);
+        this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.WARNING);
         this.setIcon(LineAwesomeIcon.USERS_COG_SOLID.create());
         final String label = tooltipText != null && !tooltipText.trim().isEmpty() ? tooltipText : DEFAULT_TOOLTIP;
         this.setTooltipText(label);

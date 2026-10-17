@@ -21,7 +21,7 @@ public class EditButton extends Button {
      */
     public EditButton(final ComponentEventListener<ClickEvent<Button>> editAction, @Nullable final String tooltipText) {
         super("", editAction);
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
+        this.addThemeVariants(ButtonVariant.SMALL);
         this.setIcon(LineAwesomeIcon.EDIT_SOLID.create());
         final String resolvedTooltip = tooltipText != null && !tooltipText.isBlank() ? tooltipText : DEFAULT_TOOLTIP;
         this.setTooltipText(resolvedTooltip);

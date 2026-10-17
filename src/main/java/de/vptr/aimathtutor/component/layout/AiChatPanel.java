@@ -119,7 +119,7 @@ public class AiChatPanel extends VerticalLayout {
         this.chatInput.setValueChangeMode(ValueChangeMode.EAGER);
 
         this.sendButton = new Button("Send", VaadinIcon.PAPERPLANE.create());
-        this.sendButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        this.sendButton.addThemeVariants(ButtonVariant.PRIMARY);
         this.sendButton.setEnabled(false);
         this.sendButton.addClickListener(e -> this.handleSend());
 

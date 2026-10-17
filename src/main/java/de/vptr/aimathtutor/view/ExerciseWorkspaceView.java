@@ -237,7 +237,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 ui.navigate(LessonsView.class);
             }
         });
-        this.backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        this.backButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         titleLayout.add(titleSection, this.backButton);
         titleLayout.setFlexGrow(1, titleSection);
@@ -288,7 +288,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
                 .set("border-radius", "var(--lumo-border-radius-m)").set("padding", "var(--lumo-space-m)");
 
         this.requestHintButton = new Button("Request Hint", ignored -> this.showNextHint());
-        this.requestHintButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        this.requestHintButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var hintsSection = new VerticalLayout(hintsHeader, this.hintsPanel, this.requestHintButton);
         hintsSection.setSpacing(true);

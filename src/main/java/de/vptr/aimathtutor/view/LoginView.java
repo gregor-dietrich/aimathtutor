@@ -112,7 +112,7 @@ public class LoginView extends VerticalLayout {
             }
         });
 
-        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        loginButton.addThemeVariants(ButtonVariant.PRIMARY);
         loginButton.addClickShortcut(Key.ENTER);
         loginButton.setWidthFull();
 

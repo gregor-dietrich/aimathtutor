@@ -132,7 +132,7 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(UserRankViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Make the name column clickable
@@ -384,10 +384,10 @@ public class AdminUserRanksView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", e -> this.saveRank());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", e -> this.rankDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 

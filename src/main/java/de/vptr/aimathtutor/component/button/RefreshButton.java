@@ -32,6 +32,6 @@ public class RefreshButton extends Button {
     }
 
     public RefreshButton(final ComponentEventListener<ClickEvent<Button>> refreshAction) {
-        this(refreshAction, DEFAULT_TOOLTIP, ButtonVariant.LUMO_PRIMARY);
+        this(refreshAction, DEFAULT_TOOLTIP, ButtonVariant.PRIMARY);
     }
 }

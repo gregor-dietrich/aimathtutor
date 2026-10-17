@@ -181,7 +181,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.topBar = new TopBar(this.themeService);
 
         this.sidebarToggleButton = new Button(new Icon(VaadinIcon.MENU), e -> this.toggleSidebar());
-        this.sidebarToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        this.sidebarToggleButton.addThemeVariants(ButtonVariant.TERTIARY);
         this.sidebarToggleButton.setAriaLabel("Toggle navigation sidebar");
 
         final var title = new H1("AI Math Tutor - Admin Panel");

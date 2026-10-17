@@ -282,7 +282,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         // Start button
         final var startButton = new Button("Start Exercise");
-        startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        startButton.addThemeVariants(ButtonVariant.PRIMARY);
         startButton.setWidthFull();
         startButton.addClickListener(ignored -> {
             if (exercise.publicId == null) {

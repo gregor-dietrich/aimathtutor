@@ -188,7 +188,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         form.add(this.currentPasswordField, this.newPasswordField, this.confirmPasswordField);
 
         final var changePasswordButton = new Button("Change Password");
-        changePasswordButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        changePasswordButton.addThemeVariants(ButtonVariant.PRIMARY);
         changePasswordButton.addClickListener(ignored -> this.handlePasswordChange());
 
         section.add(header, form, changePasswordButton);
@@ -232,7 +232,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         previewLabel.getStyle().set("font-weight", "bold");
 
         final var saveAvatarsButton = new Button("Save Avatars");
-        saveAvatarsButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveAvatarsButton.addThemeVariants(ButtonVariant.PRIMARY);
         saveAvatarsButton.addClickListener(ignored -> this.handleAvatarChange());
 
         section.add(header, description, form, previewLabel, this.previewBox, saveAvatarsButton);
