@@ -147,6 +147,18 @@ however.
   (`@ApplicationScoped`), `view/` (Vaadin), `dto/`, `security/`, `event/`,
   `exception/`, `util/`, `component/`.
 - **Graspable Math** workspace embedded via Vaadin + JavaScript API.
+- **Appearance:** each user's design and colour mode are `users.design` and
+  `users.color_mode` (`Appearance.Design`/`ColorMode`, stored as enum names).
+  - `AuthService` loads them into the session at login and clears them with the
+    other sign-in attributes.
+  - `ThemeService` renders the session's appearance into every bootstrap page
+    through an `IndexHtmlRequestListener`, as `data-design`, `data-base` and
+    `data-color-mode` on `<html>`. It also removes whichever base-theme link is
+    not in use (`AppConfig` declares Lumo and Aura).
+  - `js/appearance.js`, inlined into `<head>`, sets `data-color-scheme`
+    (`light`/`dark`) and follows the OS for "Follow system".
+  - Login, logout and saving in Settings reload the page; only the top-bar
+    toggle switches the colour mode live.
 
 ## Coding Conventions
 
@@ -178,8 +190,10 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 - **@Push:** Enabled globally on `AppConfig`. Views do not need their own
   `@Push`.
 - **Theme-neutral styling:** the app runs on Lumo or Aura, so Java names no
-  base-theme token or variant. Only `AppConfig` (which stylesheet loads) and
-  `ThemeService` (colour mode) name a theme, through the `Lumo` class.
+  base-theme token or variant. Only `AppConfig` (which stylesheets load) and
+  `ThemeService` (which base link a page keeps) name a theme, through the
+  `Lumo` and `Aura` classes; `Appearance.Base` names them only as `data-base`
+  values.
   - Inline styles use Vaadin's theme-neutral properties:
     `--vaadin-text-color[-secondary]`, `--vaadin-background-color`,
     `--vaadin-background-container[-strong]`,
@@ -195,19 +209,26 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
   - Checkstyle `RegexpSinglelineJava` `BaseThemeCoupling` rejects `--lumo-*`,
     `--aura-*` (also their private `--_lumo-*`/`--_aura-*`), `LUMO_*` and
     `AURA_*` in Java.
-- **The base-theme bridge** at the top of `styles.css` is the only place
-  `--lumo-*` and `--aura-*` appear.
+- **The base-theme bridge** at the top of `styles.css` and the design
+  stylesheets are the only places `--lumo-*` and `--aura-*` appear.
   - Each `--app-*` token takes Lumo's value and falls back to Aura's, so it
     follows whichever base stylesheet is loaded. Never load both.
-  - Every `var()` in its `:root` tokens is substituted on `<html>`. They still
-    follow a dark theme set lower down (the app's explicit Dark sets
-    `theme="dark"` on `<body>`) because both themes write those colours as
-    `light-dark()` on `:root`, which an unregistered token carries unresolved
-    to the element that uses it.
+  - Every `var()` in its `:root` tokens is substituted on `<html>`, where the
+    app sets the colour scheme. They would still follow one set lower down,
+    because both themes write those colours as `light-dark()` on `:root`, which
+    an unregistered token carries unresolved to the element that uses it.
   - So they reference only `--lumo-*`/`--aura-*`, never `--vaadin-*` colours:
     Vaadin registers six of those as `<color>`, which fixes them to one colour
     on `<html>`. Read a `--vaadin-*` colour where it is used.
   - `AppStylesTest` pins every `AppStyles` name against the stylesheet.
+- **Designs** are one stylesheet each under `META-INF/resources/designs/`,
+  keyed on `html[data-design]`; the Lumo designs feed private `--design-*`
+  inks to `lumo-inks.css`, and an Aura design never sets `--lumo-*`.
+  - Their fonts are self-hosted under `designs/fonts/<family>/` with that
+    family's `OFL.txt`; `designs/fonts.css` records each file's source and
+    version.
+  - Rules that style Vaadin component internals (host box model, `::part`) go
+    only in `designs/component-tweaks.css`.
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin
   serializes views.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.**
@@ -236,6 +257,10 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
     fields): `@Nullable`
   - **To-one associations** (`@ManyToOne`, `@OneToOne`): `@Nullable` even with
     `@JoinColumn(nullable=false)` — same null-after-ctor reason
+  - **Enums with a Java initializer** (`CommentEntity.status`,
+    `UserEntity.design`, `UserEntity.colorMode`): not `@Nullable`. The
+    initializer covers `new` and the column `DEFAULT` covers SQL inserts; keep
+    them equal (`Appearance.DEFAULT`, pinned by `UserServiceTest`).
   - **Pairing `@Nullable` + `@NotNull` (Bean Validation)** on the same field is
     valid: `@Nullable` placates NullAway, `@NotNull` rejects null at persist
     time
@@ -270,6 +295,17 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
   `StartupEvent` guard would run after the tables are gone. Both guards observe
   `@Initialized(ApplicationScoped.class)`, which fires during static init;
   `ProductionProfileGuardTest` and `SchemaManagementGuardTest` pin that.
+- **`html[data-color-scheme]` is the only dark-mode signal.** CSS and JS key on
+  `html[data-color-scheme="dark"]`. Never set a `theme` attribute for colour,
+  on `<html>` or the UI's `<body>`, and never call `Page.setColorScheme`: it
+  overwrites `<html theme>` and enables Lumo's legacy `[theme~=dark]` block,
+  which overrides the designs.
+- **Never load Lumo and Aura together.** `styles.css`'s `--app-*` tokens
+  resolve as `var(--lumo-…, <aura>)`, so with both loaded they silently take
+  Lumo's values. The base theme changes only between page loads.
+- **Do not apply the appearance in `beforeEnter` or after attach.** Eager
+  server load is off, so first paint happens before view code runs; only the
+  bootstrap listener avoids a flash of the default look.
 - **Security is session-based via `VaadinSession`, not Quarkus
   `SecurityIdentity`.** Permission checks via `PermissionService` in service
   layer. Do **not** add `@RolesAllowed` or `@Authenticated` to views.
@@ -416,6 +452,9 @@ new license (as UPL-1.0 was) needs the maintainer's approval.
 - Update `R__demo_data.sql` when the migration touches seeded tables.
 - Migrations must be safe on a populated production DB. For example, a new
   `NOT NULL` column needs a `DEFAULT` or a backfill.
+- Enum names stored in a column are data: renaming or removing a constant needs
+  a migration that rewrites those rows first. Hibernate refuses to load a row
+  with an unknown name, and for `users` that blocks the login.
 
 ## Encrypt-at-Rest
 
