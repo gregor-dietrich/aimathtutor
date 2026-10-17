@@ -92,10 +92,8 @@ function initializeCanvas() {
     }
 
     try {
-        // Check if dark theme is active and set it BEFORE creating canvas
-        var isDarkMode =
-            document.documentElement.hasAttribute("theme") &&
-            document.documentElement.getAttribute("theme").includes("dark");
+        // Check if dark mode is active and set it BEFORE creating canvas
+        var isDarkMode = document.documentElement.dataset.colorScheme === "dark";
 
         if (isDarkMode && window.gmath.setDarkTheme) {
             console.log("[GM] Setting dark theme");
@@ -335,14 +333,14 @@ window.graspableMathUtils = {
     },
 };
 
-// Re-apply dark/light theme when the Vaadin theme attribute changes
+// Re-apply dark/light theme when the effective colour scheme on <html> changes (js/appearance.js)
 (function () {
     var htmlEl = document.documentElement;
     var lastTheme = null;
 
     function applyTheme() {
         if (!window.gmath || !window.gmath.setDarkTheme) return;
-        var isDark = htmlEl.hasAttribute("theme") && htmlEl.getAttribute("theme").includes("dark");
+        var isDark = htmlEl.dataset.colorScheme === "dark";
         if (isDark === lastTheme) return;
         lastTheme = isDark;
         window.gmath.setDarkTheme(isDark);
@@ -350,7 +348,7 @@ window.graspableMathUtils = {
     }
 
     var observer = new MutationObserver(applyTheme);
-    observer.observe(htmlEl, { attributes: true, attributeFilter: ["theme"] });
+    observer.observe(htmlEl, { attributes: true, attributeFilter: ["data-color-scheme"] });
     applyTheme();
 }());
 

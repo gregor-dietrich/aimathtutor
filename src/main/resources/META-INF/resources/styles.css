@@ -8,8 +8,8 @@
    Vaadin's theme-neutral --vaadin-* properties or these --app-* tokens. Each token takes Lumo's
    value and falls back to Aura's, so it follows whichever base stylesheet is loaded; exactly one
    base stylesheet (Lumo or Aura) may be loaded at a time.
-   Every var() here is substituted on <html>. The tokens still follow a dark theme set lower down
-   (the app's explicit Dark sets theme="dark" on <body>) because both themes write these colours as
+   Every var() here is substituted on <html>, where the app sets the colour scheme. The tokens
+   would still follow a colour scheme set lower down, because both themes write these colours as
    light-dark() on :root, which an unregistered token carries unresolved to the element using it,
    and that element's color-scheme picks the branch. So they reference only --lumo-* and --aura-*,
    never --vaadin-* colours: Vaadin registers six of those as <color>, which fixes them to one
@@ -24,6 +24,18 @@
     --app-success: var(--lumo-success-text-color, var(--aura-green-text));
     --app-error: var(--lumo-error-text-color, var(--aura-red-text));
     --app-warning: var(--lumo-warning-text-color, var(--aura-yellow-text));
+}
+
+/*
+   Effective colour scheme, set by js/appearance.js from the user's colour mode and the OS. It is
+   the only dark-mode signal: key dark rules on html[data-color-scheme="dark"], never on a theme attribute.
+*/
+html[data-color-scheme="light"] {
+    color-scheme: light;
+}
+
+html[data-color-scheme="dark"] {
+    color-scheme: dark;
 }
 
 /* Card surface with a subtle gradient, border and shadow. */
@@ -153,85 +165,85 @@
 }
 
 /* Graspable Math keyboard popup in dark mode */
-html[theme~="dark"] #gm-keyboard {
+html[data-color-scheme="dark"] #gm-keyboard {
     background-color: #2a2a2a !important;
     color: #e0e0e0 !important;
 }
 
 /* All elements in keyboard get dark background */
-html[theme~="dark"] #gm-keyboard * {
+html[data-color-scheme="dark"] #gm-keyboard * {
     background-color: #2a2a2a !important;
 }
 
 /* Caption (instruction text) */
-html[theme~="dark"] #gm-keyboard .caption,
-html[theme~="dark"] #gm-keyboard .caption * {
+html[data-color-scheme="dark"] #gm-keyboard .caption,
+html[data-color-scheme="dark"] #gm-keyboard .caption * {
     background-color: #2a2a2a !important;
     color: #e0e0e0 !important;
     opacity: 1 !important;
 }
 
 /* Close button (X icon) */
-html[theme~="dark"] #gm-keyboard .close,
-html[theme~="dark"] #gm-keyboard .close * {
+html[data-color-scheme="dark"] #gm-keyboard .close,
+html[data-color-scheme="dark"] #gm-keyboard .close * {
     background-color: #2a2a2a !important;
     color: #e0e0e0 !important;
     opacity: 1 !important;
 }
 
 /* Keyboard buttons */
-html[theme~="dark"] #gm-keyboard button.key,
-html[theme~="dark"] #gm-keyboard button.key.dark {
+html[data-color-scheme="dark"] #gm-keyboard button.key,
+html[data-color-scheme="dark"] #gm-keyboard button.key.dark {
     background-color: #3a3a3a !important;
     border: 1px solid #555555 !important;
     color: #e0e0e0 !important;
 }
 
-html[theme~="dark"] #gm-keyboard button.key:hover,
-html[theme~="dark"] #gm-keyboard button.key.dark:hover {
+html[data-color-scheme="dark"] #gm-keyboard button.key:hover,
+html[data-color-scheme="dark"] #gm-keyboard button.key.dark:hover {
     background-color: #4a4a4a !important;
 }
 
 /* SVG icons */
-html[theme~="dark"] #gm-keyboard svg,
-html[theme~="dark"] #gm-keyboard svg *,
-html[theme~="dark"] #gm-keyboard svg path {
+html[data-color-scheme="dark"] #gm-keyboard svg,
+html[data-color-scheme="dark"] #gm-keyboard svg *,
+html[data-color-scheme="dark"] #gm-keyboard svg path {
     fill: #e0e0e0 !important;
     stroke: #e0e0e0 !important;
     color: #e0e0e0 !important;
 }
 
 /* Input fields */
-html[theme~="dark"] #gm-keyboard .gm-mq-input,
-html[theme~="dark"] #gm-keyboard textarea {
+html[data-color-scheme="dark"] #gm-keyboard .gm-mq-input,
+html[data-color-scheme="dark"] #gm-keyboard textarea {
     background-color: #2a2a2a !important;
     color: #e0e0e0 !important;
     border: 1px solid #555555 !important;
 }
 
 /* Help button in the GM toolbar retains a light background that setDarkTheme() misses */
-html[theme~="dark"] #graspable-canvas .btn-help {
+html[data-color-scheme="dark"] #graspable-canvas .btn-help {
     background-color: #3a3a3a !important;
     color: #e0e0e0 !important;
     border-color: #555555 !important;
 }
 
-html[theme~="dark"] #graspable-canvas .btn-help:hover {
+html[data-color-scheme="dark"] #graspable-canvas .btn-help:hover {
     background-color: #4a4a4a !important;
 }
 
 /* GM help modal content has hardcoded white backgrounds in the library CSS */
-html[theme~="dark"] .gm-help .block {
+html[data-color-scheme="dark"] .gm-help .block {
     background-color: #2a2a2a !important;
     color: #e0e0e0 !important;
 }
 
-html[theme~="dark"] .gm-help .block:nth-child(even) {
+html[data-color-scheme="dark"] .gm-help .block:nth-child(even) {
     background-color: #323232 !important;
 }
 
-html[theme~="dark"] #gm-help-modal,
-html[theme~="dark"] #gm-help-modal * {
+html[data-color-scheme="dark"] #gm-help-modal,
+html[data-color-scheme="dark"] #gm-help-modal * {
     background-color: #2a2a2a !important;
     color: #e0e0e0 !important;
     border-color: #555555 !important;
