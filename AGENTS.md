@@ -177,6 +177,34 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 - **@Push:** Enabled globally on `AppConfig`. Views do not need their own
   `@Push`.
+- **Theme-neutral styling:** the app runs on Lumo or Aura, so Java names
+  neither.
+  - Inline styles use Vaadin's theme-neutral properties:
+    `--vaadin-text-color[-secondary]`, `--vaadin-background-color`,
+    `--vaadin-background-container[-strong]`,
+    `--vaadin-border-color[-secondary]`, `--vaadin-radius-*`,
+    `--vaadin-padding-*` for padding, and `--vaadin-gap-*` for margins and
+    gaps.
+  - Accent and status colours have no neutral property, so they use the
+    `--app-*` tokens through `AppStyles`.
+  - Variants use the neutral constants (`ButtonVariant.PRIMARY`, not
+    `LUMO_PRIMARY`); badges are `Badge` with `BadgeVariant`.
+  - Styling shared by two or more components is a class in `styles.css`,
+    named in `AppStyles`.
+  - Checkstyle `RegexpSinglelineJava` `BaseThemeCoupling` rejects `--lumo-*`,
+    `--aura-*` and `LUMO_*` in Java.
+- **The base-theme bridge** at the top of `styles.css` is the only place
+  `--lumo-*` and `--aura-*` appear.
+  - Each `--app-*` token takes Lumo's value and falls back to Aura's, so it
+    follows whichever base stylesheet is loaded. Never load both.
+  - Every `var()` in its `:root` tokens is substituted on `<html>`. They still
+    follow a dark theme set lower down (Lumo's explicit dark sits on `<body>`)
+    because both themes write those colours as `light-dark()`, which an
+    unregistered token carries unresolved to the element that uses it.
+  - So they reference only `--lumo-*`/`--aura-*`, never `--vaadin-*` colours:
+    Vaadin registers six of those as `<color>`, which fixes them to one colour
+    on `<html>`. Read a `--vaadin-*` colour where it is used.
+  - `AppStylesTest` pins every `AppStyles` name against the stylesheet.
 - **All `@Inject` fields in Vaadin views must be `transient`.** Vaadin
   serializes views.
 - **In `onDetach(DetachEvent)`, use `detachEvent.getUI()` not `getUI()`.**
@@ -307,12 +335,6 @@ SpotBugs, Checkstyle, PMD, CPD). A push-only
   every Error Prone warning (any severity) fails compilation. The three excluded
   lint categories are deliberate and documented in the parent POM; do not
   exclude further categories to work around a warning — fix the code.
-- **Known upstream build-log noise (do not try to fix):** during
-  `quarkus:build`, Vaadin logs `[WARNING] Addon 'flow-react-*.jar' /
-  'flow-dnd-*.jar' contains frontend sources under
-  META-INF/resources/frontend/`. These come from Vaadin's own published jars
-  (Vaadin 25.2.1), are not fixable in this repository, and will disappear with a
-  future Vaadin upgrade.
 - **Intentional build warning (do not fix):** `[WARNING]
   [io.quarkus.arc.deployment.ObserverValidationProcessor] The method
   de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for
