@@ -105,18 +105,15 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     /**
-     * Called before navigation occurs. Initializes layout on first entry, applies theme, checks authentication and
-     * admin permissions, hides navigation for login view, and shows/hides tabs. Redirects to login or home if
-     * authentication/permission checks fail.
+     * Called before navigation occurs. Initializes layout on first entry, checks authentication and admin permissions,
+     * hides navigation for login view, and shows/hides tabs. Redirects to login or home if authentication/permission
+     * checks fail.
      *
      * @param event
      *            the before enter navigation event
      */
     @Override
     public void beforeEnter(final BeforeEnterEvent event) {
-        // Apply current theme on every navigation
-        this.themeService.applyTheme(this.themeService.getCurrentTheme());
-
         final var targetView = event.getNavigationTarget();
 
         LOG.tracef("MainLayout.beforeEnter - Target: %s", targetView.getSimpleName());
@@ -179,7 +176,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
     }
 
     private void createTopBar() {
-        this.topBar = new TopBar(this.themeService);
+        this.topBar = new TopBar(this.themeService, this.authService);
 
         this.sidebarToggleButton = new Button(new Icon(VaadinIcon.MENU), e -> this.toggleSidebar());
         this.sidebarToggleButton.addThemeVariants(ButtonVariant.TERTIARY);
@@ -267,12 +264,13 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         if (this.topBar == null) {
             return;
         }
+        this.topBar.setThemeToggleVisible(true);
         // Replace existing buttons if present
         this.topBar.removeFromRightSide(this.logoutButton, this.userViewButton);
 
         this.logoutButton = new LogoutButton(e -> {
             this.authService.logout();
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
+            this.getUI().ifPresent(LoginView::reloadToLogin);
         });
         this.userViewButton = new UserViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate(LessonsView.class)));
 
@@ -283,6 +281,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         if (this.topBar == null) {
             return;
         }
+        this.topBar.setThemeToggleVisible(false);
         this.topBar.removeFromRightSide(this.logoutButton, this.userViewButton);
         this.logoutButton = null;
         this.userViewButton = null;

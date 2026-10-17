@@ -3,55 +3,76 @@ package de.vptr.aimathtutor.component.button;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.service.ThemeService;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
+import de.vptr.aimathtutor.util.NotificationUtil;
 
 /**
- * Toggle between available UI themes. Renders an icon reflecting current theme.
+ * Cycles the signed-in user's colour mode (light, dark, follow system). The icon shows the current mode; a click saves
+ * the next one for the account off the UI thread, then applies it to the page without a reload.
  */
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-        justification = "Service reference is transient and intentionally stored for runtime behavior; not serialized")
-public class ThemeToggleButton extends Button {
+public final class ThemeToggleButton extends Button {
     private final transient ThemeService themeService;
+    private final transient AuthService authService;
+    private boolean saveInProgress;
 
     /**
-     * Constructs a ThemeToggleButton with the specified theme service.
+     * Constructs a ThemeToggleButton with the specified services.
      */
-    public ThemeToggleButton(final ThemeService themeService) {
-        // store as transient to avoid serializing non-serializable service
+    public ThemeToggleButton(final ThemeService themeService, final AuthService authService) {
+        // store as transient to avoid serializing non-serializable services
         this.themeService = themeService;
-        this.addClickListener(e -> this.toggleTheme());
+        this.authService = authService;
+        this.addClickListener(e -> this.toggleColorMode());
         this.updateButton();
     }
 
-    private void toggleTheme() {
-        final var nextTheme = this.themeService.getNextTheme();
-        this.themeService.setTheme(nextTheme);
-        this.updateButton();
+    private void toggleColorMode() {
+        if (this.saveInProgress) {
+            return;
+        }
+        // Captured here on the UI thread: the supplier runs off it.
+        final var credentials = this.authService.currentSessionCredentials();
+        final var session = VaadinSession.getCurrent();
+        final var ui = this.getUI().orElse(null);
+        if (credentials == null || session == null || ui == null) {
+            NotificationUtil.showError("Your session has ended. Please sign in again.");
+            return;
+        }
+        final var current = this.themeService.current();
+        final var next = current.colorMode().next();
+        final var appearance = current.withColorMode(next);
+        this.saveInProgress = true;
+        this.setEnabled(false);
+
+        AsyncDataLoader.load(() -> {
+            this.themeService.saveForSession(session, credentials, appearance);
+            return next;
+        }, this, ignored -> {
+            this.themeService.applyColorMode(ui);
+            this.updateButton();
+            this.finishSave();
+        }, this::finishSave, "Could not save the colour mode");
+    }
+
+    private void finishSave() {
+        this.saveInProgress = false;
+        this.setEnabled(true);
     }
 
     private void updateButton() {
-        final var currentTheme = this.themeService.getCurrentTheme();
-        switch (currentTheme) {
-            case LIGHT -> {
-                this.setIcon(LineAwesomeIcon.SUN_SOLID.create());
-                this.setTooltipText("Switch to Dark Theme");
-                this.getElement().setAttribute("aria-label", "Switch to Dark Theme");
-            }
-            case DARK -> {
-                this.setIcon(LineAwesomeIcon.MOON_SOLID.create());
-                this.setTooltipText("Switch to System Theme");
-                this.getElement().setAttribute("aria-label", "Switch to System Theme");
-            }
-            case SYSTEM -> {
-                this.setIcon(LineAwesomeIcon.DESKTOP_SOLID.create());
-                this.setTooltipText("Switch to Light Theme");
-                this.getElement().setAttribute("aria-label", "Switch to Light Theme");
-            }
-            default -> {
-                // No default action needed
-            }
-        }
+        final var colorMode = this.themeService.current().colorMode();
+        final var icon = switch (colorMode) {
+            case LIGHT -> LineAwesomeIcon.SUN_SOLID;
+            case DARK -> LineAwesomeIcon.MOON_SOLID;
+            case SYSTEM -> LineAwesomeIcon.DESKTOP_SOLID;
+        };
+        final var label = "Switch to " + colorMode.next().getDisplayName();
+        this.setIcon(icon.create());
+        this.setTooltipText(label);
+        this.getElement().setAttribute("aria-label", label);
     }
 }

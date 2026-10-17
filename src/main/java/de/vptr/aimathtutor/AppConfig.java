@@ -3,15 +3,22 @@ package de.vptr.aimathtutor;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Inline;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.theme.aura.Aura;
 import com.vaadin.flow.theme.lumo.Lumo;
 
 /**
  * Application shell configuration (theme, page title and push settings) for the Vaadin application.
  */
+// The order of the @StyleSheet lines is load-bearing: later sheets override earlier ones, and the bootstrap
+// listener in ThemeService removes whichever base sheet (Lumo or Aura) the user's design does not use, so exactly
+// one of them loads per page. Further design sheets follow styles.css.
 @StyleSheet("/" + Lumo.STYLESHEET)
+@StyleSheet("/" + Aura.STYLESHEET)
 @StyleSheet("/styles.css")
+@Inline("META-INF/resources/js/appearance.js")
 @PageTitle("AI Math Tutor")
 @Push
 // Security pin: @vaadin/markdown pulls in dompurify, and with package-lock.json missing (as after

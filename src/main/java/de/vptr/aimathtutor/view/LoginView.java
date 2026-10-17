@@ -4,6 +4,7 @@ import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -13,6 +14,7 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteConfiguration;
 
 import de.vptr.aimathtutor.component.GlassAccentBar;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -29,6 +31,18 @@ import jakarta.inject.Inject;
 public class LoginView extends VerticalLayout {
 
     private static final Logger LOG = Logger.getLogger(LoginView.class);
+
+    /**
+     * Reloads the page onto the login route, so the bootstrap page renders the appearance of the now signed-out
+     * session. The route's URL is relative to the app's base URI, so it reaches the login view from nested paths such
+     * as {@code /admin/...} too.
+     *
+     * @param ui
+     *            the UI to reload
+     */
+    public static void reloadToLogin(final UI ui) {
+        ui.getPage().setLocation(RouteConfiguration.forApplicationScope().getUrl(LoginView.class));
+    }
 
     @Inject
     private transient AuthService authService;
@@ -78,7 +92,8 @@ public class LoginView extends VerticalLayout {
                 switch (result.getStatus()) {
                     case SUCCESS -> {
                         LOG.trace("Authentication successful, navigating to main view");
-                        this.getUI().ifPresent(ui -> ui.navigate(""));
+                        // Full reload: the bootstrap page renders the new session's appearance
+                        this.getUI().ifPresent(ui -> ui.getPage().setLocation("./"));
                     }
                     case INVALID_CREDENTIALS -> {
                         LOG.trace("Invalid credentials, showing error message");

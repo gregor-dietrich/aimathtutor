@@ -93,9 +93,6 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
             this.initialized = true;
         }
 
-        // Apply current theme on every navigation
-        this.themeService.applyTheme(this.themeService.getCurrentTheme());
-
         final var targetView = event.getNavigationTarget();
 
         LOG.tracef("MainLayout.beforeEnter - Target: %s", targetView.getSimpleName());
@@ -142,7 +139,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         this.setSpacing(false);
 
         this.navigationTabs = new NavigationTabs();
-        this.topBar = new TopBar(this.themeService);
+        this.topBar = new TopBar(this.themeService, this.authService);
         this.addComponentAsFirst(this.topBar);
     }
 
@@ -165,6 +162,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         if (this.topBar == null) {
             return;
         }
+        this.topBar.setThemeToggleVisible(true);
         // Avoid adding twice
         if (this.logoutButton != null
                 && this.topBar.getRightSide().getChildren().anyMatch(c -> Objects.equals(c, this.logoutButton))) {
@@ -189,7 +187,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
         this.logoutButton = new LogoutButton(e -> {
             this.authService.logout();
-            this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
+            this.getUI().ifPresent(LoginView::reloadToLogin);
         });
 
         this.topBar.addRightSideButtons(this.adminViewButton, this.settingsButton, this.logoutButton);
@@ -200,6 +198,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
         if (this.topBar == null) {
             return;
         }
+        this.topBar.setThemeToggleVisible(false);
         this.topBar.removeFromRightSide(this.adminViewButton, this.settingsButton, this.logoutButton);
         this.adminViewButton = null;
         this.settingsButton = null;
