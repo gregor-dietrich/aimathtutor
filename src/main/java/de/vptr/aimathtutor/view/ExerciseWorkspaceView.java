@@ -24,7 +24,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -32,6 +31,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.DifficultyBadge;
 import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.component.layout.CommentsPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
@@ -217,16 +217,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Add difficulty badge right under the title
         if (this.exercise.graspableDifficulty != null) {
-            final var badge = new Span("Difficulty: " + this.exercise.graspableDifficulty.getValue());
-            badge.getElement().getThemeList().add("badge");
-            switch (this.exercise.graspableDifficulty) {
-                case BEGINNER -> badge.getElement().getThemeList().add("success");
-                case INTERMEDIATE -> badge.getElement().getThemeList().add("contrast");
-                case ADVANCED, EXPERT -> badge.getElement().getThemeList().add("error");
-                default -> {
-                    // Unknown difficulty - keep default styling
-                }
-            }
+            final var badge = new DifficultyBadge("Difficulty: " + this.exercise.graspableDifficulty.getValue(),
+                    this.exercise.graspableDifficulty);
             badge.getStyle().set("margin-top", "0.5rem");
             titleSection.add(badge);
         }

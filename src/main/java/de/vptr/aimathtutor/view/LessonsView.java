@@ -8,6 +8,8 @@ import java.util.Set;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -23,6 +25,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
+import de.vptr.aimathtutor.component.DifficultyBadge;
 import de.vptr.aimathtutor.component.GlassAccentBar;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
@@ -251,33 +254,21 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         // Completed badge
         if (Boolean.TRUE.equals(exercise.userCompleted)) {
-            final var completedBadge = new Span("✓ Completed");
-            completedBadge.getElement().getThemeList().add("badge");
-            completedBadge.getElement().getThemeList().add("success");
+            final var completedBadge = new Badge("✓ Completed");
+            completedBadge.addThemeVariants(BadgeVariant.SUCCESS);
             badgeLayout.add(completedBadge);
         }
 
         // Graspable Math badge
         if (Boolean.TRUE.equals(exercise.graspableEnabled)) {
-            final var gmBadge = new Span("📐 Interactive");
-            gmBadge.getElement().getThemeList().add("badge");
-            gmBadge.getElement().getThemeList().add("success");
+            final var gmBadge = new Badge("📐 Interactive");
+            gmBadge.addThemeVariants(BadgeVariant.SUCCESS);
             badgeLayout.add(gmBadge);
         }
 
         // Difficulty badge
         if (exercise.graspableDifficulty != null) {
-            final var difficultyBadge = new Span(exercise.graspableDifficulty.getValue());
-            difficultyBadge.getElement().getThemeList().add("badge");
-            switch (exercise.graspableDifficulty) {
-                case BEGINNER -> difficultyBadge.getElement().getThemeList().add("success");
-                case INTERMEDIATE -> difficultyBadge.getElement().getThemeList().add("contrast");
-                case ADVANCED, EXPERT -> difficultyBadge.getElement().getThemeList().add("error");
-                default -> {
-                    // unknown difficulty - no extra styling
-                }
-            }
-            badgeLayout.add(difficultyBadge);
+            badgeLayout.add(new DifficultyBadge(exercise.graspableDifficulty.getValue(), exercise.graspableDifficulty));
         }
 
         // Start button

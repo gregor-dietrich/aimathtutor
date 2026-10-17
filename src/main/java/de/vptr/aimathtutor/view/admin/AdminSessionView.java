@@ -3,6 +3,8 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.List;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
@@ -42,7 +44,7 @@ public class AdminSessionView extends AbstractAdminView {
     private transient StudentSessionViewDto session;
 
     private transient Span headerSubtitle;
-    private transient Span statusBadge;
+    private transient Badge statusBadge;
 
     private transient DashboardKpiCard actionsCard;
     private transient DashboardKpiCard correctActionsCard;
@@ -93,9 +95,8 @@ public class AdminSessionView extends AbstractAdminView {
                 .set("font-weight", "700").set("color", "var(--lumo-header-text-color)").set("letter-spacing", "-0.3px")
                 .set("display", "inline");
 
-        this.statusBadge = new Span("Loading");
-        this.statusBadge.getElement().getThemeList().add("badge");
-        this.statusBadge.getElement().getThemeList().add("contrast");
+        this.statusBadge = new Badge("Loading");
+        this.statusBadge.addThemeVariants(BadgeVariant.CONTRAST);
 
         final var titleRow = new Div(title, this.statusBadge);
         titleRow.getStyle().set("display", "flex").set("align-items", "center").set("gap", "12px").set("margin-bottom",
@@ -233,10 +234,9 @@ public class AdminSessionView extends AbstractAdminView {
         this.headerSubtitle.setText("(" + duration + ") Session ID: " + this.session.sessionId);
 
         this.statusBadge.setText(Boolean.TRUE.equals(this.session.completed) ? "Completed" : "In Progress");
-        this.statusBadge.getElement().getThemeList().clear();
-        this.statusBadge.getElement().getThemeList().add("badge");
-        this.statusBadge.getElement().getThemeList()
-                .add(Boolean.TRUE.equals(this.session.completed) ? "success" : "contrast");
+        this.statusBadge.removeThemeVariants(BadgeVariant.SUCCESS, BadgeVariant.CONTRAST);
+        this.statusBadge.addThemeVariants(
+                Boolean.TRUE.equals(this.session.completed) ? BadgeVariant.SUCCESS : BadgeVariant.CONTRAST);
 
         this.actionsCard.setValue(String.valueOf(this.session.actionsCount));
         this.correctActionsCard.setValue(String.valueOf(this.session.correctActions));
