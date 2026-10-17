@@ -25,17 +25,15 @@ public class TopStudentsList extends VerticalLayout {
         setPadding(true);
         setSpacing(false);
         setWidthFull();
-        getStyle().set("border", "1px solid var(--vaadin-border-color-secondary)").set("border-radius", "8px")
-                .set("background", "var(--vaadin-background-color)");
+        addClassName(AppStyles.LIST_CARD);
 
         final var title = new Span("Top Students by Completion");
-        title.getStyle().set("font-size", "14px").set("font-weight", "600").set("color", AppStyles.ACCENT_TEXT)
-                .set("margin-bottom", "8px");
+        title.addClassName(AppStyles.LIST_CARD_TITLE);
         add(title);
 
         if (students == null || students.isEmpty()) {
             final var empty = new Span("No student data available");
-            empty.getStyle().set("color", "var(--vaadin-text-color-secondary)").set("font-size", "13px");
+            empty.addClassName(AppStyles.LIST_CARD_EMPTY);
             add(empty);
             return;
         }
@@ -51,8 +49,7 @@ public class TopStudentsList extends VerticalLayout {
             row.setWidthFull();
             row.setPadding(false);
             row.setSpacing(true);
-            row.getStyle().set("padding", "6px 0").set("border-bottom",
-                    "1px solid var(--vaadin-border-color-secondary)");
+            row.addClassName(AppStyles.LIST_CARD_ROW);
 
             final var rankSpan = new Span(String.valueOf(rank++));
             rankSpan.getStyle().set("font-size", "13px").set("font-weight", "700").set("color", AppStyles.ACCENT)
@@ -71,7 +68,7 @@ public class TopStudentsList extends VerticalLayout {
 
         if (!hasAny) {
             final var empty = new Span("No top students yet");
-            empty.getStyle().set("color", "var(--vaadin-text-color-secondary)").set("font-size", "13px");
+            empty.addClassName(AppStyles.LIST_CARD_EMPTY);
             add(empty);
         }
     }

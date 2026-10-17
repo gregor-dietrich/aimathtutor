@@ -82,6 +82,67 @@
     text-align: center;
 }
 
+/* Bordered box of a dashboard list. */
+.list-card {
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-m);
+    background: var(--vaadin-background-color);
+}
+
+/* Title of a dashboard list. */
+.list-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--app-accent-text);
+    margin-bottom: 8px;
+}
+
+/* Row of a dashboard list, with a divider below. */
+.list-card-row {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+}
+
+/* Empty-state text of a dashboard list. */
+.list-card-empty {
+    color: var(--vaadin-text-color-secondary);
+    font-size: 13px;
+}
+
+/* Inset container panel on a contrasting background. */
+.inset-panel {
+    background-color: var(--vaadin-background-container);
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-m);
+    padding: var(--vaadin-padding-m);
+}
+
+/* Title inside a glass card. */
+.card-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--app-accent-text);
+    letter-spacing: 0.3px;
+}
+
+/* Page heading of an admin view. */
+.page-title {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+/* Subtitle below a page heading. */
+.page-subtitle {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--vaadin-text-color-secondary);
+}
+
 /* Example: CSS class name to center align the content . */
 .centered-content {
     margin: 0 auto;

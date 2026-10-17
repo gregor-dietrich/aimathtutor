@@ -24,6 +24,7 @@ import de.vptr.aimathtutor.dto.DashboardTrendDto;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
@@ -83,13 +84,11 @@ public class AdminDashboardView extends AbstractAdminView {
         this.setSpacing(true);
 
         final var title = new H2("Dashboard Overview");
-        title.getStyle().set("margin-top", "0").set("margin-bottom", "4px").set("font-size", "22px")
-                .set("font-weight", "700").set("letter-spacing", "-0.3px");
+        title.addClassName(AppStyles.PAGE_TITLE);
         this.add(title);
 
         final var subtitle = new Span("Real-time analytics at a glance");
-        subtitle.getStyle().set("font-size", "13px").set("color", "var(--vaadin-text-color-secondary)")
-                .set("margin-bottom", "8px").set("display", "block");
+        subtitle.addClassName(AppStyles.PAGE_SUBTITLE);
         this.add(subtitle);
 
         // Row 1: Active Students, Total Users, Published Exercises

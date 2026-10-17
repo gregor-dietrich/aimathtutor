@@ -105,12 +105,11 @@ public class AiChatPanel extends VerticalLayout {
         this.chatHistoryPanel.setSpacing(true);
         this.chatHistoryPanel.setPadding(false);
         this.chatHistoryPanel.setDefaultHorizontalComponentAlignment(Alignment.STRETCH);
+        this.chatHistoryPanel.addClassName(AppStyles.INSET_PANEL);
         this.chatHistoryPanel.getStyle().set("flex-grow", "1") // Grow to fill available space
                 .set("flex-shrink", "1") // Allow shrinking if needed
                 .set("overflow-y", "auto") // Only the history scrolls
-                .set("min-height", "0") // Important for flex shrinking
-                .set("padding", "var(--vaadin-padding-m)").set("background-color", "var(--vaadin-background-container)")
-                .set("border", "1px solid var(--vaadin-border-color)").set("border-radius", "var(--vaadin-radius-m)");
+                .set("min-height", "0"); // Important for flex shrinking
 
         // Chat input area
         this.chatInput = new TextField();

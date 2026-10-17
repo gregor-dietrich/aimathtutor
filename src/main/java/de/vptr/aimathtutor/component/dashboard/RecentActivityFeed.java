@@ -27,17 +27,15 @@ public class RecentActivityFeed extends VerticalLayout {
         setPadding(true);
         setSpacing(false);
         setWidthFull();
-        getStyle().set("border", "1px solid var(--vaadin-border-color-secondary)").set("border-radius", "8px")
-                .set("background", "var(--vaadin-background-color)");
+        addClassName(AppStyles.LIST_CARD);
 
         final var title = new Span("Recent Activity (7 days)");
-        title.getStyle().set("font-size", "14px").set("font-weight", "600").set("color", AppStyles.ACCENT_TEXT)
-                .set("margin-bottom", "8px");
+        title.addClassName(AppStyles.LIST_CARD_TITLE);
         add(title);
 
         if (sessions == null || sessions.isEmpty()) {
             final var empty = new Span("No recent activity");
-            empty.getStyle().set("color", "var(--vaadin-text-color-secondary)").set("font-size", "13px");
+            empty.addClassName(AppStyles.LIST_CARD_EMPTY);
             add(empty);
             return;
         }
@@ -46,8 +44,7 @@ public class RecentActivityFeed extends VerticalLayout {
             final var item = new VerticalLayout();
             item.setPadding(false);
             item.setSpacing(false);
-            item.getStyle().set("padding", "6px 0").set("border-bottom",
-                    "1px solid var(--vaadin-border-color-secondary)");
+            item.addClassName(AppStyles.LIST_CARD_ROW);
 
             final var line = new Span();
             final var userName = ChartUtil.escapeXml(session.username != null ? session.username : "Unknown");

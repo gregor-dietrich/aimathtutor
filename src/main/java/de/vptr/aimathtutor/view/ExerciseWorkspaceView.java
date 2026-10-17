@@ -276,9 +276,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.hintsPanel = new VerticalLayout();
         this.hintsPanel.setSpacing(true);
         this.hintsPanel.setPadding(true);
-        this.hintsPanel.getStyle().set("background-color", "var(--vaadin-background-container)")
-                .set("border", "1px solid var(--vaadin-border-color)").set("border-radius", "var(--vaadin-radius-m)")
-                .set("padding", "var(--vaadin-padding-m)");
+        this.hintsPanel.addClassName(AppStyles.INSET_PANEL);
 
         this.requestHintButton = new Button("Request Hint", ignored -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.PRIMARY);
@@ -299,9 +297,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             // Add a notice that this is a non-interactive exercise
             final var noticeDiv = new Div();
-            noticeDiv.getStyle().set("padding", "1rem").set("background-color", "var(--vaadin-background-container)")
-                    .set("border", "1px solid var(--vaadin-border-color)")
-                    .set("border-radius", "var(--vaadin-radius-m)").set("margin-top", "1rem");
+            noticeDiv.addClassName(AppStyles.INSET_PANEL);
+            noticeDiv.getStyle().set("padding", "1rem").set("margin-top", "1rem");
             noticeDiv.add(
                     new Paragraph("This is a reading/study exercise. Review the content above and use the AI tutor "
                             + "if you have questions."));

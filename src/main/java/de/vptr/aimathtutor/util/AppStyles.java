@@ -51,4 +51,28 @@ public final class AppStyles {
 
     /** Chat bubble of system notices. */
     public static final String CHAT_BUBBLE_SYSTEM = "chat-bubble-system";
+
+    /** Bordered box of a dashboard list. */
+    public static final String LIST_CARD = "list-card";
+
+    /** Title of a dashboard list. */
+    public static final String LIST_CARD_TITLE = "list-card-title";
+
+    /** Row of a dashboard list, with a divider below. */
+    public static final String LIST_CARD_ROW = "list-card-row";
+
+    /** Empty-state text of a dashboard list. */
+    public static final String LIST_CARD_EMPTY = "list-card-empty";
+
+    /** Inset container panel on a contrasting background. */
+    public static final String INSET_PANEL = "inset-panel";
+
+    /** Title inside a glass card. */
+    public static final String CARD_TITLE = "card-title";
+
+    /** Page heading of an admin view. */
+    public static final String PAGE_TITLE = "page-title";
+
+    /** Subtitle below a page heading. */
+    public static final String PAGE_SUBTITLE = "page-subtitle";
 }
