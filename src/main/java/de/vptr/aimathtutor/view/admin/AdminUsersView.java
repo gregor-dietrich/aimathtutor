@@ -39,6 +39,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -146,13 +147,13 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(UserViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Make the username column clickable
         this.grid.addComponentColumn(user -> {
             final var usernameSpan = new Span(user.username);
-            usernameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            usernameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
@@ -239,10 +240,10 @@ public class AdminUsersView extends AbstractAdminView {
 
             // Add label that matches FormLayout styling
             final var passwordLabel = new Span("Password");
-            passwordLabel.getStyle().set("font-size", "var(--lumo-font-size-s)");
+            passwordLabel.getStyle().set("font-size", "0.875em");
             passwordLabel.getStyle().set("font-weight", "500");
-            passwordLabel.getStyle().set("color", "var(--lumo-secondary-text-color)");
-            passwordLabel.getStyle().set("margin-bottom", "var(--lumo-space-xs)");
+            passwordLabel.getStyle().set("color", "var(--vaadin-text-color-secondary)");
+            passwordLabel.getStyle().set("margin-bottom", "var(--vaadin-gap-xs)");
 
             final var credentials = this.authService.currentSessionCredentials();
             final boolean ownAccount = credentials != null && credentials.userPublicId().equals(user.publicId);
@@ -302,10 +303,10 @@ public class AdminUsersView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", e -> this.saveUser());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", e -> this.userDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 
@@ -363,10 +364,10 @@ public class AdminUsersView extends AbstractAdminView {
             }
             this.changeUserPassword(user.publicId, newPassword);
         });
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", e -> this.passwordDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 

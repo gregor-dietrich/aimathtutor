@@ -20,7 +20,7 @@ public class ShowButton extends Button {
      */
     public ShowButton(final ComponentEventListener<ClickEvent<Button>> showAction, @Nullable final String tooltipText) {
         super("", showAction);
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
+        this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.SUCCESS);
         this.setIcon(LineAwesomeIcon.EYE_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
         this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);

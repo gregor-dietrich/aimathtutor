@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
+import de.vptr.aimathtutor.util.AppStyles;
 import jakarta.annotation.Nullable;
 
 /**
@@ -24,17 +25,15 @@ public class TopStudentsList extends VerticalLayout {
         setPadding(true);
         setSpacing(false);
         setWidthFull();
-        getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "8px").set("background",
-                "var(--lumo-base-color)");
+        addClassName(AppStyles.LIST_CARD);
 
         final var title = new Span("Top Students by Completion");
-        title.getStyle().set("font-size", "14px").set("font-weight", "600")
-                .set("color", "var(--lumo-primary-text-color)").set("margin-bottom", "8px");
+        title.addClassName(AppStyles.LIST_CARD_TITLE);
         add(title);
 
         if (students == null || students.isEmpty()) {
             final var empty = new Span("No student data available");
-            empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");
+            empty.addClassName(AppStyles.LIST_CARD_EMPTY);
             add(empty);
             return;
         }
@@ -50,18 +49,18 @@ public class TopStudentsList extends VerticalLayout {
             row.setWidthFull();
             row.setPadding(false);
             row.setSpacing(true);
-            row.getStyle().set("padding", "6px 0").set("border-bottom", "1px solid var(--lumo-contrast-5pct)");
+            row.addClassName(AppStyles.LIST_CARD_ROW);
 
             final var rankSpan = new Span(String.valueOf(rank++));
-            rankSpan.getStyle().set("font-size", "13px").set("font-weight", "700")
-                    .set("color", "var(--lumo-primary-color)").set("width", "24px");
+            rankSpan.getStyle().set("font-size", "13px").set("font-weight", "700").set("color", AppStyles.ACCENT)
+                    .set("width", "24px");
 
             final var nameSpan = new Span(student.username != null ? student.username : "Unknown");
             nameSpan.getStyle().set("font-size", "13px").set("flex", "1");
 
             final int count = student.completedSessions != null ? student.completedSessions : 0;
             final var countSpan = new Span(count + " " + (count == 1 ? "session" : "sessions"));
-            countSpan.getStyle().set("font-size", "12px").set("color", "var(--lumo-secondary-text-color)");
+            countSpan.getStyle().set("font-size", "12px").set("color", "var(--vaadin-text-color-secondary)");
 
             row.add(rankSpan, nameSpan, countSpan);
             add(row);
@@ -69,7 +68,7 @@ public class TopStudentsList extends VerticalLayout {
 
         if (!hasAny) {
             final var empty = new Span("No top students yet");
-            empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");
+            empty.addClassName(AppStyles.LIST_CARD_EMPTY);
             add(empty);
         }
     }

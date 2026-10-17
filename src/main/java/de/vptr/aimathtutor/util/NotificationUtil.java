@@ -19,7 +19,7 @@ public final class NotificationUtil {
      *            The message to display
      */
     public static void showSuccess(final String message) {
-        showNotification(message, NotificationVariant.LUMO_SUCCESS, AppConstants.NOTIFICATION_DURATION_SUCCESS_MS);
+        showNotification(message, NotificationVariant.SUCCESS, AppConstants.NOTIFICATION_DURATION_SUCCESS_MS);
     }
 
     /**
@@ -29,7 +29,7 @@ public final class NotificationUtil {
      *            The message to display
      */
     public static void showError(final String message) {
-        showNotification(message, NotificationVariant.LUMO_ERROR, AppConstants.NOTIFICATION_DURATION_ERROR_MS);
+        showNotification(message, NotificationVariant.ERROR, AppConstants.NOTIFICATION_DURATION_ERROR_MS);
     }
 
     /**
@@ -39,7 +39,7 @@ public final class NotificationUtil {
      *            The message to display
      */
     public static void showWarning(final String message) {
-        showNotification(message, NotificationVariant.LUMO_CONTRAST, AppConstants.NOTIFICATION_DURATION_WARNING_MS);
+        showNotification(message, NotificationVariant.WARNING, AppConstants.NOTIFICATION_DURATION_WARNING_MS);
     }
 
     /**
@@ -49,7 +49,7 @@ public final class NotificationUtil {
      *            The message to display
      */
     public static void showInfo(final String message) {
-        showNotification(message, NotificationVariant.LUMO_PRIMARY, AppConstants.NOTIFICATION_DURATION_INFO_MS);
+        showNotification(message, NotificationVariant.INFO, AppConstants.NOTIFICATION_DURATION_INFO_MS);
     }
 
     /**
@@ -63,12 +63,7 @@ public final class NotificationUtil {
      *            Duration in milliseconds
      */
     public static void showNotification(final String message, final NotificationVariant variant, final int duration) {
-        final var notification = new Notification();
-        notification.addThemeVariants(variant);
-        notification.setText(message);
-        notification.setDuration(duration);
-        notification.setPosition(Notification.Position.TOP_CENTER);
-        notification.open();
+        showNotification(message, variant, duration, Notification.Position.TOP_CENTER);
     }
 
     /**

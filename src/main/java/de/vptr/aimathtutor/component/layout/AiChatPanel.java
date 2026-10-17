@@ -21,6 +21,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import jakarta.annotation.Nullable;
 
 /**
@@ -80,8 +81,8 @@ public class AiChatPanel extends VerticalLayout {
         this.setWidth("30%");
         this.setSpacing(true);
         this.setPadding(true);
-        this.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)").set("display", "flex")
+        this.getStyle().set("background-color", "var(--vaadin-background-container)")
+                .set("border-left", "1px solid var(--vaadin-border-color-secondary)").set("display", "flex")
                 .set("flex-direction", "column").set("position", "sticky").set("top", "0").set("height", "100vh")
                 .set("overflow", "hidden");
 
@@ -104,13 +105,11 @@ public class AiChatPanel extends VerticalLayout {
         this.chatHistoryPanel.setSpacing(true);
         this.chatHistoryPanel.setPadding(false);
         this.chatHistoryPanel.setDefaultHorizontalComponentAlignment(Alignment.STRETCH);
+        this.chatHistoryPanel.addClassName(AppStyles.INSET_PANEL);
         this.chatHistoryPanel.getStyle().set("flex-grow", "1") // Grow to fill available space
                 .set("flex-shrink", "1") // Allow shrinking if needed
                 .set("overflow-y", "auto") // Only the history scrolls
-                .set("min-height", "0") // Important for flex shrinking
-                .set("padding", "var(--lumo-space-m)").set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+                .set("min-height", "0"); // Important for flex shrinking
 
         // Chat input area
         this.chatInput = new TextField();
@@ -119,7 +118,7 @@ public class AiChatPanel extends VerticalLayout {
         this.chatInput.setValueChangeMode(ValueChangeMode.EAGER);
 
         this.sendButton = new Button("Send", VaadinIcon.PAPERPLANE.create());
-        this.sendButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        this.sendButton.addThemeVariants(ButtonVariant.PRIMARY);
         this.sendButton.setEnabled(false);
         this.sendButton.addClickListener(e -> this.handleSend());
 
@@ -176,7 +175,7 @@ public class AiChatPanel extends VerticalLayout {
             messageRow.setWidthFull();
             messageRow.setSpacing(true);
             messageRow.setPadding(false);
-            messageRow.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+            messageRow.getStyle().set("margin-bottom", "var(--vaadin-gap-s)");
 
             // Avatar label (outside bubble)
             final var avatarLabel = new Span();
@@ -184,9 +183,7 @@ public class AiChatPanel extends VerticalLayout {
 
             // Message bubble
             final var messageDiv = new Div();
-            messageDiv.getStyle().set("padding", "var(--lumo-space-s)")
-                    .set("border-radius", "var(--lumo-border-radius-l)").set("max-width", "80%")
-                    .set("word-wrap", "break-word");
+            messageDiv.addClassName(AppStyles.CHAT_BUBBLE);
 
             if (message.sender == ChatMessageDto.Sender.AI
                     && message.messageType != ChatMessageDto.MessageType.SYSTEM) {
@@ -211,23 +208,18 @@ public class AiChatPanel extends VerticalLayout {
                 // User messages: right-aligned, avatar on right
                 messageRow.setJustifyContentMode(JustifyContentMode.END);
                 avatarLabel.setText(this.userAvatarEmoji);
-                messageDiv.getStyle().set("background-color", "var(--lumo-primary-color-10pct)").set("border",
-                        "1px solid var(--lumo-primary-color-50pct)");
+                messageDiv.addClassName(AppStyles.CHAT_BUBBLE_USER);
                 messageRow.add(messageDiv, avatarLabel);
             } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
                 // System messages: centered, no avatar
                 messageRow.setJustifyContentMode(JustifyContentMode.CENTER);
-                messageDiv.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                        .set("border", "1px solid var(--lumo-contrast-20pct)").set("font-style", "italic")
-                        .set("text-align", "center").set("color", "var(--lumo-secondary-text-color)")
-                        .set("max-width", "80%");
+                messageDiv.addClassName(AppStyles.CHAT_BUBBLE_SYSTEM);
                 messageRow.add(messageDiv);
             } else {
                 // AI messages: left-aligned, avatar on left
                 messageRow.setJustifyContentMode(JustifyContentMode.START);
                 avatarLabel.setText(this.tutorAvatarEmoji);
-                messageDiv.getStyle().set("background-color", "var(--lumo-contrast-10pct)").set("border",
-                        "1px solid var(--lumo-contrast-20pct)");
+                messageDiv.addClassName(AppStyles.CHAT_BUBBLE_TUTOR);
                 messageRow.add(avatarLabel, messageDiv);
             }
 
@@ -269,7 +261,7 @@ public class AiChatPanel extends VerticalLayout {
         typingRow.setSpacing(true);
         typingRow.setPadding(false);
         typingRow.setJustifyContentMode(JustifyContentMode.START);
-        typingRow.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+        typingRow.getStyle().set("margin-bottom", "var(--vaadin-gap-s)");
 
         // Avatar
         final var avatarLabel = new Span(this.tutorAvatarEmoji);
@@ -277,12 +269,10 @@ public class AiChatPanel extends VerticalLayout {
 
         // Typing indicator
         final var typingDiv = new Div();
-        typingDiv.getStyle().set("padding", "var(--lumo-space-s)").set("border-radius", "var(--lumo-border-radius-l)")
-                .set("background-color", "var(--lumo-contrast-10pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        typingDiv.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_TUTOR);
 
         final var typingText = new Span("typing...");
-        typingText.getStyle().set("font-style", "italic").set("color", "var(--lumo-secondary-text-color)")
+        typingText.getStyle().set("font-style", "italic").set("color", "var(--vaadin-text-color-secondary)")
                 .set("animation", "pulse 1.5s ease-in-out infinite");
         typingDiv.add(typingText);
 

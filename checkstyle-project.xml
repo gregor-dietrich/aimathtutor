@@ -42,5 +42,15 @@
             <property name="message"
                 value="JOIN FETCH on a collection cannot coexist with pagination (HHH000104, in-memory paging). Use @BatchSize, a second 'WHERE id IN :ids' query, or drop the JOIN FETCH." />
         </module>
+        <!-- The app runs on Lumo or Aura, so Java names no base-theme token or variant: the
+             base-theme bridge in styles.css is the only place their tokens appear (AGENTS.md,
+             "Theme-neutral styling"). -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="RegexpSinglelineJava.BaseThemeCoupling" />
+            <property name="format" value="--_?(lumo|aura)-|\b(LUMO|AURA)_[A-Z]" />
+            <property name="ignoreComments" value="true" />
+            <property name="message"
+                value="Java names no base-theme token or variant. Use a --vaadin-* property, an AppStyles token or class, or a theme-neutral variant constant instead of --lumo-*, --aura-*, LUMO_* or AURA_*." />
+        </module>
     </module>
 </module>

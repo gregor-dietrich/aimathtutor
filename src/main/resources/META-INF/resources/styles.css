@@ -1,13 +1,155 @@
 /*
-   CSS styling examples for the Vaadin app.
-   Visit https://vaadin.com/docs/latest/styling/application-theme and
-   https://vaadin.com/docs/latest/styling/lumo for more information.
+   Application stylesheet: the base-theme bridge, the shared classes named in AppStyles, and the
+   Graspable Math dark-mode overrides. See https://vaadin.com/docs/latest/styling for Vaadin styling.
 */
 
-/* Example: CSS class name to center align the content . */
-.centered-content {
-    margin: 0 auto;
-    max-width: 250px;
+/*
+   Base-theme bridge: the only place --lumo-* and --aura-* appear. Java and every other rule use
+   Vaadin's theme-neutral --vaadin-* properties or these --app-* tokens. Each token takes Lumo's
+   value and falls back to Aura's, so it follows whichever base stylesheet is loaded; exactly one
+   base stylesheet (Lumo or Aura) may be loaded at a time.
+   Every var() here is substituted on <html>. The tokens still follow a dark theme set lower down
+   (the app's explicit Dark sets theme="dark" on <body>) because both themes write these colours as
+   light-dark() on :root, which an unregistered token carries unresolved to the element using it,
+   and that element's color-scheme picks the branch. So they reference only --lumo-* and --aura-*,
+   never --vaadin-* colours: Vaadin registers six of those as <color>, which fixes them to one
+   colour on <html>. Read a --vaadin-* colour where it is used, in an inline style or a class rule.
+   Never define names in the --vaadin-* namespace.
+*/
+:root {
+    --app-accent: var(--lumo-primary-color, var(--aura-accent-color));
+    --app-accent-text: var(--lumo-primary-text-color, var(--aura-accent-text-color));
+    --app-accent-soft: var(--lumo-primary-color-10pct, color-mix(in oklab, var(--aura-accent-color) 12%, transparent));
+    --app-accent-muted: var(--lumo-primary-color-50pct, color-mix(in oklab, var(--aura-accent-color) 50%, transparent));
+    --app-success: var(--lumo-success-text-color, var(--aura-green-text));
+    --app-error: var(--lumo-error-text-color, var(--aura-red-text));
+    --app-warning: var(--lumo-warning-text-color, var(--aura-yellow-text));
+}
+
+/* Card surface with a subtle gradient, border and shadow. */
+.glass-card {
+    position: relative;
+    background: linear-gradient(135deg, var(--vaadin-background-color), color-mix(in srgb, var(--vaadin-background-color) 95%, var(--app-accent-soft)));
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Raises an element slightly on hover. */
+.lift-on-hover {
+    transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lift-on-hover:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Accent gradient strip along the top edge of a positioned card. */
+.accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--app-accent), var(--app-accent-muted), var(--app-accent-soft));
+    border-radius: var(--vaadin-radius-l) var(--vaadin-radius-l) 0 0;
+}
+
+/* Base box of a chat message bubble. */
+.chat-bubble {
+    padding: var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-l);
+    max-width: 80%;
+    overflow-wrap: break-word;
+}
+
+/* Chat bubble of the student. */
+.chat-bubble-user {
+    background-color: var(--app-accent-soft);
+    border-color: var(--app-accent-muted);
+}
+
+/* Chat bubble of the tutor. */
+.chat-bubble-tutor {
+    background-color: var(--vaadin-background-container-strong);
+}
+
+/* Chat bubble of system notices. */
+.chat-bubble-system {
+    background-color: var(--vaadin-background-container);
+    color: var(--vaadin-text-color-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
+/* Pulsing opacity of the tutor's typing indicator. */
+@keyframes pulse {
+    50% {
+        opacity: 0.4;
+    }
+}
+
+/* Bordered box of a dashboard list. */
+.list-card {
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-m);
+    background: var(--vaadin-background-color);
+}
+
+/* Title of a dashboard list. */
+.list-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--app-accent-text);
+    margin-bottom: 8px;
+}
+
+/* Row of a dashboard list, with a divider below. */
+.list-card-row {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+}
+
+/* Empty-state text of a dashboard list. */
+.list-card-empty {
+    color: var(--vaadin-text-color-secondary);
+    font-size: 13px;
+}
+
+/* Inset container panel on a contrasting background. */
+.inset-panel {
+    background-color: var(--vaadin-background-container);
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-m);
+    padding: var(--vaadin-padding-m);
+}
+
+/* Title inside a glass card. */
+.card-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--app-accent-text);
+    letter-spacing: 0.3px;
+}
+
+/* Page heading of an admin view. */
+.page-title {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+/* Subtitle below a page heading. */
+.page-subtitle {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--vaadin-text-color-secondary);
 }
 
 /* Graspable Math keyboard popup in dark mode */

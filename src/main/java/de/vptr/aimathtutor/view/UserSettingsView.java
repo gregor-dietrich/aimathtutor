@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -135,8 +136,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
-                "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
 
         final var header = new H3("Account Information");
         header.getStyle().set("margin-top", "0");
@@ -152,7 +153,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         final var notice = new Paragraph("Contact an administrator to change your username or email.");
-        notice.getStyle().set("font-style", "italic").set("color", "var(--lumo-secondary-text-color)");
+        notice.getStyle().set("font-style", "italic").set("color", "var(--vaadin-text-color-secondary)");
 
         section.add(header, usernameInfo, emailInfo, notice);
         return section;
@@ -162,8 +163,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
-                "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
 
         final var header = new H3("Change Password");
         header.getStyle().set("margin-top", "0");
@@ -188,7 +189,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         form.add(this.currentPasswordField, this.newPasswordField, this.confirmPasswordField);
 
         final var changePasswordButton = new Button("Change Password");
-        changePasswordButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        changePasswordButton.addThemeVariants(ButtonVariant.PRIMARY);
         changePasswordButton.addClickListener(ignored -> this.handlePasswordChange());
 
         section.add(header, form, changePasswordButton);
@@ -199,8 +200,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
-                "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
 
         final var header = new H3("Chat Avatars");
         header.getStyle().set("margin-top", "0");
@@ -223,16 +224,16 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         // Preview box
         this.previewBox = new Div();
-        this.previewBox.getStyle().set("padding", "var(--lumo-space-m)")
-                .set("background-color", "var(--lumo-contrast-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        this.previewBox.setWidthFull();
+        this.previewBox.getStyle().set("box-sizing", "border-box").set("padding", "var(--vaadin-padding-m)")
+                .set("background-color", "var(--vaadin-background-container-strong)")
+                .set("border-radius", "var(--vaadin-radius-m)").set("border", "1px solid var(--vaadin-border-color)");
 
         final var previewLabel = new Span("Preview:");
         previewLabel.getStyle().set("font-weight", "bold");
 
         final var saveAvatarsButton = new Button("Save Avatars");
-        saveAvatarsButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveAvatarsButton.addThemeVariants(ButtonVariant.PRIMARY);
         saveAvatarsButton.addClickListener(ignored -> this.handleAvatarChange());
 
         section.add(header, description, form, previewLabel, this.previewBox, saveAvatarsButton);
@@ -249,14 +250,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var userMessage = new HorizontalLayout();
         userMessage.setWidthFull();
         userMessage.setJustifyContentMode(JustifyContentMode.END);
-        userMessage.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+        userMessage.getStyle().set("margin-bottom", "var(--vaadin-gap-s)");
 
         final var userBubble = new Div();
         userBubble.setText(userEmoji + " Hello, can you help me?");
-        userBubble.getStyle().set("padding", "var(--lumo-space-s)")
-                .set("background-color", "var(--lumo-primary-color-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("border", "1px solid var(--lumo-primary-color-50pct)");
+        userBubble.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_USER);
         userMessage.add(userBubble);
 
         // AI message example
@@ -266,9 +264,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var aiBubble = new Div();
         aiBubble.setText(tutorEmoji + " Of course! I'm here to help.");
-        aiBubble.getStyle().set("padding", "var(--lumo-space-s)").set("background-color", "var(--lumo-contrast-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        aiBubble.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_TUTOR);
         aiMessage.add(aiBubble);
 
         this.previewBox.add(userMessage, aiMessage);

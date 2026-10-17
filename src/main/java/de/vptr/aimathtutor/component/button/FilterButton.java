@@ -33,6 +33,6 @@ public class FilterButton extends Button {
     }
 
     public FilterButton(final ComponentEventListener<ClickEvent<Button>> filterAction) {
-        this(filterAction, DEFAULT_TOOLTIP, ButtonVariant.LUMO_PRIMARY);
+        this(filterAction, DEFAULT_TOOLTIP, ButtonVariant.PRIMARY);
     }
 }

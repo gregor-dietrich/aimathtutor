@@ -8,11 +8,11 @@ paths:
 # Vaadin UI
 
 `AGENTS.md` ("Coding Conventions" and "Critical Anti-Patterns") holds the
-Vaadin rules that apply everywhere: transient injects, UI threading through
-`AsyncDataLoader`,
-`detachEvent.getUI()`, the synchronous `LoginView`, `CommentsPanel` and the
-`MathWorkspaceView` staleness checks. This file adds how views are built
-here.
+Vaadin rules that apply everywhere: theme-neutral styling (`--vaadin-*`
+properties, `AppStyles`, neutral variants), transient injects, UI threading
+through `AsyncDataLoader`, `detachEvent.getUI()`, the synchronous
+`LoginView`, `CommentsPanel` and the `MathWorkspaceView` staleness checks.
+This file adds how views are built here.
 
 - **Routing:** `@Route(value = "...", layout = MainLayout.class)` for user
   views, `layout = AdminMainLayout.class` for admin views. The layouts
@@ -23,5 +23,7 @@ here.
 - **Reuse components** before adding one: `component/button/`,
   `component/dialog/` (`BaseFormDialog`, `FormDialog`,
   `ConfirmationDialog`), `component/layout/` (search and filter layouts,
-  `CommentsPanel`, `AiChatPanel`), `component/dashboard/`, and the
-  navigation pieces (`NavigationTabs`, `AdminNavigationTabs`, `TopBar`).
+  `CommentsPanel`, `AiChatPanel`), `component/dashboard/`, `DifficultyBadge`
+  and `GlassAccentBar`, and the navigation pieces (`NavigationTabs`,
+  `AdminNavigationTabs`, `TopBar`). Shared styling reuses the classes named
+  in `AppStyles`.

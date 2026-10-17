@@ -8,6 +8,8 @@ import java.util.Set;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -23,12 +25,14 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
+import de.vptr.aimathtutor.component.DifficultyBadge;
 import de.vptr.aimathtutor.component.GlassAccentBar;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.inject.Inject;
@@ -38,11 +42,6 @@ import jakarta.inject.Inject;
  */
 @Route(value = "", layout = MainLayout.class)
 public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
-    private static final String GLASS_BG_GRADIENT = "linear-gradient(135deg, var(--lumo-base-color), "
-            + "color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-    private static final String GLASS_BORDER = "1px solid var(--lumo-contrast-10pct)";
-    private static final String GLASS_SHADOW = "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
-
     @Inject
     private transient AuthService authService;
 
@@ -59,7 +58,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
      * Constructs the LessonsView with alignment and padding.
      */
     public LessonsView() {
-        this.welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
+        this.welcomeLabel.getStyle().set("margin-bottom", "var(--vaadin-gap-m)");
         this.setAlignItems(Alignment.START);
         this.setJustifyContentMode(JustifyContentMode.START);
         this.setPadding(true);
@@ -116,7 +115,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         if (rootLessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
-            noLessonsMsg.getStyle().set("color", "var(--lumo-secondary-text-color)");
+            noLessonsMsg.getStyle().set("color", "var(--vaadin-text-color-secondary)");
             this.add(noLessonsMsg);
             return;
         }
@@ -132,13 +131,12 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             standaloneSection.setPadding(true);
             standaloneSection.setWidthFull();
 
-            standaloneSection.getStyle().set("background", GLASS_BG_GRADIENT).set("border-radius", "12px")
-                    .set("border", GLASS_BORDER).set("box-shadow", GLASS_SHADOW).set("position", "relative");
+            standaloneSection.addClassName(AppStyles.GLASS_CARD);
 
             final var accentBar = new GlassAccentBar();
 
             final var standaloneTitle = new H3("Additional Exercises");
-            standaloneTitle.getStyle().set("margin", "0 0 var(--lumo-space-s) 0");
+            standaloneTitle.getStyle().set("margin", "0 0 var(--vaadin-gap-s) 0");
 
             final var exerciseGrid = new HorizontalLayout();
             exerciseGrid.setSpacing(true);
@@ -165,27 +163,26 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         section.setWidthFull();
 
         if (depth == 0) {
-            section.getStyle().set("background", GLASS_BG_GRADIENT).set("border-radius", "12px")
-                    .set("border", GLASS_BORDER).set("box-shadow", GLASS_SHADOW).set("position", "relative")
-                    .set("margin-bottom", "var(--lumo-space-m)");
+            section.addClassName(AppStyles.GLASS_CARD);
+            section.getStyle().set("margin-bottom", "var(--vaadin-gap-m)");
 
             section.add(new GlassAccentBar());
         } else {
-            section.getStyle().set("border-left", "3px solid var(--lumo-primary-color)").set("padding-left",
-                    "var(--lumo-space-m)");
+            section.getStyle().set("border-left", "3px solid " + AppStyles.ACCENT).set("padding-left",
+                    "var(--vaadin-padding-m)");
         }
 
         if (depth == 0) {
             final var h = new H3(lesson.getName());
-            h.getStyle().set("margin", "0 0 var(--lumo-space-s) 0");
+            h.getStyle().set("margin", "0 0 var(--vaadin-gap-s) 0");
             section.add(h);
         } else if (depth == 1) {
             final var h = new H4(lesson.getName());
-            h.getStyle().set("margin", "0 0 var(--lumo-space-xs) 0");
+            h.getStyle().set("margin", "0 0 var(--vaadin-gap-xs) 0");
             section.add(h);
         } else {
             final var s = new Span(lesson.getName());
-            s.getStyle().set("font-weight", "600").set("font-size", "var(--lumo-font-size-s)").set("display", "block");
+            s.getStyle().set("font-weight", "600").set("font-size", "0.875em").set("display", "block");
             section.add(s);
         }
 
@@ -215,7 +212,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             section.add(exerciseGrid);
         } else if (lesson.childrenPublicIds == null || lesson.childrenPublicIds.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");
-            noExercisesMsg.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-style", "italic");
+            noExercisesMsg.getStyle().set("color", "var(--vaadin-text-color-secondary)").set("font-style", "italic");
             section.add(noExercisesMsg);
         }
 
@@ -224,11 +221,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
     private Div createExerciseCard(final ExerciseViewDto exercise) {
         final var card = new Div();
-        card.getStyle().set("width", "300px").set("background", GLASS_BG_GRADIENT).set("border", GLASS_BORDER)
-                .set("border-radius", "12px").set("cursor", "pointer")
-                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("display", "flex")
-                .set("flex-direction", "column").set("position", "relative").set("overflow", "hidden")
-                .set("box-shadow", GLASS_SHADOW);
+        card.addClassNames(AppStyles.GLASS_CARD, AppStyles.LIFT_ON_HOVER);
+        card.getStyle().set("width", "300px").set("cursor", "pointer").set("display", "flex")
+                .set("flex-direction", "column").set("overflow", "hidden");
 
         // Accent bar
         final var accentBar = new GlassAccentBar();
@@ -238,11 +233,9 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
         content.getStyle().set("padding", "1rem").set("display", "flex").set("flex-direction", "column").set("gap",
                 "0.5rem");
 
-        GlassAccentBar.addHoverEffect(card);
-
         // Title
         final var titleSpan = new Span(exercise.title);
-        titleSpan.getStyle().set("font-weight", "600").set("font-size", "var(--lumo-font-size-m)");
+        titleSpan.getStyle().set("font-weight", "600");
 
         // Badges
         final var badgeLayout = new HorizontalLayout();
@@ -251,38 +244,26 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         // Completed badge
         if (Boolean.TRUE.equals(exercise.userCompleted)) {
-            final var completedBadge = new Span("✓ Completed");
-            completedBadge.getElement().getThemeList().add("badge");
-            completedBadge.getElement().getThemeList().add("success");
+            final var completedBadge = new Badge("✓ Completed");
+            completedBadge.addThemeVariants(BadgeVariant.SUCCESS);
             badgeLayout.add(completedBadge);
         }
 
         // Graspable Math badge
         if (Boolean.TRUE.equals(exercise.graspableEnabled)) {
-            final var gmBadge = new Span("📐 Interactive");
-            gmBadge.getElement().getThemeList().add("badge");
-            gmBadge.getElement().getThemeList().add("success");
+            final var gmBadge = new Badge("📐 Interactive");
+            gmBadge.addThemeVariants(BadgeVariant.SUCCESS);
             badgeLayout.add(gmBadge);
         }
 
         // Difficulty badge
         if (exercise.graspableDifficulty != null) {
-            final var difficultyBadge = new Span(exercise.graspableDifficulty.getValue());
-            difficultyBadge.getElement().getThemeList().add("badge");
-            switch (exercise.graspableDifficulty) {
-                case BEGINNER -> difficultyBadge.getElement().getThemeList().add("success");
-                case INTERMEDIATE -> difficultyBadge.getElement().getThemeList().add("contrast");
-                case ADVANCED, EXPERT -> difficultyBadge.getElement().getThemeList().add("error");
-                default -> {
-                    // unknown difficulty - no extra styling
-                }
-            }
-            badgeLayout.add(difficultyBadge);
+            badgeLayout.add(new DifficultyBadge(exercise.graspableDifficulty.getValue(), exercise.graspableDifficulty));
         }
 
         // Start button
         final var startButton = new Button("Start Exercise");
-        startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        startButton.addThemeVariants(ButtonVariant.PRIMARY);
         startButton.setWidthFull();
         startButton.addClickListener(ignored -> {
             if (exercise.publicId == null) {

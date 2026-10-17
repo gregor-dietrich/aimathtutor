@@ -3,6 +3,8 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.List;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
@@ -19,6 +21,7 @@ import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -42,7 +45,7 @@ public class AdminSessionView extends AbstractAdminView {
     private transient StudentSessionViewDto session;
 
     private transient Span headerSubtitle;
-    private transient Span statusBadge;
+    private transient Badge statusBadge;
 
     private transient DashboardKpiCard actionsCard;
     private transient DashboardKpiCard correctActionsCard;
@@ -89,13 +92,11 @@ public class AdminSessionView extends AbstractAdminView {
 
         // Header
         final var title = new H2("Session Details");
-        title.getStyle().set("margin-top", "0").set("margin-bottom", "4px").set("font-size", "22px")
-                .set("font-weight", "700").set("color", "var(--lumo-header-text-color)").set("letter-spacing", "-0.3px")
-                .set("display", "inline");
+        title.addClassName(AppStyles.PAGE_TITLE);
+        title.getStyle().set("display", "inline");
 
-        this.statusBadge = new Span("Loading");
-        this.statusBadge.getElement().getThemeList().add("badge");
-        this.statusBadge.getElement().getThemeList().add("contrast");
+        this.statusBadge = new Badge("Loading");
+        this.statusBadge.addThemeVariants(BadgeVariant.CONTRAST);
 
         final var titleRow = new Div(title, this.statusBadge);
         titleRow.getStyle().set("display", "flex").set("align-items", "center").set("gap", "12px").set("margin-bottom",
@@ -103,8 +104,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.add(titleRow);
 
         this.headerSubtitle = new Span("Loading session information...");
-        this.headerSubtitle.getStyle().set("font-size", "13px").set("color", "var(--lumo-secondary-text-color)")
-                .set("margin-bottom", "8px").set("display", "block");
+        this.headerSubtitle.addClassName(AppStyles.PAGE_SUBTITLE);
         this.add(this.headerSubtitle);
 
         // Row 1: stats KPI cards
@@ -143,16 +143,16 @@ public class AdminSessionView extends AbstractAdminView {
         card.setPadding(false);
         card.setSpacing(false);
         card.setWidthFull();
-        applyGlassCardStyle(card);
+        card.addClassNames(AppStyles.GLASS_CARD, AppStyles.LIFT_ON_HOVER);
+        card.getStyle().set("overflow", "hidden");
 
-        final var accentBar = buildAccentBar();
+        final var accentBar = new GlassAccentBar();
         final var cardTitle = new Span("Interactions & Feedback");
-        cardTitle.getStyle().set("font-size", "13px").set("font-weight", "700")
-                .set("color", "var(--lumo-primary-text-color)").set("letter-spacing", "0.3px")
-                .set("padding", "12px 16px 4px").set("display", "block");
+        cardTitle.addClassName(AppStyles.CARD_TITLE);
+        cardTitle.getStyle().set("padding", "12px 16px 4px");
 
         this.interactionsGrid = new Grid<>(AiInteractionViewDto.class, false);
-        this.interactionsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.interactionsGrid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.interactionsGrid.setWidthFull();
         this.interactionsGrid.getStyle().set("padding", "0 8px 8px");
 
@@ -183,27 +183,7 @@ public class AdminSessionView extends AbstractAdminView {
                 .setHeader("Feedback Type").setFlexGrow(0).setWidth("100px");
 
         card.add(accentBar, cardTitle, this.interactionsGrid);
-        GlassAccentBar.addHoverEffect(card);
         return card;
-    }
-
-    private static void applyGlassCardStyle(final VerticalLayout card) {
-        final String bg = "linear-gradient(135deg, var(--lumo-base-color),"
-                + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        card.getStyle().set("background", bg).set("border-radius", "12px")
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
-                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("overflow", "hidden");
-    }
-
-    private static Div buildAccentBar() {
-        final var bar = new Div();
-        bar.getStyle().set("height", "3px").set("width", "100%")
-                .set("background",
-                        "linear-gradient(90deg, var(--lumo-primary-color),"
-                                + " var(--lumo-primary-color-50pct), var(--lumo-primary-color-10pct))")
-                .set("flex-shrink", "0");
-        return bar;
     }
 
     private void loadSessionDetails() {
@@ -233,10 +213,9 @@ public class AdminSessionView extends AbstractAdminView {
         this.headerSubtitle.setText("(" + duration + ") Session ID: " + this.session.sessionId);
 
         this.statusBadge.setText(Boolean.TRUE.equals(this.session.completed) ? "Completed" : "In Progress");
-        this.statusBadge.getElement().getThemeList().clear();
-        this.statusBadge.getElement().getThemeList().add("badge");
-        this.statusBadge.getElement().getThemeList()
-                .add(Boolean.TRUE.equals(this.session.completed) ? "success" : "contrast");
+        this.statusBadge.removeThemeVariants(BadgeVariant.SUCCESS, BadgeVariant.CONTRAST);
+        this.statusBadge.addThemeVariants(
+                Boolean.TRUE.equals(this.session.completed) ? BadgeVariant.SUCCESS : BadgeVariant.CONTRAST);
 
         this.actionsCard.setValue(String.valueOf(this.session.actionsCount));
         this.correctActionsCard.setValue(String.valueOf(this.session.correctActions));

@@ -143,10 +143,9 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         controls.setSpacing(true);
 
         final var generateProblemButton = new Button("Generate New Problem", e -> this.showProblemCategoryDialog());
-        generateProblemButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generateProblemButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var customProblemButton = new Button("Enter Custom Problem", e -> this.showCustomProblemDialog());
-        customProblemButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
         final var resetButton = new Button("Reset", e -> this.resetCanvas());
 
@@ -389,7 +388,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         layout.setPadding(false);
 
         final var instructions = new Paragraph("Choose the type of math problem you want to practice:");
-        instructions.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        instructions.getStyle().set("color", "var(--vaadin-text-color-secondary)");
 
         // Category selector
         final var categorySelect = new ComboBox<GraspableProblemDto.ProblemCategory>("Problem Category");
@@ -410,7 +409,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 dialog.close();
             }
         });
-        generateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        generateButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         dialog.getFooter().add(cancelButton, generateButton);
         dialog.open();
@@ -430,7 +429,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
 
         final var instructions =
                 new Paragraph("Enter a mathematical expression to work with. Examples: 2x+5=15, x^2-4=0, (x+3)(x-2)");
-        instructions.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        instructions.getStyle().set("color", "var(--vaadin-text-color-secondary)");
 
         final var expressionField = new TextField("Expression");
         expressionField.setWidthFull();
@@ -450,7 +449,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                 dialog.close();
             }
         });
-        loadButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        loadButton.addThemeVariants(ButtonVariant.PRIMARY);
         loadButton.setEnabled(false);
 
         expressionField.addValueChangeListener(e -> {

@@ -40,6 +40,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
@@ -161,13 +162,13 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(UserGroupViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Make the name column clickable
         this.grid.addComponentColumn(group -> {
             final var nameSpan = new Span(group.name);
-            nameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
             nameSpan.getStyle().set("display", "block");
@@ -221,10 +222,10 @@ public class AdminUserGroupsView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", ignored -> this.saveGroup());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", ignored -> this.groupDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 
@@ -315,7 +316,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
         // Create user grid
         this.userGrid = new Grid<>(UserViewDto.class, false);
-        this.userGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.userGrid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.userGrid.setHeight("300px");
 
         this.userGrid.addColumn(user -> user.publicId).setHeader("ID").setWidth("140px").setFlexGrow(0);
@@ -338,7 +339,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.availableUsersCombo.setPlaceholder("Select a user to add...");
 
         final var addButton = new Button("Add User", ignored -> this.addUserToGroup());
-        addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         addUserLayout.add(this.availableUsersCombo, addButton);
 
@@ -348,7 +349,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
         final var refreshButton = new RefreshButton(ignored -> this.loadGroupUsers());
         final var closeButton = new Button("Close", ignored -> this.userManagementDialog.close());
-        closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        closeButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(refreshButton, closeButton);
 

@@ -32,6 +32,6 @@ public class SearchButton extends Button {
     }
 
     public SearchButton(final ComponentEventListener<ClickEvent<Button>> searchAction) {
-        this(searchAction, DEFAULT_TOOLTIP, ButtonVariant.LUMO_PRIMARY);
+        this(searchAction, DEFAULT_TOOLTIP, ButtonVariant.PRIMARY);
     }
 }

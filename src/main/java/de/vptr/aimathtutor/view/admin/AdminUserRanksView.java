@@ -35,6 +35,7 @@ import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
@@ -132,13 +133,13 @@ public class AdminUserRanksView extends AbstractAdminView {
 
     private void createGrid() {
         this.grid = new Grid<>(UserRankViewDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Make the name column clickable
         this.grid.addComponentColumn(rank -> {
             final var nameSpan = new Span(rank.name);
-            nameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
             nameSpan.getStyle().set("display", "block");
@@ -384,10 +385,10 @@ public class AdminUserRanksView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", e -> this.saveRank());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", e -> this.rankDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 

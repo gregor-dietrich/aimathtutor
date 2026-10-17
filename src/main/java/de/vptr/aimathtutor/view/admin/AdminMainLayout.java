@@ -26,6 +26,7 @@ import de.vptr.aimathtutor.component.button.UserViewButton;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.LayoutNavigationUtil;
 import de.vptr.aimathtutor.view.LessonsView;
 import de.vptr.aimathtutor.view.LoginView;
@@ -181,12 +182,12 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.topBar = new TopBar(this.themeService);
 
         this.sidebarToggleButton = new Button(new Icon(VaadinIcon.MENU), e -> this.toggleSidebar());
-        this.sidebarToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ICON);
+        this.sidebarToggleButton.addThemeVariants(ButtonVariant.TERTIARY);
         this.sidebarToggleButton.setAriaLabel("Toggle navigation sidebar");
 
         final var title = new H1("AI Math Tutor - Admin Panel");
         title.getStyle().set("margin", "0");
-        title.getStyle().set("color", "var(--lumo-primary-text-color)");
+        title.getStyle().set("color", AppStyles.ACCENT_TEXT);
 
         final var leftContent = new HorizontalLayout(this.sidebarToggleButton, title);
         leftContent.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -217,8 +218,8 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
         this.sidebar.setWidth("250px");
         this.sidebar.setPadding(true);
         this.sidebar.setSpacing(false);
-        this.sidebar.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-        this.sidebar.getStyle().set("border-right", "1px solid var(--lumo-contrast-10pct)");
+        this.sidebar.getStyle().set("background-color", "var(--vaadin-background-container)");
+        this.sidebar.getStyle().set("border-right", "1px solid var(--vaadin-border-color-secondary)");
         this.sidebar.getStyle().set("height", "100%");
         this.sidebar.getStyle().set("overflow-y", "auto");
 

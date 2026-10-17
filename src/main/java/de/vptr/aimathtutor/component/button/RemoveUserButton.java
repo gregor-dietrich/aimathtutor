@@ -26,7 +26,7 @@ public class RemoveUserButton extends Button {
             @Nullable final String tooltipText) {
         super("");
         this.deleteAction = deleteAction;
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
+        this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.ERROR);
         this.setIcon(LineAwesomeIcon.USER_MINUS_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
         this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);

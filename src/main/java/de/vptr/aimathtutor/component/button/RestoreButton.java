@@ -22,7 +22,7 @@ public class RestoreButton extends Button {
     public RestoreButton(final ComponentEventListener<ClickEvent<Button>> restoreAction,
             @Nullable final String tooltipText) {
         super("", restoreAction);
-        this.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
+        this.addThemeVariants(ButtonVariant.SMALL);
         this.setIcon(LineAwesomeIcon.TRASH_RESTORE_SOLID.create());
         final String resolvedTooltip = tooltipText != null && !tooltipText.isBlank() ? tooltipText : DEFAULT_TOOLTIP;
         this.setTooltipText(resolvedTooltip);

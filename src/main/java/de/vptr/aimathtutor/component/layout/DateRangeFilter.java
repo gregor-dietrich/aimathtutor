@@ -32,7 +32,7 @@ public class DateRangeFilter extends HorizontalLayout {
         this.startDatePicker = new DatePicker("From");
         this.endDatePicker = new DatePicker("To");
         this.clearButton = new Button("Clear", e -> this.clear());
-        this.clearButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        this.clearButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         this.add(this.startDatePicker, this.endDatePicker, this.clearButton);
     }

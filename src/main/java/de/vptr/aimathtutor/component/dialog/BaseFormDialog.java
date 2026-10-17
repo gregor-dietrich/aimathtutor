@@ -45,9 +45,9 @@ public abstract class BaseFormDialog<T> extends Dialog {
         this.buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", e -> this.onSave());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
         final var cancelButton = new Button("Cancel", e -> this.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
         this.buttonLayout.add(saveButton, cancelButton);
 
         final var layout = new VerticalLayout(titleLabel, this.formLayout, this.buttonLayout);

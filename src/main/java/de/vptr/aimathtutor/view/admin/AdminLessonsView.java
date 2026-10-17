@@ -205,7 +205,7 @@ public class AdminLessonsView extends AbstractAdminView {
 
     private void createTreeGrid() {
         this.treeGrid = new TreeGrid<>(LessonViewDto.class);
-        this.treeGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.treeGrid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.treeGrid.setSizeFull();
         this.treeGrid.removeAllColumns();
 
@@ -300,10 +300,10 @@ public class AdminLessonsView extends AbstractAdminView {
         buttonLayout.setSpacing(true);
 
         final var saveButton = new Button("Save", ignored -> this.saveLesson());
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
         final var cancelButton = new Button("Cancel", ignored -> this.lessonDialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelButton.addThemeVariants(ButtonVariant.TERTIARY);
 
         buttonLayout.add(saveButton, cancelButton);
 

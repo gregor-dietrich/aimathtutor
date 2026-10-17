@@ -74,7 +74,7 @@ public class AdminProgressView extends AbstractAdminView {
 
         // Create grid
         this.grid = new Grid<>(StudentProgressSummaryDto.class, false);
-        this.grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
         // Configure columns
