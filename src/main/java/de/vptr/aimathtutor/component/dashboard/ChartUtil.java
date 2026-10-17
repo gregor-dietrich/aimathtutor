@@ -7,22 +7,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import de.vptr.aimathtutor.util.AppStyles;
 import jakarta.annotation.Nullable;
 
 /**
  * Utility for generating SVG chart strings for the admin dashboard. Produces line, horizontal bar, and donut charts
- * styled with Lumo design tokens. No external dependencies.
+ * styled with Vaadin's theme-neutral properties and the app's accent and status tokens ({@link AppStyles}). No external
+ * dependencies.
  */
 public final class ChartUtil {
 
-    private static final String LUMO_PRIMARY = "var(--lumo-primary-color)";
-    private static final String LUMO_PRIMARY_50 = "var(--lumo-primary-color-50pct)";
-    private static final String LUMO_CONTRAST_10 = "var(--lumo-contrast-10pct)";
-    private static final String LUMO_CONTRAST_50 = "var(--lumo-contrast-50pct)";
-    private static final String LUMO_SECONDARY_TEXT = "var(--lumo-secondary-text-color)";
+    private static final String BORDER_SECONDARY = "var(--vaadin-border-color-secondary)";
+    private static final String TEXT_SECONDARY = "var(--vaadin-text-color-secondary)";
 
-    private static final String[] DONUT_COLORS = { LUMO_PRIMARY, "var(--lumo-error-color)", "var(--lumo-success-color)",
-            "var(--lumo-warning-color)", "#9c27b0", "#00bcd4" };
+    private static final String[] DONUT_COLORS =
+            { AppStyles.ACCENT, AppStyles.ERROR, AppStyles.SUCCESS, AppStyles.WARNING, "#9c27b0", "#00bcd4" };
 
     private ChartUtil() {
     }
@@ -57,10 +56,10 @@ public final class ChartUtil {
         final var sb = new StringBuilder();
         sb.append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ").append(width).append(" ").append(height)
                 .append("\" style=\"width:100%;height:100%;\">");
-        sb.append("<style>.chart-text{font-family:var(--lumo-font-family);font-size:11px;fill:")
-                .append(LUMO_SECONDARY_TEXT).append(";}.chart-line{fill:none;stroke:").append(LUMO_PRIMARY)
-                .append(";stroke-width:2;stroke-linejoin:round;}.chart-dot{fill:").append(LUMO_PRIMARY)
-                .append(";}.chart-grid{stroke:").append(LUMO_CONTRAST_10).append(";stroke-width:1;}</style>");
+        sb.append("<style>.chart-text{font-size:11px;fill:").append(TEXT_SECONDARY)
+                .append(";}.chart-line{fill:none;stroke:").append(AppStyles.ACCENT)
+                .append(";stroke-width:2;stroke-linejoin:round;}.chart-dot{fill:").append(AppStyles.ACCENT)
+                .append(";}.chart-grid{stroke:").append(BORDER_SECONDARY).append(";stroke-width:1;}</style>");
 
         if (title != null && !title.isEmpty()) {
             sb.append("<text x=\"").append(padding[3])
@@ -96,8 +95,9 @@ public final class ChartUtil {
                 .append(padding[0] + plotH).append("Z");
 
         sb.append("<defs><linearGradient id=\"lineGrad\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">");
-        sb.append("<stop offset=\"0%\" stop-color=\"").append(LUMO_PRIMARY).append("\" stop-opacity=\"0.2\"/>");
-        sb.append("<stop offset=\"100%\" stop-color=\"").append(LUMO_PRIMARY_50).append("\" stop-opacity=\"0.02\"/>");
+        sb.append("<stop offset=\"0%\" stop-color=\"").append(AppStyles.ACCENT).append("\" stop-opacity=\"0.2\"/>");
+        sb.append("<stop offset=\"100%\" stop-color=\"").append(AppStyles.ACCENT_MUTED)
+                .append("\" stop-opacity=\"0.02\"/>");
         sb.append("</linearGradient></defs>");
 
         sb.append("<path d=\"").append(gradientFill).append("\" fill=\"url(#lineGrad)\"/>");
@@ -153,10 +153,9 @@ public final class ChartUtil {
         final var sb = new StringBuilder();
         sb.append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ").append(width).append(" ").append(height)
                 .append("\" style=\"width:100%;height:100%;\">");
-        sb.append("<style>.chart-bar-text{font-family:var(--lumo-font-family);font-size:12px;fill:")
-                .append(LUMO_SECONDARY_TEXT).append(";}.chart-bar{fill:").append(LUMO_PRIMARY)
-                .append(";opacity:0.8;}.chart-bar-val{font-family:var(--lumo-font-family);font-size:11px;fill:")
-                .append(LUMO_CONTRAST_50).append(";}</style>");
+        sb.append("<style>.chart-bar-text{font-size:12px;fill:").append(TEXT_SECONDARY).append(";}.chart-bar{fill:")
+                .append(AppStyles.ACCENT).append(";opacity:0.8;}.chart-bar-val{font-size:11px;fill:")
+                .append(TEXT_SECONDARY).append(";}</style>");
 
         if (title != null && !title.isEmpty()) {
             sb.append("<text x=\"4\" y=\"16\" class=\"chart-bar-text\" font-size=\"13\" font-weight=\"600\">")
@@ -220,12 +219,10 @@ public final class ChartUtil {
         final var sb = new StringBuilder();
         sb.append("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ").append(totalW).append(" ").append(size)
                 .append("\" style=\"width:100%;height:100%;\">");
-        sb.append("<style>.donut-text{font-family:var(--lumo-font-family);font-size:10px;fill:")
-                .append(LUMO_SECONDARY_TEXT)
-                .append(";text-anchor:middle;}.donut-center{font-family:var(--lumo-font-family);")
-                .append("font-size:18px;font-weight:700;fill:").append(LUMO_PRIMARY)
-                .append(";text-anchor:middle;}.donut-legend{font-family:var(--lumo-font-family);font-size:10px;fill:")
-                .append(LUMO_SECONDARY_TEXT).append(";}</style>");
+        sb.append("<style>.donut-text{font-size:10px;fill:").append(TEXT_SECONDARY)
+                .append(";text-anchor:middle;}.donut-center{font-size:18px;font-weight:700;fill:")
+                .append(AppStyles.ACCENT).append(";text-anchor:middle;}.donut-legend{font-size:10px;fill:")
+                .append(TEXT_SECONDARY).append(";}</style>");
 
         double startAngle = -90.0;
         int idx = 0;
@@ -237,7 +234,7 @@ public final class ChartUtil {
                 sb.append("<circle cx=\"").append(cx).append("\" cy=\"").append(cy).append("\" r=\"").append(outerR)
                         .append("\" fill=\"").append(color).append("\"/>");
                 sb.append("<circle cx=\"").append(cx).append("\" cy=\"").append(cy).append("\" r=\"").append(innerR)
-                        .append("\" fill=\"var(--lumo-base-color)\"/>");
+                        .append("\" fill=\"var(--vaadin-background-color)\"/>");
             } else {
                 final int largeArc = angle > 180 ? 1 : 0;
 
@@ -291,9 +288,8 @@ public final class ChartUtil {
     private static String emptySvg(final int width, final int height, final String text) {
         return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " + width + " " + height
                 + "\" style=\"width:100%;height:100%;\">" + "<text x=\"" + (width / 2) + "\" y=\"" + (height / 2)
-                + "\" text-anchor=\"middle\" dominant-baseline=\"central\" "
-                + "font-family=\"var(--lumo-font-family)\" font-size=\"14\" fill=\"var(--lumo-secondary-text-color)\">"
-                + escapeXml(text) + "</text></svg>";
+                + "\" text-anchor=\"middle\" dominant-baseline=\"central\" font-size=\"14\" fill=\"" + TEXT_SECONDARY
+                + "\">" + escapeXml(text) + "</text></svg>";
     }
 
     /**
