@@ -16,6 +16,8 @@ import de.vptr.aimathtutor.util.AppStyles;
 class ChartUtilTest {
 
     private static final LocalDate DAY = LocalDate.of(2026, 1, 1);
+    // 30 chars: after truncation to 21 (bar label) or 13 (donut legend) chars the "<img" part still survives
+    private static final String HOSTILE = "<img src=x onerror=alert(1)>\"&";
 
     private static Map<LocalDate, Long> series() {
         return Map.of(DAY, 1L, DAY.plusDays(1), 3L);
@@ -69,5 +71,44 @@ class ChartUtilTest {
         assertFalse(ChartUtil.lineChart(Map.of(), null, 400, 200).contains("font-family"));
         assertFalse(ChartUtil.horizontalBarChart(Map.of(), null, 400, 200).contains("font-family"));
         assertFalse(ChartUtil.donutChart(Map.of(), null, null, 200).contains("font-family"));
+    }
+
+    @Test
+    @DisplayName("Line chart escapes a hostile title")
+    void testLineChart_escapesTitle() {
+        final var svg = ChartUtil.lineChart(series(), HOSTILE, 400, 200);
+        assertFalse(svg.contains("<img"));
+        assertTrue(svg.contains("&lt;img"));
+    }
+
+    @Test
+    @DisplayName("Horizontal bar chart escapes a hostile title and bar label")
+    void testHorizontalBarChart_escapesTitleAndLabel() {
+        final var titled = ChartUtil.horizontalBarChart(categories(), HOSTILE, 400, 200);
+        assertFalse(titled.contains("<img"));
+        assertTrue(titled.contains("&lt;img"));
+
+        final var labelled = ChartUtil.horizontalBarChart(Map.of(HOSTILE, 5), "Title", 400, 200);
+        assertFalse(labelled.contains("<img"));
+        assertTrue(labelled.contains("&lt;img"));
+    }
+
+    @Test
+    @DisplayName("Donut chart escapes a hostile legend key and center texts")
+    void testDonutChart_escapesLegendKeyAndCenter() {
+        final var legend = ChartUtil.donutChart(Map.of(HOSTILE, 5), null, null, 200);
+        assertFalse(legend.contains("<img"));
+        assertTrue(legend.contains("&lt;img"));
+
+        final var center = ChartUtil.donutChart(categories(), HOSTILE, HOSTILE, 200);
+        assertFalse(center.contains("<img"));
+        assertTrue(center.contains("&lt;img"));
+    }
+
+    @Test
+    @DisplayName("Donut chart with a single category draws the full-circle hole in the background colour")
+    void testDonutChart_fullCircle() {
+        final var svg = ChartUtil.donutChart(Map.of("only", 7), null, null, 200);
+        assertTrue(svg.contains("fill=\"var(--vaadin-background-color)\""));
     }
 }
