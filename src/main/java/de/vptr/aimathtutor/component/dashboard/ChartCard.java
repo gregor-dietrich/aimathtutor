@@ -5,6 +5,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import de.vptr.aimathtutor.component.GlassAccentBar;
+import de.vptr.aimathtutor.util.AppStyles;
 
 /**
  * Premium chart card with glass-morphism styling, matching the DashboardKpiCard design language. Wraps SVG chart
@@ -26,19 +27,10 @@ public class ChartCard extends VerticalLayout {
         this.setWidthFull();
         this.setHeightFull();
 
-        final String bgGradient = "linear-gradient(135deg, var(--lumo-base-color),"
-                + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        this.getStyle().set("background", bgGradient).set("border-radius", "12px")
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
-                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("position", "relative")
-                .set("overflow", "hidden");
+        this.addClassNames(AppStyles.GLASS_CARD, AppStyles.LIFT_ON_HOVER);
+        this.getStyle().set("overflow", "hidden");
 
-        final var accentBar = new Div();
-        final String accentGradient = "linear-gradient(90deg, var(--lumo-primary-color),"
-                + " var(--lumo-primary-color-50pct), var(--lumo-primary-color-10pct))";
-        accentBar.getStyle().set("height", "3px").set("width", "100%").set("background", accentGradient)
-                .set("flex-shrink", "0");
+        final var accentBar = new GlassAccentBar();
 
         if (title != null && !title.isEmpty()) {
             final var titleSpan = new Span(title);
@@ -55,7 +47,6 @@ public class ChartCard extends VerticalLayout {
         this.chartContainer.setHeightFull();
         this.chartContainer.getStyle().set("min-height", "200px").set("padding", "8px 8px 4px");
         this.add(this.chartContainer);
-        GlassAccentBar.addHoverEffect(this);
     }
 
     /**

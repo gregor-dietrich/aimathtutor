@@ -21,6 +21,7 @@ import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -144,9 +145,10 @@ public class AdminSessionView extends AbstractAdminView {
         card.setPadding(false);
         card.setSpacing(false);
         card.setWidthFull();
-        applyGlassCardStyle(card);
+        card.addClassNames(AppStyles.GLASS_CARD, AppStyles.LIFT_ON_HOVER);
+        card.getStyle().set("overflow", "hidden");
 
-        final var accentBar = buildAccentBar();
+        final var accentBar = new GlassAccentBar();
         final var cardTitle = new Span("Interactions & Feedback");
         cardTitle.getStyle().set("font-size", "13px").set("font-weight", "700")
                 .set("color", "var(--lumo-primary-text-color)").set("letter-spacing", "0.3px")
@@ -184,27 +186,7 @@ public class AdminSessionView extends AbstractAdminView {
                 .setHeader("Feedback Type").setFlexGrow(0).setWidth("100px");
 
         card.add(accentBar, cardTitle, this.interactionsGrid);
-        GlassAccentBar.addHoverEffect(card);
         return card;
-    }
-
-    private static void applyGlassCardStyle(final VerticalLayout card) {
-        final String bg = "linear-gradient(135deg, var(--lumo-base-color),"
-                + " color-mix(in srgb, var(--lumo-base-color) 95%, var(--lumo-primary-color-10pct)))";
-        card.getStyle().set("background", bg).set("border-radius", "12px")
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
-                .set("box-shadow", "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)")
-                .set("transition", "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)").set("overflow", "hidden");
-    }
-
-    private static Div buildAccentBar() {
-        final var bar = new Div();
-        bar.getStyle().set("height", "3px").set("width", "100%")
-                .set("background",
-                        "linear-gradient(90deg, var(--lumo-primary-color),"
-                                + " var(--lumo-primary-color-50pct), var(--lumo-primary-color-10pct))")
-                .set("flex-shrink", "0");
-        return bar;
     }
 
     private void loadSessionDetails() {
