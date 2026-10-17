@@ -244,22 +244,12 @@ public class CommentsPanel extends VerticalLayout {
 
         // Header with author and date - styled differently from content
         final LocalDateTime created = comment.created;
-        if (created == null) {
-            // Fallback if created is null, though it shouldn't be
-            final Span header = new Span((comment.username != null ? comment.username : "Unknown") + " · unknown");
-            header.addClassName("comment-header");
-            header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem")
-                    .set("color", "var(--vaadin-text-color-secondary)");
-            commentDiv.add(header);
-        } else {
-            final String relativeDate = this.formatRelativeDate(created);
-            final Span header =
-                    new Span((comment.username != null ? comment.username : "Unknown") + " · " + relativeDate);
-            header.addClassName("comment-header");
-            header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem")
-                    .set("color", "var(--vaadin-text-color-secondary)");
-            commentDiv.add(header);
-        }
+        final String relativeDate = created != null ? this.formatRelativeDate(created) : "unknown";
+        final Span header = new Span((comment.username != null ? comment.username : "Unknown") + " · " + relativeDate);
+        header.addClassName("comment-header");
+        header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem").set("color",
+                "var(--vaadin-text-color-secondary)");
+        commentDiv.add(header);
 
         // Content with line break from header
         final String displayContent = CommentStatus.DELETED.equals(comment.status) ? "[deleted]" : comment.content;
