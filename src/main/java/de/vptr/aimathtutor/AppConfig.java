@@ -18,6 +18,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 @StyleSheet("/" + Lumo.STYLESHEET)
 @StyleSheet("/" + Aura.STYLESHEET)
 @StyleSheet("/styles.css")
+@StyleSheet("/designs/fonts.css")
 @Inline("META-INF/resources/js/appearance.js")
 @PageTitle("AI Math Tutor")
 @Push

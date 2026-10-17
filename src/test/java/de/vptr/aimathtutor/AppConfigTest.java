@@ -20,7 +20,7 @@ class AppConfigTest {
     @Test
     @DisplayName("stylesheet order is load-bearing: both bases, then styles.css")
     void stylesheetOrder() {
-        assertEquals(List.of("/lumo/lumo.css", "/aura/aura.css", "/styles.css"),
+        assertEquals(List.of("/lumo/lumo.css", "/aura/aura.css", "/styles.css", "/designs/fonts.css"),
                 Arrays.stream(AppConfig.class.getAnnotationsByType(StyleSheet.class)).map(StyleSheet::value).toList());
     }
 

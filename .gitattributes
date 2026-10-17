@@ -5,3 +5,5 @@ mvnw linguist-vendored
 mvnw.cmd linguist-vendored
 ollama/** linguist-vendored
 scripts/** linguist-vendored
+*.woff2 binary
+*.ttf binary
