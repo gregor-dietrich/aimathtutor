@@ -21,6 +21,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import jakarta.annotation.Nullable;
 
 /**
@@ -184,9 +185,7 @@ public class AiChatPanel extends VerticalLayout {
 
             // Message bubble
             final var messageDiv = new Div();
-            messageDiv.getStyle().set("padding", "var(--lumo-space-s)")
-                    .set("border-radius", "var(--lumo-border-radius-l)").set("max-width", "80%")
-                    .set("word-wrap", "break-word");
+            messageDiv.addClassName(AppStyles.CHAT_BUBBLE);
 
             if (message.sender == ChatMessageDto.Sender.AI
                     && message.messageType != ChatMessageDto.MessageType.SYSTEM) {
@@ -211,23 +210,18 @@ public class AiChatPanel extends VerticalLayout {
                 // User messages: right-aligned, avatar on right
                 messageRow.setJustifyContentMode(JustifyContentMode.END);
                 avatarLabel.setText(this.userAvatarEmoji);
-                messageDiv.getStyle().set("background-color", "var(--lumo-primary-color-10pct)").set("border",
-                        "1px solid var(--lumo-primary-color-50pct)");
+                messageDiv.addClassName(AppStyles.CHAT_BUBBLE_USER);
                 messageRow.add(messageDiv, avatarLabel);
             } else if (message.messageType == ChatMessageDto.MessageType.SYSTEM) {
                 // System messages: centered, no avatar
                 messageRow.setJustifyContentMode(JustifyContentMode.CENTER);
-                messageDiv.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                        .set("border", "1px solid var(--lumo-contrast-20pct)").set("font-style", "italic")
-                        .set("text-align", "center").set("color", "var(--lumo-secondary-text-color)")
-                        .set("max-width", "80%");
+                messageDiv.addClassName(AppStyles.CHAT_BUBBLE_SYSTEM);
                 messageRow.add(messageDiv);
             } else {
                 // AI messages: left-aligned, avatar on left
                 messageRow.setJustifyContentMode(JustifyContentMode.START);
                 avatarLabel.setText(this.tutorAvatarEmoji);
-                messageDiv.getStyle().set("background-color", "var(--lumo-contrast-10pct)").set("border",
-                        "1px solid var(--lumo-contrast-20pct)");
+                messageDiv.addClassName(AppStyles.CHAT_BUBBLE_TUTOR);
                 messageRow.add(avatarLabel, messageDiv);
             }
 
@@ -277,9 +271,7 @@ public class AiChatPanel extends VerticalLayout {
 
         // Typing indicator
         final var typingDiv = new Div();
-        typingDiv.getStyle().set("padding", "var(--lumo-space-s)").set("border-radius", "var(--lumo-border-radius-l)")
-                .set("background-color", "var(--lumo-contrast-10pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        typingDiv.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_TUTOR);
 
         final var typingText = new Span("typing...");
         typingText.getStyle().set("font-style", "italic").set("color", "var(--lumo-secondary-text-color)")

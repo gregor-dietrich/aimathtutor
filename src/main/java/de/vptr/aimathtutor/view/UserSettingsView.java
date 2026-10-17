@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.dto.UserSettingsDto;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -253,10 +254,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var userBubble = new Div();
         userBubble.setText(userEmoji + " Hello, can you help me?");
-        userBubble.getStyle().set("padding", "var(--lumo-space-s)")
-                .set("background-color", "var(--lumo-primary-color-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("border", "1px solid var(--lumo-primary-color-50pct)");
+        userBubble.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_USER);
         userMessage.add(userBubble);
 
         // AI message example
@@ -266,9 +264,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var aiBubble = new Div();
         aiBubble.setText(tutorEmoji + " Of course! I'm here to help.");
-        aiBubble.getStyle().set("padding", "var(--lumo-space-s)").set("background-color", "var(--lumo-contrast-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        aiBubble.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_TUTOR);
         aiMessage.add(aiBubble);
 
         this.previewBox.add(userMessage, aiMessage);
