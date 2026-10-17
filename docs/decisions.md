@@ -23,7 +23,16 @@ moving all inline styling to classes (mostly layout, unverifiable without view
 tests).
 
 **Premise:** Vaadin ships no theme-neutral accent or status-colour property
-(checked in 25.3.2, component-base `style-props.js`).
+(checked in 25.3.2, component-base `style-props.js`). The bridge follows a dark
+theme set below `<html>` only while Lumo and Aura write the bridged colours as
+`light-dark()` on `:root`, and while each bridged colour's value in Lumo's
+explicit-dark block equals the dark branch of its `light-dark()` (checked in
+Lumo 25.3.3, which the 25.3.2 platform resolves: `color.css` against
+`color-scheme.css`).
 **Guard:** watcher: at every Vaadin minor upgrade, check `style-props.js` for a
 `--vaadin-*` accent or status property; if one exists, map the `--app-*` tokens
-onto it.
+onto it. Also check that every bridged Lumo and Aura colour is still a
+`light-dark()` on `:root` and that their explicit-dark values in Lumo still
+match the dark branches; if either no longer holds, measure each `--app-*`
+token against the token it bridges in Light, Dark and System mode before
+upgrading. The `vaadin.version` property in `pom.xml` points here.

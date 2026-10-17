@@ -51,6 +51,7 @@
     <line-awesome.version>2.1.0</line-awesome.version>
     <spotbugs-annotations.version>4.10.5</spotbugs-annotations.version>
     <ulid-creator.version>5.2.4</ulid-creator.version>
+    <!-- On a Vaadin minor upgrade, re-check ADR-2's premise in docs/decisions.md (base-theme bridge). -->
     <vaadin.version>25.3.2</vaadin.version>
     <!-- Node.js for every Vaadin frontend build. vaadin-maven-plugin reads these two properties
     directly; quarkus-maven-plugin passes them to the Quarkus build step and to dev mode (see its
