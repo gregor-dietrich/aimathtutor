@@ -13,6 +13,7 @@ import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.Appearance.Base;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.service.security.AuthService;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -46,20 +47,23 @@ public class ThemeService {
     }
 
     /**
-     * Saves an appearance for the signed-in user, then stores it in the session. Runs off the UI thread. If the save
-     * fails, the exception propagates and the session is untouched.
+     * Saves a change of appearance for the signed-in user, then stores what the row now holds in the session. A null
+     * argument leaves that field as stored. Runs off the UI thread. If the save fails, the exception propagates and the
+     * session is untouched.
      *
      * @param session
      *            the session that makes the change, captured on the UI thread
      * @param credentials
      *            the session's credentials, captured on the UI thread
-     * @param appearance
-     *            the appearance to save
+     * @param design
+     *            the design to save, or null to keep the stored one
+     * @param colorMode
+     *            the colour mode to save, or null to keep the stored one
      */
     public void saveForSession(final VaadinSession session, final SessionCredentials credentials,
-            final Appearance appearance) {
-        this.userService.updateAppearance(credentials, appearance);
-        this.authService.rememberAppearance(session, credentials.userPublicId(), appearance);
+            @Nullable final Appearance.Design design, @Nullable final Appearance.ColorMode colorMode) {
+        final var stored = this.userService.updateAppearance(credentials, design, colorMode);
+        this.authService.rememberAppearance(session, credentials.userPublicId(), stored);
     }
 
     /**

@@ -27,6 +27,7 @@ import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.UlidUtil;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -42,8 +43,12 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Inject
+    private PasswordHashingService passwordHashingService;
+
+    @Inject
     private LoginAttemptService loginAttemptService;
 
+    private static final String PASSWORD = "P@ssw0rd1";
     private static final String USER_PUBLIC_ID_KEY = AppConstants.SESSION_KEY_USER_PUBLIC_ID;
     private static final String CREDENTIAL_STAMP_KEY = AppConstants.SESSION_KEY_CREDENTIAL_STAMP;
     private static final String AUTHENTICATED_KEY = "authenticated.status";
@@ -137,9 +142,20 @@ class AuthServiceTest {
             mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
             mockedService.when(() -> VaadinService.reinitializeSession(any())).thenAnswer(i -> null);
 
-            assertTrue(this.authService.authenticate("student1", "student1").isSuccess());
+            final var user = new UserEntity();
+            user.username = "appearance_" + UUID.randomUUID().toString().substring(0, 8);
+            user.password = this.passwordHashingService.hashPassword(PASSWORD);
+            user.rank = this.userRepository.findByUsername("student1").rank;
+            user.publicId = UlidUtil.generate();
+            user.activated = true;
+            user.design = Appearance.Design.CHALKBOARD;
+            user.colorMode = Appearance.ColorMode.DARK;
+            this.userRepository.persist(user);
 
-            verify(mockSess).setAttribute(APPEARANCE_KEY, Appearance.DEFAULT);
+            assertTrue(this.authService.authenticate(user.username, PASSWORD).isSuccess());
+
+            verify(mockSess).setAttribute(APPEARANCE_KEY,
+                    new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK));
         }
     }
 

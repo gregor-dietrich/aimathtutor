@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,14 @@ import de.vptr.aimathtutor.dto.Appearance.ColorMode;
 import de.vptr.aimathtutor.dto.Appearance.Design;
 
 class AppearanceTest {
+
+    @Test
+    @DisplayName("The constructor rejects a null design and a null colour mode")
+    @SuppressWarnings("NullAway")
+    void constructorRejectsNulls() {
+        assertThrows(NullPointerException.class, () -> new Appearance(null, ColorMode.DARK));
+        assertThrows(NullPointerException.class, () -> new Appearance(Design.VELLUM, null));
+    }
 
     @Test
     @DisplayName("ColorMode.next cycles light, dark, system")
@@ -45,9 +54,8 @@ class AppearanceTest {
     }
 
     @Test
-    @DisplayName("DEFAULT is Vellum following the system, and withColorMode keeps the design")
-    void defaultAndWithColorMode() {
+    @DisplayName("DEFAULT is Vellum following the system")
+    void defaultAppearance() {
         assertEquals(new Appearance(Design.VELLUM, ColorMode.SYSTEM), Appearance.DEFAULT);
-        assertEquals(new Appearance(Design.VELLUM, ColorMode.DARK), Appearance.DEFAULT.withColorMode(ColorMode.DARK));
     }
 }

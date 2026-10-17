@@ -7,6 +7,7 @@ import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 
@@ -39,17 +40,16 @@ public final class ThemeToggleButton extends Button {
         final var session = VaadinSession.getCurrent();
         final var ui = this.getUI().orElse(null);
         if (credentials == null || session == null || ui == null) {
-            NotificationUtil.showError("Your session has ended. Please sign in again.");
+            NotificationUtil.showError(AppConstants.SESSION_ENDED_MESSAGE);
             return;
         }
         final var current = this.themeService.current();
         final var next = current.colorMode().next();
-        final var appearance = current.withColorMode(next);
         this.saveInProgress = true;
         this.setEnabled(false);
 
         AsyncDataLoader.load(() -> {
-            this.themeService.saveForSession(session, credentials, appearance);
+            this.themeService.saveForSession(session, credentials, null, next);
             return next;
         }, this, ignored -> {
             this.themeService.applyColorMode(ui);

@@ -7,15 +7,19 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -88,17 +92,18 @@ class ThemeServiceTest {
     }
 
     @Test
-    @DisplayName("saveForSession remembers the appearance after a successful update")
-    void saveForSessionRemembersAfterUpdate() {
+    @DisplayName("saveForSession remembers the appearance the update returned, not the arguments")
+    void saveForSessionRemembersReturnedAppearance() {
         final var session = mock(VaadinSession.class);
         final var credentials = new SessionCredentials("user-1", "stamp", "throttle");
-        final var appearance = new Appearance(Design.VELLUM, ColorMode.LIGHT);
+        final var stored = new Appearance(Design.CHALKBOARD, ColorMode.DARK);
+        when(this.userService.updateAppearance(credentials, null, ColorMode.DARK)).thenReturn(stored);
 
-        this.themeService.saveForSession(session, credentials, appearance);
+        this.themeService.saveForSession(session, credentials, null, ColorMode.DARK);
 
         final var order = inOrder(this.userService, this.authService);
-        order.verify(this.userService).updateAppearance(credentials, appearance);
-        order.verify(this.authService).rememberAppearance(session, "user-1", appearance);
+        order.verify(this.userService).updateAppearance(credentials, null, ColorMode.DARK);
+        order.verify(this.authService).rememberAppearance(session, "user-1", stored);
     }
 
     @Test
@@ -106,11 +111,11 @@ class ThemeServiceTest {
     void saveForSessionLeavesSessionOnFailure() {
         final var session = mock(VaadinSession.class);
         final var credentials = new SessionCredentials("user-1", "stamp", "throttle");
-        final var appearance = new Appearance(Design.VELLUM, ColorMode.LIGHT);
-        doThrow(new IllegalStateException("gone")).when(this.userService).updateAppearance(credentials, appearance);
+        when(this.userService.updateAppearance(credentials, Design.VELLUM, ColorMode.LIGHT))
+                .thenThrow(new IllegalStateException("gone"));
 
         assertThrows(IllegalStateException.class,
-                () -> this.themeService.saveForSession(session, credentials, appearance));
+                () -> this.themeService.saveForSession(session, credentials, Design.VELLUM, ColorMode.LIGHT));
 
         verify(this.authService, never()).rememberAppearance(any(), any(), any());
     }
@@ -168,9 +173,34 @@ class ThemeServiceTest {
     void renderMissingActiveLink() {
         final var doc = Jsoup.parse("<html><head><link href=\"/lumo/lumo.css\" rel=\"stylesheet\"></head></html>");
 
-        assertDoesNotThrow(() -> ThemeService.render(doc, Appearance.DEFAULT));
+        final var records = new ArrayList<LogRecord>();
+        final var handler = new Handler() {
+            @Override
+            public void publish(final LogRecord logRecord) {
+                records.add(logRecord);
+            }
+
+            @Override
+            public void flush() {
+                // nothing buffered
+            }
+
+            @Override
+            public void close() {
+                // nothing to release
+            }
+        };
+        final var logger = LogManager.getLogManager().getLogger(ThemeService.class.getName());
+        logger.addHandler(handler);
+        try {
+            assertDoesNotThrow(() -> ThemeService.render(doc, Appearance.DEFAULT));
+        } finally {
+            logger.removeHandler(handler);
+        }
+
         assertTrue(hrefs(doc).isEmpty());
         assertEquals("aura", doc.selectFirst("html").attr("data-base"));
+        assertEquals(1, records.stream().filter(r -> r.getLevel().equals(Level.WARNING)).count());
     }
 
     @Test

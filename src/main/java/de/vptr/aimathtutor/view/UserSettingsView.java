@@ -369,7 +369,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var credentials = this.authService.currentSessionCredentials();
         final var session = VaadinSession.getCurrent();
         if (credentials == null || session == null) {
-            NotificationUtil.showError("Your session has ended. Please sign in again.");
+            NotificationUtil.showError(AppConstants.SESSION_ENDED_MESSAGE);
             this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
             return;
         }
@@ -444,7 +444,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var session = VaadinSession.getCurrent();
         final var ui = this.getUI().orElse(null);
         if (credentials == null || session == null || ui == null) {
-            NotificationUtil.showError("Your session has ended. Please sign in again.");
+            NotificationUtil.showError(AppConstants.SESSION_ENDED_MESSAGE);
             this.getUI().ifPresent(currentUi -> currentUi.navigate(LoginView.class));
             return;
         }
@@ -453,7 +453,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         // Every save reloads: the top bar's colour-mode toggle reads the mode only when it is built.
         AsyncDataLoader.load(() -> {
-            this.themeService.saveForSession(session, credentials, appearance);
+            this.themeService.saveForSession(session, credentials, appearance.design(), appearance.colorMode());
             return appearance;
         }, this, ignored -> ui.getPage().reload(), () -> this.setAppearanceControlsEnabled(saveButton, true),
                 "Could not save the appearance");

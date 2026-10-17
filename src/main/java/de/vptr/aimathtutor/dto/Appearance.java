@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.dto;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A user's chosen look of the app: which design is loaded and whether it renders light, dark or follows the system.
@@ -14,6 +15,14 @@ import java.io.Serializable;
  *            the colour mode to render it in
  */
 public record Appearance(Design design, ColorMode colorMode) implements Serializable {
+
+    /**
+     * Rejects a null component, e.g. from a crafted client message that empties a radio group.
+     */
+    public Appearance {
+        Objects.requireNonNull(design, "design");
+        Objects.requireNonNull(colorMode, "colorMode");
+    }
 
     /** The look of an account that never chose one; equals the column defaults of the migration. */
     public static final Appearance DEFAULT = new Appearance(Design.VELLUM, ColorMode.SYSTEM);
@@ -123,16 +132,5 @@ public record Appearance(Design design, ColorMode colorMode) implements Serializ
                 case SYSTEM -> LIGHT;
             };
         }
-    }
-
-    /**
-     * Returns a copy of this appearance with another colour mode.
-     *
-     * @param newColorMode
-     *            the colour mode to switch to
-     * @return a copy of this appearance with the given colour mode
-     */
-    public Appearance withColorMode(final ColorMode newColorMode) {
-        return new Appearance(this.design, newColorMode);
     }
 }
