@@ -224,7 +224,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         // Preview box
         this.previewBox = new Div();
-        this.previewBox.getStyle().set("padding", "var(--vaadin-padding-m)")
+        this.previewBox.setWidthFull();
+        this.previewBox.getStyle().set("box-sizing", "border-box").set("padding", "var(--vaadin-padding-m)")
                 .set("background-color", "var(--vaadin-background-container-strong)")
                 .set("border-radius", "var(--vaadin-radius-m)").set("border", "1px solid var(--vaadin-border-color)");
 
