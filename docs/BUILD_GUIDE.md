@@ -390,10 +390,6 @@ The frontend toolchain (`prepare-frontend`/`build-frontend`, run with
 `-Pproduction`) is **not** covered by the fail-on-warning policy. Warnings you
 may see there are expected and harmless:
 
-- **Addon frontend-source warnings** during `quarkus:build`, e.g. `[WARNING]
-  Addon 'flow-react-*.jar' contains frontend sources under
-  META-INF/resources/frontend/` — these come from Vaadin's own published jars
-  (Vaadin 25.2.1).
 - On a fresh checkout, **npm may print deprecation or peer-dependency notices**
   for bundled `@vaadin/*` packages while installing `node_modules`.
 

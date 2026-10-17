@@ -8,8 +8,7 @@ import de.vptr.aimathtutor.util.AppStyles;
  * A 3px accent bar along the top edge of its parent, drawn by the {@code accent-bar} class.
  *
  * <p>
- * The bar is absolutely positioned, so its parent must be positioned, for example a {@code glass-card}. It renders a
- * coloured top border similar to the KPI cards on the admin dashboard.
+ * The bar is absolutely positioned, so its parent must be positioned, for example a {@code glass-card}.
  * </p>
  */
 public class GlassAccentBar extends Div {
