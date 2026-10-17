@@ -12,7 +12,8 @@ not an admission criterion for what gets built.
 
 **Status:** Proposed
 
-Java names no base theme. Inline styles use Vaadin's `--vaadin-*` properties.
+Java names no base-theme token or variant; only `AppConfig` and `ThemeService`
+name a theme. Inline styles use Vaadin's `--vaadin-*` properties.
 Accent and status colours use seven `--app-*` tokens, which the bridge at the
 top of `styles.css` defines from whichever base theme is loaded. Checkstyle
 `RegexpSinglelineJava` `BaseThemeCoupling` enforces this. Rejected: a

@@ -177,8 +177,9 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
 
 - **@Push:** Enabled globally on `AppConfig`. Views do not need their own
   `@Push`.
-- **Theme-neutral styling:** the app runs on Lumo or Aura, so Java names
-  neither.
+- **Theme-neutral styling:** the app runs on Lumo or Aura, so Java names no
+  base-theme token or variant. Only `AppConfig` (which stylesheet loads) and
+  `ThemeService` (colour mode) name a theme, through the `Lumo` class.
   - Inline styles use Vaadin's theme-neutral properties:
     `--vaadin-text-color[-secondary]`, `--vaadin-background-color`,
     `--vaadin-background-container[-strong]`,
@@ -192,15 +193,17 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
   - Styling shared by two or more components is a class in `styles.css`,
     named in `AppStyles`.
   - Checkstyle `RegexpSinglelineJava` `BaseThemeCoupling` rejects `--lumo-*`,
-    `--aura-*` and `LUMO_*` in Java.
+    `--aura-*` (also their private `--_lumo-*`/`--_aura-*`), `LUMO_*` and
+    `AURA_*` in Java.
 - **The base-theme bridge** at the top of `styles.css` is the only place
   `--lumo-*` and `--aura-*` appear.
   - Each `--app-*` token takes Lumo's value and falls back to Aura's, so it
     follows whichever base stylesheet is loaded. Never load both.
   - Every `var()` in its `:root` tokens is substituted on `<html>`. They still
-    follow a dark theme set lower down (Lumo's explicit dark sits on `<body>`)
-    because both themes write those colours as `light-dark()`, which an
-    unregistered token carries unresolved to the element that uses it.
+    follow a dark theme set lower down (the app's explicit Dark sets
+    `theme="dark"` on `<body>`) because both themes write those colours as
+    `light-dark()` on `:root`, which an unregistered token carries unresolved
+    to the element that uses it.
   - So they reference only `--lumo-*`/`--aura-*`, never `--vaadin-*` colours:
     Vaadin registers six of those as `<color>`, which fixes them to one colour
     on `<html>`. Read a `--vaadin-*` colour where it is used.
