@@ -1,0 +1,81 @@
+/*
+   Component tweaks: every rule of the design stylesheets that reaches into Vaadin component
+   internals, that is, a ::part or the host box model (border, border-radius, box-shadow,
+   transform, height) of vaadin-button, vaadin-badge and vaadin-progress-bar. These depend on
+   how a component builds itself and may break when Vaadin changes it.
+
+   Removing this file's one @StyleSheet line from AppConfig returns every design to token-only
+   styling: its colours, fonts, cards, bubbles and badges stay, and the designs lose only the
+   effects below.
+
+   The reference scope of the buttons is the page, not the top bar, so the top bar's own buttons
+   are left alone: vaadin-button:not(.app-top-bar vaadin-button).
+*/
+
+/* ---------- Vellum (Aura) ---------- */
+html[data-design="vellum"] vaadin-progress-bar::part(value) {
+    background: var(--aura-accent-color);
+}
+
+/* ---------- Power-Up (Lumo) ---------- */
+html[data-design="powerup"] vaadin-button:not(.app-top-bar vaadin-button) {
+    border: 2px solid var(--design-outline);
+    box-shadow: 3px 3px 0 var(--design-outline);
+    transition: transform .08s ease, box-shadow .08s ease;
+}
+
+html[data-design="powerup"] vaadin-button[theme~="tertiary"]:not(.app-top-bar vaadin-button) {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+html[data-design="powerup"] vaadin-button[active]:not(.app-top-bar vaadin-button) {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 var(--design-outline);
+}
+
+html[data-design="powerup"] vaadin-badge {
+    transform: rotate(-2deg);
+}
+
+html[data-design="powerup"] vaadin-progress-bar {
+    height: 14px;
+}
+
+html[data-design="powerup"] vaadin-progress-bar::part(bar) {
+    border: 2px solid var(--design-outline);
+    border-radius: 99px;
+    background: light-dark(#ffffff, #0f1438);
+}
+
+html[data-design="powerup"] vaadin-progress-bar::part(value) {
+    border-radius: 99px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html[data-design="powerup"] vaadin-button:not(.app-top-bar vaadin-button) {
+        transition: none;
+    }
+}
+
+/* ---------- Vibranium (Lumo) ---------- */
+html[data-design="vibranium"] vaadin-button[theme~="primary"]:not(.app-top-bar vaadin-button) {
+    box-shadow: 0 0 0 1px var(--app-accent), 0 0 22px light-dark(rgb(91 31 196 / .35), rgb(242 194 48 / .35));
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 700;
+}
+
+html[data-design="vibranium"] vaadin-progress-bar::part(value) {
+    background: linear-gradient(90deg, var(--design-violet), var(--design-gold));
+}
+
+/* ---------- Chalkboard (Lumo) ---------- */
+html[data-design="chalkboard"] vaadin-button:not([theme~="tertiary"]):not(.app-top-bar vaadin-button) {
+    border: 2px solid var(--design-line);
+    border-radius: var(--design-wobble-small);
+}
+
+html[data-design="chalkboard"] vaadin-button[theme~="primary"]:not(.app-top-bar vaadin-button) {
+    border-color: transparent;
+}

@@ -1,0 +1,50 @@
+/*
+   Vellum (Aura): drafting vellum, Prussian ink, precision. This is the default design.
+   An Aura design sets --aura-* only and never --lumo-*: the --app-* bridge in styles.css reads
+   var(--lumo-x, <aura value>) and would pick a --lumo-* value up. The page background comes from
+   Aura itself, which paints --aura-background-color on <html>.
+*/
+html[data-design="vellum"] {
+    --aura-background-color-light: #edefeb;
+    --aura-background-color-dark: #15171a;
+    --aura-accent-color-light: #1d4e89;
+    --aura-accent-color-dark: #8db4e8;
+    --aura-font-family: "Schibsted Grotesk", var(--aura-font-family-system);
+    --aura-base-radius: 1;
+    --aura-contrast-level: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+html[data-design="vellum"] :is(h1, h2, h3) {
+    font-family: "Schibsted Grotesk", system-ui, sans-serif;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+}
+
+/* Flat paper card on the surface colour, hairline border, no shadow. */
+html[data-design="vellum"] .glass-card {
+    background: var(--aura-surface-color);
+    box-shadow: none;
+}
+
+/* A single solid ruled line instead of the gradient. */
+html[data-design="vellum"] .accent-bar {
+    height: 2px;
+    background: var(--app-accent);
+}
+
+html[data-design="vellum"] .app-top-bar {
+    background: var(--aura-surface-color);
+    border-bottom: 1px solid var(--vaadin-border-color);
+}
+
+/* Aura has no contrast badge (Lumo does); this is the quiet neutral badge of the reference. */
+html[data-base="aura"] vaadin-badge[theme~="contrast"] {
+    --vaadin-badge-background: var(--vaadin-background-container);
+    --vaadin-badge-text-color: var(--vaadin-text-color-secondary);
+    --vaadin-badge-border-color: var(--vaadin-border-color-secondary);
+}
+
+html[data-design="vellum"] vaadin-badge {
+    --vaadin-badge-font-weight: 600;
+}

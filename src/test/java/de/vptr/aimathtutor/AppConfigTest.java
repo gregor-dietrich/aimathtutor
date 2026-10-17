@@ -18,9 +18,12 @@ import com.vaadin.flow.component.page.Inline;
 class AppConfigTest {
 
     @Test
-    @DisplayName("stylesheet order is load-bearing: both bases, then styles.css")
+    @DisplayName("stylesheet order is load-bearing: both bases, styles.css, then the designs")
     void stylesheetOrder() {
-        assertEquals(List.of("/lumo/lumo.css", "/aura/aura.css", "/styles.css", "/designs/fonts.css"),
+        assertEquals(
+                List.of("/lumo/lumo.css", "/aura/aura.css", "/styles.css", "/designs/fonts.css",
+                        "/designs/lumo-inks.css", "/designs/vellum.css", "/designs/powerup.css",
+                        "/designs/vibranium.css", "/designs/chalkboard.css", "/designs/component-tweaks.css"),
                 Arrays.stream(AppConfig.class.getAnnotationsByType(StyleSheet.class)).map(StyleSheet::value).toList());
     }
 

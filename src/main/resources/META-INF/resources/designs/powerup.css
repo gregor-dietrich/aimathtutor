@@ -1,0 +1,103 @@
+/*
+   Power-Up (Lumo): comic ink, hard shadows, Ben-Day dots, hero yellow.
+   The --design-* inks are turned into --lumo-* by lumo-inks.css. Lumo components read
+   --lumo-border-radius-*; the core components and the app's classes read --vaadin-radius-*, which
+   Lumo does not derive, so both are set. The design changes no spacing.
+*/
+html[data-design="powerup"] {
+    --design-base-l: #ffffff;
+    --design-base-d: #151b46;
+    --design-ink-l: #111111;
+    --design-ink-d: #f4f6ff;
+    --design-primary-l: #ffd000;
+    --design-primary-d: #ffd000;
+    --design-on-primary-l: #111111;
+    --design-on-primary-d: #111111;
+    --design-primary-text-l: #0051d8;
+    --design-primary-text-d: #ffd84d;
+    --design-error-l: #e0003a;
+    --design-error-d: #ff4d6d;
+    --design-success-l: #00873f;
+    --design-success-d: #2ee07a;
+    --design-warning-l: #d35f00;
+    --design-warning-d: #ff9a2e;
+    --design-on-error-d: #111111;
+    --design-font: "Rubik", system-ui, sans-serif;
+    --design-outline: light-dark(#111111, #05060f);
+    --design-dot: light-dark(rgb(0 81 216 / .13), rgb(255 255 255 / .07));
+    --lumo-border-radius-s: 6px;
+    --lumo-border-radius-m: 10px;
+    --lumo-border-radius-l: 14px;
+    --vaadin-radius-s: 6px;
+    --vaadin-radius-m: 10px;
+    --vaadin-radius-l: 14px;
+    --vaadin-input-field-border-width: 2px;
+    --vaadin-input-field-border-color: var(--design-outline);
+    --vaadin-input-field-background: light-dark(#ffffff, #0f1438);
+    background: radial-gradient(var(--design-dot) 1.6px, transparent 2px) 0 0 / 16px 16px, var(--lumo-base-color);
+    background-attachment: fixed;
+}
+
+html[data-design="powerup"] :is(h1, h2, h3) {
+    font-family: "Bangers", Impact, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+}
+
+html[data-design="powerup"] :is(h1, h2) {
+    text-shadow: 3px 3px 0 light-dark(#ffd000, #000000);
+}
+
+html[data-design="powerup"] .glass-card {
+    background: light-dark(#ffffff, #1f2765);
+    border: 3px solid var(--design-outline);
+    box-shadow: 6px 6px 0 var(--design-outline);
+}
+
+html[data-design="powerup"] .accent-bar {
+    background: var(--app-accent);
+    border-bottom: 3px solid var(--design-outline);
+    height: 6px;
+}
+
+html[data-design="powerup"] .chat-bubble {
+    border: 2px solid var(--design-outline);
+}
+
+html[data-design="powerup"] .chat-bubble-user {
+    background-color: var(--app-accent);
+    color: #111111;
+}
+
+html[data-design="powerup"] .chat-bubble-tutor {
+    background-color: light-dark(#e5efff, #27307a);
+}
+
+/* The bar stays dark in both modes, with the yellow accent. */
+html[data-design="powerup"] .app-top-bar {
+    background: #111111;
+    color-scheme: dark;
+    --lumo-primary-color: #ffd000;
+    --lumo-primary-text-color: #ffd000;
+}
+
+html[data-design="powerup"] vaadin-button:not([theme~="primary"], [theme~="tertiary"], .app-top-bar vaadin-button) {
+    --vaadin-button-background: light-dark(#ffffff, #27307a);
+}
+
+html[data-design="powerup"] vaadin-button:not(.app-top-bar vaadin-button) {
+    --vaadin-button-font-weight: 700;
+}
+
+html[data-design="powerup"] vaadin-badge {
+    --vaadin-badge-background: light-dark(#ffffff, #151b46);
+    --vaadin-badge-text-color: var(--vaadin-text-color);
+    --vaadin-badge-border-color: var(--design-outline);
+    --vaadin-badge-border-width: 2px;
+    --vaadin-badge-font-weight: 600;
+}
+
+html[data-design="powerup"] vaadin-badge[theme~="success"] {
+    --vaadin-badge-background: #2ee07a;
+    --vaadin-badge-text-color: #111111;
+}
