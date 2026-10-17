@@ -1,7 +1,6 @@
 /*
-   CSS styling examples for the Vaadin app.
-   Visit https://vaadin.com/docs/latest/styling/application-theme and
-   https://vaadin.com/docs/latest/styling/lumo for more information.
+   Application stylesheet: the base-theme bridge, the shared classes named in AppStyles, and the
+   Graspable Math dark-mode overrides. See https://vaadin.com/docs/latest/styling for Vaadin styling.
 */
 
 /*
@@ -10,12 +9,12 @@
    value and falls back to Aura's, so it follows whichever base stylesheet is loaded; exactly one
    base stylesheet (Lumo or Aura) may be loaded at a time.
    Every var() here is substituted on <html>. The tokens still follow a dark theme set lower down
-   (Lumo's explicit dark sits on <body>) because both themes write these colours as light-dark(),
-   which an unregistered token carries unresolved to the element using it, and that element's
-   color-scheme picks the branch. So they reference only --lumo-* and --aura-*, never --vaadin-*
-   colours: Vaadin registers six of those as <color>, which fixes them to one colour on <html>.
-   Read a --vaadin-* colour where it is used, in an inline style or a class rule. Never define
-   names in the --vaadin-* namespace.
+   (the app's explicit Dark sets theme="dark" on <body>) because both themes write these colours as
+   light-dark() on :root, which an unregistered token carries unresolved to the element using it,
+   and that element's color-scheme picks the branch. So they reference only --lumo-* and --aura-*,
+   never --vaadin-* colours: Vaadin registers six of those as <color>, which fixes them to one
+   colour on <html>. Read a --vaadin-* colour where it is used, in an inline style or a class rule.
+   Never define names in the --vaadin-* namespace.
 */
 :root {
     --app-accent: var(--lumo-primary-color, var(--aura-accent-color));
@@ -34,10 +33,13 @@
     border: 1px solid var(--vaadin-border-color-secondary);
     border-radius: var(--vaadin-radius-l);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Raises an element slightly on hover. */
+.lift-on-hover {
+    transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .lift-on-hover:hover {
     box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     transform: translateY(-2px);
@@ -148,12 +150,6 @@
     margin-bottom: 8px;
     font-size: 13px;
     color: var(--vaadin-text-color-secondary);
-}
-
-/* Example: CSS class name to center align the content . */
-.centered-content {
-    margin: 0 auto;
-    max-width: 250px;
 }
 
 /* Graspable Math keyboard popup in dark mode */
