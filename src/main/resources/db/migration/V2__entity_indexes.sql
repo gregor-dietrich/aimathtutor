@@ -1,5 +1,6 @@
 -- V2: indexes the entities used to declare via @Table(indexes = ...) but that the
 -- baseline never created. Migrations are now the single source of truth for indexes.
+-- It also adds the per-user appearance columns to users (last section).
 --
 -- Skipped, because V1 already has an index on the same table, columns and order:
 --   idx_comment_user_created       -> idx_comments_user_created        comments (user_id, created)
@@ -65,3 +66,10 @@ DROP INDEX IF EXISTS idx_user_email_blind_index;
 DROP INDEX IF EXISTS ai_config_key_idx;
 DROP INDEX IF EXISTS idx_comment_flags_comment_id;
 DROP INDEX IF EXISTS user_groups_meta_user_id_idx;
+
+-- Per-user appearance (design and colour mode), stored as the names of Appearance.Design and
+-- Appearance.ColorMode. A constant DEFAULT is a metadata-only change on PostgreSQL 11+, so this is safe on
+-- a populated table, and existing users get the defaults.
+ALTER TABLE users
+    ADD COLUMN design VARCHAR(20) NOT NULL DEFAULT 'VELLUM',
+    ADD COLUMN color_mode VARCHAR(20) NOT NULL DEFAULT 'SYSTEM';

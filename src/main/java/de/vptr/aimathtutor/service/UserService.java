@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
@@ -604,11 +605,7 @@ public class UserService {
     @Transactional
     public String changePassword(final SessionCredentials credentials, final String currentPassword,
             final String newPassword) {
-        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
-        if (user == null || !user.activated || user.banned
-                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
-            throw new ValidationException("Your session has ended. Please sign in again.");
-        }
+        final UserEntity user = this.requireSessionUser(credentials);
 
         if (!this.loginAttemptService.tryRecordPasswordChangeAttempt(credentials.throttleKey())) {
             throw new ValidationException("Too many failed attempts. Try again later.");
@@ -631,6 +628,34 @@ public class UserService {
         final var stamp = Objects.requireNonNull(AuthService.credentialStamp(hashedPassword));
         this.fireAccountChanged(user);
         return stamp;
+    }
+
+    /**
+     * Update the calling user's appearance. The session is verified like in {@link #changePassword}. An appearance
+     * change does not end any session, so no {@link UserAccountChangedEvent} is fired.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param appearance
+     *            the design and colour mode to store
+     * @throws ValidationException
+     *             if the session has ended
+     */
+    @Transactional
+    public void updateAppearance(final SessionCredentials credentials, final Appearance appearance) {
+        final UserEntity user = this.requireSessionUser(credentials);
+        user.design = appearance.design();
+        user.colorMode = appearance.colorMode();
+        this.userRepository.persist(user);
+    }
+
+    private UserEntity requireSessionUser(final SessionCredentials credentials) {
+        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
+        if (user == null || !user.activated || user.banned
+                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
+            throw new ValidationException("Your session has ended. Please sign in again.");
+        }
+        return user;
     }
 
     /**

@@ -36,6 +36,7 @@ import org.mockito.Mockito;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinSession;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -611,6 +612,65 @@ class UserServiceTest {
 
         assertEquals("Your session has ended. Please sign in again.", e.getMessage());
         verify(this.passwordHashingService, never()).verifyPassword(any(), any());
+    }
+
+    @Test
+    @DisplayName("A seeded user loads with the default appearance")
+    @TestTransaction
+    void testSeededUserHasDefaultAppearance() {
+        final var student = this.userRepository.findByUsername("student1");
+        assertEquals(Appearance.DEFAULT, new Appearance(student.design, student.colorMode));
+    }
+
+    @Test
+    @DisplayName("updateAppearance persists both fields")
+    @TestTransaction
+    void testUpdateAppearance_persists() {
+        final var entity = this.createAndFetchUser();
+        final var credentials = credentialsFor(entity);
+        final var id = entity.id;
+
+        this.userService.updateAppearance(credentials,
+                new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK));
+        this.em.flush();
+        this.em.clear();
+
+        final var reloaded = this.userRepository.findById(id);
+        assertEquals(Appearance.Design.CHALKBOARD, reloaded.design);
+        assertEquals(Appearance.ColorMode.DARK, reloaded.colorMode);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "stale stamp", "banned", "deactivated" })
+    @DisplayName("updateAppearance refuses a revoked session and leaves the row unchanged")
+    @TestTransaction
+    void testUpdateAppearance_refusesRevokedSession(final String revocation) {
+        final var entity = this.createAndFetchUser();
+        final var credentials = credentialsFor(entity);
+        switch (revocation) {
+            case "banned" -> entity.banned = true;
+            case "deactivated" -> entity.activated = false;
+            default -> entity.password = this.passwordHashingService.hashPassword(VALID_PASSWORD);
+        }
+        final var id = entity.id;
+
+        final var e = assertThrows(ValidationException.class, () -> this.userService.updateAppearance(credentials,
+                new Appearance(Appearance.Design.VIBRANIUM, Appearance.ColorMode.LIGHT)));
+        this.em.flush();
+        this.em.clear();
+
+        assertEquals("Your session has ended. Please sign in again.", e.getMessage());
+        final var reloaded = this.userRepository.findById(id);
+        assertEquals(Appearance.DEFAULT, new Appearance(reloaded.design, reloaded.colorMode));
+    }
+
+    @Test
+    @DisplayName("updateAppearance refuses credentials of an unknown user")
+    @TestTransaction
+    void testUpdateAppearance_unknownUser() {
+        final var credentials = new SessionCredentials("no-such-public-id", "stamp", UUID.randomUUID().toString());
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAppearance(credentials, Appearance.DEFAULT));
     }
 
     @Test

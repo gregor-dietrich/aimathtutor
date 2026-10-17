@@ -10,12 +10,15 @@ import org.hibernate.generator.EventType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.entity.converter.EncryptedStringConverter;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -84,6 +87,14 @@ public class UserEntity extends BaseEntity {
 
     @Column(nullable = false)
     public boolean activated = false;
+
+    @Column(name = "design", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    public Appearance.Design design = Appearance.DEFAULT.design();
+
+    @Column(name = "color_mode", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    public Appearance.ColorMode colorMode = Appearance.DEFAULT.colorMode();
 
     @Column(name = "activation_key")
     @JsonIgnore
