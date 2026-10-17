@@ -291,7 +291,6 @@
             <exclude>de/vptr/aimathtutor/util/AsyncDataLoader.class</exclude>
             <exclude>de/vptr/aimathtutor/util/GraspableMathConnector.class</exclude>
             <exclude>de/vptr/aimathtutor/util/LayoutNavigationUtil*</exclude>
-            <exclude>de/vptr/aimathtutor/util/NotificationUtil*</exclude>
             <exclude>de/vptr/aimathtutor/util/PasswordUtil.class</exclude>
             <exclude>de/vptr/aimathtutor/util/GraspableEventFactory*</exclude>
             <exclude>de/vptr/aimathtutor/util/ExecutorShutdownUtil*</exclude>
