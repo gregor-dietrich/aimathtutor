@@ -82,6 +82,13 @@
     text-align: center;
 }
 
+/* Pulsing opacity of the tutor's typing indicator. */
+@keyframes pulse {
+    50% {
+        opacity: 0.4;
+    }
+}
+
 /* Bordered box of a dashboard list. */
 .list-card {
     border: 1px solid var(--vaadin-border-color-secondary);
