@@ -48,7 +48,7 @@ public class LoginView extends VerticalLayout {
         final var accentBar = new GlassAccentBar();
 
         final var title = new H2("Log in");
-        title.getStyle().set("margin", "0 0 var(--lumo-space-m) 0").set("text-align", "center");
+        title.getStyle().set("margin", "0 0 var(--vaadin-gap-m) 0").set("text-align", "center");
 
         final var usernameField = new TextField("Username");
         usernameField.setPrefixComponent(LineAwesomeIcon.USER_SOLID.create());

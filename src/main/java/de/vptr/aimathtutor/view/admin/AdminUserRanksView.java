@@ -35,6 +35,7 @@ import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
@@ -138,7 +139,7 @@ public class AdminUserRanksView extends AbstractAdminView {
         // Make the name column clickable
         this.grid.addComponentColumn(rank -> {
             final var nameSpan = new Span(rank.name);
-            nameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
             nameSpan.getStyle().set("display", "block");

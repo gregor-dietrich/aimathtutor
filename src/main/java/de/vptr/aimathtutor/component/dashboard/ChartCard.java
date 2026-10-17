@@ -34,9 +34,8 @@ public class ChartCard extends VerticalLayout {
 
         if (title != null && !title.isEmpty()) {
             final var titleSpan = new Span(title);
-            titleSpan.getStyle().set("font-size", "13px").set("font-weight", "700")
-                    .set("color", "var(--lumo-primary-text-color)").set("letter-spacing", "0.3px")
-                    .set("padding", "12px 16px 0").set("display", "block");
+            titleSpan.getStyle().set("font-size", "13px").set("font-weight", "700").set("color", AppStyles.ACCENT_TEXT)
+                    .set("letter-spacing", "0.3px").set("padding", "12px 16px 0").set("display", "block");
             this.add(accentBar, titleSpan);
         } else {
             this.add(accentBar);

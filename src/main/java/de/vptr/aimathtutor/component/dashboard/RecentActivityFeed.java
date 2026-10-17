@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
+import de.vptr.aimathtutor.util.AppStyles;
 import jakarta.annotation.Nullable;
 
 /**
@@ -26,17 +27,17 @@ public class RecentActivityFeed extends VerticalLayout {
         setPadding(true);
         setSpacing(false);
         setWidthFull();
-        getStyle().set("border", "1px solid var(--lumo-contrast-10pct)").set("border-radius", "8px").set("background",
-                "var(--lumo-base-color)");
+        getStyle().set("border", "1px solid var(--vaadin-border-color-secondary)").set("border-radius", "8px")
+                .set("background", "var(--vaadin-background-color)");
 
         final var title = new Span("Recent Activity (7 days)");
-        title.getStyle().set("font-size", "14px").set("font-weight", "600")
-                .set("color", "var(--lumo-primary-text-color)").set("margin-bottom", "8px");
+        title.getStyle().set("font-size", "14px").set("font-weight", "600").set("color", AppStyles.ACCENT_TEXT)
+                .set("margin-bottom", "8px");
         add(title);
 
         if (sessions == null || sessions.isEmpty()) {
             final var empty = new Span("No recent activity");
-            empty.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-size", "13px");
+            empty.getStyle().set("color", "var(--vaadin-text-color-secondary)").set("font-size", "13px");
             add(empty);
             return;
         }
@@ -45,14 +46,15 @@ public class RecentActivityFeed extends VerticalLayout {
             final var item = new VerticalLayout();
             item.setPadding(false);
             item.setSpacing(false);
-            item.getStyle().set("padding", "6px 0").set("border-bottom", "1px solid var(--lumo-contrast-5pct)");
+            item.getStyle().set("padding", "6px 0").set("border-bottom",
+                    "1px solid var(--vaadin-border-color-secondary)");
 
             final var line = new Span();
             final var userName = ChartUtil.escapeXml(session.username != null ? session.username : "Unknown");
             final var exTitle = ChartUtil.escapeXml(session.exerciseTitle != null ? session.exerciseTitle : "Unknown");
             final var time = formatRelativeTime(session.endTime != null ? session.endTime : session.startTime);
             line.getElement().setProperty("innerHTML", "<strong>" + userName + "</strong> — " + exTitle + " — " + time);
-            line.getStyle().set("font-size", "13px").set("color", "var(--lumo-body-text-color)");
+            line.getStyle().set("font-size", "13px").set("color", "var(--vaadin-text-color)");
 
             item.add(line);
             add(item);

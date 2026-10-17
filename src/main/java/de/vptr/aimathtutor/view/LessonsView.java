@@ -58,7 +58,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
      * Constructs the LessonsView with alignment and padding.
      */
     public LessonsView() {
-        this.welcomeLabel.getStyle().set("margin-bottom", "var(--lumo-space-m)");
+        this.welcomeLabel.getStyle().set("margin-bottom", "var(--vaadin-gap-m)");
         this.setAlignItems(Alignment.START);
         this.setJustifyContentMode(JustifyContentMode.START);
         this.setPadding(true);
@@ -115,7 +115,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         if (rootLessons.isEmpty() && standaloneExercises.isEmpty()) {
             final var noLessonsMsg = new Paragraph("No lessons available yet. Check back soon!");
-            noLessonsMsg.getStyle().set("color", "var(--lumo-secondary-text-color)");
+            noLessonsMsg.getStyle().set("color", "var(--vaadin-text-color-secondary)");
             this.add(noLessonsMsg);
             return;
         }
@@ -136,7 +136,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             final var accentBar = new GlassAccentBar();
 
             final var standaloneTitle = new H3("Additional Exercises");
-            standaloneTitle.getStyle().set("margin", "0 0 var(--lumo-space-s) 0");
+            standaloneTitle.getStyle().set("margin", "0 0 var(--vaadin-gap-s) 0");
 
             final var exerciseGrid = new HorizontalLayout();
             exerciseGrid.setSpacing(true);
@@ -164,25 +164,25 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         if (depth == 0) {
             section.addClassName(AppStyles.GLASS_CARD);
-            section.getStyle().set("margin-bottom", "var(--lumo-space-m)");
+            section.getStyle().set("margin-bottom", "var(--vaadin-gap-m)");
 
             section.add(new GlassAccentBar());
         } else {
-            section.getStyle().set("border-left", "3px solid var(--lumo-primary-color)").set("padding-left",
-                    "var(--lumo-space-m)");
+            section.getStyle().set("border-left", "3px solid " + AppStyles.ACCENT).set("padding-left",
+                    "var(--vaadin-padding-m)");
         }
 
         if (depth == 0) {
             final var h = new H3(lesson.getName());
-            h.getStyle().set("margin", "0 0 var(--lumo-space-s) 0");
+            h.getStyle().set("margin", "0 0 var(--vaadin-gap-s) 0");
             section.add(h);
         } else if (depth == 1) {
             final var h = new H4(lesson.getName());
-            h.getStyle().set("margin", "0 0 var(--lumo-space-xs) 0");
+            h.getStyle().set("margin", "0 0 var(--vaadin-gap-xs) 0");
             section.add(h);
         } else {
             final var s = new Span(lesson.getName());
-            s.getStyle().set("font-weight", "600").set("font-size", "var(--lumo-font-size-s)").set("display", "block");
+            s.getStyle().set("font-weight", "600").set("font-size", "0.875em").set("display", "block");
             section.add(s);
         }
 
@@ -212,7 +212,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
             section.add(exerciseGrid);
         } else if (lesson.childrenPublicIds == null || lesson.childrenPublicIds.isEmpty()) {
             final var noExercisesMsg = new Paragraph("No exercises available in this lesson yet.");
-            noExercisesMsg.getStyle().set("color", "var(--lumo-secondary-text-color)").set("font-style", "italic");
+            noExercisesMsg.getStyle().set("color", "var(--vaadin-text-color-secondary)").set("font-style", "italic");
             section.add(noExercisesMsg);
         }
 
@@ -235,7 +235,7 @@ public class LessonsView extends VerticalLayout implements BeforeEnterObserver {
 
         // Title
         final var titleSpan = new Span(exercise.title);
-        titleSpan.getStyle().set("font-weight", "600").set("font-size", "var(--lumo-font-size-m)");
+        titleSpan.getStyle().set("font-weight", "600");
 
         // Badges
         final var badgeLayout = new HorizontalLayout();

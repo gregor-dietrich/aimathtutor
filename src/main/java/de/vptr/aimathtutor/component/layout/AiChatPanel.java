@@ -81,8 +81,8 @@ public class AiChatPanel extends VerticalLayout {
         this.setWidth("30%");
         this.setSpacing(true);
         this.setPadding(true);
-        this.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border-left", "1px solid var(--lumo-contrast-10pct)").set("display", "flex")
+        this.getStyle().set("background-color", "var(--vaadin-background-container)")
+                .set("border-left", "1px solid var(--vaadin-border-color-secondary)").set("display", "flex")
                 .set("flex-direction", "column").set("position", "sticky").set("top", "0").set("height", "100vh")
                 .set("overflow", "hidden");
 
@@ -109,9 +109,8 @@ public class AiChatPanel extends VerticalLayout {
                 .set("flex-shrink", "1") // Allow shrinking if needed
                 .set("overflow-y", "auto") // Only the history scrolls
                 .set("min-height", "0") // Important for flex shrinking
-                .set("padding", "var(--lumo-space-m)").set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+                .set("padding", "var(--vaadin-padding-m)").set("background-color", "var(--vaadin-background-container)")
+                .set("border", "1px solid var(--vaadin-border-color)").set("border-radius", "var(--vaadin-radius-m)");
 
         // Chat input area
         this.chatInput = new TextField();
@@ -177,7 +176,7 @@ public class AiChatPanel extends VerticalLayout {
             messageRow.setWidthFull();
             messageRow.setSpacing(true);
             messageRow.setPadding(false);
-            messageRow.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+            messageRow.getStyle().set("margin-bottom", "var(--vaadin-gap-s)");
 
             // Avatar label (outside bubble)
             final var avatarLabel = new Span();
@@ -263,7 +262,7 @@ public class AiChatPanel extends VerticalLayout {
         typingRow.setSpacing(true);
         typingRow.setPadding(false);
         typingRow.setJustifyContentMode(JustifyContentMode.START);
-        typingRow.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+        typingRow.getStyle().set("margin-bottom", "var(--vaadin-gap-s)");
 
         // Avatar
         final var avatarLabel = new Span(this.tutorAvatarEmoji);
@@ -274,7 +273,7 @@ public class AiChatPanel extends VerticalLayout {
         typingDiv.addClassNames(AppStyles.CHAT_BUBBLE, AppStyles.CHAT_BUBBLE_TUTOR);
 
         final var typingText = new Span("typing...");
-        typingText.getStyle().set("font-style", "italic").set("color", "var(--lumo-secondary-text-color)")
+        typingText.getStyle().set("font-style", "italic").set("color", "var(--vaadin-text-color-secondary)")
                 .set("animation", "pulse 1.5s ease-in-out infinite");
         typingDiv.add(typingText);
 

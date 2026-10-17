@@ -43,6 +43,7 @@ import de.vptr.aimathtutor.service.ai.AiTutorService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AiChatUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -238,7 +239,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Completion status indicator (if applicable)
         if (Boolean.TRUE.equals(this.exercise.userCompleted)) {
             final var completionInfo = new Paragraph();
-            completionInfo.getStyle().set("color", "var(--lumo-success-color)").set("font-weight", "500").set("margin",
+            completionInfo.getStyle().set("color", AppStyles.SUCCESS).set("font-weight", "500").set("margin",
                     "0.5rem 0 0 0");
             final String pluralSuffix =
                     this.exercise.userCompletionCount != null && this.exercise.userCompletionCount > 1 ? "times"
@@ -254,9 +255,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             final var contentSection = new VerticalLayout();
             contentSection.setPadding(true);
             contentSection.setSpacing(true);
-            contentSection.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("border", "1px solid var(--lumo-contrast-10pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)").set("margin-top", "1rem");
+            contentSection.getStyle().set("background-color", "var(--vaadin-background-container)")
+                    .set("border", "1px solid var(--vaadin-border-color-secondary)")
+                    .set("border-radius", "var(--vaadin-radius-m)").set("margin-top", "1rem");
 
             final var instructionsHeader = new H4("Instructions");
             instructionsHeader.getStyle().set("margin-top", "0");
@@ -275,9 +276,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.hintsPanel = new VerticalLayout();
         this.hintsPanel.setSpacing(true);
         this.hintsPanel.setPadding(true);
-        this.hintsPanel.getStyle().set("background-color", "var(--lumo-contrast-5pct)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)").set("padding", "var(--lumo-space-m)");
+        this.hintsPanel.getStyle().set("background-color", "var(--vaadin-background-container)")
+                .set("border", "1px solid var(--vaadin-border-color)").set("border-radius", "var(--vaadin-radius-m)")
+                .set("padding", "var(--vaadin-padding-m)");
 
         this.requestHintButton = new Button("Request Hint", ignored -> this.showNextHint());
         this.requestHintButton.addThemeVariants(ButtonVariant.PRIMARY);
@@ -298,9 +299,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             // Add a notice that this is a non-interactive exercise
             final var noticeDiv = new Div();
-            noticeDiv.getStyle().set("padding", "1rem").set("background-color", "var(--lumo-contrast-5pct)")
-                    .set("border", "1px solid var(--lumo-contrast-20pct)")
-                    .set("border-radius", "var(--lumo-border-radius-m)").set("margin-top", "1rem");
+            noticeDiv.getStyle().set("padding", "1rem").set("background-color", "var(--vaadin-background-container)")
+                    .set("border", "1px solid var(--vaadin-border-color)")
+                    .set("border-radius", "var(--vaadin-radius-m)").set("margin-top", "1rem");
             noticeDiv.add(
                     new Paragraph("This is a reading/study exercise. Review the content above and use the AI tutor "
                             + "if you have questions."));
@@ -602,9 +603,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Display hint
         final var hintDiv = new Div();
         hintDiv.getStyle().set("padding", "0.5rem").set("margin-bottom", "0.5rem")
-                .set("background-color", "var(--lumo-primary-color-10pct)")
-                .set("border-left", "3px solid var(--lumo-primary-color)")
-                .set("border-radius", "var(--lumo-border-radius-s)");
+                .set("background-color", AppStyles.ACCENT_SOFT).set("border-left", "3px solid " + AppStyles.ACCENT)
+                .set("border-radius", "var(--vaadin-radius-s)");
         hintDiv.add(new Paragraph("💡 Hint " + this.hintCount + ": " + hint));
 
         this.hintsPanel.add(hintDiv);

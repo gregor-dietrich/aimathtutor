@@ -17,6 +17,7 @@ import com.vaadin.flow.router.Route;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.service.AnalyticsService;
 import de.vptr.aimathtutor.util.AdminSearchLayoutFactory;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -82,7 +83,7 @@ public class AdminSessionsView extends AbstractAdminView {
         // Make the username column clickable like a hyperlink
         this.grid.addComponentColumn(session -> {
             final var usernameSpan = new Span(session.username);
-            usernameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            usernameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("display", "block");
             usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.sessionId));

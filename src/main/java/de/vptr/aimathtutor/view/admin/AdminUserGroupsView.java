@@ -40,6 +40,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserGroupService;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
@@ -167,7 +168,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         // Make the name column clickable
         this.grid.addComponentColumn(group -> {
             final var nameSpan = new Span(group.name);
-            nameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
             nameSpan.getStyle().set("display", "block");

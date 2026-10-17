@@ -30,6 +30,7 @@ import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.event.CommentCreatedEventBridge;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.comment.CommentService;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
@@ -133,15 +134,15 @@ public class CommentsPanel extends VerticalLayout {
     private Div createCommentForm() {
         final Div formContainer = new Div();
         formContainer.addClassName("comment-form");
-        formContainer.getStyle().set("width", "100%").set("border-left", "1px solid var(--lumo-primary-color-50pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)").set("padding", "0 1rem 0 1rem");
+        formContainer.getStyle().set("width", "100%").set("border-left", "1px solid " + AppStyles.ACCENT_MUTED)
+                .set("border-radius", "var(--vaadin-radius-m)").set("padding", "0 1rem 0 1rem");
 
         // Textarea
         this.commentTextArea = new TextArea();
         this.commentTextArea.setLabel("Your comment");
         this.commentTextArea.setPlaceholder("Write a comment...");
         this.commentTextArea.setMaxLength(1000);
-        this.commentTextArea.getStyle().set("width", "95%").set("background-color", "var(--lumo-base-color)");
+        this.commentTextArea.getStyle().set("width", "95%").set("background-color", "var(--vaadin-background-color)");
 
         // Submit button
         this.submitButton = new Button("Post Comment");
@@ -207,7 +208,7 @@ public class CommentsPanel extends VerticalLayout {
                         final Div repliesContainer = new Div();
                         repliesContainer.addClassName("comment-replies");
                         repliesContainer.getStyle().set("margin-left", "2rem").set("margin-top", "0.5rem")
-                                .set("padding-left", "1rem").set("border-left", "2px solid var(--lumo-contrast-20pct)");
+                                .set("padding-left", "1rem").set("border-left", "2px solid var(--vaadin-border-color)");
 
                         for (final CommentViewDto reply : replies) {
                             repliesContainer.add(this.createCommentElement(reply));
@@ -238,8 +239,8 @@ public class CommentsPanel extends VerticalLayout {
         final Div commentDiv = new Div();
         commentDiv.addClassName("comment-item");
         commentDiv.getStyle().set("padding", "1rem").set("margin-bottom", "0.75rem")
-                .set("background-color", "var(--lumo-base-color)").set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)");
+                .set("background-color", "var(--vaadin-background-color)")
+                .set("border", "1px solid var(--vaadin-border-color)").set("border-radius", "var(--vaadin-radius-m)");
 
         // Header with author and date - styled differently from content
         final LocalDateTime created = comment.created;
@@ -248,7 +249,7 @@ public class CommentsPanel extends VerticalLayout {
             final Span header = new Span((comment.username != null ? comment.username : "Unknown") + " · unknown");
             header.addClassName("comment-header");
             header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem")
-                    .set("color", "var(--lumo-contrast-70pct)");
+                    .set("color", "var(--vaadin-text-color-secondary)");
             commentDiv.add(header);
         } else {
             final String relativeDate = this.formatRelativeDate(created);
@@ -256,7 +257,7 @@ public class CommentsPanel extends VerticalLayout {
                     new Span((comment.username != null ? comment.username : "Unknown") + " · " + relativeDate);
             header.addClassName("comment-header");
             header.getStyle().set("display", "block").set("font-weight", "600").set("font-size", "0.875rem")
-                    .set("color", "var(--lumo-contrast-70pct)");
+                    .set("color", "var(--vaadin-text-color-secondary)");
             commentDiv.add(header);
         }
 
@@ -308,7 +309,7 @@ public class CommentsPanel extends VerticalLayout {
         if (comment.lastEdit != null) {
             final Span editedNote = new Span("(edited)");
             editedNote.addClassName("comment-edited");
-            editedNote.getStyle().set("font-size", "0.75rem").set("color", "var(--lumo-contrast-50pct)");
+            editedNote.getStyle().set("font-size", "0.75rem").set("color", "var(--vaadin-text-color-secondary)");
             commentDiv.add(editedNote);
         }
 

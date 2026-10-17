@@ -39,6 +39,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -152,7 +153,7 @@ public class AdminUsersView extends AbstractAdminView {
         // Make the username column clickable
         this.grid.addComponentColumn(user -> {
             final var usernameSpan = new Span(user.username);
-            usernameSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            usernameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
             usernameSpan.getStyle().set("display", "block");
@@ -239,10 +240,10 @@ public class AdminUsersView extends AbstractAdminView {
 
             // Add label that matches FormLayout styling
             final var passwordLabel = new Span("Password");
-            passwordLabel.getStyle().set("font-size", "var(--lumo-font-size-s)");
+            passwordLabel.getStyle().set("font-size", "0.875em");
             passwordLabel.getStyle().set("font-weight", "500");
-            passwordLabel.getStyle().set("color", "var(--lumo-secondary-text-color)");
-            passwordLabel.getStyle().set("margin-bottom", "var(--lumo-space-xs)");
+            passwordLabel.getStyle().set("color", "var(--vaadin-text-color-secondary)");
+            passwordLabel.getStyle().set("margin-bottom", "var(--vaadin-gap-xs)");
 
             final var credentials = this.authService.currentSessionCredentials();
             final boolean ownAccount = credentials != null && credentials.userPublicId().equals(user.publicId);

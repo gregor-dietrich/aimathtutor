@@ -136,8 +136,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
-                "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
 
         final var header = new H3("Account Information");
         header.getStyle().set("margin-top", "0");
@@ -153,7 +153,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         final var notice = new Paragraph("Contact an administrator to change your username or email.");
-        notice.getStyle().set("font-style", "italic").set("color", "var(--lumo-secondary-text-color)");
+        notice.getStyle().set("font-style", "italic").set("color", "var(--vaadin-text-color-secondary)");
 
         section.add(header, usernameInfo, emailInfo, notice);
         return section;
@@ -163,8 +163,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
-                "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
 
         final var header = new H3("Change Password");
         header.getStyle().set("margin-top", "0");
@@ -200,8 +200,8 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var section = new VerticalLayout();
         section.setSpacing(true);
         section.setPadding(true);
-        section.getStyle().set("background-color", "var(--lumo-contrast-5pct)").set("border-radius",
-                "var(--lumo-border-radius-m)");
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
 
         final var header = new H3("Chat Avatars");
         header.getStyle().set("margin-top", "0");
@@ -224,10 +224,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         // Preview box
         this.previewBox = new Div();
-        this.previewBox.getStyle().set("padding", "var(--lumo-space-m)")
-                .set("background-color", "var(--lumo-contrast-10pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)")
-                .set("border", "1px solid var(--lumo-contrast-20pct)");
+        this.previewBox.getStyle().set("padding", "var(--vaadin-padding-m)")
+                .set("background-color", "var(--vaadin-background-container-strong)")
+                .set("border-radius", "var(--vaadin-radius-m)").set("border", "1px solid var(--vaadin-border-color)");
 
         final var previewLabel = new Span("Preview:");
         previewLabel.getStyle().set("font-weight", "bold");
@@ -250,7 +249,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         final var userMessage = new HorizontalLayout();
         userMessage.setWidthFull();
         userMessage.setJustifyContentMode(JustifyContentMode.END);
-        userMessage.getStyle().set("margin-bottom", "var(--lumo-space-s)");
+        userMessage.getStyle().set("margin-bottom", "var(--vaadin-gap-s)");
 
         final var userBubble = new Div();
         userBubble.setText(userEmoji + " Hello, can you help me?");

@@ -93,8 +93,7 @@ public class AdminSessionView extends AbstractAdminView {
         // Header
         final var title = new H2("Session Details");
         title.getStyle().set("margin-top", "0").set("margin-bottom", "4px").set("font-size", "22px")
-                .set("font-weight", "700").set("color", "var(--lumo-header-text-color)").set("letter-spacing", "-0.3px")
-                .set("display", "inline");
+                .set("font-weight", "700").set("letter-spacing", "-0.3px").set("display", "inline");
 
         this.statusBadge = new Badge("Loading");
         this.statusBadge.addThemeVariants(BadgeVariant.CONTRAST);
@@ -105,7 +104,7 @@ public class AdminSessionView extends AbstractAdminView {
         this.add(titleRow);
 
         this.headerSubtitle = new Span("Loading session information...");
-        this.headerSubtitle.getStyle().set("font-size", "13px").set("color", "var(--lumo-secondary-text-color)")
+        this.headerSubtitle.getStyle().set("font-size", "13px").set("color", "var(--vaadin-text-color-secondary)")
                 .set("margin-bottom", "8px").set("display", "block");
         this.add(this.headerSubtitle);
 
@@ -150,9 +149,8 @@ public class AdminSessionView extends AbstractAdminView {
 
         final var accentBar = new GlassAccentBar();
         final var cardTitle = new Span("Interactions & Feedback");
-        cardTitle.getStyle().set("font-size", "13px").set("font-weight", "700")
-                .set("color", "var(--lumo-primary-text-color)").set("letter-spacing", "0.3px")
-                .set("padding", "12px 16px 4px").set("display", "block");
+        cardTitle.getStyle().set("font-size", "13px").set("font-weight", "700").set("color", AppStyles.ACCENT_TEXT)
+                .set("letter-spacing", "0.3px").set("padding", "12px 16px 4px").set("display", "block");
 
         this.interactionsGrid = new Grid<>(AiInteractionViewDto.class, false);
         this.interactionsGrid.addThemeVariants(GridVariant.ROW_STRIPES);

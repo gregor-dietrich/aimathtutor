@@ -46,6 +46,7 @@ import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -233,7 +234,7 @@ public class AdminCommentsView extends AbstractAdminView {
         this.grid.addComponentColumn(comment -> {
             final var title = comment.exerciseTitle != null ? comment.exerciseTitle : "(No title)";
             final var titleSpan = new Span(title);
-            titleSpan.getStyle().set("color", "var(--lumo-contrast-70pct)");
+            titleSpan.getStyle().set("color", "var(--vaadin-text-color-secondary)");
             titleSpan.getStyle().set("font-weight", "500");
             return titleSpan;
         }).setHeader("Exercise").setWidth(AppConstants.GRID_NAME_WIDTH).setFlexGrow(1);
@@ -263,11 +264,11 @@ public class AdminCommentsView extends AbstractAdminView {
 
             // Color-code status
             if (CommentStatus.VISIBLE.equals(status)) {
-                statusSpan.getStyle().set("color", "var(--lumo-success-color)");
+                statusSpan.getStyle().set("color", AppStyles.SUCCESS);
             } else if (CommentStatus.HIDDEN.equals(status)) {
-                statusSpan.getStyle().set("color", "var(--lumo-warning-color)");
+                statusSpan.getStyle().set("color", AppStyles.WARNING);
             } else if (CommentStatus.DELETED.equals(status)) {
-                statusSpan.getStyle().set("color", "var(--lumo-error-color)");
+                statusSpan.getStyle().set("color", AppStyles.ERROR);
             }
             statusSpan.getElement().setAttribute("aria-label", status.getValue());
 

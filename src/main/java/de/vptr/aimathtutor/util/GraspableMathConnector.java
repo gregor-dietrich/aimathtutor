@@ -22,9 +22,8 @@ public final class GraspableMathConnector {
         final var canvas = new Div();
         canvas.setId("graspable-canvas");
         canvas.getStyle().set("width", "100%").set("height", AppConstants.CANVAS_HEIGHT_WORKSPACE)
-                .set("border", "1px solid var(--lumo-contrast-20pct)")
-                .set("border-radius", "var(--lumo-border-radius-m)").set("background-color", "var(--lumo-base-color)")
-                .set("margin-top", "1rem");
+                .set("border", "1px solid var(--vaadin-border-color)").set("border-radius", "var(--vaadin-radius-m)")
+                .set("background-color", "var(--vaadin-background-color)").set("margin-top", "1rem");
         return canvas;
     }
 

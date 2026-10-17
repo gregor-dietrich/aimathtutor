@@ -49,6 +49,7 @@ import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.LessonService;
 import de.vptr.aimathtutor.util.AdminFilterUtil;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.DateTimeFormatterUtil;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -202,7 +203,7 @@ public class AdminExercisesView extends AbstractAdminView {
         // Make the title column clickable
         this.grid.addComponentColumn(exercise -> {
             final var titleSpan = new Span(exercise.title);
-            titleSpan.getStyle().set("color", "var(--lumo-primary-text-color)");
+            titleSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             titleSpan.getStyle().set("cursor", "pointer");
             titleSpan.getStyle().set("width", "100%");
             titleSpan.getStyle().set("display", "block");
