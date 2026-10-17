@@ -4,6 +4,81 @@
    https://vaadin.com/docs/latest/styling/lumo for more information.
 */
 
+/*
+   Base-theme bridge: the only place --lumo-* and --aura-* appear. Java and every other rule use
+   Vaadin's theme-neutral --vaadin-* properties or these --app-* tokens. Each token takes Lumo's
+   value and falls back to Aura's, so it follows whichever base stylesheet is loaded; exactly one
+   base stylesheet (Lumo or Aura) may be loaded at a time.
+   These tokens reference only --lumo-* and --aura-*, never --vaadin-* colours: Vaadin registers
+   six of those as <color>, so they resolve where they are declared, and a :root token built from
+   them would ignore a dark theme set below <html>. Read a --vaadin-* colour where it is used, in
+   an inline style or a class rule. Never define names in the --vaadin-* namespace.
+*/
+:root {
+    --app-accent: var(--lumo-primary-color, var(--aura-accent-color));
+    --app-accent-text: var(--lumo-primary-text-color, var(--aura-accent-text-color));
+    --app-accent-soft: var(--lumo-primary-color-10pct, color-mix(in oklab, var(--aura-accent-color) 12%, transparent));
+    --app-accent-muted: var(--lumo-primary-color-50pct, color-mix(in oklab, var(--aura-accent-color) 50%, transparent));
+    --app-success: var(--lumo-success-text-color, var(--aura-green-text));
+    --app-error: var(--lumo-error-text-color, var(--aura-red-text));
+    --app-warning: var(--lumo-warning-text-color, var(--aura-yellow-text));
+}
+
+/* Card surface with a subtle gradient, border and shadow. */
+.glass-card {
+    position: relative;
+    background: linear-gradient(135deg, var(--vaadin-background-color), color-mix(in srgb, var(--vaadin-background-color) 95%, var(--app-accent-soft)));
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Raises an element slightly on hover. */
+.lift-on-hover:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Accent gradient strip along the top edge of a positioned card. */
+.accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--app-accent), var(--app-accent-muted), var(--app-accent-soft));
+    border-radius: var(--vaadin-radius-l) var(--vaadin-radius-l) 0 0;
+}
+
+/* Base box of a chat message bubble. */
+.chat-bubble {
+    padding: var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-l);
+    max-width: 80%;
+    overflow-wrap: break-word;
+}
+
+/* Chat bubble of the student. */
+.chat-bubble-user {
+    background-color: var(--app-accent-soft);
+    border-color: var(--app-accent-muted);
+}
+
+/* Chat bubble of the tutor. */
+.chat-bubble-tutor {
+    background-color: var(--vaadin-background-container-strong);
+}
+
+/* Chat bubble of system notices. */
+.chat-bubble-system {
+    background-color: var(--vaadin-background-container);
+    color: var(--vaadin-text-color-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
 /* Example: CSS class name to center align the content . */
 .centered-content {
     margin: 0 auto;
