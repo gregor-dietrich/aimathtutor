@@ -12,6 +12,7 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -19,7 +20,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Appearance.ColorMode;
+import de.vptr.aimathtutor.dto.Appearance.Design;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
+import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
@@ -46,12 +51,20 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     @Inject
     private transient UserService userService;
 
+    @Inject
+    private transient ThemeService themeService;
+
     @Nullable
     private PasswordField currentPasswordField;
     @Nullable
     private PasswordField newPasswordField;
     @Nullable
     private PasswordField confirmPasswordField;
+
+    @Nullable
+    private RadioButtonGroup<Design> designGroup;
+    @Nullable
+    private RadioButtonGroup<ColorMode> colorModeGroup;
 
     @Nullable
     private ComboBox<String> userAvatarSelect;
@@ -69,6 +82,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
     private boolean passwordChangeInProgress;
     private boolean avatarUpdateInProgress;
+    private boolean appearanceSaveInProgress;
 
     /**
      * Called before navigation occurs. Checks authentication, loads current user information, and builds the settings
@@ -119,6 +133,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var title = new H2("Settings");
 
+        // Appearance Section
+        final var appearanceSection = this.createAppearanceSection();
+
         // User Info Section (read-only)
         final var userInfoSection = this.createUserInfoSection();
 
@@ -128,8 +145,39 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         // Avatar Section
         final var avatarSection = this.createAvatarSection();
 
-        content.add(title, userInfoSection, passwordSection, avatarSection);
+        content.add(title, appearanceSection, userInfoSection, passwordSection, avatarSection);
         this.add(content);
+    }
+
+    private VerticalLayout createAppearanceSection() {
+        final var section = new VerticalLayout();
+        section.setSpacing(true);
+        section.setPadding(true);
+        section.getStyle().set("background-color", "var(--vaadin-background-container)").set("border-radius",
+                "var(--vaadin-radius-m)");
+
+        final var header = new H3("Appearance");
+        header.getStyle().set("margin-top", "0");
+
+        // Read from the session, so it does not wait for the async settings load.
+        final var appearance = this.themeService.current();
+
+        this.designGroup = new RadioButtonGroup<>("Design");
+        this.designGroup.setItems(Design.values());
+        this.designGroup.setItemLabelGenerator(Design::getDisplayName);
+        this.designGroup.setValue(appearance.design());
+
+        this.colorModeGroup = new RadioButtonGroup<>("Colour mode");
+        this.colorModeGroup.setItems(ColorMode.values());
+        this.colorModeGroup.setItemLabelGenerator(ColorMode::getDisplayName);
+        this.colorModeGroup.setValue(appearance.colorMode());
+
+        final var saveButton = new Button("Save Appearance");
+        saveButton.addThemeVariants(ButtonVariant.PRIMARY);
+        saveButton.addClickListener(ignored -> this.handleAppearanceChange(saveButton));
+
+        section.add(header, this.designGroup, this.colorModeGroup, saveButton);
+        return section;
     }
 
     private VerticalLayout createUserInfoSection() {
@@ -385,5 +433,36 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             this.userAvatarSelect.setEnabled(true);
             this.tutorAvatarSelect.setEnabled(true);
         }, "Failed to update avatars");
+    }
+
+    private void handleAppearanceChange(final Button saveButton) {
+        if (this.appearanceSaveInProgress) {
+            return;
+        }
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
+        final var session = VaadinSession.getCurrent();
+        final var ui = this.getUI().orElse(null);
+        if (credentials == null || session == null || ui == null) {
+            NotificationUtil.showError("Your session has ended. Please sign in again.");
+            this.getUI().ifPresent(currentUi -> currentUi.navigate(LoginView.class));
+            return;
+        }
+        final var appearance = new Appearance(this.designGroup.getValue(), this.colorModeGroup.getValue());
+        this.setAppearanceControlsEnabled(saveButton, false);
+
+        // Every save reloads: the top bar's colour-mode toggle reads the mode only when it is built.
+        AsyncDataLoader.load(() -> {
+            this.themeService.saveForSession(session, credentials, appearance);
+            return appearance;
+        }, this, ignored -> ui.getPage().reload(), () -> this.setAppearanceControlsEnabled(saveButton, true),
+                "Could not save the appearance");
+    }
+
+    private void setAppearanceControlsEnabled(final Button saveButton, final boolean enabled) {
+        this.appearanceSaveInProgress = !enabled;
+        saveButton.setEnabled(enabled);
+        this.designGroup.setEnabled(enabled);
+        this.colorModeGroup.setEnabled(enabled);
     }
 }
