@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.service.security;
 
-import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
@@ -29,8 +28,8 @@ public class PermissionService {
         }
     }
 
-    private UserRankViewDto getCurrentRank() {
-        final var rank = this.userRankService.getCurrentUserRank();
+    private UserRankEntity getCurrentRank() {
+        final var rank = this.findCurrentUserRank();
         if (rank == null) {
             throw new PermissionDeniedException("You do not have permission to perform this action");
         }
@@ -137,11 +136,8 @@ public class PermissionService {
      */
     public UserEntity requireAiConfigEdit(final Long userId) {
         final UserEntity user = this.userRepository.findById(userId);
-        // Read the permission flag straight off the (eagerly fetched) rank rather than building a
-        // UserRankViewDto: that DTO's constructor counts the lazy `users` collection, which throws a
-        // LazyInitializationException when this runs outside a Hibernate session — e.g. the pre-DNS
-        // authorization check in AiConfigService, which is intentionally non-transactional and may run on a
-        // background thread.
+        // Read the flag without traversing rank membership: the pre-DNS authorization check in
+        // AiConfigService is non-transactional and may run on a background thread.
         if (user == null || !user.activated || user.banned || user.rank == null || !user.rank.aiConfigEdit) {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");
         }
