@@ -53,7 +53,11 @@ however.
   apply under make; use `~/.m2/settings.xml`, or `-gs <file>` in
   `.mvn/maven.config`. `./mvnw` stays for IDE or bare use.
 - **Dev mode:** `make dev` → `quarkus:dev` on port `9001`. Dev UI:
-  `http://localhost:9001/q/dev/`.
+  `http://localhost:9001/q/dev/`. A production build leaves precompressed
+  `.br`/`.gz` copies of the static CSS and JS in
+  `target/classes/META-INF/resources/`, and dev mode serves those stale copies
+  to browsers that accept them instead of the edited files; run `make clean`
+  before checking CSS or JS changes in dev mode after a production build.
 - **Tests:** `make test` → `make test-scripts` (python unittest of
   `scripts/tests`), then `mvn -q verify` with Quarkus console/file logging off.
   Runs unit tests (skips integration tests). Uses `@QuarkusTest` and Mockito;
