@@ -1,0 +1,109 @@
+# Production stack: runs the published application image.
+# Download as docker-compose.yml beside your .env; see docs/QUICKSTART.md.
+services:
+  app:
+    image: gregordietrich/aimathtutor:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      quarkus.datasource.jdbc.url: jdbc:postgresql://db:5432/${SQL_DATABASE:-aimathtutor}
+      quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
+      quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
+      # AI API keys and other app.* settings come from .env (env_file above).
+
+      # Encryption key file — auto-generated on first start if absent
+      app.security.encryption-key-file: /etc/aimathtutor/keys/encryption.key
+    ports:
+      - "80:9001/tcp"
+    volumes:
+      - aimathtutor_logs:/deployments/logs
+      - aimathtutor_keys:/etc/aimathtutor/keys
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18.6-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    restart: unless-stopped
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: ${SQL_USERNAME:-aimathtutor}
+      POSTGRES_PASSWORD: ${SQL_PASSWORD:-changeit}
+      POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
+    volumes:
+      - postgres_data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Uncomment if you want to use pgAdmin. It listens on localhost only; set
+  # PGADMIN_EMAIL and PGADMIN_PASSWORD in .env first.
+  # pgadmin:
+  #   image: dpage/pgadmin4:9.15.0
+  #   restart: unless-stopped
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:?set PGADMIN_EMAIL in .env}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?set PGADMIN_PASSWORD in .env}
+  #   ports:
+  #     - "127.0.0.1:9001:80/tcp"
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+
+  # Uncomment the ollama service below and ollama_data volume to use local AI.
+  # ollama:
+  #   # Choose image based on your hardware:
+  #   image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
+  #   # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #
+  #   # Optional: Enable NVIDIA GPU support
+  #   # Requires: NVIDIA GPU, drivers, and NVIDIA Container Toolkit
+  #   # See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: all
+  #   #           capabilities: [gpu]
+  #
+  #   # Optional: Enable AMD GPU support (use with 0.15.2-rocm image)
+  #   # Requires: AMD GPU (RX 6000/7000 series or newer) with ROCm drivers
+  #   # devices:
+  #   #   - /dev/kfd
+  #   #   - /dev/dri
+  #   # group_add:
+  #   #   - video
+  #
+  #   healthcheck:
+  #     test: ["CMD", "ollama", "ls"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
+
+volumes:
+  aimathtutor_keys: # AES-256 master key — back this up; losing it = data unrecoverable
+  aimathtutor_logs:
+  # pgadmin_data: # Uncomment if you want to use pgAdmin
+  # ollama_data: # Uncomment if you want to use Ollama
+  postgres_data:

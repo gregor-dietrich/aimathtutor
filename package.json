@@ -11,12 +11,10 @@
     "@vaadin/vaadin-themable-mixin": "25.3.3",
     "@vaadin/vaadin-usage-statistics": "2.1.3",
     "date-fns": "4.4.0",
-    "dompurify": "3.4.16",
     "lit": "3.3.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-router": "8.4.0",
-    "source-map-js": "1.2.2"
+    "react-router": "8.4.0"
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
@@ -52,12 +50,10 @@
       "@vaadin/vaadin-themable-mixin": "25.3.3",
       "@vaadin/vaadin-usage-statistics": "2.1.3",
       "date-fns": "4.4.0",
-      "dompurify": "3.4.16",
       "lit": "3.3.3",
       "react": "19.3.0",
       "react-dom": "19.3.0",
-      "react-router": "8.4.0",
-      "source-map-js": "1.2.2"
+      "react-router": "8.4.0"
     },
     "devDependencies": {
       "@babel/core": "7.29.7",
@@ -83,7 +79,7 @@
       "vite": "8.3.2",
       "vite-plugin-checker": "0.14.5"
     },
-    "hash": "2be58bb29093ea93e2da8e9c57a63720320b7102d5d53e23c8d19b8e3de428ca"
+    "hash": "ac20e43304e4dfe9be7d716ee9f00085cae8f9fdcab8c06e7265610f0b1d3db2"
   },
   "overrides": {
     "@vaadin/a11y-base": "25.3.3",
@@ -157,11 +153,9 @@
     "@vaadin/vertical-layout": "25.3.3",
     "@vaadin/virtual-list": "25.3.3",
     "date-fns": "$date-fns",
-    "dompurify": "$dompurify",
     "lit": "$lit",
     "react": "$react",
     "react-dom": "$react-dom",
-    "react-router": "$react-router",
-    "source-map-js": "$source-map-js"
+    "react-router": "$react-router"
   }
 }

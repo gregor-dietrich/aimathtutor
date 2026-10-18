@@ -24,9 +24,10 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
-Deploy with the compose file in the
-[Quickstart](docs/QUICKSTART.md#using-docker-compose), which runs the published
-image. The repository's own `docker-compose.yml` builds the app from the
+Deploy with [deploy/compose.yml](deploy/compose.yml), which runs the published
+image; follow the [Quickstart](docs/QUICKSTART.md#using-docker-compose) to
+download it as `docker-compose.yml` beside your `.env`. The repository's own
+`docker-compose.yml` builds the app from the
 checkout and is for development only.
 
 When deploying to production, it is **critical** to override the default
@@ -38,6 +39,11 @@ Either replaces the default `changeit` value used in dev/test profiles.
 On the first start, also set `APP_BOOTSTRAP_ADMIN_PASSWORD` to create the
 initial admin account (see
 [Quickstart](docs/QUICKSTART.md#initial-admin-account)).
+
+Add operator JVM options through `JDK_JAVA_OPTIONS`, for example
+`JDK_JAVA_OPTIONS=-Xmx512m` in the deployment `.env`. Both images run Java
+as PID 1 with required runtime arguments in their entrypoints. Java prints the
+value to the container log, so keep secrets out of it.
 
 Never set a `dev` or `test` profile (`QUARKUS_PROFILE`,
 `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop
@@ -171,9 +177,10 @@ scripts.
 
 **Configuration:**
 
-- **API Keys**: Set properties `app.google.api.key`, `app.openai.api.key`, and
-  `app.openai.organization-id` (immutable at runtime).
-- **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure
+- **API Keys**: Set properties `app.google.api.key` and `app.openai.api.key`
+  (immutable at runtime).
+- **Provider Settings** (model, base URL, temperature, prompts, optional OpenAI
+  Organization ID, etc.): Configure
   via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable,
   database-backed).
 - **Encryption key**: Resolution order: (1) `app.security.encryption-key-file`

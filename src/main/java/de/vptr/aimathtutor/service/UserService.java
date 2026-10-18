@@ -8,6 +8,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.jboss.logging.Logger;
+
 import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
@@ -41,6 +43,8 @@ import jakarta.ws.rs.core.Response;
  */
 @ApplicationScoped
 public class UserService {
+
+    private static final Logger LOG = Logger.getLogger(UserService.class);
 
     /** The Admin rank seeded by V1. */
     private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
@@ -206,6 +210,16 @@ public class UserService {
     @Transactional
     public boolean hasUsers() {
         return this.userRepository.countAll() > 0;
+    }
+
+    /**
+     * Tells whether an activated, unbanned user holds every permission.
+     *
+     * @return true if at least one active administrator exists
+     */
+    @Transactional
+    public boolean hasActiveAdministrator() {
+        return this.userRepository.countActiveAdministrators() > 0;
     }
 
     /**
@@ -606,8 +620,13 @@ public class UserService {
     public String changePassword(final SessionCredentials credentials, final String currentPassword,
             final String newPassword) {
         final UserEntity user = this.requireSessionUser(credentials);
+        // Validated before the current password is checked: otherwise the new password's rejection would confirm a
+        // correct guess without changing anything.
+        this.validatePassword(newPassword);
 
         if (!this.loginAttemptService.tryRecordPasswordChangeAttempt(credentials.throttleKey())) {
+            LOG.warnf("Refused a password change for user %s: too many wrong current passwords in this session",
+                    user.publicId);
             throw new ValidationException("Too many failed attempts. Try again later.");
         }
 
@@ -616,9 +635,6 @@ public class UserService {
             throw new ValidationException("Current password is incorrect");
         }
         this.loginAttemptService.clearPasswordChangeAttempts(credentials.throttleKey());
-
-        // Validate new password
-        this.validatePassword(newPassword);
 
         // Hash new password with bcrypt
         final var hashedPassword = this.passwordHashingService.hashPassword(newPassword);

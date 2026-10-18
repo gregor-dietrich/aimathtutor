@@ -54,6 +54,14 @@ jobs:
       # gate (the job stays red), so one push shows every problem.
       - name: Repository gates (devkitw, pins, decisions, secrets, Markdown)
         run: make -k lint-repo
+      # Inputs go to a temporary project directory: a .env in the checkout would reach the Quarkus tests.
+      - name: Validate development and production Compose configurations
+        if: ${{ !cancelled() }}
+        run: |
+          compose_qa_dir=$(mktemp -d)
+          cp .env.example "$compose_qa_dir/.env"
+          docker compose --project-directory "$compose_qa_dir" -f docker-compose.yml config --quiet
+          docker compose --project-directory "$compose_qa_dir" -f deploy/compose.yml config --quiet
       - name: Test frontend lifecycle scripts
         if: ${{ !cancelled() }}
         run: make test-scripts

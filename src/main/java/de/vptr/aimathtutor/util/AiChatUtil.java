@@ -11,6 +11,7 @@ import de.vptr.aimathtutor.component.layout.AiChatPanel;
 import de.vptr.aimathtutor.dto.ChatMessageDto;
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import jakarta.annotation.Nullable;
 
 /**
@@ -76,7 +77,10 @@ public final class AiChatUtil {
         }
         chatPanel.hideTypingIndicator();
         log.error("Error getting AI answer", ex);
-        chatPanel.addMessage(ChatMessageDto.aiAnswer("Sorry, I encountered an error. Please try again."));
+        // A permanent failure (missing key, rejected request) fails again on retry, so don't suggest one.
+        chatPanel.addMessage(ChatMessageDto.aiAnswer(cause instanceof NonRetryableProviderException
+                ? "Sorry, the AI tutor is not available right now. Please let your teacher know."
+                : "Sorry, I encountered an error. Please try again."));
     }
 
     /**

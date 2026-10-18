@@ -11,9 +11,9 @@ import jakarta.annotation.Nullable;
  *
  * <p>
  * This base type represents a transient failure and is eligible for retry. Permanent failures (missing API key, blocked
- * content, misconfiguration) are signalled with {@link NonRetryableProviderException}; the
- * {@code @Retry(abortOn = NonRetryableProviderException.class)} annotation on the calling methods skips retries in
- * those cases.
+ * content, misconfiguration, HTTP client errors other than 408 and 429) are signalled with
+ * {@link NonRetryableProviderException}; the {@code @Retry(abortOn = NonRetryableProviderException.class)} annotation
+ * on the calling methods skips retries in those cases.
  */
 public class ProviderException extends RuntimeException {
 
@@ -26,9 +26,13 @@ public class ProviderException extends RuntimeException {
     private final int httpStatus;
 
     /**
-     * Build an exception backed by an HTTP failure.
+     * Build an exception backed by an HTTP failure. Client errors are permanent except for request timeouts (408) and
+     * rate limits (429), which remain eligible for retry.
      */
     public static ProviderException httpFailure(final String providerName, final int httpStatus, final String message) {
+        if (httpStatus >= 400 && httpStatus < 500 && httpStatus != 408 && httpStatus != 429) {
+            return new NonRetryableProviderException(providerName, message, httpStatus);
+        }
         return new ProviderException(providerName, message, httpStatus, null);
     }
 

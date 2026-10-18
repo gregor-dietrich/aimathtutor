@@ -11,10 +11,6 @@ public class UserRankViewDto extends UserRankPermissions {
     @Nullable
     public String name;
 
-    // Computed fields
-    @Nullable
-    public Long usersCount;
-
     public UserRankViewDto() {
     }
 
@@ -61,9 +57,6 @@ public class UserRankViewDto extends UserRankPermissions {
 
             // AI configuration permissions
             this.aiConfigEdit = entity.aiConfigEdit;
-
-            // Computed fields
-            this.usersCount = entity.users != null ? (long) entity.users.size() : 0L;
         }
     }
 

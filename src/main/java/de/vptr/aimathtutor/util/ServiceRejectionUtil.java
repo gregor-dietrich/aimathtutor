@@ -9,18 +9,22 @@ import jakarta.validation.ValidationException;
 /**
  * Shows why a service rejected a write, such as a save or delete. Services reject invalid input with
  * {@link ValidationException}, which shares its simple name with the binder's exception that the views import, so the
- * views catch it through this helper.
+ * views catch it through this helper. The message mapping is shared with {@link AsyncDataLoader}, which shows the same
+ * text for a rejection thrown inside an asynchronous load.
  */
 public final class ServiceRejectionUtil {
 
     private static final Logger LOG = Logger.getLogger(ServiceRejectionUtil.class);
 
+    private static final String INVALID_INPUT = "Invalid input";
+
     private ServiceRejectionUtil() {
     }
 
     /**
-     * Runs a service call and shows the message of a {@link ValidationException} it throws. The rejection is expected
-     * user input, so it is logged at DEBUG only, and without the message, which can contain user data.
+     * Runs a service call and shows the message of a rejection it throws (see {@link #isRejection}). The rejection is
+     * expected user input, so it is logged at DEBUG only, and without the message, which can contain user data. Any
+     * other {@link ValidationException} propagates.
      *
      * @param serviceCall
      *            the call that writes, such as saving the form's data or deleting an item
@@ -30,12 +34,41 @@ public final class ServiceRejectionUtil {
         try {
             serviceCall.run();
             return true;
-        } catch (final ConstraintViolationException e) {
-            return showRejection(e.getConstraintViolations().stream().map(ServiceRejectionUtil::describe)
-                    .reduce((a, b) -> a + "; " + b).orElse("Invalid input"));
         } catch (final ValidationException e) {
-            return showRejection(e.getMessage() != null ? e.getMessage() : "Invalid input");
+            if (!isRejection(e)) {
+                throw e;
+            }
+            return showRejection(rejectionMessage(e));
         }
+    }
+
+    /**
+     * Tells a service rejection, a plain {@link ValidationException} or a {@link ConstraintViolationException}, from
+     * the other subclasses, which report a broken constraint or validator setup: a defect to log, not a message to
+     * show.
+     *
+     * @param e
+     *            the exception thrown by a service
+     * @return true if the exception rejects the input
+     */
+    public static boolean isRejection(final ValidationException e) {
+        return e.getClass() == ValidationException.class || e instanceof ConstraintViolationException;
+    }
+
+    /**
+     * Maps a service rejection to the text shown to the user: the violations of a {@link ConstraintViolationException}
+     * joined with "; ", otherwise the exception's message. Falls back to "Invalid input" when there is nothing to show.
+     *
+     * @param e
+     *            the rejection thrown by a service
+     * @return the user-facing message
+     */
+    public static String rejectionMessage(final ValidationException e) {
+        if (e instanceof final ConstraintViolationException cve) {
+            return cve.getConstraintViolations().stream().map(ServiceRejectionUtil::describe)
+                    .reduce((a, b) -> a + "; " + b).orElse(INVALID_INPUT);
+        }
+        return e.getMessage() != null ? e.getMessage() : INVALID_INPUT;
     }
 
     private static String describe(final ConstraintViolation<?> violation) {

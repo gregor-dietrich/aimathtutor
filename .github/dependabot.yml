@@ -18,6 +18,17 @@ updates:
     patterns: ["*"]
     multi-ecosystem-group: "infrastructure"
 
+  - package-ecosystem: "docker-compose"
+    directories:
+      - "/"
+      - "/deploy"
+    patterns: ["*"]
+    multi-ecosystem-group: "infrastructure"
+    ignore:
+      # Keep exact PostgreSQL tags and digests within the supported 18.x line.
+      - dependency-name: "postgres"
+        versions: ["<18", ">=19"]
+
   - package-ecosystem: "maven"
     directory: "/"
     patterns: ["*"]

@@ -199,13 +199,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Add Panache Mock for entity mocking -->
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-panache-mock</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!-- Add JaCoCo coverage for Quarkus. Required, not optional: it offline-instruments the
     application classes, which is the only way @QuarkusTest coverage reaches jacoco.exec.
     Removing it drops every service/repository/entity class to 0% (measured: 89.8% -> 28.1%),
@@ -260,6 +253,26 @@
             --sun-misc-unsafe-memory-access=allow
             -XX:+EnableDynamicAgentLoading
             -Xshare:off
+            --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+            --add-exports jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+            --add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
             -Dio.netty.tryReflectionSetAccessible=true
             -Dio.netty.allocator.useCacheForAllThreads=false</jvmArgs>
           <systemProperties>

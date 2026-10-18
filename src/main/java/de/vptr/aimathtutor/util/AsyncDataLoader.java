@@ -2,7 +2,9 @@ package de.vptr.aimathtutor.util;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -10,7 +12,9 @@ import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.Component;
 
+import de.vptr.aimathtutor.view.LoginView;
 import jakarta.annotation.Nullable;
+import jakarta.validation.ValidationException;
 
 /**
  * Utility for loading data asynchronously into Vaadin views with consistent timeout, error handling, and UI access
@@ -48,6 +52,10 @@ public final class AsyncDataLoader {
      * Loads data asynchronously with a caller-specified timeout. Use a short timeout (e.g. 5 s) for fast dashboard tile
      * queries that should not hold the whole panel hostage if the DB is slow; use a longer timeout for heavy reports or
      * batch summaries.
+     * <p>
+     * A service rejection thrown by the supplier (see {@link ServiceRejectionUtil#isRejection}) has its message shown,
+     * and a rejection that the session ended returns to the login page. On timeout the supplier is not cancelled and
+     * may still complete its work, so the notification tells the user to reload to see the current state.
      *
      * @param <T>
      *            the type of data being loaded
@@ -58,7 +66,7 @@ public final class AsyncDataLoader {
      * @param onSuccess
      *            callback invoked with the loaded data on success
      * @param onError
-     *            callback invoked on error (before the notification is shown)
+     *            callback invoked on error (after the notification is shown)
      * @param timeout
      *            maximum time to wait before aborting and notifying the user; must be positive
      * @param errorMessage
@@ -78,9 +86,6 @@ public final class AsyncDataLoader {
             thread.setContextClassLoader(classLoader);
             try {
                 return dataSupplier.get();
-            } catch (final RuntimeException e) {
-                LOG.error(errorMessage, e);
-                throw e;
             } finally {
                 thread.setContextClassLoader(previous);
             }
@@ -91,8 +96,25 @@ public final class AsyncDataLoader {
                         onSuccess.accept(data);
                         return;
                     }
-                    LOG.errorf(throwable, "Async load failed: %s", throwable.getMessage());
-                    NotificationUtil.showError(errorMessage);
+                    final var cause = throwable instanceof CompletionException && throwable.getCause() != null
+                            ? throwable.getCause() : throwable;
+                    if (cause instanceof final ValidationException rejection
+                            && ServiceRejectionUtil.isRejection(rejection)) {
+                        // Expected service rejection; the message can carry user data, so it is never logged.
+                        LOG.debug("Service rejected a write");
+                        final var message = ServiceRejectionUtil.rejectionMessage(rejection);
+                        NotificationUtil.showError(message);
+                        if (AppConstants.SESSION_ENDED_MESSAGE.equals(message)) {
+                            LoginView.reloadToLogin(ui);
+                        }
+                    } else if (cause instanceof TimeoutException) {
+                        LOG.warnf("Async call timed out after %s: %s", timeout, errorMessage);
+                        NotificationUtil.showError(errorMessage
+                                + ". The server did not respond in time; reload the page to see the current state.");
+                    } else {
+                        LOG.errorf(cause, "Async load failed: %s", errorMessage);
+                        NotificationUtil.showError(errorMessage);
+                    }
                     if (onError == null) {
                         return;
                     }

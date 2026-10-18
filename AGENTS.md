@@ -93,8 +93,12 @@ however.
   `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`,
   `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`,
   and `-XX:+EnableDynamicAgentLoading`. Set consistently in `pom.xml`
-  (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and Docker
-  `JAVA_OPTS_APPEND`.
+  (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and both Docker
+  exec-form entrypoints. Operators add JVM options with `JDK_JAVA_OPTIONS`;
+  do not bake a value for that variable into the images. The dev JVM also
+  needs the `jdk.compiler/com.sun.tools.javac.*` exports and opens from
+  `.mvn/jvm.config` for Error Prone during live reload; those compile-time
+  arguments do not belong in the runtime images.
 - **Node.js is pinned:** `vaadin.node.version` in `pom.xml` (Vaadin's default
   for the current release) is used by every frontend build path (production and
   regen builds, the Quarkus build step, dev mode). Vaadin downloads it to
@@ -176,11 +180,15 @@ however.
   directly. Enforced by Checkstyle `IllegalImport`.
 - **Vaadin UI threading:** Never block the UI thread. Load view data through
   `AsyncDataLoader.load(...)` (`util/`), which runs the call off the UI thread
-  with a timeout and applies the result or the error in `ui.access()`. Where it
-  doesn't fit, use `CompletableFuture.supplyAsync()` on the view's injected
-  `ManagedExecutor` + `ui.access()` + `.exceptionally()`. Never use the common
-  ForkJoinPool: under `make dev` its threads lack the app's class loader, so a
-  bean first created there cannot read its config.
+  with a timeout and applies the result or the error in `ui.access()`: a
+  service's `ValidationException` shows its message (an ended session returns
+  to login), a timeout says the outcome is unknown, and any other error is
+  logged once. Where it doesn't fit, use `CompletableFuture.supplyAsync()` on
+  the view's injected `ManagedExecutor` + `ui.access()` + `.exceptionally()`.
+  Never use the common ForkJoinPool directly: under `make dev` its threads lack
+  the app's class loader, so a bean first created there cannot read its config.
+  `AsyncDataLoader` runs on it only because it hands the caller's context class
+  loader to the worker thread for the call.
 
 ```java
 final var ui = getUI().orElse(null);
@@ -370,11 +378,12 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 | License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license the parent's allowlist and `pom.xml`'s appends don't name (`mvn verify` without `-q` lists each)             |
 
 CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
-fails, then `make test-scripts`, then `make -o test-scripts test` with
-`MAVEN_ARGS=-DskipITs=false`; the `-o` skips the prerequisite already run, so a
-failing script test doesn't stop the Java tests; both run regardless of the
-gate's result) and `security` (CodeQL around `make install`, then `make audit`
-when `NVD_API_KEY` is set; only that step receives the key) run in parallel,
+fails, then the Compose validation, then `make test-scripts`, then
+`make -o test-scripts test` with `MAVEN_ARGS=-DskipITs=false`; the `-o` skips
+the prerequisite already run, so a failing script test doesn't stop the Java
+tests; each runs regardless of the steps before it) and `security` (CodeQL
+around `make install`, then `make audit` when `NVD_API_KEY` is set; only that
+step receives the key) run in parallel,
 then `build` (`make install` with `MAVEN_ARGS=-Pproduction`: package, spotless,
 SpotBugs, Checkstyle, PMD, CPD). A push-only
 `dependency-submission` job submits the Maven dependency graph after
@@ -424,8 +433,14 @@ new license (as UPL-1.0 was) needs the maintainer's approval.
 
 ## Database
 
-- **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24`,
-  dev on port `55432`, test on a random port).
+- **PostgreSQL.** Dev/test uses Quarkus Dev Services (dev on port `55432`,
+  test on a random port). Root and production Compose pin the same exact
+  PostgreSQL tag and digest; Dev Services uses `postgres@sha256:<digest>`
+  with the matching tag in the immediately preceding comment. Keep all
+  three in step; plain JUnit `PostgresImagePinTest` checks parity. Dependabot
+  covers both Compose directories and keeps PostgreSQL on 18.x. Its PostgreSQL
+  bumps change only the Compose files, so the parity test fails on that PR
+  until the Dev Services digest and its tag comment are updated there by hand.
 - **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is
   `validate`-only. Migrations live in `src/main/resources/db/migration`, and
   dev/test demo data lives in `db/demo/R__demo_data.sql`. Profiles are picked at
@@ -521,13 +536,13 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 
 ## AI Configuration
 
-- **API keys:** `app.google.api.key`, `app.openai.api.key`,
-  `app.openai.organization-id`.
+- **API keys:** `app.google.api.key`, `app.openai.api.key`.
 - **SSRF protection:** `app.security.allowed-ollama-hosts` — comma-separated
   list of permitted hostnames for Ollama (defaults to `ollama,localhost`).
   Prevents SSRF via DNS rebinding.
-- **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts —
-  configured via Admin Settings UI at `/admin/config`.
+- **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
+  and the optional OpenAI Organization ID — configured via Admin Settings UI
+  at `/admin/config`. The Organization ID has no property/environment input.
 
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on AI provider calls, sets 1s
@@ -541,12 +556,22 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 
 ## Docker
 
-- **Production:** the compose file in `docs/QUICKSTART.md`, which runs the
-  published image. The root `docker-compose.yml` (app + PostgreSQL; optional
+- **Production:** `deploy/compose.yml` runs the published image;
+  `docs/QUICKSTART.md` downloads it as `docker-compose.yml` beside `.env`.
+  The root `docker-compose.yml` (app + PostgreSQL; optional
   pgadmin/Ollama) builds the app from the checkout (`pull_policy: build`) and is
   for development only.
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu`
-  (port 9001, healthcheck `/q/health/ready`).
+  (port 9001, healthcheck `/q/health/ready`). Java runs directly as PID 1;
+  required runtime arguments are explicit before `-jar` in both entrypoints.
+  Add operator options with `JDK_JAVA_OPTIONS` (for example `-Xmx512m`);
+  Compose passes it through from `.env`.
+- **Compose validation:** CI runs
+  `docker compose --project-directory <tmp> -f <file> config --quiet` for root
+  and production files, with `.env.example` copied to `<tmp>/.env`; a `.env`
+  in the checkout would reach the Quarkus tests. Also validate the optional
+  `pgadmin` and `ollama` services and volumes when changing their commented
+  blocks.
 - **Build:** `scripts/build.sh` via `make build` — host-platform images into the
   local image store (`docker buildx build --load`, or plain `docker build`
   without buildx).
