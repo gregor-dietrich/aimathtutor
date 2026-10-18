@@ -110,6 +110,10 @@ public class AppLifecycleBean {
         if (!usernames.isEmpty()) {
             LOG.warnf("Deactivated the seeded accounts %s because they still accept their published passwords. "
                     + "Set new passwords before reactivating them.", usernames);
+            if (!this.userService.hasActiveAdministrator()) {
+                LOG.error("No active administrator remains after deactivating the seeded accounts. "
+                        + "Follow the README's 'Recovering administrator access' procedure.");
+            }
         }
     }
 

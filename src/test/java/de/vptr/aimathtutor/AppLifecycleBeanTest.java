@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -10,11 +11,16 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.util.TestLogCapture;
 import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -34,10 +40,11 @@ class AppLifecycleBeanTest {
         return this.bean(LaunchMode.NORMAL, "securepassword", bootstrapPassword);
     }
 
-    @Test
-    @DisplayName("onStart does not throw or bootstrap when launch mode is TEST")
-    void onStart_testMode_noException() {
-        final var appLifecycleBean = this.bean(LaunchMode.TEST, "changeit", Optional.empty());
+    @ParameterizedTest
+    @EnumSource(value = LaunchMode.class, names = { "TEST", "DEVELOPMENT" })
+    @DisplayName("onStart does not bootstrap or deactivate accounts in dev/test mode")
+    void onStart_nonProductionMode_noException(final LaunchMode launchMode) {
+        final var appLifecycleBean = this.bean(launchMode, "changeit", Optional.empty());
 
         assertDoesNotThrow(() -> appLifecycleBean.onStart(new StartupEvent()));
         verifyNoInteractions(this.userService);
@@ -97,15 +104,34 @@ class AppLifecycleBeanTest {
         verify(this.userService).replaceSeededAdminPassword(BOOTSTRAP_PASSWORD);
     }
 
-    @Test
-    @DisplayName("onStart deactivates the seeded demo accounts in production")
-    void onStart_normalMode_deactivatesSeededDemoAccounts() {
+    @ParameterizedTest(name = "deactivated={0}, survivingAdministrator={1}, errors={2}")
+    @CsvSource({ "true, false, 1", "true, true, 0", "false, false, 0" })
+    @DisplayName("Production logs recovery guidance only when deactivation leaves no active administrator")
+    void onStart_normalMode_reportsLostAdministrator(final boolean deactivated, final boolean survivingAdministrator,
+            final long errors) {
         when(this.userService.hasUsers()).thenReturn(true);
-        when(this.userService.deactivateSeededDemoAccounts()).thenReturn(List.of("teacher"));
+        when(this.userService.deactivateSeededDemoAccounts()).thenReturn(deactivated ? List.of("teacher") : List.of());
+        when(this.userService.hasActiveAdministrator()).thenReturn(survivingAdministrator);
         final var appLifecycleBean = this.productionBean(Optional.empty());
 
-        assertDoesNotThrow(() -> appLifecycleBean.onStart(new StartupEvent()));
+        final var records = TestLogCapture.capture(AppLifecycleBean.class,
+                () -> assertDoesNotThrow(() -> appLifecycleBean.onStart(new StartupEvent())));
+
         verify(this.userService).deactivateSeededDemoAccounts();
+        if (deactivated) {
+            verify(this.userService).hasActiveAdministrator();
+        } else {
+            verify(this.userService, never()).hasActiveAdministrator();
+        }
+        final var errorRecords =
+                records.stream().filter(r -> r.getLevel().intValue() >= Level.SEVERE.intValue()).toList();
+        assertEquals(errors, errorRecords.size());
+        if (errors > 0) {
+            assertEquals(
+                    "No active administrator remains after deactivating the seeded accounts. "
+                            + "Follow the README's 'Recovering administrator access' procedure.",
+                    errorRecords.getFirst().getMessage());
+        }
     }
 
     @Test

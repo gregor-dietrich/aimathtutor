@@ -340,6 +340,40 @@ class UserServiceTest {
         assertTrue(this.userService.deactivateSeededDemoAccounts().isEmpty());
     }
 
+    @ParameterizedTest(name = "survivingAdministrator={0}")
+    @ValueSource(booleans = { false, true })
+    @DisplayName("Administrator detection reflects seeded account deactivation")
+    @TestTransaction
+    void hasActiveAdministrator_afterSeededAccountDeactivation(final boolean survivingAdministrator) {
+        final var administrator = this.createSoleAdministrator();
+        final var survivor = this.userRepository.findByPublicId(administrator.publicId).orElseThrow();
+        final var teacher = this.userRepository.findByUsernameOptional("teacher").orElseThrow();
+        teacher.rank = survivor.rank;
+        survivor.activated = survivingAdministrator;
+        assertTrue(this.userService.hasActiveAdministrator());
+
+        assertTrue(this.userService.deactivateSeededDemoAccounts().contains("teacher"));
+
+        assertEquals(survivingAdministrator, this.userService.hasActiveAdministrator());
+    }
+
+    @ParameterizedTest(name = "activated={0}, banned={1}, administratorRank={2}")
+    @CsvSource({ "true, false, true", "false, false, true", "true, true, true", "true, false, false" })
+    @DisplayName("hasActiveAdministrator requires an active unbanned user with every permission")
+    @TestTransaction
+    void hasActiveAdministrator_checksAccountAndRank(final boolean activated, final boolean banned,
+            final boolean administratorRank) {
+        final var administrator = this.createSoleAdministrator();
+        final var user = this.userRepository.findByPublicId(administrator.publicId).orElseThrow();
+        user.activated = activated;
+        user.banned = banned;
+        if (!administratorRank) {
+            user.rank = this.userRankRepository.findByPublicId(TEACHER_RANK_PUBLIC_ID).orElseThrow();
+        }
+
+        assertEquals(activated && !banned && administratorRank, this.userService.hasActiveAdministrator());
+    }
+
     @Test
     @DisplayName("Should reject duplicate username")
     @TestTransaction

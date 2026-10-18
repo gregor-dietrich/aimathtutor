@@ -13,13 +13,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -40,6 +36,7 @@ import de.vptr.aimathtutor.dto.Appearance.ColorMode;
 import de.vptr.aimathtutor.dto.Appearance.Design;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.TestLogCapture;
 
 @DisplayName("ThemeService")
 @SuppressWarnings("NullAway")
@@ -173,30 +170,8 @@ class ThemeServiceTest {
     void renderMissingActiveLink() {
         final var doc = Jsoup.parse("<html><head><link href=\"/lumo/lumo.css\" rel=\"stylesheet\"></head></html>");
 
-        final var records = new ArrayList<LogRecord>();
-        final var handler = new Handler() {
-            @Override
-            public void publish(final LogRecord logRecord) {
-                records.add(logRecord);
-            }
-
-            @Override
-            public void flush() {
-                // nothing buffered
-            }
-
-            @Override
-            public void close() {
-                // nothing to release
-            }
-        };
-        final var logger = LogManager.getLogManager().getLogger(ThemeService.class.getName());
-        logger.addHandler(handler);
-        try {
-            assertDoesNotThrow(() -> ThemeService.render(doc, Appearance.DEFAULT));
-        } finally {
-            logger.removeHandler(handler);
-        }
+        final var records = TestLogCapture.capture(ThemeService.class,
+                () -> assertDoesNotThrow(() -> ThemeService.render(doc, Appearance.DEFAULT)));
 
         assertTrue(hrefs(doc).isEmpty());
         assertEquals("aura", doc.selectFirst("html").attr("data-base"));

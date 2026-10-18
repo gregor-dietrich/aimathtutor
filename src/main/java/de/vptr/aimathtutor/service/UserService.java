@@ -209,6 +209,16 @@ public class UserService {
     }
 
     /**
+     * Tells whether an activated, unbanned user holds every permission.
+     *
+     * @return true if at least one active administrator exists
+     */
+    @Transactional
+    public boolean hasActiveAdministrator() {
+        return this.userRepository.countActiveAdministrators() > 0;
+    }
+
+    /**
      * Creates the initial admin account, but only while no user exists. It needs no permission check because there is
      * nobody yet who could hold one; once any account exists, it does nothing.
      *
