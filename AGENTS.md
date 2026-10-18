@@ -177,13 +177,15 @@ however.
 - **Vaadin UI threading:** Never block the UI thread. Load view data through
   `AsyncDataLoader.load(...)` (`util/`), which runs the call off the UI thread
   with a timeout and applies the result or the error in `ui.access()`. Where it
-  doesn't fit, use `CompletableFuture.supplyAsync()` + `ui.access()` +
-  `.exceptionally()`:
+  doesn't fit, use `CompletableFuture.supplyAsync()` on the view's injected
+  `ManagedExecutor` + `ui.access()` + `.exceptionally()`. Never use the common
+  ForkJoinPool: under `make dev` its threads lack the app's class loader, so a
+  bean first created there cannot read its config.
 
 ```java
 final var ui = getUI().orElse(null);
 if (ui == null) return;
-CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
+CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccept(result -> {
     ui.access(() -> { /* update UI */ });
 }).exceptionally(ex -> {
     ui.access(() -> { /* show error */ });
