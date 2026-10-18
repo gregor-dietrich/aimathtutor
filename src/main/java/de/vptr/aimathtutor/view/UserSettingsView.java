@@ -34,6 +34,7 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.validation.ValidationException;
 
 /**
  * User settings view for choosing the appearance (design and colour mode), changing the password and customizing chat
@@ -45,6 +46,9 @@ import jakarta.inject.Inject;
 @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
         justification = "Vaadin lifecycle: fields are built before these methods run")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
+
+    private record PasswordChangeResult(@Nullable String rejectionMessage) {
+    }
 
     @Inject
     private transient AuthService authService;
@@ -229,8 +233,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         this.newPasswordField = new PasswordField("New Password");
         this.newPasswordField.setRequired(true);
-        this.newPasswordField.setHelperText("Minimum " + AppConstants.PASSWORD_MIN_LENGTH
-                + " characters with uppercase, lowercase, digit and symbol");
+        this.newPasswordField.setHelperText("Between " + AppConstants.PASSWORD_MIN_LENGTH + " and "
+                + AppConstants.PASSWORD_MAX_LENGTH + " characters with uppercase, lowercase, digit and symbol");
+        this.newPasswordField.setMaxLength(AppConstants.PASSWORD_MAX_LENGTH);
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
@@ -241,7 +246,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
 
         final var changePasswordButton = new Button("Change Password");
         changePasswordButton.addThemeVariants(ButtonVariant.PRIMARY);
-        changePasswordButton.addClickListener(ignored -> this.handlePasswordChange());
+        changePasswordButton.addClickListener(ignored -> this.handlePasswordChange(changePasswordButton));
 
         section.add(header, form, changePasswordButton);
         return section;
@@ -328,7 +333,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.updatePreview();
     }
 
-    private void handlePasswordChange() {
+    private void handlePasswordChange(final Button changePasswordButton) {
         final String currentPassword = this.currentPasswordField.getValue();
         final String newPassword = this.newPasswordField.getValue();
         final String confirmPassword = this.confirmPasswordField.getValue();
@@ -347,6 +352,12 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         if (newPassword.length() < AppConstants.PASSWORD_MIN_LENGTH) {
             NotificationUtil.showError(
                     "New password must be at least " + AppConstants.PASSWORD_MIN_LENGTH + " characters long");
+            return;
+        }
+
+        if (newPassword.length() > AppConstants.PASSWORD_MAX_LENGTH) {
+            NotificationUtil
+                    .showError("New password must not exceed " + AppConstants.PASSWORD_MAX_LENGTH + " characters");
             return;
         }
 
@@ -372,30 +383,37 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
             this.getUI().ifPresent(ui -> ui.navigate(LoginView.class));
             return;
         }
-        this.passwordChangeInProgress = true;
-        this.currentPasswordField.setEnabled(false);
-        this.newPasswordField.setEnabled(false);
-        this.confirmPasswordField.setEnabled(false);
+        this.setPasswordControlsEnabled(changePasswordButton, false);
 
         AsyncDataLoader.load(() -> {
-            final String stamp = this.userService.changePassword(credentials, currentPassword, newPassword);
+            final String stamp;
+            try {
+                stamp = this.userService.changePassword(credentials, currentPassword, newPassword);
+            } catch (final ValidationException e) {
+                final var message = e.getMessage();
+                return new PasswordChangeResult(message != null ? message : "Password could not be changed");
+            }
             this.authService.renewCredentialStamp(session, credentials.userPublicId(), stamp);
-            return stamp;
-        }, this, ignored -> {
-            NotificationUtil.showSuccess("Password changed successfully");
+            return new PasswordChangeResult(null);
+        }, this, result -> {
+            this.setPasswordControlsEnabled(changePasswordButton, true);
+            if (result.rejectionMessage() != null) {
+                NotificationUtil.showError(result.rejectionMessage());
+                return;
+            }
             this.currentPasswordField.clear();
             this.newPasswordField.clear();
             this.confirmPasswordField.clear();
-            this.passwordChangeInProgress = false;
-            this.currentPasswordField.setEnabled(true);
-            this.newPasswordField.setEnabled(true);
-            this.confirmPasswordField.setEnabled(true);
-        }, () -> {
-            this.passwordChangeInProgress = false;
-            this.currentPasswordField.setEnabled(true);
-            this.newPasswordField.setEnabled(true);
-            this.confirmPasswordField.setEnabled(true);
-        }, "Failed to change password");
+            NotificationUtil.showSuccess("Password changed successfully");
+        }, () -> this.setPasswordControlsEnabled(changePasswordButton, true), "Failed to change password");
+    }
+
+    private void setPasswordControlsEnabled(final Button changePasswordButton, final boolean enabled) {
+        this.passwordChangeInProgress = !enabled;
+        changePasswordButton.setEnabled(enabled);
+        this.currentPasswordField.setEnabled(enabled);
+        this.newPasswordField.setEnabled(enabled);
+        this.confirmPasswordField.setEnabled(enabled);
     }
 
     private void handleAvatarChange() {
