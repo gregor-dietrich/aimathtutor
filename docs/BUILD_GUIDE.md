@@ -64,8 +64,9 @@ auto-generates a 256-bit key at `~/.local/share/aimathtutor/encryption.key` (or
 `$XDG_DATA_HOME/aimathtutor/encryption.key` if set). Permissions are set to 600
 (owner read/write only).
 
-**Production (Docker Compose):** The compose file in the
-[Quickstart](QUICKSTART.md#using-docker-compose) already configures the
+**Production (Docker Compose):** [deploy/compose.yml](../deploy/compose.yml),
+downloaded as described in [Quickstart](QUICKSTART.md#using-docker-compose),
+already configures the
 `aimathtutor_keys` named volume and the `app.security.encryption-key-file`
 property. No extra steps needed.
 
@@ -89,76 +90,23 @@ inference, you have two options:
 
 #### Option 1: Docker Compose (Recommended)
 
-The project includes an Ollama service in `docker-compose.yml` that you can
-enable:
+Use the production [deploy/compose.yml](../deploy/compose.yml), downloaded as
+`docker-compose.yml` beside `.env` following the
+[Quickstart](QUICKSTART.md#using-docker-compose). Uncomment its entire `ollama:`
+service block under `services:` and `ollama_data:` under the top-level
+`volumes:`. Keep the existing encryption key, log and database volumes.
+The [Ollama setup](QUICKSTART.md#setup-with-docker-compose-recommended) covers
+CPU, NVIDIA and AMD configuration. Run these commands from that download
+directory:
 
-1. **Uncomment the Ollama service** in `docker-compose.yml`:
+```sh
+docker compose up -d
+docker compose exec ollama ollama pull qwen3:8b
+```
 
-   ```yml
-   ollama:
-     # Choose image based on your GPU:
-     image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
-     # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
-     restart: unless-stopped
-     volumes:
-       - ollama_data:/root/.ollama
-     # For NVIDIA GPU support, uncomment below:
-     # deploy:
-     #   resources:
-     #     reservations:
-     #       devices:
-     #         - driver: nvidia
-     #           count: all
-     #           capabilities: [gpu]
-     # For AMD GPU support:
-     # 1. Use image: ollama/ollama:0.15.2-rocm above
-     # 2. Uncomment below:
-     # devices:
-     #   - /dev/kfd
-     #   - /dev/dri
-     # group_add:
-     #   - video
-     healthcheck:
-       test: ["CMD", "ollama", "ls"]
-       interval: 10s
-       timeout: 3s
-       retries: 3
-       start_period: 10s
-   ```
-
-2. **Uncomment the volume** in the `volumes:` section:
-
-   ```yml
-   volumes:
-     aimathtutor_logs:
-     ollama_data: # Uncomment this line
-     pgadmin_data:
-     postgres_data:
-   ```
-
-3. **Start the stack:**
-
-   ```sh
-   docker compose up -d
-   ```
-
-4. **Pull a model** into the Ollama container:
-
-   ```sh
-   docker compose exec ollama ollama pull qwen3:8b
-   # Or: docker compose exec ollama ollama pull qwen3:4b
-   ```
-
-5. **Configure AIMathTutor** to use `http://ollama:11434` as the Ollama API URL
-   in Admin Settings.
-
-> **GPU Support:** By default, Ollama runs on CPU. For GPU acceleration:
->
-> - **NVIDIA:** Uncomment the `deploy` section. Requires NVIDIA GPU, drivers,
->   and [NVIDIA Container
->   Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-> - **AMD:** Use `ollama/ollama:0.15.2-rocm` image and uncomment AMD device
->   mappings. Requires AMD GPU with ROCm support (RX 6000/7000 series or newer)
+Configure `http://ollama:11434` as the Ollama API URL in Admin Settings.
+For development from a checkout, the root `docker-compose.yml` also includes
+an optional `ollama` service and `ollama_data` volume.
 
 #### Option 2: Host Installation (Development)
 
@@ -289,8 +237,8 @@ make dev
 
 This runs the production build locally with the repository's development
 compose file, which builds the app from the checkout. For a real deployment, use
-the compose file in the [Quickstart](QUICKSTART.md#using-docker-compose), which
-runs the published image.
+[deploy/compose.yml](../deploy/compose.yml), which runs the published image;
+follow the [Quickstart](QUICKSTART.md#using-docker-compose) to download it.
 
 First, package the application for production:
 

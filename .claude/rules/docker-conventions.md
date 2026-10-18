@@ -1,8 +1,9 @@
 ---
-description: "Use when modifying the Dockerfiles or docker-compose.yml. Covers keeping the two images in step and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
+description: "Use when modifying the Dockerfiles or Compose files. Covers keeping the two images in step and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
 paths:
   - "src/main/docker/**"
   - "docker-compose.yml"
+  - "deploy/compose.yml"
   - "docs/QUICKSTART.md"
 ---
 

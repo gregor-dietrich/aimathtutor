@@ -136,86 +136,18 @@ PGADMIN_PASSWORD=<a strong password>
 > **_NOTE:_** The encryption key file path is configured in `docker-compose.yml`
 > and does not need to be set in `.env`.
 
-#### 2. Create a `docker-compose.yml` file in the same directory
+#### 2. Download the production Compose file
 
-```yml
-services:
-  app:
-    image: gregordietrich/aimathtutor:latest
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      quarkus.datasource.jdbc.url: jdbc:postgresql://db:5432/${SQL_DATABASE:-aimathtutor}
-      quarkus.datasource.username: ${SQL_USERNAME:-aimathtutor}
-      quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
+Download the tracked [production configuration](../deploy/compose.yml) into the
+same directory as `.env`, using the local filename `docker-compose.yml`:
 
-      # AI API Keys (sourced from .env file above)
-      app.google.api.key: ${app.google.api.key}
-      # app.openai.api.key: ${app.openai.api.key}
-      # app.openai.organization-id: ${app.openai.organization-id}
-
-      # Encryption key file — auto-generated on first start if absent
-      app.security.encryption-key-file: /etc/aimathtutor/keys/encryption.key
-    ports:
-      - "80:9001/tcp"
-    volumes:
-      - aimathtutor_logs:/deployments/logs
-      - aimathtutor_keys:/etc/aimathtutor/keys
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:18.6-alpine3.24
-    restart: unless-stopped
-    command: ["postgres", "-c", "max_connections=200"]
-    environment:
-      POSTGRES_USER: ${SQL_USERNAME:-aimathtutor}
-      POSTGRES_PASSWORD: ${SQL_PASSWORD:-changeit}
-      POSTGRES_DB: ${SQL_DATABASE:-aimathtutor}
-      POSTGRES_PORT: 5432
-    volumes:
-      - postgres_data:/var/lib/postgresql/18/docker
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${SQL_USERNAME:-aimathtutor} -d ${SQL_DATABASE:-aimathtutor}",
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-
-  # Uncomment if you want to use pgAdmin. It listens on localhost only; set
-  # PGADMIN_EMAIL and PGADMIN_PASSWORD in .env first.
-  # pgadmin:
-  #   image: dpage/pgadmin4:9.12.0
-  #   restart: unless-stopped
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:?set PGADMIN_EMAIL in .env}
-  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?set PGADMIN_PASSWORD in .env}
-  #   ports:
-  #     - "127.0.0.1:9001:80/tcp"
-  #   volumes:
-  #     - pgadmin_data:/var/lib/pgadmin
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "wget --spider -q http://pgadmin/ || exit 1"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 10s
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-
-volumes:
-  aimathtutor_keys: # AES-256 master key — back this up; losing it = data unrecoverable
-  aimathtutor_logs:
-  # pgadmin_data: # Uncomment if you want to use pgAdmin
-  postgres_data:
+```sh
+curl -fL https://raw.githubusercontent.com/gregor-dietrich/aimathtutor/main/deploy/compose.yml -o docker-compose.yml
 ```
+
+All Compose commands below run in that directory and use this downloaded
+`docker-compose.yml`. The repository-root file with the same name builds the
+application from a checkout for development.
 
 #### 3. Start the compose stack
 
@@ -243,56 +175,24 @@ without restarting the application.
 ### 🏠 Using Ollama (Local LLM)
 
 For privacy-focused, offline AI tutoring without cloud dependencies, enable the
-Ollama service included in `docker-compose.yml`.
+`ollama` service included in [deploy/compose.yml](../deploy/compose.yml),
+downloaded above as `docker-compose.yml`.
 
 #### Setup with Docker Compose (Recommended)
 
 #### Step 1: Enable Ollama Service
 
-In your `docker-compose.yml`, uncomment the Ollama service and volume:
+In the downloaded `docker-compose.yml`, uncomment the entire `ollama:` service
+block under `services:` and `ollama_data:` under the top-level `volumes:`.
+Keep the GPU-specific settings commented for CPU mode. Keep the complete volume
+block, including the encryption key and database volumes:
 
 ```yml
-services:
-  # ... existing services ...
-
-  ollama:
-    # Choose image based on your hardware:
-    image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
-    # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
-
-    # Optional: Enable NVIDIA GPU support
-    # Requires: NVIDIA GPU, drivers, and NVIDIA Container Toolkit
-    # See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-
-    # Optional: Enable AMD GPU support (use with 0.15.2-rocm image)
-    # Requires: AMD GPU (RX 6000/7000 series or newer) with ROCm drivers
-    # devices:
-    #   - /dev/kfd
-    #   - /dev/dri
-    # group_add:
-    #   - video
-
-    healthcheck:
-      test: ["CMD", "ollama", "ls"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-
 volumes:
+  aimathtutor_keys:
   aimathtutor_logs:
-  ollama_data: # Uncomment this line
   # pgadmin_data: # Uncomment if you want to use pgAdmin
+  ollama_data:
   postgres_data:
 ```
 
@@ -377,7 +277,7 @@ If you prefer running Ollama directly on your host machine:
 
    ```yml
    services:
-     aimathtutor:
+     app:
        # ... existing config ...
        extra_hosts:
          - "host.docker.internal:host-gateway"

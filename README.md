@@ -24,9 +24,10 @@ See [Quickstart](docs/QUICKSTART.md) for setup and usage.
 
 ### Deployment
 
-Deploy with the compose file in the
-[Quickstart](docs/QUICKSTART.md#using-docker-compose), which runs the published
-image. The repository's own `docker-compose.yml` builds the app from the
+Deploy with [deploy/compose.yml](deploy/compose.yml), which runs the published
+image; follow the [Quickstart](docs/QUICKSTART.md#using-docker-compose) to
+download it as `docker-compose.yml` beside your `.env`. The repository's own
+`docker-compose.yml` builds the app from the
 checkout and is for development only.
 
 When deploying to production, it is **critical** to override the default

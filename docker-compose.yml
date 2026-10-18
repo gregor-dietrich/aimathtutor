@@ -1,5 +1,5 @@
 # Development stack: builds the app image from this checkout (pull_policy: build).
-# Not for production: deploy with the compose file in docs/QUICKSTART.md, which
+# Not for production: deploy with deploy/compose.yml (see docs/QUICKSTART.md), which
 # runs the published image.
 services:
   app:
