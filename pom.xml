@@ -199,13 +199,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Add Panache Mock for entity mocking -->
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-panache-mock</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <!-- Add JaCoCo coverage for Quarkus. Required, not optional: it offline-instruments the
     application classes, which is the only way @QuarkusTest coverage reaches jacoco.exec.
     Removing it drops every service/repository/entity class to 0% (measured: 89.8% -> 28.1%),
