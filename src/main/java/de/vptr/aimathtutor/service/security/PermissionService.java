@@ -22,8 +22,8 @@ public class PermissionService {
     @Inject
     UserRepository userRepository;
 
-    private void require(@Nullable final Boolean permission, final String action) {
-        if (!Boolean.TRUE.equals(permission)) {
+    private void require(final boolean permission, final String action) {
+        if (!permission) {
             throw new PermissionDeniedException("You do not have permission to " + action);
         }
     }
@@ -136,7 +136,7 @@ public class PermissionService {
      */
     public UserEntity requireAiConfigEdit(final Long userId) {
         final UserEntity user = this.userRepository.findById(userId);
-        // Read the flag without traversing rank membership: the pre-DNS authorization check in
+        // Read only the flag; the view DTO this replaced counted the rank's members. The pre-DNS authorization check in
         // AiConfigService is non-transactional and may run on a background thread.
         if (user == null || !user.activated || user.banned || user.rank == null || !user.rank.aiConfigEdit) {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");

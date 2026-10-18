@@ -32,7 +32,9 @@ public final class TestLogCapture {
                 // nothing to release
             }
         };
-        final var logger = Objects.requireNonNull(LogManager.getLogManager().getLogger(source.getName()));
+        final var logger = Objects.requireNonNull(LogManager.getLogManager().getLogger(source.getName()),
+                () -> "No logger " + source.getName()
+                        + "; tests need the JBoss log manager, which creates loggers on demand (set by surefire)");
         logger.addHandler(handler);
         try {
             action.run();
