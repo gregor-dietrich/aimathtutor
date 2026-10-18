@@ -424,8 +424,12 @@ new license (as UPL-1.0 was) needs the maintainer's approval.
 
 ## Database
 
-- **PostgreSQL.** Dev/test uses Quarkus devservices (`postgres:18.6-alpine3.24`,
-  dev on port `55432`, test on a random port).
+- **PostgreSQL.** Dev/test uses Quarkus Dev Services (dev on port `55432`,
+  test on a random port). Root and production Compose pin the same exact
+  PostgreSQL tag and digest; Dev Services uses `postgres@sha256:<digest>`
+  with the matching tag in the immediately preceding comment. Keep all
+  three in step; plain JUnit `PostgresImagePinTest` checks parity. Dependabot
+  covers both Compose directories and keeps PostgreSQL on 18.x.
 - **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is
   `validate`-only. Migrations live in `src/main/resources/db/migration`, and
   dev/test demo data lives in `db/demo/R__demo_data.sql`. Profiles are picked at
