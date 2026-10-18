@@ -79,6 +79,7 @@ public class AppLifecycleBean {
         if (launchMode == LaunchMode.NORMAL) {
             bootstrapAdmin();
             deactivateSeededDemoAccounts();
+            reportMissingAdministrator();
         }
     }
 
@@ -110,10 +111,17 @@ public class AppLifecycleBean {
         if (!usernames.isEmpty()) {
             LOG.warnf("Deactivated the seeded accounts %s because they still accept their published passwords. "
                     + "Set new passwords before reactivating them.", usernames);
-            if (!this.userService.hasActiveAdministrator()) {
-                LOG.error("No active administrator remains after deactivating the seeded accounts. "
-                        + "Follow the README's 'Recovering administrator access' procedure.");
-            }
+        }
+    }
+
+    /**
+     * Logs recovery guidance on every production start while no active administrator exists, not only on the start
+     * whose demo-account deactivation removed the last one.
+     */
+    private void reportMissingAdministrator() {
+        if (!this.userService.hasActiveAdministrator()) {
+            LOG.error(
+                    "No active administrator exists. Follow the README's 'Recovering administrator access' procedure.");
         }
     }
 

@@ -105,8 +105,8 @@ class AppLifecycleBeanTest {
     }
 
     @ParameterizedTest(name = "deactivated={0}, survivingAdministrator={1}, errors={2}")
-    @CsvSource({ "true, false, 1", "true, true, 0", "false, false, 0" })
-    @DisplayName("Production logs recovery guidance only when deactivation leaves no active administrator")
+    @CsvSource({ "true, false, 1", "true, true, 0", "false, false, 1", "false, true, 0" })
+    @DisplayName("Production logs recovery guidance on every start without an active administrator")
     void onStart_normalMode_reportsLostAdministrator(final boolean deactivated, final boolean survivingAdministrator,
             final long errors) {
         when(this.userService.hasUsers()).thenReturn(true);
@@ -118,19 +118,13 @@ class AppLifecycleBeanTest {
                 () -> assertDoesNotThrow(() -> appLifecycleBean.onStart(new StartupEvent())));
 
         verify(this.userService).deactivateSeededDemoAccounts();
-        if (deactivated) {
-            verify(this.userService).hasActiveAdministrator();
-        } else {
-            verify(this.userService, never()).hasActiveAdministrator();
-        }
+        verify(this.userService).hasActiveAdministrator();
         final var errorRecords =
                 records.stream().filter(r -> r.getLevel().intValue() >= Level.SEVERE.intValue()).toList();
         assertEquals(errors, errorRecords.size());
         if (errors > 0) {
-            assertEquals(
-                    "No active administrator remains after deactivating the seeded accounts. "
-                            + "Follow the README's 'Recovering administrator access' procedure.",
-                    errorRecords.getFirst().getMessage());
+            assertEquals("No active administrator exists. Follow the README's 'Recovering administrator access' "
+                    + "procedure.", errorRecords.getFirst().getMessage());
         }
     }
 
