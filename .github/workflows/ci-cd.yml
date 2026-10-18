@@ -27,10 +27,10 @@ jobs:
           fetch-depth: 0 # lint-secrets scans the full history; a shallow clone fails it
       - name: Validate development and production Compose configurations
         run: |
-          cp .env.example .env
-          cp .env.example deploy/.env
-          docker compose -f docker-compose.yml config --quiet
-          docker compose -f deploy/compose.yml config --quiet
+          compose_qa_dir=$(mktemp -d)
+          cp .env.example "$compose_qa_dir/.env"
+          docker compose --project-directory "$compose_qa_dir" -f docker-compose.yml config --quiet
+          docker compose --project-directory "$compose_qa_dir" -f deploy/compose.yml config --quiet
       # devkit's Markdown gate needs node on PATH; Vaadin's own Node.js under ~/.vaadin is not on it.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
