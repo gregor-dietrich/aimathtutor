@@ -127,6 +127,7 @@ public class LoginView extends VerticalLayout {
         loginButton.addThemeVariants(ButtonVariant.PRIMARY);
         loginButton.addClickShortcut(Key.ENTER);
         loginButton.setWidthFull();
+        loginButton.getStyle().set("margin-top", "var(--vaadin-gap-m)");
 
         card.add(accentBar, title, usernameField, passwordField, loginButton);
         this.add(card);
