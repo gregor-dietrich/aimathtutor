@@ -133,16 +133,16 @@ public class CommentsPanel extends VerticalLayout {
             justification = "Vaadin lifecycle: UI fields are assigned in buildUi() from the constructor before use")
     private Div createCommentForm() {
         final Div formContainer = new Div();
-        formContainer.addClassName("comment-form");
-        formContainer.getStyle().set("width", "100%").set("border-left", "1px solid " + AppStyles.ACCENT_MUTED)
-                .set("border-radius", "var(--vaadin-radius-m)").set("padding", "0 1rem 0 1rem");
+        formContainer.addClassNames("comment-form", AppStyles.INSET_PANEL);
+        formContainer.getStyle().set("box-sizing", "border-box").set("width", "100%").set("display", "flex")
+                .set("flex-direction", "column").set("align-items", "flex-start").set("gap", "var(--vaadin-gap-m)");
 
         // Textarea
         this.commentTextArea = new TextArea();
         this.commentTextArea.setLabel("Your comment");
         this.commentTextArea.setPlaceholder("Write a comment...");
         this.commentTextArea.setMaxLength(1000);
-        this.commentTextArea.getStyle().set("width", "95%").set("background-color", "var(--vaadin-background-color)");
+        this.commentTextArea.setWidthFull();
 
         // Submit button
         this.submitButton = new Button("Post Comment");

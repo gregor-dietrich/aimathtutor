@@ -34,13 +34,13 @@ SELECT setval('lessons_id_seq', (SELECT max(id) FROM lessons));
 
 INSERT INTO exercises (id, public_id, title, content, user_id, lesson_id, published, commentable, graspable_enabled, graspable_initial_expression, graspable_target_expression, graspable_difficulty, graspable_hints)
 VALUES
-  (1, '01ARZ3NDEKTSV4RRFFQ69G5FD0', 'Solve for x: simple linear', 'Solve the equation for x: 2x + 3 = 11', 2, 2, TRUE, TRUE, TRUE, '2*x + 3 = 11', 'x = 4', 'BEGINNER', '["Isolate the term with x","Subtract 3 from both sides","Divide both sides by 2"]'),
-  (2, '01ARZ3NDEKTSV4RRFFQ69G5FD1', 'Two-step linear equation', 'Solve: 3(x - 2) = 9', 2, 2, TRUE, TRUE, TRUE, '3*(x - 2) = 9', 'x = 5', 'BEGINNER', '["Divide both sides by 3","Then add 2 to both sides"]'),
-  (3, '01ARZ3NDEKTSV4RRFFQ69G5FD2', 'Linear equation with fractions', 'Solve: (1/2)x + 1 = 4', 2, 2, TRUE, TRUE, TRUE, '(1/2)*x + 1 = 4', 'x = 6', 'INTERMEDIATE', '["Eliminate fractions by multiplying both sides","Isolate x"]'),
-  (4, '01ARZ3NDEKTSV4RRFFQ69G5FD3', 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'INTERMEDIATE', '["Use distributive property","Combine like terms"]'),
-  (5, '01ARZ3NDEKTSV4RRFFQ69G5FD4', 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'INTERMEDIATE', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]'),
-  (6, '01ARZ3NDEKTSV4RRFFQ69G5FD5', 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'ADVANCED', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]'),
-  (7, '01ARZ3NDEKTSV4RRFFQ69G5FD6', 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'ADVANCED', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]')
+  (1, '01ARZ3NDEKTSV4RRFFQ69G5FD0', 'Solve for x: simple linear', 'Solve the equation for x: 2x + 3 = 11', 2, 2, TRUE, TRUE, TRUE, '2*x + 3 = 11', 'x = 4', 'BEGINNER', E'Isolate the term with x\nSubtract 3 from both sides\nDivide both sides by 2'),
+  (2, '01ARZ3NDEKTSV4RRFFQ69G5FD1', 'Two-step linear equation', 'Solve: 3(x - 2) = 9', 2, 2, TRUE, TRUE, TRUE, '3*(x - 2) = 9', 'x = 5', 'BEGINNER', E'Divide both sides by 3\nThen add 2 to both sides'),
+  (3, '01ARZ3NDEKTSV4RRFFQ69G5FD2', 'Linear equation with fractions', 'Solve: (1/2)x + 1 = 4', 2, 2, TRUE, TRUE, TRUE, '(1/2)*x + 1 = 4', 'x = 6', 'INTERMEDIATE', E'Eliminate fractions by multiplying both sides\nIsolate x'),
+  (4, '01ARZ3NDEKTSV4RRFFQ69G5FD3', 'Expand and simplify', 'Expand and simplify the expression (x + 2)(x - 3).', 2, 4, TRUE, TRUE, TRUE, '(x + 2)*(x - 3)', 'x^2 - x - 6', 'INTERMEDIATE', E'Use distributive property\nCombine like terms'),
+  (5, '01ARZ3NDEKTSV4RRFFQ69G5FD4', 'Solve quadratic by factoring', 'Solve for x by factoring: x^2 - 5x + 6 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 - 5*x + 6 = 0', 'x = 2 or x = 3', 'INTERMEDIATE', E'Find two numbers that multiply to 6 and add to -5\nSet each factor to zero'),
+  (6, '01ARZ3NDEKTSV4RRFFQ69G5FD5', 'Complete the square', 'Solve by completing the square: x^2 + 6x + 5 = 0', 2, 3, TRUE, TRUE, TRUE, 'x^2 + 6*x + 5 = 0', 'x = -1 or x = -5', 'ADVANCED', E'Move constant to the right\nAdd (b/2)^2 to both sides\nTake square root of both sides'),
+  (7, '01ARZ3NDEKTSV4RRFFQ69G5FD6', 'Quadratic formula', 'Use the quadratic formula to solve: 2x^2 - 4x - 6 = 0', 2, 3, TRUE, TRUE, TRUE, '2*x^2 - 4*x - 6 = 0', 'x = 2 or x = -1.5', 'ADVANCED', E'Identify a, b, c\nApply the quadratic formula\nSimplify the results')
 ON CONFLICT (public_id) DO NOTHING;
 
 INSERT INTO exercises (id, public_id, title, content, user_id, lesson_id, published, commentable, graspable_enabled)

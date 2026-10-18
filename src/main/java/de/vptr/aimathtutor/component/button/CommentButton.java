@@ -10,11 +10,11 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import jakarta.annotation.Nullable;
 
 /**
- * Button that opens the comment editor for a given entity. Displays a comment icon and forwards clicks to the provided
+ * Button that shows the comments of a given entity. Displays a comment icon and forwards clicks to the provided
  * listener.
  */
 public class CommentButton extends Button {
-    private static final String DEFAULT_TOOLTIP = "Add Comment";
+    private static final String DEFAULT_TOOLTIP = "Show Comments";
 
     /**
      * Constructs a CommentButton with the specified action and tooltip.

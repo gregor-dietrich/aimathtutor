@@ -401,7 +401,9 @@ SpotBugs, Checkstyle, PMD, CPD). A push-only
   @Initialized(ApplicationScoped.class) ... We strongly recommend to observe
   StartupEvent instead`. The same warning is logged for
   `SchemaManagementGuard#checkStrategy`. See the `ProductionProfileGuard`
-  anti-pattern above.
+  anti-pattern above. `application.properties` raises that processor's log
+  category to `ERROR`, which silences it in dev mode; the Maven build logs
+  through Maven, which ignores the category, so it still prints it.
 
 ### ⚠️ Never Change Quality Gate Thresholds
 

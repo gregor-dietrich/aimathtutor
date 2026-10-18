@@ -335,7 +335,9 @@ de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for
 StartupEvent instead`. The same warning is logged for
 `SchemaManagementGuard#checkStrategy`. This is deliberate: both guards have to
 run before Hibernate's schema management, which `StartupEvent` does not. Do not
-"fix" it.
+"fix" it. Dev mode does not show it: `application.properties` raises that
+processor's log category to `ERROR`. The Maven build logs through Maven, which
+ignores that setting.
 
 ### Frontend build: expected non-fatal warnings
 

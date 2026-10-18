@@ -9,8 +9,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.MatchResult;
-import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
 
@@ -576,10 +574,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
-        // Split hints by newline, semicolon, or pipe character
-        // Supports formats like: "hint1\nhint2" or "hint1;hint2" or "hint1|hint2"
-        final String[] hints = Pattern.compile("[^\\r\\n;|]+").matcher(this.exercise.graspableHints).results()
-                .map(MatchResult::group).toArray(String[]::new);
+        // One hint per line; blank lines are skipped
+        final String[] hints = this.exercise.graspableHints.lines().map(String::strip).filter(line -> !line.isEmpty())
+                .toArray(String[]::new);
 
         if (this.hintCount >= hints.length) {
             NotificationUtil.showInfo("No more hints available");

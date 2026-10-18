@@ -20,9 +20,10 @@ import jakarta.inject.Inject;
  * Hibernate maps. Hibernate runs that DDL before {@code StartupEvent}, so this observes the container's initialization
  * instead, which Quarkus fires during static init, before Hibernate starts.
  * <p>
- * Every build logs a Quarkus warning that recommends {@code StartupEvent} for this observer. Do not follow it: a
- * {@code StartupEvent} observer runs after the tables are gone. In a native image, static init runs at image build
- * time, so this guard would not run at startup; the application ships as a JVM image only.
+ * Every Maven build logs a Quarkus warning that recommends {@code StartupEvent} for this observer (dev mode silences it
+ * through its log category). Do not follow it: a {@code StartupEvent} observer runs after the tables are gone. In a
+ * native image, static init runs at image build time, so this guard would not run at startup; the application ships as
+ * a JVM image only.
  */
 @ApplicationScoped
 public class ProductionProfileGuard {
