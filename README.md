@@ -40,6 +40,10 @@ On the first start, also set `APP_BOOTSTRAP_ADMIN_PASSWORD` to create the
 initial admin account (see
 [Quickstart](docs/QUICKSTART.md#initial-admin-account)).
 
+Add operator JVM options through `JDK_JAVA_OPTIONS`, for example
+`JDK_JAVA_OPTIONS=-Xmx512m` in the deployment `.env`. Both images run Java
+as PID 1 with required runtime arguments in their entrypoints.
+
 Never set a `dev` or `test` profile (`QUARKUS_PROFILE`,
 `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop
 and recreate the database tables, so the app refuses to start with one.

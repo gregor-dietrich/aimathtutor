@@ -106,6 +106,11 @@ docker run -d --name aimathtutor \
 > via the **Admin Settings UI** at `/admin/config` after logging in with admin
 > credentials.
 
+To add JVM options to either published image, set `JDK_JAVA_OPTIONS` (for
+example, `-e JDK_JAVA_OPTIONS="-Xmx512m"` with `docker run`). With Compose,
+put `JDK_JAVA_OPTIONS=-Xmx512m` in `.env`. Java runs directly as PID 1, with
+required runtime options in the image's entrypoint.
+
 ### Using Docker Compose
 
 #### 1. Create a `.env` file in a new directory

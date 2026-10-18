@@ -93,8 +93,12 @@ however.
   `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`,
   `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`,
   and `-XX:+EnableDynamicAgentLoading`. Set consistently in `pom.xml`
-  (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and Docker
-  `JAVA_OPTS_APPEND`.
+  (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and both Docker
+  exec-form entrypoints. Operators add JVM options with `JDK_JAVA_OPTIONS`;
+  do not bake a value for that variable into the images. The dev JVM also
+  needs the `jdk.compiler/com.sun.tools.javac.*` exports and opens from
+  `.mvn/jvm.config` for Error Prone during live reload; those compile-time
+  arguments do not belong in the runtime images.
 - **Node.js is pinned:** `vaadin.node.version` in `pom.xml` (Vaadin's default
   for the current release) is used by every frontend build path (production and
   regen builds, the Quarkus build step, dev mode). Vaadin downloads it to
@@ -545,12 +549,19 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 
 ## Docker
 
-- **Production:** the compose file in `docs/QUICKSTART.md`, which runs the
-  published image. The root `docker-compose.yml` (app + PostgreSQL; optional
+- **Production:** `deploy/compose.yml` runs the published image;
+  `docs/QUICKSTART.md` downloads it as `docker-compose.yml` beside `.env`.
+  The root `docker-compose.yml` (app + PostgreSQL; optional
   pgadmin/Ollama) builds the app from the checkout (`pull_policy: build`) and is
   for development only.
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu`
-  (port 9001, healthcheck `/q/health/ready`).
+  (port 9001, healthcheck `/q/health/ready`). Java runs directly as PID 1;
+  required runtime arguments are explicit before `-jar` in both entrypoints.
+  Add operator options with `JDK_JAVA_OPTIONS` (for example `-Xmx512m`);
+  Compose passes it through from `.env`.
+- **Compose validation:** CI runs `docker compose -f <file> config --quiet`
+  for root and production files with placeholder `.env` inputs. Also validate
+  the optional `ollama` service/volume when changing their commented blocks.
 - **Build:** `scripts/build.sh` via `make build` — host-platform images into the
   local image store (`docker buildx build --load`, or plain `docker build`
   without buildx).
