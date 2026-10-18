@@ -31,7 +31,7 @@ jobs:
           node-version: "22" # the newest 22.x, at or above devkit's 22.22.2 floor
           check-latest: true # not an older 22.x the runner has cached
       - name: Set up JDK 25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: "temurin"
           java-version: "25"
@@ -99,7 +99,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up JDK 25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: "temurin"
           java-version: "25"
@@ -118,13 +118,13 @@ jobs:
           path: ~/.vaadin/node-${{ steps.node.outputs.version }}
           key: ${{ runner.os }}-vaadin-node-${{ steps.node.outputs.version }}
       - name: SAST (CodeQL)
-        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: java, javascript
       - name: Compile project
         run: make install
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
       - name: Run OWASP Dependency-Check
         if: env.HAS_NVD_KEY == 'true'
         run: make audit
@@ -145,7 +145,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up JDK 25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: "temurin"
           java-version: "25"
@@ -184,7 +184,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up JDK 25
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: "temurin"
           java-version: "25"
