@@ -19,7 +19,6 @@ import de.vptr.aimathtutor.service.ai.provider.MockProvider;
 import de.vptr.aimathtutor.service.ai.provider.OllamaProvider;
 import de.vptr.aimathtutor.service.ai.provider.OpenAiProvider;
 import de.vptr.aimathtutor.service.ai.provider.ProviderInterface;
-import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.RateLimitService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -68,9 +67,6 @@ public class AiTutorService {
 
     @Inject
     RateLimitService rateLimitService;
-
-    @Inject
-    AuthService authService;
 
     /**
      * Analyzes a student's math action and provides AI feedback. Only provides feedback for significant actions to
