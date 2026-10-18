@@ -42,7 +42,8 @@ initial admin account (see
 
 Add operator JVM options through `JDK_JAVA_OPTIONS`, for example
 `JDK_JAVA_OPTIONS=-Xmx512m` in the deployment `.env`. Both images run Java
-as PID 1 with required runtime arguments in their entrypoints.
+as PID 1 with required runtime arguments in their entrypoints. Java prints the
+value to the container log, so keep secrets out of it.
 
 Never set a `dev` or `test` profile (`QUARKUS_PROFILE`,
 `QUARKUS_CONFIG_PROFILE_PARENT`) on a production deployment: those profiles drop

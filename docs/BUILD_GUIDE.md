@@ -309,7 +309,8 @@ published, and the git tag stays in place (`make untag` removes it).
 Both Dockerfiles run Java directly as PID 1, with required runtime arguments
 in their exec-form entrypoints. Add operator options with `JDK_JAVA_OPTIONS`,
 for example `docker run -e JDK_JAVA_OPTIONS="-Xmx512m" ...`, or set
-`JDK_JAVA_OPTIONS=-Xmx512m` in the deployment `.env` used by Compose.
+`JDK_JAVA_OPTIONS=-Xmx512m` in the deployment `.env` used by Compose. Java
+prints the value to the container log, so keep secrets out of it.
 
 If you want to learn more about building Docker images, please consult
 <https://quarkus.io/guides/container-image>.

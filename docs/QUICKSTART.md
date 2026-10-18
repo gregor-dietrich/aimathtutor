@@ -109,7 +109,9 @@ docker run -d --name aimathtutor \
 To add JVM options to either published image, set `JDK_JAVA_OPTIONS` (for
 example, `-e JDK_JAVA_OPTIONS="-Xmx512m"` with `docker run`). With Compose,
 put `JDK_JAVA_OPTIONS=-Xmx512m` in `.env`. Java runs directly as PID 1, with
-required runtime options in the image's entrypoint.
+required runtime options in the image's entrypoint. Java prints the value of
+`JDK_JAVA_OPTIONS` to the container log, so use it for JVM tuning only and keep
+secrets in `.env` properties.
 
 ### Using Docker Compose
 
@@ -161,6 +163,14 @@ application from a checkout for development.
 ```sh
 docker compose up -d
 ```
+
+To upgrade later, download the Compose file again (step 2), then run
+`docker compose pull` and `docker compose up -d --remove-orphans`.
+
+> **_NOTE:_** The stack serves plain HTTP on port 80. Beyond a trusted local
+> network, put a TLS-terminating reverse proxy in front of it, and set
+> `app.security.trusted-proxy-ips` in `.env` to the proxy's address so that the
+> client addresses it forwards are used.
 
 #### 4. Configure AI Provider Settings
 
