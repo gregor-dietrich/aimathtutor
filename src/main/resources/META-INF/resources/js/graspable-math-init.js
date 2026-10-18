@@ -337,13 +337,25 @@ window.graspableMathUtils = {
 (function () {
     var htmlEl = document.documentElement;
     var lastTheme = null;
+    var warned = false;
 
     function applyTheme() {
         if (!window.gmath || !window.gmath.setDarkTheme) return;
         var isDark = htmlEl.dataset.colorScheme === "dark";
         if (isDark === lastTheme) return;
+        try {
+            window.gmath.setDarkTheme(isDark);
+        } catch (error) {
+            // gmath 3.5.16 cannot switch from dark back to light and keeps its dark theme.
+            // Not recorded as applied, so a later change is still tried; warn only once.
+            if (!warned) {
+                warned = true;
+                console.warn("[GM] Could not switch the theme (" + error.message
+                    + "); the math workspace stays dark until the next page load");
+            }
+            return;
+        }
         lastTheme = isDark;
-        window.gmath.setDarkTheme(isDark);
         console.log("[GM] Theme changed, setDarkTheme(" + isDark + ")");
     }
 

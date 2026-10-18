@@ -80,8 +80,8 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
     }
 
     /**
-     * Called before navigation occurs. Initializes layout on first entry, applies theme, checks authentication, and
-     * shows/hides navigation tabs based on target view.
+     * Called before navigation occurs. Initializes layout on first entry, checks authentication, and shows/hides
+     * navigation tabs based on target view.
      *
      * @param event
      *            the before enter navigation event

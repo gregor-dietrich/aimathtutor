@@ -70,6 +70,9 @@ public final class AppStyles {
     /** Title inside a glass card. */
     public static final String CARD_TITLE = "card-title";
 
+    /** Frame of the top bar. */
+    public static final String TOP_BAR = "app-top-bar";
+
     /** Page heading of an admin view. */
     public static final String PAGE_TITLE = "page-title";
 

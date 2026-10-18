@@ -222,7 +222,8 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
     on `<html>`. Read a `--vaadin-*` colour where it is used.
   - `AppStylesTest` pins every `AppStyles` name against the stylesheet.
 - **Designs** are one stylesheet each under `META-INF/resources/designs/`,
-  keyed on `html[data-design]`; the Lumo designs feed private `--design-*`
+  keyed on `html[data-design]` (Vellum's contrast badge keys on
+  `html[data-base="aura"]`); the Lumo designs feed private `--design-*`
   inks to `lumo-inks.css`, and an Aura design never sets `--lumo-*`.
   - Their fonts are self-hosted under `designs/fonts/<family>/` with that
     family's `OFL.txt`; `designs/fonts.css` records each file's source and
@@ -300,6 +301,11 @@ CompletableFuture.supplyAsync(blockingCall::get).thenAccept(result -> {
   on `<html>` or the UI's `<body>`, and never call `Page.setColorScheme`: it
   overwrites `<html theme>` and enables Lumo's legacy `[theme~=dark]` block,
   which overrides the designs.
+  - **Exception:** Graspable Math's own elements (`#gm-keyboard`, the help
+    button and dialog) key on `html.gm-dark-theme`, the class gmath sets itself.
+    gmath 3.5.16 cannot switch from dark back to light (`setDarkTheme(false)`
+    throws and the class stays), so these overrides follow gmath, not the
+    scheme, and the workspace stays dark until the next page load.
 - **Never load Lumo and Aura together.** `styles.css`'s `--app-*` tokens
   resolve as `var(--lumo-…, <aura>)`, so with both loaded they silently take
   Lumo's values. The base theme changes only between page loads.

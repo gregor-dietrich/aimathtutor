@@ -35,8 +35,7 @@ import jakarta.inject.Inject;
 
 /**
  * Main layout for the admin panel providing navigation, top bar, and content area. Implements authentication checks,
- * admin permission validation, and theme application. Routes child admin views through a sidebar navigation and content
- * area layout.
+ * and admin permission validation. Routes child admin views through a sidebar navigation and content area layout.
  */
 @SuppressWarnings("NullAway")
 public class AdminMainLayout extends VerticalLayout implements RouterLayout, BeforeEnterObserver {

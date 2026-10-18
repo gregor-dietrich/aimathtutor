@@ -5,11 +5,13 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.server.VaadinSession;
 
+import de.vptr.aimathtutor.dto.Appearance.ColorMode;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.view.LoginView;
 
 /**
  * Cycles the signed-in user's colour mode (light, dark, follow system). The icon shows the current mode; a click saves
@@ -19,6 +21,8 @@ public final class ThemeToggleButton extends Button {
     private final transient ThemeService themeService;
     private final transient AuthService authService;
     private boolean saveInProgress;
+    /** The mode the icon shows; a click advances from it, so a tab with a stale icon does not skip a step. */
+    private ColorMode shownMode;
 
     /**
      * Constructs a ThemeToggleButton with the specified services.
@@ -41,10 +45,12 @@ public final class ThemeToggleButton extends Button {
         final var ui = this.getUI().orElse(null);
         if (credentials == null || session == null || ui == null) {
             NotificationUtil.showError(AppConstants.SESSION_ENDED_MESSAGE);
+            if (ui != null) {
+                LoginView.reloadToLogin(ui);
+            }
             return;
         }
-        final var current = this.themeService.current();
-        final var next = current.colorMode().next();
+        final var next = this.shownMode.next();
         this.saveInProgress = true;
         this.setEnabled(false);
 
@@ -65,6 +71,7 @@ public final class ThemeToggleButton extends Button {
 
     private void updateButton() {
         final var colorMode = this.themeService.current().colorMode();
+        this.shownMode = colorMode;
         final var icon = switch (colorMode) {
             case LIGHT -> LineAwesomeIcon.SUN_SOLID;
             case DARK -> LineAwesomeIcon.MOON_SOLID;

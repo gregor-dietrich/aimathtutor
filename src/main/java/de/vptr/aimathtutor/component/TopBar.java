@@ -8,6 +8,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AppStyles;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 
@@ -33,7 +34,7 @@ public class TopBar extends HorizontalLayout {
      * {@link #setThemeToggleVisible(boolean)} shows it for a signed-in user.
      */
     public TopBar(final ThemeService themeService, final AuthService authService) {
-        this.addClassName("app-top-bar");
+        this.addClassName(AppStyles.TOP_BAR);
         this.setWidthFull();
         this.setJustifyContentMode(JustifyContentMode.END);
         this.setPadding(true);

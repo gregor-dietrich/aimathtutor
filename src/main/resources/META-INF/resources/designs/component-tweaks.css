@@ -4,9 +4,9 @@
    transform, height) of vaadin-button, vaadin-badge and vaadin-progress-bar. These depend on
    how a component builds itself and may break when Vaadin changes it.
 
-   Removing this file's one @StyleSheet line from AppConfig returns every design to token-only
-   styling: its colours, fonts, cards, bubbles and badges stay, and the designs lose only the
-   effects below.
+   Removing this file's one @StyleSheet line from AppConfig (and from AppConfigTest's list)
+   returns every design to token-only styling: its colours, fonts, cards, bubbles and badges
+   stay, and the designs lose only the effects below.
 
    The reference scope of the buttons is the page, not the top bar, so the top bar's own buttons
    are left alone: vaadin-button:not(.app-top-bar vaadin-button).

@@ -15,7 +15,8 @@ import com.vaadin.flow.theme.lumo.Lumo;
 // The order of the @StyleSheet lines is load-bearing: later sheets override earlier ones, and the bootstrap
 // listener in ThemeService removes whichever base sheet (Lumo or Aura) the user's design does not use, so exactly
 // one of them loads per page. After styles.css come the fonts, the Lumo ink derivation, one sheet per design (each
-// keyed on html[data-design]) and, last, component-tweaks.css, whose line alone can be dropped.
+// keyed on html[data-design]) and, last, component-tweaks.css, whose line alone can be dropped
+// (AppConfigTest's list of expected sheets must drop it too).
 @StyleSheet("/" + Lumo.STYLESHEET)
 @StyleSheet("/" + Aura.STYLESHEET)
 @StyleSheet("/styles.css")
