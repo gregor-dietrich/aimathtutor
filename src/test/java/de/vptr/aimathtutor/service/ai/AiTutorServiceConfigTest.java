@@ -178,7 +178,7 @@ class AiTutorServiceConfigTest {
         configureProvider("google", true);
         when(this.googleAiProvider.isAvailable()).thenReturn(true);
         when(this.googleAiProvider.analyzeMathAction(any(), any()))
-                .thenThrow(new NonRetryableProviderException("google", "quota exceeded"));
+                .thenThrow(new NonRetryableProviderException("google", "invalid API key"));
         assertThrows(NonRetryableProviderException.class, () -> this.aiTutorService
                 .analyzeMathAction(this.buildSignificantEvent(), new ConversationContextDto(), "u1"));
     }
