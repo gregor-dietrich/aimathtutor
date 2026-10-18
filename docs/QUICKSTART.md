@@ -126,7 +126,6 @@ APP_BOOTSTRAP_ADMIN_PASSWORD=your_initial_admin_password
 # Not needed for Ollama (local LLM)
 app.google.api.key=your_google_api_key_here
 app.openai.api.key=your_openai_api_key_here
-app.openai.organization-id=your_openai_org_id_here
 
 # Admin UI (only needed if you enable pgAdmin in docker-compose.yml)
 PGADMIN_EMAIL=<your email address>
@@ -168,6 +167,7 @@ account](#initial-admin-account) and navigate to **Admin Settings**
 - Set the model name
 - Adjust temperature, max tokens, and other provider-specific settings
 - Configure custom prompts
+- Set the optional OpenAI **Organization ID** (stored in the database)
 
 These settings are persisted in the database and can be changed at runtime
 without restarting the application.

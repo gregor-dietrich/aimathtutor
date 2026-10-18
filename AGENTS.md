@@ -525,13 +525,13 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 
 ## AI Configuration
 
-- **API keys:** `app.google.api.key`, `app.openai.api.key`,
-  `app.openai.organization-id`.
+- **API keys:** `app.google.api.key`, `app.openai.api.key`.
 - **SSRF protection:** `app.security.allowed-ollama-hosts` — comma-separated
   list of permitted hostnames for Ollama (defaults to `ollama,localhost`).
   Prevents SSRF via DNS rebinding.
-- **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts —
-  configured via Admin Settings UI at `/admin/config`.
+- **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
+  and the optional OpenAI Organization ID — configured via Admin Settings UI
+  at `/admin/config`. The Organization ID has no property/environment input.
 
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on AI provider calls, sets 1s

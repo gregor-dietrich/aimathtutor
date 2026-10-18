@@ -172,9 +172,10 @@ scripts.
 
 **Configuration:**
 
-- **API Keys**: Set properties `app.google.api.key`, `app.openai.api.key`, and
-  `app.openai.organization-id` (immutable at runtime).
-- **Provider Settings** (model, base URL, temperature, prompts, etc.): Configure
+- **API Keys**: Set properties `app.google.api.key` and `app.openai.api.key`
+  (immutable at runtime).
+- **Provider Settings** (model, base URL, temperature, prompts, optional OpenAI
+  Organization ID, etc.): Configure
   via the **Admin Settings UI** at `/admin/config` after login (runtime-mutable,
   database-backed).
 - **Encryption key**: Resolution order: (1) `app.security.encryption-key-file`

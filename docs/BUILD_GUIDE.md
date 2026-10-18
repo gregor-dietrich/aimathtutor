@@ -34,7 +34,6 @@ providers):
 ```sh
 export APP_GOOGLE_API_KEY=your_google_api_key_here
 export APP_OPENAI_API_KEY=your_openai_api_key_here
-export APP_OPENAI_ORGANIZATION_ID=your_openai_org_id_here  # Optional
 ```
 
 Alternatively, create a `.env` file in the project root and source it:
@@ -43,14 +42,14 @@ Alternatively, create a `.env` file in the project root and source it:
 # .env
 APP_GOOGLE_API_KEY=your_google_api_key_here
 APP_OPENAI_API_KEY=your_openai_api_key_here
-APP_OPENAI_ORGANIZATION_ID=your_openai_org_id_here
 
 # source it
 source .env
 ```
 
 > **_NOTE:_** API keys are immutable configuration sourced from environment
-> variables. All other AI settings (model, temperature, prompts, etc.) are
+> variables. All other AI settings (model, temperature, prompts, optional OpenAI
+> Organization ID, etc.) are
 > configured at runtime via the Admin Settings UI (`/admin/config`) after
 > logging in.
 
