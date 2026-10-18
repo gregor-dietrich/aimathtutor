@@ -2,6 +2,8 @@ package de.vptr.aimathtutor.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mockStatic;
 
 import java.util.Set;
@@ -20,7 +22,9 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintDeclarationException;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.UnexpectedTypeException;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
@@ -55,6 +59,27 @@ class ServiceRejectionUtilTest {
             notifications.verify(() -> NotificationUtil.showError("Username '" + username + "' is already taken"));
             notifications.verifyNoMoreInteractions();
         }
+    }
+
+    @Test
+    @DisplayName("A broken validator setup propagates instead of showing its message")
+    void validatorDefectPropagates() {
+        final var defect = new UnexpectedTypeException("HV000030: No validator could be found");
+        try (MockedStatic<NotificationUtil> notifications = mockStatic(NotificationUtil.class)) {
+            assertEquals(defect,
+                    assertThrows(UnexpectedTypeException.class, () -> ServiceRejectionUtil.runOrShowRejection(() -> {
+                        throw defect;
+                    })));
+            notifications.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    void testIsRejection() {
+        assertTrue(ServiceRejectionUtil.isRejection(new ValidationException("Username taken")));
+        assertTrue(ServiceRejectionUtil.isRejection(new ConstraintViolationException("ignored", Set.of())));
+        assertFalse(ServiceRejectionUtil.isRejection(new UnexpectedTypeException("no validator")));
+        assertFalse(ServiceRejectionUtil.isRejection(new ConstraintDeclarationException("bad declaration")));
     }
 
     @Test

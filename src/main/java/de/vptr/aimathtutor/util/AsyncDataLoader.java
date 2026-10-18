@@ -53,9 +53,9 @@ public final class AsyncDataLoader {
      * queries that should not hold the whole panel hostage if the DB is slow; use a longer timeout for heavy reports or
      * batch summaries.
      * <p>
-     * A {@link ValidationException} thrown by the supplier is a service rejection: its message is shown, and a
-     * rejection that the session ended returns to the login page. On timeout the supplier is not cancelled and may
-     * still complete its work, so the notification tells the user to reload to see the current state.
+     * A service rejection thrown by the supplier (see {@link ServiceRejectionUtil#isRejection}) has its message shown,
+     * and a rejection that the session ended returns to the login page. On timeout the supplier is not cancelled and
+     * may still complete its work, so the notification tells the user to reload to see the current state.
      *
      * @param <T>
      *            the type of data being loaded
@@ -98,7 +98,8 @@ public final class AsyncDataLoader {
                     }
                     final var cause = throwable instanceof CompletionException && throwable.getCause() != null
                             ? throwable.getCause() : throwable;
-                    if (cause instanceof final ValidationException rejection) {
+                    if (cause instanceof final ValidationException rejection
+                            && ServiceRejectionUtil.isRejection(rejection)) {
                         // Expected service rejection; the message can carry user data, so it is never logged.
                         LOG.debug("Service rejected a write");
                         final var message = ServiceRejectionUtil.rejectionMessage(rejection);

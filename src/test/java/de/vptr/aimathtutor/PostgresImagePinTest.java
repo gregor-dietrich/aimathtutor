@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.DisplayName;
@@ -22,9 +25,11 @@ class PostgresImagePinTest {
 
     private static final Pattern POSTGRES_PIN = Pattern.compile("(postgres:[^\\s@]+)@(sha256:[a-f0-9]{64})");
 
+    private static final String DEV_SERVICES_KEY = "%dev,test.quarkus.datasource.devservices.image-name";
+
     private static final Pattern DEV_SERVICES_PIN =
             Pattern.compile("(?m)^# Dev Services PostgreSQL tag: (postgres:[^\\s@]+)\\R"
-                    + "%dev,test\\.quarkus\\.datasource\\.devservices\\.image-name=postgres@(sha256:[a-f0-9]{64})$");
+                    + Pattern.quote(DEV_SERVICES_KEY) + "=postgres@(sha256:[a-f0-9]{64})$");
 
     @Test
     void testPostgresImagePinsMatch() throws IOException {
@@ -37,8 +42,13 @@ class PostgresImagePinTest {
         final var properties = Files.readString(Path.of("src/main/resources/application.properties"));
         final var devServicesPin = DEV_SERVICES_PIN.matcher(properties);
         assertTrue(devServicesPin.find(), "Dev Services needs a digest-only pin immediately after its tag comment");
-        assertEquals(1, properties.split("devservices\\.image-name=", -1).length - 1,
+        final var loaded = new Properties();
+        loaded.load(new StringReader(properties));
+        assertEquals(List.of(DEV_SERVICES_KEY),
+                loaded.stringPropertyNames().stream().filter(key -> key.endsWith("devservices.image-name")).toList(),
                 "A second Dev Services image-name property would override the checked pin");
+        assertEquals("postgres@" + devServicesPin.group(2), loaded.getProperty(DEV_SERVICES_KEY),
+                "A later assignment of the same key would override the checked pin");
         assertEquals(composePin.group(1), devServicesPin.group(1), "Dev Services tag comment must match Compose");
         assertEquals(composePin.group(2), devServicesPin.group(2), "Dev Services digest must match Compose");
     }

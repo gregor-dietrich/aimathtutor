@@ -22,8 +22,9 @@ public final class ServiceRejectionUtil {
     }
 
     /**
-     * Runs a service call and shows the message of a {@link ValidationException} it throws. The rejection is expected
-     * user input, so it is logged at DEBUG only, and without the message, which can contain user data.
+     * Runs a service call and shows the message of a rejection it throws (see {@link #isRejection}). The rejection is
+     * expected user input, so it is logged at DEBUG only, and without the message, which can contain user data. Any
+     * other {@link ValidationException} propagates.
      *
      * @param serviceCall
      *            the call that writes, such as saving the form's data or deleting an item
@@ -34,8 +35,24 @@ public final class ServiceRejectionUtil {
             serviceCall.run();
             return true;
         } catch (final ValidationException e) {
+            if (!isRejection(e)) {
+                throw e;
+            }
             return showRejection(rejectionMessage(e));
         }
+    }
+
+    /**
+     * Tells a service rejection, a plain {@link ValidationException} or a {@link ConstraintViolationException}, from
+     * the other subclasses, which report a broken constraint or validator setup: a defect to log, not a message to
+     * show.
+     *
+     * @param e
+     *            the exception thrown by a service
+     * @return true if the exception rejects the input
+     */
+    public static boolean isRejection(final ValidationException e) {
+        return e.getClass() == ValidationException.class || e instanceof ConstraintViolationException;
     }
 
     /**

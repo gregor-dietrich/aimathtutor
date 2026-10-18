@@ -168,9 +168,16 @@ To upgrade later, download the Compose file again (step 2), then run
 `docker compose pull` and `docker compose up -d --remove-orphans`.
 
 > **_NOTE:_** The stack serves plain HTTP on port 80. Beyond a trusted local
-> network, put a TLS-terminating reverse proxy in front of it, and set
-> `app.security.trusted-proxy-ips` in `.env` to the proxy's address so that the
-> client addresses it forwards are used.
+> network, put a TLS-terminating reverse proxy in front of it and make the
+> application reachable only through the proxy, or clients can bypass TLS and
+> send passwords over plain HTTP. For a proxy on the same host, change the app's
+> port mapping to `"127.0.0.1:8080:9001/tcp"` and point the proxy at
+> `http://127.0.0.1:8080`; for a proxy container, attach it to this stack's
+> network and remove the app's `ports` mapping. Then set
+> `app.security.trusted-proxy-ips` in `.env` to the address the application sees
+> the proxy connect from, so that the client addresses it forwards are used: for
+> a same-host proxy that is the stack network's gateway (`docker network
+> inspect`), not `127.0.0.1`.
 
 #### 4. Configure AI Provider Settings
 
