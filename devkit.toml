@@ -6,8 +6,6 @@ commit = "69baa79c1ef916f3309e55b94fdbe7d894496f2e"
 
 [frontend.min-pins]
 react-router = "7.15.0"
-dompurify = "3.4.16"
-source-map-js = "1.2.2"
 
 # The namespace make release publishes to; docker-compose.yml builds the app image (pull_policy: build) and tags it through ${REVISION}.
 [pins]
