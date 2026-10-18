@@ -69,12 +69,20 @@ public final class AsyncDataLoader {
         if (timeout == null || timeout.isZero() || timeout.isNegative()) {
             throw new IllegalArgumentException("timeout must be a positive duration");
         }
+        // Common-pool threads carry the system class loader, which in dev mode is not the app's: a bean first created
+        // in the supplier would fail to load its config or classes through it.
+        final var classLoader = Thread.currentThread().getContextClassLoader();
         final var _ = CompletableFuture.supplyAsync(() -> {
+            final var thread = Thread.currentThread();
+            final var previous = thread.getContextClassLoader();
+            thread.setContextClassLoader(classLoader);
             try {
                 return dataSupplier.get();
             } catch (final RuntimeException e) {
                 LOG.error(errorMessage, e);
                 throw e;
+            } finally {
+                thread.setContextClassLoader(previous);
             }
         }).orTimeout(timeout.toNanos(), TimeUnit.NANOSECONDS).whenComplete((data, throwable) -> {
             component.getUI().ifPresent(ui -> {

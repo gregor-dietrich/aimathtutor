@@ -171,17 +171,17 @@ public class AdminUsersView extends AbstractAdminView {
             checkbox.setValue(user.activated);
             checkbox.setReadOnly(true);
             return checkbox;
-        }).setHeader("Activated").setWidth("100px").setFlexGrow(0);
+        }).setHeader("Activated").setAutoWidth(true).setFlexGrow(0);
 
         this.grid.addComponentColumn(user -> {
             final var checkbox = new Checkbox();
             checkbox.setValue(user.banned);
             checkbox.setReadOnly(true);
             return checkbox;
-        }).setHeader("Banned").setWidth("100px").setFlexGrow(0);
+        }).setHeader("Banned").setAutoWidth(true).setFlexGrow(0);
 
         this.grid.addColumn(user -> user.created != null ? this.dateTimeFormatter.formatDateTime(user.created) : "")
-                .setHeader("Created").setWidth("180px").setFlexGrow(0);
+                .setHeader("Created").setAutoWidth(true).setFlexGrow(0);
 
         // Add action column
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions").setWidth("180px").setFlexGrow(0);

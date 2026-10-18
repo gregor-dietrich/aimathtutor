@@ -141,6 +141,9 @@ public final class AppConstants {
      */
     public static final String OWN_PASSWORD_MESSAGE = "Change your own password on the Settings page";
 
+    /** Message shown when the caller's session is no longer valid. */
+    public static final String SESSION_ENDED_MESSAGE = "Your session has ended. Please sign in again.";
+
     /** Rejection message for a change to, or assignment of, a user or rank above the caller's own rank. */
     public static final String PRIVILEGE_CEILING_MESSAGE =
             "You can't create, change, assign or delete a user or rank with permissions your rank doesn't have.";

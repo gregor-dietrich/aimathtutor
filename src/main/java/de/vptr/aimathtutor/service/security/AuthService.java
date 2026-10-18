@@ -19,6 +19,7 @@ import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinService;
 import com.vaadin.flow.server.VaadinSession;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.UserEntity;
@@ -70,6 +71,7 @@ public class AuthService {
     private static final String SESSION_TOKEN_KEY = "authenticated.sessionToken";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
     private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
+    private static final String APPEARANCE_KEY = "authenticated.appearance";
 
     // Pre-computed bcrypt hash used for constant-time dummy verification on early-exit
     // authentication paths (user not found, banned, not activated). Prevents username
@@ -193,6 +195,42 @@ public class AuthService {
     }
 
     /**
+     * Returns the signed-in user's appearance as stored in the current session, without touching the database.
+     *
+     * @return the appearance, or null if there is no session or nobody is signed in
+     */
+    @Nullable
+    public Appearance sessionAppearance() {
+        final var session = VaadinSession.getCurrent();
+        return session != null && session.getAttribute(APPEARANCE_KEY) instanceof final Appearance appearance
+                ? appearance : null;
+    }
+
+    /**
+     * Stores a freshly saved appearance in the session that saved it, so the next page of that session needs no
+     * database read. Writes only if the session still belongs to the account, as it may have signed out or into another
+     * one meanwhile.
+     *
+     * @param session
+     *            the session that made the change, captured on the UI thread
+     * @param userPublicId
+     *            the public ID of the account the session belonged to when it made the change
+     * @param appearance
+     *            the saved appearance
+     */
+    public void rememberAppearance(final VaadinSession session, final String userPublicId,
+            final Appearance appearance) {
+        session.lock();
+        try {
+            if (userPublicId.equals(session.getAttribute(USER_PUBLIC_ID_KEY))) {
+                session.setAttribute(APPEARANCE_KEY, appearance);
+            }
+        } finally {
+            session.unlock();
+        }
+    }
+
+    /**
      * Authenticates a user with the provided credentials. Validates username and password, checks user activation and
      * ban status, and stores authentication information in the session.
      *
@@ -306,6 +344,7 @@ public class AuthService {
                     session.setAttribute(SESSION_TOKEN_KEY, UUID.randomUUID().toString());
                     session.setAttribute(AUTHENTICATED_KEY, true);
                     session.setAttribute(LAST_DB_CHECK_KEY, System.currentTimeMillis());
+                    session.setAttribute(APPEARANCE_KEY, new Appearance(user.design, user.colorMode));
                 }
             } catch (final RuntimeException e) {
                 LOG.errorf(e, "Failed to complete login: %s", e.getMessage());
@@ -348,6 +387,7 @@ public class AuthService {
         session.setAttribute(SESSION_TOKEN_KEY, null);
         session.setAttribute(AUTHENTICATED_KEY, false);
         session.setAttribute(LAST_DB_CHECK_KEY, null);
+        session.setAttribute(APPEARANCE_KEY, null);
     }
 
     /**

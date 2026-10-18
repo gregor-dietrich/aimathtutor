@@ -1,0 +1,128 @@
+/*
+ * Self-hosted web fonts for the user-selectable designs.
+ *
+ * Each family's OFL.txt sits beside its files in fonts/<family>/. The font
+ * files are versioned by filename (font URLs get no cache-busting), so a new
+ * upstream version is a new file name. URLs are relative to this file.
+ * Families whose licence declares a Reserved Font Name (Andika, Orbitron)
+ * ship the unmodified upstream file, since a subset would be a Modified
+ * Version; the others ship Google's latin subset.
+ */
+
+/* https://fonts.gstatic.com/s/schibstedgrotesk/v7/Jqz55SSPQuCQF3t8uOwiUL-taUTtap9GayojdSFO.woff2
+     Google Fonts v7, latin subset */
+@font-face {
+    font-family: "Schibsted Grotesk";
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url("fonts/schibsted-grotesk/schibsted-grotesk-v7-wght.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://fonts.gstatic.com/s/rubik/v31/iJWKBXyIfDnIV7nBrXyw023e.woff2
+     Google Fonts v31, latin subset */
+@font-face {
+    font-family: "Rubik";
+    font-style: normal;
+    font-weight: 300 900;
+    font-display: swap;
+    src: url("fonts/rubik/rubik-v31-wght.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://fonts.gstatic.com/s/bangers/v25/FeVQS0BTqb0h60ACH55Q2J5hm24.woff2
+     Google Fonts v25, latin subset */
+@font-face {
+    font-family: "Bangers";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/bangers/bangers-v25-400.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://fonts.gstatic.com/s/chakrapetch/v13/cIf6MapbsEk7TDLdtEz1BwkWn6pgar3I1A.woff2
+     Google Fonts v13, latin subset */
+@font-face {
+    font-family: "Chakra Petch";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/chakra-petch/chakra-petch-v13-400.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://fonts.gstatic.com/s/chakrapetch/v13/cIflMapbsEk7TDLdtEz1BwkebIl1R5_F_gUk0w.woff2
+     Google Fonts v13, latin subset */
+@font-face {
+    font-family: "Chakra Petch";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("fonts/chakra-petch/chakra-petch-v13-500.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://fonts.gstatic.com/s/chakrapetch/v13/cIflMapbsEk7TDLdtEz1BwkeQI51R5_F_gUk0w.woff2
+     Google Fonts v13, latin subset */
+@font-face {
+    font-family: "Chakra Petch";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("fonts/chakra-petch/chakra-petch-v13-600.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://fonts.gstatic.com/s/chakrapetch/v13/cIflMapbsEk7TDLdtEz1BwkeJI91R5_F_gUk0w.woff2
+     Google Fonts v13, latin subset */
+@font-face {
+    font-family: "Chakra Petch";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("fonts/chakra-petch/chakra-petch-v13-700.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* https://github.com/google/fonts/blob/abf7124594/ofl/orbitron/Orbitron%5Bwght%5D.ttf
+   Version 2.001, unmodified (Reserved Font Name: no subset); upstream ships no WOFF2 */
+@font-face {
+    font-family: "Orbitron";
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url("fonts/orbitron/orbitron-2.001-wght.ttf") format("truetype");
+}
+
+/* https://github.com/silnrsi/font-andika/releases/download/v7.000/Andika-7.000.zip (web/Andika-Regular.woff2)
+     SIL release 7.000, unmodified (Reserved Font Name: no subset) */
+@font-face {
+    font-family: "Andika";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/andika/andika-7.000-400.woff2") format("woff2");
+}
+
+/* https://github.com/silnrsi/font-andika/releases/download/v7.000/Andika-7.000.zip (web/Andika-Bold.woff2)
+     SIL release 7.000, unmodified (Reserved Font Name: no subset) */
+@font-face {
+    font-family: "Andika";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("fonts/andika/andika-7.000-700.woff2") format("woff2");
+}
+
+/* https://fonts.gstatic.com/s/kalam/v18/YA9Qr0Wd4kDdMtDqHTLMkiQqtbGs.woff2
+     Google Fonts v18, latin subset */
+@font-face {
+    font-family: "Kalam";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("fonts/kalam/kalam-v18-700.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

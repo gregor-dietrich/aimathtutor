@@ -1,0 +1,62 @@
+/*
+   Lumo ink derivation. Lumo's alpha scales (--lumo-shade-*, --lumo-tint-*, and the contrast and
+   text colours built on them) are hard-coded blue-greys, so a Lumo design could not recolour
+   them. This file rebuilds them from the design's own inks.
+
+   A Lumo design (powerup, vibranium, chalkboard) supplies private --design-* inputs on <html>:
+     --design-base-l / -d                    page background, light and dark
+     --design-ink-l / -d                     text ink (the shade, and the tint in dark mode)
+     --design-primary-l / -d                 primary colour; --design-primary-text-l / -d for text
+     --design-on-primary-l / -d              text on the primary colour
+     --design-error-l / -d, --design-success-l / -d, --design-warning-l / -d
+     --design-on-error-l / -d                text on error and success fills (default white)
+     --design-font                           the body font stack
+   This file reads them and outputs only --lumo-* properties. It applies to the Lumo base only, so
+   an Aura design (vellum) never reaches it: an Aura design must never set --lumo-*, because the
+   --app-* bridge in styles.css would pick it up. Relative colour syntax needs the current
+   (Baseline 2024) browsers; the same is true of light-dark().
+*/
+html[data-base="lumo"] {
+    --lumo-base-color: light-dark(var(--design-base-l), var(--design-base-d));
+    --lumo-shade: var(--design-ink-l);
+    --lumo-tint: var(--design-ink-d);
+    --lumo-shade-5pct: rgb(from var(--design-ink-l) r g b / .05);
+    --lumo-shade-10pct: rgb(from var(--design-ink-l) r g b / .1);
+    --lumo-shade-20pct: rgb(from var(--design-ink-l) r g b / .2);
+    --lumo-shade-30pct: rgb(from var(--design-ink-l) r g b / .3);
+    --lumo-shade-40pct: rgb(from var(--design-ink-l) r g b / .4);
+    --lumo-shade-50pct: rgb(from var(--design-ink-l) r g b / .5);
+    --lumo-shade-60pct: rgb(from var(--design-ink-l) r g b / .6);
+    --lumo-shade-70pct: rgb(from var(--design-ink-l) r g b / .72);
+    --lumo-shade-80pct: rgb(from var(--design-ink-l) r g b / .82);
+    --lumo-shade-90pct: rgb(from var(--design-ink-l) r g b / .92);
+    --lumo-tint-5pct: rgb(from var(--design-ink-d) r g b / .06);
+    --lumo-tint-10pct: rgb(from var(--design-ink-d) r g b / .12);
+    --lumo-tint-20pct: rgb(from var(--design-ink-d) r g b / .22);
+    --lumo-tint-30pct: rgb(from var(--design-ink-d) r g b / .32);
+    --lumo-tint-40pct: rgb(from var(--design-ink-d) r g b / .42);
+    --lumo-tint-50pct: rgb(from var(--design-ink-d) r g b / .52);
+    --lumo-tint-60pct: rgb(from var(--design-ink-d) r g b / .62);
+    --lumo-tint-70pct: rgb(from var(--design-ink-d) r g b / .74);
+    --lumo-tint-80pct: rgb(from var(--design-ink-d) r g b / .84);
+    --lumo-tint-90pct: rgb(from var(--design-ink-d) r g b / .93);
+    --lumo-primary-color: light-dark(var(--design-primary-l), var(--design-primary-d));
+    --lumo-primary-color-10pct: light-dark(rgb(from var(--design-primary-l) r g b / .12), rgb(from var(--design-primary-d) r g b / .16));
+    --lumo-primary-color-50pct: light-dark(rgb(from var(--design-primary-l) r g b / .6), rgb(from var(--design-primary-d) r g b / .6));
+    --lumo-primary-text-color: light-dark(var(--design-primary-text-l), var(--design-primary-text-d));
+    --lumo-primary-contrast-color: light-dark(var(--design-on-primary-l), var(--design-on-primary-d));
+    --lumo-error-color: light-dark(var(--design-error-l), var(--design-error-d));
+    --lumo-error-color-10pct: light-dark(rgb(from var(--design-error-l) r g b / .1), rgb(from var(--design-error-d) r g b / .16));
+    --lumo-error-color-50pct: light-dark(rgb(from var(--design-error-l) r g b / .5), rgb(from var(--design-error-d) r g b / .5));
+    --lumo-error-text-color: light-dark(var(--design-error-l), var(--design-error-d));
+    --lumo-error-contrast-color: light-dark(var(--design-on-error-l, #ffffff), var(--design-on-error-d, #ffffff));
+    --lumo-success-color: light-dark(var(--design-success-l), var(--design-success-d));
+    --lumo-success-color-10pct: light-dark(rgb(from var(--design-success-l) r g b / .12), rgb(from var(--design-success-d) r g b / .16));
+    --lumo-success-color-50pct: light-dark(rgb(from var(--design-success-l) r g b / .5), rgb(from var(--design-success-d) r g b / .5));
+    --lumo-success-text-color: light-dark(var(--design-success-l), var(--design-success-d));
+    --lumo-success-contrast-color: light-dark(var(--design-on-error-l, #ffffff), var(--design-on-error-d, #ffffff));
+    --lumo-warning-color: light-dark(var(--design-warning-l), var(--design-warning-d));
+    --lumo-warning-color-10pct: light-dark(rgb(from var(--design-warning-l) r g b / .12), rgb(from var(--design-warning-d) r g b / .16));
+    --lumo-warning-text-color: light-dark(var(--design-warning-l), var(--design-warning-d));
+    --lumo-font-family: var(--design-font);
+}

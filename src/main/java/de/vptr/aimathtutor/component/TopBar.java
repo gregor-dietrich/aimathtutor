@@ -7,6 +7,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 import de.vptr.aimathtutor.component.button.ThemeToggleButton;
 import de.vptr.aimathtutor.service.ThemeService;
+import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AppStyles;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 
@@ -25,20 +27,32 @@ import jakarta.annotation.Nullable;
 public class TopBar extends HorizontalLayout {
 
     private final HorizontalLayout rightSide;
+    private final ThemeToggleButton themeToggle;
 
     /**
-     * Build a width-full top bar with the theme toggle pre-attached on the right.
+     * Build a width-full top bar with the theme toggle pre-attached on the right, hidden until
+     * {@link #setThemeToggleVisible(boolean)} shows it for a signed-in user.
      */
-    public TopBar(final ThemeService themeService) {
+    public TopBar(final ThemeService themeService, final AuthService authService) {
+        this.addClassName(AppStyles.TOP_BAR);
         this.setWidthFull();
         this.setJustifyContentMode(JustifyContentMode.END);
         this.setPadding(true);
 
         this.rightSide = new HorizontalLayout();
         this.rightSide.setSpacing(true);
-        this.rightSide.add(new ThemeToggleButton(themeService));
+        this.themeToggle = new ThemeToggleButton(themeService, authService);
+        this.themeToggle.setVisible(false);
+        this.rightSide.add(this.themeToggle);
 
         this.add(this.rightSide);
+    }
+
+    /**
+     * Show the theme toggle for a signed-in user, hide it otherwise.
+     */
+    public void setThemeToggleVisible(final boolean visible) {
+        this.themeToggle.setVisible(visible);
     }
 
     /**

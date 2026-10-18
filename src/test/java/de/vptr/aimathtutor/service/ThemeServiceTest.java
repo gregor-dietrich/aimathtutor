@@ -2,223 +2,226 @@ package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import org.mockito.ArgumentCaptor;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.page.Page;
-import com.vaadin.flow.dom.Element;
-import com.vaadin.flow.dom.ThemeList;
+import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinSession;
-import com.vaadin.flow.theme.lumo.Lumo;
+import com.vaadin.flow.server.communication.IndexHtmlRequestListener;
+import com.vaadin.flow.server.communication.IndexHtmlResponse;
 
-import de.vptr.aimathtutor.service.ThemeService.Theme;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
+import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Appearance.ColorMode;
+import de.vptr.aimathtutor.dto.Appearance.Design;
+import de.vptr.aimathtutor.dto.SessionCredentials;
+import de.vptr.aimathtutor.service.security.AuthService;
 
-@QuarkusTest
+@DisplayName("ThemeService")
+@SuppressWarnings("NullAway")
 class ThemeServiceTest {
 
-    @Inject
-    ThemeService themeService;
+    private static final String PAGE = """
+            <html lang="de"><head>
+            <link href="/lumo/lumo.css?v-c=1" rel="stylesheet">
+            <link href="/aura/aura.css?v-c=2" rel="stylesheet">
+            <link href="/styles.css?v-c=3" rel="stylesheet">
+            </head><body></body></html>""";
 
-    @Test
-    @DisplayName("Should return SYSTEM theme as default when no session")
-    void shouldReturnSystemThemeAsDefaultWhenNoSession() {
-        // Note: VaadinSession.getCurrent() will return null in test environment
-        // When
-        final Theme currentTheme = this.themeService.getCurrentTheme();
+    private final AuthService authService = mock(AuthService.class);
+    private final UserService userService = mock(UserService.class);
+    private ThemeService themeService;
 
-        // Then
-        assertEquals(Theme.SYSTEM, currentTheme);
+    @BeforeEach
+    void setUp() {
+        this.themeService = new ThemeService(this.authService, this.userService);
     }
 
     @Test
-    @DisplayName("Should get next theme correctly from LIGHT")
-    void shouldGetNextThemeCorrectlyFromLight() {
-        // When
-        final Theme nextTheme = this.themeService.getNextTheme();
+    @DisplayName("current() returns the session appearance")
+    void currentReturnsSessionAppearance() {
+        final var stored = new Appearance(Design.CHALKBOARD, ColorMode.DARK);
+        when(this.authService.sessionAppearance()).thenReturn(stored);
 
-        // Then
-        // Since getCurrentTheme() returns SYSTEM by default, getNextTheme should return
-        // LIGHT
-        assertEquals(Theme.LIGHT, nextTheme);
+        assertSame(stored, this.themeService.current());
     }
 
     @Test
-    @DisplayName("Should cycle through themes correctly")
-    void shouldCycleThroughThemesCorrectly() {
-        // Test the theme cycling logic
-        // LIGHT -> DARK
-        final Theme nextFromLight = switch (Theme.LIGHT) {
-            case LIGHT -> Theme.DARK;
-            case DARK -> Theme.SYSTEM;
-            case SYSTEM -> Theme.LIGHT;
-        };
-        assertEquals(Theme.DARK, nextFromLight);
+    @DisplayName("current() falls back to the default without a session appearance")
+    void currentFallsBackToDefault() {
+        when(this.authService.sessionAppearance()).thenReturn(null);
 
-        // DARK -> SYSTEM
-        final Theme nextFromDark = switch (Theme.DARK) {
-            case LIGHT -> Theme.DARK;
-            case DARK -> Theme.SYSTEM;
-            case SYSTEM -> Theme.LIGHT;
-        };
-        assertEquals(Theme.SYSTEM, nextFromDark);
-
-        // SYSTEM -> LIGHT
-        final Theme nextFromSystem = switch (Theme.SYSTEM) {
-            case LIGHT -> Theme.DARK;
-            case DARK -> Theme.SYSTEM;
-            case SYSTEM -> Theme.LIGHT;
-        };
-        assertEquals(Theme.LIGHT, nextFromSystem);
+        assertEquals(Appearance.DEFAULT, this.themeService.current());
     }
 
     @Test
-    @DisplayName("Should set theme without active UI")
-    void shouldSetThemeWithoutActiveUi() {
-        // When - This should not throw an exception even without active UI
-        assertDoesNotThrow(() -> this.themeService.setTheme(Theme.DARK));
+    @DisplayName("applyColorMode passes the mode value to executeJs")
+    void applyColorModePassesModeValue() {
+        when(this.authService.sessionAppearance()).thenReturn(new Appearance(Design.VELLUM, ColorMode.DARK));
+        final var ui = mock(UI.class);
+        final var page = mock(Page.class);
+        when(ui.getPage()).thenReturn(page);
+
+        this.themeService.applyColorMode(ui);
+
+        verify(page).executeJs("window.appAppearance?.setColorMode($0)", "dark");
     }
 
     @Test
-    @DisplayName("Should apply theme without active UI")
-    void shouldApplyThemeWithoutActiveUi() {
-        // When - This should not throw an exception even without active UI
-        assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.LIGHT));
-        assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.DARK));
-        assertDoesNotThrow(() -> this.themeService.applyTheme(Theme.SYSTEM));
+    @DisplayName("saveForSession remembers the appearance the update returned, not the arguments")
+    void saveForSessionRemembersReturnedAppearance() {
+        final var session = mock(VaadinSession.class);
+        final var credentials = new SessionCredentials("user-1", "stamp", "throttle");
+        final var stored = new Appearance(Design.CHALKBOARD, ColorMode.DARK);
+        when(this.userService.updateAppearance(credentials, null, ColorMode.DARK)).thenReturn(stored);
+
+        this.themeService.saveForSession(session, credentials, null, ColorMode.DARK);
+
+        final var order = inOrder(this.userService, this.authService);
+        order.verify(this.userService).updateAppearance(credentials, null, ColorMode.DARK);
+        order.verify(this.authService).rememberAppearance(session, "user-1", stored);
     }
 
     @Test
-    @DisplayName("applyTheme with DARK theme updates UI")
-    void applyTheme_withDarkTheme_updatesUi() {
-        assertDoesNotThrow(() -> this.testApplyTheme(Theme.DARK));
+    @DisplayName("saveForSession leaves the session untouched when the update throws")
+    void saveForSessionLeavesSessionOnFailure() {
+        final var session = mock(VaadinSession.class);
+        final var credentials = new SessionCredentials("user-1", "stamp", "throttle");
+        when(this.userService.updateAppearance(credentials, Design.VELLUM, ColorMode.LIGHT))
+                .thenThrow(new IllegalStateException("gone"));
+
+        assertThrows(IllegalStateException.class,
+                () -> this.themeService.saveForSession(session, credentials, Design.VELLUM, ColorMode.LIGHT));
+
+        verify(this.authService, never()).rememberAppearance(any(), any(), any());
     }
 
     @Test
-    @DisplayName("applyTheme with LIGHT theme updates UI")
-    void applyTheme_withLightTheme_updatesUi() {
-        assertDoesNotThrow(() -> this.testApplyTheme(Theme.LIGHT));
+    @DisplayName("the registered bootstrap listener renders the session appearance into the page")
+    void bootstrapListenerRendersSessionAppearance() {
+        when(this.authService.sessionAppearance()).thenReturn(new Appearance(Design.VIBRANIUM, ColorMode.LIGHT));
+        final var event = mock(ServiceInitEvent.class);
+        this.themeService.onServiceInit(event);
+        final var captor = ArgumentCaptor.forClass(IndexHtmlRequestListener.class);
+        verify(event).addIndexHtmlRequestListener(captor.capture());
+        final var doc = Jsoup.parse(PAGE);
+        final var response = mock(IndexHtmlResponse.class);
+        when(response.getDocument()).thenReturn(doc);
+
+        captor.getValue().modifyIndexHtmlResponse(response);
+
+        assertEquals("vibranium", doc.selectFirst("html").attr("data-design"));
+        assertEquals(List.of("/lumo/lumo.css?v-c=1", "/styles.css?v-c=3"), hrefs(doc));
     }
 
     @Test
-    @DisplayName("applyTheme with SYSTEM theme updates UI")
-    void applyTheme_withSystemTheme_updatesUi() {
-        assertDoesNotThrow(() -> this.testApplyTheme(Theme.SYSTEM));
+    @DisplayName("render for a Lumo design keeps only the Lumo base link")
+    void renderLumoDesign() {
+        final var doc = Jsoup.parse(PAGE);
+
+        ThemeService.render(doc, new Appearance(Design.POWER_UP, ColorMode.DARK));
+
+        final var html = doc.selectFirst("html");
+        assertEquals("powerup", html.attr("data-design"));
+        assertEquals("lumo", html.attr("data-base"));
+        assertEquals("dark", html.attr("data-color-mode"));
+        assertEquals(List.of("/lumo/lumo.css?v-c=1", "/styles.css?v-c=3"), hrefs(doc));
+        assertEquals("", html.attr("theme"));
     }
 
-    private void testApplyTheme(final Theme theme) {
-        try (MockedStatic<UI> mockedUi = mockStatic(UI.class)) {
-            final UI ui = mock(UI.class);
-            final Element element = mock(Element.class);
-            final ThemeList themeList = mock(ThemeList.class);
-            final Page page = mock(Page.class);
+    @Test
+    @DisplayName("render for Vellum keeps only the Aura base link")
+    void renderVellum() {
+        final var doc = Jsoup.parse(PAGE);
 
-            when(ui.getElement()).thenReturn(element);
-            when(element.getThemeList()).thenReturn(themeList);
-            when(ui.getPage()).thenReturn(page);
-            mockedUi.when(UI::getCurrent).thenReturn(ui);
+        ThemeService.render(doc, Appearance.DEFAULT);
 
-            this.themeService.applyTheme(theme);
+        final var html = doc.selectFirst("html");
+        assertEquals("vellum", html.attr("data-design"));
+        assertEquals("aura", html.attr("data-base"));
+        assertEquals("system", html.attr("data-color-mode"));
+        assertEquals("de", html.attr("lang"));
+        assertEquals(List.of("/aura/aura.css?v-c=2", "/styles.css?v-c=3"), hrefs(doc));
+    }
 
-            verify(themeList).clear();
-            if (theme == Theme.DARK) {
-                verify(themeList).add(Lumo.DARK);
+    @Test
+    @DisplayName("render does not throw when the active base link is missing")
+    void renderMissingActiveLink() {
+        final var doc = Jsoup.parse("<html><head><link href=\"/lumo/lumo.css\" rel=\"stylesheet\"></head></html>");
+
+        final var records = new ArrayList<LogRecord>();
+        final var handler = new Handler() {
+            @Override
+            public void publish(final LogRecord logRecord) {
+                records.add(logRecord);
             }
-            verify(page).executeJs(anyString());
-        }
-    }
 
-    @Test
-    @DisplayName("Should verify Theme enum properties")
-    void shouldVerifyThemeEnumProperties() {
-        // Test LIGHT theme
-        assertEquals("Light", Theme.LIGHT.getDisplayName());
-        assertNull(Theme.LIGHT.getThemeVariant());
+            @Override
+            public void flush() {
+                // nothing buffered
+            }
 
-        // Test DARK theme
-        assertEquals("Dark", Theme.DARK.getDisplayName());
-        assertEquals("dark", Theme.DARK.getThemeVariant()); // Lumo.DARK value
-
-        // Test SYSTEM theme
-        assertEquals("System", Theme.SYSTEM.getDisplayName());
-        assertNull(Theme.SYSTEM.getThemeVariant());
-    }
-
-    @Test
-    @DisplayName("Should handle all theme enum values")
-    void shouldHandleAllThemeEnumValues() {
-        // Verify all enum values exist
-        final Theme[] themes = Theme.values();
-        assertEquals(3, themes.length);
-
-        // Verify each theme has proper display name
-        for (final Theme theme : themes) {
-            assertNotNull(theme.getDisplayName());
-            assertFalse(theme.getDisplayName().isBlank());
-        }
-    }
-
-    @Test
-    @DisplayName("Should have proper enum ordering")
-    void shouldHaveProperEnumOrdering() {
-        final Theme[] themes = Theme.values();
-
-        assertEquals(Theme.LIGHT, themes[0]);
-        assertEquals(Theme.DARK, themes[1]);
-        assertEquals(Theme.SYSTEM, themes[2]);
-    }
-
-    @Test
-    @DisplayName("Should handle theme cycling edge cases")
-    void shouldHandleThemeCyclingEdgeCases() {
-        // Test that each theme leads to exactly one next theme
-        assertEquals(Theme.DARK, this.getNextThemeFor(Theme.LIGHT));
-        assertEquals(Theme.SYSTEM, this.getNextThemeFor(Theme.DARK));
-        assertEquals(Theme.LIGHT, this.getNextThemeFor(Theme.SYSTEM));
-    }
-
-    private Theme getNextThemeFor(final Theme current) {
-        return switch (current) {
-            case LIGHT -> Theme.DARK;
-            case DARK -> Theme.SYSTEM;
-            case SYSTEM -> Theme.LIGHT;
+            @Override
+            public void close() {
+                // nothing to release
+            }
         };
+        final var logger = LogManager.getLogManager().getLogger(ThemeService.class.getName());
+        logger.addHandler(handler);
+        try {
+            assertDoesNotThrow(() -> ThemeService.render(doc, Appearance.DEFAULT));
+        } finally {
+            logger.removeHandler(handler);
+        }
+
+        assertTrue(hrefs(doc).isEmpty());
+        assertEquals("aura", doc.selectFirst("html").attr("data-base"));
+        assertEquals(1, records.stream().filter(r -> r.getLevel().equals(Level.WARNING)).count());
     }
 
     @Test
-    @DisplayName("getCurrentTheme returns stored theme from session")
-    void testCurrentTheme_withStoredTheme_returnsStoredTheme() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute("selected_theme")).thenReturn(Theme.DARK);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+    @DisplayName("render does not throw when there is no html element")
+    void renderMissingHtml() {
+        final var doc = Jsoup.parse("<html></html>");
+        doc.selectFirst("html").remove();
 
-            assertEquals(Theme.DARK, this.themeService.getCurrentTheme());
-        }
+        assertDoesNotThrow(() -> ThemeService.render(doc, Appearance.DEFAULT));
+        assertNull(doc.selectFirst("html"));
     }
 
     @Test
-    @DisplayName("setTheme persists the theme in the session")
-    void setTheme_withSession_storesThemeInSession() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
+    @DisplayName("persisted enum names are pinned: renaming one needs a Flyway migration of users.design/color_mode")
+    void persistedEnumNamesArePinned() {
+        assertEquals(List.of("VELLUM", "POWER_UP", "VIBRANIUM", "CHALKBOARD"),
+                Arrays.stream(Design.values()).map(Enum::name).toList());
+        assertEquals(List.of("LIGHT", "DARK", "SYSTEM"), Arrays.stream(ColorMode.values()).map(Enum::name).toList());
+    }
 
-            this.themeService.setTheme(Theme.LIGHT);
-
-            verify(mockSess).setAttribute("selected_theme", Theme.LIGHT);
-        }
+    private static List<String> hrefs(final Document doc) {
+        return doc.select("link").eachAttr("href");
     }
 }

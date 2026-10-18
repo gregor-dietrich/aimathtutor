@@ -1,0 +1,113 @@
+/*
+   Vibranium (Lumo): vibranium black, gauntlet gold, 1337 mono.
+   The --design-* inks are turned into --lumo-* by lumo-inks.css. Lumo components read
+   --lumo-border-radius-*; the core components and the app's classes read --vaadin-radius-*, which
+   Lumo does not derive, so both are set. The design changes no spacing.
+*/
+html[data-design="vibranium"] {
+    --design-base-l: #f3effa;
+    --design-base-d: #0d0714;
+    --design-ink-l: #1b0d2e;
+    --design-ink-d: #eee8f8;
+    --design-primary-l: #5b1fc4;
+    --design-primary-d: #f2c230;
+    --design-on-primary-l: #ffffff;
+    --design-on-primary-d: #1a1200;
+    --design-primary-text-l: #5b1fc4;
+    --design-primary-text-d: #f5cf55;
+    --design-error-l: #cc1230;
+    --design-error-d: #ff3b57;
+    --design-success-l: #0b7f39;
+    --design-success-d: #39e27d;
+    --design-warning-l: #b45200;
+    --design-warning-d: #ff9a2e;
+    --design-font: "Chakra Petch", system-ui, sans-serif;
+    --design-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --design-gold: light-dark(#a87a06, #f2c230);
+    --design-violet: light-dark(#5b1fc4, #a970ff);
+    --design-heading: light-dark(#3a1580, #f2c230);
+    --lumo-border-radius-s: 1px;
+    --lumo-border-radius-m: 2px;
+    --lumo-border-radius-l: 2px;
+    --vaadin-radius-s: 1px;
+    --vaadin-radius-m: 2px;
+    --vaadin-radius-l: 2px;
+    background:
+        radial-gradient(55% 45% at 0% 100%, light-dark(#e2d2fa, #2b0f50), transparent 70%),
+        radial-gradient(40% 35% at 100% 0%, light-dark(#f6ead0, #2a1d04), transparent 70%),
+        var(--lumo-base-color);
+    background-attachment: fixed;
+}
+
+html[data-design="vibranium"] :is(h1, h2, h3) {
+    font-family: "Orbitron", "Chakra Petch", sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--design-heading);
+}
+
+/* Chamfered corners and a short gold rule along the top edge. */
+html[data-design="vibranium"] .glass-card {
+    background:
+        linear-gradient(var(--design-gold), var(--design-gold)) 18px 0 / 38% 2px no-repeat,
+        light-dark(rgb(255 255 255 / .8), rgb(255 255 255 / .035));
+    border: 0;
+    box-shadow: none;
+    clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+}
+
+/* Same rule as the card's own, so a card with an accent bar looks like one without. */
+html[data-design="vibranium"] .accent-bar {
+    left: 18px;
+    right: auto;
+    width: 38%;
+    height: 2px;
+    background: var(--design-gold);
+    border-radius: 0;
+}
+
+html[data-design="vibranium"] .chat-bubble-user {
+    background-color: light-dark(#e9defb, #2a1648);
+}
+
+html[data-design="vibranium"] .chat-bubble-tutor {
+    background-color: light-dark(#ffffff, #1a1028);
+}
+
+html[data-design="vibranium"] .app-top-bar {
+    background: light-dark(rgb(255 255 255 / .6), rgb(13 7 20 / .7));
+    border-bottom: 1px solid var(--design-gold);
+}
+
+html[data-design="vibranium"] vaadin-grid {
+    font-family: var(--design-mono);
+    font-size: 12.5px;
+}
+
+html[data-design="vibranium"] :is(vaadin-text-field, vaadin-password-field, vaadin-combo-box, vaadin-select, vaadin-date-picker) {
+    --vaadin-input-field-label-font-weight: 600;
+}
+
+/* Outlined mono badges. The status colours are set per theme because Lumo's own set the
+   background, which the rules below replace. */
+html[data-design="vibranium"] vaadin-badge {
+    --vaadin-badge-background: transparent;
+    --vaadin-badge-border-color: currentColor;
+    --vaadin-badge-border-radius: 0;
+    --vaadin-badge-text-color: var(--vaadin-text-color-secondary);
+    --vaadin-badge-font-family: var(--design-mono);
+    --vaadin-badge-font-size: 12.5px;
+    --vaadin-badge-font-weight: 600;
+}
+
+html[data-design="vibranium"] vaadin-badge[theme~="success"] {
+    --vaadin-badge-text-color: var(--app-success);
+}
+
+html[data-design="vibranium"] vaadin-badge[theme~="error"] {
+    --vaadin-badge-text-color: var(--app-error);
+}
+
+html[data-design="vibranium"] vaadin-badge[theme~="warning"] {
+    --vaadin-badge-text-color: var(--app-warning);
+}

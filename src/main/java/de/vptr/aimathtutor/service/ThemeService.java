@@ -1,137 +1,106 @@
 package de.vptr.aimathtutor.service;
 
+import org.jboss.logging.Logger;
+import org.jsoup.nodes.Document;
+
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.theme.aura.Aura;
 import com.vaadin.flow.theme.lumo.Lumo;
 
+import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Appearance.Base;
+import de.vptr.aimathtutor.dto.SessionCredentials;
+import de.vptr.aimathtutor.service.security.AuthService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 /**
- * Service for managing application theme preferences. Handles theme selection, persistence, and application across the
- * UI.
+ * Facade for the signed-in user's appearance (design and colour mode): reads it from the session, saves a change, and
+ * renders it into the bootstrap page so the first paint already has the right base stylesheet and attributes.
  */
 @ApplicationScoped
 public class ThemeService {
 
-    /**
-     * Enumeration of available application themes. Supports light, dark, and system-default theme modes.
-     */
-    public enum Theme {
-        LIGHT("Light", null), DARK("Dark", Lumo.DARK), SYSTEM("System", null);
+    private static final Logger LOG = Logger.getLogger(ThemeService.class);
 
-        private final String displayName;
-        @Nullable
-        private final String themeVariant;
+    private final AuthService authService;
+    private final UserService userService;
 
-        Theme(final String displayName, @Nullable final String themeVariant) {
-            this.displayName = displayName;
-            this.themeVariant = themeVariant;
-        }
-
-        /**
-         * Gets the user-friendly display name for this theme.
-         *
-         * @return the theme's display name
-         */
-        public String getDisplayName() {
-            return this.displayName;
-        }
-
-        /**
-         * Gets the Lumo theme variant string for this theme.
-         *
-         * @return the theme variant string, or null for automatic/default
-         */
-        @Nullable
-        public String getThemeVariant() {
-            return this.themeVariant;
-        }
-    }
-
-    private static final String THEME_SESSION_KEY = "selected_theme";
-
-    /**
-     * Retrieves the currently active theme for the session.
-     *
-     * @return the current {@link Theme}, defaults to SYSTEM if not set
-     */
-    public Theme getCurrentTheme() {
-        final var session = VaadinSession.getCurrent();
-        if (session != null) {
-            final var theme = (Theme) session.getAttribute(THEME_SESSION_KEY);
-            return theme != null ? theme : Theme.SYSTEM;
-        }
-        return Theme.SYSTEM;
+    @Inject
+    ThemeService(final AuthService authService, final UserService userService) {
+        this.authService = authService;
+        this.userService = userService;
     }
 
     /**
-     * Sets the theme for the current session and applies it to the UI.
+     * Returns the appearance of the current session.
      *
-     * @param theme
-     *            the {@link Theme} to set as current
+     * @return the session's appearance, or {@link Appearance#DEFAULT} when nobody is signed in
      */
-    public void setTheme(final Theme theme) {
-        final var session = VaadinSession.getCurrent();
-        if (session != null) {
-            session.setAttribute(THEME_SESSION_KEY, theme);
-        }
-        this.applyTheme(theme);
+    public Appearance current() {
+        final var appearance = this.authService.sessionAppearance();
+        return appearance != null ? appearance : Appearance.DEFAULT;
     }
 
     /**
-     * Applies the specified theme to the current UI. Handles theme application via Vaadin's UI theme list and
-     * JavaScript for system-default themes.
+     * Saves a change of appearance for the signed-in user, then stores what the row now holds in the session. A null
+     * argument leaves that field as stored. Runs off the UI thread. If the save fails, the exception propagates and the
+     * session is untouched.
      *
-     * @param theme
-     *            the {@link Theme} to apply
+     * @param session
+     *            the session that makes the change, captured on the UI thread
+     * @param credentials
+     *            the session's credentials, captured on the UI thread
+     * @param design
+     *            the design to save, or null to keep the stored one
+     * @param colorMode
+     *            the colour mode to save, or null to keep the stored one
      */
-    public void applyTheme(final Theme theme) {
-        final var ui = UI.getCurrent();
-        if (ui != null) {
-            final var themeList = ui.getElement().getThemeList();
-
-            switch (theme) {
-                case DARK -> {
-                    // Clear any document-level theme attributes and apply dark theme
-                    ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
-                    themeList.clear();
-                    themeList.add(Lumo.DARK);
-                }
-                case LIGHT -> {
-                    // Clear any document-level theme attributes and ensure light theme
-                    ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
-                    themeList.clear();
-                    // Light theme is default, no need to add anything to themeList
-                }
-                case SYSTEM -> {
-                    // Clear Vaadin theme list and use CSS media query to detect system preference
-                    themeList.clear();
-                    ui.getPage().executeJs(
-                            "if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {"
-                                    + "  document.documentElement.setAttribute('theme', 'dark');" + "} else {"
-                                    + "  document.documentElement.removeAttribute('theme');" + "}");
-                }
-                default -> {
-                    // Unknown theme - fall back to system and log
-                    themeList.clear();
-                    ui.getPage().executeJs("document.documentElement.removeAttribute('theme');");
-                }
-            }
-        }
+    public void saveForSession(final VaadinSession session, final SessionCredentials credentials,
+            @Nullable final Appearance.Design design, @Nullable final Appearance.ColorMode colorMode) {
+        final var stored = this.userService.updateAppearance(credentials, design, colorMode);
+        this.authService.rememberAppearance(session, credentials.userPublicId(), stored);
     }
 
     /**
-     * Gets the next theme in the cycle (LIGHT → DARK → SYSTEM → LIGHT).
+     * Applies the session's colour mode to the page already shown, without a reload.
      *
-     * @return the next {@link Theme} in the rotation
+     * @param ui
+     *            the UI to update
      */
-    public Theme getNextTheme() {
-        final var current = this.getCurrentTheme();
-        return switch (current) {
-            case LIGHT -> Theme.DARK;
-            case DARK -> Theme.SYSTEM;
-            case SYSTEM -> Theme.LIGHT;
-        };
+    public void applyColorMode(final UI ui) {
+        ui.getPage().executeJs("window.appAppearance?.setColorMode($0)", this.current().colorMode().getValue());
+    }
+
+    void onServiceInit(@Observes final ServiceInitEvent event) {
+        // The handler runs under the session lock, so the session attribute read in current() is safe.
+        event.addIndexHtmlRequestListener(response -> render(response.getDocument(), this.current()));
+    }
+
+    /**
+     * Writes the appearance into the bootstrap page: the design, base and colour mode attributes on {@code <html>}, and
+     * only the stylesheet link of the active base.
+     */
+    static void render(final Document page, final Appearance appearance) {
+        final var html = page.selectFirst("html");
+        if (html == null) {
+            LOG.warnf("Bootstrap page has no <html> element, appearance %s not rendered", appearance);
+        } else {
+            html.attr("data-design", appearance.design().getValue());
+            html.attr("data-base", appearance.design().getBase().getValue());
+            html.attr("data-color-mode", appearance.colorMode().getValue());
+        }
+
+        final var active = appearance.design().getBase();
+        final var unused = active == Base.AURA ? Lumo.STYLESHEET : Aura.STYLESHEET;
+        final var used = active == Base.AURA ? Aura.STYLESHEET : Lumo.STYLESHEET;
+        page.select("link[href*=\"" + unused + "\"]").remove();
+        if (page.select("link[href*=\"" + used + "\"]").isEmpty()) {
+            LOG.warnf("Bootstrap page has no stylesheet link for the %s base", active.getValue());
+        }
     }
 }

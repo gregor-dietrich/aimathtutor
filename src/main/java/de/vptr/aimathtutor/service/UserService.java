@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
@@ -604,11 +605,7 @@ public class UserService {
     @Transactional
     public String changePassword(final SessionCredentials credentials, final String currentPassword,
             final String newPassword) {
-        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
-        if (user == null || !user.activated || user.banned
-                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
-            throw new ValidationException("Your session has ended. Please sign in again.");
-        }
+        final UserEntity user = this.requireSessionUser(credentials);
 
         if (!this.loginAttemptService.tryRecordPasswordChangeAttempt(credentials.throttleKey())) {
             throw new ValidationException("Too many failed attempts. Try again later.");
@@ -631,6 +628,46 @@ public class UserService {
         final var stamp = Objects.requireNonNull(AuthService.credentialStamp(hashedPassword));
         this.fireAccountChanged(user);
         return stamp;
+    }
+
+    /**
+     * Update the calling user's appearance. The session is verified like in {@link #changePassword}. An appearance
+     * change does not end any session, so no {@link UserAccountChangedEvent} is fired.
+     * <p>
+     * A null argument leaves that field as stored, so each control writes only the field it owns and cannot revert a
+     * change made elsewhere.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param design
+     *            the design to store, or null to keep the stored one
+     * @param colorMode
+     *            the colour mode to store, or null to keep the stored one
+     * @return the appearance the row now holds
+     * @throws ValidationException
+     *             if the session has ended
+     */
+    @Transactional
+    public Appearance updateAppearance(final SessionCredentials credentials, @Nullable final Appearance.Design design,
+            @Nullable final Appearance.ColorMode colorMode) {
+        final UserEntity user = this.requireSessionUser(credentials);
+        if (design != null) {
+            user.design = design;
+        }
+        if (colorMode != null) {
+            user.colorMode = colorMode;
+        }
+        this.userRepository.persist(user);
+        return new Appearance(user.design, user.colorMode);
+    }
+
+    private UserEntity requireSessionUser(final SessionCredentials credentials) {
+        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
+        if (user == null || !user.activated || user.banned
+                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
+            throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
+        }
+        return user;
     }
 
     /**

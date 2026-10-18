@@ -1,0 +1,106 @@
+/*
+   Chalkboard (Lumo): slate board by night, graph-paper exam sheet by day.
+   The --design-* inks are turned into --lumo-* by lumo-inks.css. This design keeps Lumo's radii
+   and spacing; its wobbly hand-drawn corners are set on the elements that carry them.
+*/
+html[data-design="chalkboard"] {
+    --design-base-l: #fdfdfb;
+    --design-base-d: #1f2d26;
+    --design-ink-l: #25282d;
+    --design-ink-d: #eceee6;
+    --design-primary-l: #1f45b5;
+    --design-primary-d: #f3d35b;
+    --design-on-primary-l: #ffffff;
+    --design-on-primary-d: #2a2510;
+    --design-primary-text-l: #1f45b5;
+    --design-primary-text-d: #f6dd7a;
+    --design-error-l: #cc2a1f;
+    --design-error-d: #f59aaa;
+    --design-success-l: #1d7a3a;
+    --design-success-d: #a6e39a;
+    --design-warning-l: #a95400;
+    --design-warning-d: #f7b26a;
+    --design-on-error-d: #1f2d26;
+    --design-font: "Andika", system-ui, sans-serif;
+    --design-grid: light-dark(#d9e4f3, rgb(236 238 230 / .055));
+    --design-dust: light-dark(transparent, rgb(236 238 230 / .05));
+    --design-line: light-dark(#25282d, rgb(236 238 230 / .75));
+    --design-wobble: 255px 14px 225px 14px / 14px 225px 14px 255px;
+    --design-wobble-small: 120px 9px 110px 9px / 9px 110px 9px 120px;
+    --vaadin-input-field-background: light-dark(rgb(255 255 255 / .7), rgb(255 255 255 / .04));
+    background:
+        linear-gradient(var(--design-grid) 1px, transparent 1px) 0 0 / 20px 20px,
+        linear-gradient(90deg, var(--design-grid) 1px, transparent 1px) 0 0 / 20px 20px,
+        radial-gradient(55% 40% at 18% 22%, var(--design-dust), transparent 70%),
+        radial-gradient(45% 35% at 82% 78%, var(--design-dust), transparent 70%),
+        var(--lumo-base-color);
+    background-attachment: fixed;
+}
+
+html[data-design="chalkboard"] :is(h1, h2, h3) {
+    font-family: "Kalam", "Segoe Print", "Bradley Hand", cursive;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+html[data-design="chalkboard"] .glass-card {
+    background: light-dark(rgb(255 255 255 / .82), rgb(255 255 255 / .02));
+    border: 2px solid var(--design-line);
+    border-radius: var(--design-wobble);
+    box-shadow: none;
+}
+
+/* A highlighter tab inset from the wobbly corners. */
+html[data-design="chalkboard"] .accent-bar {
+    left: 18px;
+    right: 18px;
+    border-radius: 0 0 4px 4px;
+    background: var(--app-accent);
+}
+
+html[data-design="chalkboard"] .chat-bubble {
+    border-radius: var(--design-wobble);
+}
+
+html[data-design="chalkboard"] .chat-bubble-user {
+    background-color: light-dark(#e6ecfa, rgb(243 211 91 / .14));
+}
+
+html[data-design="chalkboard"] .chat-bubble-tutor {
+    background-color: light-dark(#ffffff, rgb(255 255 255 / .06));
+}
+
+/* A double rule by day, a heavy chalk-tray line by night (the dark rule replaces the light one). */
+html[data-design="chalkboard"] .app-top-bar {
+    background: light-dark(#ffffff, #2b2219);
+    border-bottom: 3px double #9db6dc;
+}
+
+html[data-design="chalkboard"][data-color-scheme="dark"] .app-top-bar {
+    border-bottom: 5px solid #1c1610;
+}
+
+html[data-design="chalkboard"] vaadin-button:not([theme~="primary"], [theme~="tertiary"], .app-top-bar vaadin-button) {
+    --vaadin-button-background: transparent;
+}
+
+html[data-design="chalkboard"] vaadin-badge {
+    --vaadin-badge-background: transparent;
+    --vaadin-badge-border-color: currentColor;
+    --vaadin-badge-border-width: 1.5px;
+    --vaadin-badge-border-radius: 40px 8px 36px 8px / 8px 36px 8px 40px;
+    --vaadin-badge-text-color: var(--vaadin-text-color-secondary);
+    --vaadin-badge-font-weight: 600;
+}
+
+html[data-design="chalkboard"] vaadin-badge[theme~="success"] {
+    --vaadin-badge-text-color: var(--app-success);
+}
+
+html[data-design="chalkboard"] vaadin-badge[theme~="error"] {
+    --vaadin-badge-text-color: var(--app-error);
+}
+
+html[data-design="chalkboard"] vaadin-badge[theme~="warning"] {
+    --vaadin-badge-text-color: var(--app-warning);
+}

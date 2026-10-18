@@ -29,6 +29,7 @@ import org.mockito.MockedStatic;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinSession;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.UserAccountChangedEvent;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -54,6 +55,7 @@ class AuthServiceSessionTest {
     private static final String SESSION_TOKEN_KEY = "authenticated.sessionToken";
     private static final String AUTHENTICATED_KEY = "authenticated.status";
     private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
+    private static final String APPEARANCE_KEY = "authenticated.appearance";
 
     /** A logged-in session that validated against the DB just now. */
     private static VaadinSession cachedSessionFor(final UserEntity user) {
@@ -309,6 +311,53 @@ class AuthServiceSessionTest {
 
         verify(signedOut, never()).setAttribute(any(String.class), any());
         verify(otherAccount, never()).setAttribute(any(String.class), any());
+    }
+
+    @Test
+    @DisplayName("rememberAppearance writes for the owning session")
+    @TestTransaction
+    void rememberAppearanceWritesForOwner() {
+        final var user = this.userRepository.findByUsername("student1");
+        final VaadinSession owner = AuthServiceTest.sessionFor(user);
+        final var appearance = new Appearance(Appearance.Design.POWER_UP, Appearance.ColorMode.DARK);
+
+        this.authService.rememberAppearance(owner, user.publicId, appearance);
+
+        verify(owner).setAttribute(APPEARANCE_KEY, appearance);
+        verify(owner).unlock();
+    }
+
+    @Test
+    @DisplayName("rememberAppearance writes nothing once the session signed out or into another account")
+    @TestTransaction
+    void rememberAppearanceSkipsChangedSession() {
+        final var user = this.userRepository.findByUsername("student1");
+        final VaadinSession signedOut = mock(VaadinSession.class);
+        final VaadinSession otherAccount = mock(VaadinSession.class);
+        when(otherAccount.getAttribute(USER_PUBLIC_ID_KEY)).thenReturn("01SOMEOTHERACCOUNTPUBLICID");
+
+        this.authService.rememberAppearance(signedOut, user.publicId, Appearance.DEFAULT);
+        this.authService.rememberAppearance(otherAccount, user.publicId, Appearance.DEFAULT);
+
+        verify(signedOut, never()).setAttribute(any(String.class), any());
+        verify(otherAccount, never()).setAttribute(any(String.class), any());
+        verify(signedOut).unlock();
+        verify(otherAccount).unlock();
+    }
+
+    @Test
+    @DisplayName("sessionAppearance reads the stored appearance and is null without a session or a value")
+    void sessionAppearanceReadsSession() {
+        assertNull(this.authService.sessionAppearance());
+        final var appearance = new Appearance(Appearance.Design.VIBRANIUM, Appearance.ColorMode.LIGHT);
+        final VaadinSession withValue = mock(VaadinSession.class);
+        when(withValue.getAttribute(APPEARANCE_KEY)).thenReturn(appearance);
+        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(withValue);
+            assertEquals(appearance, this.authService.sessionAppearance());
+            mockedSession.when(VaadinSession::getCurrent).thenReturn(mock(VaadinSession.class));
+            assertNull(this.authService.sessionAppearance());
+        }
     }
 
     @Test
