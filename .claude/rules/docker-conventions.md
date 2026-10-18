@@ -20,8 +20,9 @@ paths:
   add operator options via `JDK_JAVA_OPTIONS`, without baking its value into
   the image.
 - **Compose defaults are placeholders:** every credential or
-  deployment-specific value comes from `${VAR:-default}`, and a default is
-  never a real secret (`changeit`, `not-configured`). The same holds for the
+  deployment-specific value comes from `${VAR:-default}`, or from
+  `${VAR:?message}` where no placeholder should work, and a default is never a
+  real secret (`changeit`, `not-configured`). The same holds for the
   production `deploy/compose.yml`, downloaded as `docker-compose.yml` by
   `docs/QUICKSTART.md`. Root Compose builds from the checkout; production
   Compose runs the published image. Keep PostgreSQL tag/digest parity with

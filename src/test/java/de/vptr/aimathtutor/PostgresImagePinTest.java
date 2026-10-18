@@ -37,6 +37,8 @@ class PostgresImagePinTest {
         final var properties = Files.readString(Path.of("src/main/resources/application.properties"));
         final var devServicesPin = DEV_SERVICES_PIN.matcher(properties);
         assertTrue(devServicesPin.find(), "Dev Services needs a digest-only pin immediately after its tag comment");
+        assertEquals(1, properties.split("devservices\\.image-name=", -1).length - 1,
+                "A second Dev Services image-name property would override the checked pin");
         assertEquals(composePin.group(1), devServicesPin.group(1), "Dev Services tag comment must match Compose");
         assertEquals(composePin.group(2), devServicesPin.group(2), "Dev Services digest must match Compose");
     }

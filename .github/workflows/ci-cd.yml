@@ -25,12 +25,6 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # lint-secrets scans the full history; a shallow clone fails it
-      - name: Validate development and production Compose configurations
-        run: |
-          compose_qa_dir=$(mktemp -d)
-          cp .env.example "$compose_qa_dir/.env"
-          docker compose --project-directory "$compose_qa_dir" -f docker-compose.yml config --quiet
-          docker compose --project-directory "$compose_qa_dir" -f deploy/compose.yml config --quiet
       # devkit's Markdown gate needs node on PATH; Vaadin's own Node.js under ~/.vaadin is not on it.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -60,6 +54,14 @@ jobs:
       # gate (the job stays red), so one push shows every problem.
       - name: Repository gates (devkitw, pins, decisions, secrets, Markdown)
         run: make -k lint-repo
+      # Inputs go to a temporary project directory: a .env in the checkout would reach the Quarkus tests.
+      - name: Validate development and production Compose configurations
+        if: ${{ !cancelled() }}
+        run: |
+          compose_qa_dir=$(mktemp -d)
+          cp .env.example "$compose_qa_dir/.env"
+          docker compose --project-directory "$compose_qa_dir" -f docker-compose.yml config --quiet
+          docker compose --project-directory "$compose_qa_dir" -f deploy/compose.yml config --quiet
       - name: Test frontend lifecycle scripts
         if: ${{ !cancelled() }}
         run: make test-scripts

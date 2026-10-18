@@ -378,11 +378,12 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 | License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license the parent's allowlist and `pom.xml`'s appends don't name (`mvn verify` without `-q` lists each)             |
 
 CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
-fails, then `make test-scripts`, then `make -o test-scripts test` with
-`MAVEN_ARGS=-DskipITs=false`; the `-o` skips the prerequisite already run, so a
-failing script test doesn't stop the Java tests; both run regardless of the
-gate's result) and `security` (CodeQL around `make install`, then `make audit`
-when `NVD_API_KEY` is set; only that step receives the key) run in parallel,
+fails, then the Compose validation, then `make test-scripts`, then
+`make -o test-scripts test` with `MAVEN_ARGS=-DskipITs=false`; the `-o` skips
+the prerequisite already run, so a failing script test doesn't stop the Java
+tests; each runs regardless of the steps before it) and `security` (CodeQL
+around `make install`, then `make audit` when `NVD_API_KEY` is set; only that
+step receives the key) run in parallel,
 then `build` (`make install` with `MAVEN_ARGS=-Pproduction`: package, spotless,
 SpotBugs, Checkstyle, PMD, CPD). A push-only
 `dependency-submission` job submits the Maven dependency graph after
@@ -437,7 +438,9 @@ new license (as UPL-1.0 was) needs the maintainer's approval.
   PostgreSQL tag and digest; Dev Services uses `postgres@sha256:<digest>`
   with the matching tag in the immediately preceding comment. Keep all
   three in step; plain JUnit `PostgresImagePinTest` checks parity. Dependabot
-  covers both Compose directories and keeps PostgreSQL on 18.x.
+  covers both Compose directories and keeps PostgreSQL on 18.x. Its PostgreSQL
+  bumps change only the Compose files, so the parity test fails on that PR
+  until the Dev Services digest and its tag comment are updated there by hand.
 - **Schema strategy:** Flyway owns the schema in all profiles. Hibernate is
   `validate`-only. Migrations live in `src/main/resources/db/migration`, and
   dev/test demo data lives in `db/demo/R__demo_data.sql`. Profiles are picked at
@@ -563,9 +566,12 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   required runtime arguments are explicit before `-jar` in both entrypoints.
   Add operator options with `JDK_JAVA_OPTIONS` (for example `-Xmx512m`);
   Compose passes it through from `.env`.
-- **Compose validation:** CI runs `docker compose -f <file> config --quiet`
-  for root and production files with placeholder `.env` inputs. Also validate
-  the optional `ollama` service/volume when changing their commented blocks.
+- **Compose validation:** CI runs
+  `docker compose --project-directory <tmp> -f <file> config --quiet` for root
+  and production files, with `.env.example` copied to `<tmp>/.env`; a `.env`
+  in the checkout would reach the Quarkus tests. Also validate the optional
+  `pgadmin` and `ollama` services and volumes when changing their commented
+  blocks.
 - **Build:** `scripts/build.sh` via `make build` — host-platform images into the
   local image store (`docker buildx build --load`, or plain `docker build`
   without buildx).
