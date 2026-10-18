@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,7 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestLogCapture;
 import de.vptr.aimathtutor.util.TestUserRankFactory;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
@@ -774,6 +776,43 @@ class UserServiceTest {
 
         assertEquals("Too many failed attempts. Try again later.", e.getMessage());
         verify(this.passwordHashingService, never()).verifyPassword(eq(VALID_PASSWORD), any());
+    }
+
+    @Test
+    @DisplayName("changePassword logs a refusal by its throttle at WARN without the password")
+    @TestTransaction
+    void testChangePassword_throttleRefusalLogged() {
+        final var user = this.createAndFetchUser();
+        final var credentials = credentialsFor(user);
+        for (int i = 0; i < 5; i++) {
+            this.failToChangePassword(credentials);
+        }
+
+        final var records = TestLogCapture.capture(UserService.class, () -> assertThrows(ValidationException.class,
+                () -> this.userService.changePassword(credentials, VALID_PASSWORD, "N3wP@ssword!")));
+
+        final var warnings = records.stream().filter(r -> r.getLevel().equals(Level.WARNING)).toList();
+        assertEquals(1, warnings.size());
+        final var message = String.valueOf(warnings.getFirst().getMessage());
+        assertTrue(message.contains(String.valueOf(user.publicId)), message);
+        assertFalse(message.contains(VALID_PASSWORD), message);
+    }
+
+    @Test
+    @DisplayName("changePassword rejects an invalid new password before checking the current password")
+    @TestTransaction
+    void testChangePassword_invalidNewPasswordRejectedBeforeCurrentPasswordCheck() {
+        final var credentials = credentialsFor(this.createAndFetchUser());
+
+        final var e = assertThrows(ValidationException.class,
+                () -> this.userService.changePassword(credentials, "WrongP@ss1", "alllowercase"));
+
+        assertEquals("Password must contain at least one uppercase letter, one lowercase letter, one digit, "
+                + "and one special character", e.getMessage());
+        verify(this.passwordHashingService, never()).verifyPassword(eq("WrongP@ss1"), any());
+        for (int i = 0; i < 5; i++) {
+            this.failToChangePassword(credentials);
+        }
     }
 
     @Test
