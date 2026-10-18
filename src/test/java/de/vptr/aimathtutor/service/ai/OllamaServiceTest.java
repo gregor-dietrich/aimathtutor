@@ -3,7 +3,7 @@ package de.vptr.aimathtutor.service.ai;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,10 +12,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.vptr.aimathtutor.dto.OllamaResponseDto;
 import de.vptr.aimathtutor.dto.OllamaTagsResponseDto;
 import de.vptr.aimathtutor.exception.ProviderException;
+import de.vptr.aimathtutor.util.RetryAnnotationVerifier;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
@@ -53,7 +56,20 @@ class OllamaServiceTest extends AbstractJaxRsAiServiceTest {
         when(this.mockResponse.getStatus()).thenReturn(500);
         when(this.mockResponse.readEntity(String.class)).thenReturn("Internal Server Error");
 
-        assertThrows(ProviderException.class, () -> this.ollamaService.generateContent("Test prompt"));
+        assertThrowsExactly(ProviderException.class, () -> this.ollamaService.generateContent("Test prompt"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 400, 401, 403, 404 })
+    @DisplayName("generateContent should preserve permanent HTTP failures")
+    void testGenerateContentPermanentHttpError(final int status) {
+        this.assertPermanentHttpFailure(status, () -> this.ollamaService.generateContent("Test prompt"));
+    }
+
+    @Test
+    @DisplayName("Should abort retries for permanent Ollama failures")
+    void generateContentShouldHaveRetryAnnotation() throws NoSuchMethodException {
+        RetryAnnotationVerifier.verifyRetryAnnotation(OllamaService.class, "generateContent", String.class);
     }
 
     @Test

@@ -22,8 +22,10 @@ paths:
   `AppConstants.RETRY_*` values; health checks such as
   `OllamaService.isAvailable()` do not retry. Throw `ProviderException` for a
   transient failure and `NonRetryableProviderException` for one a retry cannot
-  fix (missing key, blocked content, misconfiguration). Which HTTP statuses
-  count as transient is open in #199.
+  fix (missing key, blocked content, misconfiguration). The shared
+  `ProviderException.httpFailure` factory classifies HTTP 400–499 as permanent
+  except 408 and 429; transport failures, 408/429 and 5xx remain retryable.
+  Both HTTP exception categories preserve the provider, status and message.
 - **Timeouts** are set on the JAX-RS client that `AbstractProviderService`
   builds, from `getConnectTimeoutSeconds()`/`getReadTimeoutSeconds()`; the
   code uses no `@Timeout`.

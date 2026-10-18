@@ -1,12 +1,16 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.function.Executable;
 
+import de.vptr.aimathtutor.exception.NonRetryableProviderException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
@@ -38,6 +42,13 @@ public abstract class AbstractJaxRsAiServiceTest extends AbstractAiServiceTest {
 
         setupClient();
         mockCommonConfig();
+    }
+
+    protected void assertPermanentHttpFailure(final int status, final Executable request) {
+        when(this.mockResponse.getStatus()).thenReturn(status);
+        when(this.mockResponse.readEntity(String.class)).thenReturn("Request rejected");
+        final var failure = assertThrowsExactly(NonRetryableProviderException.class, request);
+        assertEquals(status, failure.getHttpStatus());
     }
 
     /**

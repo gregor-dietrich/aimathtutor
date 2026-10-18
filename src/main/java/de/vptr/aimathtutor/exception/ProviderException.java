@@ -26,9 +26,13 @@ public class ProviderException extends RuntimeException {
     private final int httpStatus;
 
     /**
-     * Build an exception backed by an HTTP failure.
+     * Build an exception backed by an HTTP failure. Client errors are permanent except for request timeouts (408) and
+     * rate limits (429), which remain eligible for retry.
      */
     public static ProviderException httpFailure(final String providerName, final int httpStatus, final String message) {
+        if (httpStatus >= 400 && httpStatus < 500 && httpStatus != 408 && httpStatus != 429) {
+            return new NonRetryableProviderException(providerName, message, httpStatus);
+        }
         return new ProviderException(providerName, message, httpStatus, null);
     }
 

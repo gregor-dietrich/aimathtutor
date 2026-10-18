@@ -1,9 +1,9 @@
 package de.vptr.aimathtutor.exception;
 
 /**
- * Permanent AI provider failure: missing API key, invalid configuration, content blocked by safety filters, or
- * empty/truncated response that retrying would not fix. Used as the {@code abortOn} target for {@code @Retry} on the
- * provider services so the call fails fast.
+ * Permanent AI provider failure: a client HTTP error other than 408/429, missing API key, invalid configuration,
+ * content blocked by safety filters, or empty/truncated response that retrying would not fix. Used as the
+ * {@code abortOn} target for {@code @Retry} on the provider services so the call fails fast.
  */
 public class NonRetryableProviderException extends ProviderException {
 
@@ -15,5 +15,9 @@ public class NonRetryableProviderException extends ProviderException {
 
     public NonRetryableProviderException(final String providerName, final String message, final Throwable cause) {
         super(providerName, message, NO_HTTP_STATUS, cause);
+    }
+
+    public NonRetryableProviderException(final String providerName, final String message, final int httpStatus) {
+        super(providerName, message, httpStatus, null);
     }
 }
