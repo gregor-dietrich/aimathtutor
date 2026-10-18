@@ -1,8 +1,10 @@
 package de.vptr.aimathtutor.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mockStatic;
 
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +20,8 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
 
 @QuarkusTest
 class ServiceRejectionUtilTest {
@@ -51,6 +55,23 @@ class ServiceRejectionUtilTest {
             notifications.verify(() -> NotificationUtil.showError("Username '" + username + "' is already taken"));
             notifications.verifyNoMoreInteractions();
         }
+    }
+
+    @Test
+    void testRejectionMessage_plainMessage() {
+        assertEquals("Username taken",
+                ServiceRejectionUtil.rejectionMessage(new ValidationException("Username taken")));
+    }
+
+    @Test
+    void testRejectionMessage_nullMessage() {
+        assertEquals("Invalid input", ServiceRejectionUtil.rejectionMessage(new ValidationException()));
+    }
+
+    @Test
+    void testRejectionMessage_noViolations() {
+        assertEquals("Invalid input",
+                ServiceRejectionUtil.rejectionMessage(new ConstraintViolationException("ignored", Set.of())));
     }
 
     private static UserDto buildDto(final String username) {

@@ -34,7 +34,6 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import jakarta.validation.ValidationException;
 
 /**
  * User settings view for choosing the appearance (design and colour mode), changing the password and customizing chat
@@ -46,9 +45,6 @@ import jakarta.validation.ValidationException;
 @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
         justification = "Vaadin lifecycle: fields are built before these methods run")
 public class UserSettingsView extends VerticalLayout implements BeforeEnterObserver {
-
-    private record PasswordChangeResult(@Nullable String rejectionMessage) {
-    }
 
     @Inject
     private transient AuthService authService;
@@ -235,7 +231,6 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.newPasswordField.setRequired(true);
         this.newPasswordField.setHelperText("Between " + AppConstants.PASSWORD_MIN_LENGTH + " and "
                 + AppConstants.PASSWORD_MAX_LENGTH + " characters with uppercase, lowercase, digit and symbol");
-        this.newPasswordField.setMaxLength(AppConstants.PASSWORD_MAX_LENGTH);
         this.newPasswordField.setWidthFull();
 
         this.confirmPasswordField = new PasswordField("Confirm New Password");
@@ -386,21 +381,11 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.setPasswordControlsEnabled(changePasswordButton, false);
 
         AsyncDataLoader.load(() -> {
-            final String stamp;
-            try {
-                stamp = this.userService.changePassword(credentials, currentPassword, newPassword);
-            } catch (final ValidationException e) {
-                final var message = e.getMessage();
-                return new PasswordChangeResult(message != null ? message : "Password could not be changed");
-            }
+            final var stamp = this.userService.changePassword(credentials, currentPassword, newPassword);
             this.authService.renewCredentialStamp(session, credentials.userPublicId(), stamp);
-            return new PasswordChangeResult(null);
-        }, this, result -> {
+            return Boolean.TRUE;
+        }, this, ignored -> {
             this.setPasswordControlsEnabled(changePasswordButton, true);
-            if (result.rejectionMessage() != null) {
-                NotificationUtil.showError(result.rejectionMessage());
-                return;
-            }
             this.currentPasswordField.clear();
             this.newPasswordField.clear();
             this.confirmPasswordField.clear();

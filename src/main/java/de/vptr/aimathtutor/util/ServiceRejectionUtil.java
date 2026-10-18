@@ -9,11 +9,14 @@ import jakarta.validation.ValidationException;
 /**
  * Shows why a service rejected a write, such as a save or delete. Services reject invalid input with
  * {@link ValidationException}, which shares its simple name with the binder's exception that the views import, so the
- * views catch it through this helper.
+ * views catch it through this helper. The message mapping is shared with {@link AsyncDataLoader}, which shows the same
+ * text for a rejection thrown inside an asynchronous load.
  */
 public final class ServiceRejectionUtil {
 
     private static final Logger LOG = Logger.getLogger(ServiceRejectionUtil.class);
+
+    private static final String INVALID_INPUT = "Invalid input";
 
     private ServiceRejectionUtil() {
     }
@@ -30,12 +33,25 @@ public final class ServiceRejectionUtil {
         try {
             serviceCall.run();
             return true;
-        } catch (final ConstraintViolationException e) {
-            return showRejection(e.getConstraintViolations().stream().map(ServiceRejectionUtil::describe)
-                    .reduce((a, b) -> a + "; " + b).orElse("Invalid input"));
         } catch (final ValidationException e) {
-            return showRejection(e.getMessage() != null ? e.getMessage() : "Invalid input");
+            return showRejection(rejectionMessage(e));
         }
+    }
+
+    /**
+     * Maps a service rejection to the text shown to the user: the violations of a {@link ConstraintViolationException}
+     * joined with "; ", otherwise the exception's message. Falls back to "Invalid input" when there is nothing to show.
+     *
+     * @param e
+     *            the rejection thrown by a service
+     * @return the user-facing message
+     */
+    public static String rejectionMessage(final ValidationException e) {
+        if (e instanceof final ConstraintViolationException cve) {
+            return cve.getConstraintViolations().stream().map(ServiceRejectionUtil::describe)
+                    .reduce((a, b) -> a + "; " + b).orElse(INVALID_INPUT);
+        }
+        return e.getMessage() != null ? e.getMessage() : INVALID_INPUT;
     }
 
     private static String describe(final ConstraintViolation<?> violation) {

@@ -180,11 +180,15 @@ however.
   directly. Enforced by Checkstyle `IllegalImport`.
 - **Vaadin UI threading:** Never block the UI thread. Load view data through
   `AsyncDataLoader.load(...)` (`util/`), which runs the call off the UI thread
-  with a timeout and applies the result or the error in `ui.access()`. Where it
-  doesn't fit, use `CompletableFuture.supplyAsync()` on the view's injected
-  `ManagedExecutor` + `ui.access()` + `.exceptionally()`. Never use the common
-  ForkJoinPool: under `make dev` its threads lack the app's class loader, so a
-  bean first created there cannot read its config.
+  with a timeout and applies the result or the error in `ui.access()`: a
+  service's `ValidationException` shows its message (an ended session returns
+  to login), a timeout says the outcome is unknown, and any other error is
+  logged once. Where it doesn't fit, use `CompletableFuture.supplyAsync()` on
+  the view's injected `ManagedExecutor` + `ui.access()` + `.exceptionally()`.
+  Never use the common ForkJoinPool directly: under `make dev` its threads lack
+  the app's class loader, so a bean first created there cannot read its config.
+  `AsyncDataLoader` runs on it only because it hands the caller's context class
+  loader to the worker thread for the call.
 
 ```java
 final var ui = getUI().orElse(null);
