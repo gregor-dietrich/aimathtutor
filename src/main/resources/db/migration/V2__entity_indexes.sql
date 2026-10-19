@@ -1,6 +1,7 @@
 -- V2: indexes the entities used to declare via @Table(indexes = ...) but that the
 -- baseline never created. Migrations are now the single source of truth for indexes.
--- It also adds the per-user appearance columns to users (last section).
+-- It also adds the per-user appearance columns to users and rewrites the 4.0.x demo
+-- exercises' hints (last two sections).
 --
 -- Skipped, because V1 already has an index on the same table, columns and order:
 --   idx_comment_user_created       -> idx_comments_user_created        comments (user_id, created)
@@ -73,3 +74,26 @@ DROP INDEX IF EXISTS user_groups_meta_user_id_idx;
 ALTER TABLE users
     ADD COLUMN design VARCHAR(20) NOT NULL DEFAULT 'VELLUM',
     ADD COLUMN color_mode VARCHAR(20) NOT NULL DEFAULT 'SYSTEM';
+
+-- Hints are stored one per line. The 4.0.x seed stored its demo exercises' hints as JSON arrays, which
+-- show as one raw "Hint 1". Only a value that is still the seed's exact text is rewritten, so an exercise
+-- an author has edited keeps its hints. Fresh installations have no such rows.
+UPDATE exercises e
+SET graspable_hints = v.hints
+FROM (VALUES
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD0', '["Isolate the term with x","Subtract 3 from both sides","Divide both sides by 2"]',
+        E'Isolate the term with x\nSubtract 3 from both sides\nDivide both sides by 2'),
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD1', '["Divide both sides by 3","Then add 2 to both sides"]',
+        E'Divide both sides by 3\nThen add 2 to both sides'),
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD2', '["Eliminate fractions by multiplying both sides","Isolate x"]',
+        E'Eliminate fractions by multiplying both sides\nIsolate x'),
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD3', '["Use distributive property","Combine like terms"]',
+        E'Use distributive property\nCombine like terms'),
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD4', '["Find two numbers that multiply to 6 and add to -5","Set each factor to zero"]',
+        E'Find two numbers that multiply to 6 and add to -5\nSet each factor to zero'),
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD5', '["Move constant to the right","Add (b/2)^2 to both sides","Take square root of both sides"]',
+        E'Move constant to the right\nAdd (b/2)^2 to both sides\nTake square root of both sides'),
+    ('01ARZ3NDEKTSV4RRFFQ69G5FD6', '["Identify a, b, c","Apply the quadratic formula","Simplify the results"]',
+        E'Identify a, b, c\nApply the quadratic formula\nSimplify the results')
+) AS v (public_id, seeded, hints)
+WHERE e.public_id = v.public_id AND e.graspable_hints = v.seeded;

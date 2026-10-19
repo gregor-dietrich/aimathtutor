@@ -16,14 +16,14 @@ import jakarta.inject.Inject;
 
 /**
  * Refuses a production launch with the dev or test profile. Profiles are chosen at runtime, so a production jar started
- * with {@code QUARKUS_PROFILE=dev} would apply {@code %dev,test}'s drop-and-create and drop and recreate every table
- * Hibernate maps. Hibernate runs that DDL before {@code StartupEvent}, so this observes the container's initialization
- * instead, which Quarkus fires during static init, before Hibernate starts.
+ * with {@code QUARKUS_PROFILE=dev} would apply {@code %dev,test}'s Flyway clean-at-start and wipe the production schema
+ * ({@link FlywayCleanGuard} also disables clean there). Flyway runs before {@code StartupEvent}, so this observes the
+ * container's initialization instead, which Quarkus fires during static init, before Flyway and Hibernate start.
  * <p>
- * Every Maven build logs a Quarkus warning that recommends {@code StartupEvent} for this observer (dev mode silences it
- * through its log category). Do not follow it: a {@code StartupEvent} observer runs after the tables are gone. In a
- * native image, static init runs at image build time, so this guard would not run at startup; the application ships as
- * a JVM image only.
+ * Maven builds log a Quarkus warning that recommends {@code StartupEvent} for this observer; dev mode hides it through
+ * the processor's log category in {@code application.properties}. Do not follow it: a {@code StartupEvent} observer
+ * runs after Flyway has already acted on the database. In a native image, static init runs at image build time, so this
+ * guard would not run at startup; the application ships as a JVM image only.
  */
 @ApplicationScoped
 public class ProductionProfileGuard {
