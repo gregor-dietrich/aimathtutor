@@ -90,7 +90,9 @@ public class AdminUsersView extends AbstractAdminView {
 
     private void loadUsersAsync() {
         LOG.info("Starting async user loading");
-        AsyncDataLoader.load(() -> this.userService.getAllUsers(), this, users -> {
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.userService.getAllUsers(credentials), this, users -> {
             LOG.infof("Successfully loaded %s users", users.size());
             this.grid.setItems(users);
         }, "Failed to load users. Please try again.");
@@ -462,7 +464,8 @@ public class AdminUsersView extends AbstractAdminView {
         }
         this.searchButton.setEnabled(false);
         this.searchButton.setText("Searching...");
-        AsyncDataLoader.load(() -> this.userService.searchUsers(query.trim()), this, users -> {
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.userService.searchUsers(credentials, query.trim()), this, users -> {
             this.searchButton.setEnabled(true);
             this.searchButton.setText("Search");
             this.grid.setItems(users);

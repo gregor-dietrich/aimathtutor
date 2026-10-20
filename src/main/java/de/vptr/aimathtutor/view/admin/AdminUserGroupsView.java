@@ -368,17 +368,21 @@ public class AdminUserGroupsView extends AbstractAdminView {
     }
 
     private void loadGroupUsers() {
-        AsyncDataLoader.load(() -> this.groupService.getUsersInGroup(this.selectedGroup.publicId), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        final var groupPublicId = this.selectedGroup.publicId;
+        AsyncDataLoader.load(() -> this.groupService.getUsersInGroup(credentials, groupPublicId), this,
                 users -> this.userGrid.setItems(users), "Unexpected error occurred");
     }
 
     private void loadAvailableUsers() {
+        final var credentials = this.authService.currentSessionCredentials();
+        final var groupPublicId = this.selectedGroup.publicId;
         AsyncDataLoader.load(() -> {
-            final var allUsers = this.userService.getAllUsers();
+            final var allUsers = this.userService.getAllUsers(credentials);
             if (allUsers == null) {
                 return List.<UserViewDto>of();
             }
-            final var currentUsers = this.groupService.getUsersInGroup(this.selectedGroup.publicId);
+            final var currentUsers = this.groupService.getUsersInGroup(credentials, groupPublicId);
             final var currentUserPublicIds = currentUsers == null ? Set.<String>of()
                     : currentUsers.stream().map(user -> user.publicId).collect(Collectors.toSet());
             return allUsers.stream().filter(user -> !currentUserPublicIds.contains(user.publicId))

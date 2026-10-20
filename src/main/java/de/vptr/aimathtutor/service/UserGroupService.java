@@ -6,17 +6,20 @@ import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
 
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserGroupEntity;
 import de.vptr.aimathtutor.entity.UserGroupMetaEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserGroupMetaRepository;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -83,14 +86,22 @@ public class UserGroupService {
     /**
      * Retrieves all users in a specific group.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param groupPublicId
      *            the group public ID
      * @return a list of {@link UserViewDto}s in the group
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      * @throws WebApplicationException
      *             if group not found (NOT_FOUND status)
      */
     @Transactional
-    public List<UserViewDto> getUsersInGroup(final String groupPublicId) {
+    public List<UserViewDto> getUsersInGroup(@Nullable final SessionCredentials credentials,
+            final String groupPublicId) {
+        this.permissionService.requireAdminView(credentials);
         final UserGroupEntity group = this.userGroupRepository.findByPublicId(groupPublicId).orElse(null);
         if (group == null) {
             throw new WebApplicationException("Group not found", Response.Status.NOT_FOUND);

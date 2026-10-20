@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -43,6 +44,7 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -107,6 +109,10 @@ class UserServiceTest {
         // The caller is an administrator unless a test says otherwise, so the privilege ceiling never applies
         when(this.permissionService.findCurrentUserRank())
                 .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
+    }
+
+    private SessionCredentials adminCredentials() {
+        return credentialsFor(this.userRepository.findByUsername("admin"));
     }
 
     private UserDto buildValidDto() {
@@ -420,7 +426,7 @@ class UserServiceTest {
     @DisplayName("Should return all users including seeded accounts")
     @TestTransaction
     void shouldGetAllUsersIncludingSeeded() {
-        final var users = this.userService.getAllUsers();
+        final var users = this.userService.getAllUsers(this.adminCredentials());
         assertNotNull(users);
         assertTrue(users.size() >= 4, "Expected ≥4 seeded users, got " + users.size());
     }
@@ -445,7 +451,7 @@ class UserServiceTest {
     @DisplayName("searchUsers with blank query returns all users")
     @TestTransaction
     void testSearchUsers_blank() {
-        final var results = this.userService.searchUsers("");
+        final var results = this.userService.searchUsers(this.adminCredentials(), "");
         assertNotNull(results);
         assertTrue(results.size() >= 4, "Blank search should return all users");
     }
@@ -454,7 +460,7 @@ class UserServiceTest {
     @DisplayName("searchUsers with username prefix returns matching users")
     @TestTransaction
     void testSearchUsers_byUsername() {
-        final var results = this.userService.searchUsers("admin");
+        final var results = this.userService.searchUsers(this.adminCredentials(), "admin");
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.stream().anyMatch(u -> "admin".equals(u.username)));
@@ -464,7 +470,7 @@ class UserServiceTest {
     @DisplayName("searchUsers with non-matching term returns empty list")
     @TestTransaction
     void testSearchUsers_noMatch() {
-        final var results = this.userService.searchUsers("zzz_no_match_xyz_999");
+        final var results = this.userService.searchUsers(this.adminCredentials(), "zzz_no_match_xyz_999");
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -475,7 +481,8 @@ class UserServiceTest {
     void testSearchUsers_emailWithEscapeChar() {
         // "@"-containing terms go to the blind-index equality lookup, which must receive the raw term;
         // a '!' in the local-part must neither fail the query nor be escaped away.
-        final var results = assertDoesNotThrow(() -> this.userService.searchUsers("foo!bar@example.com"));
+        final var results =
+                assertDoesNotThrow(() -> this.userService.searchUsers(this.adminCredentials(), "foo!bar@example.com"));
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -491,7 +498,7 @@ class UserServiceTest {
         dto.email = "john_doe_" + suffix + "@example.com";
         this.userService.createUser(dto);
 
-        final var results = this.userService.searchUsers(dto.email);
+        final var results = this.userService.searchUsers(this.adminCredentials(), dto.email);
         assertEquals(1, results.size(), "Exact email search should find the user");
         assertEquals(dto.username, results.get(0).username);
     }
@@ -1061,11 +1068,9 @@ class UserServiceTest {
     @DisplayName("updateAvatars persists emoji values")
     @TestTransaction
     void testUpdateAvatars_success() {
-        final UserDto dto = this.buildValidDto();
-        final UserViewDto created = this.userService.createUser(dto);
-        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        final var entity = this.createAndFetchUser();
 
-        this.userService.updateAvatars(entity.id, "🧑", "🤖");
+        this.userService.updateAvatars(credentialsFor(entity), "🧑", "🤖");
 
         final var updated = this.userRepository.findById(entity.id);
         assertNotNull(updated);
@@ -1079,18 +1084,16 @@ class UserServiceTest {
     void testUpdateAvatars_blankUserEmoji() {
         final var entity = this.createAndFetchUser();
 
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "", "🤖"));
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(credentialsFor(entity), "", "🤖"));
     }
 
     @Test
     @DisplayName("getSettings returns non-null DTO with defaults")
     @TestTransaction
     void testGetSettings_returnsDefaults() {
-        final UserDto dto = this.buildValidDto();
-        final UserViewDto created = this.userService.createUser(dto);
-        final var entity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
+        final var entity = this.createAndFetchUser();
 
-        final var settings = this.userService.getSettings(entity.id);
+        final var settings = this.userService.getSettings(credentialsFor(entity));
         assertNotNull(settings);
         assertNotNull(settings.userAvatarEmoji);
         assertNotNull(settings.tutorAvatarEmoji);
@@ -1208,15 +1211,74 @@ class UserServiceTest {
     void testUpdateAvatars_tooLongEmoji() {
         final var entity = this.createAndFetchUser();
 
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "a".repeat(11), "🤖"));
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "🧑", "a".repeat(11)));
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(credentialsFor(entity), "a".repeat(11), "🤖"));
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", "a".repeat(11)));
     }
 
     @Test
-    @DisplayName("getSettings throws WebApplicationException for unknown user id")
+    @DisplayName("getSettings refuses credentials of an unknown user")
     @TestTransaction
-    void testGetSettings_notFound() {
-        assertThrows(WebApplicationException.class, () -> this.userService.getSettings(-999L));
+    void testGetSettings_unknownUser() {
+        final var credentials = new SessionCredentials("no-such-public-id", "stamp", UUID.randomUUID().toString());
+
+        final var e = assertThrows(ValidationException.class, () -> this.userService.getSettings(credentials));
+        assertEquals(AppConstants.SESSION_ENDED_MESSAGE, e.getMessage());
+    }
+
+    @Test
+    @DisplayName("getSettings and updateAvatars refuse null credentials")
+    @TestTransaction
+    void testSettings_nullCredentials() {
+        assertThrows(ValidationException.class, () -> this.userService.getSettings(null));
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(null, "🧑", "🤖"));
+    }
+
+    @Test
+    @DisplayName("updateAvatars writes nothing for a stale stamp, a banned or a deactivated user")
+    @TestTransaction
+    void testUpdateAvatars_endedSessionWritesNothing() {
+        final var stale = this.createAndFetchUser();
+        final var userBefore = stale.userAvatarEmoji;
+        final var tutorBefore = stale.tutorAvatarEmoji;
+        final var staleCredentials = credentialsFor(stale);
+        stale.password = this.passwordHashingService.hashPassword("An0ther!Pass");
+        final var banned = this.createAndFetchUser();
+        final var bannedCredentials = credentialsFor(banned);
+        banned.banned = true;
+        final var deactivated = this.createAndFetchUser();
+        final var deactivatedCredentials = credentialsFor(deactivated);
+        deactivated.activated = false;
+
+        for (final var pair : List.of(Map.entry(stale, staleCredentials), Map.entry(banned, bannedCredentials),
+                Map.entry(deactivated, deactivatedCredentials))) {
+            final var e = assertThrows(ValidationException.class,
+                    () -> this.userService.updateAvatars(pair.getValue(), "🧑", "🤖"));
+            assertEquals(AppConstants.SESSION_ENDED_MESSAGE, e.getMessage());
+            assertEquals(userBefore, pair.getKey().userAvatarEmoji, "An ended session must not change the avatars");
+            assertEquals(tutorBefore, pair.getKey().tutorAvatarEmoji, "An ended session must not change the avatars");
+            assertThrows(ValidationException.class, () -> this.userService.getSettings(pair.getValue()));
+        }
+    }
+
+    @Test
+    @DisplayName("getAllUsers and searchUsers require the administration view and propagate its refusal")
+    @TestTransaction
+    void testAdminReads_requireAdminView() {
+        final var credentials = this.adminCredentials();
+
+        this.userService.getAllUsers(credentials);
+        this.userService.searchUsers(credentials, "");
+        verify(this.permissionService, times(2)).requireAdminView(credentials);
+
+        Mockito.doThrow(new PermissionDeniedException("view the administration")).when(this.permissionService)
+                .requireAdminView(credentials);
+        assertThrows(PermissionDeniedException.class, () -> this.userService.getAllUsers(credentials));
+        assertThrows(PermissionDeniedException.class, () -> this.userService.searchUsers(credentials, "admin"));
+        Mockito.doThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE)).when(this.permissionService)
+                .requireAdminView(credentials);
+        assertThrows(ValidationException.class, () -> this.userService.searchUsers(credentials, "admin"));
     }
 
     @Test
@@ -1420,7 +1482,7 @@ class UserServiceTest {
     @TestTransaction
     void testUpdateAvatars_blankTutorEmoji_throwsValidationException() {
         final var entity = this.createAndFetchUser();
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "🧑", ""));
+        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", ""));
     }
 
     @Test
@@ -1428,7 +1490,8 @@ class UserServiceTest {
     @TestTransaction
     void testUpdateAvatars_nullUserEmoji_throwsValidationException() {
         final var entity = this.createAndFetchUser();
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, null, "🤖"));
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(credentialsFor(entity), null, "🤖"));
     }
 
     @Test
@@ -1436,7 +1499,8 @@ class UserServiceTest {
     @TestTransaction
     void testUpdateAvatars_nullTutorEmoji_throwsValidationException() {
         final var entity = this.createAndFetchUser();
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(entity.id, "🧑", null));
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", null));
     }
 
     @Test
