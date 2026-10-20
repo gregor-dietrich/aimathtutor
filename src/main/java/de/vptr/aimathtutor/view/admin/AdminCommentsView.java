@@ -365,17 +365,10 @@ public class AdminCommentsView extends AbstractAdminView {
         try {
             this.binder.writeBean(this.currentComment);
 
-            final var editorId = this.authService.getUserId();
-            if (editorId == null) {
-                NotificationUtil.showError("You must be logged in to edit comments");
-                return;
-            }
-            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
-                this.commentService.editComment(Objects.requireNonNull(this.currentComment.publicId),
-                        this.currentComment);
-                NotificationUtil.showSuccess("Comment updated successfully");
-            });
+            final var saved = ServiceRejectionUtil.runOrShowRejection(() -> this.commentService
+                    .editComment(Objects.requireNonNull(this.currentComment.publicId), this.currentComment));
             if (saved) {
+                NotificationUtil.showSuccess("Comment updated successfully");
                 this.commentDialog.close();
                 this.loadCommentsAsync();
             }
@@ -392,14 +385,11 @@ public class AdminCommentsView extends AbstractAdminView {
 
     private void deleteComment(final CommentDto comment) {
         try {
-            final var requesterId = this.authService.getUserId();
-            if (requesterId == null) {
-                NotificationUtil.showError("You must be logged in to delete comments");
-                return;
+            if (ServiceRejectionUtil.runOrShowRejection(
+                    () -> this.commentService.deleteComment(Objects.requireNonNull(comment.publicId), true))) {
+                NotificationUtil.showSuccess("Comment deleted successfully");
+                this.loadCommentsAsync();
             }
-            this.commentService.deleteComment(Objects.requireNonNull(comment.publicId), true);
-            NotificationUtil.showSuccess("Comment deleted successfully");
-            this.loadCommentsAsync();
         } catch (final PermissionDeniedException e) {
             NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
         } catch (final Exception e) {
@@ -491,14 +481,11 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("Comment public ID is missing");
                     return;
                 }
-                final var currentUserId = this.authService.getUserId();
-                if (currentUserId == null) {
-                    NotificationUtil.showError("Session expired, please log in again");
-                    return;
+                if (ServiceRejectionUtil.runOrShowRejection(
+                        () -> this.commentService.moderateComment(comment.publicId, "HIDE", reason))) {
+                    NotificationUtil.showSuccess("Comment hidden successfully");
+                    this.loadCommentsAsync();
                 }
-                this.commentService.moderateComment(comment.publicId, "HIDE", reason);
-                NotificationUtil.showSuccess("Comment hidden successfully");
-                this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
                 NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
             } catch (final Exception e) {
@@ -515,14 +502,11 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("Comment public ID is missing");
                     return;
                 }
-                final var currentUserId = this.authService.getUserId();
-                if (currentUserId == null) {
-                    NotificationUtil.showError("Session expired, please log in again");
-                    return;
+                if (ServiceRejectionUtil.runOrShowRejection(
+                        () -> this.commentService.moderateComment(comment.publicId, "SHOW", reason))) {
+                    NotificationUtil.showSuccess("Comment shown successfully");
+                    this.loadCommentsAsync();
                 }
-                this.commentService.moderateComment(comment.publicId, "SHOW", reason);
-                NotificationUtil.showSuccess("Comment shown successfully");
-                this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
                 NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
             } catch (final Exception e) {
@@ -539,14 +523,11 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("Comment public ID is missing");
                     return;
                 }
-                final var currentUserId = this.authService.getUserId();
-                if (currentUserId == null) {
-                    NotificationUtil.showError("Session expired, please log in again");
-                    return;
+                if (ServiceRejectionUtil.runOrShowRejection(
+                        () -> this.commentService.moderateComment(comment.publicId, "RESTORE", reason))) {
+                    NotificationUtil.showSuccess("Comment restored successfully");
+                    this.loadCommentsAsync();
                 }
-                this.commentService.moderateComment(comment.publicId, "RESTORE", reason);
-                NotificationUtil.showSuccess("Comment restored successfully");
-                this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
                 NotificationUtil.showError(e.getMessage() != null ? e.getMessage() : "Permission denied");
             } catch (final Exception e) {
