@@ -33,8 +33,8 @@ import jakarta.inject.Inject;
  * resolve to the same keys.
  * <p>
  * Runs at the same point as {@link ProductionProfileGuard}, before Hibernate starts; see there for why it is not a
- * {@code StartupEvent} observer. Its priority is one after that guard's, so a dev/test profile, which also sets
- * drop-and-create, is reported as the profile problem it is.
+ * {@code StartupEvent} observer. Its priority is one after that guard's, so a launch with both problems reports the
+ * dev/test profile first.
  */
 @ApplicationScoped
 public class SchemaManagementGuard {

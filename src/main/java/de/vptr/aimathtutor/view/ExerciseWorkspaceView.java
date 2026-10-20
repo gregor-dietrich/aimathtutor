@@ -9,8 +9,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.MatchResult;
-import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
 
@@ -44,6 +42,7 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AiChatUtil;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.AppStyles;
+import de.vptr.aimathtutor.util.ExerciseHintUtil;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
@@ -576,18 +575,15 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
 
-        // Split hints by newline, semicolon, or pipe character
-        // Supports formats like: "hint1\nhint2" or "hint1;hint2" or "hint1|hint2"
-        final String[] hints = Pattern.compile("[^\\r\\n;|]+").matcher(this.exercise.graspableHints).results()
-                .map(MatchResult::group).toArray(String[]::new);
+        final var hints = ExerciseHintUtil.parseHints(this.exercise.graspableHints);
 
-        if (this.hintCount >= hints.length) {
+        if (this.hintCount >= hints.size()) {
             NotificationUtil.showInfo("No more hints available");
             this.requestHintButton.setEnabled(false);
             return;
         }
 
-        final String hint = hints[this.hintCount];
+        final String hint = hints.get(this.hintCount);
         this.hintCount++;
 
         // Record hint usage
@@ -607,11 +603,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.hintsPanel.add(hintDiv);
 
         // Update button text
-        if (this.hintCount >= hints.length) {
+        if (this.hintCount >= hints.size()) {
             this.requestHintButton.setText("No More Hints");
             this.requestHintButton.setEnabled(false);
         } else {
-            this.requestHintButton.setText("Request Hint (" + (hints.length - this.hintCount) + " remaining)");
+            this.requestHintButton.setText("Request Hint (" + (hints.size() - this.hintCount) + " remaining)");
         }
 
         NotificationUtil.showSuccess("Hint revealed!");

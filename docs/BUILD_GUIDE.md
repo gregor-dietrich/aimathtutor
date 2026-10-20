@@ -328,14 +328,16 @@ Quality Gates section in [AGENTS.md](../AGENTS.md) for details.
 
 ### Quarkus build: intentional observer warning
 
-Every build logs `[WARNING]
+Maven builds log `[WARNING]
 [io.quarkus.arc.deployment.ObserverValidationProcessor] The method
 de.vptr.aimathtutor.ProductionProfileGuard#checkProfiles is an observer for
 @Initialized(ApplicationScoped.class) ... We strongly recommend to observe
 StartupEvent instead`. The same warning is logged for
 `SchemaManagementGuard#checkStrategy`. This is deliberate: both guards have to
-run before Hibernate's schema management, which `StartupEvent` does not. Do not
-"fix" it.
+run before Flyway and Hibernate's schema management, which `StartupEvent` does
+not. Do not "fix" it. Dev mode does not show it: `application.properties` raises
+that processor's log category to `ERROR`. The Maven build logs through Maven,
+which ignores that setting.
 
 ### Frontend build: expected non-fatal warnings
 

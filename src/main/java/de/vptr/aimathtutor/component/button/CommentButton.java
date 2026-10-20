@@ -10,25 +10,25 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import jakarta.annotation.Nullable;
 
 /**
- * Button that opens the comment editor for a given entity. Displays a comment icon and forwards clicks to the provided
+ * Button that shows the comments of a given entity. Displays a comment icon and forwards clicks to the provided
  * listener.
  */
 public class CommentButton extends Button {
-    private static final String DEFAULT_TOOLTIP = "Add Comment";
+    private static final String DEFAULT_TOOLTIP = "Show Comments";
 
     /**
      * Constructs a CommentButton with the specified action and tooltip.
      */
-    public CommentButton(final ComponentEventListener<ClickEvent<Button>> addUserAction,
+    public CommentButton(final ComponentEventListener<ClickEvent<Button>> clickListener,
             @Nullable final String tooltipText) {
-        super("", addUserAction);
+        super("", clickListener);
         this.addThemeVariants(ButtonVariant.SMALL, ButtonVariant.WARNING);
         this.setIcon(LineAwesomeIcon.COMMENT_ALT_SOLID.create());
         this.setTooltipText(tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
         this.getElement().setAttribute("aria-label", tooltipText != null ? tooltipText : DEFAULT_TOOLTIP);
     }
 
-    public CommentButton(final ComponentEventListener<ClickEvent<Button>> addUserAction) {
-        this(addUserAction, null);
+    public CommentButton(final ComponentEventListener<ClickEvent<Button>> clickListener) {
+        this(clickListener, null);
     }
 }

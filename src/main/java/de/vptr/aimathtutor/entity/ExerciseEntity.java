@@ -131,5 +131,5 @@ public class ExerciseEntity extends BaseEntity {
 
     @Column(name = "graspable_hints", columnDefinition = "TEXT")
     @Nullable
-    public String graspableHints; // JSON array of hint strings
+    public String graspableHints; // one hint per line
 }

@@ -305,9 +305,10 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 - **AdminConfigView save methods must null-check `authService.getUserId()`.**
   Use `requireUserId()` helper.
 - **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to
-  `StartupEvent`**, even though every build logs a Quarkus warning recommending
-  it. Hibernate's schema management runs before `StartupEvent`, so a
-  `StartupEvent` guard would run after the tables are gone. Both guards observe
+  `StartupEvent`**, even though Maven builds log a Quarkus warning recommending
+  it. Flyway (with a dev/test profile's clean-at-start) and Hibernate's schema
+  management run before `StartupEvent`, so a `StartupEvent` guard would run
+  after they had already acted on the database. Both guards observe
   `@Initialized(ApplicationScoped.class)`, which fires during static init;
   `ProductionProfileGuardTest` and `SchemaManagementGuardTest` pin that.
 - **`html[data-color-scheme]` is the only dark-mode signal.** CSS and JS key on
@@ -401,7 +402,9 @@ SpotBugs, Checkstyle, PMD, CPD). A push-only
   @Initialized(ApplicationScoped.class) ... We strongly recommend to observe
   StartupEvent instead`. The same warning is logged for
   `SchemaManagementGuard#checkStrategy`. See the `ProductionProfileGuard`
-  anti-pattern above.
+  anti-pattern above. `application.properties` raises that processor's log
+  category to `ERROR`, which silences it in dev mode; the Maven build logs
+  through Maven, which ignores the category, so it still prints it.
 
 ### ⚠️ Never Change Quality Gate Thresholds
 
