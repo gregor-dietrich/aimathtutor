@@ -12,7 +12,11 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +31,7 @@ import de.vptr.aimathtutor.dto.AuthResultDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.ClientIpUtil;
 import de.vptr.aimathtutor.util.UlidUtil;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -156,6 +161,63 @@ class AuthServiceTest {
 
             verify(mockSess).setAttribute(APPEARANCE_KEY,
                     new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK));
+        }
+    }
+
+    private AuthResultDto authenticateBehindProxy(final String username, final String forwarded) {
+        try (MockedStatic<VaadinRequest> mockedRequest = mockStatic(VaadinRequest.class)) {
+            final VaadinRequest mockReq = mock(VaadinRequest.class);
+            when(mockReq.getRemoteAddr()).thenReturn(AppConstants.BLOCKED_HOST_LOOPBACK_IPV4);
+            when(mockReq.getHeaders("X-Forwarded-For")).thenReturn(Collections.enumeration(List.of(forwarded)));
+            mockedRequest.when(VaadinRequest::getCurrent).thenReturn(mockReq);
+            return this.authService.authenticate(username, "wrong-" + PASSWORD);
+        }
+    }
+
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+    private static String randomDocumentationIpv6() {
+        return "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff)) + ":"
+                + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff));
+    }
+
+    private void lock(final String key) {
+        for (var i = 0; i < 5; i++) {
+            this.loginAttemptService.recordFailedAttempt(key);
+        }
+        assertTrue(this.loginAttemptService.isLockedOut(key));
+    }
+
+    @Test
+    @DisplayName("authenticate throttles by the rightmost X-Forwarded-For entry, in normalised form")
+    void authenticateThrottlesByRightmostForwardedEntry() {
+        final var username = UUID.randomUUID().toString();
+        final var forged = randomDocumentationIpv6();
+        final var real = randomDocumentationIpv6();
+        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        try {
+            this.lock(realKey);
+            final var result = this.authenticateBehindProxy(username, forged + ", " + real.toUpperCase(Locale.ROOT));
+            assertTrue(result.getMessage().contains("Too many failed attempts"), result.getMessage());
+        } finally {
+            this.loginAttemptService.recordSuccessfulLogin(realKey);
+        }
+    }
+
+    @Test
+    @DisplayName("authenticate ignores a locked bucket of the forged leading X-Forwarded-For entry")
+    void authenticateIgnoresForgedForwardedEntry() {
+        final var username = UUID.randomUUID().toString();
+        final var forged = randomDocumentationIpv6();
+        final var real = randomDocumentationIpv6();
+        final var forgedKey = username + ":" + ClientIpUtil.parseLiteral(forged).getHostAddress();
+        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        try {
+            this.lock(forgedKey);
+            final var result = this.authenticateBehindProxy(username, forged + ", " + real);
+            assertEquals("Invalid username or password", result.getMessage());
+        } finally {
+            this.loginAttemptService.recordSuccessfulLogin(forgedKey);
+            this.loginAttemptService.recordSuccessfulLogin(realKey);
         }
     }
 

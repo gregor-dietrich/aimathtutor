@@ -1,16 +1,18 @@
 package de.vptr.aimathtutor.service.security;
 
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -26,6 +28,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.UserAccountChangedEvent;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.ClientIpUtil;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -55,15 +58,26 @@ public class AuthService {
     @Nullable
     String trustedProxyIpsConfig;
 
-    private Set<String> trustedProxyIps;
+    private Set<InetAddress> trustedProxyIps;
 
     @PostConstruct
     void init() {
-        this.trustedProxyIps = trustedProxyIpsConfig != null
-                ? Arrays.stream(trustedProxyIpsConfig.split(",")).map(String::trim).filter(s -> !s.isEmpty())
-                        .collect(Collectors.toUnmodifiableSet())
-                : Set.of(AppConstants.BLOCKED_HOST_LOOPBACK_IPV4, AppConstants.BLOCKED_HOST_LOOPBACK_IPV6,
+        final var config = this.trustedProxyIpsConfig != null ? this.trustedProxyIpsConfig
+                : String.join(",", AppConstants.BLOCKED_HOST_LOOPBACK_IPV4, AppConstants.BLOCKED_HOST_LOOPBACK_IPV6,
                         AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED);
+        final Set<InetAddress> trusted = new HashSet<>();
+        for (final var entry : config.split(",", -1)) {
+            if (entry.isBlank()) {
+                continue;
+            }
+            final var address = ClientIpUtil.parseLiteral(entry);
+            if (address == null) {
+                LOG.warnf("Ignoring app.security.trusted-proxy-ips entry that is not an IP address: %s", entry.trim());
+            } else {
+                trusted.add(address);
+            }
+        }
+        this.trustedProxyIps = Set.copyOf(trusted);
     }
 
     private static final String USER_PUBLIC_ID_KEY = AppConstants.SESSION_KEY_USER_PUBLIC_ID;
@@ -282,11 +296,7 @@ public class AuthService {
                 LOG.trace("Authentication failed - user not found");
                 // Dummy bcrypt call to normalise timing and prevent username enumeration
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
-                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
-                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
-                if (clientIp != null) {
-                    this.loginAttemptService.recordFailedAttempt(clientIp);
-                }
+                this.recordFailure(usernameKey, usernameIpKey, clientIp);
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -294,11 +304,7 @@ public class AuthService {
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned");
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
-                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
-                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
-                if (clientIp != null) {
-                    this.loginAttemptService.recordFailedAttempt(clientIp);
-                }
+                this.recordFailure(usernameKey, usernameIpKey, clientIp);
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -306,22 +312,14 @@ public class AuthService {
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated");
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
-                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
-                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
-                if (clientIp != null) {
-                    this.loginAttemptService.recordFailedAttempt(clientIp);
-                }
+                this.recordFailure(usernameKey, usernameIpKey, clientIp);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password");
-                this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
-                this.loginAttemptService.recordFailedAttempt(usernameIpKey);
-                if (clientIp != null) {
-                    this.loginAttemptService.recordFailedAttempt(clientIp);
-                }
+                this.recordFailure(usernameKey, usernameIpKey, clientIp);
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -362,23 +360,23 @@ public class AuthService {
         }
     }
 
+    private void recordFailure(final String usernameKey, final String usernameIpKey, @Nullable final String clientIp) {
+        this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
+        this.loginAttemptService.recordFailedAttempt(usernameIpKey);
+        if (clientIp != null) {
+            this.loginAttemptService.recordFailedAttempt(clientIp);
+        }
+    }
+
     @Nullable
     private String extractClientIp() {
         final VaadinRequest request = VaadinRequest.getCurrent();
         if (request == null) {
             return null;
         }
-        final String remoteAddr = request.getRemoteAddr();
-        final String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank() && this.isTrustedProxy(remoteAddr)) {
-            final int commaIdx = forwarded.indexOf(',');
-            return (commaIdx >= 0 ? forwarded.substring(0, commaIdx) : forwarded).trim();
-        }
-        return remoteAddr;
-    }
-
-    private boolean isTrustedProxy(final String remoteAddr) {
-        return this.trustedProxyIps.contains(remoteAddr);
+        final var headers = request.getHeaders("X-Forwarded-For");
+        return ClientIpUtil.resolveClientIp(request.getRemoteAddr(),
+                headers != null ? Collections.list(headers) : List.of(), this.trustedProxyIps);
     }
 
     private static void clearAuthAttributes(final VaadinSession session) {
