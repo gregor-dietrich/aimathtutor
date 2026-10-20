@@ -619,7 +619,7 @@ public class UserService {
     @Transactional
     public String changePassword(final SessionCredentials credentials, final String currentPassword,
             final String newPassword) {
-        final UserEntity user = this.requireSessionUser(credentials);
+        final UserEntity user = this.authService.requireSessionUser(credentials);
         // Validated before the current password is checked: otherwise the new password's rejection would confirm a
         // correct guess without changing anything.
         this.validatePassword(newPassword);
@@ -666,7 +666,7 @@ public class UserService {
     @Transactional
     public Appearance updateAppearance(final SessionCredentials credentials, @Nullable final Appearance.Design design,
             @Nullable final Appearance.ColorMode colorMode) {
-        final UserEntity user = this.requireSessionUser(credentials);
+        final UserEntity user = this.authService.requireSessionUser(credentials);
         if (design != null) {
             user.design = design;
         }
@@ -675,15 +675,6 @@ public class UserService {
         }
         this.userRepository.persist(user);
         return new Appearance(user.design, user.colorMode);
-    }
-
-    private UserEntity requireSessionUser(final SessionCredentials credentials) {
-        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
-        if (user == null || !user.activated || user.banned
-                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
-            throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
-        }
-        return user;
     }
 
     /**

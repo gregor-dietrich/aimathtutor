@@ -37,6 +37,7 @@ import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 
 /**
  * Authentication helper service offering login/logout and current user info.
@@ -522,5 +523,45 @@ public class AuthService {
         }
         final var stamp = (String) session.getAttribute(CREDENTIAL_STAMP_KEY);
         return this.userRepository.findByPublicId(publicId).filter(user -> holdsStamp(user, stamp)).orElse(null);
+    }
+
+    /**
+     * Resolves the session's user for an action on the UI thread, refusing a session that has ended. Reads the Vaadin
+     * session, so it must not be called off the UI thread; work on another thread takes
+     * {@link #currentSessionCredentials()} on the UI thread and passes them to
+     * {@link #requireSessionUser(SessionCredentials)}.
+     *
+     * @return the current, activated and not banned {@link UserEntity}
+     * @throws ValidationException
+     *             if there is no session, its credentials are revoked, or the account is deactivated or banned
+     */
+    public UserEntity requireCurrentUser() {
+        return requireActive(this.getCurrentUserEntity());
+    }
+
+    /**
+     * Verifies captured session credentials against the database and returns their user. Any thread; it reads through
+     * the repository in the caller's transaction.
+     *
+     * @param credentials
+     *            the credentials captured by {@link #currentSessionCredentials()}, or null
+     * @return the activated and not banned {@link UserEntity} the credentials belong to
+     * @throws ValidationException
+     *             if the credentials are null, the user is unknown, the credential stamp is stale, or the account is
+     *             deactivated or banned
+     */
+    public UserEntity requireSessionUser(@Nullable final SessionCredentials credentials) {
+        if (credentials == null) {
+            throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
+        }
+        return requireActive(this.userRepository.findByPublicId(credentials.userPublicId())
+                .filter(user -> holdsStamp(user, credentials.credentialStamp())).orElse(null));
+    }
+
+    private static UserEntity requireActive(@Nullable final UserEntity user) {
+        if (user == null || !user.activated || user.banned) {
+            throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
+        }
+        return user;
     }
 }

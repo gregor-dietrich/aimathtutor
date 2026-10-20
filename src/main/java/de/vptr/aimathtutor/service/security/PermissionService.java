@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.security;
 
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
@@ -8,6 +9,7 @@ import de.vptr.aimathtutor.service.UserRankService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.ValidationException;
 
 /**
  * Service for checking user permissions based on their rank. All permission checks are enforced against the currently
@@ -21,6 +23,9 @@ public class PermissionService {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    AuthService authService;
 
     private void require(final boolean permission, final String action) {
         if (!permission) {
@@ -48,6 +53,22 @@ public class PermissionService {
     @Nullable
     public UserRankEntity findCurrentUserRank() {
         return this.userRankService.getCurrentUserRankEntity();
+    }
+
+    /**
+     * Requires that the captured session still belongs to an active user whose rank may view the administration. Any
+     * thread; it joins the caller's transaction.
+     *
+     * @param credentials
+     *            the credentials captured by {@link AuthService#currentSessionCredentials()}, or null
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
+     */
+    public void requireAdminView(@Nullable final SessionCredentials credentials) {
+        final var user = this.authService.requireSessionUser(credentials);
+        this.require(user.rank != null && user.rank.adminView, "view the administration");
     }
 
     // Exercise permissions

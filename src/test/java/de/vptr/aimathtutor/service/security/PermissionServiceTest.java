@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +18,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
+import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.validation.ValidationException;
 
 @QuarkusTest
 @SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
@@ -464,5 +469,62 @@ class PermissionServiceTest {
         final var rank = new UserRankEntity();
         when(this.userRankService.getCurrentUserRankEntity()).thenReturn(rank);
         assertSame(rank, this.permissionService.findCurrentUserRank());
+    }
+
+    private UserEntity stubUser(final UserRankEntity rank) {
+        final var user = new UserEntity();
+        user.publicId = UUID.randomUUID().toString();
+        user.password = "hash-" + user.publicId;
+        user.activated = true;
+        user.rank = rank;
+        when(this.userRepository.findByPublicId(user.publicId)).thenReturn(Optional.of(user));
+        return user;
+    }
+
+    private static SessionCredentials credentialsFor(final UserEntity user) {
+        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
+                UUID.randomUUID().toString());
+    }
+
+    @Test
+    @DisplayName("requireAdminView succeeds for an active user whose rank holds adminView")
+    void requireAdminViewSucceeds() {
+        final var rank = this.buildRank();
+        rank.adminView = true;
+        final var user = this.stubUser(rank);
+
+        assertDoesNotThrow(() -> this.permissionService.requireAdminView(credentialsFor(user)));
+    }
+
+    @Test
+    @DisplayName("requireAdminView throws for a rank without adminView")
+    void requireAdminViewThrowsWithoutPermission() {
+        final var user = this.stubUser(this.buildRank());
+
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireAdminView(credentialsFor(user)));
+        assertEquals("You do not have permission to view the administration", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("requireAdminView throws for a user without a rank")
+    void requireAdminViewThrowsWithoutRank() {
+        final var user = this.stubUser(null);
+
+        assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireAdminView(credentialsFor(user)));
+    }
+
+    @Test
+    @DisplayName("requireAdminView refuses an ended session")
+    void requireAdminViewRefusesEndedSession() {
+        final var rank = this.buildRank();
+        rank.adminView = true;
+        final var user = this.stubUser(rank);
+        final var stale = new SessionCredentials(user.publicId, "stale", UUID.randomUUID().toString());
+
+        final var ex = assertThrows(ValidationException.class, () -> this.permissionService.requireAdminView(stale));
+        assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
+        assertThrows(ValidationException.class, () -> this.permissionService.requireAdminView(null));
     }
 }
