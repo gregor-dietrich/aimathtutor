@@ -3,12 +3,14 @@ package de.vptr.aimathtutor.service.security;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.vptr.aimathtutor.util.ExecutorShutdownUtil;
@@ -77,24 +79,26 @@ public class LoginAttemptService {
         this.passwordChangeAttempts.entrySet()
                 .removeIf(entry -> entry.getValue().isExpired(PASSWORD_CHANGE_POLICY, now));
 
-        // If still over limit after cleanup, remove oldest entries
-        if (this.attempts.size() > MAX_CACHE_SIZE) {
-            this.attempts.entrySet().stream()
-                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
-                    .limit(this.attempts.size() - MAX_CACHE_SIZE)
-                    .forEach(entry -> this.attempts.remove(entry.getKey(), entry.getValue()));
-        }
-        trimOldest(this.accountAttempts, attempt -> true);
-        // Never lift a password-change lock: a locked bucket stops updating, so it would be the oldest, and fresh
-        // sessions could flood it out. Its entries need a signed-in session each, so keeping them stays bounded.
-        trimOldest(this.passwordChangeAttempts, attempt -> attempt.count < PASSWORD_CHANGE_POLICY.maxAttempts);
+        // If still over the limit, remove the oldest unlocked entries. A size cap must never lift a lock: a locked
+        // bucket stops updating, so it would be the oldest, and a flood of fresh keys could wipe it. The locked
+        // population stays bounded by bcrypt throughput times lock length, because a locked bucket records nothing.
+        trimOldest(this.attempts, attempt -> !attempt.isLocked(now), attempt -> attempt.lastAttempt);
+        trimOldest(this.accountAttempts, attempt -> attempt.count < ACCOUNT_POLICY.maxAttempts,
+                attempt -> attempt.lastAttempt);
+        trimOldest(this.passwordChangeAttempts, attempt -> attempt.count < PASSWORD_CHANGE_POLICY.maxAttempts,
+                attempt -> attempt.lastAttempt);
     }
 
-    private static void trimOldest(final Map<String, WindowedAttempt> map, final Predicate<WindowedAttempt> evictable) {
-        if (map.size() > MAX_CACHE_SIZE) {
-            map.entrySet().stream().filter(entry -> evictable.test(entry.getValue()))
-                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
-                    .limit(map.size() - MAX_CACHE_SIZE).forEach(entry -> map.remove(entry.getKey(), entry.getValue()));
+    private static <V> void trimOldest(final Map<String, V> map, final Predicate<V> evictable,
+            final Function<V, Instant> lastAttempt) {
+        if (map.size() <= MAX_CACHE_SIZE) {
+            return;
+        }
+        final var candidates = map.entrySet().stream().filter(entry -> evictable.test(entry.getValue()))
+                .sorted(Comparator.comparing(entry -> lastAttempt.apply(entry.getValue()))).toList();
+        if (candidates.size() > MAX_CACHE_SIZE) {
+            candidates.stream().limit(candidates.size() - MAX_CACHE_SIZE)
+                    .forEach(entry -> map.remove(entry.getKey(), entry.getValue()));
         }
     }
 

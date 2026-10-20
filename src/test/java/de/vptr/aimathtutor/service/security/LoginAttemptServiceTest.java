@@ -147,23 +147,42 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    @DisplayName("Should enforce account max cache size")
-    void shouldEnforceAccountMaxCacheSize() {
-        final String target = "user_target";
-        // Record enough attempts to cause a lockout
-        for (int i = 0; i < 30; i++) {
-            this.loginAttemptService.recordFailedAccountAttempt(target);
+    @DisplayName("Flooding the account map past its size cap never lifts a locked account")
+    void sizeCapNeverEvictsLockedAccountBucket() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        for (int i = 0; i < 25; i++) {
+            service.recordFailedAccountAttempt("target");
         }
-        assertTrue(this.loginAttemptService.getRemainingAccountLockoutSeconds(target) > 0);
-
-        // Flood the cache with many distinct accounts to trigger eviction
-        for (int i = 0; i < 10_005; i++) {
-            this.loginAttemptService.recordFailedAccountAttempt("user_" + i);
+        for (int i = 0; i < 24; i++) {
+            service.recordFailedAccountAttempt("old");
+        }
+        clock.advance(Duration.ofSeconds(1));
+        for (int i = 0; i <= 10_000; i++) {
+            service.recordFailedAccountAttempt("flood-" + i);
         }
 
-        // Target should have been evicted, so lockout is now 0
-        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds(target),
-                "Target account should have been evicted from the bounded cache");
+        assertTrue(service.isAccountLockedOut("target"));
+        assertEquals(599, service.getRemainingAccountLockoutSeconds("target"));
+        service.recordFailedAccountAttempt("old");
+        assertFalse(service.isAccountLockedOut("old"), "the unlocked, oldest bucket was evicted");
+    }
+
+    @Test
+    @DisplayName("Flooding the login map past its size cap never lifts a locked key")
+    void sizeCapNeverEvictsLockedLoginBucket() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "target", 5);
+        fail(service, "old", 4);
+        clock.advance(Duration.ofSeconds(1));
+        for (int i = 0; i <= 10_000; i++) {
+            service.recordFailedAttempt("flood-" + i);
+        }
+
+        assertTrue(service.isLockedOut("target"));
+        assertEquals(29, service.getRemainingLockoutSeconds("target"));
+        assertEquals(0, service.recordFailedAttempt("old"), "the unlocked, oldest bucket was evicted");
     }
 
     @Test
