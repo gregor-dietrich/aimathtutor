@@ -300,6 +300,12 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   generation.
 - **LoginAttemptServiceTest must verify exact cap value of 3600.** Do not revert
   to weak `<= 3600`.
+- **Login throttle invariants.** `LoginAttemptService` never evicts a locked
+  bucket to honour its size cap, and per-key counts outlive a lock by an hour so
+  lockouts escalate. `AuthService` takes the client IP from the right end of
+  `X-Forwarded-For` (all header lines, skipping `app.security.trusted-proxy-ips`),
+  parses entries only with `InetAddress.ofLiteral` (never a DNS lookup), and falls
+  back to the direct peer at the first entry that is not an IP address.
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded
   strings cause state leakage (`@ApplicationScoped`).
 - **AdminConfigView save methods must null-check `authService.getUserId()`.**

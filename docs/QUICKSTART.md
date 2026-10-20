@@ -178,6 +178,12 @@ To upgrade later, download the Compose file again (step 2), then run
 > the proxy connect from, so that the client addresses it forwards are used: for
 > a same-host proxy that is the stack network's gateway (`docker network
 > inspect`), not `127.0.0.1`.
+>
+> If the request passes through several proxies, list each one's address,
+> separated by commas. Every proxy must add the address it received the request
+> from as the last `X-Forwarded-For` entry, without a port (nginx:
+> `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`). Only IP
+> addresses are accepted, not hostnames or address ranges.
 
 #### 4. Configure AI Provider Settings
 
