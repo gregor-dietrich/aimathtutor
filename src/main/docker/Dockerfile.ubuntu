@@ -11,6 +11,7 @@
 #
 # Then run the container using:
 #
+# Mount a key volume and set app.security.encryption-key-file (docs/QUICKSTART.md): a container without one generates a new key and cannot start against a database holding encrypted data.
 # docker run -i --rm -p 9001:9001 quarkus/aimathtutor-jvm
 #
 # Java runs directly as PID 1; required runtime options are in ENTRYPOINT.

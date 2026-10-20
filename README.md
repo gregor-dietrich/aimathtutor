@@ -131,6 +131,12 @@ If logging in fails with a server error after the reset, check that the app
 still mounts its original encryption key volume: a reset doesn't help when the
 key is lost.
 
+If the key is lost for good, the stored email addresses cannot be recovered, and
+the app refuses to start while they exist. To start over with a new key, run
+`UPDATE users SET email = NULL, email_blind_index = NULL;` in psql (step 2) and
+start the app: it generates a new key, and an administrator can enter the
+addresses again under user administration.
+
 ### Common Development Commands (via Makefile)
 
 - `make dev` – Start Quarkus in dev mode
@@ -185,8 +191,10 @@ scripts.
   database-backed).
 - **Encryption key**: Resolution order: (1) `app.security.encryption-key-file`
   property, (2) `$XDG_DATA_HOME/aimathtutor/encryption.key`, (3)
-  `~/.aimathtutor/encryption.key`, (4) auto-generate a 256-bit key at the XDG
-  path with 0600 permissions. In Docker, mount the `aimathtutor_keys` volume at
+  `~/.aimathtutor/encryption.key`, (4) generate a 256-bit key at the XDG path
+  with 0600 permissions; a production start does this only while the database
+  holds no encrypted email addresses, and otherwise refuses to start until the
+  key file is restored. In Docker, mount the `aimathtutor_keys` volume at
   `/etc/aimathtutor/keys`. This key encrypts PII fields (such as user email) at
   rest.
 

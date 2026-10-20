@@ -71,7 +71,10 @@ property. No extra steps needed.
 
 **Production (custom path):** Set `app.security.encryption-key-file` to an
 absolute path writable by the application process. The file must contain a
-Base64-encoded 32-byte key. The application generates it if absent.
+Base64-encoded 32-byte key. On a first start, while the database holds no
+encrypted data, the application generates it. Once email addresses are stored, a
+production start refuses to run without the key file and asks for it to be
+restored.
 
 > **⚠️ Critical:** Back up the key file (or the `aimathtutor_keys` Docker
 > volume). Losing the key renders all encrypted data permanently unrecoverable.
@@ -80,7 +83,8 @@ Base64-encoded 32-byte key. The application generates it if absent.
 > 1. `app.security.encryption-key-file` property (if set and non-empty)
 > 2. `$XDG_DATA_HOME/aimathtutor/encryption.key` (if file exists)
 > 3. `~/.aimathtutor/encryption.key` (if file exists)
-> 4. Auto-generate at the XDG path
+> 4. Generate at the XDG path (in production only while the database holds no
+>    encrypted data)
 
 ### 1b. Setting Up Ollama (Optional)
 
