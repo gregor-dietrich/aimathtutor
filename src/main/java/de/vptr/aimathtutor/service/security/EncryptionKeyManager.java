@@ -13,18 +13,28 @@ import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.security.SecureRandom;
+import java.sql.SQLException;
 import java.util.Base64;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
+
+import javax.sql.DataSource;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import io.quarkus.runtime.LaunchMode;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.interceptor.Interceptor;
 
 /**
  * Loads or generates the master encryption key used for AES-256-GCM field encryption. The key is persisted to a file so
@@ -37,8 +47,14 @@ import jakarta.inject.Inject;
  * <li>Existing key at {@code $XDG_DATA_HOME/aimathtutor/encryption.key} (or
  * {@code ~/.local/share/aimathtutor/encryption.key})</li>
  * <li>Existing key at {@code ~/.aimathtutor/encryption.key}</li>
- * <li>Auto-generates a new 256-bit key at the XDG location with 0600 permissions</li>
+ * <li>Generates a new 256-bit key at the XDG location with 0600 permissions. In production ({@link LaunchMode#NORMAL})
+ * this happens only while no user holds an encrypted email address: with encrypted data and no key file, startup is
+ * refused, because a fresh key could never read that data.</li>
  * </ol>
+ *
+ * <p>
+ * The manager is created at startup by {@link #loadAtStartup}, not by {@code @Initialized}: the check needs the schema
+ * that Flyway has migrated by then.
  */
 @ApplicationScoped
 public class EncryptionKeyManager {
@@ -48,17 +64,62 @@ public class EncryptionKeyManager {
     private static final String KEY_FILENAME = "encryption.key";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    @Inject
-    @ConfigProperty(name = "app.security.encryption-key-file")
-    Optional<String> keyFile;
+    private final LaunchMode launchMode;
+
+    @Nullable
+    private final String keyFile;
+
+    private final BooleanSupplier encryptedDataExists;
 
     byte[] masterKey;
+
+    @Inject
+    EncryptionKeyManager(final LaunchMode launchMode,
+            @ConfigProperty(name = "app.security.encryption-key-file") final Optional<String> keyFile,
+            final DataSource dataSource) {
+        this(launchMode, keyFile, () -> encryptedDataExists(dataSource));
+    }
+
+    EncryptionKeyManager(final LaunchMode launchMode, final Optional<String> keyFile,
+            final BooleanSupplier encryptedDataExists) {
+        this.launchMode = launchMode;
+        this.keyFile = keyFile.orElse(null);
+        this.encryptedDataExists = encryptedDataExists;
+    }
+
+    /** Observing the event creates the bean, after Flyway and before {@code AppLifecycleBean} (priority 2500). */
+    void loadAtStartup(@Observes @Priority(Interceptor.Priority.APPLICATION) final StartupEvent event) {
+        // Nothing to do: the bean's @PostConstruct loads or creates the key.
+    }
 
     @PostConstruct
     void init() {
         final Path keyPath = resolveKeyPath();
         LOG.infof("Encryption key file: %s", keyPath);
-        this.masterKey = Files.exists(keyPath) ? loadKey(keyPath) : generateAndPersistKey(keyPath);
+        this.masterKey = Files.notExists(keyPath) ? createKey(keyPath) : loadKey(keyPath);
+    }
+
+    static boolean encryptedDataExists(final DataSource dataSource) {
+        try (var connection = dataSource.getConnection();
+                var statement = connection.createStatement();
+                var result = statement.executeQuery(
+                        "SELECT EXISTS (SELECT 1 FROM users WHERE email IS NOT NULL OR email_blind_index IS NOT NULL)")) {
+            return result.next() && result.getBoolean(1);
+        } catch (final SQLException e) {
+            throw new IllegalStateException("Could not check the database for encrypted data", e);
+        }
+    }
+
+    private byte[] createKey(final Path path) {
+        if (this.launchMode == LaunchMode.NORMAL && this.encryptedDataExists.getAsBoolean()) {
+            LOG.fatalf("No encryption key file exists at %s, but the database already holds encrypted email "
+                    + "addresses, which only that key can read. Nothing was changed. Restore the key file to that "
+                    + "path from your backup (with Docker Compose, the aimathtutor_keys volume), or set "
+                    + "app.security.encryption-key-file to where it is.", path);
+            throw new IllegalStateException("Encryption key file missing at " + path
+                    + " while the database holds encrypted data; restore the key file");
+        }
+        return generateAndPersistKey(path);
     }
 
     byte[] getMasterKey() {
@@ -66,8 +127,8 @@ public class EncryptionKeyManager {
     }
 
     private Path resolveKeyPath() {
-        if (this.keyFile.isPresent() && !this.keyFile.get().isBlank()) {
-            return Paths.get(this.keyFile.get());
+        if (this.keyFile != null && !this.keyFile.isBlank()) {
+            return Paths.get(this.keyFile);
         }
         final Path xdgKey = xdgKeyPath();
         if (Files.exists(xdgKey)) {

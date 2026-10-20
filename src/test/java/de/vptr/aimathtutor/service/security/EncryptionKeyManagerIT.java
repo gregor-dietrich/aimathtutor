@@ -1,8 +1,13 @@
 package de.vptr.aimathtutor.service.security;
 
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
@@ -14,6 +19,19 @@ public class EncryptionKeyManagerIT {
 
     @Inject
     EncryptionKeyManager encryptionKeyManager;
+
+    @Inject
+    DataSource dataSource;
+
+    @Test
+    @TestTransaction
+    public void testEncryptedDataExists_seesStoredEmail() throws SQLException {
+        try (var connection = this.dataSource.getConnection(); var statement = connection.createStatement()) {
+            statement.executeUpdate("UPDATE users SET email = '1|x|y' WHERE username = 'admin'");
+        }
+
+        Assertions.assertTrue(EncryptionKeyManager.encryptedDataExists(this.dataSource));
+    }
 
     @Test
     public void testGetMasterKey_returns32Bytes() {
