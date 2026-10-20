@@ -2,6 +2,10 @@ package de.vptr.aimathtutor.util;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.UI;
+
+import de.vptr.aimathtutor.view.LoginView;
+import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
@@ -23,8 +27,9 @@ public final class ServiceRejectionUtil {
 
     /**
      * Runs a service call and shows the message of a rejection it throws (see {@link #isRejection}). The rejection is
-     * expected user input, so it is logged at DEBUG only, and without the message, which can contain user data. Any
-     * other {@link ValidationException} propagates.
+     * expected user input, so it is logged at DEBUG only, and without the message, which can contain user data. A
+     * rejection that the session ended also returns to the login page. Any other {@link ValidationException}
+     * propagates.
      *
      * @param serviceCall
      *            the call that writes, such as saving the form's data or deleting an item
@@ -38,7 +43,8 @@ public final class ServiceRejectionUtil {
             if (!isRejection(e)) {
                 throw e;
             }
-            return showRejection(rejectionMessage(e));
+            showRejection(UI.getCurrent(), rejectionMessage(e));
+            return false;
         }
     }
 
@@ -79,9 +85,20 @@ public final class ServiceRejectionUtil {
         return (fieldName != null ? fieldName : "field") + ": " + violation.getMessage();
     }
 
-    private static boolean showRejection(final String message) {
+    /**
+     * Shows a rejection's message and, when it says the session ended, reloads the UI onto the login page. Logs at
+     * DEBUG without the message, which can contain user data.
+     *
+     * @param ui
+     *            the UI to redirect, or null if there is none (the message is still shown)
+     * @param message
+     *            the user-facing message
+     */
+    static void showRejection(@Nullable final UI ui, final String message) {
         LOG.debug("Service rejected a write");
         NotificationUtil.showError(message);
-        return false;
+        if (ui != null && AppConstants.SESSION_ENDED_MESSAGE.equals(message)) {
+            LoginView.reloadToLogin(ui);
+        }
     }
 }

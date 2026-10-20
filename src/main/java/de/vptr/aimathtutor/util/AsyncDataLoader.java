@@ -12,7 +12,7 @@ import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.Component;
 
-import de.vptr.aimathtutor.view.LoginView;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ValidationException;
 
@@ -54,8 +54,9 @@ public final class AsyncDataLoader {
      * batch summaries.
      * <p>
      * A service rejection thrown by the supplier (see {@link ServiceRejectionUtil#isRejection}) has its message shown,
-     * and a rejection that the session ended returns to the login page. On timeout the supplier is not cancelled and
-     * may still complete its work, so the notification tells the user to reload to see the current state.
+     * and a rejection that the session ended returns to the login page. A {@link PermissionDeniedException} has its
+     * message shown. On timeout the supplier is not cancelled and may still complete its work, so the notification
+     * tells the user to reload to see the current state.
      *
      * @param <T>
      *            the type of data being loaded
@@ -101,12 +102,11 @@ public final class AsyncDataLoader {
                     if (cause instanceof final ValidationException rejection
                             && ServiceRejectionUtil.isRejection(rejection)) {
                         // Expected service rejection; the message can carry user data, so it is never logged.
-                        LOG.debug("Service rejected a write");
-                        final var message = ServiceRejectionUtil.rejectionMessage(rejection);
-                        NotificationUtil.showError(message);
-                        if (AppConstants.SESSION_ENDED_MESSAGE.equals(message)) {
-                            LoginView.reloadToLogin(ui);
-                        }
+                        ServiceRejectionUtil.showRejection(ui, ServiceRejectionUtil.rejectionMessage(rejection));
+                    } else if (cause instanceof final PermissionDeniedException denied) {
+                        // The message names the missing permission, not user data; expected, so DEBUG without it.
+                        LOG.debug("Service denied a permission");
+                        NotificationUtil.showError(denied.getMessage() != null ? denied.getMessage() : errorMessage);
                     } else if (cause instanceof TimeoutException) {
                         LOG.warnf("Async call timed out after %s: %s", timeout, errorMessage);
                         NotificationUtil.showError(errorMessage
