@@ -83,10 +83,10 @@ class ExerciseCompletionServiceTest {
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "Seeded student1 must exist");
         when(this.authService.getUserId()).thenReturn(student.id);
+        when(this.authService.requireCurrentUser()).thenReturn(student);
 
         final ExerciseViewDto exercise = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(Objects.requireNonNull(student.id),
-                Objects.requireNonNull(exercise.id));
+        final String sessionId = this.graspableMathService.createSession(Objects.requireNonNull(exercise.id));
         this.graspableMathService.markSessionComplete(sessionId);
 
         final ExerciseViewDto result = this.exerciseCompletionService.enrichWithCompletionData(exercise);
@@ -105,10 +105,10 @@ class ExerciseCompletionServiceTest {
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "Seeded student1 must exist");
         when(this.authService.getUserId()).thenReturn(student.id);
+        when(this.authService.requireCurrentUser()).thenReturn(student);
 
         final ExerciseViewDto exercise = this.createExercise();
-        this.graspableMathService.createSession(Objects.requireNonNull(student.id),
-                Objects.requireNonNull(exercise.id));
+        this.graspableMathService.createSession(Objects.requireNonNull(exercise.id));
 
         final ExerciseViewDto result = this.exerciseCompletionService.enrichWithCompletionData(exercise);
 

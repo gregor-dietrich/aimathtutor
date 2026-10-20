@@ -80,7 +80,7 @@ public class AiTutorService {
      * @param context
      *            Conversation context with recent actions, questions, and AI messages
      * @param userIdStr
-     *            the user ID (as string) for rate limiting; if null, uses event.studentId
+     *            the user ID (as string) for rate limiting
      * @return AI-generated feedback, or null if no feedback needed
      */
     @Nullable
@@ -121,9 +121,7 @@ public class AiTutorService {
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT) : "mock";
 
         // Apply per-user rate limiting for non-mock providers
-        final var effectiveUserId =
-                userIdStr != null ? userIdStr : event.studentId != null ? String.valueOf(event.studentId) : null;
-        if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
+        if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
             return AiFeedbackDto.hint("I'm receiving too many requests. Please wait a moment before your next action.");
         }
 
@@ -165,10 +163,7 @@ public class AiTutorService {
      *            the user ID as a string
      * @return true if the call is within the rate limit and was recorded
      */
-    private boolean checkAiRateLimit(@Nullable final String userIdStr) {
-        if (userIdStr == null) {
-            return false;
-        }
+    private boolean checkAiRateLimit(final String userIdStr) {
         if (!this.rateLimitService.tryConsume(userIdStr)) {
             LOG.warnf("AI tutor rate limit exceeded for user: %s", userIdStr);
             return false;
@@ -263,8 +258,7 @@ public class AiTutorService {
         final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT) : "mock";
 
         // Apply per-user rate limiting for non-mock providers
-        final var effectiveUserId = userIdStr != null ? userIdStr : "ANONYMOUS";
-        if (!"mock".equals(provider) && !this.checkAiRateLimit(effectiveUserId)) {
+        if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
             return ChatMessageDto
                     .aiAnswer("I'm receiving too many requests right now. Please wait a moment before asking again.");
         }

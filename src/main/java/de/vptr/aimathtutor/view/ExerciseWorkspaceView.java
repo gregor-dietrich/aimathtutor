@@ -179,9 +179,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
         // Create session for this exercise
         try {
-            final Long userId = this.authService.getUserId();
-            this.currentSessionId = this.graspableMathService.createSession(Objects.requireNonNull(userId),
-                    Objects.requireNonNull(this.exerciseId));
+            this.currentSessionId = this.graspableMathService.createSession(Objects.requireNonNull(this.exerciseId));
         } catch (final Exception e) {
             LOG.error("Failed to create session", e);
             this.currentSessionId = "session-" + System.currentTimeMillis();
