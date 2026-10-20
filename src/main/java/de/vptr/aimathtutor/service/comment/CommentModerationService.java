@@ -10,7 +10,6 @@ import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -29,9 +28,6 @@ public class CommentModerationService {
     @Inject
     CommentRepository commentRepository;
 
-    @Inject
-    UserRepository userRepository;
-
     /**
      * Moderate a comment (hide/unhide/restore/delete).
      *
@@ -39,14 +35,15 @@ public class CommentModerationService {
      *            the comment public ID
      * @param action
      *            the moderation action: "HIDE", "SHOW", "RESTORE", "DELETE"
-     * @param moderatorId
-     *            the moderator user ID
+     * @param moderator
+     *            the moderating user, resolved from the session by the caller
      * @param reason
      *            the reason for moderation
      */
     @Transactional
-    public void moderateComment(final String commentPublicId, final String action, final Long moderatorId,
+    public void moderateComment(final String commentPublicId, final String action, final UserEntity moderator,
             final String reason) {
+        final Long moderatorId = moderator.id;
         if (reason != null && reason.length() > 500) {
             throw new ValidationException("Moderation reason must be <= 500 characters");
         }
@@ -58,18 +55,6 @@ public class CommentModerationService {
             LOG.warnf("Moderate comment failed: comment not found commentPublicId=%s, moderatorId=%s", commentPublicId,
                     moderatorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        if (moderatorId == null) {
-            LOG.warnf("Moderate comment failed: moderatorId is null commentPublicId=%s", commentPublicId);
-            throw new WebApplicationException("Moderator ID is required", Response.Status.BAD_REQUEST);
-        }
-
-        final UserEntity moderator = this.userRepository.findById(moderatorId);
-        if (moderator == null) {
-            LOG.warnf("Moderate comment failed: moderator not found commentPublicId=%s, moderatorId=%s",
-                    commentPublicId, moderatorId);
-            throw new WebApplicationException("Moderator not found", Response.Status.BAD_REQUEST);
         }
 
         if (action == null) {

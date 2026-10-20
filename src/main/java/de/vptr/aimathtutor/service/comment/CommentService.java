@@ -24,8 +24,8 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserService;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
@@ -64,9 +64,6 @@ public class CommentService {
     ExerciseRepository exerciseRepository;
 
     @Inject
-    UserRepository userRepository;
-
-    @Inject
     CommentPermissionService commentPermissionService;
 
     @Inject
@@ -80,6 +77,9 @@ public class CommentService {
 
     @Inject
     PermissionService permissionService;
+
+    @Inject
+    AuthService authService;
 
     /**
      * Retrieves all comments in the system with loaded relationships.
@@ -197,10 +197,16 @@ public class CommentService {
     }
 
     /**
-     * Create a new comment with rate limiting and validation. Requires the {@code commentAdd} permission.
+     * Create a new comment with rate limiting and validation, authored by the signed-in user. Requires the
+     * {@code commentAdd} permission.
+     *
+     * @throws ValidationException
+     *             if the session has ended or the input is invalid
      */
     @Transactional
-    public CommentViewDto createComment(final @Valid CommentDto dto, final Long authorId) {
+    public CommentViewDto createComment(final @Valid CommentDto dto) {
+        final UserEntity author = this.authService.requireCurrentUser();
+        final Long authorId = Objects.requireNonNull(author.id);
         LOG.infof("Creating comment for exercisePublicId=%s, authorId=%s", dto.exercisePublicId, authorId);
 
         this.permissionService.requireCommentAdd();
@@ -267,14 +273,7 @@ public class CommentService {
             }
         }
 
-        // 5. Get author
-        final UserEntity author = this.userRepository.findById(authorId);
-        if (author == null) {
-            LOG.warnf("Comment creation failed: user not found for authorId=%s", authorId);
-            throw new WebApplicationException("User not found", Response.Status.BAD_REQUEST);
-        }
-
-        // 6. Create and persist entity
+        // 5. Create and persist entity
         final CommentEntity comment = new CommentEntity();
         comment.content = this.sanitizeCommentContent(dto.content);
         comment.exercise = exercise;
@@ -285,7 +284,7 @@ public class CommentService {
         comment.flagsCount = 0;
         this.commentRepository.persist(comment);
 
-        // 7. Fire CDI event for real-time updates
+        // 6. Fire CDI event for real-time updates
         final Long commentId = comment.id;
         final Long exerciseId = comment.exercise != null ? comment.exercise.id : null;
         final Long userId = comment.user != null ? comment.user.id : null;
@@ -396,10 +395,15 @@ public class CommentService {
     }
 
     /**
-     * Delete a comment (soft or hard)
+     * Delete a comment (soft or hard) as the signed-in user.
+     *
+     * @throws ValidationException
+     *             if the session has ended
      */
     @Transactional
-    public void deleteComment(final String commentPublicId, final Long requesterId, final boolean softDelete) {
+    public void deleteComment(final String commentPublicId, final boolean softDelete) {
+        final UserEntity requester = this.authService.requireCurrentUser();
+        final Long requesterId = requester.id;
         LOG.infof("Attempting to delete comment: commentPublicId=%s, requesterId=%s, softDelete=%s", commentPublicId,
                 requesterId, softDelete);
 
@@ -408,12 +412,6 @@ public class CommentService {
             LOG.warnf("Delete comment failed: comment not found commentPublicId=%s, requesterId=%s", commentPublicId,
                     requesterId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        final UserEntity requester = this.userRepository.findById(requesterId);
-        if (requester == null) {
-            LOG.warnf("Delete comment failed: requester not found requesterId=%s", requesterId);
-            throw new WebApplicationException("Requester not found", Response.Status.BAD_REQUEST);
         }
 
         final boolean isAuthor = this.commentPermissionService.isAuthor(comment, requester);
@@ -434,10 +432,15 @@ public class CommentService {
     }
 
     /**
-     * Edit a comment with permission check
+     * Edit a comment as the signed-in user, with permission check
+     *
+     * @throws ValidationException
+     *             if the session has ended
      */
     @Transactional
-    public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto, final Long editorId) {
+    public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto) {
+        final UserEntity editor = this.authService.requireCurrentUser();
+        final Long editorId = editor.id;
         LOG.infof("Attempting to edit comment: commentPublicId=%s, editorId=%s", commentPublicId, editorId);
 
         final CommentEntity comment = this.commentRepository.findByPublicId(commentPublicId).orElse(null);
@@ -445,12 +448,6 @@ public class CommentService {
             LOG.warnf("Edit comment failed: comment not found commentPublicId=%s, editorId=%s", commentPublicId,
                     editorId);
             throw new WebApplicationException("Comment not found", Response.Status.NOT_FOUND);
-        }
-
-        final UserEntity editor = this.userRepository.findById(editorId);
-        if (editor == null) {
-            LOG.warnf("Edit comment failed: editor not found editorId=%s", editorId);
-            throw new WebApplicationException("Editor not found", Response.Status.BAD_REQUEST);
         }
 
         // Authors can always edit their own comments; non-authors need explicit
@@ -470,11 +467,14 @@ public class CommentService {
     }
 
     /**
-     * Flag a comment for moderation review
+     * Flag a comment for moderation review as the signed-in user
+     *
+     * @throws ValidationException
+     *             if the session has ended
      */
     @Transactional
-    public void flagComment(final String commentPublicId, final Long flaggerId, final String reason) {
-        this.commentFlaggingService.flagComment(commentPublicId, flaggerId, reason);
+    public void flagComment(final String commentPublicId, final String reason) {
+        this.commentFlaggingService.flagComment(commentPublicId, this.authService.requireCurrentUser(), reason);
     }
 
     /**
@@ -507,13 +507,16 @@ public class CommentService {
     }
 
     /**
-     * Moderate a comment (hide/unhide/delete). Requires the {@code commentEdit} permission.
+     * Moderate a comment (hide/unhide/delete) as the signed-in user. Requires the {@code commentEdit} permission.
+     *
+     * @throws ValidationException
+     *             if the session has ended
      */
     @Transactional
-    public void moderateComment(final String commentPublicId, final String action, final Long moderatorId,
-            final String reason) {
+    public void moderateComment(final String commentPublicId, final String action, final String reason) {
+        final UserEntity moderator = this.authService.requireCurrentUser();
         this.permissionService.requireCommentEdit();
-        this.commentModerationService.moderateComment(commentPublicId, action, moderatorId, reason);
+        this.commentModerationService.moderateComment(commentPublicId, action, moderator, reason);
     }
 
     /**

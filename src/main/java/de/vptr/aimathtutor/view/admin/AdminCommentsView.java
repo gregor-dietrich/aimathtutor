@@ -372,7 +372,7 @@ public class AdminCommentsView extends AbstractAdminView {
             }
             final var saved = ServiceRejectionUtil.runOrShowRejection(() -> {
                 this.commentService.editComment(Objects.requireNonNull(this.currentComment.publicId),
-                        this.currentComment, editorId);
+                        this.currentComment);
                 NotificationUtil.showSuccess("Comment updated successfully");
             });
             if (saved) {
@@ -397,7 +397,7 @@ public class AdminCommentsView extends AbstractAdminView {
                 NotificationUtil.showError("You must be logged in to delete comments");
                 return;
             }
-            this.commentService.deleteComment(Objects.requireNonNull(comment.publicId), requesterId, true);
+            this.commentService.deleteComment(Objects.requireNonNull(comment.publicId), true);
             NotificationUtil.showSuccess("Comment deleted successfully");
             this.loadCommentsAsync();
         } catch (final PermissionDeniedException e) {
@@ -496,7 +496,7 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("Session expired, please log in again");
                     return;
                 }
-                this.commentService.moderateComment(comment.publicId, "HIDE", currentUserId, reason);
+                this.commentService.moderateComment(comment.publicId, "HIDE", reason);
                 NotificationUtil.showSuccess("Comment hidden successfully");
                 this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
@@ -520,7 +520,7 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("Session expired, please log in again");
                     return;
                 }
-                this.commentService.moderateComment(comment.publicId, "SHOW", currentUserId, reason);
+                this.commentService.moderateComment(comment.publicId, "SHOW", reason);
                 NotificationUtil.showSuccess("Comment shown successfully");
                 this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {
@@ -544,7 +544,7 @@ public class AdminCommentsView extends AbstractAdminView {
                     NotificationUtil.showError("Session expired, please log in again");
                     return;
                 }
-                this.commentService.moderateComment(comment.publicId, "RESTORE", currentUserId, reason);
+                this.commentService.moderateComment(comment.publicId, "RESTORE", reason);
                 NotificationUtil.showSuccess("Comment restored successfully");
                 this.loadCommentsAsync();
             } catch (final PermissionDeniedException e) {

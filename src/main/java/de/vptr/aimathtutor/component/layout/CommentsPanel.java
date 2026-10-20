@@ -329,7 +329,7 @@ public class CommentsPanel extends VerticalLayout {
             dto.sessionId = this.sessionId;
 
             // Call service
-            this.getCommentService().createComment(dto, this.currentUserId);
+            this.getCommentService().createComment(dto);
 
             // Clear form and fully exit reply mode
             this.commentTextArea.clear();
@@ -375,7 +375,7 @@ public class CommentsPanel extends VerticalLayout {
             try {
                 final CommentDto dto = new CommentDto();
                 dto.content = editArea.getValue();
-                this.getCommentService().editComment(commentPublicId, dto, this.currentUserId);
+                this.getCommentService().editComment(commentPublicId, dto);
                 dialog.close();
                 this.loadComments();
                 NotificationUtil.showSuccess("Comment updated!");
@@ -397,7 +397,7 @@ public class CommentsPanel extends VerticalLayout {
 
     private void onDeleteClicked(final String commentPublicId) {
         try {
-            this.getCommentService().deleteComment(commentPublicId, this.currentUserId, true); // soft delete
+            this.getCommentService().deleteComment(commentPublicId, true); // soft delete
             this.loadComments();
             NotificationUtil.showSuccess("Comment deleted!");
         } catch (final PermissionDeniedException ex) {
@@ -410,7 +410,7 @@ public class CommentsPanel extends VerticalLayout {
 
     private void onReportClicked(final String commentPublicId) {
         try {
-            this.getCommentService().flagComment(commentPublicId, this.currentUserId, "Comment reported");
+            this.getCommentService().flagComment(commentPublicId, "Comment reported");
             NotificationUtil.showSuccess("Comment flagged for review");
         } catch (final Exception ex) {
             LOG.error("Failed to flag comment", ex);

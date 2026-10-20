@@ -49,23 +49,8 @@ class CommentFlaggingServiceTest {
     void shouldThrowNotFoundForNonExistentComment() {
         final UserEntity user = this.userRepository.findByUsername("admin");
         assertNotNull(user, "Seeded admin user must exist");
-        final var ex = assertThrows(WebApplicationException.class, () -> this.flaggingService
-                .flagComment("00000000000000000000000000", Objects.requireNonNull(user.id), "spam"));
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
-    }
-
-    @Test
-    @DisplayName("Should throw NOT_FOUND for non-existent flagger")
-    @TestTransaction
-    void shouldThrowNotFoundForNonExistentFlagger() {
-        final ExerciseEntity exercise = this.exerciseRepository.findById(1L);
-        assertNotNull(exercise, "Seeded exercise must exist");
-        final var admin = this.userRepository.findByUsername("admin");
-        assertNotNull(admin, "Seeded admin user must exist");
-        final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, admin);
-
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), 99_999L, "spam"));
+                () -> this.flaggingService.flagComment("00000000000000000000000000", user, "spam"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -79,8 +64,8 @@ class CommentFlaggingServiceTest {
         assertNotNull(exercise, "Seeded exercise must exist");
         final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, author);
 
-        final var ex = assertThrows(WebApplicationException.class, () -> this.flaggingService
-                .flagComment(Objects.requireNonNull(comment.publicId), Objects.requireNonNull(author.id), "spam"));
+        final var ex = assertThrows(WebApplicationException.class,
+                () -> this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), author, "spam"));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -96,8 +81,7 @@ class CommentFlaggingServiceTest {
         assertNotNull(exercise, "Seeded exercise must exist");
         final var comment = TestCommentFactory.createComment(this.commentRepository, exercise, author);
 
-        this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), Objects.requireNonNull(flagger.id),
-                "inappropriate");
+        this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), flagger, "inappropriate");
         assertEquals(1, comment.flagsCount);
     }
 
@@ -117,15 +101,14 @@ class CommentFlaggingServiceTest {
         assertNotNull(teacher, "Seeded teacher user must exist");
         assertNotNull(student1, "Seeded student1 user must exist");
         assertNotNull(student2, "Seeded student2 user must exist");
-        final Long[] flaggerIds = { Objects.requireNonNull(teacher.id), Objects.requireNonNull(student1.id),
-                Objects.requireNonNull(student2.id) };
-        for (final Long flaggerId : flaggerIds) {
-            this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), flaggerId, "spam");
+        final UserEntity[] flaggers = { teacher, student1, student2 };
+        for (final UserEntity flagger : flaggers) {
+            this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), flagger, "spam");
         }
 
         // Create additional flaggers to reach threshold
         final UserRankEntity studentRank = this.userRankRepository.findById(3L);
-        for (int i = 0; i < AppConstants.COMMENT_AUTO_HIDE_THRESHOLD - flaggerIds.length; i++) {
+        for (int i = 0; i < AppConstants.COMMENT_AUTO_HIDE_THRESHOLD - flaggers.length; i++) {
             final UserEntity flagger = new UserEntity();
             flagger.username = "flagger" + i;
             flagger.password = "password";
@@ -133,8 +116,7 @@ class CommentFlaggingServiceTest {
             flagger.activated = true;
             flagger.banned = false;
             this.userRepository.persist(flagger);
-            this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId),
-                    Objects.requireNonNull(flagger.id), "spam");
+            this.flaggingService.flagComment(Objects.requireNonNull(comment.publicId), flagger, "spam");
         }
 
         assertEquals(AppConstants.COMMENT_AUTO_HIDE_THRESHOLD, comment.flagsCount);

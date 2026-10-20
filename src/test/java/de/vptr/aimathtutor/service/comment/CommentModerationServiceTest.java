@@ -53,7 +53,7 @@ class CommentModerationServiceTest {
     void shouldThrowNotFoundForNonExistentComment() {
         final UserEntity moderator = this.userRepository.findById(1L);
         final var ex = assertThrows(WebApplicationException.class, () -> this.moderationService
-                .moderateComment("00000000000000000000000000", "HIDE", moderator.id, "reason"));
+                .moderateComment("00000000000000000000000000", "HIDE", moderator, "reason"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -63,7 +63,7 @@ class CommentModerationServiceTest {
     void shouldHideComment() {
         final var fixture = this.createModerationFixture();
 
-        this.moderationService.moderateComment(fixture.comment().publicId, "HIDE", fixture.moderator().id,
+        this.moderationService.moderateComment(fixture.comment().publicId, "HIDE", fixture.moderator(),
                 "Offensive content");
 
         assertEquals(CommentStatus.HIDDEN, fixture.comment().status);
@@ -82,7 +82,7 @@ class CommentModerationServiceTest {
         fixture.comment().deletedBy = fixture.moderator();
         fixture.comment().deletedAt = LocalDateTime.now(ZoneId.systemDefault());
 
-        this.moderationService.moderateComment(fixture.comment().publicId, "SHOW", fixture.moderator().id, "Approved");
+        this.moderationService.moderateComment(fixture.comment().publicId, "SHOW", fixture.moderator(), "Approved");
 
         assertEquals(CommentStatus.VISIBLE, fixture.comment().status);
         assertEquals(0, fixture.comment().flagsCount);
@@ -97,8 +97,7 @@ class CommentModerationServiceTest {
         final var fixture = this.createModerationFixture();
         fixture.comment().status = CommentStatus.DELETED;
 
-        this.moderationService.moderateComment(fixture.comment().publicId, "RESTORE", fixture.moderator().id,
-                "Restored");
+        this.moderationService.moderateComment(fixture.comment().publicId, "RESTORE", fixture.moderator(), "Restored");
 
         assertEquals(CommentStatus.VISIBLE, fixture.comment().status);
         assertEquals(0, fixture.comment().flagsCount);
@@ -111,7 +110,7 @@ class CommentModerationServiceTest {
     void shouldDeleteComment() {
         final var fixture = this.createModerationFixture();
 
-        this.moderationService.moderateComment(fixture.comment().publicId, "DELETE", fixture.moderator().id, "Spam");
+        this.moderationService.moderateComment(fixture.comment().publicId, "DELETE", fixture.moderator(), "Spam");
 
         assertEquals(CommentStatus.DELETED, fixture.comment().status);
         assertEquals("DELETE", fixture.comment().moderationAction);
@@ -126,18 +125,7 @@ class CommentModerationServiceTest {
         final var fixture = this.createModerationFixture();
 
         assertThrows(ValidationException.class, () -> this.moderationService.moderateComment(fixture.comment().publicId,
-                "INVALID", fixture.moderator().id, "reason"));
-    }
-
-    @Test
-    @DisplayName("Should throw BAD_REQUEST when moderator is not found")
-    @TestTransaction
-    void shouldThrowBadRequestWhenModeratorNotFound() {
-        final var fixture = this.createModerationFixture();
-
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.moderationService.moderateComment(fixture.comment().publicId, "HIDE", 99_999L, "reason"));
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
+                "INVALID", fixture.moderator(), "reason"));
     }
 
     @Test
@@ -148,7 +136,7 @@ class CommentModerationServiceTest {
 
         final String longReason = "a".repeat(501);
         assertThrows(ValidationException.class, () -> this.moderationService.moderateComment(fixture.comment().publicId,
-                "HIDE", fixture.moderator().id, longReason));
+                "HIDE", fixture.moderator(), longReason));
     }
 
     @Test
@@ -158,7 +146,7 @@ class CommentModerationServiceTest {
         final var fixture = this.createModerationFixture();
 
         assertThrows(ValidationException.class, () -> this.moderationService.moderateComment(fixture.comment().publicId,
-                null, fixture.moderator().id, "reason"));
+                null, fixture.moderator(), "reason"));
     }
 
     private record ModerationFixture(UserEntity moderator, CommentEntity comment) {

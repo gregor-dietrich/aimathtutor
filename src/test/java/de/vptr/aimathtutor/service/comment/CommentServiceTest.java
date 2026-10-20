@@ -19,17 +19,20 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
+import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ExerciseService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -70,6 +73,12 @@ class CommentServiceTest {
         when(this.authService.getCurrentUserEntity()).thenReturn(this.userRepository.findByUsername("teacher"));
     }
 
+    /** Makes {@code actor} the signed-in user and returns the service under test. */
+    private CommentService as(final UserEntity actor) {
+        when(this.authService.requireCurrentUser()).thenReturn(actor);
+        return this.commentService;
+    }
+
     private ExerciseViewDto createCommentableExercise() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher);
@@ -99,7 +108,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(dto, student.id);
+            this.as(student).createComment(dto);
         });
     }
 
@@ -115,7 +124,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(dto, student.id);
+            this.as(student).createComment(dto);
         });
     }
 
@@ -131,7 +140,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
 
         assertThrows(ValidationException.class, () -> {
-            this.commentService.createComment(dto, student.id);
+            this.as(student).createComment(dto);
         });
     }
 
@@ -145,8 +154,7 @@ class CommentServiceTest {
         dto.content = "<script>alert(1)</script>safe text";
         dto.exercisePublicId = exercise.publicId;
 
-        final CommentViewDto created =
-                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created = this.as(this.userRepository.findByUsername("student1")).createComment(dto);
 
         assertNotNull(created);
         assertNotNull(created.content);
@@ -173,7 +181,7 @@ class CommentServiceTest {
         dto.exercisePublicId = ex.publicId;
 
         final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
+                () -> this.as(this.userRepository.findByUsername("student1")).createComment(dto));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
         verify(this.permissionService).requireCommentAdd();
     }
@@ -186,8 +194,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "hello world";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created =
-                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created = this.as(this.userRepository.findByUsername("student1")).createComment(dto);
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
 
@@ -203,7 +210,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "comment one";
         dto.exercisePublicId = exercise.publicId;
-        this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
+        this.as(this.userRepository.findByUsername("student1")).createComment(dto);
 
         final var comments = this.commentService.findByExerciseId(exercise.id);
 
@@ -219,12 +226,11 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "to delete";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created =
-                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created = this.as(this.userRepository.findByUsername("student1")).createComment(dto);
         final var student = this.userRepository.findByUsername("student1");
         assertNotNull(student, "student1 fixture must exist");
 
-        this.commentService.deleteComment(created.publicId, student.id, true);
+        this.as(student).deleteComment(created.publicId, true);
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent(), "Soft-deleted comment should still be findable");
@@ -240,12 +246,11 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "needs hiding";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created =
-                this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id);
+        final CommentViewDto created = this.as(this.userRepository.findByUsername("student1")).createComment(dto);
         final var admin = this.userRepository.findByUsername("admin");
         assertNotNull(admin);
 
-        this.commentService.moderateComment(created.publicId, "HIDE", admin.id, "spam");
+        this.as(admin).moderateComment(created.publicId, "HIDE", "spam");
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent());
@@ -264,11 +269,11 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "original content";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         final var editDto = new CommentDto();
         editDto.content = "edited content";
-        final CommentViewDto edited = this.commentService.editComment(created.publicId, editDto, student.id);
+        final CommentViewDto edited = this.as(student).editComment(created.publicId, editDto);
 
         assertEquals("edited content", edited.content);
 
@@ -288,7 +293,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "student1's comment";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student1.id);
+        final CommentViewDto created = this.as(student1).createComment(dto);
 
         doThrow(new WebApplicationException("Forbidden", Response.Status.FORBIDDEN)).when(this.permissionService)
                 .requireCommentEdit();
@@ -297,7 +302,7 @@ class CommentServiceTest {
         editDto.content = "student2 sneaking in";
 
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.commentService.editComment(created.publicId, editDto, student2.id));
+                () -> this.as(student2).editComment(created.publicId, editDto));
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
 
         final var reloaded = this.commentService.findById(this.getCommentNumericId(created.publicId));
@@ -317,7 +322,7 @@ class CommentServiceTest {
             final var d = new CommentDto();
             d.content = "comment " + i;
             d.exercisePublicId = exercise.publicId;
-            this.commentService.createComment(d, student.id);
+            this.as(student).createComment(d);
         }
 
         final var page1 = this.commentService.listCommentsByExercise(exercise.id, 0, 2, null);
@@ -345,7 +350,7 @@ class CommentServiceTest {
             final var d = new CommentDto();
             d.content = "recent " + i;
             d.exercisePublicId = exercise.publicId;
-            this.commentService.createComment(d, student.id);
+            this.as(student).createComment(d);
         }
 
         final var recent = this.commentService.findRecentComments(3);
@@ -365,7 +370,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "my comment";
         dto.exercisePublicId = exercise.publicId;
-        this.commentService.createComment(dto, student.id);
+        this.as(student).createComment(dto);
 
         final var results = this.commentService.findByUserId(student.id);
         assertNotNull(results);
@@ -392,7 +397,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "flaggable comment";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         final var entity = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
         entity.flagsCount = 2;
@@ -412,7 +417,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "visible comment";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         final var visible = this.commentService.findByStatus(CommentStatus.VISIBLE);
         assertNotNull(visible);
@@ -429,7 +434,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "all comments test";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         final var all = this.commentService.getAllComments();
         assertNotNull(all);
@@ -454,9 +459,9 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "to hard delete";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
-        this.commentService.deleteComment(created.publicId, student.id, false);
+        this.as(student).deleteComment(created.publicId, false);
 
         assertFalse(this.commentRepository.findByPublicId(created.publicId).isPresent(),
                 "Hard-deleted comment should be removed from the repository");
@@ -472,13 +477,13 @@ class CommentServiceTest {
         final var parentDto = new CommentDto();
         parentDto.content = "parent comment";
         parentDto.exercisePublicId = exercise.publicId;
-        final CommentViewDto parent = this.commentService.createComment(parentDto, student.id);
+        final CommentViewDto parent = this.as(student).createComment(parentDto);
 
         final var replyDto = new CommentDto();
         replyDto.content = "reply comment";
         replyDto.exercisePublicId = exercise.publicId;
         replyDto.parentCommentPublicId = parent.publicId;
-        final CommentViewDto reply = this.commentService.createComment(replyDto, student.id);
+        final CommentViewDto reply = this.as(student).createComment(replyDto);
 
         final var replies = this.commentService.findReplies(parent.publicId);
         assertNotNull(replies);
@@ -504,7 +509,7 @@ class CommentServiceTest {
         dto.exercisePublicId = ex.publicId;
 
         final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.commentService.createComment(dto, this.userRepository.findByUsername("student1").id));
+                () -> this.as(this.userRepository.findByUsername("student1")).createComment(dto));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
@@ -518,7 +523,7 @@ class CommentServiceTest {
         dto.content = "test";
         dto.exercisePublicId = null;
 
-        assertThrows(ValidationException.class, () -> this.commentService.createComment(dto, student.id));
+        assertThrows(ValidationException.class, () -> this.as(student).createComment(dto));
     }
 
     @Test
@@ -532,8 +537,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         dto.parentCommentPublicId = "00000000000000000000000000";
 
-        final var ex =
-                assertThrows(WebApplicationException.class, () -> this.commentService.createComment(dto, student.id));
+        final var ex = assertThrows(WebApplicationException.class, () -> this.as(student).createComment(dto));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -548,15 +552,14 @@ class CommentServiceTest {
         final var parentDto = new CommentDto();
         parentDto.content = "parent";
         parentDto.exercisePublicId = exercise1.publicId;
-        final var parent = this.commentService.createComment(parentDto, student.id);
+        final var parent = this.as(student).createComment(parentDto);
 
         final var replyDto = new CommentDto();
         replyDto.content = "reply";
         replyDto.exercisePublicId = exercise2.publicId;
         replyDto.parentCommentPublicId = parent.publicId;
 
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.commentService.createComment(replyDto, student.id));
+        final var ex = assertThrows(WebApplicationException.class, () -> this.as(student).createComment(replyDto));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
@@ -583,7 +586,7 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "find me by public id";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         final var found = this.commentService.findByPublicId(created.publicId);
         assertTrue(found.isPresent());
@@ -601,10 +604,10 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "flaggable";
         dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         // Use a different user to flag (can't flag own comment)
-        this.commentService.flagComment(created.publicId, otherStudent.id, "inappropriate");
+        this.as(otherStudent).flagComment(created.publicId, "inappropriate");
         // Should complete without exception
     }
 
@@ -623,23 +626,13 @@ class CommentServiceTest {
         final var dto = new CommentDto();
         dto.content = "date range test";
         dto.exercisePublicId = exercise.publicId;
-        this.commentService.createComment(dto, student.id);
+        this.as(student).createComment(dto);
 
         final String today = LocalDate.now(ZoneId.systemDefault()).toString();
         final String tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1).toString();
         final var results = this.commentService.findByDateRange(today, tomorrow);
         assertNotNull(results);
         assertFalse(results.isEmpty());
-    }
-
-    @Test
-    @DisplayName("deleteComment throws NOT_FOUND for non-existent publicId")
-    @TestTransaction
-    void testDeleteComment_notFound() {
-        final var student = this.userRepository.findByUsername("student1");
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.commentService.deleteComment("00000000000000000000000000", student.id, false));
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test
@@ -652,13 +645,13 @@ class CommentServiceTest {
         final var parentDto = new CommentDto();
         parentDto.content = "parent";
         parentDto.exercisePublicId = exercise.publicId;
-        final var parent = this.commentService.createComment(parentDto, student.id);
+        final var parent = this.as(student).createComment(parentDto);
 
         final var replyDto = new CommentDto();
         replyDto.content = "a reply";
         replyDto.exercisePublicId = exercise.publicId;
         replyDto.parentCommentPublicId = parent.publicId;
-        this.commentService.createComment(replyDto, student.id);
+        this.as(student).createComment(replyDto);
 
         final var replies = this.commentService.listCommentsByExercise(exercise.id, 0, 10, parent.publicId);
         assertNotNull(replies);
@@ -666,49 +659,77 @@ class CommentServiceTest {
     }
 
     @Test
-    @DisplayName("editComment throws NOT_FOUND for non-existent publicId")
+    @DisplayName("editComment and deleteComment throw NOT_FOUND for non-existent publicId")
+    @TestTransaction
+    void testEditAndDeleteComment_notFound() {
+        final var student = this.userRepository.findByUsername("student1");
+        final var editDto = new CommentDto();
+        editDto.content = "edited content";
+        final var editEx = assertThrows(WebApplicationException.class,
+                () -> this.as(student).editComment("00000000000000000000000000", editDto));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), editEx.getResponse().getStatus());
+        final var deleteEx = assertThrows(WebApplicationException.class,
+                () -> this.as(student).deleteComment("00000000000000000000000000", false));
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), deleteEx.getResponse().getStatus());
+    }
+
     @TestTransaction
     void testEditComment_notFound() {
         final var student = this.userRepository.findByUsername("student1");
         final var editDto = new CommentDto();
         editDto.content = "edited content";
         final var ex = assertThrows(WebApplicationException.class,
-                () -> this.commentService.editComment("00000000000000000000000000", editDto, student.id));
+                () -> this.as(student).editComment("00000000000000000000000000", editDto));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test
-    @DisplayName("deleteComment throws BAD_REQUEST when requester is not found")
+    @DisplayName("every comment write refuses an ended session and changes nothing")
     @TestTransaction
-    void testDeleteComment_requesterNotFound() {
+    void testEndedSession_refusesEveryWrite() {
         final var exercise = this.createCommentableExercise();
         final var student = this.userRepository.findByUsername("student1");
         final var dto = new CommentDto();
-        dto.content = "comment to delete";
+        dto.content = "comment to keep";
         dto.exercisePublicId = exercise.publicId;
-        final var created = this.commentService.createComment(dto, student.id);
-
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.commentService.deleteComment(created.publicId, -999L, true));
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
-    }
-
-    @Test
-    @DisplayName("editComment throws BAD_REQUEST when editor is not found")
-    @TestTransaction
-    void testEditComment_editorNotFound() {
-        final var exercise = this.createCommentableExercise();
-        final var student = this.userRepository.findByUsername("student1");
-        final var dto = new CommentDto();
-        dto.content = "comment to edit";
-        dto.exercisePublicId = exercise.publicId;
-        final var created = this.commentService.createComment(dto, student.id);
+        final var created = this.as(student).createComment(dto);
 
         final var editDto = new CommentDto();
         editDto.content = "new content";
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.commentService.editComment(created.publicId, editDto, -999L));
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
+        when(this.authService.requireCurrentUser())
+                .thenThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE));
+        final Executable[] writes = { () -> this.commentService.createComment(dto),
+                () -> this.commentService.editComment(created.publicId, editDto),
+                () -> this.commentService.deleteComment(created.publicId, true),
+                () -> this.commentService.flagComment(created.publicId, "spam"),
+                () -> this.commentService.moderateComment(created.publicId, "HIDE", "spam") };
+        for (final Executable write : writes) {
+            final var ex = assertThrows(ValidationException.class, write);
+            assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
+        }
+
+        final var reloaded = this.commentService.findByPublicId(created.publicId).orElseThrow();
+        assertEquals("comment to keep", reloaded.content, "Comment content must be unchanged");
+        assertEquals(CommentStatus.VISIBLE, reloaded.status, "Comment must be neither deleted nor hidden");
+        assertEquals(0, reloaded.flagsCount, "Comment must not be flagged");
+        assertEquals(1, this.commentService.findByExerciseId(exercise.id).size(), "No second comment may be stored");
+    }
+
+    @Test
+    @DisplayName("createComment persists the session user as author and rate-limits on that user")
+    @TestTransaction
+    void testCreateComment_authorIsSessionUser() {
+        final var exercise = this.createCommentableExercise();
+        final var student = this.userRepository.findByUsername("student2");
+        final var dto = new CommentDto();
+        dto.content = "authored by the session user";
+        dto.exercisePublicId = exercise.publicId;
+
+        final var created = this.as(student).createComment(dto);
+
+        assertEquals(student.publicId,
+                this.commentRepository.findByPublicId(created.publicId).orElseThrow().user.publicId);
+        verify(this.commentRateLimitService).checkRateLimit(student.id);
     }
 
     @Test
@@ -723,7 +744,7 @@ class CommentServiceTest {
         dto.content = "session comment";
         dto.exercisePublicId = exercise.publicId;
         dto.sessionId = sessionId;
-        final CommentViewDto created = this.commentService.createComment(dto, student.id);
+        final CommentViewDto created = this.as(student).createComment(dto);
 
         final var results = this.commentService.listCommentsBySession(sessionId);
         assertNotNull(results);
