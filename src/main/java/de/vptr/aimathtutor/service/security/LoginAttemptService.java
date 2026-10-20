@@ -19,7 +19,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * In-memory service for tracking and throttling login attempts. Implements per-username and per-IP exponential backoff
- * to mitigate brute-force attacks. Uses bounded cache with automatic cleanup to prevent DoS via unbounded growth.
+ * to mitigate brute-force attacks: the failure count of a key survives its lock and is forgotten only an hour after the
+ * lock ends, so repeated lockouts escalate up to the one-hour cap. Uses bounded cache with automatic cleanup to prevent
+ * DoS via unbounded growth.
  */
 @ApplicationScoped
 public class LoginAttemptService {
@@ -27,6 +29,8 @@ public class LoginAttemptService {
     private static final int MAX_ATTEMPTS = 5;
     private static final long BASE_LOCKOUT_SECONDS = 30;
     private static final long MAX_LOCKOUT_SECONDS = 3600; // 1 hour
+    // A key's failures are forgotten this long after its lock ends, so that the next lock is longer
+    private static final long FORGET_AFTER_SECONDS = 3600;
     private static final int MAX_CACHE_SIZE = 10_000;
     private static final long CLEANUP_INTERVAL_SECONDS = 300; // 5 minutes
 
@@ -67,8 +71,8 @@ public class LoginAttemptService {
      * Periodically removes expired entries to prevent unbounded memory growth.
      */
     private void cleanupExpiredEntries() {
-        this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired());
         final var now = this.clock.instant();
+        this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
         this.accountAttempts.entrySet().removeIf(entry -> entry.getValue().isExpired(ACCOUNT_POLICY, now));
         this.passwordChangeAttempts.entrySet()
                 .removeIf(entry -> entry.getValue().isExpired(PASSWORD_CHANGE_POLICY, now));
@@ -96,7 +100,9 @@ public class LoginAttemptService {
 
     /**
      * Records a failed login attempt for the given key (username or IP). Returns the number of seconds the client
-     * should wait before retrying. Enforces maximum cache size to prevent DoS attacks.
+     * should wait before retrying. The count keeps growing while the key is locked and is forgotten only
+     * {@value #FORGET_AFTER_SECONDS} seconds after the lock ends, so each lock lasts longer than the one before.
+     * Enforces maximum cache size to prevent DoS attacks.
      *
      * @param key
      *            the username or IP address
@@ -108,14 +114,15 @@ public class LoginAttemptService {
             this.cleanupExpiredEntries();
         }
 
+        final var now = this.clock.instant();
         final LoginAttempt attempt = this.attempts.compute(key, (k, v) -> {
-            if (v == null || v.isExpired()) {
-                return new LoginAttempt(1, Instant.now());
+            if (v == null || v.isExpired(now)) {
+                return new LoginAttempt(1, now);
             }
-            return new LoginAttempt(v.count + 1, Instant.now());
+            return new LoginAttempt(v.count + 1, now);
         });
 
-        return this.calculateLockoutSeconds(attempt.count);
+        return lockoutSeconds(attempt.count);
     }
 
     /**
@@ -203,11 +210,12 @@ public class LoginAttemptService {
         if (attempt == null) {
             return false;
         }
-        if (attempt.isExpired()) {
+        final var now = this.clock.instant();
+        if (attempt.isExpired(now)) {
             this.attempts.remove(key, attempt);
             return false;
         }
-        return attempt.count >= MAX_ATTEMPTS;
+        return attempt.isLocked(now);
     }
 
     /**
@@ -238,12 +246,11 @@ public class LoginAttemptService {
      */
     public long getRemainingLockoutSeconds(final String key) {
         final LoginAttempt attempt = this.attempts.get(key);
-        if (attempt == null || attempt.isExpired() || attempt.count < MAX_ATTEMPTS) {
+        if (attempt == null) {
             return 0;
         }
-        final long lockoutSeconds = this.calculateLockoutSeconds(attempt.count);
-        final long elapsed = ChronoUnit.SECONDS.between(attempt.lastAttempt, Instant.now());
-        return Math.max(0, lockoutSeconds - elapsed);
+        final var now = this.clock.instant();
+        return attempt.isExpired(now) ? 0 : attempt.remainingLockoutSeconds(now);
     }
 
     /**
@@ -263,12 +270,10 @@ public class LoginAttemptService {
         return Math.max(0, ACCOUNT_POLICY.lockSeconds - elapsed);
     }
 
-    private long calculateLockoutSeconds(final int attemptCount) {
-        if (attemptCount < MAX_ATTEMPTS) {
-            return 0;
-        }
-        final long multiplier = 1L << (attemptCount - MAX_ATTEMPTS); // exponential: 1, 2, 4, 8...
-        return Math.min(BASE_LOCKOUT_SECONDS * multiplier, MAX_LOCKOUT_SECONDS);
+    /** Lock length after {@code count} failures: none below the threshold, then doubling from 30 s up to the cap. */
+    private static long lockoutSeconds(final int count) {
+        return count < MAX_ATTEMPTS ? 0
+                : Math.min(BASE_LOCKOUT_SECONDS * (1L << Math.min(count - MAX_ATTEMPTS, 31)), MAX_LOCKOUT_SECONDS);
     }
 
     private static final class LoginAttempt {
@@ -280,18 +285,17 @@ public class LoginAttemptService {
             this.lastAttempt = lastAttempt;
         }
 
-        boolean isExpired() {
-            final long lockoutSeconds = calculateLockoutSeconds(this.count);
-            final long elapsed = ChronoUnit.SECONDS.between(this.lastAttempt, Instant.now());
-            return elapsed > lockoutSeconds + BASE_LOCKOUT_SECONDS;
+        long remainingLockoutSeconds(final Instant now) {
+            return Math.max(0, lockoutSeconds(this.count) - ChronoUnit.SECONDS.between(this.lastAttempt, now));
         }
 
-        private static long calculateLockoutSeconds(final int attemptCount) {
-            if (attemptCount < MAX_ATTEMPTS) {
-                return 0;
-            }
-            final long multiplier = 1L << (attemptCount - MAX_ATTEMPTS);
-            return Math.min(BASE_LOCKOUT_SECONDS * multiplier, MAX_LOCKOUT_SECONDS);
+        boolean isLocked(final Instant now) {
+            return this.remainingLockoutSeconds(now) > 0;
+        }
+
+        boolean isExpired(final Instant now) {
+            return ChronoUnit.SECONDS.between(this.lastAttempt, now) > lockoutSeconds(this.count)
+                    + FORGET_AFTER_SECONDS;
         }
     }
 
