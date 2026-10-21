@@ -10,9 +10,11 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.vptr.aimathtutor.AppLifecycleBean;
 import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
@@ -20,7 +22,8 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.ObserverMethod;
 
 /**
- * Unit tests for the private static methods of {@link EncryptionKeyManager} using reflection and temp directories.
+ * Unit tests for {@link EncryptionKeyManager} using temp directories: its private static methods by reflection, and
+ * {@code init()} through the package-private constructor.
  */
 @SuppressWarnings({ "NullAway", "PMD.AvoidAccessibilityAlteration" })
 public class EncryptionKeyManagerTest {
@@ -49,6 +52,8 @@ public class EncryptionKeyManagerTest {
     }
 
     private static EncryptionKeyManager managerWithHomeOnly() {
+        Assumptions.assumeTrue(System.getenv("XDG_DATA_HOME") == null,
+                "XDG_DATA_HOME is set: the test would touch the real key location");
         return new EncryptionKeyManager(LaunchMode.TEST, Optional.empty(), EncryptionKeyManagerTest::notCalled);
     }
 
@@ -231,11 +236,29 @@ public class EncryptionKeyManagerTest {
     }
 
     @Test
-    public void testLoadAtStartup_observesStartupEventBeforeDefaultPriority() throws Exception {
+    public void testInit_productionCheckFails_failsClosedWithoutCreatingKey() {
+        final Path keyPath = this.tempDir.resolve("keys/encryption.key");
+        final EncryptionKeyManager km = this.productionManager(() -> {
+            throw new IllegalStateException("database down");
+        });
+
+        Assertions.assertThrows(IllegalStateException.class, km::init);
+
+        Assertions.assertFalse(Files.exists(keyPath), "No key file may be created");
+        Assertions.assertFalse(Files.exists(keyPath.getParent()), "No directory may be created");
+    }
+
+    @Test
+    public void testLoadAtStartup_observesStartupEventBeforeAppLifecycleBean() throws Exception {
         final Method method = EncryptionKeyManager.class.getDeclaredMethod("loadAtStartup", StartupEvent.class);
+        final Method lifecycle = AppLifecycleBean.class.getDeclaredMethod("onStart", StartupEvent.class);
 
         Assertions.assertTrue(method.getParameters()[0].isAnnotationPresent(Observes.class));
         final int priority = method.getParameters()[0].getAnnotation(Priority.class).value();
-        Assertions.assertTrue(priority < ObserverMethod.DEFAULT_PRIORITY, "priority " + priority);
+        final var lifecyclePriority = lifecycle.getParameters()[0].getAnnotation(Priority.class);
+        final int lifecycleValue =
+                lifecyclePriority == null ? ObserverMethod.DEFAULT_PRIORITY : lifecyclePriority.value();
+        Assertions.assertTrue(priority < lifecycleValue,
+                "priority " + priority + " must be lower than AppLifecycleBean's " + lifecycleValue);
     }
 }

@@ -47,10 +47,13 @@ import jakarta.interceptor.Interceptor;
  * <li>Existing key at {@code $XDG_DATA_HOME/aimathtutor/encryption.key} (or
  * {@code ~/.local/share/aimathtutor/encryption.key})</li>
  * <li>Existing key at {@code ~/.aimathtutor/encryption.key}</li>
- * <li>Generates a new 256-bit key at the XDG location with 0600 permissions. In production ({@link LaunchMode#NORMAL})
- * this happens only while no user holds an encrypted email address: with encrypted data and no key file, startup is
- * refused, because a fresh key could never read that data.</li>
+ * <li>Otherwise the XDG location.</li>
  * </ol>
+ *
+ * <p>
+ * A missing key file is generated at the resolved path with 0600 permissions. In production ({@link LaunchMode#NORMAL})
+ * that happens only while no user holds an encrypted email address; otherwise startup is refused, because a fresh key
+ * could never read that data.
  *
  * <p>
  * The manager is created at startup by {@link #loadAtStartup}, not by {@code @Initialized}: the check needs the schema
@@ -77,7 +80,7 @@ public class EncryptionKeyManager {
     EncryptionKeyManager(final LaunchMode launchMode,
             @ConfigProperty(name = "app.security.encryption-key-file") final Optional<String> keyFile,
             final DataSource dataSource) {
-        this(launchMode, keyFile, () -> encryptedDataExists(dataSource));
+        this(launchMode, keyFile, () -> queryEncryptedDataExists(dataSource));
     }
 
     EncryptionKeyManager(final LaunchMode launchMode, final Optional<String> keyFile,
@@ -99,7 +102,8 @@ public class EncryptionKeyManager {
         this.masterKey = Files.notExists(keyPath) ? createKey(keyPath) : loadKey(keyPath);
     }
 
-    static boolean encryptedDataExists(final DataSource dataSource) {
+    // Plain JDBC: UserRepository depends on EncryptionService, which needs this manager's key.
+    static boolean queryEncryptedDataExists(final DataSource dataSource) {
         try (var connection = dataSource.getConnection();
                 var statement = connection.createStatement();
                 var result = statement.executeQuery(
@@ -112,11 +116,13 @@ public class EncryptionKeyManager {
 
     private byte[] createKey(final Path path) {
         if (this.launchMode == LaunchMode.NORMAL && this.encryptedDataExists.getAsBoolean()) {
+            final Path shown = path.toAbsolutePath().normalize();
             LOG.fatalf("No encryption key file exists at %s, but the database already holds encrypted email "
                     + "addresses, which only that key can read. Nothing was changed. Restore the key file to that "
-                    + "path from your backup (with Docker Compose, the aimathtutor_keys volume), or set "
-                    + "app.security.encryption-key-file to where it is.", path);
-            throw new IllegalStateException("Encryption key file missing at " + path
+                    + "path from your backup (the aimathtutor_keys volume, which Docker Compose prefixes with its "
+                    + "project name; docker volume ls lists older ones), or set app.security.encryption-key-file to "
+                    + "where it is. Without a backup, see \"Lost encryption key\" in the README.", shown);
+            throw new IllegalStateException("Encryption key file missing at " + shown
                     + " while the database holds encrypted data; restore the key file");
         }
         return generateAndPersistKey(path);
