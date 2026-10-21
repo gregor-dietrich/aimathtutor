@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.util;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
 
@@ -12,6 +13,9 @@ import jakarta.annotation.Nullable;
  * Addresses are parsed only with {@link InetAddress#ofLiteral(String)}, which never performs a DNS lookup.
  */
 public final class ClientIpUtil {
+
+    // ofLiteral also accepts BSD short forms such as "10.1" or "2130706433"; only four decimal parts are an address
+    private static final Pattern DOTTED_QUAD = Pattern.compile("\\d{1,3}(\\.\\d{1,3}){3}");
 
     private ClientIpUtil() {
         // Utility class
@@ -29,8 +33,12 @@ public final class ClientIpUtil {
         if (value == null || value.isBlank()) {
             return null;
         }
+        final var text = value.trim();
+        if (text.indexOf(':') < 0 && !DOTTED_QUAD.matcher(text).matches()) {
+            return null;
+        }
         try {
-            return InetAddress.ofLiteral(value.trim());
+            return InetAddress.ofLiteral(text);
         } catch (final IllegalArgumentException e) {
             return null;
         }

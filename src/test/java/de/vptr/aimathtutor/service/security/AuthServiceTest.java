@@ -204,6 +204,23 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("a throttled authenticate records no failure, so attempts while locked do not escalate")
+    void throttledAuthenticateRecordsNothing() {
+        final var username = UUID.randomUUID().toString();
+        final var real = randomDocumentationIpv6();
+        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        try {
+            this.lock(realKey);
+            final var result = this.authenticateBehindProxy(username, real);
+            assertTrue(result.getMessage().contains("Too many failed attempts"), result.getMessage());
+            // the 6th failure locks for 60s; a recorded attempt while locked would have made it longer
+            assertEquals(60, this.loginAttemptService.recordFailedAttempt(realKey));
+        } finally {
+            this.loginAttemptService.recordSuccessfulLogin(realKey);
+        }
+    }
+
+    @Test
     @DisplayName("authenticate ignores a locked bucket of the forged leading X-Forwarded-For entry")
     void authenticateIgnoresForgedForwardedEntry() {
         final var username = UUID.randomUUID().toString();

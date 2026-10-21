@@ -114,6 +114,28 @@ class ClientIpUtilTest {
         assertEquals(CLIENT, resolve("192.0.2.1", List.of(CLIENT), "::ffff:192.0.2.1"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "10.0.0", "10.1", "12345", "2130706433" })
+    @DisplayName("parseLiteral rejects IPv4 short forms")
+    void parseLiteralRejectsShortForms(final String shortForm) {
+        assertNull(ClientIpUtil.parseLiteral(shortForm));
+    }
+
+    @Test
+    @DisplayName("parseLiteral still accepts dotted quads and IPv4-mapped forms")
+    void parseLiteralAcceptsFullForms() {
+        assertEquals(PEER, ip(PEER).getHostAddress());
+        assertEquals("192.0.2.1", ip("::ffff:192.0.2.1").getHostAddress());
+        assertEquals("192.0.2.1", ip("[::ffff:192.0.2.1]").getHostAddress());
+        assertEquals("0:0:0:0:0:0:0:1", ip("[::1]").getHostAddress());
+    }
+
+    @Test
+    @DisplayName("a short-form rightmost entry returns the peer")
+    void shortFormRightmostReturnsPeer() {
+        assertEquals(PEER, resolve(PEER, List.of(FORGED + ", 198.51.100"), PEER));
+    }
+
     @Test
     @DisplayName("several header lines count as one list")
     void headerLinesJoined() {

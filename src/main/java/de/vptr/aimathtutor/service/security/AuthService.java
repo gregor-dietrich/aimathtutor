@@ -54,7 +54,7 @@ public class AuthService {
     @Inject
     LoginAttemptService loginAttemptService;
 
-    @ConfigProperty(name = "app.security.trusted-proxy-ips", defaultValue = "127.0.0.1,::1,0:0:0:0:0:0:0:1")
+    @ConfigProperty(name = "app.security.trusted-proxy-ips", defaultValue = "127.0.0.1,::1")
     @Nullable
     String trustedProxyIpsConfig;
 
@@ -63,8 +63,7 @@ public class AuthService {
     @PostConstruct
     void init() {
         final var config = this.trustedProxyIpsConfig != null ? this.trustedProxyIpsConfig
-                : String.join(",", AppConstants.BLOCKED_HOST_LOOPBACK_IPV4, AppConstants.BLOCKED_HOST_LOOPBACK_IPV6,
-                        AppConstants.BLOCKED_HOST_LOOPBACK_IPV6_EXPANDED);
+                : String.join(",", AppConstants.BLOCKED_HOST_LOOPBACK_IPV4, AppConstants.BLOCKED_HOST_LOOPBACK_IPV6);
         final Set<InetAddress> trusted = new HashSet<>();
         for (final var entry : config.split(",", -1)) {
             if (entry.isBlank()) {
