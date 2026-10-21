@@ -93,10 +93,12 @@ public class GraspableMathService {
     }
 
     /**
-     * Processes a Graspable Math event and updates session statistics.
+     * Processes a Graspable Math event and updates session statistics. UI thread only.
      * 
      * @param event
      *            The event to process
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void processEvent(final GraspableEventDto event) {
@@ -125,10 +127,12 @@ public class GraspableMathService {
     }
 
     /**
-     * Marks a session as completed.
+     * Marks a session as completed. UI thread only.
      * 
      * @param sessionId
      *            The session ID
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void completeSession(final String sessionId) {
@@ -138,10 +142,12 @@ public class GraspableMathService {
     }
 
     /**
-     * Increments the hints used counter for a session.
+     * Increments the hints used counter for a session. UI thread only.
      * 
      * @param sessionId
      *            The session ID
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void recordHintUsed(final String sessionId) {
@@ -257,10 +263,12 @@ public class GraspableMathService {
     }
 
     /**
-     * Marks a session as completed.
+     * Marks a session as completed. UI thread only.
      * 
      * @param sessionId
      *            The session ID to mark complete
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void markSessionComplete(final String sessionId) {

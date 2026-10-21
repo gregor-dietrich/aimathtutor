@@ -82,6 +82,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     @Nullable
     private transient String currentSessionId;
     private transient int hintCount = 0;
+    // volatile only satisfies SpotBugs AT_STALE_THREAD_WRITE_OF_PRIMITIVE; every access is on the UI thread
     private transient volatile boolean problemSolved = false;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
@@ -168,6 +169,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Cancel callbacks from the previous exercise so they cannot touch the rebuilt
         // UI or log with a stale sessionId, and drop the old AI conversation history.
         this.cancelPendingAsyncFutures();
+        this.currentSessionId = null;
         this.conversationContext.clear();
         this.removeAll();
         this.hintCount = 0;
@@ -192,8 +194,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
             return;
         }
         if (createdSessionId == null) {
-            // Refused, and the rejection was shown (a session that ended is back at login)
+            // Refused, and the rejection was shown (a session that ended reloads to login)
             this.initializedExercisePublicId = null;
+            event.rerouteTo(LessonsView.class);
             return;
         }
         this.currentSessionId = createdSessionId;
@@ -357,7 +360,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         super.onAttach(attachEvent);
 
         // Initialize Graspable Math widget using external JavaScript (only if enabled)
-        if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
+        if (this.currentSessionId != null && Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
             this.initializeGraspableMath();
         }
     }
@@ -470,9 +473,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             if (isComplete) {
                 event.isComplete = true;
-                this.problemSolved = true;
                 // Mark session as completed
-                this.graspableMathService.markSessionComplete(this.currentSessionId);
+                if (!ServiceRejectionUtil.runOrShowRejection(
+                        () -> this.graspableMathService.markSessionComplete(this.currentSessionId))) {
+                    return;
+                }
+                this.problemSolved = true;
 
                 // Show success notification
                 final var notifyUi = this.getUI().orElse(null);
@@ -485,7 +491,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         // Process event through GraspableMathService (for session tracking)
-        this.graspableMathService.processEvent(event);
+        if (!ServiceRejectionUtil.runOrShowRejection(() -> this.graspableMathService.processEvent(event))) {
+            return;
+        }
 
         // Skip action analysis if problem was already solved before this action
         if (wasAlreadySolved) {
