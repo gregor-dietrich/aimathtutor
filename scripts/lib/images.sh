@@ -3,6 +3,11 @@
 # Image building shared by build.sh (`make build`: images in the local image store) and release.sh
 # (`make release`: multi-platform images that buildx pushes itself). Source it and
 # call its functions from the repository root.
+#
+# `package_app` builds one jar on the host, so a release built on macOS ships brotli4j's macOS native library in the
+# Linux images. It never loads while HTTP compression is off (`application.properties` sets no
+# `quarkus.http.enable-compression`); turning compression on needs a Linux build host or the Linux classifier in the
+# jar first.
 
 # shellcheck disable=SC2034 # read by build.sh and release.sh
 IMAGE_NAME="gregordietrich/aimathtutor"
