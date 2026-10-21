@@ -86,19 +86,31 @@ however.
   `build-frontend`. CI: `make install` with `MAVEN_ARGS=-Pproduction`.
   The pinned Maven's launcher reads `MAVEN_ARGS`, so this works through
   any devkit target (`./mvnw` ignores it).
-- **JVM args required:** `--add-opens java.base/java.lang=ALL-UNNAMED`,
+- **Runtime JVM arguments:** both Dockerfiles' exec-form entrypoints run
+  `java -jar /deployments/quarkus-run.jar` with no JVM arguments: none was
+  measured to be needed by the production jar (#250). An argument with no
+  measured consumer stays out of the images; each `--add-opens` opens a JDK
+  package to the whole class path. The entrypoints set no `-D` property:
+  settings come from the environment, so an operator's value (for example
+  `QUARKUS_HTTP_HOST`) is never overridden. Operators add JVM options, or
+  restore a dropped argument, with `JDK_JAVA_OPTIONS`; do not bake a value for
+  that variable into the images.
+- **Dev JVM arguments:** `pom.xml` (`quarkus-maven-plugin` `<jvmArgs>`, the
+  `make dev` JVM) and `.mvn/jvm.config` (Maven's own JVM, which also runs the
+  Quarkus build) carry their own arguments, kept unmeasured because they are
+  dev-only: `--add-opens java.base/java.lang=ALL-UNNAMED`,
   `--add-opens java.base/jdk.internal.ref=ALL-UNNAMED`,
   `--add-opens java.base/jdk.internal.misc=ALL-UNNAMED`,
   `--add-opens java.base/java.nio=ALL-UNNAMED`,
   `--add-opens java.base/sun.nio.ch=ALL-UNNAMED`,
-  `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`,
-  and `-XX:+EnableDynamicAgentLoading`. Set consistently in `pom.xml`
-  (`quarkus-maven-plugin` `<jvmArgs>`), `.mvn/jvm.config`, and both Docker
-  exec-form entrypoints. Operators add JVM options with `JDK_JAVA_OPTIONS`;
-  do not bake a value for that variable into the images. The dev JVM also
-  needs the `jdk.compiler/com.sun.tools.javac.*` exports and opens from
-  `.mvn/jvm.config` for Error Prone during live reload; those compile-time
-  arguments do not belong in the runtime images.
+  `--enable-native-access=ALL-UNNAMED`, `--sun-misc-unsafe-memory-access=allow`
+  and `-XX:+EnableDynamicAgentLoading`; the
+  `jdk.compiler/com.sun.tools.javac.*` exports and opens for Error Prone
+  (including during live reload) and `-Xshare:off` in both; and the Netty
+  properties in `pom.xml` only. The `jdk.compiler` arguments never go into the
+  images. Plain JUnit `JvmArgsParityTest` checks that both entrypoints are
+  identical, that both dev files contain every runtime argument, and that the
+  `jdk.compiler` set is the same in both dev files and absent from the images.
 - **Node.js is pinned:** `vaadin.node.version` in `pom.xml` (Vaadin's default
   for the current release) is used by every frontend build path (production and
   regen builds, the Quarkus build step, dev mode). Vaadin downloads it to
@@ -609,8 +621,8 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   pgadmin/Ollama) builds the app from the checkout (`pull_policy: build`) and is
   for development only.
 - **Dockerfiles:** `src/main/docker/Dockerfile.alpine` and `Dockerfile.ubuntu`
-  (port 9001, healthcheck `/q/health/ready`). Java runs directly as PID 1;
-  required runtime arguments are explicit before `-jar` in both entrypoints.
+  (port 9001, healthcheck `/q/health/ready`). Java runs directly as PID 1,
+  with no JVM arguments in either entrypoint (see "Runtime JVM arguments").
   Add operator options with `JDK_JAVA_OPTIONS` (for example `-Xmx512m`);
   Compose passes it through from `.env`.
 - **Compose validation:** CI runs
