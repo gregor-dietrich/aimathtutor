@@ -12,7 +12,8 @@ services:
       quarkus.datasource.password: ${SQL_PASSWORD:-changeit}
       # AI API keys and other app.* settings come from .env (env_file above).
 
-      # Encryption key file — generated on the first start; back up aimathtutor_keys. Without it, a database holding encrypted data refuses to start.
+      # Encryption key file, generated on the first start. Back up aimathtutor_keys:
+      # once users have email addresses, the app does not start without it.
       app.security.encryption-key-file: /etc/aimathtutor/keys/encryption.key
     ports:
       - "80:9001/tcp"

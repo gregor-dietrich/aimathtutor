@@ -83,8 +83,11 @@ restored.
 > 1. `app.security.encryption-key-file` property (if set and non-empty)
 > 2. `$XDG_DATA_HOME/aimathtutor/encryption.key` (if file exists)
 > 3. `~/.aimathtutor/encryption.key` (if file exists)
-> 4. Generate at the XDG path (in production only while the database holds no
->    encrypted data)
+> 4. The XDG path
+>
+> A missing key file is generated at the resolved path; in production only while
+> the database holds no encrypted data. Without a backup, see
+> [Lost encryption key](../README.md#lost-encryption-key).
 
 ### 1b. Setting Up Ollama (Optional)
 

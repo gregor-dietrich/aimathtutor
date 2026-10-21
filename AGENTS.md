@@ -514,15 +514,18 @@ JPA layer.
      SmallRye Config will pick this up from env vars or properties)
   2. `$XDG_DATA_HOME/aimathtutor/encryption.key` if file exists
   3. `~/.aimathtutor/encryption.key` if file exists
-  4. Auto-generate at the XDG path (creates dirs, sets permissions 600)
-- **A missing key file is generated only on a database without encrypted data.**
-  In `LaunchMode.NORMAL`, when the resolved key file does not exist and `users`
-  holds a non-null `email` or `email_blind_index`, `EncryptionKeyManager.init()`
-  refuses to start, naming the path and asking for the key to be restored. A
+  4. The XDG path. A missing key file is generated at the resolved path
+     (creates dirs, sets permissions 600).
+- **In production, a missing key file is generated only on a database without
+  encrypted data.** In `LaunchMode.NORMAL`, when the resolved key file does not
+  exist and `users` holds a non-null `email` or `email_blind_index`,
+  `EncryptionKeyManager.init()` refuses to start, naming the path and asking for
+  the key to be restored. A new encrypted column joins that query. A
   `StartupEvent` observer at `Interceptor.Priority.APPLICATION` creates the
   manager after Flyway and before `AppLifecycleBean`; dev and test never run the
   query. A key file that is present but wrong is not detected at startup; it
-  fails at the first read of an encrypted email.
+  fails at the first read of an encrypted email, so no startup check compares
+  the key against stored data.
 - **`EncryptionService`** (`service/security/`): derives two sub-keys from
   master via `HMAC(master, label)` (`"encrypt"` → AES key, `"blind-index"` →
   HMAC key). Provides `encrypt()`, `decrypt()`, and `generateBlindIndex()`.

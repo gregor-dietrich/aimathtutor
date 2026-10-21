@@ -131,11 +131,20 @@ If logging in fails with a server error after the reset, check that the app
 still mounts its original encryption key volume: a reset doesn't help when the
 key is lost.
 
-If the key is lost for good, the stored email addresses cannot be recovered, and
-the app refuses to start while they exist. To start over with a new key, run
-`UPDATE users SET email = NULL, email_blind_index = NULL;` in psql (step 2) and
-start the app: it generates a new key, and an administrator can enter the
-addresses again under user administration.
+### Lost encryption key
+
+Without its key file, the app refuses to start while users have email
+addresses. Look for the old key first: Compose prefixes the `aimathtutor_keys`
+volume with its project name, so `docker volume ls | grep aimathtutor_keys` may
+still list the volume of an earlier deployment.
+
+If the key is lost for good, the stored email addresses cannot be recovered. To
+start over, back up the database
+(`docker compose exec -T db pg_dump -U aimathtutor aimathtutor > before-key-reset.sql`),
+run `UPDATE users SET email = NULL, email_blind_index = NULL;` in psql (step 2
+above) and run `docker compose restart app`. Without a key file, the app
+generates a new one, and an administrator can enter the addresses again under
+user administration.
 
 ### Common Development Commands (via Makefile)
 
@@ -191,12 +200,12 @@ scripts.
   database-backed).
 - **Encryption key**: Resolution order: (1) `app.security.encryption-key-file`
   property, (2) `$XDG_DATA_HOME/aimathtutor/encryption.key`, (3)
-  `~/.aimathtutor/encryption.key`, (4) generate a 256-bit key at the XDG path
-  with 0600 permissions; a production start does this only while the database
-  holds no encrypted email addresses, and otherwise refuses to start until the
-  key file is restored. In Docker, mount the `aimathtutor_keys` volume at
-  `/etc/aimathtutor/keys`. This key encrypts PII fields (such as user email) at
-  rest.
+  `~/.aimathtutor/encryption.key`, (4) the XDG path. A missing key file is
+  generated at the resolved path with 0600 permissions; a production start does
+  this only while the database holds no encrypted email addresses, and otherwise
+  refuses to start (see [Lost encryption key](#lost-encryption-key)). In
+  Docker, mount the `aimathtutor_keys` volume at `/etc/aimathtutor/keys`. This
+  key encrypts PII fields (such as user email) at rest.
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) and
 [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md) for detailed setup instructions.
