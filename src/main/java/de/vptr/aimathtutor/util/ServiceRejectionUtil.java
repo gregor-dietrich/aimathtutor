@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.util;
 
+import java.util.function.Supplier;
+
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.UI;
@@ -36,15 +38,31 @@ public final class ServiceRejectionUtil {
      * @return true if the call completed, false if the service rejected it
      */
     public static boolean runOrShowRejection(final Runnable serviceCall) {
-        try {
+        return callOrShowRejection(() -> {
             serviceCall.run();
-            return true;
+            return Boolean.TRUE;
+        }) != null;
+    }
+
+    /**
+     * Like {@link #runOrShowRejection}, for a service call that returns a value.
+     *
+     * @param <T>
+     *            the type of the call's result
+     * @param serviceCall
+     *            the call, which must not return null
+     * @return the call's result, or null if the service rejected it
+     */
+    @Nullable
+    public static <T> T callOrShowRejection(final Supplier<T> serviceCall) {
+        try {
+            return serviceCall.get();
         } catch (final ValidationException e) {
             if (!isRejection(e)) {
                 throw e;
             }
             showRejection(UI.getCurrent(), rejectionMessage(e));
-            return false;
+            return null;
         }
     }
 

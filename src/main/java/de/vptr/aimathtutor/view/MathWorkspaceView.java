@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view;
 
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -40,6 +41,7 @@ import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -268,10 +270,15 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
         LOG.debugf("Math action: type=%s, before=%s, after=%s", eventType, expressionBefore, expressionAfter);
 
+        final var userId = this.resolveUserId();
+        if (userId == null) {
+            return;
+        }
+
         this.currentExpression = expressionAfter;
 
-        final var event = GraspableEventFactory.createMathActionEvent(eventType, expressionBefore, expressionAfter,
-                this.authService.getUserId());
+        final var event =
+                GraspableEventFactory.createMathActionEvent(eventType, expressionBefore, expressionAfter, userId);
         event.sessionId = this.sessionId;
 
         // Add action to conversation context
@@ -313,7 +320,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
         if (ui == null) {
             return;
         }
-        final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
+        final var userIdForRateLimit = String.valueOf(userId);
 
         final var _ = this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit)
                 .thenAccept(feedback -> {
@@ -347,6 +354,11 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
      * Handles user questions from the chat panel.
      */
     private void handleUserQuestion(final String question) {
+        final var userId = this.resolveUserId();
+        if (userId == null) {
+            return;
+        }
+
         // Create and add user message to context
         final var userMessage = ChatMessageDto.userQuestion(question);
         userMessage.sessionId = this.sessionId;
@@ -364,8 +376,7 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
             this.chatPanel.hideTypingIndicator();
             return;
         }
-        final var userId = this.authService.getUserId();
-        final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
+        final var userIdStr = String.valueOf(userId);
         this.aiTutorService.answerQuestionAsync(question, this.currentExpression, this.initialExpression,
                 this.targetExpression, this.sessionId, this.conversationContext, userIdStr).thenAccept(answer -> {
                     AiChatUtil.handleAsyncAnswer(ui, answer, this.chatPanel, this.conversationContext);
@@ -373,6 +384,18 @@ public class MathWorkspaceView extends HorizontalLayout implements BeforeEnterOb
                     AiChatUtil.handleAsyncError(ui, ex, this.chatPanel, LOG);
                     return null;
                 });
+    }
+
+    /**
+     * Resolves the signed-in user's ID for one action, on the UI thread. A refusal is shown (an ended session returns
+     * to login).
+     *
+     * @return the user's ID, or null if the session no longer identifies an active user
+     */
+    @Nullable
+    private Long resolveUserId() {
+        return ServiceRejectionUtil
+                .callOrShowRejection(() -> Objects.requireNonNull(this.authService.requireCurrentUser().id));
     }
 
     /**
