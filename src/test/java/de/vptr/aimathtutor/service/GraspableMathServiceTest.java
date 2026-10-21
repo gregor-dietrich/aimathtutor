@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.GraspableEventDto;
@@ -93,7 +94,9 @@ class GraspableMathServiceTest {
                 .thenThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE));
         final long before = this.graspableMathService.getExerciseSessions(exerciseId).size();
 
-        assertThrows(ValidationException.class, () -> this.graspableMathService.createSession(exerciseId));
+        assertEquals(AppConstants.SESSION_ENDED_MESSAGE,
+                assertThrows(ValidationException.class, () -> this.graspableMathService.createSession(exerciseId))
+                        .getMessage());
         assertEquals(before, this.graspableMathService.getExerciseSessions(exerciseId).size());
     }
 
@@ -126,10 +129,13 @@ class GraspableMathServiceTest {
     }
 
     private void assertWritesRefused(final String sessionId, final GraspableEventDto event) {
-        assertThrows(ValidationException.class, () -> this.graspableMathService.processEvent(event));
-        assertThrows(ValidationException.class, () -> this.graspableMathService.recordHintUsed(sessionId));
-        assertThrows(ValidationException.class, () -> this.graspableMathService.markSessionComplete(sessionId));
-        assertThrows(ValidationException.class, () -> this.graspableMathService.completeSession(sessionId));
+        for (final Executable write : new Executable[] { () -> this.graspableMathService.processEvent(event),
+                () -> this.graspableMathService.recordHintUsed(sessionId),
+                () -> this.graspableMathService.markSessionComplete(sessionId),
+                () -> this.graspableMathService.completeSession(sessionId) }) {
+            assertEquals(AppConstants.SESSION_ENDED_MESSAGE,
+                    assertThrows(ValidationException.class, write).getMessage());
+        }
     }
 
     @Test

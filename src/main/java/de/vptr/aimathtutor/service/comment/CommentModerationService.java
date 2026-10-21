@@ -41,7 +41,7 @@ public class CommentModerationService {
      *            the reason for moderation
      */
     @Transactional
-    public void moderateComment(final String commentPublicId, final String action, final UserEntity moderator,
+    void moderateComment(final String commentPublicId, final String action, final UserEntity moderator,
             final String reason) {
         final Long moderatorId = moderator.id;
         if (reason != null && reason.length() > 500) {

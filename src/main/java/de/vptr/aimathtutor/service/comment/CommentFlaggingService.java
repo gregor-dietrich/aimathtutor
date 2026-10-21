@@ -44,7 +44,7 @@ public class CommentFlaggingService {
      *            the reason for flagging
      */
     @Transactional
-    public void flagComment(final String commentPublicId, final UserEntity flagger, final String reason) {
+    void flagComment(final String commentPublicId, final UserEntity flagger, final String reason) {
         final Long flaggerId = flagger.id;
         LOG.infof("Flagging comment: commentPublicId=%s, flaggerId=%s, reasonProvided=%s", commentPublicId, flaggerId,
                 reason != null && !reason.isBlank());

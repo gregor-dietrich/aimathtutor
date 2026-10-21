@@ -88,7 +88,7 @@ class ServiceRejectionUtilTest {
     }
 
     @Test
-    @DisplayName("Without a current UI a session-ended rejection is still shown and nothing redirects")
+    @DisplayName("Without a current UI a session-ended rejection does not redirect to the login page")
     void sessionEndedWithoutUiOnlyShowsMessage() {
         assertFalse(runSessionEnded(null, MockedStatic::verifyNoInteractions));
     }

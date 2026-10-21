@@ -435,7 +435,7 @@ public class CommentService {
      * Edit a comment as the signed-in user, with permission check
      *
      * @throws ValidationException
-     *             if the session has ended
+     *             if the session has ended or the input is invalid
      */
     @Transactional
     public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto) {
@@ -510,7 +510,7 @@ public class CommentService {
      * Moderate a comment (hide/unhide/delete) as the signed-in user. Requires the {@code commentEdit} permission.
      *
      * @throws ValidationException
-     *             if the session has ended
+     *             if the session has ended or the input is invalid
      */
     @Transactional
     public void moderateComment(final String commentPublicId, final String action, final String reason) {

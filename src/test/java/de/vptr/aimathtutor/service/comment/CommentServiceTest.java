@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.CommentFlagRepository;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.ExerciseService;
@@ -58,6 +60,9 @@ class CommentServiceTest {
     @Inject
     private CommentRepository commentRepository;
 
+    @Inject
+    private CommentFlagRepository commentFlagRepository;
+
     @InjectMock
     private PermissionService permissionService;
 
@@ -75,7 +80,7 @@ class CommentServiceTest {
 
     /** Makes {@code actor} the signed-in user and returns the service under test. */
     private CommentService as(final UserEntity actor) {
-        when(this.authService.requireCurrentUser()).thenReturn(actor);
+        doReturn(actor).when(this.authService).requireCurrentUser();
         return this.commentService;
     }
 
@@ -234,6 +239,8 @@ class CommentServiceTest {
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent(), "Soft-deleted comment should still be findable");
+        assertEquals(student.publicId,
+                this.commentRepository.findByPublicId(created.publicId).orElseThrow().deletedBy.publicId);
         verify(this.permissionService).requireCommentAdd();
         verify(this.permissionService, never()).requireCommentDelete();
     }
@@ -256,6 +263,8 @@ class CommentServiceTest {
         assertTrue(found.isPresent());
         final var hidden = this.commentService.findByStatus(CommentStatus.HIDDEN);
         assertTrue(hidden.stream().anyMatch(c -> c.publicId.equals(created.publicId)));
+        assertEquals(admin.publicId,
+                this.commentRepository.findByPublicId(created.publicId).orElseThrow().moderator.publicId);
         verify(this.permissionService).requireCommentAdd();
         verify(this.permissionService).requireCommentEdit();
     }
@@ -608,7 +617,10 @@ class CommentServiceTest {
 
         // Use a different user to flag (can't flag own comment)
         this.as(otherStudent).flagComment(created.publicId, "inappropriate");
-        // Should complete without exception
+
+        final var flagged = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
+        assertEquals(1, flagged.flagsCount);
+        assertTrue(this.commentFlagRepository.hasUserFlaggedComment(flagged.id, otherStudent.id));
     }
 
     @Test
@@ -671,16 +683,6 @@ class CommentServiceTest {
         final var deleteEx = assertThrows(WebApplicationException.class,
                 () -> this.as(student).deleteComment("00000000000000000000000000", false));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), deleteEx.getResponse().getStatus());
-    }
-
-    @TestTransaction
-    void testEditComment_notFound() {
-        final var student = this.userRepository.findByUsername("student1");
-        final var editDto = new CommentDto();
-        editDto.content = "edited content";
-        final var ex = assertThrows(WebApplicationException.class,
-                () -> this.as(student).editComment("00000000000000000000000000", editDto));
-        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
     @Test

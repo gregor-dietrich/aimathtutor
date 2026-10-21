@@ -100,6 +100,7 @@ class AiTutorServiceConfigTest {
         final var event = this.buildSignificantEvent();
         final var result = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "u1");
         verify(this.rateLimitService).tryConsume("u1");
+        verifyNoInteractions(this.googleAiProvider);
         assertNotNull(result);
         assertTrue(result.message.contains("requests") || result.message.contains("wait"));
     }
@@ -111,6 +112,7 @@ class AiTutorServiceConfigTest {
         final var result = this.aiTutorService.answerQuestion("What is x?", null, null, null, "sid",
                 new ConversationContextDto(), "u1");
         verify(this.rateLimitService).tryConsume("u1");
+        verifyNoInteractions(this.googleAiProvider);
         assertNotNull(result);
         assertTrue(result.message.contains("requests") || result.message.contains("wait"));
     }

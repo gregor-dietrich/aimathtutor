@@ -13,7 +13,7 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 
 /**
- * Shows why a service rejected a write, such as a save or delete. Services reject invalid input with
+ * Shows why a service rejected a call, such as a save or delete. Services reject invalid input with
  * {@link ValidationException}, which shares its simple name with the binder's exception that the views import, so the
  * views catch it through this helper. The message mapping is shared with {@link AsyncDataLoader}, which shows the same
  * text for a rejection thrown inside an asynchronous load.
@@ -108,12 +108,12 @@ public final class ServiceRejectionUtil {
      * DEBUG without the message, which can contain user data.
      *
      * @param ui
-     *            the UI to redirect, or null if there is none (the message is still shown)
+     *            the UI to redirect, or null if there is none, in which case nothing redirects
      * @param message
      *            the user-facing message
      */
     static void showRejection(@Nullable final UI ui, final String message) {
-        LOG.debug("Service rejected a write");
+        LOG.debug("Service rejected a call");
         NotificationUtil.showError(message);
         if (ui != null && AppConstants.SESSION_ENDED_MESSAGE.equals(message)) {
             LoginView.reloadToLogin(ui);

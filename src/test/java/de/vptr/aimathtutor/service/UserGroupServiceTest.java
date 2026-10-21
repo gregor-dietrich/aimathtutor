@@ -181,7 +181,7 @@ class UserGroupServiceTest {
     }
 
     @Test
-    @DisplayName("getUsersInGroup propagates the administration-view refusal and reads nothing")
+    @DisplayName("getUsersInGroup propagates the administration-view refusal")
     @TestTransaction
     void shouldRefuseMembersWithoutAdminView() {
         final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
