@@ -165,7 +165,7 @@ class LoginAttemptServiceTest {
         assertTrue(service.isAccountLockedOut("target"));
         assertEquals(599, service.getRemainingAccountLockoutSeconds("target"));
         service.recordFailedAccountAttempt("old");
-        assertFalse(service.isAccountLockedOut("old"), "the unlocked, oldest bucket was evicted");
+        assertTrue(service.isAccountLockedOut("old"), "the bucket at 24 failures outlived the count-1 flood");
     }
 
     @Test
@@ -182,7 +182,49 @@ class LoginAttemptServiceTest {
 
         assertTrue(service.isLockedOut("target"));
         assertEquals(29, service.getRemainingLockoutSeconds("target"));
-        assertEquals(0, service.recordFailedAttempt("old"), "the unlocked, oldest bucket was evicted");
+        assertEquals(30, service.recordFailedAttempt("old"), "the older bucket with the higher count was kept");
+    }
+
+    @Test
+    @DisplayName("Flooding the login map keeps a key whose lock ended but whose count is retained")
+    void sizeCapKeepsRetainedCountAfterLockEnds() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        final var key = "retained-" + UUID.randomUUID();
+        fail(service, key, 5);
+        clock.advance(Duration.ofSeconds(31));
+        assertFalse(service.isLockedOut(key));
+        for (int i = 0; i <= 10_000; i++) {
+            service.recordFailedAttempt("flood-" + i);
+        }
+
+        assertEquals(60, service.recordFailedAttempt(key), "escalation survived the flood");
+    }
+
+    @Test
+    @DisplayName("A clock stepped backwards does not lock a key below the threshold")
+    void backwardClockStepDoesNotLockBelowThreshold() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        final var key = "back-" + UUID.randomUUID();
+        service.recordFailedAttempt(key);
+        clock.advance(Duration.ofSeconds(-10));
+
+        assertFalse(service.isLockedOut(key));
+        assertEquals(0, service.getRemainingLockoutSeconds(key));
+    }
+
+    @Test
+    @DisplayName("A clock stepped backwards does not extend a real lock")
+    void backwardClockStepDoesNotExtendLock() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        final var key = "back-lock-" + UUID.randomUUID();
+        fail(service, key, 5);
+        clock.advance(Duration.ofSeconds(-10));
+
+        assertTrue(service.isLockedOut(key));
+        assertEquals(30, service.getRemainingLockoutSeconds(key));
     }
 
     @Test
@@ -305,11 +347,8 @@ class LoginAttemptServiceTest {
     void lockLengthsFollowTheSchedule() {
         final var service = serviceWith(new MutableClock());
         for (int count = 1; count <= 100; count++) {
-            final var expected = count < 5 ? 0 : Math.min(30L << Math.min(count - 5, 31), 3600L);
+            final long expected = count < 5 ? 0 : count < 12 ? 30L << (count - 5) : 3600;
             assertEquals(expected, service.recordFailedAttempt("k"), "lock after failure " + count);
-            if (count >= 64 && count <= 69) {
-                assertEquals(3600, expected);
-            }
         }
     }
 
