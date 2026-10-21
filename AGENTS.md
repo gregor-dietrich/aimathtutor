@@ -181,10 +181,11 @@ however.
 - **Vaadin UI threading:** Never block the UI thread. Load view data through
   `AsyncDataLoader.load(...)` (`util/`), which runs the call off the UI thread
   with a timeout and applies the result or the error in `ui.access()`: a
-  service's `ValidationException` shows its message (an ended session returns
-  to login), a timeout says the outcome is unknown, and any other error is
-  logged once. Where it doesn't fit, use `CompletableFuture.supplyAsync()` on
-  the view's injected `ManagedExecutor` + `ui.access()` + `.exceptionally()`.
+  service's `ValidationException` or `PermissionDeniedException` shows its
+  message (an ended session returns to login), a timeout says the outcome is
+  unknown, and any other error is logged once. Where it doesn't fit, use
+  `CompletableFuture.supplyAsync()` on the view's injected `ManagedExecutor` +
+  `ui.access()` + `.exceptionally()`.
   Never use the common ForkJoinPool directly: under `make dev` its threads lack
   the app's class loader, so a bean first created there cannot read its config.
   `AsyncDataLoader` runs on it only because it hands the caller's context class
@@ -352,13 +353,25 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   longer matches the password hash, so a password change ends the account's
   other sessions; off-UI-thread work takes
   `AuthService.currentSessionCredentials()` captured on the UI thread and
-  verifies them in its own transaction, as `UserService.changePassword` does.
-  Only `changePassword` changes the caller's own password, after the
-  current-password check and its per-session attempt limit; admin write paths
-  refuse it with `AppConstants.OWN_PASSWORD_MESSAGE`. Views that cache a user ID
-  at navigation still act on it until their next navigation. Every user write
-  that can end sessions fires `UserAccountChangedEvent`; `AuthService` evicts
-  its cache in an `AFTER_SUCCESS` observer, never before commit.
+  verifies them in its own transaction, as `UserService.changePassword` does,
+  through `AuthService.requireSessionUser`. Only `changePassword` changes the
+  caller's own password, after the current-password check and its per-session
+  attempt limit; admin write paths refuse it with
+  `AppConstants.OWN_PASSWORD_MESSAGE`. A service that acts for the signed-in
+  user resolves the caller itself and never takes the caller's ID from a view:
+  code entered on the UI thread calls `AuthService.requireCurrentUser()`; code
+  that runs off it takes the `SessionCredentials` captured on the UI thread
+  when the user acted (never earlier, never kept in a field) and verifies them
+  with `AuthService.requireSessionUser()` in its own transaction. Both refuse a
+  revoked, banned, deactivated or deleted account with
+  `AppConstants.SESSION_ENDED_MESSAGE`, which `AsyncDataLoader` and
+  `ServiceRejectionUtil.runOrShowRejection` turn into a return to login. A view
+  may keep the user's ID for display only. Admin reads of user data call
+  `PermissionService.requireAdminView(credentials)`. An AI call or AI-config
+  save already handed to its worker is not cancelled by a revocation during
+  the provider call. Every user write that can end sessions fires
+  `UserAccountChangedEvent`; `AuthService` evicts its cache in an
+  `AFTER_SUCCESS` observer, never before commit.
 - **Every user or rank write path must enforce the privilege ceiling.** Read the
   caller's permissions with `UserRankService.requireCallerPermissions()` before
   writing (before editing a rank, which may be the caller's own), and call
