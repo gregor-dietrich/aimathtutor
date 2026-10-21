@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
@@ -362,32 +361,27 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
         // Load current users and available users
         this.loadGroupUsers();
-        this.loadAvailableUsers();
 
         this.userManagementDialog.open();
+    }
+
+    /** The dialog's data: the group's members, and every other user for the combo. */
+    private record GroupMembers(List<UserViewDto> members, List<UserViewDto> available) {
     }
 
     private void loadGroupUsers() {
         final var credentials = this.authService.currentSessionCredentials();
         final var groupPublicId = this.selectedGroup.publicId;
-        AsyncDataLoader.load(() -> this.groupService.getUsersInGroup(credentials, groupPublicId), this,
-                users -> this.userGrid.setItems(users), "Unexpected error occurred");
-    }
-
-    private void loadAvailableUsers() {
-        final var credentials = this.authService.currentSessionCredentials();
-        final var groupPublicId = this.selectedGroup.publicId;
         AsyncDataLoader.load(() -> {
-            final var allUsers = this.userService.getAllUsers(credentials);
-            if (allUsers == null) {
-                return List.<UserViewDto>of();
-            }
-            final var currentUsers = this.groupService.getUsersInGroup(credentials, groupPublicId);
-            final var currentUserPublicIds = currentUsers == null ? Set.<String>of()
-                    : currentUsers.stream().map(user -> user.publicId).collect(Collectors.toSet());
-            return allUsers.stream().filter(user -> !currentUserPublicIds.contains(user.publicId))
-                    .collect(Collectors.toList());
-        }, this, availableUsers -> this.availableUsersCombo.setItems(availableUsers), "Error loading available users");
+            final var members = this.groupService.getUsersInGroup(credentials, groupPublicId);
+            final var memberPublicIds = members.stream().map(user -> user.publicId).collect(Collectors.toSet());
+            final var available = this.userService.getAllUsers(credentials).stream()
+                    .filter(user -> !memberPublicIds.contains(user.publicId)).toList();
+            return new GroupMembers(members, available);
+        }, this, result -> {
+            this.userGrid.setItems(result.members());
+            this.availableUsersCombo.setItems(result.available());
+        }, "Unexpected error occurred");
     }
 
     private void addUserToGroup() {
@@ -413,7 +407,6 @@ public class AdminUserGroupsView extends AbstractAdminView {
             NotificationUtil.showSuccess("User added to group successfully");
             // Refresh user lists for the dialog
             this.loadGroupUsers();
-            this.loadAvailableUsers(); // Refresh the combo to exclude the newly added user
             // Also refresh the main groups grid so computed columns (user count) update
             this.loadGroupsAsync();
             this.availableUsersCombo.clear();
@@ -429,7 +422,6 @@ public class AdminUserGroupsView extends AbstractAdminView {
                 NotificationUtil.showSuccess("User removed from group successfully");
                 // Refresh user lists for the dialog
                 this.loadGroupUsers();
-                this.loadAvailableUsers(); // Refresh the combo to include the removed user
                 // Also refresh the main groups grid so computed columns (user count) update
                 this.loadGroupsAsync();
             } else {

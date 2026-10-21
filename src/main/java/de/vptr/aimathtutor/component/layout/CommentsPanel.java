@@ -80,7 +80,7 @@ public class CommentsPanel extends VerticalLayout {
      * @param sessionId
      *            external session id (optional)
      * @param currentUserId
-     *            current user database id (may be null)
+     *            the viewer's id, for display only (edit and delete on their own comments)
      */
     public CommentsPanel(final Long exerciseId, final String exercisePublicId, final String sessionId,
             final Long currentUserId) {
@@ -393,8 +393,7 @@ public class CommentsPanel extends VerticalLayout {
                 NotificationUtil.showError(ex.getMessage() != null ? ex.getMessage() : "Permission denied");
             } catch (final Exception ex) {
                 LOG.error("Failed to edit comment", ex);
-                NotificationUtil.showError(
-                        ex.getMessage() != null ? ex.getMessage() : "Failed to edit comment. Please try again.");
+                NotificationUtil.showError("Failed to edit comment. Please try again.");
             }
         });
 

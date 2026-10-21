@@ -103,6 +103,12 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         // Get current user info
+        if (this.authService.getCurrentUserEntity() == null) {
+            NotificationUtil.showError("Could not load user information");
+            event.rerouteTo(LessonsView.class);
+            return;
+        }
+
         final var user = this.userService.getCurrentUser();
         this.currentUsername = user.username;
         this.currentEmail = user.email;
