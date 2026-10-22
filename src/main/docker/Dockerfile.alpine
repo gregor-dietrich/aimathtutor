@@ -16,7 +16,7 @@
 # docker run -i --rm -p 9001:9001 -v aimathtutor_keys:/etc/aimathtutor/keys \
 #   -e app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key quarkus/aimathtutor-jvm
 #
-# Java runs directly as PID 1. ENTRYPOINT holds only the runtime JVM arguments the jar needs (AGENTS.md, Build & Development): none.
+# Java runs directly as PID 1. ENTRYPOINT holds only the runtime JVM arguments the jar needs (AGENTS.md, Build & Development).
 # Add operator JVM options with JDK_JAVA_OPTIONS, for example:
 # docker run -i --rm -p 9001:9001 -e JDK_JAVA_OPTIONS="-Xmx512m" quarkus/aimathtutor-jvm
 #
