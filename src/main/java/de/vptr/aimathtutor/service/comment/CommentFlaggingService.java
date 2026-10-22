@@ -9,9 +9,9 @@ import org.jboss.logging.Logger;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.entity.CommentEntity;
+import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentFlagRepository;
 import de.vptr.aimathtutor.repository.CommentRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,9 +31,6 @@ public class CommentFlaggingService {
     CommentRepository commentRepository;
 
     @Inject
-    UserRepository userRepository;
-
-    @Inject
     CommentFlagRepository commentFlagRepository;
 
     /**
@@ -41,13 +38,14 @@ public class CommentFlaggingService {
      *
      * @param commentPublicId
      *            the comment public ID
-     * @param flaggerId
-     *            the user ID of the flagger
+     * @param flagger
+     *            the flagging user, resolved from the session by the caller
      * @param reason
      *            the reason for flagging
      */
     @Transactional
-    public void flagComment(final String commentPublicId, final Long flaggerId, final String reason) {
+    void flagComment(final String commentPublicId, final UserEntity flagger, final String reason) {
+        final Long flaggerId = flagger.id;
         LOG.infof("Flagging comment: commentPublicId=%s, flaggerId=%s, reasonProvided=%s", commentPublicId, flaggerId,
                 reason != null && !reason.isBlank());
 
@@ -65,10 +63,6 @@ public class CommentFlaggingService {
         }
 
         // Create flag record via repository (repository handles duplicate-check)
-        final var flagger = this.userRepository.findById(flaggerId);
-        if (flagger == null) {
-            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
-        }
         this.commentFlagRepository.createFlag(comment, flagger);
 
         // Increment flag count

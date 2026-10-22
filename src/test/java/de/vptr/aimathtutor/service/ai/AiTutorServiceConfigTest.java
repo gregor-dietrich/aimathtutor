@@ -94,12 +94,13 @@ class AiTutorServiceConfigTest {
     }
 
     @Test
-    @DisplayName("analyzeMathAction returns rate limit hint when effective user ID is null")
-    void analyzeMathAction_returnsRateLimitHintWhenUserIdNull() {
-        configureProvider("google", true);
+    @DisplayName("analyzeMathAction returns rate limit hint when rate limit exceeded")
+    void analyzeMathAction_returnsRateLimitHintWhenExceeded() {
+        configureProvider("google", false);
         final var event = this.buildSignificantEvent();
-        // userIdStr=null and event.studentId=null → effectiveUserId=null → checkAiRateLimit(null)=false
-        final var result = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), null);
+        final var result = this.aiTutorService.analyzeMathAction(event, new ConversationContextDto(), "u1");
+        verify(this.rateLimitService).tryConsume("u1");
+        verifyNoInteractions(this.googleAiProvider);
         assertNotNull(result);
         assertTrue(result.message.contains("requests") || result.message.contains("wait"));
     }
@@ -109,7 +110,9 @@ class AiTutorServiceConfigTest {
     void answerQuestion_returnsRateLimitMessageWhenExceeded() {
         configureProvider("google", false);
         final var result = this.aiTutorService.answerQuestion("What is x?", null, null, null, "sid",
-                new ConversationContextDto(), null);
+                new ConversationContextDto(), "u1");
+        verify(this.rateLimitService).tryConsume("u1");
+        verifyNoInteractions(this.googleAiProvider);
         assertNotNull(result);
         assertTrue(result.message.contains("requests") || result.message.contains("wait"));
     }

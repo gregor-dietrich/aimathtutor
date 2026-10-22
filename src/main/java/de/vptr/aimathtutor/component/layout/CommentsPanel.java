@@ -32,6 +32,7 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.service.comment.CommentService;
 import de.vptr.aimathtutor.util.AppStyles;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.spi.CDI;
@@ -51,6 +52,10 @@ public class CommentsPanel extends VerticalLayout {
     private final Long exerciseId;
     private final String exercisePublicId;
     private final String sessionId;
+    /**
+     * The viewer's id, used only to show edit and delete on their own comments. The services do not trust it: they
+     * resolve the caller from the session.
+     */
     private final Long currentUserId;
     private static final int PAGE_SIZE = 50;
 
@@ -75,7 +80,7 @@ public class CommentsPanel extends VerticalLayout {
      * @param sessionId
      *            external session id (optional)
      * @param currentUserId
-     *            current user database id (may be null)
+     *            the viewer's id, for display only (edit and delete on their own comments)
      */
     public CommentsPanel(final Long exerciseId, final String exercisePublicId, final String sessionId,
             final Long currentUserId) {
@@ -329,7 +334,9 @@ public class CommentsPanel extends VerticalLayout {
             dto.sessionId = this.sessionId;
 
             // Call service
-            this.getCommentService().createComment(dto, this.currentUserId);
+            if (!ServiceRejectionUtil.runOrShowRejection(() -> this.getCommentService().createComment(dto))) {
+                return;
+            }
 
             // Clear form and fully exit reply mode
             this.commentTextArea.clear();
@@ -375,7 +382,10 @@ public class CommentsPanel extends VerticalLayout {
             try {
                 final CommentDto dto = new CommentDto();
                 dto.content = editArea.getValue();
-                this.getCommentService().editComment(commentPublicId, dto, this.currentUserId);
+                if (!ServiceRejectionUtil
+                        .runOrShowRejection(() -> this.getCommentService().editComment(commentPublicId, dto))) {
+                    return;
+                }
                 dialog.close();
                 this.loadComments();
                 NotificationUtil.showSuccess("Comment updated!");
@@ -383,8 +393,7 @@ public class CommentsPanel extends VerticalLayout {
                 NotificationUtil.showError(ex.getMessage() != null ? ex.getMessage() : "Permission denied");
             } catch (final Exception ex) {
                 LOG.error("Failed to edit comment", ex);
-                NotificationUtil.showError(
-                        ex.getMessage() != null ? ex.getMessage() : "Failed to edit comment. Please try again.");
+                NotificationUtil.showError("Failed to edit comment. Please try again.");
             }
         });
 
@@ -397,7 +406,11 @@ public class CommentsPanel extends VerticalLayout {
 
     private void onDeleteClicked(final String commentPublicId) {
         try {
-            this.getCommentService().deleteComment(commentPublicId, this.currentUserId, true); // soft delete
+            // soft delete
+            if (!ServiceRejectionUtil
+                    .runOrShowRejection(() -> this.getCommentService().deleteComment(commentPublicId, true))) {
+                return;
+            }
             this.loadComments();
             NotificationUtil.showSuccess("Comment deleted!");
         } catch (final PermissionDeniedException ex) {
@@ -410,7 +423,10 @@ public class CommentsPanel extends VerticalLayout {
 
     private void onReportClicked(final String commentPublicId) {
         try {
-            this.getCommentService().flagComment(commentPublicId, this.currentUserId, "Comment reported");
+            if (!ServiceRejectionUtil.runOrShowRejection(
+                    () -> this.getCommentService().flagComment(commentPublicId, "Comment reported"))) {
+                return;
+            }
             NotificationUtil.showSuccess("Comment flagged for review");
         } catch (final Exception ex) {
             LOG.error("Failed to flag comment", ex);

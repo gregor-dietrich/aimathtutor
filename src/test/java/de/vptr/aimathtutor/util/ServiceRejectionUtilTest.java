@@ -4,23 +4,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import com.vaadin.flow.component.UI;
+
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.PermissionService;
+import de.vptr.aimathtutor.view.LoginView;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintDeclarationException;
 import jakarta.validation.ConstraintViolationException;
@@ -71,6 +77,34 @@ class ServiceRejectionUtilTest {
                         throw defect;
                     })));
             notifications.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    @DisplayName("A rejection that the session ended shows its message and reloads onto the login page")
+    void sessionEndedRedirectsToLogin() {
+        final var ui = mock(UI.class);
+        assertFalse(runSessionEnded(ui, login -> login.verify(() -> LoginView.reloadToLogin(ui))));
+    }
+
+    @Test
+    @DisplayName("Without a current UI a session-ended rejection does not redirect to the login page")
+    void sessionEndedWithoutUiOnlyShowsMessage() {
+        assertFalse(runSessionEnded(null, MockedStatic::verifyNoInteractions));
+    }
+
+    private static boolean runSessionEnded(@Nullable final UI ui, final Consumer<MockedStatic<LoginView>> loginCheck) {
+        UI.setCurrent(ui);
+        try (MockedStatic<NotificationUtil> notifications = mockStatic(NotificationUtil.class);
+                MockedStatic<LoginView> login = mockStatic(LoginView.class)) {
+            final var completed = ServiceRejectionUtil.runOrShowRejection(() -> {
+                throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
+            });
+            notifications.verify(() -> NotificationUtil.showError(AppConstants.SESSION_ENDED_MESSAGE));
+            loginCheck.accept(login);
+            return completed;
+        } finally {
+            UI.setCurrent(null);
         }
     }
 

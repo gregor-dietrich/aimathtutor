@@ -93,9 +93,15 @@ class AnalyticsServiceTest {
         return created.id;
     }
 
+    /** Creates a session as the given user, whom the mocked auth service then reports as the current user. */
+    private String createSessionFor(final Long userId, final Long exerciseId) {
+        when(this.authService.requireCurrentUser()).thenReturn(this.userRepository.findById(userId));
+        return this.graspableMathService.createSession(exerciseId);
+    }
+
     private String createSessionWithInteraction(final Long studentId, final Long exerciseId, final String eventType,
             final String feedbackType) {
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
         final var interaction = new AiInteractionEntity();
         interaction.sessionId = sessionId;
         final var userForInteraction = this.userRepository.findById(studentId);
@@ -129,7 +135,7 @@ class AnalyticsServiceTest {
     private SessionFixture createSessionFixture() {
         final Long studentId = this.studentId();
         final Long exerciseId = TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
         return new SessionFixture(studentId, exerciseId, sessionId);
     }
 
@@ -149,7 +155,7 @@ class AnalyticsServiceTest {
     void testGetAllSessions() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final List<StudentSessionViewDto> sessions = this.analyticsService.getAllSessions();
         assertNotNull(sessions);
@@ -163,7 +169,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByUser() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        this.createSessionFor(studentId, exerciseId);
 
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByUser(studentId);
         assertNotNull(sessions);
@@ -178,7 +184,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByExercise() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        this.createSessionFor(studentId, exerciseId);
 
         final ExerciseViewDto exercise = this.exerciseService.findById(exerciseId).orElseThrow();
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByExercise(exerciseId);
@@ -194,20 +200,18 @@ class AnalyticsServiceTest {
     void testGetSessionsByUserAndExercise() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final var otherStudent = this.userRepository.findByUsername("student2");
         assertNotNull(otherStudent, "Seeded student2 must exist");
         final Long otherStudentId = otherStudent.id;
         final Long otherExerciseId = this.createExercise();
-        final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
+        final String otherSessionId = this.createSessionFor(otherStudentId, otherExerciseId);
 
         final Long differentExerciseId = this.createExercise();
-        final String sameUserDiffExerciseSessionId =
-                this.graspableMathService.createSession(studentId, differentExerciseId);
+        final String sameUserDiffExerciseSessionId = this.createSessionFor(studentId, differentExerciseId);
 
-        final String diffUserSameExerciseSessionId =
-                this.graspableMathService.createSession(otherStudentId, exerciseId);
+        final String diffUserSameExerciseSessionId = this.createSessionFor(otherStudentId, exerciseId);
 
         final List<StudentSessionViewDto> sessions =
                 this.analyticsService.getSessionsByUserAndExercise(studentId, exerciseId);
@@ -235,7 +239,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByDateRange_bothBounds() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
         final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
@@ -251,7 +255,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByDateRange_nullBounds() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(null, null);
         assertNotNull(sessions);
@@ -273,7 +277,7 @@ class AnalyticsServiceTest {
     void testGetSessionBySessionId() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final StudentSessionViewDto found = this.analyticsService.getSessionBySessionId(sessionId);
         assertNotNull(found);
@@ -340,7 +344,7 @@ class AnalyticsServiceTest {
         assertNotNull(otherStudent, "Seeded student2 must exist");
         final Long otherStudentId = otherStudent.id;
         final Long otherExerciseId = this.createExercise();
-        final String otherSessionId = this.graspableMathService.createSession(otherStudentId, otherExerciseId);
+        final String otherSessionId = this.createSessionFor(otherStudentId, otherExerciseId);
 
         final var otherInteraction = new AiInteractionEntity();
         otherInteraction.sessionId = otherSessionId;
@@ -390,7 +394,7 @@ class AnalyticsServiceTest {
         final int baselineTotal = baseline.totalSessions;
 
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        this.createSessionFor(studentId, exerciseId);
 
         final StudentProgressSummaryDto summary = this.analyticsService.getUserProgressSummary(studentId);
         assertNotNull(summary);
@@ -499,13 +503,13 @@ class AnalyticsServiceTest {
     void testSearchSessions_byUsername() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        this.createSessionFor(studentId, exerciseId);
 
         final var otherStudent = this.userRepository.findByUsername("student2");
         assertNotNull(otherStudent, "Seeded student2 must exist");
         final Long otherStudentId = otherStudent.id;
         final Long otherExerciseId = this.createExercise();
-        this.graspableMathService.createSession(otherStudentId, otherExerciseId);
+        this.createSessionFor(otherStudentId, otherExerciseId);
 
         final List<StudentSessionViewDto> results = this.analyticsService.searchSessions("student1");
         assertNotNull(results);
@@ -594,7 +598,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByStatusAndDateRange() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
         this.graspableMathService.markSessionComplete(sessionId);
 
         final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
@@ -617,7 +621,7 @@ class AnalyticsServiceTest {
     void testGetAiInteractionsByExercise() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final var exercise = this.exerciseRepository.findById(exerciseId);
         assertNotNull(exercise, "Created exercise must exist");
@@ -634,7 +638,7 @@ class AnalyticsServiceTest {
 
         final Long otherExerciseId = this.createExercise();
         final var otherExercise = this.exerciseRepository.findById(otherExerciseId);
-        final String otherSessionId = this.graspableMathService.createSession(studentId, otherExerciseId);
+        final String otherSessionId = this.createSessionFor(studentId, otherExerciseId);
         final var otherInteraction = new AiInteractionEntity();
         otherInteraction.sessionId = otherSessionId;
         otherInteraction.user = user;
@@ -657,7 +661,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByDateRange_onlyStart() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(start, null);
@@ -672,7 +676,7 @@ class AnalyticsServiceTest {
     void testGetSessionsByDateRange_onlyEnd() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        final String sessionId = this.graspableMathService.createSession(studentId, exerciseId);
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
 
         final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
         final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByDateRange(null, end);
@@ -754,7 +758,7 @@ class AnalyticsServiceTest {
     void testGetRecentSessions() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
-        this.graspableMathService.createSession(studentId, exerciseId);
+        this.createSessionFor(studentId, exerciseId);
 
         final var recent = this.analyticsService.getRecentSessions(10);
         assertNotNull(recent);

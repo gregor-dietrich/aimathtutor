@@ -46,6 +46,7 @@ import de.vptr.aimathtutor.util.ExerciseHintUtil;
 import de.vptr.aimathtutor.util.GraspableEventFactory;
 import de.vptr.aimathtutor.util.GraspableMathConnector;
 import de.vptr.aimathtutor.util.NotificationUtil;
+import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -81,7 +82,8 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
     @Nullable
     private transient String currentSessionId;
     private transient int hintCount = 0;
-    private transient boolean problemSolved = false;
+    // volatile only satisfies SpotBugs AT_STALE_THREAD_WRITE_OF_PRIMITIVE; every access is on the UI thread
+    private transient volatile boolean problemSolved = false;
     private final transient ConversationContextDto conversationContext = new ConversationContextDto();
 
     // UI Components
@@ -160,16 +162,18 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.initializedExercisePublicId = exercisePublicId;
 
         // Initialize the view (supports both Graspable and non-Graspable exercises)
-        this.initializeView();
+        this.initializeView(event);
     }
 
-    private void initializeView() {
+    private void initializeView(final BeforeEnterEvent event) {
         // Cancel callbacks from the previous exercise so they cannot touch the rebuilt
         // UI or log with a stale sessionId, and drop the old AI conversation history.
         this.cancelPendingAsyncFutures();
+        this.currentSessionId = null;
         this.conversationContext.clear();
         this.removeAll();
         this.hintCount = 0;
+        this.problemSolved = false;
         this.currentExpression = null;
 
         this.setWidthFull();
@@ -178,16 +182,24 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         this.setAlignItems(Alignment.STRETCH);
 
         // Create session for this exercise
+        final String createdSessionId;
         try {
-            final Long userId = this.authService.getUserId();
-            this.currentSessionId = this.graspableMathService.createSession(Objects.requireNonNull(userId),
-                    Objects.requireNonNull(this.exerciseId));
+            createdSessionId = ServiceRejectionUtil.callOrShowRejection(
+                    () -> this.graspableMathService.createSession(Objects.requireNonNull(this.exerciseId)));
         } catch (final Exception e) {
             LOG.error("Failed to create session", e);
-            this.currentSessionId = "session-" + System.currentTimeMillis();
+            NotificationUtil.showError("The exercise session could not be started");
+            this.initializedExercisePublicId = null;
+            event.rerouteTo(LessonsView.class);
+            return;
         }
-
-        this.problemSolved = false;
+        if (createdSessionId == null) {
+            // Refused, and the rejection was shown (a session that ended reloads to login)
+            this.initializedExercisePublicId = null;
+            event.rerouteTo(LessonsView.class);
+            return;
+        }
+        this.currentSessionId = createdSessionId;
 
         // Left side: Exercise content and Graspable Math canvas (70%)
         final var leftPanel = new VerticalLayout();
@@ -348,7 +360,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         super.onAttach(attachEvent);
 
         // Initialize Graspable Math widget using external JavaScript (only if enabled)
-        if (Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
+        if (this.currentSessionId != null && Boolean.TRUE.equals(this.exercise.graspableEnabled)) {
             this.initializeGraspableMath();
         }
     }
@@ -432,12 +444,17 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      */
     @ClientCallable
     public void onMathAction(final String eventType, final String expressionBefore, final String expressionAfter) {
+        final var userId = this.resolveUserId();
+        if (userId == null) {
+            return;
+        }
+
         LOG.debugf("Math action: type=%s, before=%s, after=%s", eventType, expressionBefore, expressionAfter);
 
         this.currentExpression = expressionAfter;
 
-        final var event = GraspableEventFactory.createMathActionEvent(eventType, expressionBefore, expressionAfter,
-                this.authService.getUserId());
+        final var event =
+                GraspableEventFactory.createMathActionEvent(eventType, expressionBefore, expressionAfter, userId);
         event.exerciseId = this.exerciseId;
         event.sessionId = this.currentSessionId;
         event.timestamp = LocalDateTime.now(ZoneId.systemDefault());
@@ -456,9 +473,12 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
 
             if (isComplete) {
                 event.isComplete = true;
-                this.problemSolved = true;
                 // Mark session as completed
-                this.graspableMathService.markSessionComplete(this.currentSessionId);
+                if (!ServiceRejectionUtil.runOrShowRejection(
+                        () -> this.graspableMathService.markSessionComplete(this.currentSessionId))) {
+                    return;
+                }
+                this.problemSolved = true;
 
                 // Show success notification
                 final var notifyUi = this.getUI().orElse(null);
@@ -471,7 +491,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         // Process event through GraspableMathService (for session tracking)
-        this.graspableMathService.processEvent(event);
+        if (!ServiceRejectionUtil.runOrShowRejection(() -> this.graspableMathService.processEvent(event))) {
+            return;
+        }
 
         // Skip action analysis if problem was already solved before this action
         if (wasAlreadySolved) {
@@ -485,10 +507,9 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         if (ui == null) {
             return;
         }
-        final var userIdForRateLimit = event.studentId != null ? String.valueOf(event.studentId) : "ANONYMOUS";
 
         final var rootFuture =
-                this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, userIdForRateLimit);
+                this.aiTutorService.analyzeMathActionAsync(event, this.conversationContext, String.valueOf(userId));
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
         final var _ = rootFuture.thenAccept(feedback -> {
@@ -523,6 +544,11 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
      * Handles user questions from the chat panel.
      */
     private void handleUserQuestion(final String question) {
+        final var userId = this.resolveUserId();
+        if (userId == null) {
+            return;
+        }
+
         // Create and add user message to context
         final var userMessage = ChatMessageDto.userQuestion(question);
         userMessage.sessionId = this.currentSessionId;
@@ -534,9 +560,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         // Show typing indicator while waiting for AI response
         this.chatPanel.showTypingIndicator();
 
-        // Get user ID and exercise ID before async call (to avoid context issues)
-        final var userId = this.authService.getUserId();
-        final var userIdStr = userId != null ? String.valueOf(userId) : "ANONYMOUS";
+        // Get exercise ID before async call (to avoid context issues)
         final var exerciseId = this.exercise != null ? this.exercise.id : null;
         final var sessionId = this.currentSessionId;
 
@@ -549,7 +573,7 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         final var rootFuture = this.aiTutorService.answerQuestionAsync(question, this.currentExpression,
                 this.exercise != null ? this.exercise.graspableInitialExpression : null,
                 this.exercise != null ? this.exercise.graspableTargetExpression : null, this.currentSessionId,
-                this.conversationContext, userIdStr);
+                this.conversationContext, String.valueOf(userId));
         final String requestId = UUID.randomUUID().toString();
         this.pendingAsyncFutures.put(requestId, rootFuture);
         final var _ = rootFuture.thenAccept(answer -> {
@@ -569,6 +593,18 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }).whenComplete((result, throwable) -> this.pendingAsyncFutures.remove(requestId));
     }
 
+    /**
+     * Resolves the signed-in user's ID for one action, on the UI thread. A refusal is shown (an ended session returns
+     * to login).
+     *
+     * @return the user's ID, or null if the session no longer identifies an active user
+     */
+    @Nullable
+    private Long resolveUserId() {
+        return ServiceRejectionUtil
+                .callOrShowRejection(() -> Objects.requireNonNull(this.authService.requireCurrentUser().id));
+    }
+
     private void showNextHint() {
         if (this.exercise.graspableHints == null || this.exercise.graspableHints.isBlank()) {
             NotificationUtil.showInfo("No hints available for this exercise");
@@ -584,14 +620,17 @@ public class ExerciseWorkspaceView extends HorizontalLayout implements BeforeEnt
         }
 
         final String hint = hints.get(this.hintCount);
-        this.hintCount++;
 
-        // Record hint usage
+        // Record hint usage; a refused write reveals nothing
         try {
-            this.graspableMathService.recordHintUsed(this.currentSessionId);
+            if (!ServiceRejectionUtil
+                    .runOrShowRejection(() -> this.graspableMathService.recordHintUsed(this.currentSessionId))) {
+                return;
+            }
         } catch (final Exception e) {
             LOG.warn("Could not record hint usage", e);
         }
+        this.hintCount++;
 
         // Display hint
         final var hintDiv = new Div();

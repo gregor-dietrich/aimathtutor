@@ -18,6 +18,7 @@ import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.event.UserAccountChangedEvent;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -85,10 +86,17 @@ public class UserService {
     /**
      * Retrieves all users in the system.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @return a list of all {@link UserViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<UserViewDto> getAllUsers() {
+    public List<UserViewDto> getAllUsers(@Nullable final SessionCredentials credentials) {
+        this.permissionService.requireAdminView(credentials);
         return this.userRepository.findAll().stream().map(UserViewDto::new).toList();
     }
 
@@ -566,14 +574,21 @@ public class UserService {
      * Searches users by username or email using the provided query string (case-insensitive). Returns all users if
      * query is null or empty.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param query
      *            the search query string (username/email match)
      * @return a list of matching {@link UserViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<UserViewDto> searchUsers(final String query) {
+    public List<UserViewDto> searchUsers(@Nullable final SessionCredentials credentials, final String query) {
+        this.permissionService.requireAdminView(credentials);
         if (query == null || query.isBlank()) {
-            return this.getAllUsers();
+            return this.userRepository.findAll().stream().map(UserViewDto::new).toList();
         }
         // The repository takes the RAW term: it routes "@"-containing terms to the blind-index email
         // lookup (which needs the unmodified plaintext) and escapes/wraps everything else itself.
@@ -619,7 +634,7 @@ public class UserService {
     @Transactional
     public String changePassword(final SessionCredentials credentials, final String currentPassword,
             final String newPassword) {
-        final UserEntity user = this.requireSessionUser(credentials);
+        final UserEntity user = this.authService.requireSessionUser(credentials);
         // Validated before the current password is checked: otherwise the new password's rejection would confirm a
         // correct guess without changing anything.
         this.validatePassword(newPassword);
@@ -666,7 +681,7 @@ public class UserService {
     @Transactional
     public Appearance updateAppearance(final SessionCredentials credentials, @Nullable final Appearance.Design design,
             @Nullable final Appearance.ColorMode colorMode) {
-        final UserEntity user = this.requireSessionUser(credentials);
+        final UserEntity user = this.authService.requireSessionUser(credentials);
         if (design != null) {
             user.design = design;
         }
@@ -677,31 +692,22 @@ public class UserService {
         return new Appearance(user.design, user.colorMode);
     }
 
-    private UserEntity requireSessionUser(final SessionCredentials credentials) {
-        final UserEntity user = this.userRepository.findByPublicId(credentials.userPublicId()).orElse(null);
-        if (user == null || !user.activated || user.banned
-                || !AuthService.holdsStamp(user, credentials.credentialStamp())) {
-            throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
-        }
-        return user;
-    }
-
     /**
-     * Update user avatar emojis.
+     * Update the calling user's avatar emojis. The session is verified like in {@link #changePassword}.
      * 
-     * @param userId
-     *            The user ID
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param userEmoji
      *            The emoji for the user
      * @param tutorEmoji
      *            The emoji for the AI tutor
+     * @throws ValidationException
+     *             if the session has ended or an emoji is invalid
      */
     @Transactional
-    public void updateAvatars(final Long userId, final String userEmoji, final String tutorEmoji) {
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null) {
-            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
-        }
+    public void updateAvatars(@Nullable final SessionCredentials credentials, final String userEmoji,
+            final String tutorEmoji) {
+        final UserEntity user = this.authService.requireSessionUser(credentials);
 
         // Validate emojis
         if (userEmoji == null || userEmoji.isBlank()) {
@@ -725,16 +731,15 @@ public class UserService {
     /**
      * Get user settings (avatars only, no passwords).
      * 
-     * @param userId
-     *            The user ID
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @return UserSettingsDto with avatar settings
+     * @throws ValidationException
+     *             if the session has ended
      */
     @Transactional
-    public UserSettingsDto getSettings(final Long userId) {
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null) {
-            throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
-        }
+    public UserSettingsDto getSettings(@Nullable final SessionCredentials credentials) {
+        final UserEntity user = this.authService.requireSessionUser(credentials);
 
         return new UserSettingsDto(
                 user.userAvatarEmoji != null ? user.userAvatarEmoji : AppConstants.AVATAR_DEFAULT_USER,

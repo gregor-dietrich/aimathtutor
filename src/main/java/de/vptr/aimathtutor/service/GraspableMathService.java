@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -15,11 +16,13 @@ import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
-import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 
 /**
  * Service for managing Graspable Math workspace sessions and events. Handles session creation, event processing, and
@@ -33,7 +36,7 @@ public class GraspableMathService {
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
     @Inject
-    UserRepository userRepository;
+    AuthService authService;
 
     @Inject
     ExerciseRepository exerciseRepository;
@@ -42,22 +45,18 @@ public class GraspableMathService {
     StudentSessionRepository studentSessionRepository;
 
     /**
-     * Creates a new student session for working on an exercise.
+     * Creates a new student session for the current user working on an exercise. UI thread only.
      * 
-     * @param userId
-     *            The student's user ID
      * @param exerciseId
      *            The exercise ID
      * @return The session ID
+     * @throws ValidationException
+     *             if the user's session has ended
      */
     @Transactional
-    public String createSession(final Long userId, final Long exerciseId) {
+    public String createSession(final Long exerciseId) {
         final String sessionId = UUID.randomUUID().toString();
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null) {
-            LOG.errorf("User not found: %s", userId);
-            throw new IllegalArgumentException("User not found: " + userId);
-        }
+        final UserEntity user = this.authService.requireCurrentUser();
 
         final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
         if (exercise == null) {
@@ -76,7 +75,7 @@ public class GraspableMathService {
         session.hintsUsed = 0;
 
         this.studentSessionRepository.persist(session);
-        LOG.infof("Created new session: %s for user %s on exercise %s", sessionId, userId, exerciseId);
+        LOG.infof("Created new session: %s for user %s on exercise %s", sessionId, user.id, exerciseId);
 
         return sessionId;
     }
@@ -94,16 +93,18 @@ public class GraspableMathService {
     }
 
     /**
-     * Processes a Graspable Math event and updates session statistics.
+     * Processes a Graspable Math event and updates session statistics. UI thread only.
      * 
      * @param event
      *            The event to process
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void processEvent(final GraspableEventDto event) {
         LOG.debugf("Processing Graspable Math event: %s", event);
 
-        final var session = this.studentSessionRepository.findBySessionId(event.sessionId);
+        final var session = this.findOwnSession(event.sessionId);
         if (session == null) {
             LOG.warnf("Session not found: %s", event.sessionId);
             return;
@@ -126,10 +127,12 @@ public class GraspableMathService {
     }
 
     /**
-     * Marks a session as completed.
+     * Marks a session as completed. UI thread only.
      * 
      * @param sessionId
      *            The session ID
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void completeSession(final String sessionId) {
@@ -139,14 +142,16 @@ public class GraspableMathService {
     }
 
     /**
-     * Increments the hints used counter for a session.
+     * Increments the hints used counter for a session. UI thread only.
      * 
      * @param sessionId
      *            The session ID
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void recordHintUsed(final String sessionId) {
-        final var session = this.studentSessionRepository.findBySessionId(sessionId);
+        final var session = this.findOwnSession(sessionId);
         if (session != null) {
             session.hintsUsed++;
             this.studentSessionRepository.persist(session);
@@ -258,10 +263,12 @@ public class GraspableMathService {
     }
 
     /**
-     * Marks a session as completed.
+     * Marks a session as completed. UI thread only.
      * 
      * @param sessionId
      *            The session ID to mark complete
+     * @throws ValidationException
+     *             if the user's session has ended or the session belongs to another user
      */
     @Transactional
     public void markSessionComplete(final String sessionId) {
@@ -273,7 +280,7 @@ public class GraspableMathService {
     }
 
     private boolean doCompleteSession(final String sessionId) {
-        final var session = this.studentSessionRepository.findBySessionId(sessionId);
+        final var session = this.findOwnSession(sessionId);
         if (session == null || Boolean.TRUE.equals(session.completed)) {
             return false;
         }
@@ -283,5 +290,19 @@ public class GraspableMathService {
         }
         this.studentSessionRepository.persist(session);
         return true;
+    }
+
+    /**
+     * Finds a session for a write by the current user. An unknown session is a no-op (null); one that belongs to
+     * another user, or a caller whose session has ended, is refused.
+     */
+    @Nullable
+    private StudentSessionEntity findOwnSession(@Nullable final String sessionId) {
+        final var caller = this.authService.requireCurrentUser();
+        final var session = this.studentSessionRepository.findBySessionId(sessionId);
+        if (session != null && !Objects.equals(session.user != null ? session.user.id : null, caller.id)) {
+            throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
+        }
+        return session;
     }
 }

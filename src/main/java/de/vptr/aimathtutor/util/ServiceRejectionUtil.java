@@ -1,13 +1,19 @@
 package de.vptr.aimathtutor.util;
 
+import java.util.function.Supplier;
+
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.UI;
+
+import de.vptr.aimathtutor.view.LoginView;
+import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 
 /**
- * Shows why a service rejected a write, such as a save or delete. Services reject invalid input with
+ * Shows why a service rejected a call, such as a save or delete. Services reject invalid input with
  * {@link ValidationException}, which shares its simple name with the binder's exception that the views import, so the
  * views catch it through this helper. The message mapping is shared with {@link AsyncDataLoader}, which shows the same
  * text for a rejection thrown inside an asynchronous load.
@@ -23,22 +29,40 @@ public final class ServiceRejectionUtil {
 
     /**
      * Runs a service call and shows the message of a rejection it throws (see {@link #isRejection}). The rejection is
-     * expected user input, so it is logged at DEBUG only, and without the message, which can contain user data. Any
-     * other {@link ValidationException} propagates.
+     * expected user input, so it is logged at DEBUG only, and without the message, which can contain user data. A
+     * rejection that the session ended also returns to the login page. Any other {@link ValidationException}
+     * propagates.
      *
      * @param serviceCall
      *            the call that writes, such as saving the form's data or deleting an item
      * @return true if the call completed, false if the service rejected it
      */
     public static boolean runOrShowRejection(final Runnable serviceCall) {
-        try {
+        return callOrShowRejection(() -> {
             serviceCall.run();
-            return true;
+            return Boolean.TRUE;
+        }) != null;
+    }
+
+    /**
+     * Like {@link #runOrShowRejection}, for a service call that returns a value.
+     *
+     * @param <T>
+     *            the type of the call's result
+     * @param serviceCall
+     *            the call, which must not return null
+     * @return the call's result, or null if the service rejected it
+     */
+    @Nullable
+    public static <T> T callOrShowRejection(final Supplier<T> serviceCall) {
+        try {
+            return serviceCall.get();
         } catch (final ValidationException e) {
             if (!isRejection(e)) {
                 throw e;
             }
-            return showRejection(rejectionMessage(e));
+            showRejection(UI.getCurrent(), rejectionMessage(e));
+            return null;
         }
     }
 
@@ -79,9 +103,20 @@ public final class ServiceRejectionUtil {
         return (fieldName != null ? fieldName : "field") + ": " + violation.getMessage();
     }
 
-    private static boolean showRejection(final String message) {
-        LOG.debug("Service rejected a write");
+    /**
+     * Shows a rejection's message and, when it says the session ended, reloads the UI onto the login page. Logs at
+     * DEBUG without the message, which can contain user data.
+     *
+     * @param ui
+     *            the UI to redirect, or null if there is none, in which case nothing redirects
+     * @param message
+     *            the user-facing message
+     */
+    static void showRejection(@Nullable final UI ui, final String message) {
+        LOG.debug("Service rejected a call");
         NotificationUtil.showError(message);
-        return false;
+        if (ui != null && AppConstants.SESSION_ENDED_MESSAGE.equals(message)) {
+            LoginView.reloadToLogin(ui);
+        }
     }
 }

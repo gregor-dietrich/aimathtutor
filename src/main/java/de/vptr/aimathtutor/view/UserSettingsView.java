@@ -75,8 +75,6 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     private Div previewBox;
 
     @Nullable
-    private Long currentUserId;
-    @Nullable
     private String currentUsername;
     @Nullable
     private String currentEmail;
@@ -105,8 +103,7 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         }
 
         // Get current user info
-        this.currentUserId = this.authService.getUserId();
-        if (this.currentUserId == null) {
+        if (this.authService.getCurrentUserEntity() == null) {
             NotificationUtil.showError("Could not load user information");
             event.rerouteTo(LessonsView.class);
             return;
@@ -318,7 +315,9 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
     }
 
     private void loadCurrentSettings() {
-        AsyncDataLoader.load(() -> this.userService.getSettings(this.currentUserId), this, this::applySettings,
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.userService.getSettings(credentials), this, this::applySettings,
                 "Failed to load settings");
     }
 
@@ -422,8 +421,10 @@ public class UserSettingsView extends VerticalLayout implements BeforeEnterObser
         this.userAvatarSelect.setEnabled(false);
         this.tutorAvatarSelect.setEnabled(false);
 
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(() -> {
-            this.userService.updateAvatars(this.currentUserId, userEmoji, tutorEmoji);
+            this.userService.updateAvatars(credentials, userEmoji, tutorEmoji);
             return null;
         }, this, ignored -> {
             NotificationUtil.showSuccess("Avatars updated successfully");

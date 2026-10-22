@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
 
@@ -14,8 +15,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
@@ -31,6 +34,10 @@ import jakarta.ws.rs.core.Response;
 @QuarkusTest
 @SuppressWarnings("NullAway")
 class UserGroupServiceTest {
+
+    // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
+    private static final SessionCredentials CREDENTIALS =
+            new SessionCredentials("admin-public-id", "stamp", "session-key");
 
     @Inject
     private UserGroupService userGroupService;
@@ -142,9 +149,10 @@ class UserGroupServiceTest {
         this.userGroupService.addUserToGroup(student.publicId, group.publicId);
 
         final var groupEntity = this.userGroupRepository.findByPublicId(group.publicId).orElseThrow();
-        final var members = this.userGroupService.getUsersInGroup(group.publicId);
+        final var members = this.userGroupService.getUsersInGroup(CREDENTIALS, group.publicId);
         assertEquals(1, members.size());
         assertEquals("student1", members.get(0).username);
+        verify(this.permissionService).requireAdminView(CREDENTIALS);
         assertTrue(this.userGroupService.isUserInGroup(student.id, groupEntity.id));
     }
 
@@ -168,8 +176,20 @@ class UserGroupServiceTest {
     @TestTransaction
     void shouldThrowNotFoundForUnknownGroup() {
         final var thrown = assertThrows(WebApplicationException.class,
-                () -> this.userGroupService.getUsersInGroup("00000000000000000000000000"));
+                () -> this.userGroupService.getUsersInGroup(CREDENTIALS, "00000000000000000000000000"));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("getUsersInGroup propagates the administration-view refusal")
+    @TestTransaction
+    void shouldRefuseMembersWithoutAdminView() {
+        final UserGroupViewDto group = this.userGroupService.createGroup(this.buildDto());
+        Mockito.doThrow(new PermissionDeniedException("view the administration")).when(this.permissionService)
+                .requireAdminView(CREDENTIALS);
+
+        assertThrows(PermissionDeniedException.class,
+                () -> this.userGroupService.getUsersInGroup(CREDENTIALS, group.publicId));
     }
 
     @Test
