@@ -147,23 +147,84 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    @DisplayName("Should enforce account max cache size")
-    void shouldEnforceAccountMaxCacheSize() {
-        final String target = "user_target";
-        // Record enough attempts to cause a lockout
-        for (int i = 0; i < 30; i++) {
-            this.loginAttemptService.recordFailedAccountAttempt(target);
+    @DisplayName("Flooding the account map past its size cap never lifts a locked account")
+    void sizeCapNeverEvictsLockedAccountBucket() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        for (int i = 0; i < 25; i++) {
+            service.recordFailedAccountAttempt("target");
         }
-        assertTrue(this.loginAttemptService.getRemainingAccountLockoutSeconds(target) > 0);
-
-        // Flood the cache with many distinct accounts to trigger eviction
-        for (int i = 0; i < 10_005; i++) {
-            this.loginAttemptService.recordFailedAccountAttempt("user_" + i);
+        for (int i = 0; i < 24; i++) {
+            service.recordFailedAccountAttempt("old");
+        }
+        clock.advance(Duration.ofSeconds(1));
+        for (int i = 0; i <= 10_000; i++) {
+            service.recordFailedAccountAttempt("flood-" + i);
         }
 
-        // Target should have been evicted, so lockout is now 0
-        assertEquals(0, this.loginAttemptService.getRemainingAccountLockoutSeconds(target),
-                "Target account should have been evicted from the bounded cache");
+        assertTrue(service.isAccountLockedOut("target"));
+        assertEquals(599, service.getRemainingAccountLockoutSeconds("target"));
+        service.recordFailedAccountAttempt("old");
+        assertTrue(service.isAccountLockedOut("old"), "the bucket at 24 failures outlived the count-1 flood");
+    }
+
+    @Test
+    @DisplayName("Flooding the login map past its size cap never lifts a locked key")
+    void sizeCapNeverEvictsLockedLoginBucket() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "target", 5);
+        fail(service, "old", 4);
+        clock.advance(Duration.ofSeconds(1));
+        for (int i = 0; i <= 10_000; i++) {
+            service.recordFailedAttempt("flood-" + i);
+        }
+
+        assertTrue(service.isLockedOut("target"));
+        assertEquals(29, service.getRemainingLockoutSeconds("target"));
+        assertEquals(30, service.recordFailedAttempt("old"), "the older bucket with the higher count was kept");
+    }
+
+    @Test
+    @DisplayName("Flooding the login map keeps a key whose lock ended but whose count is retained")
+    void sizeCapKeepsRetainedCountAfterLockEnds() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        final var key = "retained-" + UUID.randomUUID();
+        fail(service, key, 5);
+        clock.advance(Duration.ofSeconds(31));
+        assertFalse(service.isLockedOut(key));
+        for (int i = 0; i <= 10_000; i++) {
+            service.recordFailedAttempt("flood-" + i);
+        }
+
+        assertEquals(60, service.recordFailedAttempt(key), "escalation survived the flood");
+    }
+
+    @Test
+    @DisplayName("A clock stepped backwards does not lock a key below the threshold")
+    void backwardClockStepDoesNotLockBelowThreshold() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        final var key = "back-" + UUID.randomUUID();
+        service.recordFailedAttempt(key);
+        clock.advance(Duration.ofSeconds(-10));
+
+        assertFalse(service.isLockedOut(key));
+        assertEquals(0, service.getRemainingLockoutSeconds(key));
+    }
+
+    @Test
+    @DisplayName("A clock stepped backwards does not extend a real lock")
+    void backwardClockStepDoesNotExtendLock() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        final var key = "back-lock-" + UUID.randomUUID();
+        fail(service, key, 5);
+        clock.advance(Duration.ofSeconds(-10));
+
+        assertTrue(service.isLockedOut(key));
+        assertEquals(30, service.getRemainingLockoutSeconds(key));
     }
 
     @Test
@@ -207,6 +268,88 @@ class LoginAttemptServiceTest {
         final var service = new LoginAttemptService();
         service.clock = clock;
         return service;
+    }
+
+    private static void fail(final LoginAttemptService service, final String key, final int times) {
+        for (int i = 0; i < times; i++) {
+            service.recordFailedAttempt(key);
+        }
+    }
+
+    @Test
+    @DisplayName("A lock of 30 s ends after 30 s")
+    void lockEndsWhenItsDurationHasPassed() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "k", 5);
+        assertTrue(service.isLockedOut("k"));
+        assertEquals(30, service.getRemainingLockoutSeconds("k"));
+
+        clock.advance(Duration.ofSeconds(30));
+        assertFalse(service.isLockedOut("k"));
+        assertEquals(0, service.getRemainingLockoutSeconds("k"));
+    }
+
+    @Test
+    @DisplayName("Failures survive a lock, so the next locks escalate")
+    void locksEscalateAfterTheyEnd() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "k", 5);
+
+        clock.advance(Duration.ofSeconds(31));
+        assertEquals(60, service.recordFailedAttempt("k"));
+        clock.advance(Duration.ofSeconds(61));
+        assertEquals(120, service.recordFailedAttempt("k"));
+    }
+
+    @Test
+    @DisplayName("Failures below the threshold are kept for an hour")
+    void failuresBelowTheThresholdAreKept() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "k", 4);
+
+        clock.advance(Duration.ofSeconds(31));
+        assertEquals(30, service.recordFailedAttempt("k"));
+    }
+
+    @Test
+    @DisplayName("Failures are forgotten an hour after the lock ends")
+    void failuresAreForgottenAnHourAfterTheLock() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "k", 5);
+        clock.advance(Duration.ofSeconds(3630));
+        assertEquals(60, service.recordFailedAttempt("k"), "still remembered at 30 s + 1 h");
+
+        final var other = serviceWith(clock);
+        fail(other, "k", 5);
+        clock.advance(Duration.ofSeconds(3631));
+        assertEquals(0, other.recordFailedAttempt("k"), "forgotten just after 30 s + 1 h");
+    }
+
+    @Test
+    @DisplayName("A successful login forgets the failures at once")
+    void successfulLoginForgetsFailures() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "k", 5);
+        clock.advance(Duration.ofSeconds(31));
+
+        service.recordSuccessfulLogin("k");
+
+        assertEquals(0, service.recordFailedAttempt("k"));
+    }
+
+    @Test
+    @DisplayName("Lock lengths follow the doubling schedule up to the cap, at any count")
+    void lockLengthsFollowTheSchedule() {
+        final var service = serviceWith(new MutableClock());
+        for (int count = 1; count <= 100; count++) {
+            final long expected = count < 5 ? 0 : count < 12 ? 30L << (count - 5) : 3600;
+            assertEquals(expected, service.recordFailedAttempt("k"), "lock after failure " + count);
+        }
     }
 
     @Test

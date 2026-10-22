@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service.security;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -18,8 +19,11 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * In-memory service for tracking and throttling login attempts. Implements per-username and per-IP exponential backoff
- * to mitigate brute-force attacks. Uses bounded cache with automatic cleanup to prevent DoS via unbounded growth.
+ * In-memory service for tracking and throttling login attempts. The username+IP and IP keys use exponential backoff to
+ * mitigate brute-force attacks: the failure count of a key survives its lock and is forgotten only an hour after the
+ * lock ends, so repeated lockouts escalate up to the one-hour cap. The per-account bucket is a fixed window: 25
+ * failures per 15 minutes, then a 10-minute lock. The caches are bounded (10,000 unlocked entries plus the locked ones)
+ * with automatic cleanup to prevent DoS via unbounded growth.
  */
 @ApplicationScoped
 public class LoginAttemptService {
@@ -27,6 +31,8 @@ public class LoginAttemptService {
     private static final int MAX_ATTEMPTS = 5;
     private static final long BASE_LOCKOUT_SECONDS = 30;
     private static final long MAX_LOCKOUT_SECONDS = 3600; // 1 hour
+    // A key's failures are forgotten this long after its lock ends, so that the next lock is longer
+    private static final long FORGET_AFTER_SECONDS = 3600;
     private static final int MAX_CACHE_SIZE = 10_000;
     private static final long CLEANUP_INTERVAL_SECONDS = 300; // 5 minutes
 
@@ -38,8 +44,8 @@ public class LoginAttemptService {
 
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();
     private final Map<String, WindowedAttempt> accountAttempts = new ConcurrentHashMap<>();
-    // Own key space: login keys include client-supplied X-Forwarded-For text, so they must never share a map with the
-    // per-session password-change tokens.
+    // Own key space: login keys include the client-chosen username, so they must never share a map with the per-session
+    // password-change tokens.
     private final Map<String, WindowedAttempt> passwordChangeAttempts = new ConcurrentHashMap<>();
 
     /** Time source; replaced in tests to cross the throttle windows without waiting. */
@@ -67,36 +73,47 @@ public class LoginAttemptService {
      * Periodically removes expired entries to prevent unbounded memory growth.
      */
     private void cleanupExpiredEntries() {
-        this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired());
         final var now = this.clock.instant();
+        this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
         this.accountAttempts.entrySet().removeIf(entry -> entry.getValue().isExpired(ACCOUNT_POLICY, now));
         this.passwordChangeAttempts.entrySet()
                 .removeIf(entry -> entry.getValue().isExpired(PASSWORD_CHANGE_POLICY, now));
 
-        // If still over limit after cleanup, remove oldest entries
-        if (this.attempts.size() > MAX_CACHE_SIZE) {
-            this.attempts.entrySet().stream()
-                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
-                    .limit(this.attempts.size() - MAX_CACHE_SIZE)
-                    .forEach(entry -> this.attempts.remove(entry.getKey(), entry.getValue()));
-        }
-        trimOldest(this.accountAttempts, attempt -> true);
-        // Never lift a password-change lock: a locked bucket stops updating, so it would be the oldest, and fresh
-        // sessions could flood it out. Its entries need a signed-in session each, so keeping them stays bounded.
-        trimOldest(this.passwordChangeAttempts, attempt -> attempt.count < PASSWORD_CHANGE_POLICY.maxAttempts);
+        // If still over the limit, evict unlocked entries. The cap counts only unlocked entries; locked ones are kept
+        // on top of it, because a size cap must never lift a lock: a locked bucket stops updating, so a flood of fresh
+        // keys could wipe it. The locked population stays bounded by bcrypt throughput times lock length, because a
+        // locked bucket records nothing. Eviction takes the lowest count first, then the oldest, so a flood of
+        // count-1 keys cannot erase the escalation a key has earned.
+        trimLowest(this.attempts, attempt -> !attempt.isLocked(now),
+                Comparator.comparingInt((final LoginAttempt attempt) -> attempt.count)
+                        .thenComparing(attempt -> attempt.lastAttempt));
+        trimLowest(this.accountAttempts, attempt -> attempt.count < ACCOUNT_POLICY.maxAttempts,
+                Comparator.comparingInt((final WindowedAttempt attempt) -> attempt.count)
+                        .thenComparing(attempt -> attempt.lastAttempt));
+        trimLowest(this.passwordChangeAttempts, attempt -> attempt.count < PASSWORD_CHANGE_POLICY.maxAttempts,
+                Comparator.comparingInt((final WindowedAttempt attempt) -> attempt.count)
+                        .thenComparing(attempt -> attempt.lastAttempt));
     }
 
-    private static void trimOldest(final Map<String, WindowedAttempt> map, final Predicate<WindowedAttempt> evictable) {
-        if (map.size() > MAX_CACHE_SIZE) {
-            map.entrySet().stream().filter(entry -> evictable.test(entry.getValue()))
-                    .sorted((e1, e2) -> e1.getValue().lastAttempt.compareTo(e2.getValue().lastAttempt))
-                    .limit(map.size() - MAX_CACHE_SIZE).forEach(entry -> map.remove(entry.getKey(), entry.getValue()));
+    private static <V> void trimLowest(final Map<String, V> map, final Predicate<V> evictable,
+            final Comparator<V> evictionOrder) {
+        if (map.size() <= MAX_CACHE_SIZE) {
+            return;
         }
+        final var candidates = map.entrySet().stream().filter(entry -> evictable.test(entry.getValue())).toList();
+        final var excess = candidates.size() - MAX_CACHE_SIZE;
+        if (excess <= 0) {
+            return;
+        }
+        candidates.stream().sorted(Map.Entry.comparingByValue(evictionOrder)).limit(excess)
+                .forEach(entry -> map.remove(entry.getKey(), entry.getValue()));
     }
 
     /**
      * Records a failed login attempt for the given key (username or IP). Returns the number of seconds the client
-     * should wait before retrying. Enforces maximum cache size to prevent DoS attacks.
+     * should wait before retrying. The count survives the lock (callers record nothing while a key is locked) and is
+     * forgotten only {@value #FORGET_AFTER_SECONDS} seconds after the lock ends, so each lock lasts longer than the one
+     * before. Enforces maximum cache size to prevent DoS attacks.
      *
      * @param key
      *            the username or IP address
@@ -108,14 +125,15 @@ public class LoginAttemptService {
             this.cleanupExpiredEntries();
         }
 
+        final var now = this.clock.instant();
         final LoginAttempt attempt = this.attempts.compute(key, (k, v) -> {
-            if (v == null || v.isExpired()) {
-                return new LoginAttempt(1, Instant.now());
+            if (v == null || v.isExpired(now)) {
+                return new LoginAttempt(1, now);
             }
-            return new LoginAttempt(v.count + 1, Instant.now());
+            return new LoginAttempt(v.count + 1, now);
         });
 
-        return this.calculateLockoutSeconds(attempt.count);
+        return lockoutSeconds(attempt.count);
     }
 
     /**
@@ -203,11 +221,12 @@ public class LoginAttemptService {
         if (attempt == null) {
             return false;
         }
-        if (attempt.isExpired()) {
+        final var now = this.clock.instant();
+        if (attempt.isExpired(now)) {
             this.attempts.remove(key, attempt);
             return false;
         }
-        return attempt.count >= MAX_ATTEMPTS;
+        return attempt.isLocked(now);
     }
 
     /**
@@ -238,12 +257,7 @@ public class LoginAttemptService {
      */
     public long getRemainingLockoutSeconds(final String key) {
         final LoginAttempt attempt = this.attempts.get(key);
-        if (attempt == null || attempt.isExpired() || attempt.count < MAX_ATTEMPTS) {
-            return 0;
-        }
-        final long lockoutSeconds = this.calculateLockoutSeconds(attempt.count);
-        final long elapsed = ChronoUnit.SECONDS.between(attempt.lastAttempt, Instant.now());
-        return Math.max(0, lockoutSeconds - elapsed);
+        return attempt == null ? 0 : attempt.remainingLockoutSeconds(this.clock.instant());
     }
 
     /**
@@ -263,12 +277,12 @@ public class LoginAttemptService {
         return Math.max(0, ACCOUNT_POLICY.lockSeconds - elapsed);
     }
 
-    private long calculateLockoutSeconds(final int attemptCount) {
-        if (attemptCount < MAX_ATTEMPTS) {
-            return 0;
-        }
-        final long multiplier = 1L << (attemptCount - MAX_ATTEMPTS); // exponential: 1, 2, 4, 8...
-        return Math.min(BASE_LOCKOUT_SECONDS * multiplier, MAX_LOCKOUT_SECONDS);
+    /** Lock length after {@code count} failures: none below the threshold, then doubling from 30 s up to the cap. */
+    private static long lockoutSeconds(final int count) {
+        // Any shift of 7 or more already exceeds the cap; 31 keeps 30 * 2^shift inside a long, so 1L << n never wraps
+        // (Java masks the shift to 6 bits).
+        return count < MAX_ATTEMPTS ? 0
+                : Math.min(BASE_LOCKOUT_SECONDS * (1L << Math.min(count - MAX_ATTEMPTS, 31)), MAX_LOCKOUT_SECONDS);
     }
 
     private static final class LoginAttempt {
@@ -280,18 +294,18 @@ public class LoginAttemptService {
             this.lastAttempt = lastAttempt;
         }
 
-        boolean isExpired() {
-            final long lockoutSeconds = calculateLockoutSeconds(this.count);
-            final long elapsed = ChronoUnit.SECONDS.between(this.lastAttempt, Instant.now());
-            return elapsed > lockoutSeconds + BASE_LOCKOUT_SECONDS;
+        long remainingLockoutSeconds(final Instant now) {
+            return Math.max(0,
+                    lockoutSeconds(this.count) - Math.max(0, ChronoUnit.SECONDS.between(this.lastAttempt, now)));
         }
 
-        private static long calculateLockoutSeconds(final int attemptCount) {
-            if (attemptCount < MAX_ATTEMPTS) {
-                return 0;
-            }
-            final long multiplier = 1L << (attemptCount - MAX_ATTEMPTS);
-            return Math.min(BASE_LOCKOUT_SECONDS * multiplier, MAX_LOCKOUT_SECONDS);
+        boolean isLocked(final Instant now) {
+            return this.remainingLockoutSeconds(now) > 0;
+        }
+
+        boolean isExpired(final Instant now) {
+            return ChronoUnit.SECONDS.between(this.lastAttempt, now) > lockoutSeconds(this.count)
+                    + FORGET_AFTER_SECONDS;
         }
     }
 
