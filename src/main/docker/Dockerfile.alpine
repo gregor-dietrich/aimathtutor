@@ -16,7 +16,7 @@
 # docker run -i --rm -p 9001:9001 -v aimathtutor_keys:/etc/aimathtutor/keys \
 #   -e app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key quarkus/aimathtutor-jvm
 #
-# Java runs directly as PID 1; required runtime options are in ENTRYPOINT.
+# Java runs directly as PID 1. ENTRYPOINT holds only the runtime JVM arguments the jar needs (AGENTS.md, Build & Development).
 # Add operator JVM options with JDK_JAVA_OPTIONS, for example:
 # docker run -i --rm -p 9001:9001 -e JDK_JAVA_OPTIONS="-Xmx512m" quarkus/aimathtutor-jvm
 #
@@ -43,18 +43,7 @@ EXPOSE 9001
 USER 185
 WORKDIR /deployments
 
-ENTRYPOINT [ "java", \
-    "-Dquarkus.http.host=0.0.0.0", \
-    "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", \
-    "--add-opens", "java.base/java.lang=ALL-UNNAMED", \
-    "--add-opens", "java.base/jdk.internal.ref=ALL-UNNAMED", \
-    "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED", \
-    "--add-opens", "java.base/java.nio=ALL-UNNAMED", \
-    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", \
-    "--enable-native-access=ALL-UNNAMED", \
-    "--sun-misc-unsafe-memory-access=allow", \
-    "-XX:+EnableDynamicAgentLoading", \
-    "-jar", "/deployments/quarkus-run.jar" ]
+ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
 CMD []
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 --start-period=10s \

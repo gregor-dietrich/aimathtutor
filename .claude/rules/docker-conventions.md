@@ -15,10 +15,12 @@ paths:
   on Ubuntu). A change to one goes into the other:
   the Temurin 25 JRE base pinned by digest, the fast-jar copy to
   `/deployments`, user `185`, port `9001`, the `/q/health/ready`
-  healthcheck, and required runtime arguments in the exec-form Java
-  entrypoint, which must match the JVM args in `AGENTS.md`. Java stays PID 1;
-  add operator options via `JDK_JAVA_OPTIONS`, without baking its value into
-  the image.
+  healthcheck, and the runtime JVM arguments in the exec-form Java
+  entrypoint, each with its measured reason in `AGENTS.md` ("Runtime JVM
+  arguments") and checked by `JvmArgsParityTest`; add or drop one only after
+  measuring the image, and pass no `-D` settings there. Java stays PID 1; add
+  operator options via `JDK_JAVA_OPTIONS`, without baking its value into the
+  image.
 - **Compose defaults are placeholders:** every credential or
   deployment-specific value comes from `${VAR:-default}`, or from
   `${VAR:?message}` where no placeholder should work, and a default is never a
