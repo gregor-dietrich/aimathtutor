@@ -36,3 +36,19 @@ onto it. Also check that every bridged Lumo and Aura colour is still a
 match the dark branches; if either no longer holds, measure each `--app-*`
 token against the token it bridges in Light, Dark and System mode before
 upgrading. The `vaadin.version` property in `pom.xml` points here.
+
+## ADR-3: Who shares a login throttle bucket
+
+**Status:** Accepted
+
+The client bucket and the username+client bucket key an IPv6 client by its /64
+prefix and an IPv4 client by its address. A successful sign-in subtracts that
+username's failures from that client from the client bucket instead of clearing
+it, so failures for other usernames stay counted. Rejected: clearing the client
+bucket on every success (an account holder resets the bound on spraying other
+usernames between guesses), clearing it only after a success for a username
+that failed from that client (one failure on one's own account restores the
+reset), never clearing it on success (a school behind one IPv4 NAT locks out
+after five typos across all its students), and keying IPv6 by /56 or /48
+(mobile carriers give each device its own /64, so a wider prefix puts unrelated
+customers in one bucket).

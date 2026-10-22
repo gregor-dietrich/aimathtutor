@@ -1,6 +1,8 @@
 package de.vptr.aimathtutor.util;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -42,6 +44,35 @@ public final class ClientIpUtil {
         } catch (final IllegalArgumentException e) {
             return null;
         }
+    }
+
+    /**
+     * Maps a client address to the key its login throttle buckets use. An IPv6 client gets its /64 prefix, because one
+     * subscriber typically controls a whole /64 and could otherwise use a fresh address per attempt; an IPv4 address
+     * (an IPv4-mapped IPv6 address included) stays whole.
+     *
+     * @param clientIp
+     *            the resolved client address, possibly not an IP literal
+     * @return the normalised IPv4 address, or the IPv6 /64 prefix as {@code <prefix>/64}; the text unchanged if it is
+     *         not an IP literal; {@code null} for {@code null}
+     */
+    @Nullable
+    public static String throttleKey(@Nullable final String clientIp) {
+        final var address = parseLiteral(clientIp);
+        if (address == null) {
+            return clientIp;
+        }
+        if (address instanceof Inet6Address) {
+            final var prefix = new byte[16];
+            System.arraycopy(address.getAddress(), 0, prefix, 0, 8);
+            try {
+                // From a byte array, so the result carries no scope id
+                return InetAddress.getByAddress(prefix).getHostAddress() + "/64";
+            } catch (final UnknownHostException e) {
+                throw new IllegalStateException("A 16-byte array is an address", e);
+            }
+        }
+        return address.getHostAddress();
     }
 
     /**

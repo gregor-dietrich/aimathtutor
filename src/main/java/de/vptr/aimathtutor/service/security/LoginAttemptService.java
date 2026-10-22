@@ -19,11 +19,11 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * In-memory service for tracking and throttling login attempts. The username+IP and IP keys use exponential backoff to
- * mitigate brute-force attacks: the failure count of a key survives its lock and is forgotten only an hour after the
- * lock ends, so repeated lockouts escalate up to the one-hour cap. The per-account bucket is a fixed window: 25
- * failures per 15 minutes, then a 10-minute lock. The caches are bounded (10,000 unlocked entries plus the locked ones)
- * with automatic cleanup to prevent DoS via unbounded growth.
+ * In-memory service for tracking and throttling login attempts. The username+IP and client keys (an IPv4 address or an
+ * IPv6 /64 prefix) use exponential backoff to mitigate brute-force attacks: the failure count of a key survives its
+ * lock and is forgotten only an hour after the lock ends, so repeated lockouts escalate up to the one-hour cap. The
+ * per-account bucket is a fixed window: 25 failures per 15 minutes, then a 10-minute lock. The caches are bounded
+ * (10,000 unlocked entries plus the locked ones) with automatic cleanup to prevent DoS via unbounded growth.
  */
 @ApplicationScoped
 public class LoginAttemptService {
@@ -190,13 +190,27 @@ public class LoginAttemptService {
     }
 
     /**
-     * Records a successful login, clearing any previous failed attempts.
+     * Records a successful login. It forgives only the failures of that username from that client: the username+IP
+     * bucket is removed and its count is subtracted from the client bucket, which is removed when nothing is left. The
+     * failures of other usernames from the same client stay, so signing in with one's own account never resets the
+     * bound on guessing others.
      *
-     * @param key
-     *            the username or IP address
+     * @param usernameIpKey
+     *            the username+IP key
+     * @param clientKey
+     *            the client key (IP or IPv6 /64 prefix), or null if the client is unknown
      */
-    public void recordSuccessfulLogin(final String key) {
-        this.attempts.remove(key);
+    public void recordSuccessfulLogin(final String usernameIpKey, @Nullable final String clientKey) {
+        final var own = this.attempts.remove(usernameIpKey);
+        if (clientKey == null || own == null) {
+            return;
+        }
+        final var now = this.clock.instant();
+        final var forgiven = own.isExpired(now) ? 0 : own.count;
+        this.attempts.computeIfPresent(clientKey, (k, v) -> {
+            final var remaining = v.isExpired(now) ? 0 : v.count - forgiven;
+            return remaining > 0 ? new LoginAttempt(remaining, v.lastAttempt) : null;
+        });
     }
 
     /**

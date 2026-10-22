@@ -174,9 +174,10 @@ class AuthServiceTest {
         }
     }
 
-    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
     private static String randomDocumentationIpv6() {
-        return "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff)) + ":"
+        // a random /64 each, because the throttle keys an IPv6 client by its prefix
+        return "2001:db8:" + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff)) + ":"
+                + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff)) + "::"
                 + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff));
     }
 
@@ -193,13 +194,13 @@ class AuthServiceTest {
         final var username = UUID.randomUUID().toString();
         final var forged = randomDocumentationIpv6();
         final var real = randomDocumentationIpv6();
-        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        final var realKey = username + ":" + ClientIpUtil.throttleKey(real);
         try {
             this.lock(realKey);
             final var result = this.authenticateBehindProxy(username, forged + ", " + real.toUpperCase(Locale.ROOT));
             assertTrue(result.getMessage().contains("Too many failed attempts"), result.getMessage());
         } finally {
-            this.loginAttemptService.recordSuccessfulLogin(realKey);
+            this.loginAttemptService.recordSuccessfulLogin(realKey, null);
         }
     }
 
@@ -208,7 +209,7 @@ class AuthServiceTest {
     void throttledAuthenticateRecordsNothing() {
         final var username = UUID.randomUUID().toString();
         final var real = randomDocumentationIpv6();
-        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        final var realKey = username + ":" + ClientIpUtil.throttleKey(real);
         try {
             this.lock(realKey);
             final var result = this.authenticateBehindProxy(username, real);
@@ -216,7 +217,7 @@ class AuthServiceTest {
             // the 6th failure locks for 60s; a recorded attempt while locked would have made it longer
             assertEquals(60, this.loginAttemptService.recordFailedAttempt(realKey));
         } finally {
-            this.loginAttemptService.recordSuccessfulLogin(realKey);
+            this.loginAttemptService.recordSuccessfulLogin(realKey, null);
         }
     }
 
@@ -226,15 +227,15 @@ class AuthServiceTest {
         final var username = UUID.randomUUID().toString();
         final var forged = randomDocumentationIpv6();
         final var real = randomDocumentationIpv6();
-        final var forgedKey = username + ":" + ClientIpUtil.parseLiteral(forged).getHostAddress();
-        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        final var forgedKey = username + ":" + ClientIpUtil.throttleKey(forged);
+        final var realKey = username + ":" + ClientIpUtil.throttleKey(real);
         try {
             this.lock(forgedKey);
             final var result = this.authenticateBehindProxy(username, forged + ", " + real);
             assertEquals("Invalid username or password", result.getMessage());
         } finally {
-            this.loginAttemptService.recordSuccessfulLogin(forgedKey);
-            this.loginAttemptService.recordSuccessfulLogin(realKey);
+            this.loginAttemptService.recordSuccessfulLogin(forgedKey, null);
+            this.loginAttemptService.recordSuccessfulLogin(realKey, null);
         }
     }
 
@@ -493,7 +494,7 @@ class AuthServiceTest {
         assertTrue(result.getMessage().contains("Too many failed attempts"),
                 "Expected throttle message, got: " + result.getMessage());
 
-        this.loginAttemptService.recordSuccessfulLogin(compositeKey);
+        this.loginAttemptService.recordSuccessfulLogin(compositeKey, null);
     }
 
     @Test
