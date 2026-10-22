@@ -14,21 +14,25 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.AiInteractionViewDto;
 import de.vptr.aimathtutor.dto.DashboardTrendDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 
 /**
  * Service for retrieving analytics and progress tracking data. Used by admin views to display student sessions, AI
@@ -57,11 +61,22 @@ public class AnalyticsService {
     @Inject
     EntityManager entityManager;
 
+    @Inject
+    PermissionService permissionService;
+
     /**
      * Get all student sessions
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentSessionViewDto> getAllSessions() {
+    public List<StudentSessionViewDto> getAllSessions(@Nullable final SessionCredentials credentials) {
+        this.permissionService.requireAdminView(credentials);
         LOG.trace("Getting all student sessions");
         final List<StudentSessionEntity> sessions = this.studentSessionRepository.findAll();
         return sessions.stream().map(StudentSessionViewDto::new).toList();
@@ -128,9 +143,26 @@ public class AnalyticsService {
 
     /**
      * Get sessions within a date range. Either bound may be null for an open-ended range.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param startDate
+     *            the inclusive lower bound, or null
+     * @param endDate
+     *            the inclusive upper bound, or null
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentSessionViewDto> getSessionsByDateRange(final LocalDateTime startDate,
+    public List<StudentSessionViewDto> getSessionsByDateRange(@Nullable final SessionCredentials credentials,
+            final LocalDateTime startDate, final LocalDateTime endDate) {
+        this.permissionService.requireAdminView(credentials);
+        return this.findSessionsByDateRange(startDate, endDate);
+    }
+
+    private List<StudentSessionViewDto> findSessionsByDateRange(final LocalDateTime startDate,
             final LocalDateTime endDate) {
         LOG.tracef("Getting sessions between %s and %s", startDate, endDate);
         final List<StudentSessionEntity> sessions;
@@ -172,10 +204,21 @@ public class AnalyticsService {
 
     /**
      * Get a specific session by session ID string
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param sessionId
+     *            the session ID string
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
     @Nullable
-    public StudentSessionViewDto getSessionBySessionId(final String sessionId) {
+    public StudentSessionViewDto getSessionBySessionId(@Nullable final SessionCredentials credentials,
+            final String sessionId) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Getting session by session ID: %s", sessionId);
         final StudentSessionEntity session = this.studentSessionRepository.findBySessionIdWithRelations(sessionId);
         return session != null ? new StudentSessionViewDto(session) : null;
@@ -193,9 +236,20 @@ public class AnalyticsService {
 
     /**
      * Get AI interactions by session ID
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param sessionId
+     *            the session ID string
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<AiInteractionViewDto> getAiInteractionsBySession(final String sessionId) {
+    public List<AiInteractionViewDto> getAiInteractionsBySession(@Nullable final SessionCredentials credentials,
+            final String sessionId) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Getting AI interactions for session: %s", sessionId);
         final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findBySessionId(sessionId);
         return interactions.stream().map(AiInteractionViewDto::new).toList();
@@ -241,9 +295,21 @@ public class AnalyticsService {
     /**
      * Get progress summaries for all users Refactored to avoid N+1 queries by fetching all sessions once and grouping
      * by user
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentProgressSummaryDto> getAllUsersProgressSummary() {
+    public List<StudentProgressSummaryDto> getAllUsersProgressSummary(@Nullable final SessionCredentials credentials) {
+        this.permissionService.requireAdminView(credentials);
+        return this.findAllUsersProgressSummary();
+    }
+
+    private List<StudentProgressSummaryDto> findAllUsersProgressSummary() {
         LOG.trace("Getting progress summary for all users");
 
         // Fetch all users
@@ -363,9 +429,20 @@ public class AnalyticsService {
 
     /**
      * Search sessions by student username or exercise title
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param searchTerm
+     *            the search term
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentSessionViewDto> searchSessions(final String searchTerm) {
+    public List<StudentSessionViewDto> searchSessions(@Nullable final SessionCredentials credentials,
+            final String searchTerm) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Searching sessions for term: %s", searchTerm);
         if (searchTerm == null || searchTerm.isBlank()) {
             return List.of();
@@ -392,10 +469,23 @@ public class AnalyticsService {
     /**
      * Get progress summaries for users whose last activity falls within a date range. Full session history is used for
      * each user so totals remain consistent with other summaries.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param startDate
+     *            the start of the range
+     * @param endDate
+     *            the end of the range
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentProgressSummaryDto> getUsersProgressSummaryByDateRange(final LocalDateTime startDate,
+    public List<StudentProgressSummaryDto> getUsersProgressSummaryByDateRange(
+            @Nullable final SessionCredentials credentials, final LocalDateTime startDate,
             final LocalDateTime endDate) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Getting progress summaries between %s and %s", startDate, endDate);
 
         final List<StudentSessionEntity> rangeSessions =
@@ -426,12 +516,23 @@ public class AnalyticsService {
 
     /**
      * Get progress summaries for users matching a username search term.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param searchTerm
+     *            the username search term
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentProgressSummaryDto> getUsersProgressSummaryByUsernameSearch(final String searchTerm) {
+    public List<StudentProgressSummaryDto> getUsersProgressSummaryByUsernameSearch(
+            @Nullable final SessionCredentials credentials, final String searchTerm) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Getting progress summaries for username search: %s", searchTerm);
         if (searchTerm == null || searchTerm.isBlank()) {
-            return this.getAllUsersProgressSummary();
+            return this.findAllUsersProgressSummary();
         }
 
         // The repository takes the RAW term and builds the LIKE pattern (or email lookup) itself.
@@ -476,7 +577,7 @@ public class AnalyticsService {
         }
         final var end = LocalDateTime.now(zone);
         final var start = end.minusDays(days);
-        final var sessions = this.getSessionsByDateRange(start, end);
+        final var sessions = this.findSessionsByDateRange(start, end);
         for (final var session : sessions) {
             if (session.startTime == null) {
                 continue;
@@ -584,9 +685,20 @@ public class AnalyticsService {
     /**
      * Get recent sessions within the last 7 days, limited to the given count. Uses {@code LIMIT} at the database so the
      * full 7-day window is never materialised in memory.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param limit
+     *            the maximum number of sessions
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentSessionViewDto> getRecentSessions(final int limit) {
+    public List<StudentSessionViewDto> getRecentSessions(@Nullable final SessionCredentials credentials,
+            final int limit) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Getting recent sessions, limit %d", limit);
         final var now = LocalDateTime.now(ZoneId.systemDefault());
         final var weekAgo = now.minusDays(7);
@@ -598,9 +710,20 @@ public class AnalyticsService {
      * Get top students by completed sessions count, limited to the given count. Resolves the top user IDs via a SQL
      * {@code GROUP BY ... ORDER BY ... LIMIT} query and then computes per-user progress summaries for that small set
      * only — bounded by {@code limit}, not by total user/session counts.
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @param limit
+     *            the maximum number of students
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<StudentProgressSummaryDto> getTopStudentsByCompletion(final int limit) {
+    public List<StudentProgressSummaryDto> getTopStudentsByCompletion(@Nullable final SessionCredentials credentials,
+            final int limit) {
+        this.permissionService.requireAdminView(credentials);
         LOG.tracef("Getting top students by completion, limit %d", limit);
         if (limit <= 0) {
             return List.of();

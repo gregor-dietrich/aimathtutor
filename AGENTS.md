@@ -388,8 +388,10 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   one action may go with that action (the AI rate-limit key and interaction
   log, the lesson list's completion badges, and `AdminConfigView.requireUserId()`,
   whose worker re-checks the user through `PermissionService.requireAiConfigEdit`).
-  Admin reads of user data call `PermissionService.requireAdminView(credentials)`;
-  #255 tracks the admin reads that don't yet. An AI call or AI-config save
+  Admin reads of user data (user, group, comment and session listings, session
+  details and progress summaries) call
+  `PermissionService.requireAdminView(credentials)`; the dashboard's aggregate
+  counts and charts do not. An AI call or AI-config save
   already handed to its worker is not cancelled by a revocation during the
   provider call, and rows a page loaded while its user had access stay readable
   in it until it reloads or navigates: only new loads are refused. Every user

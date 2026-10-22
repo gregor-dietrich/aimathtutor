@@ -149,6 +149,7 @@ public class AdminDashboardView extends AbstractAdminView {
     }
 
     private void loadDashboardData() {
+        final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(() -> {
             final var totalSessions = this.analyticsService.getTotalSessionsCount();
             final var completedSessions = this.analyticsService.getCompletedSessionsCount();
@@ -157,7 +158,7 @@ public class AdminDashboardView extends AbstractAdminView {
             final var totalUsers = this.analyticsService.getUserCount();
             final var publishedExercises = this.analyticsService.getPublishedExerciseCount();
 
-            final var summaries = this.analyticsService.getAllUsersProgressSummary();
+            final var summaries = this.analyticsService.getAllUsersProgressSummary(credentials);
             final var avgSuccessRate = summaries.stream().filter(s -> s.successRate != null)
                     .mapToDouble(s -> Objects.requireNonNull(s.successRate)).average().orElse(0.0);
 
@@ -165,8 +166,8 @@ public class AdminDashboardView extends AbstractAdminView {
             final var topExercises = this.analyticsService.getProblemCategoryStats();
             final var completionHistogram = this.analyticsService.getCompletionRateHistogram();
             final var hintBuckets = this.analyticsService.getHintUsageBuckets();
-            final var recentSessions = this.analyticsService.getRecentSessions(10);
-            final var topStudents = this.analyticsService.getTopStudentsByCompletion(5);
+            final var recentSessions = this.analyticsService.getRecentSessions(credentials, 10);
+            final var topStudents = this.analyticsService.getTopStudentsByCompletion(credentials, 5);
             final var trends = this.analyticsService.getTrendData();
 
             return new DashboardData(totalSessions, completedSessions, activeStudents, todaySessions, totalUsers,

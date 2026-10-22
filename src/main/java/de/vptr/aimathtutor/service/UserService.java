@@ -561,16 +561,6 @@ public class UserService {
     }
 
     /**
-     * Retrieves all active (non-banned, activated) users in the system.
-     *
-     * @return a list of active {@link UserViewDto}s
-     */
-    @Transactional
-    public List<UserViewDto> findActiveUsers() {
-        return this.userRepository.findActiveUsers().stream().map(UserViewDto::new).toList();
-    }
-
-    /**
      * Searches users by username or email using the provided query string (case-insensitive). Returns all users if
      * query is null or empty.
      *

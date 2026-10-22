@@ -239,7 +239,7 @@ class UserGroupServiceTest {
     @TestTransaction
     void testSearchGroups_blank() {
         this.userGroupService.createGroup(this.buildDto());
-        final var results = this.userGroupService.searchGroups("");
+        final var results = this.userGroupService.searchGroups(CREDENTIALS, "");
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Blank query should return all groups");
     }
@@ -248,7 +248,7 @@ class UserGroupServiceTest {
     @DisplayName("searchGroups with non-matching term returns empty list")
     @TestTransaction
     void testSearchGroups_noMatch() {
-        final var results = this.userGroupService.searchGroups("zzz_nonexistent_group_xyz");
+        final var results = this.userGroupService.searchGroups(CREDENTIALS, "zzz_nonexistent_group_xyz");
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -259,7 +259,7 @@ class UserGroupServiceTest {
     void testGetAllGroups() {
         final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
 
-        final var all = this.userGroupService.getAllGroups();
+        final var all = this.userGroupService.getAllGroups(CREDENTIALS);
         assertNotNull(all);
         assertTrue(all.stream().anyMatch(g -> g.publicId.equals(created.publicId)),
                 "Newly created group should appear in getAllGroups");
@@ -317,7 +317,7 @@ class UserGroupServiceTest {
         dto.name = uniqueName;
         this.userGroupService.createGroup(dto);
 
-        final var results = this.userGroupService.searchGroups(uniqueName);
+        final var results = this.userGroupService.searchGroups(CREDENTIALS, uniqueName);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.stream().anyMatch(g -> uniqueName.equals(g.name)));
@@ -332,9 +332,43 @@ class UserGroupServiceTest {
         assertNotNull(student);
         this.userGroupService.addUserToGroup(student.publicId, group.publicId);
 
-        final var groups = this.userGroupService.getGroupsForUser(student.publicId);
+        final var groups = this.userGroupService.getGroupsForUser(CREDENTIALS, student.publicId);
         assertNotNull(groups);
         assertTrue(groups.stream().anyMatch(g -> g.publicId.equals(group.publicId)),
                 "student1 should be in the newly created group");
+    }
+
+    @Test
+    @DisplayName("Group reads require the administration view once per call, also when they delegate")
+    @TestTransaction
+    void shouldRequireAdminViewForGroupReads() {
+        this.userGroupService.getAllGroups(CREDENTIALS);
+        this.userGroupService.searchGroups(CREDENTIALS, "");
+        this.userGroupService.getGroupsForUser(CREDENTIALS, "00000000000000000000000000");
+
+        verify(this.permissionService, Mockito.times(3)).requireAdminView(CREDENTIALS);
+    }
+
+    @Test
+    @DisplayName("Group reads propagate the refusal and return no data")
+    @TestTransaction
+    void shouldRefuseGroupReadsWithoutAdminView() {
+        Mockito.doThrow(new PermissionDeniedException("view the administration")).when(this.permissionService)
+                .requireAdminView(CREDENTIALS);
+
+        assertThrows(PermissionDeniedException.class, () -> this.userGroupService.getAllGroups(CREDENTIALS));
+        assertThrows(PermissionDeniedException.class, () -> this.userGroupService.searchGroups(CREDENTIALS, ""));
+        assertThrows(PermissionDeniedException.class,
+                () -> this.userGroupService.getGroupsForUser(CREDENTIALS, "00000000000000000000000000"));
+    }
+
+    @Test
+    @DisplayName("A session that ended refuses the group read")
+    @TestTransaction
+    void shouldRefuseGroupReadOfEndedSession() {
+        Mockito.doThrow(new ValidationException("session ended")).when(this.permissionService)
+                .requireAdminView(CREDENTIALS);
+
+        assertThrows(ValidationException.class, () -> this.userGroupService.getAllGroups(CREDENTIALS));
     }
 }

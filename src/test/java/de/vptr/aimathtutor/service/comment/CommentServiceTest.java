@@ -27,6 +27,7 @@ import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.CommentFlagRepository;
 import de.vptr.aimathtutor.repository.CommentRepository;
@@ -47,6 +48,10 @@ import jakarta.ws.rs.core.Response;
 @QuarkusTest
 @SuppressWarnings("NullAway")
 class CommentServiceTest {
+
+    // The mocked PermissionService accepts any credentials; the guard's own checks are tested with it
+    private static final SessionCredentials CREDENTIALS =
+            new SessionCredentials("admin-public-id", "stamp", "session-key");
 
     @Inject
     private CommentService commentService;
@@ -217,7 +222,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         this.as(this.userRepository.findByUsername("student1")).createComment(dto);
 
-        final var comments = this.commentService.findByExerciseId(exercise.id);
+        final var comments = this.commentService.findByExerciseId(CREDENTIALS, exercise.id);
 
         assertEquals(1, comments.size());
         assertEquals("comment one", comments.get(0).content);
@@ -261,7 +266,7 @@ class CommentServiceTest {
 
         final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
         assertTrue(found.isPresent());
-        final var hidden = this.commentService.findByStatus(CommentStatus.HIDDEN);
+        final var hidden = this.commentService.findByStatus(CREDENTIALS, CommentStatus.HIDDEN);
         assertTrue(hidden.stream().anyMatch(c -> c.publicId.equals(created.publicId)));
         assertEquals(admin.publicId,
                 this.commentRepository.findByPublicId(created.publicId).orElseThrow().moderator.publicId);
@@ -381,7 +386,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         this.as(student).createComment(dto);
 
-        final var results = this.commentService.findByUserId(student.id);
+        final var results = this.commentService.findByUserId(CREDENTIALS, student.id);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.stream().allMatch(c -> student.publicId.equals(c.authorPublicId)),
@@ -392,7 +397,7 @@ class CommentServiceTest {
     @DisplayName("searchComments returns empty list for blank query")
     @TestTransaction
     void testSearchComments_blank() {
-        final var results = this.commentService.searchComments("");
+        final var results = this.commentService.searchComments(CREDENTIALS, "");
         assertNotNull(results);
         assertTrue(results.isEmpty(), "Blank search should return empty list per service contract");
     }
@@ -411,7 +416,7 @@ class CommentServiceTest {
         final var entity = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
         entity.flagsCount = 2;
 
-        final var results = this.commentService.findFlaggedComments(0);
+        final var results = this.commentService.findFlaggedComments(CREDENTIALS, 0);
         assertNotNull(results);
         assertTrue(results.stream().anyMatch(c -> created.publicId.equals(c.publicId)),
                 "Flagged comment should appear in results");
@@ -428,7 +433,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.as(student).createComment(dto);
 
-        final var visible = this.commentService.findByStatus(CommentStatus.VISIBLE);
+        final var visible = this.commentService.findByStatus(CREDENTIALS, CommentStatus.VISIBLE);
         assertNotNull(visible);
         assertTrue(visible.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
                 "Newly created comment should have VISIBLE status");
@@ -445,7 +450,7 @@ class CommentServiceTest {
         dto.exercisePublicId = exercise.publicId;
         final CommentViewDto created = this.as(student).createComment(dto);
 
-        final var all = this.commentService.getAllComments();
+        final var all = this.commentService.getAllComments(CREDENTIALS);
         assertNotNull(all);
         assertTrue(all.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
                 "Newly created comment should appear in getAllComments");
@@ -576,14 +581,14 @@ class CommentServiceTest {
     @DisplayName("findByDateRange returns empty list for null dates")
     @TestTransaction
     void testFindByDateRange_nullDates() {
-        assertTrue(this.commentService.findByDateRange(null, null).isEmpty());
+        assertTrue(this.commentService.findByDateRange(CREDENTIALS, null, null).isEmpty());
     }
 
     @Test
     @DisplayName("findByDateRange returns empty list for invalid date strings")
     @TestTransaction
     void testFindByDateRange_invalidDates() {
-        assertTrue(this.commentService.findByDateRange("not-a-date", "also-not-a-date").isEmpty());
+        assertTrue(this.commentService.findByDateRange(CREDENTIALS, "not-a-date", "also-not-a-date").isEmpty());
     }
 
     @Test
@@ -626,7 +631,7 @@ class CommentServiceTest {
     @Test
     @DisplayName("searchComments(null) returns empty list")
     void testSearchComments_null() {
-        assertTrue(this.commentService.searchComments(null).isEmpty());
+        assertTrue(this.commentService.searchComments(CREDENTIALS, null).isEmpty());
     }
 
     @Test
@@ -642,7 +647,7 @@ class CommentServiceTest {
 
         final String today = LocalDate.now(ZoneId.systemDefault()).toString();
         final String tomorrow = LocalDate.now(ZoneId.systemDefault()).plusDays(1).toString();
-        final var results = this.commentService.findByDateRange(today, tomorrow);
+        final var results = this.commentService.findByDateRange(CREDENTIALS, today, tomorrow);
         assertNotNull(results);
         assertFalse(results.isEmpty());
     }
@@ -714,7 +719,8 @@ class CommentServiceTest {
         assertEquals("comment to keep", reloaded.content, "Comment content must be unchanged");
         assertEquals(CommentStatus.VISIBLE, reloaded.status, "Comment must be neither deleted nor hidden");
         assertEquals(0, reloaded.flagsCount, "Comment must not be flagged");
-        assertEquals(1, this.commentService.findByExerciseId(exercise.id).size(), "No second comment may be stored");
+        assertEquals(1, this.commentService.findByExerciseId(CREDENTIALS, exercise.id).size(),
+                "No second comment may be stored");
     }
 
     @Test

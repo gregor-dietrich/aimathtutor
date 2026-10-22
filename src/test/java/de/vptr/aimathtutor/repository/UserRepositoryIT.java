@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.repository;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -144,27 +143,6 @@ public class UserRepositoryIT {
         final List<UserEntity> all = this.userRepository.findAll();
         Assertions.assertFalse(all.isEmpty());
         Assertions.assertTrue(all.stream().anyMatch(u -> Objects.equals(u.username, user.username)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindActiveUsers_excludesBanned() {
-        this.createUser("actv");
-
-        final UserEntity banned = new UserEntity();
-        final UserRankEntity rank = new UserRankEntity();
-        rank.name = "Rank_banned";
-        this.userRankRepository.persist(rank);
-        banned.username = "usr_banned_" + UUID.randomUUID();
-        banned.password = "pw";
-        banned.email = "banned@example.com";
-        banned.activated = true;
-        banned.banned = true;
-        banned.rank = rank;
-        this.userRepository.persist(banned);
-
-        final List<UserEntity> active = this.userRepository.findActiveUsers();
-        Assertions.assertTrue(active.stream().allMatch(u -> u.activated && !u.banned));
     }
 
     @Test

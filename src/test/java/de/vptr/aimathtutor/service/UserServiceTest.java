@@ -532,15 +532,6 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("findActiveUsers returns non-empty list of activated users")
-    @TestTransaction
-    void testFindActiveUsers() {
-        final var activeUsers = this.userService.findActiveUsers();
-        assertNotNull(activeUsers);
-        assertFalse(activeUsers.isEmpty(), "Seeded activated users should be in the active list");
-    }
-
-    @Test
     @DisplayName("findByEmail returns user with matching email")
     @TestTransaction
     void testFindByEmail_found() {

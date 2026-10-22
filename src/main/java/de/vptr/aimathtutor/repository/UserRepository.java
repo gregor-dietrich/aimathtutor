@@ -181,15 +181,6 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all active users from the database.
-     *
-     * @return a list of active {@link UserEntity} objects
-     */
-    public List<UserEntity> findActiveUsers() {
-        return this.listNamed("User.findActive", UserEntity.class);
-    }
-
-    /**
      * Retrieves all users with a specific rank.
      *
      * @param rankId
