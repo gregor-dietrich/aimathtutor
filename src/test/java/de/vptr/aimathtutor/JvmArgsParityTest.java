@@ -33,6 +33,11 @@ class JvmArgsParityTest {
 
     private static final Pattern QUOTED = Pattern.compile("\"([^\"]*)\"");
 
+    private static final Pattern OPTIONS_VARIABLE =
+            Pattern.compile("(?m)^(?!\\h*#).*\\b(?:JDK_JAVA_OPTIONS|JAVA_TOOL_OPTIONS|_JAVA_OPTIONS)\\b");
+
+    private static final Pattern ONE_WORD = Pattern.compile("\\S+");
+
     private static final String COMPILER_MODULE = "jdk.compiler/";
 
     private static final List<String> LAUNCHER_TAIL = List.of("-jar", "/deployments/quarkus-run.jar");
@@ -45,8 +50,24 @@ class JvmArgsParityTest {
     }
 
     @Test
+    void testImagesSetNoSystemProperty() throws IOException {
+        for (final var image : List.of(ALPINE, UBUNTU)) {
+            assertEquals(List.of(), entrypoint(image).stream().filter(argument -> argument.startsWith("-D")).toList(),
+                    image + " ENTRYPOINT must set no -D property: it would override the operator's environment");
+        }
+    }
+
+    @Test
+    void testImagesBakeNoJvmOptionsVariable() throws IOException {
+        for (final var image : List.of(ALPINE, UBUNTU)) {
+            assertFalse(OPTIONS_VARIABLE.matcher(Files.readString(image)).find(),
+                    image + " must not set JDK_JAVA_OPTIONS, JAVA_TOOL_OPTIONS or _JAVA_OPTIONS");
+        }
+    }
+
+    @Test
     void testDevJvmsCarryEveryRuntimeArgument() throws IOException {
-        final var runtime = runtimeArguments();
+        final var runtime = entrypoint(ALPINE);
         for (final var dev : List.of(POM, JVM_CONFIG)) {
             final var missing = new TreeSet<>(runtime);
             missing.removeAll(devArguments(dev));
@@ -64,12 +85,6 @@ class JvmArgsParityTest {
             assertEquals(Set.of(), compilerArguments(Set.copyOf(entrypoint(image))),
                     image + " must carry no jdk.compiler arguments");
         }
-    }
-
-    private static Set<String> runtimeArguments() throws IOException {
-        final var arguments = new TreeSet<>(entrypoint(ALPINE));
-        arguments.removeIf(argument -> argument.startsWith("-D"));
-        return arguments;
     }
 
     private static Set<String> compilerArguments(final Set<String> arguments) {
@@ -102,8 +117,11 @@ class JvmArgsParityTest {
         final var tokens = new ArrayList<String>();
         final var quoted = QUOTED.matcher(body);
         while (quoted.find()) {
+            assertTrue(ONE_WORD.matcher(quoted.group(1)).matches(),
+                    dockerfile + " ENTRYPOINT arguments must be one word each: " + quoted.group(1));
             tokens.add(quoted.group(1));
         }
+        assertTrue(tokens.size() >= 3, dockerfile + " ENTRYPOINT must be java [arguments] -jar <jar>");
         assertEquals("java", tokens.get(0), dockerfile + " ENTRYPOINT must start with java");
         assertEquals(LAUNCHER_TAIL, tokens.subList(tokens.size() - 2, tokens.size()),
                 dockerfile + " ENTRYPOINT must end with the launcher jar");
@@ -122,6 +140,7 @@ class JvmArgsParityTest {
                 prefix = "";
             }
         }
+        assertEquals("", prefix, "--add-opens and --add-exports need a value");
         return folded;
     }
 }
