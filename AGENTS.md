@@ -88,14 +88,17 @@ however.
   any devkit target (`./mvnw` ignores it).
 - **Runtime JVM arguments:** both Dockerfiles' exec-form entrypoints run
   `java -jar /deployments/quarkus-run.jar` with no JVM arguments: none was
-  measured to be needed by the production jar (#250). An argument with no
-  measured consumer stays out of the images; each `--add-opens` opens a JDK
-  package to the whole class path, and `-XX:+EnableDynamicAgentLoading` would
-  silence the JDK's warning when an agent is loaded into the running JVM. The
-  entrypoints set no `-D` property: settings come from the environment, so an
-  operator's value (for example `QUARKUS_HTTP_HOST`) is never overridden.
-  Operators add JVM options, or restore a dropped argument, with
-  `JDK_JAVA_OPTIONS`; do not bake a value for that variable into the images.
+  measured to be needed by the production jar (#250). That measurement left out
+  arm64, outbound TLS to the AI providers, HTTP compression (off) and writes of
+  encrypted email addresses; an accepted risk, since operators can restore an
+  argument without a rebuild. An argument with no measured consumer stays out
+  of the images; each `--add-opens` opens a JDK package to the whole class
+  path, and `-XX:+EnableDynamicAgentLoading` would silence the JDK's warning
+  when an agent is loaded into the running JVM. The entrypoints set no `-D`
+  property: settings come from the environment, so an operator's value (for
+  example `QUARKUS_HTTP_HOST`) is never overridden. Operators add JVM options,
+  or restore a dropped argument, with `JDK_JAVA_OPTIONS`; do not bake a value
+  for that variable into the images.
 - **Dev JVM arguments:** `pom.xml` (`quarkus-maven-plugin` `<jvmArgs>`, the
   `make dev` JVM) and `.mvn/jvm.config` (Maven's own JVM, which also runs the
   Quarkus build) carry their own arguments, kept unmeasured because they are
