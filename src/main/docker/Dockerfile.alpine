@@ -11,7 +11,10 @@
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 9001:9001 quarkus/aimathtutor-jvm
+# Mount the key volume, or --rm discards the key and a later start refuses a database holding email addresses.
+# Datasource and admin settings: docs/QUICKSTART.md.
+# docker run -i --rm -p 9001:9001 -v aimathtutor_keys:/etc/aimathtutor/keys \
+#   -e app.security.encryption-key-file=/etc/aimathtutor/keys/encryption.key quarkus/aimathtutor-jvm
 #
 # Java runs directly as PID 1; required runtime options are in ENTRYPOINT.
 # Add operator JVM options with JDK_JAVA_OPTIONS, for example:

@@ -1,19 +1,61 @@
 package de.vptr.aimathtutor.service.security;
 
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 /**
- * Tests for {@link EncryptionKeyManager}: verifies key availability and defensive copying.
+ * Tests for {@link EncryptionKeyManager}: verifies key availability, defensive copying and the query that detects
+ * stored encrypted data.
  */
 @QuarkusTest
 public class EncryptionKeyManagerIT {
 
     @Inject
     EncryptionKeyManager encryptionKeyManager;
+
+    @Inject
+    DataSource dataSource;
+
+    @Test
+    @TestTransaction
+    public void testEncryptedDataExists_seesStoredEmail() throws SQLException {
+        try (var connection = this.dataSource.getConnection(); var statement = connection.createStatement()) {
+            Assertions.assertEquals(1,
+                    statement.executeUpdate("UPDATE users SET email = '1|x|y' WHERE username = 'admin'"));
+        }
+
+        Assertions.assertTrue(EncryptionKeyManager.queryEncryptedDataExists(this.dataSource));
+    }
+
+    @Test
+    @TestTransaction
+    public void testEncryptedDataExists_noEmails_returnsFalse() throws SQLException {
+        try (var connection = this.dataSource.getConnection(); var statement = connection.createStatement()) {
+            statement.executeUpdate("UPDATE users SET email = NULL, email_blind_index = NULL");
+        }
+
+        Assertions.assertFalse(EncryptionKeyManager.queryEncryptedDataExists(this.dataSource));
+    }
+
+    @Test
+    @TestTransaction
+    public void testEncryptedDataExists_blindIndexOnly_returnsTrue() throws SQLException {
+        try (var connection = this.dataSource.getConnection(); var statement = connection.createStatement()) {
+            statement.executeUpdate("UPDATE users SET email = NULL, email_blind_index = NULL");
+            Assertions.assertEquals(1,
+                    statement.executeUpdate("UPDATE users SET email_blind_index = 'x' WHERE username = 'admin'"));
+        }
+
+        Assertions.assertTrue(EncryptionKeyManager.queryEncryptedDataExists(this.dataSource));
+    }
 
     @Test
     public void testGetMasterKey_returns32Bytes() {

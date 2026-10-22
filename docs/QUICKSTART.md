@@ -100,11 +100,13 @@ docker run -d --name aimathtutor \
 
 > **_NOTE:_** The `aimathtutor_keys` volume stores the AES-256 master key used
 > to encrypt PII (email) at rest. Back this volume up — losing it makes
-> encrypted data permanently unrecoverable. On first start, a key is generated
-> automatically if none exists. **_NOTE:_** Model names, temperatures, and other
-> AI provider settings (other than API keys) must be configured after startup
-> via the **Admin Settings UI** at `/admin/config` after logging in with admin
-> credentials.
+> encrypted data permanently unrecoverable. The first start generates a key.
+> Once email addresses are stored, the application refuses to start without it:
+> restore the volume from your backup (without one, see
+> [Lost encryption key](../README.md#lost-encryption-key)). **_NOTE:_** Model
+> names, temperatures, and other AI provider settings (other than API keys) must
+> be configured after startup via the **Admin Settings UI** at `/admin/config`
+> after logging in with admin credentials.
 
 To add JVM options to either published image, set `JDK_JAVA_OPTIONS` (for
 example, `-e JDK_JAVA_OPTIONS="-Xmx512m"` with `docker run`). With Compose,

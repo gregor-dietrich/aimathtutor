@@ -1,23 +1,36 @@
 package de.vptr.aimathtutor.service.security;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.vptr.aimathtutor.AppLifecycleBean;
+import io.quarkus.runtime.LaunchMode;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.ObserverMethod;
+
 /**
- * Unit tests for the private static methods of {@link EncryptionKeyManager} using reflection and temp directories.
+ * Unit tests for {@link EncryptionKeyManager} using temp directories: its private static methods by reflection, and
+ * {@code init()} through the package-private constructor.
  */
 @SuppressWarnings({ "NullAway", "PMD.AvoidAccessibilityAlteration" })
 public class EncryptionKeyManagerTest {
+
+    private static boolean notCalled() {
+        throw new AssertionError("The database must not be queried");
+    }
 
     @TempDir
     Path tempDir;
@@ -31,20 +44,22 @@ public class EncryptionKeyManagerTest {
     private void initWithTempHome(final EncryptionKeyManager km) {
         final String originalHome = System.getProperty("user.home");
         try {
-            // Manually initialize injected fields for unit test (no CDI)
-            try {
-                final Field keyFileField = EncryptionKeyManager.class.getDeclaredField("keyFile");
-                keyFileField.setAccessible(true);
-                keyFileField.set(km, Optional.empty());
-            } catch (final NoSuchFieldException | IllegalAccessException e) {
-                throw new IllegalStateException("Failed to set keyFile field via reflection", e);
-            }
-
             System.setProperty("user.home", this.tempDir.toString());
             km.init();
         } finally {
             System.setProperty("user.home", originalHome);
         }
+    }
+
+    private static EncryptionKeyManager managerWithHomeOnly() {
+        Assumptions.assumeTrue(System.getenv("XDG_DATA_HOME") == null,
+                "XDG_DATA_HOME is set: the test would touch the real key location");
+        return new EncryptionKeyManager(LaunchMode.TEST, Optional.empty(), EncryptionKeyManagerTest::notCalled);
+    }
+
+    private EncryptionKeyManager productionManager(final BooleanSupplier encryptedDataExists) {
+        return new EncryptionKeyManager(LaunchMode.NORMAL,
+                Optional.of(this.tempDir.resolve("keys/encryption.key").toString()), encryptedDataExists);
     }
 
     @Test
@@ -101,7 +116,7 @@ public class EncryptionKeyManagerTest {
 
     @Test
     public void testInitWithNewKeyFile_generatesKey() {
-        final EncryptionKeyManager km = new EncryptionKeyManager();
+        final EncryptionKeyManager km = managerWithHomeOnly();
         this.initWithTempHome(km);
 
         Assertions.assertNotNull(km.masterKey);
@@ -119,7 +134,7 @@ public class EncryptionKeyManagerTest {
         Files.createDirectories(keyDir);
         Files.write(keyDir.resolve("encryption.key"), Base64.getEncoder().encode(expectedKey));
 
-        final EncryptionKeyManager km = new EncryptionKeyManager();
+        final EncryptionKeyManager km = managerWithHomeOnly();
         this.initWithTempHome(km);
 
         Assertions.assertArrayEquals(expectedKey, km.masterKey);
@@ -136,7 +151,7 @@ public class EncryptionKeyManagerTest {
         Files.createDirectories(homeKeyDir);
         Files.write(homeKeyDir.resolve("encryption.key"), Base64.getEncoder().encode(expectedKey));
 
-        final EncryptionKeyManager km = new EncryptionKeyManager();
+        final EncryptionKeyManager km = managerWithHomeOnly();
         this.initWithTempHome(km);
 
         Assertions.assertArrayEquals(expectedKey, km.masterKey,
@@ -164,12 +179,86 @@ public class EncryptionKeyManagerTest {
         Files.createDirectories(keyDir);
         Files.write(keyDir.resolve("encryption.key"), Base64.getEncoder().encode(expectedKey));
 
-        final EncryptionKeyManager km = new EncryptionKeyManager();
+        final EncryptionKeyManager km = managerWithHomeOnly();
         this.initWithTempHome(km);
 
         final byte[] k1 = km.getMasterKey();
         final byte[] k2 = km.getMasterKey();
         Assertions.assertNotSame(k1, k2, "getMasterKey must return a new array each time");
         Assertions.assertArrayEquals(k1, k2);
+    }
+
+    @Test
+    public void testInit_productionMissingKeyWithEncryptedData_refuses() {
+        final Path keyPath = this.tempDir.resolve("keys/encryption.key");
+        final EncryptionKeyManager km = this.productionManager(() -> true);
+
+        final var ex = Assertions.assertThrows(IllegalStateException.class, km::init);
+
+        Assertions.assertTrue(ex.getMessage().contains(keyPath.toString()), ex.getMessage());
+        Assertions.assertTrue(ex.getMessage().contains("restore"), ex.getMessage());
+        Assertions.assertFalse(Files.exists(keyPath), "No key file may be created");
+        Assertions.assertFalse(Files.exists(keyPath.getParent()), "No directory may be created");
+    }
+
+    @Test
+    public void testInit_productionMissingKeyOnEmptyDatabase_generatesKey() throws IOException {
+        final EncryptionKeyManager km = this.productionManager(() -> false);
+
+        km.init();
+
+        Assertions.assertEquals(32, km.masterKey.length);
+        Assertions.assertEquals(32,
+                Base64.getDecoder().decode(Files.readAllBytes(this.tempDir.resolve("keys/encryption.key"))).length);
+    }
+
+    @Test
+    public void testInit_productionExistingKey_doesNotQuery() throws IOException {
+        final Path keyPath = this.tempDir.resolve("keys/encryption.key");
+        Files.createDirectories(keyPath.getParent());
+        Files.write(keyPath, Base64.getEncoder().encode(new byte[32]));
+
+        final EncryptionKeyManager km = this.productionManager(EncryptionKeyManagerTest::notCalled);
+        km.init();
+
+        Assertions.assertEquals(32, km.masterKey.length);
+    }
+
+    @Test
+    public void testInit_devMissingKey_generatesWithoutQuery() {
+        final Path keyPath = this.tempDir.resolve("keys/encryption.key");
+        final EncryptionKeyManager km = new EncryptionKeyManager(LaunchMode.DEVELOPMENT,
+                Optional.of(keyPath.toString()), EncryptionKeyManagerTest::notCalled);
+
+        km.init();
+
+        Assertions.assertTrue(Files.exists(keyPath));
+    }
+
+    @Test
+    public void testInit_productionCheckFails_failsClosedWithoutCreatingKey() {
+        final Path keyPath = this.tempDir.resolve("keys/encryption.key");
+        final EncryptionKeyManager km = this.productionManager(() -> {
+            throw new IllegalStateException("database down");
+        });
+
+        Assertions.assertThrows(IllegalStateException.class, km::init);
+
+        Assertions.assertFalse(Files.exists(keyPath), "No key file may be created");
+        Assertions.assertFalse(Files.exists(keyPath.getParent()), "No directory may be created");
+    }
+
+    @Test
+    public void testLoadAtStartup_observesStartupEventBeforeAppLifecycleBean() throws Exception {
+        final Method method = EncryptionKeyManager.class.getDeclaredMethod("loadAtStartup", StartupEvent.class);
+        final Method lifecycle = AppLifecycleBean.class.getDeclaredMethod("onStart", StartupEvent.class);
+
+        Assertions.assertTrue(method.getParameters()[0].isAnnotationPresent(Observes.class));
+        final int priority = method.getParameters()[0].getAnnotation(Priority.class).value();
+        final var lifecyclePriority = lifecycle.getParameters()[0].getAnnotation(Priority.class);
+        final int lifecycleValue =
+                lifecyclePriority == null ? ObserverMethod.DEFAULT_PRIORITY : lifecyclePriority.value();
+        Assertions.assertTrue(priority < lifecycleValue,
+                "priority " + priority + " must be lower than AppLifecycleBean's " + lifecycleValue);
     }
 }
