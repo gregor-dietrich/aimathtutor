@@ -265,7 +265,7 @@ public class AuthService {
         }
 
         final String usernameKey = username.toLowerCase(Locale.ROOT).trim();
-        final String clientKey = ClientIpUtil.throttleKey(this.extractClientIp());
+        final String clientKey = ClientIpUtil.loginClientKey(this.extractClientIp());
         final String usernameIpKey = usernameKey + ":" + (clientKey != null ? clientKey : "unknown");
 
         // Check login attempt throttling by account (username only)
@@ -285,7 +285,7 @@ public class AuthService {
         // Check login attempt throttling by IP
         if (clientKey != null && this.loginAttemptService.isLockedOut(clientKey)) {
             final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientKey);
-            LOG.warnf("Authentication throttled by IP (%ss remaining)", remaining);
+            LOG.warnf("Authentication throttled by client %s (%ss remaining)", clientKey, remaining);
             return AuthResultDto.backendUnavailable("Too many failed attempts. Try again later.");
         }
 

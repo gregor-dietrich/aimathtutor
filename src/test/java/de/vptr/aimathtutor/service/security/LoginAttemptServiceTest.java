@@ -241,7 +241,7 @@ class LoginAttemptServiceTest {
     }
 
     /** A clock the test moves by hand, to cross the throttle windows without waiting. */
-    private static final class MutableClock extends Clock {
+    static final class MutableClock extends Clock {
         private Instant now = Instant.parse("2026-01-01T00:00:00Z");
 
         void advance(final Duration duration) {
@@ -264,13 +264,13 @@ class LoginAttemptServiceTest {
         }
     }
 
-    private static LoginAttemptService serviceWith(final MutableClock clock) {
+    static LoginAttemptService serviceWith(final MutableClock clock) {
         final var service = new LoginAttemptService();
         service.clock = clock;
         return service;
     }
 
-    private static void fail(final LoginAttemptService service, final String key, final int times) {
+    static void fail(final LoginAttemptService service, final String key, final int times) {
         for (int i = 0; i < times; i++) {
             service.recordFailedAttempt(key);
         }

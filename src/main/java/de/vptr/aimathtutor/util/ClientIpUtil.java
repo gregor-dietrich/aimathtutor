@@ -50,6 +50,10 @@ public final class ClientIpUtil {
      * Maps a client address to the key its login throttle buckets use. An IPv6 client gets its /64 prefix, because one
      * subscriber typically controls a whole /64 and could otherwise use a fresh address per attempt; an IPv4 address
      * (an IPv4-mapped IPv6 address included) stays whole.
+     * <p>
+     * Limitation: only IPv4-mapped addresses are keyed as IPv4. Other IPv6 forms that embed an IPv4 address are keyed
+     * by their /64 like any IPv6 address, so behind NAT64/SIIT ({@code 64:ff9b::/96}), with IPv4-compatible
+     * {@code ::a.b.c.d} addresses or via Teredo, all such clients share one bucket.
      *
      * @param clientIp
      *            the resolved client address, possibly not an IP literal
@@ -57,7 +61,7 @@ public final class ClientIpUtil {
      *         not an IP literal; {@code null} for {@code null}
      */
     @Nullable
-    public static String throttleKey(@Nullable final String clientIp) {
+    public static String loginClientKey(@Nullable final String clientIp) {
         final var address = parseLiteral(clientIp);
         if (address == null) {
             return clientIp;
