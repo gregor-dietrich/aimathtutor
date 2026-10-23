@@ -88,7 +88,7 @@ class UserRankServiceTest {
         for (final String name : testRankNames) {
             final var existing = this.userRankRepository.findByName(name);
             if (existing.isPresent()) {
-                this.userRankRepository.deleteById(existing.get().id);
+                this.userRankRepository.deleteByPublicId(existing.get().publicId);
             }
         }
     }

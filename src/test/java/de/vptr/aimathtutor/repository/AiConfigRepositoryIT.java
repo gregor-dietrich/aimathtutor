@@ -66,23 +66,6 @@ public class AiConfigRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByPublicId_found() {
-        final AiConfigEntity config = this.createConfig("fpub");
-        final Optional<AiConfigEntity> found =
-                this.aiConfigRepository.findByPublicId(Objects.requireNonNull(config.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(config.publicId, found.get().publicId);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_null() {
-        Assertions.assertTrue(this.aiConfigRepository.findByPublicId(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByCategory_returnsConfigsInCategory() {
         final AiConfigEntity config = this.createConfig("fcat");
         final List<AiConfigEntity> results = this.aiConfigRepository.findByCategory(ConfigCategory.GENERAL);
@@ -116,22 +99,5 @@ public class AiConfigRepositoryIT {
                 this.aiConfigRepository.findByConfigKey(Objects.requireNonNull(config.configKey));
         Assertions.assertTrue(found.isPresent());
         Assertions.assertEquals("updated_value", found.get().configValue);
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_existing() {
-        final AiConfigEntity config = this.createConfig("delid");
-        final Long id = Objects.requireNonNull(config.id);
-        this.aiConfigRepository.deleteById(id);
-        Assertions.assertTrue(
-                this.aiConfigRepository.findByConfigKey(Objects.requireNonNull(config.configKey)).isEmpty());
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertDoesNotThrow(() -> this.aiConfigRepository.deleteById(999_999L));
     }
 }

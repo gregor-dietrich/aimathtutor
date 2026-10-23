@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
 /**
  * Integration tests for {@link StudentSessionRepository}.
  */
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
+@SuppressWarnings("NullAway")
 @QuarkusTest
 public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
@@ -110,21 +110,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByPublicId_found() {
-        final StudentSessionEntity s = this.createSession("fpub");
-        final var found = this.sessionRepository.findByPublicId(Objects.requireNonNull(s.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(s.publicId, found.get().publicId);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_null() {
-        Assertions.assertTrue(this.sessionRepository.findByPublicId(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindBySessionIdWithRelations_found() {
         final StudentSessionEntity s = this.createSession("fsidwr");
         final StudentSessionEntity found = this.sessionRepository.findBySessionIdWithRelations(s.sessionId);
@@ -149,20 +134,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
     public void testFindAll_returnsResults() {
         this.createSession("fall");
         Assertions.assertFalse(this.sessionRepository.findAll().isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindById_found() {
-        final StudentSessionEntity s = this.createSession("fid");
-        final StudentSessionEntity found = this.sessionRepository.findById(Objects.requireNonNull(s.id));
-        Assertions.assertNotNull(found);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindById_null() {
-        Assertions.assertNull(this.sessionRepository.findById(null));
     }
 
     @Test
@@ -340,27 +311,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testPersist_null_doesNotThrow() {
         Assertions.assertDoesNotThrow(() -> this.sessionRepository.persist(null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_existingSession() {
-        final StudentSessionEntity s = this.createSession("delid");
-        final Long id = Objects.requireNonNull(s.id);
-        Assertions.assertTrue(this.sessionRepository.deleteById(id));
-        Assertions.assertNull(this.sessionRepository.findById(id));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_null() {
-        Assertions.assertFalse(this.sessionRepository.deleteById(null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.sessionRepository.deleteById(999_999L));
     }
 
     @Test

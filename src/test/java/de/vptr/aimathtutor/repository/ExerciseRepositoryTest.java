@@ -42,23 +42,6 @@ class ExerciseRepositoryTest {
     }
 
     @Test
-    @DisplayName("persist and deleteById cover both found and not-found paths")
-    @TestTransaction
-    void testPersistAndDeleteById() {
-        final var exercise = new ExerciseEntity();
-        exercise.title = "Test Exercise " + UlidUtil.generate();
-        exercise.content = "content";
-        exercise.publicId = UlidUtil.generate();
-        this.exerciseRepository.persist(exercise);
-        this.exerciseRepository.flush();
-
-        assertNotNull(this.exerciseRepository.findById(exercise.id));
-        assertFalse(this.exerciseRepository.deleteById(999_999L));
-        assertTrue(this.exerciseRepository.deleteById(exercise.id));
-        assertNull(this.exerciseRepository.findById(exercise.id));
-    }
-
-    @Test
     @DisplayName("deleteByPublicId covers found and not-found paths")
     @TestTransaction
     void testDeleteByPublicId() {

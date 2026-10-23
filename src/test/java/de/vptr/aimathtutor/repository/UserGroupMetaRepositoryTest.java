@@ -87,7 +87,6 @@ class UserGroupMetaRepositoryTest {
     @Test
     @DisplayName("Null handling in repository methods")
     void testNullHandling() {
-        assertFalse(this.userGroupMetaRepository.findByPublicId(null).isPresent());
         assertTrue(this.userGroupMetaRepository.findByUserPublicId(null).isEmpty());
         assertTrue(this.userGroupMetaRepository.findByGroupPublicIdWithUsers(null).isEmpty());
         assertNull(this.userGroupMetaRepository.findByUserPublicIdAndGroupPublicId(null, "foo"));

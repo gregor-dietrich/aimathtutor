@@ -121,18 +121,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByIdOptional_nullReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findByIdOptional(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByIdOptional_notFoundReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findByIdOptional(-999L).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByPublicId_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findByPublicId(null).isEmpty());
     }
@@ -204,25 +192,9 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindAllOrdered_returnsComments() {
-        this.createComment("fall");
-        Assertions.assertFalse(this.commentRepository.findAllOrdered().isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindAllOrderedWithRelations_returnsComments() {
         this.createComment("fallwr");
         Assertions.assertFalse(this.commentRepository.findAllOrderedWithRelations().isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByIdOptional_found() {
-        final CommentEntity c = this.createComment("fido");
-        final var found = this.commentRepository.findByIdOptional(Objects.requireNonNull(c.id));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(c.content, found.get().content);
     }
 
     @Test
@@ -276,7 +248,7 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final CommentEntity c = this.createComment("delid");
         final Long id = Objects.requireNonNull(c.id);
         Assertions.assertTrue(this.commentRepository.deleteById(id));
-        Assertions.assertTrue(this.commentRepository.findByIdOptional(id).isEmpty());
+        Assertions.assertNull(this.commentRepository.findById(id));
     }
 
     @Test

@@ -193,22 +193,6 @@ public class UserRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testDeleteById_existingUser() {
-        final UserEntity user = this.createUser("delid");
-        final Long id = Objects.requireNonNull(user.id);
-        Assertions.assertTrue(this.userRepository.deleteById(id));
-        Assertions.assertNull(this.userRepository.findById(id));
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.userRepository.deleteById(999_999L));
-    }
-
-    @Test
-    @TestTransaction
     public void testDeleteByPublicId_existingUser() {
         final UserEntity user = this.createUser("delpi");
         final String publicId = Objects.requireNonNull(user.publicId);

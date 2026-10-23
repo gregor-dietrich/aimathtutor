@@ -279,7 +279,7 @@ class AnalyticsServiceTest {
         assertNotNull(admin, "Seeded admin must exist");
         final Long adminId = admin.id;
         for (final var existing : this.studentSessionRepository.findByUserId(adminId)) {
-            this.studentSessionRepository.deleteById(existing.id);
+            existing.delete();
         }
         final Long exerciseId = this.createExercise();
         final long before = this.analyticsService.getActiveStudentsCount();

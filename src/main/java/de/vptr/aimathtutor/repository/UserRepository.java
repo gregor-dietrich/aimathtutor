@@ -304,23 +304,6 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Deletes a user by its unique identifier.
-     *
-     * @param id
-     *            the ID of the user to delete
-     * @return true if the user was successfully deleted, false if not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        final UserEntity e = this.findById(id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
-    }
-
-    /**
      * Deletes a user by its public identifier.
      *
      * @param publicId

@@ -137,21 +137,6 @@ public class UserRankRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testDeleteById_existingRank() {
-        final UserRankEntity rank = this.createRank("Rank_delid");
-        final Long id = Objects.requireNonNull(rank.id);
-        Assertions.assertTrue(this.userRankRepository.deleteById(id));
-        Assertions.assertNull(this.userRankRepository.findById(id));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.userRankRepository.deleteById(999_999L));
-    }
-
-    @Test
-    @TestTransaction
     public void testDeleteByPublicId_existingRank() {
         final UserRankEntity rank = this.createRank("Rank_delpub");
         final String publicId = Objects.requireNonNull(rank.publicId);

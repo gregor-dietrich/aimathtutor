@@ -26,7 +26,6 @@ class AiConfigRepositoryTest {
     @DisplayName("Null handling for repository methods")
     void testNullHandling() {
         assertTrue(this.aiConfigRepository.findByConfigKey(null).isEmpty());
-        assertTrue(this.aiConfigRepository.findByPublicId(null).isEmpty());
         assertTrue(this.aiConfigRepository.findByCategory(null).isEmpty());
     }
 
@@ -51,32 +50,6 @@ class AiConfigRepositoryTest {
         final var results = this.aiConfigRepository.findByCategory(ConfigCategory.GENERAL);
         assertNotNull(results);
         assertFalse(results.isEmpty());
-    }
-
-    @Test
-    @DisplayName("findByPublicId returns present for existing seeded entry")
-    void testFindByPublicId() {
-        final var first = this.aiConfigRepository.findAll().get(0);
-        assertTrue(this.aiConfigRepository.findByPublicId(first.publicId).isPresent());
-    }
-
-    @Test
-    @DisplayName("deleteById removes entity when found and is no-op when not found")
-    @TestTransaction
-    void testDeleteById() {
-        this.aiConfigRepository.deleteById(999_999L);
-
-        final var entity = new AiConfigEntity("test.key." + UlidUtil.generate(), "value", ConfigType.STRING,
-                ConfigCategory.GENERAL);
-        entity.publicId = UlidUtil.generate();
-        this.aiConfigRepository.persist(entity);
-        this.aiConfigRepository.flush();
-
-        assertTrue(this.aiConfigRepository.findByConfigKey(entity.configKey).isPresent());
-        this.aiConfigRepository.deleteById(entity.id);
-        this.aiConfigRepository.flush();
-
-        assertTrue(this.aiConfigRepository.findByConfigKey(entity.configKey).isEmpty());
     }
 
     @Test

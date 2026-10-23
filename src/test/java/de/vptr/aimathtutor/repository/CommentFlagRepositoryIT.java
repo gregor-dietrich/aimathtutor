@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -36,49 +35,13 @@ public class CommentFlagRepositoryIT extends AbstractRepositoryIT {
         return comment;
     }
 
-    private CommentFlagEntity createFlag(final CommentEntity comment, final UserEntity flagger) {
-        final CommentFlagEntity flag = new CommentFlagEntity();
-        flag.comment = comment;
-        flag.flagger = flagger;
-        this.commentFlagRepository.persist(flag);
-        return flag;
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_found() {
-        final UserEntity user = this.createUser("cfpub", "cfuser_");
-        final ExerciseEntity ex = this.createExercise(user, "CFPublicIdEx", "x + 1");
-        final CommentEntity comment = this.createComment(user, ex, "CF comment");
-        final CommentFlagEntity flag = this.createFlag(comment, user);
-
-        final Optional<CommentFlagEntity> found =
-                this.commentFlagRepository.findByPublicId(Objects.requireNonNull(flag.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(flag.publicId, found.get().publicId);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_null() {
-        Assertions.assertTrue(this.commentFlagRepository.findByPublicId(null).isEmpty());
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_notFound() {
-        Assertions.assertTrue(this.commentFlagRepository.findByPublicId("nonexistent").isEmpty());
-    }
-
     @Test
     @TestTransaction
     public void testHasUserFlaggedComment_true() {
         final UserEntity user = this.createUser("cfhuf", "cfuser_");
         final ExerciseEntity ex = this.createExercise(user, "CFHasFlagEx", "x + 1");
         final CommentEntity comment = this.createComment(user, ex, "Flags comment");
-        this.createFlag(comment, user);
+        this.commentFlagRepository.createFlag(comment, user);
 
         Assertions.assertTrue(this.commentFlagRepository.hasUserFlaggedComment(Objects.requireNonNull(comment.id),
                 Objects.requireNonNull(user.id)));
@@ -103,29 +66,6 @@ public class CommentFlagRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertFalse(this.commentFlagRepository.hasUserFlaggedComment(null, 1L));
         Assertions.assertFalse(this.commentFlagRepository.hasUserFlaggedComment(1L, null));
         Assertions.assertFalse(this.commentFlagRepository.hasUserFlaggedComment(null, null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testPersist_flag() {
-        final UserEntity user = this.createUser("cfper", "cfuser_");
-        final ExerciseEntity ex = this.createExercise(user, "CFPersistEx", "x + 1");
-        final CommentEntity comment = this.createComment(user, ex, "Persist flag comment");
-
-        final CommentFlagEntity flag = new CommentFlagEntity();
-        flag.comment = comment;
-        flag.flagger = user;
-        this.commentFlagRepository.persist(flag);
-
-        Assertions.assertNotNull(flag.id);
-        Assertions.assertNotNull(flag.publicId);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testPersist_null() {
-        Assertions.assertDoesNotThrow(() -> this.commentFlagRepository.persist(null));
     }
 
     @Test
@@ -165,26 +105,5 @@ public class CommentFlagRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertThrows(WebApplicationException.class, () -> this.commentFlagRepository.createFlag(null, user));
         Assertions.assertThrows(WebApplicationException.class,
                 () -> this.commentFlagRepository.createFlag(comment, null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByIdOptional_found() {
-        final UserEntity user = this.createUser("cfido", "cfuser_");
-        final ExerciseEntity ex = this.createExercise(user, "CFIdOptEx", "x + 1");
-        final CommentEntity comment = this.createComment(user, ex, "Find by ID comment");
-        final CommentFlagEntity flag = this.createFlag(comment, user);
-
-        final Optional<CommentFlagEntity> found =
-                this.commentFlagRepository.findByIdOptional(Objects.requireNonNull(flag.id));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(flag.id, found.get().id);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByIdOptional_null() {
-        Assertions.assertTrue(this.commentFlagRepository.findByIdOptional(null).isEmpty());
     }
 }

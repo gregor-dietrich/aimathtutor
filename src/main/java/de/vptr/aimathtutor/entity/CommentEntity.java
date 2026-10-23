@@ -22,8 +22,7 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Entity representing comments on exercises.
  */
-@NamedQueries({ @NamedQuery(name = "Comment.findAllOrdered", query = "FROM CommentEntity ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.findByPublicId", query = "FROM CommentEntity WHERE publicId = :id"),
+@NamedQueries({ @NamedQuery(name = "Comment.findByPublicId", query = "FROM CommentEntity WHERE publicId = :id"),
         @NamedQuery(name = "Comment.findAllWithRelations",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "

@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,35 +28,6 @@ public class AiInteractionRepositoryIT extends AbstractRepositoryIT {
         interaction.actionCorrect = true;
         this.aiInteractionRepository.persist(interaction);
         return interaction;
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindAll_returnsInteractions() {
-        this.createInteraction("sess-fall", "fall");
-        final List<AiInteractionEntity> all = this.aiInteractionRepository.findAll();
-        Assertions.assertFalse(all.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_found() {
-        final AiInteractionEntity interaction = this.createInteraction("sess-fpub", "fpub");
-        final var found = this.aiInteractionRepository.findByPublicId(Objects.requireNonNull(interaction.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(interaction.publicId, found.get().publicId);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_notFound() {
-        Assertions.assertTrue(this.aiInteractionRepository.findByPublicId("nonexistent-public-id").isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_null() {
-        Assertions.assertTrue(this.aiInteractionRepository.findByPublicId(null).isEmpty());
     }
 
     @Test

@@ -110,23 +110,6 @@ public class UserGroupRepository extends AbstractRepository {
     }
 
     /**
-     * Deletes a user group by its unique identifier.
-     *
-     * @param id
-     *            the ID of the user group to delete
-     * @return true if the user group was successfully deleted, false if not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        final UserGroupEntity e = this.findById(id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
-    }
-
-    /**
      * Deletes a user group by its public identifier.
      *
      * @param publicId

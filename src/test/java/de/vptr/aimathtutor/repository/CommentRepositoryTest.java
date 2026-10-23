@@ -146,7 +146,6 @@ class CommentRepositoryTest {
     @DisplayName("Null and not-found handling for repository methods")
     @TestTransaction
     void testNullAndNotFoundHandling() {
-        assertTrue(this.commentRepository.findByIdOptional(null).isEmpty());
         assertFalse(this.commentRepository.deleteByPublicId("non-existent-public-id"));
     }
 

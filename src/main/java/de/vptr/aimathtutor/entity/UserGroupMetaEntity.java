@@ -20,10 +20,8 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "user_groups_meta")
-@NamedQueries({
-        @NamedQuery(name = "UserGroupMeta.findByPublicId", query = "FROM UserGroupMetaEntity WHERE publicId = :p"),
-        @NamedQuery(name = "UserGroupMeta.countByUserAndGroup",
-                query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g") })
+@NamedQueries({ @NamedQuery(name = "UserGroupMeta.countByUserAndGroup",
+        query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g") })
 public class UserGroupMetaEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

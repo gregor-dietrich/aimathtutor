@@ -25,15 +25,6 @@ public class CommentRepository extends AbstractRepository {
     private static final int DEFAULT_PAGE_SIZE = 500;
 
     /**
-     * Retrieves all comments from the database in a defined order.
-     *
-     * @return a list of all {@link CommentEntity} objects ordered
-     */
-    public List<CommentEntity> findAllOrdered() {
-        return this.listNamed("Comment.findAllOrdered", CommentEntity.class);
-    }
-
-    /**
      * Fetch comments with related user, exercise and parentComment eagerly to avoid lazy-loading in service layer.
      */
     public List<CommentEntity> findAllOrderedWithRelations() {
@@ -54,20 +45,6 @@ public class CommentRepository extends AbstractRepository {
         q.setFirstResult(page * pageSize);
         q.setMaxResults(pageSize);
         return q.getResultList();
-    }
-
-    /**
-     * Retrieves an optional comment by its unique identifier.
-     *
-     * @param id
-     *            the comment ID
-     * @return an {@link Optional} containing the comment if found, empty otherwise
-     */
-    public Optional<CommentEntity> findByIdOptional(final Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(this.em.find(CommentEntity.class, id));
     }
 
     /**

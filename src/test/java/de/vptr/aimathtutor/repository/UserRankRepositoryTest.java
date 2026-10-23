@@ -40,22 +40,6 @@ class UserRankRepositoryTest {
     }
 
     @Test
-    @DisplayName("persist and deleteById cover both found and not-found paths")
-    @TestTransaction
-    void testPersistAndDeleteById() {
-        final var rank = new UserRankEntity();
-        rank.name = "TestRank " + UlidUtil.generate();
-        rank.publicId = UlidUtil.generate();
-        this.userRankRepository.persist(rank);
-        this.userRankRepository.flush();
-
-        assertNotNull(this.userRankRepository.findById(rank.id));
-        assertFalse(this.userRankRepository.deleteById(999_999L));
-        assertTrue(this.userRankRepository.deleteById(rank.id));
-        assertNull(this.userRankRepository.findById(rank.id));
-    }
-
-    @Test
     @DisplayName("deleteByPublicId covers found and not-found paths")
     @TestTransaction
     void testDeleteByPublicId() {

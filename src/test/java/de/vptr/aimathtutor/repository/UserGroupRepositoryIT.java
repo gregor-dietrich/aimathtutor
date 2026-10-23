@@ -147,22 +147,6 @@ public class UserGroupRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testDeleteById_existing() {
-        final UserGroupEntity group = this.createGroup("delid");
-        final Long id = Objects.requireNonNull(group.id);
-        Assertions.assertTrue(this.userGroupRepository.deleteById(id));
-        Assertions.assertNull(this.userGroupRepository.findById(id));
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.userGroupRepository.deleteById(999_999L));
-    }
-
-    @Test
-    @TestTransaction
     public void testDeleteByPublicId_existing() {
         final UserGroupEntity group = this.createGroup("delpi");
         final String publicId = Objects.requireNonNull(group.publicId);

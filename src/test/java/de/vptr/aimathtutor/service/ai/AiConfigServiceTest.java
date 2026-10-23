@@ -58,7 +58,7 @@ class AiConfigServiceTest {
         for (final var key : testKeys) {
             final var entity = this.aiConfigRepository.findByConfigKey(key);
             if (entity.isPresent()) {
-                this.aiConfigRepository.deleteById(entity.get().id);
+                entity.get().delete();
             }
         }
 

@@ -131,23 +131,6 @@ public class LessonRepository extends AbstractRepository {
     }
 
     /**
-     * Deletes a lesson by its unique identifier.
-     *
-     * @param id
-     *            the ID of the lesson to delete
-     * @return true if the lesson was successfully deleted, false if not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        final LessonEntity e = this.findById(id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
-    }
-
-    /**
      * Deletes the lesson with the given public ID.
      *
      * @param publicId

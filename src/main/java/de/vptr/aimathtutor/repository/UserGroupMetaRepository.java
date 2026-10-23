@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.List;
-import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.UserGroupMetaEntity;
 import jakarta.annotation.Nullable;
@@ -14,23 +13,6 @@ import jakarta.transaction.Transactional;
  */
 @ApplicationScoped
 public class UserGroupMetaRepository extends AbstractRepository {
-
-    /**
-     * Retrieves a user group membership by its public identifier.
-     *
-     * @param publicId
-     *            the public ID of the membership
-     * @return an {@link Optional} containing the membership if found, empty otherwise
-     */
-    public Optional<UserGroupMetaEntity> findByPublicId(final String publicId) {
-        if (publicId == null) {
-            return Optional.empty();
-        }
-        final var q = this.em.createNamedQuery("UserGroupMeta.findByPublicId", UserGroupMetaEntity.class);
-        q.setParameter("p", publicId);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst();
-    }
 
     /**
      * Retrieves all user group memberships for a user by their public identifier.

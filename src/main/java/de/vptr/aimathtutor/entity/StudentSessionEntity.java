@@ -25,7 +25,6 @@ import jakarta.validation.constraints.NotNull;
 @Table(name = "student_sessions")
 @NamedQueries({
         @NamedQuery(name = "StudentSession.findBySessionId", query = "FROM StudentSessionEntity WHERE sessionId = :s"),
-        @NamedQuery(name = "StudentSession.findByPublicId", query = "FROM StudentSessionEntity WHERE publicId = :p"),
         @NamedQuery(name = "StudentSession.countByCompleted",
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE completed = :c"),
         @NamedQuery(name = "StudentSession.countAll", query = "SELECT COUNT(s) FROM StudentSessionEntity s"),

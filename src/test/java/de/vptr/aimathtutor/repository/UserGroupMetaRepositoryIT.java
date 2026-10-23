@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.repository;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -38,23 +37,6 @@ public class UserGroupMetaRepositoryIT extends AbstractRepositoryIT {
         meta.group = group;
         this.userGroupMetaRepository.persist(meta);
         return meta;
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_found() {
-        final UserGroupMetaEntity meta = this.createMeta("ugmpub");
-        final Optional<UserGroupMetaEntity> found =
-                this.userGroupMetaRepository.findByPublicId(Objects.requireNonNull(meta.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(meta.publicId, found.get().publicId);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_null() {
-        Assertions.assertTrue(this.userGroupMetaRepository.findByPublicId(null).isEmpty());
     }
 
     @Test
