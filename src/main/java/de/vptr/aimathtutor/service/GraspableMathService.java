@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
@@ -157,28 +156,6 @@ public class GraspableMathService {
             this.studentSessionRepository.persist(session);
             LOG.debugf("Hint used in session: %s", sessionId);
         }
-    }
-
-    /**
-     * Retrieves all sessions for a specific user.
-     * 
-     * @param userId
-     *            The user ID
-     * @return List of sessions
-     */
-    public List<StudentSessionEntity> getUserSessions(final Long userId) {
-        return this.studentSessionRepository.findByUserId(userId);
-    }
-
-    /**
-     * Retrieves all sessions for a specific exercise.
-     * 
-     * @param exerciseId
-     *            The exercise ID
-     * @return List of sessions
-     */
-    public List<StudentSessionEntity> getExerciseSessions(final Long exerciseId) {
-        return this.studentSessionRepository.findByExerciseId(exerciseId);
     }
 
     /**

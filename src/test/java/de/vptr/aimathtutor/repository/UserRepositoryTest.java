@@ -113,7 +113,6 @@ class UserRepositoryTest {
         assertFalse(this.userRepository.findByUsernameOptional(null).isPresent());
         assertFalse(this.userRepository.findByEmailOptional(null).isPresent());
         assertNull(this.userRepository.persist(null));
-        assertEquals(0L, this.userRepository.countByRankId(null));
         assertEquals(0L, this.userRepository.countByRankPublicId(null));
         assertFalse(this.userRepository.deleteById(null));
         assertFalse(this.userRepository.deleteByPublicId(null));

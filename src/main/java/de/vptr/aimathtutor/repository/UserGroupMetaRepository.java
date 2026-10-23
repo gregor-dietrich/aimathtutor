@@ -50,36 +50,6 @@ public class UserGroupMetaRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all user group memberships for a specific group.
-     *
-     * @param groupPublicId
-     *            the public ID of the group
-     * @return a list of memberships for the group
-     */
-    public List<UserGroupMetaEntity> findByGroupPublicId(final String groupPublicId) {
-        if (groupPublicId == null) {
-            return List.of();
-        }
-        final var q = this.em.createQuery("FROM UserGroupMetaEntity m WHERE m.group.publicId = :p",
-                UserGroupMetaEntity.class);
-        q.setParameter("p", groupPublicId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all group memberships for a specific user with users eagerly loaded.
-     *
-     * @param groupId
-     *            the group ID to filter by
-     * @return a list of {@link UserGroupMetaEntity} objects representing group members with loaded user data
-     */
-    public List<UserGroupMetaEntity> findByGroupIdWithUsers(final Long groupId) {
-        final var q = this.em.createNamedQuery("UserGroupMeta.findByGroupIdWithUsers", UserGroupMetaEntity.class);
-        q.setParameter("g", groupId);
-        return q.getResultList();
-    }
-
-    /**
      * Retrieves all group memberships for a specific group with users eagerly loaded, using public ID.
      *
      * @param groupPublicId
@@ -95,37 +65,6 @@ public class UserGroupMetaRepository extends AbstractRepository {
                         UserGroupMetaEntity.class);
         q.setParameter("p", groupPublicId);
         return q.getResultList();
-    }
-
-    /**
-     * Retrieves all group memberships for a specific user.
-     *
-     * @param userId
-     *            the user ID to filter by
-     * @return a list of {@link UserGroupMetaEntity} objects representing group memberships
-     */
-    public List<UserGroupMetaEntity> findByUserId(final Long userId) {
-        final var q = this.em.createNamedQuery("UserGroupMeta.findByUserId", UserGroupMetaEntity.class);
-        q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves the group membership record for a specific user and group.
-     *
-     * @param userId
-     *            the user ID to filter by
-     * @param groupId
-     *            the group ID to filter by
-     * @return the {@link UserGroupMetaEntity} if the membership exists, null otherwise
-     */
-    @Nullable
-    public UserGroupMetaEntity findByUserAndGroup(final Long userId, final Long groupId) {
-        final var q = this.em.createNamedQuery("UserGroupMeta.findByUserAndGroup", UserGroupMetaEntity.class);
-        q.setParameter("u", userId);
-        q.setParameter("g", groupId);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst().orElse(null);
     }
 
     /**

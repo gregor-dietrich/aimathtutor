@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,7 @@ import jakarta.inject.Inject;
  * Integration tests for {@link CommentRepository}.
  */
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
+@SuppressWarnings("NullAway")
 public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
@@ -164,12 +163,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindReplies_nullReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findReplies(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindRepliesWithRelations_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
     }
@@ -270,38 +263,11 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByExerciseId_found() {
-        final CommentEntity c = this.createComment("fex");
-        final Long exId = Objects.requireNonNull(Objects.requireNonNull(c.exercise).id);
-        final List<CommentEntity> result = this.commentRepository.findByExerciseId(exId);
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(r -> Objects.equals(r.id, c.id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserId_found() {
-        final CommentEntity c = this.createComment("fuid");
-        final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
-        final List<CommentEntity> result = this.commentRepository.findByUserId(userId);
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(r -> Objects.equals(r.id, c.id)));
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByUserIdWithRelations_found() {
         final CommentEntity c = this.createComment("fuidwr");
         final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
         final List<CommentEntity> result = this.commentRepository.findByUserIdWithRelations(userId);
         Assertions.assertFalse(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindRecentComments_returnsComments() {
-        this.createComment("frecent");
-        Assertions.assertFalse(this.commentRepository.findRecentComments(10).isEmpty());
     }
 
     @Test
@@ -320,44 +286,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final String publicId = Objects.requireNonNull(c.publicId);
         Assertions.assertTrue(this.commentRepository.deleteByPublicId(publicId));
         Assertions.assertTrue(this.commentRepository.findByPublicId(publicId).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindBySessionId_found() {
-        final String sessionId = "sess-cr-" + UUID.randomUUID();
-        final UserEntity user = this.createUser("fsess", "cruser_");
-        final ExerciseEntity ex = this.createExercise(user, "SessEx", "x+1");
-        final CommentEntity c = new CommentEntity();
-        c.content = "Session comment";
-        c.exercise = ex;
-        c.user = user;
-        c.sessionId = sessionId;
-        this.commentRepository.persist(c);
-
-        final List<CommentEntity> result = this.commentRepository.findBySessionId(sessionId);
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(r -> sessionId.equals(r.sessionId)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindReplies_found() {
-        final CommentEntity parent = this.createComment("rplypar");
-        final UserEntity user = Objects.requireNonNull(parent.user);
-        final ExerciseEntity ex = Objects.requireNonNull(parent.exercise);
-
-        final CommentEntity reply = new CommentEntity();
-        reply.content = "Reply content";
-        reply.exercise = ex;
-        reply.user = user;
-        reply.parentComment = parent;
-        reply.status = CommentStatus.VISIBLE;
-        this.commentRepository.persist(reply);
-
-        final List<CommentEntity> replies = this.commentRepository.findReplies(Objects.requireNonNull(parent.publicId));
-        Assertions.assertFalse(replies.isEmpty());
-        Assertions.assertTrue(replies.stream().anyMatch(r -> "Reply content".equals(r.content)));
     }
 
     @Test
@@ -408,16 +336,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final List<CommentEntity> replies =
                 this.commentRepository.findRepliesPaged(Objects.requireNonNull(parent.publicId), 0, 10);
         Assertions.assertFalse(replies.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testCountByUserSince_returnsCount() {
-        final CommentEntity c = this.createComment("cntsince");
-        final Long userId = Objects.requireNonNull(Objects.requireNonNull(c.user).id);
-        final long count =
-                this.commentRepository.countByUserSince(userId, LocalDateTime.now(ZoneId.systemDefault()).minusDays(1));
-        Assertions.assertTrue(count >= 1, "expected at least one comment for the created user since yesterday");
     }
 
     @Test

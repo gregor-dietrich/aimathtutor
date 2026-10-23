@@ -26,45 +26,15 @@ import jakarta.validation.constraints.NotNull;
 @NamedQueries({
         @NamedQuery(name = "StudentSession.findBySessionId", query = "FROM StudentSessionEntity WHERE sessionId = :s"),
         @NamedQuery(name = "StudentSession.findByPublicId", query = "FROM StudentSessionEntity WHERE publicId = :p"),
-        @NamedQuery(name = "StudentSession.findByUserId", query = "FROM StudentSessionEntity WHERE user.id = :u"),
-        @NamedQuery(name = "StudentSession.findByExerciseId",
-                query = "FROM StudentSessionEntity WHERE exercise.id = :e"),
-        @NamedQuery(name = "StudentSession.findAllOrdered",
-                query = "FROM StudentSessionEntity ORDER BY startTime DESC, publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByUserAndExercise",
-                query = "FROM StudentSessionEntity " + "WHERE user.id = :u and exercise.id = :e "
-                        + "ORDER BY startTime DESC, publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByUserAndDateRange",
-                query = "FROM StudentSessionEntity " + "WHERE user.id = :u and startTime >= :s and startTime <= :e "
-                        + "ORDER BY startTime DESC, publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByExerciseAndDateRange",
-                query = "FROM StudentSessionEntity "
-                        + "WHERE exercise.id = :e and startTime >= :s and startTime <= :en "
-                        + "ORDER BY startTime DESC, publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByCompletedAndDateRange",
-                query = "FROM StudentSessionEntity " + "WHERE completed = :c and startTime >= :s and startTime <= :e "
-                        + "ORDER BY startTime DESC, publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByStartTimeAfter",
-                query = "FROM StudentSessionEntity WHERE startTime >= :t ORDER BY startTime DESC, publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByStartTimeBetween",
-                query = "FROM StudentSessionEntity " + "WHERE startTime >= :s and startTime <= :e "
-                        + "ORDER BY startTime DESC, publicId DESC"),
         @NamedQuery(name = "StudentSession.countByCompleted",
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE completed = :c"),
         @NamedQuery(name = "StudentSession.countAll", query = "SELECT COUNT(s) FROM StudentSessionEntity s"),
-        @NamedQuery(name = "StudentSession.searchByUserOrExercise",
-                query = "FROM StudentSessionEntity "
-                        + "WHERE lower(user.username) like :p escape '!' or lower(exercise.title) like :p escape '!' "
-                        + "ORDER BY startTime DESC, publicId DESC"),
         @NamedQuery(name = "StudentSession.findAllWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.findByUserIdWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "WHERE s.user.id = :u ORDER BY s.startTime DESC, s.publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByExerciseIdWithRelations",
-                query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
-                        + "WHERE s.exercise.id = :e ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.findByUserAndExerciseWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "WHERE s.user.id = :u and s.exercise.id = :e "

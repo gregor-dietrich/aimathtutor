@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
 /**
  * Integration tests for {@link StudentSessionRepository}.
  */
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods", "PMD.ExcessivePublicCount" })
+@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
 @QuarkusTest
 public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
@@ -142,21 +142,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testFindByUserId_null() {
         Assertions.assertTrue(this.sessionRepository.findByUserId(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseId_found() {
-        final StudentSessionEntity s = this.createSession("fexid");
-        final Long exId = Objects.requireNonNull(Objects.requireNonNull(s.exercise).id);
-        final List<StudentSessionEntity> result = this.sessionRepository.findByExerciseId(exId);
-        Assertions.assertFalse(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseId_null() {
-        Assertions.assertTrue(this.sessionRepository.findByExerciseId(null).isEmpty());
     }
 
     @Test

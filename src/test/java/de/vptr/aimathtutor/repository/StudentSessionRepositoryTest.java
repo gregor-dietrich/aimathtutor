@@ -142,7 +142,6 @@ class StudentSessionRepositoryTest {
         assertNull(this.studentSessionRepository.findBySessionId(null));
         assertNull(this.studentSessionRepository.findBySessionIdWithRelations(null));
         assertTrue(this.studentSessionRepository.findByUserId(null).isEmpty());
-        assertTrue(this.studentSessionRepository.findByExerciseId(null).isEmpty());
         assertNull(this.studentSessionRepository.findById(null));
         assertTrue(this.studentSessionRepository.findByUserIdAndExerciseId(null, 1L).isEmpty());
         assertTrue(this.studentSessionRepository.findByStartTimeAfter(null).isEmpty());

@@ -88,23 +88,6 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find all sessions for a given exercise id with relations eagerly loaded.
-     *
-     * @param exerciseId
-     *            database id of the exercise
-     * @return list of sessions, empty list if exerciseId is null or none found
-     */
-    public List<StudentSessionEntity> findByExerciseId(final Long exerciseId) {
-        if (exerciseId == null) {
-            return List.of();
-        }
-        final var q =
-                this.em.createNamedQuery("StudentSession.findByExerciseIdWithRelations", StudentSessionEntity.class);
-        q.setParameter("e", exerciseId);
-        return q.getResultList();
-    }
-
-    /**
      * List all student sessions ordered by id descending with relations eagerly loaded.
      *
      * @return list of all student sessions

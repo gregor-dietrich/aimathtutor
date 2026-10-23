@@ -136,19 +136,6 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all comments for a specific exercise.
-     *
-     * @param exerciseId
-     *            the exercise ID to filter by
-     * @return a list of {@link CommentEntity} objects for the exercise
-     */
-    public List<CommentEntity> findByExerciseId(final Long exerciseId) {
-        final var q = this.em.createNamedQuery("Comment.findByExerciseId", CommentEntity.class);
-        q.setParameter("e", exerciseId);
-        return q.getResultList();
-    }
-
-    /**
      * Retrieves all comments for a specific exercise with related entities eagerly loaded.
      *
      * @param exerciseId
@@ -183,19 +170,6 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all comments created by a specific user.
-     *
-     * @param userId
-     *            the user ID to filter by
-     * @return a list of {@link CommentEntity} objects created by the user
-     */
-    public List<CommentEntity> findByUserId(final Long userId) {
-        final var q = this.em.createNamedQuery("Comment.findByUserId", CommentEntity.class);
-        q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
      * Retrieves all comments created by a specific user with related entities eagerly loaded.
      *
      * @param userId
@@ -208,19 +182,6 @@ public class CommentRepository extends AbstractRepository {
         }
         final var q = this.em.createNamedQuery("Comment.findByUserIdWithRelations", CommentEntity.class);
         q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves the most recent comments from the database, up to a specified limit.
-     *
-     * @param limit
-     *            the maximum number of comments to retrieve (0 or negative returns empty list)
-     * @return a list of recent {@link CommentEntity} objects
-     */
-    public List<CommentEntity> findRecentComments(final int limit) {
-        final var q = this.em.createNamedQuery("Comment.findRecent", CommentEntity.class);
-        q.setMaxResults(Math.max(0, limit));
         return q.getResultList();
     }
 
@@ -273,35 +234,6 @@ public class CommentRepository extends AbstractRepository {
         }
         this.em.remove(e);
         return true;
-    }
-
-    /**
-     * Retrieves all comments associated with a specific student session.
-     *
-     * @param sessionId
-     *            the session ID to filter by
-     * @return a list of {@link CommentEntity} objects in the session
-     */
-    public List<CommentEntity> findBySessionId(final String sessionId) {
-        final var q = this.em.createNamedQuery("Comment.findBySessionId", CommentEntity.class);
-        q.setParameter("s", sessionId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all reply comments to a specific parent comment.
-     *
-     * @param parentPublicId
-     *            the public ID of the parent comment to filter by
-     * @return a list of {@link CommentEntity} objects that are replies to the parent
-     */
-    public List<CommentEntity> findReplies(final String parentPublicId) {
-        if (parentPublicId == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("Comment.findReplies", CommentEntity.class);
-        q.setParameter("p", parentPublicId);
-        return q.getResultList();
     }
 
     /**
@@ -359,22 +291,6 @@ public class CommentRepository extends AbstractRepository {
         q.setFirstResult(page * pageSize);
         q.setMaxResults(pageSize);
         return q.getResultList();
-    }
-
-    /**
-     * Counts comments created by a specific user since a given date and time.
-     *
-     * @param userId
-     *            the user ID to filter by
-     * @param since
-     *            the date and time threshold (inclusive)
-     * @return the count of comments created by the user since the given date
-     */
-    public long countByUserSince(final Long userId, final LocalDateTime since) {
-        final var q = this.em.createNamedQuery("Comment.countByUserSince", Long.class);
-        q.setParameter("u", userId);
-        q.setParameter("s", since);
-        return q.getSingleResult();
     }
 
     /**

@@ -89,7 +89,6 @@ class UserGroupMetaRepositoryTest {
     void testNullHandling() {
         assertFalse(this.userGroupMetaRepository.findByPublicId(null).isPresent());
         assertTrue(this.userGroupMetaRepository.findByUserPublicId(null).isEmpty());
-        assertTrue(this.userGroupMetaRepository.findByGroupPublicId(null).isEmpty());
         assertTrue(this.userGroupMetaRepository.findByGroupPublicIdWithUsers(null).isEmpty());
         assertNull(this.userGroupMetaRepository.findByUserPublicIdAndGroupPublicId(null, "foo"));
         assertNull(this.userGroupMetaRepository.findByUserPublicIdAndGroupPublicId("bar", null));

@@ -76,36 +76,6 @@ public class UserGroupMetaRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByGroupPublicId_returnsMetas() {
-        final UserGroupMetaEntity meta = this.createMeta("ugmgpi");
-        final String groupPublicId = Objects.requireNonNull(Objects.requireNonNull(meta.group).publicId);
-        final List<UserGroupMetaEntity> result = this.userGroupMetaRepository.findByGroupPublicId(groupPublicId);
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(m -> Objects.equals(m.id, meta.id)));
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByGroupPublicId_null() {
-        Assertions.assertTrue(this.userGroupMetaRepository.findByGroupPublicId(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByGroupIdWithUsers_returnsMetas() {
-        final UserGroupMetaEntity meta = this.createMeta("ugmgiwu");
-        final UserGroupEntity group = Objects.requireNonNull(meta.group);
-        final List<UserGroupMetaEntity> result =
-                this.userGroupMetaRepository.findByGroupIdWithUsers(Objects.requireNonNull(group.id));
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(m -> Objects.equals(m.id, meta.id)));
-        Assertions.assertNotNull(result.get(0).user);
-        Assertions.assertNotNull(result.get(0).user.username);
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByGroupPublicIdWithUsers_returnsMetas() {
         final UserGroupMetaEntity meta = this.createMeta("ugmgpiwu");
         final String groupPublicId = Objects.requireNonNull(Objects.requireNonNull(meta.group).publicId);
@@ -121,36 +91,6 @@ public class UserGroupMetaRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testFindByGroupPublicIdWithUsers_null() {
         Assertions.assertTrue(this.userGroupMetaRepository.findByGroupPublicIdWithUsers(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserId_returnsMetas() {
-        final UserGroupMetaEntity meta = this.createMeta("ugmbyui");
-        final UserEntity user = Objects.requireNonNull(meta.user);
-        final List<UserGroupMetaEntity> result =
-                this.userGroupMetaRepository.findByUserId(Objects.requireNonNull(user.id));
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(m -> Objects.equals(m.id, meta.id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserAndGroup_found() {
-        final UserGroupMetaEntity meta = this.createMeta("ugmfuag");
-        final UserEntity user = Objects.requireNonNull(meta.user);
-        final UserGroupEntity group = Objects.requireNonNull(meta.group);
-        final UserGroupMetaEntity found = this.userGroupMetaRepository
-                .findByUserAndGroup(Objects.requireNonNull(user.id), Objects.requireNonNull(group.id));
-        Assertions.assertNotNull(found);
-        Assertions.assertEquals(meta.id, found.id);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testFindByUserAndGroup_notFound() {
-        Assertions.assertNull(this.userGroupMetaRepository.findByUserAndGroup(999_999L, 999_999L));
     }
 
     @Test
@@ -205,7 +145,7 @@ public class UserGroupMetaRepositoryIT extends AbstractRepositoryIT {
         final UserEntity user = Objects.requireNonNull(meta.user);
         final UserGroupEntity group = Objects.requireNonNull(meta.group);
         this.userGroupMetaRepository.delete(meta);
-        Assertions.assertNull(this.userGroupMetaRepository.findByUserAndGroup(Objects.requireNonNull(user.id),
+        Assertions.assertFalse(this.userGroupMetaRepository.isUserInGroup(Objects.requireNonNull(user.id),
                 Objects.requireNonNull(group.id)));
     }
 

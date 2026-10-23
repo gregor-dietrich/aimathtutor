@@ -158,7 +158,6 @@ class CommentRepositoryTest {
         assertTrue(this.commentRepository.findByIdOptionalWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findByExerciseIdWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findByUserIdWithRelations(null).isEmpty());
-        assertTrue(this.commentRepository.findReplies(null).isEmpty());
         assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());
     }

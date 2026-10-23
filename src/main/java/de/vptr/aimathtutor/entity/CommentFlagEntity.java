@@ -24,7 +24,6 @@ import jakarta.persistence.Table;
 @NamedQueries({
         @NamedQuery(name = "CommentFlag.countByCommentAndFlagger",
                 query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u"),
-        @NamedQuery(name = "CommentFlag.findByComment", query = "FROM CommentFlagEntity WHERE comment.id = :c"),
         @NamedQuery(name = "CommentFlag.findByPublicId", query = "FROM CommentFlagEntity WHERE publicId = :p") })
 public class CommentFlagEntity extends BaseEntity {
 

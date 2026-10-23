@@ -147,33 +147,6 @@ public class UserRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByRankId_returnsUsersWithRank() {
-        final UserEntity user = this.createUser("frank");
-        final UserRankEntity rank = Objects.requireNonNull(user.rank);
-        final List<UserEntity> ranked = this.userRepository.findByRankId(Objects.requireNonNull(rank.id));
-        Assertions.assertFalse(ranked.isEmpty());
-        Assertions
-                .assertTrue(ranked.stream().allMatch(u -> Objects.equals(Objects.requireNonNull(u.rank).id, rank.id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testCountByRankId_returnsCount() {
-        final UserEntity user = this.createUser("cntrk");
-        final UserRankEntity rank = Objects.requireNonNull(user.rank);
-        final long count = this.userRepository.countByRankId(Objects.requireNonNull(rank.id));
-        Assertions.assertTrue(count >= 1);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testCountByRankId_null() {
-        Assertions.assertEquals(0L, this.userRepository.countByRankId(null));
-    }
-
-    @Test
-    @TestTransaction
     public void testCountByRankPublicId_returnsCount() {
         final UserEntity user = this.createUser("cntrpi");
         final UserRankEntity rank = Objects.requireNonNull(user.rank);

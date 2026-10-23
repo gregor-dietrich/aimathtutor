@@ -181,35 +181,6 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all users with a specific rank.
-     *
-     * @param rankId
-     *            the rank ID to filter by
-     * @return a list of {@link UserEntity} objects with the specified rank
-     */
-    public List<UserEntity> findByRankId(final Long rankId) {
-        final var q = this.em.createNamedQuery("User.findByRankId", UserEntity.class);
-        q.setParameter("r", rankId);
-        return q.getResultList();
-    }
-
-    /**
-     * Counts users with a specific rank.
-     *
-     * @param rankId
-     *            the rank ID to filter by
-     * @return the count of users with the specified rank
-     */
-    public long countByRankId(final Long rankId) {
-        if (rankId == null) {
-            return 0L;
-        }
-        final var q = this.em.createNamedQuery("User.countByRankId", Long.class);
-        q.setParameter("r", rankId);
-        return q.getSingleResult();
-    }
-
-    /**
      * Counts users with a specific rank by public ID.
      *
      * @param rankPublicId
