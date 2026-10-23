@@ -17,6 +17,8 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 
 /**
  * Facade for the signed-in user's appearance (design and colour mode): reads it from the session, saves a change, and
@@ -48,8 +50,8 @@ public class ThemeService {
 
     /**
      * Saves a change of appearance for the signed-in user, then stores what the row now holds in the session. A null
-     * argument leaves that field as stored. Runs off the UI thread. If the save fails, the exception propagates and the
-     * session is untouched.
+     * argument leaves that field as stored. Runs off the UI thread and outside any transaction, so the save has
+     * committed before the session changes. If the save fails, the exception propagates and the session is untouched.
      *
      * @param session
      *            the session that makes the change, captured on the UI thread
@@ -60,6 +62,7 @@ public class ThemeService {
      * @param colorMode
      *            the colour mode to save, or null to keep the stored one
      */
+    @Transactional(TxType.NEVER)
     public void saveForSession(final VaadinSession session, final SessionCredentials credentials,
             @Nullable final Appearance.Design design, @Nullable final Appearance.ColorMode colorMode) {
         final var stored = this.userService.updateAppearance(credentials, design, colorMode);

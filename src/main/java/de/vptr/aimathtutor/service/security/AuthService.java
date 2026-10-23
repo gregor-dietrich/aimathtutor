@@ -37,6 +37,7 @@ import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.ValidationException;
 
 /**
@@ -538,7 +539,7 @@ public class AuthService {
 
     /**
      * Verifies captured session credentials against the database and returns their user. Any thread; it reads through
-     * the repository in the caller's transaction.
+     * the repository in the caller's transaction, which it requires.
      *
      * @param credentials
      *            the credentials captured by {@link #currentSessionCredentials()}, or null
@@ -547,6 +548,7 @@ public class AuthService {
      *             if the credentials are null, the user is unknown, the credential stamp is stale, or the account is
      *             deactivated or banned
      */
+    @Transactional(TxType.MANDATORY)
     public UserEntity requireSessionUser(@Nullable final SessionCredentials credentials) {
         if (credentials == null) {
             throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);

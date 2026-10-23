@@ -26,8 +26,10 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.transaction.TransactionalException;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
@@ -487,6 +489,7 @@ class PermissionServiceTest {
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireAdminView succeeds for an active user whose rank holds adminView")
     void requireAdminViewSucceeds() {
         final var rank = this.buildRank();
@@ -497,6 +500,7 @@ class PermissionServiceTest {
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireAdminView throws for a rank without adminView")
     void requireAdminViewThrowsWithoutPermission() {
         final var user = this.stubUser(this.buildRank());
@@ -507,6 +511,7 @@ class PermissionServiceTest {
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireAdminView throws for a user without a rank")
     void requireAdminViewThrowsWithoutRank() {
         final var user = this.stubUser(null);
@@ -516,6 +521,7 @@ class PermissionServiceTest {
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireAdminView refuses an ended session")
     void requireAdminViewRefusesEndedSession() {
         final var rank = this.buildRank();
@@ -526,5 +532,15 @@ class PermissionServiceTest {
         final var ex = assertThrows(ValidationException.class, () -> this.permissionService.requireAdminView(stale));
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
         assertThrows(ValidationException.class, () -> this.permissionService.requireAdminView(null));
+    }
+
+    @Test
+    @DisplayName("requireAdminView refuses a caller with no transaction")
+    void requireAdminViewRequiresTransaction() {
+        final var rank = this.buildRank();
+        rank.adminView = true;
+        final var user = this.stubUser(rank);
+
+        assertThrows(TransactionalException.class, () -> this.permissionService.requireAdminView(credentialsFor(user)));
     }
 }

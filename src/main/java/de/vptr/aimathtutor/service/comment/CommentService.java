@@ -26,7 +26,6 @@ import de.vptr.aimathtutor.event.CommentCreatedEvent;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
-import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
@@ -52,9 +51,6 @@ public class CommentService {
     // Strict policy: disallow all HTML elements/attributes. Tags are dropped and
     // residual <, >, & characters are HTML-escaped, yielding safe plain text.
     private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
-
-    @Inject
-    UserService userService;
 
     @Inject
     Event<CommentCreatedEvent> commentCreatedEvent;
@@ -558,6 +554,7 @@ public class CommentService {
      * @throws PermissionDeniedException
      *             if the caller may not view the administration
      */
+    @Transactional
     public List<CommentViewDto> searchComments(@Nullable final SessionCredentials credentials, final String query) {
         this.permissionService.requireAdminView(credentials);
         if (query == null || query.isBlank()) {

@@ -413,7 +413,8 @@ public class AnalyticsService {
     public List<StudentProgressSummaryDto> getUsersProgressSummaryByUsernameSearch(
             @Nullable final SessionCredentials credentials, final String searchTerm) {
         this.permissionService.requireAdminView(credentials);
-        LOG.tracef("Getting progress summaries for username search: %s", searchTerm);
+        LOG.tracef("Getting progress summaries for username search with query length: %s",
+                searchTerm == null ? 0 : searchTerm.length());
         if (searchTerm == null || searchTerm.isBlank()) {
             return this.findAllUsersProgressSummary();
         }

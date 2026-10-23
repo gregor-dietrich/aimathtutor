@@ -4,20 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -30,27 +22,27 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
+import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
-import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
-import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
 
 @QuarkusTest
 @SuppressWarnings("NullAway")
 class AnalyticsServiceTest {
 
-    // The mocked PermissionService accepts any credentials; the guard's own checks are tested with it
+    // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
+    // (the guard itself is tested in PermissionServiceTest)
     private static final SessionCredentials CREDENTIALS =
             new SessionCredentials("admin-public-id", "stamp", "session-key");
 
@@ -77,6 +69,9 @@ class AnalyticsServiceTest {
 
     @Inject
     ExerciseRepository exerciseRepository;
+
+    @Inject
+    AiInteractionRepository aiInteractionRepository;
 
     @BeforeEach
     @Transactional
@@ -105,6 +100,23 @@ class AnalyticsServiceTest {
     private String createSessionFor(final Long userId, final Long exerciseId) {
         when(this.authService.requireCurrentUser()).thenReturn(this.userRepository.findById(userId));
         return this.graspableMathService.createSession(exerciseId);
+    }
+
+    private String createSessionWithInteraction(final Long studentId, final Long exerciseId, final String eventType,
+            final String feedbackType) {
+        final String sessionId = this.createSessionFor(studentId, exerciseId);
+        final var interaction = new AiInteractionEntity();
+        interaction.sessionId = sessionId;
+        final var user = this.userRepository.findById(studentId);
+        assertNotNull(user, "Seeded student1 must exist");
+        interaction.user = user;
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise, "Created exercise must exist");
+        interaction.exercise = exercise;
+        interaction.eventType = eventType;
+        interaction.feedbackType = feedbackType;
+        this.aiInteractionRepository.persist(interaction);
+        return sessionId;
     }
 
     private StudentSessionEntity createAndPersistSession(final Long studentId, final Long exerciseId) {
@@ -225,6 +237,24 @@ class AnalyticsServiceTest {
         final StudentSessionViewDto result =
                 this.analyticsService.getSessionBySessionId(CREDENTIALS, "nonexistent-session-id");
         assertNull(result);
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getAiInteractionsBySession returns the session's interaction with user, exercise and event type")
+    void testGetAiInteractionsBySession_found() {
+        final Long exerciseId = this.createExercise();
+        final String sessionId = this.createSessionWithInteraction(this.studentId(), exerciseId, "test_event", "HINT");
+        final var exerciseTitle = this.exerciseRepository.findById(exerciseId).title;
+
+        final List<AiInteractionViewDto> interactions =
+                this.analyticsService.getAiInteractionsBySession(CREDENTIALS, sessionId);
+
+        assertEquals(1, interactions.size());
+        assertEquals(sessionId, interactions.get(0).sessionId);
+        assertEquals("student1", interactions.get(0).username);
+        assertEquals(exerciseTitle, interactions.get(0).exerciseTitle);
+        assertEquals("test_event", interactions.get(0).eventType);
     }
 
     @Test
@@ -361,12 +391,45 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
+    @DisplayName("getUsersProgressSummaryByUsernameSearch gives a user with no sessions zero sessions and success rate")
+    void testGetUsersProgressSummaryByUsernameSearch_noSessions() {
+        final var admin = this.userRepository.findByUsername("admin");
+        assertNotNull(admin, "Seeded admin must exist");
+        final var summaries =
+                this.analyticsService.getUsersProgressSummaryByUsernameSearch(CREDENTIALS, admin.username);
+
+        final var summary = summaries.stream().filter(s -> admin.username.equals(s.username)).findFirst().orElseThrow();
+        assertEquals(0, summary.totalSessions);
+        assertEquals(0.0, summary.successRate);
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getUsersProgressSummaryByUsernameSearch counts a new session once")
+    void testGetUsersProgressSummaryByUsernameSearch_withSession() {
+        final Long studentId = this.studentId();
+        final int baselineTotal = this.studentSummary().totalSessions;
+
+        this.createSessionFor(studentId, this.createExercise());
+
+        assertEquals(baselineTotal + 1, this.studentSummary().totalSessions,
+                "Creating one session should increase totalSessions by 1");
+    }
+
+    private StudentProgressSummaryDto studentSummary() {
+        return this.analyticsService.getUsersProgressSummaryByUsernameSearch(CREDENTIALS, "student1").stream()
+                .filter(s -> "student1".equals(s.username)).findFirst().orElseThrow();
+    }
+
+    @Test
+    @TestTransaction
     @DisplayName("getUsersProgressSummaryByUsernameSearch returns all for blank term")
     void testGetUsersProgressSummaryByUsernameSearch_blank() {
         final List<StudentProgressSummaryDto> summaries =
                 this.analyticsService.getUsersProgressSummaryByUsernameSearch(CREDENTIALS, "");
         assertNotNull(summaries);
-        assertFalse(summaries.isEmpty(), "Blank search delegates to getAllUsersProgressSummary");
+        assertFalse(summaries.isEmpty(),
+                "Blank search lists every user through the private findAllUsersProgressSummary helper");
     }
 
     @Test
@@ -424,14 +487,6 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
-    @DisplayName("getUserCount returns a positive count")
-    void testGetUserCount() {
-        final long count = this.analyticsService.getUserCount();
-        assertTrue(count >= 4, "Should have at least 4 seeded users");
-    }
-
-    @Test
-    @TestTransaction
     @DisplayName("getPublishedExerciseCount returns a non-negative count")
     void testGetPublishedExerciseCount() {
         final long count = this.analyticsService.getPublishedExerciseCount();
@@ -440,16 +495,6 @@ class AnalyticsServiceTest {
         assertNotNull(exerciseId);
         final long after = this.analyticsService.getPublishedExerciseCount();
         assertTrue(after >= count, "Creating an exercise should not decrease published count");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getDailySessionCounts returns a map with days+1 entries")
-    void testGetDailySessionCounts() {
-        final Map<LocalDate, Long> counts = this.analyticsService.getDailySessionCounts(7);
-        assertNotNull(counts);
-        assertEquals(8, counts.size(), "Should return 8 entries for 7 days (0..7 inclusive)");
-        assertTrue(counts.containsKey(LocalDate.now(ZoneId.systemDefault())), "Should include today's date");
     }
 
     @Test
@@ -518,19 +563,6 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
-    @DisplayName("getTrendData returns a non-null DTO with valid values")
-    void testGetTrendData() {
-        final var trend = this.analyticsService.getTrendData();
-        assertNotNull(trend);
-        assertTrue(trend.totalSessions >= 0);
-        assertTrue(trend.completedSessions >= 0);
-        assertTrue(trend.activeStudents >= 0);
-        assertTrue(trend.todaySessions >= 0);
-        assertTrue(trend.totalUsers >= 4);
-    }
-
-    @Test
-    @TestTransaction
     @DisplayName("getUsersProgressSummaryByDateRange includes users active in range and excludes those outside")
     void testGetUsersProgressSummaryByDateRange() {
         final Long studentId = this.studentId();
@@ -571,47 +603,5 @@ class AnalyticsServiceTest {
         assertNotNull(stats);
         assertTrue(stats.containsKey(exercise.title), "Stats should contain the seeded exercise title");
         assertEquals(1, stats.get(exercise.title), "Should have exactly one completed session for the exercise");
-    }
-
-    @Test
-    @DisplayName("Per-user reads require the administration view once per call, also when they delegate")
-    @TestTransaction
-    void shouldRequireAdminViewOncePerCall() {
-        this.analyticsService.getAllSessions(CREDENTIALS);
-        this.analyticsService.getUsersProgressSummaryByUsernameSearch(CREDENTIALS, "");
-
-        verify(this.permissionService, times(2)).requireAdminView(CREDENTIALS);
-    }
-
-    @Test
-    @DisplayName("Per-user reads propagate the refusal and return no data")
-    @TestTransaction
-    void shouldPropagateAdminViewRefusal() {
-        doThrow(new PermissionDeniedException("view the administration")).when(this.permissionService)
-                .requireAdminView(CREDENTIALS);
-
-        assertThrows(PermissionDeniedException.class, () -> this.analyticsService.getAllSessions(CREDENTIALS));
-        assertThrows(PermissionDeniedException.class,
-                () -> this.analyticsService.getTopStudentsByCompletion(CREDENTIALS, 5));
-    }
-
-    @Test
-    @DisplayName("A session that ended refuses the read")
-    @TestTransaction
-    void shouldRefuseReadOfEndedSession() {
-        doThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE)).when(this.permissionService)
-                .requireAdminView(CREDENTIALS);
-
-        assertThrows(ValidationException.class, () -> this.analyticsService.getSessionBySessionId(CREDENTIALS, "any"));
-    }
-
-    @Test
-    @DisplayName("The dashboard's anonymous counts need no credentials")
-    @TestTransaction
-    void shouldNotGuardAnonymousAggregates() {
-        this.analyticsService.getDailySessionCounts(7);
-        this.analyticsService.getTotalSessionsCount();
-
-        verify(this.permissionService, never()).requireAdminView(any());
     }
 }

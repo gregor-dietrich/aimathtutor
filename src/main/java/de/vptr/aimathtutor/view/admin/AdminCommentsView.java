@@ -408,7 +408,7 @@ public class AdminCommentsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.infof("Searching comments with query: %s", query);
+        LOG.infof("Searching comments with query length: %s", query.length());
         final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(() -> this.commentService.searchComments(credentials, query.trim()), this, comments -> {
             LOG.infof("Successfully found %s comments", comments.size());

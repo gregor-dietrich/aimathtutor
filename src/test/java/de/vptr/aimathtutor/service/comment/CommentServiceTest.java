@@ -49,7 +49,8 @@ import jakarta.ws.rs.core.Response;
 @SuppressWarnings("NullAway")
 class CommentServiceTest {
 
-    // The mocked PermissionService accepts any credentials; the guard's own checks are tested with it
+    // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
+    // (the guard itself is tested in PermissionServiceTest)
     private static final SessionCredentials CREDENTIALS =
             new SessionCredentials("admin-public-id", "stamp", "session-key");
 
@@ -171,6 +172,21 @@ class CommentServiceTest {
         assertFalse(created.content.contains("<script>"), "Sanitizer should strip <script>, got: " + created.content);
         assertTrue(created.content.contains("safe text"));
         verify(this.permissionService).requireCommentAdd();
+    }
+
+    @Test
+    @DisplayName("Should store the sessionId of the DTO on the created comment")
+    @TestTransaction
+    void shouldStoreSessionIdOnCreate() {
+        final var dto = new CommentDto();
+        dto.content = "comment with a session";
+        dto.exercisePublicId = this.createCommentableExercise().publicId;
+        dto.sessionId = "test-session-" + UUID.randomUUID();
+
+        final CommentViewDto created = this.as(this.userRepository.findByUsername("student1")).createComment(dto);
+
+        final var stored = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
+        assertEquals(dto.sessionId, stored.sessionId);
     }
 
     @Test
