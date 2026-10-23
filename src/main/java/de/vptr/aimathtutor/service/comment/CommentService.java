@@ -222,19 +222,6 @@ public class CommentService {
     }
 
     /**
-     * Retrieves the most recently created comments with a limit on count.
-     *
-     * @param limit
-     *            the maximum number of comments to return
-     * @return a list of up to {@code limit} recent {@link CommentViewDto}s with loaded relationships
-     */
-    @Transactional
-    public List<CommentViewDto> findRecentComments(final int limit) {
-        final List<CommentEntity> comments = this.commentRepository.findRecentCommentsWithRelations(limit);
-        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
-    }
-
-    /**
      * Create a new comment with rate limiting and validation, authored by the signed-in user. Requires the
      * {@code commentAdd} permission.
      *
@@ -530,16 +517,6 @@ public class CommentService {
             // Replies to specific parent
             comments = this.commentRepository.findRepliesPaged(parentPublicId, page, pageSize);
         }
-
-        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
-    }
-
-    /**
-     * List comments by session
-     */
-    @Transactional
-    public List<CommentViewDto> listCommentsBySession(final String sessionId) {
-        final List<CommentEntity> comments = this.commentRepository.findBySessionIdWithRelations(sessionId);
 
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }

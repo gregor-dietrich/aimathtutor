@@ -10,7 +10,7 @@ import jakarta.transaction.Transactional;
 
 /**
  * Repository for managing AI interaction entities. Provides database access and query operations for AI interactions
- * including find by session, user, and exercise ID operations.
+ * including find by session ID.
  */
 @ApplicationScoped
 public class AiInteractionRepository extends AbstractRepository {
@@ -54,38 +54,6 @@ public class AiInteractionRepository extends AbstractRepository {
         }
         final var q = this.em.createNamedQuery("AiInteraction.findBySessionId", AiInteractionEntity.class);
         q.setParameter("s", sessionId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all AI interactions initiated by a specific user.
-     *
-     * @param userId
-     *            the user ID to filter by; null values return empty list
-     * @return a list of {@link AiInteractionEntity} objects created by the user
-     */
-    public List<AiInteractionEntity> findByUserId(final Long userId) {
-        if (userId == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("AiInteraction.findByUserId", AiInteractionEntity.class);
-        q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all AI interactions related to a specific exercise.
-     *
-     * @param exerciseId
-     *            the exercise ID to filter by; null values return empty list
-     * @return a list of {@link AiInteractionEntity} objects for the exercise
-     */
-    public List<AiInteractionEntity> findByExerciseId(final Long exerciseId) {
-        if (exerciseId == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("AiInteraction.findByExerciseId", AiInteractionEntity.class);
-        q.setParameter("e", exerciseId);
         return q.getResultList();
     }
 

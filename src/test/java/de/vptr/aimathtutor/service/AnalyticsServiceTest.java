@@ -30,18 +30,15 @@ import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.StudentProgressSummaryDto;
 import de.vptr.aimathtutor.dto.StudentSessionViewDto;
-import de.vptr.aimathtutor.entity.AiInteractionEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.repository.AiInteractionRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
-import de.vptr.aimathtutor.util.TestExerciseFactory;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -50,7 +47,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
+@SuppressWarnings("NullAway")
 class AnalyticsServiceTest {
 
     // The mocked PermissionService accepts any credentials; the guard's own checks are tested with it
@@ -77,9 +74,6 @@ class AnalyticsServiceTest {
 
     @Inject
     StudentSessionRepository studentSessionRepository;
-
-    @Inject
-    AiInteractionRepository aiInteractionRepository;
 
     @Inject
     ExerciseRepository exerciseRepository;
@@ -113,23 +107,6 @@ class AnalyticsServiceTest {
         return this.graspableMathService.createSession(exerciseId);
     }
 
-    private String createSessionWithInteraction(final Long studentId, final Long exerciseId, final String eventType,
-            final String feedbackType) {
-        final String sessionId = this.createSessionFor(studentId, exerciseId);
-        final var interaction = new AiInteractionEntity();
-        interaction.sessionId = sessionId;
-        final var userForInteraction = this.userRepository.findById(studentId);
-        assertNotNull(userForInteraction, "Seeded student1 must exist");
-        interaction.user = userForInteraction;
-        final var exercise = this.exerciseRepository.findById(exerciseId);
-        assertNotNull(exercise, "Created exercise must exist");
-        interaction.exercise = exercise;
-        interaction.eventType = eventType;
-        interaction.feedbackType = feedbackType;
-        this.aiInteractionRepository.persist(interaction);
-        return sessionId;
-    }
-
     private StudentSessionEntity createAndPersistSession(final Long studentId, final Long exerciseId) {
         final var exercise = this.exerciseRepository.findById(exerciseId);
         assertNotNull(exercise, "Created exercise must exist");
@@ -141,26 +118,6 @@ class AnalyticsServiceTest {
         session.exercise = exercise;
         this.studentSessionRepository.persist(session);
         return session;
-    }
-
-    private record SessionFixture(Long studentId, Long exerciseId, String sessionId) {
-    }
-
-    private SessionFixture createSessionFixture() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
-        final String sessionId = this.createSessionFor(studentId, exerciseId);
-        return new SessionFixture(studentId, exerciseId, sessionId);
-    }
-
-    private void assertDateRangeFilter(final String sessionId, final List<? extends StudentSessionViewDto> within,
-            final List<? extends StudentSessionViewDto> outside) {
-        assertNotNull(within);
-        assertTrue(within.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Session should appear within the date range");
-        assertNotNull(outside);
-        assertFalse(outside.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Session should not appear in a future range");
     }
 
     @Test
@@ -175,37 +132,6 @@ class AnalyticsServiceTest {
         assertNotNull(sessions);
         assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
                 "Seeded session should appear in the list");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getSessionsByUser returns sessions for the given user")
-    void testGetSessionsByUser() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        this.createSessionFor(studentId, exerciseId);
-
-        final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByUser(studentId);
-        assertNotNull(sessions);
-        assertFalse(sessions.isEmpty(), "Should find at least one session for student1");
-        assertTrue(sessions.stream().allMatch(s -> "student1".equals(s.username)),
-                "All returned sessions should belong to student1");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getSessionsByExercise returns sessions for the given exercise")
-    void testGetSessionsByExercise() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        this.createSessionFor(studentId, exerciseId);
-
-        final ExerciseViewDto exercise = this.exerciseService.findById(exerciseId).orElseThrow();
-        final List<StudentSessionViewDto> sessions = this.analyticsService.getSessionsByExercise(exerciseId);
-        assertNotNull(sessions);
-        assertFalse(sessions.isEmpty(), "Should find at least one session for the exercise");
-        assertTrue(sessions.stream().allMatch(s -> exercise.publicId.equals(s.exercisePublicId)),
-                "All returned sessions should belong to the exercise");
     }
 
     @Test
@@ -281,14 +207,6 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
-    @DisplayName("getSessionById returns null for unknown ID")
-    void testGetSessionById_notFound() {
-        final StudentSessionViewDto result = this.analyticsService.getSessionById(-999L);
-        assertNull(result);
-    }
-
-    @Test
-    @TestTransaction
     @DisplayName("getSessionBySessionId returns the session matching the string ID")
     void testGetSessionBySessionId() {
         final Long studentId = this.studentId();
@@ -311,116 +229,12 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
-    @DisplayName("getAllAiInteractions returns a non-null list")
-    void testGetAllAiInteractions() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId = this.createSessionWithInteraction(studentId, exerciseId, "test_event", "HINT");
-
-        final List<AiInteractionViewDto> interactions = this.analyticsService.getAllAiInteractions();
-        assertNotNull(interactions);
-        assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
-                "Seeded interaction should appear in the list");
-    }
-
-    @Test
-    @TestTransaction
     @DisplayName("getAiInteractionsBySession returns empty list for unknown session")
     void testGetAiInteractionsBySession_notFound() {
         final List<AiInteractionViewDto> interactions =
                 this.analyticsService.getAiInteractionsBySession(CREDENTIALS, "no-such-session");
         assertNotNull(interactions);
         assertTrue(interactions.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getAiInteractionsByUser returns a non-null list")
-    void testGetAiInteractionsByUser() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId =
-                this.createSessionWithInteraction(studentId, exerciseId, "test_event_user", "POSITIVE");
-
-        final List<AiInteractionViewDto> interactions = this.analyticsService.getAiInteractionsByUser(studentId);
-        assertNotNull(interactions);
-        assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
-                "Seeded interaction should appear for the user");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getAiInteractionsByUser filters out other users' interactions")
-    void testGetAiInteractionsByUser_filtersByUser() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId =
-                this.createSessionWithInteraction(studentId, exerciseId, "test_event_user_filter", "NEGATIVE");
-
-        final var otherStudent = this.userRepository.findByUsername("student2");
-        assertNotNull(otherStudent, "Seeded student2 must exist");
-        final Long otherStudentId = otherStudent.id;
-        final Long otherExerciseId = this.createExercise();
-        final String otherSessionId = this.createSessionFor(otherStudentId, otherExerciseId);
-
-        final var otherInteraction = new AiInteractionEntity();
-        otherInteraction.sessionId = otherSessionId;
-        otherInteraction.user = otherStudent;
-        otherInteraction.eventType = "test_event_other_user";
-        otherInteraction.feedbackType = "HINT";
-        this.aiInteractionRepository.persist(otherInteraction);
-
-        final List<AiInteractionViewDto> interactions = this.analyticsService.getAiInteractionsByUser(studentId);
-        assertNotNull(interactions);
-        assertTrue(interactions.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
-                "Seeded interaction should appear for the user");
-        assertFalse(interactions.stream().anyMatch(i -> otherSessionId.equals(i.sessionId)),
-                "Interactions from other users should not appear");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getUserProgressSummary returns null for non-existent user")
-    void testGetUserProgressSummary_notFound() {
-        final StudentProgressSummaryDto result = this.analyticsService.getUserProgressSummary(-999L);
-        assertNull(result);
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getUserProgressSummary returns zero-session summary for user with no sessions")
-    void testGetUserProgressSummary_noSessions() {
-        final var admin = this.userRepository.findByUsername("admin");
-        assertNotNull(admin, "Seeded admin must exist");
-        final Long adminId = admin.id;
-        final StudentProgressSummaryDto summary = this.analyticsService.getUserProgressSummary(adminId);
-        assertNotNull(summary);
-        assertEquals("admin", summary.username);
-        assertEquals(0, summary.totalSessions);
-        assertEquals(0.0, summary.successRate);
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getUserProgressSummary aggregates session data correctly")
-    void testGetUserProgressSummary_withSession() {
-        final Long studentId = this.studentId();
-        final StudentProgressSummaryDto baseline = this.analyticsService.getUserProgressSummary(studentId);
-        assertNotNull(baseline);
-        assertEquals("student1", baseline.username);
-        final int baselineTotal = baseline.totalSessions;
-
-        final Long exerciseId = this.createExercise();
-        this.createSessionFor(studentId, exerciseId);
-
-        final StudentProgressSummaryDto summary = this.analyticsService.getUserProgressSummary(studentId);
-        assertNotNull(summary);
-        assertEquals("student1", summary.username);
-        assertEquals(baselineTotal + 1, summary.totalSessions,
-                "Creating one session should increase totalSessions by 1");
-        assertNotNull(summary.getCompletionRatePercentage());
-        assertNotNull(summary.getSuccessRatePercentage());
-        assertNotNull(summary.getFormattedAverageActions());
     }
 
     @Test
@@ -574,103 +388,6 @@ class AnalyticsServiceTest {
                 this.analyticsService.getUsersProgressSummaryByUsernameSearch(CREDENTIALS, "zzz_nobody_xyz");
         assertNotNull(summaries);
         assertTrue(summaries.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getSessionsByUserAndDateRange returns session within range and excludes it outside")
-    void testGetSessionsByUserAndDateRange() {
-        final var fixture = this.createSessionFixture();
-
-        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
-        final var within = this.analyticsService.getSessionsByUserAndDateRange(fixture.studentId(), start, end);
-
-        final LocalDateTime futureStart = LocalDateTime.now(ZoneId.systemDefault()).plusHours(1);
-        final LocalDateTime futureEnd = LocalDateTime.now(ZoneId.systemDefault()).plusHours(2);
-        final var outside =
-                this.analyticsService.getSessionsByUserAndDateRange(fixture.studentId(), futureStart, futureEnd);
-        this.assertDateRangeFilter(fixture.sessionId(), within, outside);
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getSessionsByExerciseAndDateRange returns session within range and excludes it outside")
-    void testGetSessionsByExerciseAndDateRange() {
-        final var fixture = this.createSessionFixture();
-
-        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
-        final var within = this.analyticsService.getSessionsByExerciseAndDateRange(fixture.exerciseId(), start, end);
-
-        final LocalDateTime futureStart = LocalDateTime.now(ZoneId.systemDefault()).plusHours(1);
-        final LocalDateTime futureEnd = LocalDateTime.now(ZoneId.systemDefault()).plusHours(2);
-        final var outside =
-                this.analyticsService.getSessionsByExerciseAndDateRange(fixture.exerciseId(), futureStart, futureEnd);
-        this.assertDateRangeFilter(fixture.sessionId(), within, outside);
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getSessionsByStatusAndDateRange filters completed vs incomplete sessions")
-    void testGetSessionsByStatusAndDateRange() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId = this.createSessionFor(studentId, exerciseId);
-        this.graspableMathService.markSessionComplete(sessionId);
-
-        final LocalDateTime start = LocalDateTime.now(ZoneId.systemDefault()).minusMinutes(1);
-        final LocalDateTime end = LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(1);
-
-        final var completed = this.analyticsService.getSessionsByStatusAndDateRange(Boolean.TRUE, start, end);
-        assertNotNull(completed);
-        assertTrue(completed.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Completed session should appear when filtering completed=true");
-
-        final var incomplete = this.analyticsService.getSessionsByStatusAndDateRange(Boolean.FALSE, start, end);
-        assertNotNull(incomplete);
-        assertFalse(incomplete.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
-                "Completed session should not appear when filtering completed=false");
-    }
-
-    @Test
-    @TestTransaction
-    @DisplayName("getAiInteractionsByExercise returns interactions for that exercise")
-    void testGetAiInteractionsByExercise() {
-        final Long studentId = this.studentId();
-        final Long exerciseId = this.createExercise();
-        final String sessionId = this.createSessionFor(studentId, exerciseId);
-
-        final var exercise = this.exerciseRepository.findById(exerciseId);
-        assertNotNull(exercise, "Created exercise must exist");
-        final var user = this.userRepository.findById(studentId);
-        assertNotNull(user, "Seeded student1 must exist");
-
-        final var interaction = new AiInteractionEntity();
-        interaction.sessionId = sessionId;
-        interaction.user = user;
-        interaction.exercise = exercise;
-        interaction.eventType = "test_exercise_interaction";
-        interaction.feedbackType = "POSITIVE";
-        this.aiInteractionRepository.persist(interaction);
-
-        final Long otherExerciseId = this.createExercise();
-        final var otherExercise = this.exerciseRepository.findById(otherExerciseId);
-        final String otherSessionId = this.createSessionFor(studentId, otherExerciseId);
-        final var otherInteraction = new AiInteractionEntity();
-        otherInteraction.sessionId = otherSessionId;
-        otherInteraction.user = user;
-        otherInteraction.exercise = otherExercise;
-        otherInteraction.eventType = "other_exercise_interaction";
-        otherInteraction.feedbackType = "HINT";
-        this.aiInteractionRepository.persist(otherInteraction);
-
-        final List<AiInteractionViewDto> results = this.analyticsService.getAiInteractionsByExercise(exerciseId);
-        assertNotNull(results);
-        assertTrue(results.stream().anyMatch(i -> sessionId.equals(i.sessionId)),
-                "Interaction for the exercise should appear");
-        assertFalse(results.stream().anyMatch(i -> otherSessionId.equals(i.sessionId)),
-                "Interaction from a different exercise should not appear");
     }
 
     @Test

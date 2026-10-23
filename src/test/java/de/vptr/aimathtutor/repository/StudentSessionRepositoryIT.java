@@ -28,27 +28,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByUserAndDateRange() {
-        final UserEntity user = this.createUser("drng", "sessuser_");
-        final ExerciseEntity ex = this.createExercise(user, "DateRangeExercise", "x + 2");
-
-        final StudentSessionEntity session = new StudentSessionEntity();
-        session.sessionId = "sess-drng-" + UUID.randomUUID();
-        session.user = user;
-        session.exercise = ex;
-        session.startTime = LocalDateTime.now(ZoneId.systemDefault()).minusDays(1);
-        session.completed = true;
-        this.sessionRepository.persist(session);
-
-        final List<StudentSessionEntity> found = this.sessionRepository.findByUserIdAndDateRange(
-                Objects.requireNonNull(user.id), LocalDateTime.now(ZoneId.systemDefault()).minusDays(2),
-                LocalDateTime.now(ZoneId.systemDefault()));
-        Assertions.assertFalse(found.isEmpty());
-        Assertions.assertTrue(found.stream().anyMatch(s -> Objects.equals(s.sessionId, session.sessionId)));
-    }
-
-    @Test
-    @TestTransaction
     public void testSearchByUserOrExerciseTerm_returnsMatchingSession() {
         final UserEntity user = this.createUser("srch", "sessuser_");
         final ExerciseEntity ex = this.createExercise(user, "SearchableExercise", "x + 2");
@@ -215,31 +194,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testFindByUserIdAndExerciseId_nullUserId() {
         Assertions.assertTrue(this.sessionRepository.findByUserIdAndExerciseId(null, 1L).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserIdAndDateRange_nullUserId() {
-        final LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        Assertions.assertTrue(this.sessionRepository.findByUserIdAndDateRange(null, now.minusDays(1), now).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseIdAndDateRange_found() {
-        final StudentSessionEntity s = this.createSession("fexdr");
-        final Long exId = Objects.requireNonNull(Objects.requireNonNull(s.exercise).id);
-        final LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        final List<StudentSessionEntity> result =
-                this.sessionRepository.findByExerciseIdAndDateRange(exId, now.minusDays(1), now);
-        Assertions.assertFalse(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseIdAndDateRange_null() {
-        Assertions.assertTrue(this.sessionRepository.findByExerciseIdAndDateRange(null,
-                LocalDateTime.now(ZoneId.systemDefault()), LocalDateTime.now(ZoneId.systemDefault())).isEmpty());
     }
 
     @Test

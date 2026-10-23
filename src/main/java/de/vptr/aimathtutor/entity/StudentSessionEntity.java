@@ -69,14 +69,6 @@ import jakarta.validation.constraints.NotNull;
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "WHERE s.user.id = :u and s.exercise.id = :e "
                         + "ORDER BY s.startTime DESC, s.publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByUserAndDateRangeWithRelations",
-                query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
-                        + "WHERE s.user.id = :u and s.startTime >= :s and s.startTime <= :e "
-                        + "ORDER BY s.startTime DESC, s.publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByExerciseAndDateRangeWithRelations",
-                query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
-                        + "WHERE s.exercise.id = :e and s.startTime >= :s and s.startTime <= :en "
-                        + "ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.findByCompletedAndDateRangeWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "WHERE s.completed = :c and s.startTime >= :s and s.startTime <= :e "

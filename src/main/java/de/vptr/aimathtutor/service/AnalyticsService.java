@@ -83,26 +83,6 @@ public class AnalyticsService {
     }
 
     /**
-     * Get sessions by user ID
-     */
-    @Transactional
-    public List<StudentSessionViewDto> getSessionsByUser(final Long userId) {
-        LOG.tracef("Getting sessions for user: %s", userId);
-        final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByUserId(userId);
-        return sessions.stream().map(StudentSessionViewDto::new).toList();
-    }
-
-    /**
-     * Get sessions by exercise ID
-     */
-    @Transactional
-    public List<StudentSessionViewDto> getSessionsByExercise(final Long exerciseId) {
-        LOG.tracef("Getting sessions for exercise: %s", exerciseId);
-        final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByExerciseId(exerciseId);
-        return sessions.stream().map(StudentSessionViewDto::new).toList();
-    }
-
-    /**
      * Get sessions by user and exercise ID Efficient single-database query for filtering sessions by both user and
      * exercise
      */
@@ -113,31 +93,6 @@ public class AnalyticsService {
         // Use repository single-query filter
         final List<StudentSessionEntity> sessions =
                 this.studentSessionRepository.findByUserIdAndExerciseId(userId, exerciseId);
-        return sessions.stream().map(StudentSessionViewDto::new).toList();
-    }
-
-    /**
-     * Get sessions by user and date range
-     */
-    @Transactional
-    public List<StudentSessionViewDto> getSessionsByUserAndDateRange(final Long userId, final LocalDateTime startDate,
-            final LocalDateTime endDate) {
-        LOG.tracef("Getting sessions for user: %s between %s and %s", userId, startDate, endDate);
-        // repository can expose a date-range finder if needed; use filter here
-        final List<StudentSessionEntity> sessions =
-                this.studentSessionRepository.findByUserIdAndDateRange(userId, startDate, endDate);
-        return sessions.stream().map(StudentSessionViewDto::new).toList();
-    }
-
-    /**
-     * Get sessions by exercise and date range
-     */
-    @Transactional
-    public List<StudentSessionViewDto> getSessionsByExerciseAndDateRange(final Long exerciseId,
-            final LocalDateTime startDate, final LocalDateTime endDate) {
-        LOG.tracef("Getting sessions for exercise: %s between %s and %s", exerciseId, startDate, endDate);
-        final List<StudentSessionEntity> sessions =
-                this.studentSessionRepository.findByExerciseIdAndDateRange(exerciseId, startDate, endDate);
         return sessions.stream().map(StudentSessionViewDto::new).toList();
     }
 
@@ -179,30 +134,6 @@ public class AnalyticsService {
     }
 
     /**
-     * Get sessions by completion status and date range
-     */
-    @Transactional
-    public List<StudentSessionViewDto> getSessionsByStatusAndDateRange(final Boolean completed,
-            final LocalDateTime startDate, final LocalDateTime endDate) {
-        LOG.tracef("Getting %s sessions between %s and %s", Boolean.TRUE.equals(completed) ? "completed" : "incomplete",
-                startDate, endDate);
-        final List<StudentSessionEntity> sessions =
-                this.studentSessionRepository.findByCompletedAndDateRange(completed, startDate, endDate);
-        return sessions.stream().map(StudentSessionViewDto::new).toList();
-    }
-
-    /**
-     * Get a specific session by ID
-     */
-    @Transactional
-    @Nullable
-    public StudentSessionViewDto getSessionById(final Long sessionId) {
-        LOG.tracef("Getting session: %s", sessionId);
-        final StudentSessionEntity session = this.studentSessionRepository.findById(sessionId);
-        return session != null ? new StudentSessionViewDto(session) : null;
-    }
-
-    /**
      * Get a specific session by session ID string
      *
      * @param credentials
@@ -225,16 +156,6 @@ public class AnalyticsService {
     }
 
     /**
-     * Get all AI interactions
-     */
-    @Transactional
-    public List<AiInteractionViewDto> getAllAiInteractions() {
-        LOG.trace("Getting all AI interactions");
-        final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findAll();
-        return interactions.stream().map(AiInteractionViewDto::new).toList();
-    }
-
-    /**
      * Get AI interactions by session ID
      *
      * @param credentials
@@ -253,43 +174,6 @@ public class AnalyticsService {
         LOG.tracef("Getting AI interactions for session: %s", sessionId);
         final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findBySessionId(sessionId);
         return interactions.stream().map(AiInteractionViewDto::new).toList();
-    }
-
-    /**
-     * Get AI interactions by user ID
-     */
-    @Transactional
-    public List<AiInteractionViewDto> getAiInteractionsByUser(final Long userId) {
-        LOG.tracef("Getting AI interactions for user: %s", userId);
-        final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findByUserId(userId);
-        return interactions.stream().map(AiInteractionViewDto::new).toList();
-    }
-
-    /**
-     * Get AI interactions by exercise ID
-     */
-    @Transactional
-    public List<AiInteractionViewDto> getAiInteractionsByExercise(final Long exerciseId) {
-        LOG.tracef("Getting AI interactions for exercise: %s", exerciseId);
-        final List<AiInteractionEntity> interactions = this.aiInteractionRepository.findByExerciseId(exerciseId);
-        return interactions.stream().map(AiInteractionViewDto::new).toList();
-    }
-
-    /**
-     * Get progress summary for a single user
-     */
-    @Transactional
-    @Nullable
-    public StudentProgressSummaryDto getUserProgressSummary(final Long userId) {
-        LOG.tracef("Getting progress summary for user: %s", userId);
-
-        final UserEntity user = this.userRepository.findById(userId);
-        if (user == null) {
-            return null;
-        }
-
-        final List<StudentSessionEntity> sessions = this.studentSessionRepository.findByUserId(userId);
-        return this.computeProgressSummary(user, sessions);
     }
 
     /**
@@ -336,8 +220,7 @@ public class AnalyticsService {
     }
 
     /**
-     * Computes progress summary for a user given their sessions Helper method to avoid code duplication between
-     * getUserProgressSummary and getAllUsersProgressSummary
+     * Computes progress summary for a user given their sessions
      */
     private StudentProgressSummaryDto computeProgressSummary(final UserEntity user,
             final List<StudentSessionEntity> sessions) {

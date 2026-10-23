@@ -225,22 +225,6 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves the most recent comments with related entities eagerly loaded.
-     *
-     * @param limit
-     *            the maximum number of comments to retrieve (0 or negative returns empty list)
-     * @return a list of recent {@link CommentEntity} objects with relations
-     */
-    public List<CommentEntity> findRecentCommentsWithRelations(final int limit) {
-        if (limit <= 0) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("Comment.findRecentWithRelations", CommentEntity.class);
-        q.setMaxResults(limit);
-        return q.getResultList();
-    }
-
-    /**
      * Persists a comment entity to the database.
      *
      * @param comment
@@ -300,22 +284,6 @@ public class CommentRepository extends AbstractRepository {
      */
     public List<CommentEntity> findBySessionId(final String sessionId) {
         final var q = this.em.createNamedQuery("Comment.findBySessionId", CommentEntity.class);
-        q.setParameter("s", sessionId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all comments associated with a specific student session with related entities eagerly loaded.
-     *
-     * @param sessionId
-     *            the session ID to filter by
-     * @return a list of {@link CommentEntity} objects with relations in the session
-     */
-    public List<CommentEntity> findBySessionIdWithRelations(final String sessionId) {
-        if (sessionId == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("Comment.findBySessionIdWithRelations", CommentEntity.class);
         q.setParameter("s", sessionId);
         return q.getResultList();
     }

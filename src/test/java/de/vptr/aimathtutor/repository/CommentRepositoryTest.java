@@ -151,23 +151,6 @@ class CommentRepositoryTest {
     }
 
     @Test
-    @DisplayName("findRecentCommentsWithRelations should respect limit")
-    @TestTransaction
-    void testFindRecentCommentsWithRelations() {
-        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
-        for (int i = 0; i < 5; i++) {
-            final var c = new CommentEntity();
-            c.content = "Recent " + i;
-            c.exercise = exercise;
-            this.commentRepository.persist(c);
-        }
-        this.commentRepository.flush();
-
-        final var recent = this.commentRepository.findRecentCommentsWithRelations(3);
-        assertEquals(3, recent.size());
-    }
-
-    @Test
     @DisplayName("Null guard paths for optional and relation-loading methods")
     void testNullGuardPaths() {
         assertTrue(this.commentRepository.findByPublicId(null).isEmpty());
@@ -175,11 +158,9 @@ class CommentRepositoryTest {
         assertTrue(this.commentRepository.findByIdOptionalWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findByExerciseIdWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findByUserIdWithRelations(null).isEmpty());
-        assertTrue(this.commentRepository.findBySessionIdWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findReplies(null).isEmpty());
         assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());
-        assertTrue(this.commentRepository.findRecentCommentsWithRelations(0).isEmpty());
     }
 
     @Test

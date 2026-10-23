@@ -355,27 +355,6 @@ class CommentServiceTest {
     }
 
     @Test
-    @DisplayName("findRecentComments returns at most limit number of comments")
-    @TestTransaction
-    void testFindRecentComments_limitRespected() {
-        final ExerciseViewDto exercise = this.createCommentableExercise();
-        final var student = this.userRepository.findByUsername("student1");
-        for (int i = 0; i < 5; i++) {
-            final var d = new CommentDto();
-            d.content = "recent " + i;
-            d.exercisePublicId = exercise.publicId;
-            this.as(student).createComment(d);
-        }
-
-        final var recent = this.commentService.findRecentComments(3);
-        assertNotNull(recent);
-        assertEquals(3, recent.size(), "findRecentComments(3) should return exactly 3 comments");
-        assertEquals("recent 4", recent.get(0).content, "Most recent comment should be first");
-        assertEquals("recent 3", recent.get(1).content, "Second most recent should be second");
-        assertEquals("recent 2", recent.get(2).content, "Third most recent should be third");
-    }
-
-    @Test
     @DisplayName("findByUserId returns only comments by that user")
     @TestTransaction
     void testFindByUserId_filtered() {
@@ -740,23 +719,4 @@ class CommentServiceTest {
         verify(this.commentRateLimitService).checkRateLimit(student.id);
     }
 
-    @Test
-    @DisplayName("listCommentsBySession returns comments with the given sessionId")
-    @TestTransaction
-    void testListCommentsBySession() {
-        final ExerciseViewDto exercise = this.createCommentableExercise();
-        final var student = this.userRepository.findByUsername("student1");
-        final String sessionId = "test-session-" + UUID.randomUUID().toString().substring(0, 8);
-
-        final var dto = new CommentDto();
-        dto.content = "session comment";
-        dto.exercisePublicId = exercise.publicId;
-        dto.sessionId = sessionId;
-        final CommentViewDto created = this.as(student).createComment(dto);
-
-        final var results = this.commentService.listCommentsBySession(sessionId);
-        assertNotNull(results);
-        assertTrue(results.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
-                "Comment with matching sessionId should be returned");
-    }
 }

@@ -58,32 +58,6 @@ class StudentSessionRepositoryTest {
     }
 
     @Test
-    @DisplayName("findByUserIdAndDateRange should filter correctly")
-    @TestTransaction
-    void testFindByUserIdAndDateRange() {
-        final var user = this.userRepository.findByUsername("student1");
-        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
-        final var now = LocalDateTime.now(ZoneId.systemDefault());
-
-        final var session = new StudentSessionEntity();
-        session.sessionId = UlidUtil.generate();
-        session.user = user;
-        session.exercise = exercise;
-        session.startTime = now;
-        session.publicId = UlidUtil.generate();
-        this.studentSessionRepository.persist(session);
-        this.studentSessionRepository.flush();
-
-        final var found = this.studentSessionRepository.findByUserIdAndDateRange(user.id, now.minusMinutes(1),
-                now.plusMinutes(1));
-        assertFalse(found.isEmpty());
-
-        final var notFound =
-                this.studentSessionRepository.findByUserIdAndDateRange(user.id, now.plusMinutes(2), now.plusMinutes(3));
-        assertTrue(notFound.isEmpty());
-    }
-
-    @Test
     @DisplayName("countActiveStudentsSince should count unique users")
     @TestTransaction
     void testCountActiveStudentsSince() {
@@ -171,7 +145,6 @@ class StudentSessionRepositoryTest {
         assertTrue(this.studentSessionRepository.findByExerciseId(null).isEmpty());
         assertNull(this.studentSessionRepository.findById(null));
         assertTrue(this.studentSessionRepository.findByUserIdAndExerciseId(null, 1L).isEmpty());
-        assertTrue(this.studentSessionRepository.findByUserIdAndDateRange(null, null, null).isEmpty());
         assertTrue(this.studentSessionRepository.findByStartTimeAfter(null).isEmpty());
         assertEquals(0L, this.studentSessionRepository.countByCompleted(null));
         assertEquals(0L, this.studentSessionRepository.countActiveStudentsSince(null));
@@ -190,7 +163,6 @@ class StudentSessionRepositoryTest {
         final long halfOpenCount =
                 this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(null, null);
         assertEquals(0L, halfOpenCount);
-        assertTrue(this.studentSessionRepository.findByExerciseIdAndDateRange(null, null, null).isEmpty());
         assertTrue(this.studentSessionRepository.findByCompletedAndDateRange(null, null, null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm(null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm("").isEmpty());

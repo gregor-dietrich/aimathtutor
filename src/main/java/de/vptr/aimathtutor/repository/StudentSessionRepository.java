@@ -149,38 +149,6 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Finds student sessions by user ID and date range with relations eagerly loaded.
-     */
-    public List<StudentSessionEntity> findByUserIdAndDateRange(final Long userId, final LocalDateTime start,
-            final LocalDateTime end) {
-        if (userId == null || start == null || end == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("StudentSession.findByUserAndDateRangeWithRelations",
-                StudentSessionEntity.class);
-        q.setParameter("u", userId);
-        q.setParameter("s", start);
-        q.setParameter("e", end);
-        return q.getResultList();
-    }
-
-    /**
-     * Finds student sessions by exercise ID and date range with relations eagerly loaded.
-     */
-    public List<StudentSessionEntity> findByExerciseIdAndDateRange(final Long exerciseId, final LocalDateTime start,
-            final LocalDateTime end) {
-        if (exerciseId == null || start == null || end == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("StudentSession.findByExerciseAndDateRangeWithRelations",
-                StudentSessionEntity.class);
-        q.setParameter("e", exerciseId);
-        q.setParameter("s", start);
-        q.setParameter("en", end);
-        return q.getResultList();
-    }
-
-    /**
      * Finds student sessions by completion status and date range with relations eagerly loaded.
      */
     public List<StudentSessionEntity> findByCompletedAndDateRange(final Boolean completed, final LocalDateTime start,

@@ -21,7 +21,7 @@ import jakarta.inject.Inject;
  * Integration tests for {@link CommentRepository}.
  */
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods", "PMD.ExcessivePublicCount" })
+@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
 public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
@@ -164,12 +164,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindBySessionIdWithRelations_nullReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findBySessionIdWithRelations(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindReplies_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findReplies(null).isEmpty());
     }
@@ -202,18 +196,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testDeleteByPublicId_notFoundReturnsFalse() {
         Assertions.assertFalse(this.commentRepository.deleteByPublicId("00000000000000000000000000"));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindRecentCommentsWithRelations_zeroLimitReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findRecentCommentsWithRelations(0).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindRecentCommentsWithRelations_negativeLimitReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findRecentCommentsWithRelations(-1).isEmpty());
     }
 
     private CommentEntity createComment(final String suffix) {
@@ -324,13 +306,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindRecentCommentsWithRelations_positiveLimit() {
-        this.createComment("frecentwr");
-        Assertions.assertFalse(this.commentRepository.findRecentCommentsWithRelations(10).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testDeleteById_existingComment() {
         final CommentEntity c = this.createComment("delid");
         final Long id = Objects.requireNonNull(c.id);
@@ -363,23 +338,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final List<CommentEntity> result = this.commentRepository.findBySessionId(sessionId);
         Assertions.assertFalse(result.isEmpty());
         Assertions.assertTrue(result.stream().anyMatch(r -> sessionId.equals(r.sessionId)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindBySessionIdWithRelations_found() {
-        final String sessionId = "sess-crwr-" + UUID.randomUUID();
-        final UserEntity user = this.createUser("fsesswr", "cruser_");
-        final ExerciseEntity ex = this.createExercise(user, "SessWrEx", "x+1");
-        final CommentEntity c = new CommentEntity();
-        c.content = "Session WR comment";
-        c.exercise = ex;
-        c.user = user;
-        c.sessionId = sessionId;
-        this.commentRepository.persist(c);
-
-        final List<CommentEntity> result = this.commentRepository.findBySessionIdWithRelations(sessionId);
-        Assertions.assertFalse(result.isEmpty());
     }
 
     @Test

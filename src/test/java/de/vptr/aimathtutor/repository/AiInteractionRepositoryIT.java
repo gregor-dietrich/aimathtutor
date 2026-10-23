@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.entity.AiInteractionEntity;
-import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.entity.UserEntity;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -29,21 +27,6 @@ public class AiInteractionRepositoryIT extends AbstractRepositoryIT {
         interaction.eventType = "simplify_" + suffix;
         interaction.feedbackType = "POSITIVE";
         interaction.actionCorrect = true;
-        this.aiInteractionRepository.persist(interaction);
-        return interaction;
-    }
-
-    private AiInteractionEntity createInteractionWithUser(final String sessionId, final String suffix) {
-        final UserEntity user = this.createUser(suffix, "aiuser_");
-        final ExerciseEntity ex = this.createExercise(user, "Exercise_" + suffix, "x + 1");
-
-        final AiInteractionEntity interaction = new AiInteractionEntity();
-        interaction.sessionId = sessionId;
-        interaction.eventType = "factor_" + suffix;
-        interaction.feedbackType = "CORRECTIVE";
-        interaction.user = user;
-        interaction.exercise = ex;
-        interaction.actionCorrect = false;
         this.aiInteractionRepository.persist(interaction);
         return interaction;
     }
@@ -91,42 +74,6 @@ public class AiInteractionRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testFindBySessionId_null() {
         final List<AiInteractionEntity> result = this.aiInteractionRepository.findBySessionId(null);
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserId_found() {
-        final AiInteractionEntity interaction = this.createInteractionWithUser("sess-uid", "fuid");
-        final Long userId = Objects.requireNonNull(Objects.requireNonNull(interaction.user).id);
-        final List<AiInteractionEntity> result = this.aiInteractionRepository.findByUserId(userId);
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(r -> userId.equals(Objects.requireNonNull(r.user).id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserId_null() {
-        final List<AiInteractionEntity> result = this.aiInteractionRepository.findByUserId(null);
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseId_found() {
-        final AiInteractionEntity interaction = this.createInteractionWithUser("sess-exid", "fexid");
-        final Long exId = Objects.requireNonNull(Objects.requireNonNull(interaction.exercise).id);
-        final List<AiInteractionEntity> result = this.aiInteractionRepository.findByExerciseId(exId);
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(r -> exId.equals(Objects.requireNonNull(r.exercise).id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseId_null() {
-        final List<AiInteractionEntity> result = this.aiInteractionRepository.findByExerciseId(null);
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isEmpty());
     }

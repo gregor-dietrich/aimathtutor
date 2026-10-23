@@ -45,16 +45,8 @@ import jakarta.validation.constraints.NotBlank;
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
                         + "WHERE c.user.id = :u ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findRecent", query = "FROM CommentEntity ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.findRecentWithRelations",
-                query = "SELECT c FROM CommentEntity c "
-                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                        + "ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findBySessionId",
                 query = "FROM CommentEntity WHERE sessionId = :s ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.findBySessionIdWithRelations",
-                query = "SELECT c FROM CommentEntity c "
-                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                        + "WHERE c.sessionId = :s ORDER BY c.created DESC"),
         @NamedQuery(name = "Comment.findReplies",
                 query = "FROM CommentEntity " + "WHERE parentComment.publicId = :p AND status = 'VISIBLE' "
                         + "ORDER BY created ASC"),
