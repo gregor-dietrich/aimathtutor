@@ -34,25 +34,6 @@ public abstract class AbstractRepository {
     }
 
     /**
-     * Executes a named query with a maximum results limit and retrieves results of the specified type.
-     *
-     * @param <T>
-     *            the type of entities to retrieve
-     * @param name
-     *            the name of the persistent named query
-     * @param type
-     *            the entity class type
-     * @param max
-     *            the maximum number of results to retrieve (0 or negative returns empty list)
-     * @return a list of up to max results from the named query
-     */
-    protected <T> List<T> listNamedWithMax(final String name, final Class<T> type, final int max) {
-        final TypedQuery<T> q = this.em.createNamedQuery(name, type);
-        q.setMaxResults(Math.max(0, max));
-        return q.getResultList();
-    }
-
-    /**
      * Flushes the current persistence context to the database.
      */
     public void flush() {

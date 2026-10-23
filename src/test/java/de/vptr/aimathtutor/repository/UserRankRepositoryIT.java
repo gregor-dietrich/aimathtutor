@@ -31,7 +31,7 @@ public class UserRankRepositoryIT {
     @TestTransaction
     public void testFindAll_returnsRanks() {
         final UserRankEntity created = this.createRank("Rank_fall");
-        final List<UserRankEntity> all = this.userRankRepository.findAll();
+        final List<UserRankEntity> all = this.userRankRepository.findAll(0, 100);
         Assertions.assertTrue(all.stream().anyMatch(r -> Objects.equals(r.id, created.id)),
                 "findAll must include the rank that was just created");
     }

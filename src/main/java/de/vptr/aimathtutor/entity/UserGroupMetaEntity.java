@@ -43,20 +43,4 @@ public class UserGroupMetaEntity extends BaseEntity {
     @Column(name = "last_edit")
     @Nullable
     public LocalDateTime lastEdit;
-
-    // Helper method to check if user is in group
-
-    /**
-     * Checks if a user is a member of a specific group.
-     *
-     * @param userId
-     *            the ID of the user to check
-     * @param groupId
-     *            the ID of the group to check
-     * @return true if the user is a member of the group, false otherwise
-     */
-    public static boolean isUserInGroup(final Long userId, final Long groupId) {
-        return count("user.id = ?1 AND group.id = ?2", userId, groupId) > 0;
-    }
-
 }

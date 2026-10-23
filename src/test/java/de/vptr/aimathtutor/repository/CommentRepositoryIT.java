@@ -39,7 +39,7 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         this.commentRepository.persist(comment);
 
         final List<CommentEntity> comments =
-                this.commentRepository.findByExerciseIdWithRelations(Objects.requireNonNull(ex.id));
+                this.commentRepository.findByExerciseIdWithRelations(Objects.requireNonNull(ex.id), 0, 10);
         Assertions.assertFalse(comments.isEmpty());
         final CommentEntity loaded = comments.get(0);
         Assertions.assertNotNull(loaded.user);
@@ -127,20 +127,8 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByPublicIdWithRelations_nullReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findByPublicIdWithRelations(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByIdOptionalWithRelations_nullReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findByIdOptionalWithRelations(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByExerciseIdWithRelations_nullReturnsEmpty() {
-        Assertions.assertTrue(this.commentRepository.findByExerciseIdWithRelations(null).isEmpty());
+        Assertions.assertTrue(this.commentRepository.findByExerciseIdWithRelations(null, 0, 10).isEmpty());
     }
 
     @Test
@@ -194,7 +182,7 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testFindAllOrderedWithRelations_returnsComments() {
         this.createComment("fallwr");
-        Assertions.assertFalse(this.commentRepository.findAllOrderedWithRelations().isEmpty());
+        Assertions.assertFalse(this.commentRepository.findAllOrderedWithRelations(0, 10).isEmpty());
     }
 
     @Test
@@ -204,24 +192,6 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         final var found = this.commentRepository.findByPublicId(Objects.requireNonNull(c.publicId));
         Assertions.assertTrue(found.isPresent());
         Assertions.assertEquals(c.publicId, found.get().publicId);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicIdWithRelations_found() {
-        final CommentEntity c = this.createComment("fpubwr");
-        final var found = this.commentRepository.findByPublicIdWithRelations(Objects.requireNonNull(c.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(c.publicId, found.get().publicId);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByIdOptionalWithRelations_found() {
-        final CommentEntity c = this.createComment("fidowr");
-        final var found = this.commentRepository.findByIdOptionalWithRelations(Objects.requireNonNull(c.id));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(c.id, found.get().id);
     }
 
     @Test

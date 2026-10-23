@@ -88,7 +88,7 @@ public class CommentFlaggingService {
      * @return a list of flagged {@link CommentViewDto}s
      */
     @Transactional
-    public List<CommentViewDto> findFlaggedComments(final Integer minFlags) {
+    List<CommentViewDto> findFlaggedComments(final Integer minFlags) {
         final List<CommentEntity> comments = this.commentRepository.findFlaggedComments(minFlags);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }

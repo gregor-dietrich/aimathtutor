@@ -8,7 +8,6 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
@@ -116,40 +115,6 @@ public class CommentService {
         this.permissionService.requireAdminView(credentials);
         final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations(page, pageSize);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
-    }
-
-    /**
-     * Finds a single comment by ID with loaded relationships.
-     *
-     * @param id
-     *            the comment ID
-     * @return an {@link Optional} containing the {@link CommentViewDto} with exercise/user data, or empty if not found
-     */
-    @Transactional
-    public Optional<CommentViewDto> findById(final Long id) {
-        final Optional<CommentEntity> comment = this.commentRepository.findByIdOptionalWithRelations(id);
-        if (comment.isPresent()) {
-            final CommentEntity entity = comment.get();
-            return Optional.of(new CommentViewDto(entity));
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Finds a single comment by its public ID with loaded relationships.
-     *
-     * @param publicId
-     *            the comment public ID
-     * @return an {@link Optional} containing the {@link CommentViewDto} with exercise/user data, or empty if not found
-     */
-    @Transactional
-    public Optional<CommentViewDto> findByPublicId(final String publicId) {
-        final Optional<CommentEntity> comment = this.commentRepository.findByPublicIdWithRelations(publicId);
-        if (comment.isPresent()) {
-            final CommentEntity entity = comment.get();
-            return Optional.of(new CommentViewDto(entity));
-        }
-        return Optional.empty();
     }
 
     /**

@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.service;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -67,31 +66,6 @@ public class UserGroupService {
 
     private List<UserGroupViewDto> findAllGroups() {
         return this.userGroupRepository.findAll().stream().map(UserGroupViewDto::new).toList();
-    }
-
-    /**
-     * Finds a user group by ID.
-     *
-     * @param id
-     *            the group ID
-     * @return an {@link Optional} containing the {@link UserGroupViewDto}, or empty if not found
-     */
-    @Transactional
-    public Optional<UserGroupViewDto> findById(final Long id) {
-        return this.userGroupRepository.findByIdOptional(id).map(UserGroupViewDto::new);
-    }
-
-    /**
-     * Finds a user group by name.
-     *
-     * @param name
-     *            the group name
-     * @return an {@link Optional} containing the {@link UserGroupViewDto}, or empty if not found
-     */
-    @Transactional
-    public Optional<UserGroupViewDto> findByName(final String name) {
-        final var group = this.userGroupRepository.findByName(name);
-        return Optional.ofNullable(group).map(UserGroupViewDto::new);
     }
 
     /**
@@ -306,19 +280,6 @@ public class UserGroupService {
         }
         this.userGroupMetaRepository.delete(meta);
         return true;
-    }
-
-    /**
-     * Checks if a user is a member of a specific group.
-     *
-     * @param userId
-     *            the user ID
-     * @param groupId
-     *            the group ID
-     * @return {@code true} if user is in group, {@code false} otherwise
-     */
-    public boolean isUserInGroup(final Long userId, final Long groupId) {
-        return this.userGroupMetaRepository.isUserInGroup(userId, groupId);
     }
 
     /**

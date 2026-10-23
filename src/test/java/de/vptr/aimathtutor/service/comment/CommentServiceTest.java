@@ -102,11 +102,6 @@ class CommentServiceTest {
         return this.exerciseService.createExercise(dto);
     }
 
-    private Long getCommentNumericId(final String publicId) {
-        return this.commentRepository.findByPublicId(publicId).map(c -> c.id)
-                .orElseThrow(() -> new AssertionError("Comment not found: " + publicId));
-    }
-
     @Test
     @DisplayName("Should throw ValidationException when creating comment with null content")
     @Transactional
@@ -213,22 +208,6 @@ class CommentServiceTest {
     }
 
     @Test
-    @DisplayName("Should find comment by id after creation")
-    @TestTransaction
-    void shouldFindCommentById() {
-        final ExerciseViewDto exercise = this.createCommentableExercise();
-        final var dto = new CommentDto();
-        dto.content = "hello world";
-        dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.as(this.userRepository.findByUsername("student1")).createComment(dto);
-
-        final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
-
-        assertTrue(found.isPresent());
-        assertEquals("hello world", found.get().content);
-    }
-
-    @Test
     @DisplayName("Should list comments by exercise id")
     @TestTransaction
     void shouldListCommentsByExercise() {
@@ -258,8 +237,8 @@ class CommentServiceTest {
 
         this.as(student).deleteComment(created.publicId, true);
 
-        final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
-        assertTrue(found.isPresent(), "Soft-deleted comment should still be findable");
+        assertTrue(this.commentRepository.findByPublicId(created.publicId).isPresent(),
+                "Soft-deleted comment should still be findable");
         assertEquals(student.publicId,
                 this.commentRepository.findByPublicId(created.publicId).orElseThrow().deletedBy.publicId);
         verify(this.permissionService).requireCommentAdd();
@@ -280,8 +259,6 @@ class CommentServiceTest {
 
         this.as(admin).moderateComment(created.publicId, "HIDE", "spam");
 
-        final var found = this.commentService.findById(this.getCommentNumericId(created.publicId));
-        assertTrue(found.isPresent());
         final var hidden = this.commentService.findByStatus(CREDENTIALS, CommentStatus.HIDDEN);
         assertTrue(hidden.stream().anyMatch(c -> c.publicId.equals(created.publicId)));
         assertEquals(admin.publicId,
@@ -335,9 +312,8 @@ class CommentServiceTest {
                 () -> this.as(student2).editComment(created.publicId, editDto));
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), ex.getResponse().getStatus());
 
-        final var reloaded = this.commentService.findById(this.getCommentNumericId(created.publicId));
-        assertTrue(reloaded.isPresent());
-        assertEquals(created.content, reloaded.get().content, "Comment content should be unchanged after failed edit");
+        final var reloaded = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
+        assertEquals(created.content, reloaded.content, "Comment content should be unchanged after failed edit");
         verify(this.permissionService).requireCommentEdit();
     }
 
@@ -449,14 +425,6 @@ class CommentServiceTest {
         assertNotNull(all);
         assertTrue(all.stream().anyMatch(c -> c.publicId.equals(created.publicId)),
                 "Newly created comment should appear in getAllComments");
-    }
-
-    @Test
-    @DisplayName("findByPublicId returns empty for unknown publicId")
-    @TestTransaction
-    void testFindByPublicId_notFound() {
-        final var result = this.commentService.findByPublicId("00000000000000000000000000");
-        assertFalse(result.isPresent());
     }
 
     @Test
@@ -587,22 +555,6 @@ class CommentServiceTest {
     }
 
     @Test
-    @DisplayName("findByPublicId returns comment when found")
-    @TestTransaction
-    void testFindByPublicId_found() {
-        final var exercise = this.createCommentableExercise();
-        final var student = this.userRepository.findByUsername("student1");
-        final var dto = new CommentDto();
-        dto.content = "find me by public id";
-        dto.exercisePublicId = exercise.publicId;
-        final CommentViewDto created = this.as(student).createComment(dto);
-
-        final var found = this.commentService.findByPublicId(created.publicId);
-        assertTrue(found.isPresent());
-        assertEquals(created.content, found.get().content);
-    }
-
-    @Test
     @DisplayName("flagComment calls through to flagging service")
     @TestTransaction
     void testFlagComment() {
@@ -710,7 +662,7 @@ class CommentServiceTest {
             assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
         }
 
-        final var reloaded = this.commentService.findByPublicId(created.publicId).orElseThrow();
+        final var reloaded = this.commentRepository.findByPublicId(created.publicId).orElseThrow();
         assertEquals("comment to keep", reloaded.content, "Comment content must be unchanged");
         assertEquals(CommentStatus.VISIBLE, reloaded.status, "Comment must be neither deleted nor hidden");
         assertEquals(0, reloaded.flagsCount, "Comment must not be flagged");

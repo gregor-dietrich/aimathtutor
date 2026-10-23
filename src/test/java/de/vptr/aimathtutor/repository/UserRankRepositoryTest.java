@@ -35,7 +35,7 @@ class UserRankRepositoryTest {
     @Test
     @DisplayName("findAll returns non-null list with seeded entries")
     void testFindAll() {
-        final var all = this.userRankRepository.findAll();
+        final var all = this.userRankRepository.findAll(0, 100);
         assertNotNull(all);
     }
 

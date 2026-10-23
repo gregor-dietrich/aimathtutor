@@ -107,33 +107,8 @@ public class UserService {
      *            the username to search for
      * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
      */
-    @Transactional
-    public Optional<UserViewDto> findByUsername(final String username) {
+    private Optional<UserViewDto> findByUsername(final String username) {
         return this.userRepository.findByUsernameOptional(username).map(UserViewDto::new);
-    }
-
-    /**
-     * Finds a user by public ID.
-     *
-     * @param publicId
-     *            the user public ID
-     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
-     */
-    @Transactional
-    public Optional<UserViewDto> findByPublicId(final String publicId) {
-        return this.userRepository.findByPublicId(publicId).map(UserViewDto::new);
-    }
-
-    /**
-     * Finds a user by ID.
-     *
-     * @param id
-     *            the user ID
-     * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
-     */
-    @Transactional
-    public Optional<UserViewDto> findById(final Long id) {
-        return this.userRepository.findByIdOptional(id).map(UserViewDto::new);
     }
 
     /**
@@ -143,8 +118,7 @@ public class UserService {
      *            the email address to search for
      * @return an {@link Optional} containing the {@link UserViewDto}, or empty if not found
      */
-    @Transactional
-    public Optional<UserViewDto> findByEmail(final String email) {
+    private Optional<UserViewDto> findByEmail(final String email) {
         return this.userRepository.findByEmailOptional(email).map(UserViewDto::new);
     }
 

@@ -16,15 +16,6 @@ import jakarta.transaction.Transactional;
 public class UserRankRepository extends AbstractRepository {
 
     /**
-     * Retrieves all user ranks from the database.
-     *
-     * @return a list of all {@link UserRankEntity} objects
-     */
-    public List<UserRankEntity> findAll() {
-        return this.findAll(0, 100);
-    }
-
-    /**
      * Retrieves user ranks from the database with pagination.
      *
      * @param page

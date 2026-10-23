@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserGroupDto;
 import de.vptr.aimathtutor.dto.UserGroupViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.repository.UserGroupMetaRepository;
 import de.vptr.aimathtutor.repository.UserGroupRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
@@ -44,6 +45,9 @@ class UserGroupServiceTest {
 
     @Inject
     private UserGroupRepository userGroupRepository;
+
+    @Inject
+    private UserGroupMetaRepository userGroupMetaRepository;
 
     @Inject
     private UserRepository userRepository;
@@ -114,31 +118,6 @@ class UserGroupServiceTest {
     }
 
     @Test
-    @DisplayName("Should find group by id")
-    @TestTransaction
-    void shouldFindGroupById() {
-        final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
-        final var groupEntity = this.userGroupRepository.findByPublicId(created.publicId).orElseThrow();
-
-        final var found = this.userGroupService.findById(groupEntity.id);
-
-        assertTrue(found.isPresent());
-        assertEquals(created.name, found.get().name);
-    }
-
-    @Test
-    @DisplayName("Should find group by name")
-    @TestTransaction
-    void shouldFindGroupByName() {
-        final UserGroupViewDto created = this.userGroupService.createGroup(this.buildDto());
-
-        final var found = this.userGroupService.findByName(created.name);
-
-        assertTrue(found.isPresent());
-        assertEquals(created.publicId, found.get().publicId);
-    }
-
-    @Test
     @DisplayName("Should add user to group and list them")
     @TestTransaction
     void shouldAddUserToGroupAndListMembership() {
@@ -153,7 +132,7 @@ class UserGroupServiceTest {
         assertEquals(1, members.size());
         assertEquals("student1", members.get(0).username);
         verify(this.permissionService).requireAdminView(CREDENTIALS);
-        assertTrue(this.userGroupService.isUserInGroup(student.id, groupEntity.id));
+        assertTrue(this.userGroupMetaRepository.isUserInGroup(student.id, groupEntity.id));
     }
 
     @Test
@@ -168,7 +147,7 @@ class UserGroupServiceTest {
 
         assertTrue(removed);
         final var groupEntity = this.userGroupRepository.findByPublicId(group.publicId).orElseThrow();
-        assertFalse(this.userGroupService.isUserInGroup(student.id, groupEntity.id));
+        assertFalse(this.userGroupMetaRepository.isUserInGroup(student.id, groupEntity.id));
     }
 
     @Test

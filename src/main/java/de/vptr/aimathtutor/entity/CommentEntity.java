@@ -27,10 +27,6 @@ import jakarta.validation.constraints.NotBlank;
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
                         + "ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findByIdWithRelations",
-                query = "SELECT c FROM CommentEntity c "
-                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                        + "WHERE c.id = :id"),
         @NamedQuery(name = "Comment.findByExerciseIdWithRelations",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "

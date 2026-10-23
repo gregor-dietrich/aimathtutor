@@ -29,7 +29,7 @@ class UserRepositoryTest {
     @DisplayName("findByEmailOptional should find user by blind index")
     @TestTransaction
     void testFindByEmailOptional() {
-        final var rank = this.userRankRepository.findAll().get(0);
+        final var rank = this.userRankRepository.findAll(0, 1).get(0);
         final String email = "test_" + UlidUtil.generate() + "@example.com";
 
         final var user = new UserEntity();
@@ -52,7 +52,7 @@ class UserRepositoryTest {
     @DisplayName("countByRankPublicId should count users with rank")
     @TestTransaction
     void testCountByRankPublicId() {
-        final var rank = this.userRankRepository.findAll().get(0);
+        final var rank = this.userRankRepository.findAll(0, 1).get(0);
         final long initialCount = this.userRepository.countByRankPublicId(rank.publicId);
 
         final var user = new UserEntity();
@@ -70,7 +70,7 @@ class UserRepositoryTest {
     @DisplayName("search with email should trigger blind index lookup")
     @TestTransaction
     void testSearchByEmail() {
-        final var rank = this.userRankRepository.findAll().get(0);
+        final var rank = this.userRankRepository.findAll(0, 1).get(0);
         final String email = "search_" + UlidUtil.generate() + "@example.com";
 
         final var user = new UserEntity();
@@ -91,7 +91,7 @@ class UserRepositoryTest {
     @DisplayName("deleteByPublicId should remove the user")
     @TestTransaction
     void testDeleteByPublicId() {
-        final var rank = this.userRankRepository.findAll().get(0);
+        final var rank = this.userRankRepository.findAll(0, 1).get(0);
         final var user = new UserEntity();
         user.username = "to_delete";
         user.password = "password";

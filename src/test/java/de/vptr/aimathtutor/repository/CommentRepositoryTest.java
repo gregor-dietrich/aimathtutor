@@ -31,9 +31,9 @@ class CommentRepositoryTest {
     ExerciseRepository exerciseRepository;
 
     @Test
-    @DisplayName("findByPublicIdWithRelations should load relations")
+    @DisplayName("findByExerciseIdWithRelations should load relations")
     @TestTransaction
-    void testFindByPublicIdWithRelations() {
+    void testFindByExerciseIdWithRelations_loadsRelations() {
         final var user = this.userRepository.findByUsername("student1");
         final var exercise = this.exerciseRepository.findAllOrdered().get(0);
 
@@ -45,7 +45,8 @@ class CommentRepositoryTest {
         this.commentRepository.persist(comment);
         this.commentRepository.flush();
 
-        final var found = this.commentRepository.findByPublicIdWithRelations(comment.publicId);
+        final var found = this.commentRepository.findByExerciseIdWithRelations(exercise.id, 0, 100).stream()
+                .filter(c -> comment.publicId.equals(c.publicId)).findFirst();
         assertTrue(found.isPresent());
         assertNotNull(found.get().user);
         assertNotNull(found.get().exercise);
@@ -153,9 +154,7 @@ class CommentRepositoryTest {
     @DisplayName("Null guard paths for optional and relation-loading methods")
     void testNullGuardPaths() {
         assertTrue(this.commentRepository.findByPublicId(null).isEmpty());
-        assertTrue(this.commentRepository.findByPublicIdWithRelations(null).isEmpty());
-        assertTrue(this.commentRepository.findByIdOptionalWithRelations(null).isEmpty());
-        assertTrue(this.commentRepository.findByExerciseIdWithRelations(null).isEmpty());
+        assertTrue(this.commentRepository.findByExerciseIdWithRelations(null, 0, 10).isEmpty());
         assertTrue(this.commentRepository.findByUserIdWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
         assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());

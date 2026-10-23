@@ -236,35 +236,12 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Should find user by id after creating")
-    @TestTransaction
-    void shouldFindUserById() {
-        final UserDto dto = this.buildValidDto();
-        final UserViewDto created = this.userService.createUser(dto);
-        final var userEntity = this.userRepository.findByPublicId(created.publicId).orElseThrow();
-
-        final var found = this.userService.findById(userEntity.id);
-
-        assertTrue(found.isPresent());
-        assertEquals(dto.username, found.get().username);
-    }
-
-    @Test
-    @DisplayName("Should find seeded admin user by username")
-    @TestTransaction
-    void shouldFindSeededUserByUsername() {
-        final var found = this.userService.findByUsername("admin");
-        assertTrue(found.isPresent(), "Seeded admin user should exist");
-        assertEquals("admin", found.get().username);
-    }
-
-    @Test
     @DisplayName("createInitialAdmin does nothing while users exist")
     @TestTransaction
     void createInitialAdmin_usersExist_returnsFalse() {
         assertTrue(this.userService.hasUsers());
         assertFalse(this.userService.createInitialAdmin("root", VALID_PASSWORD));
-        assertTrue(this.userService.findByUsername("root").isEmpty());
+        assertTrue(this.userRepository.findByUsernameOptional("root").isEmpty());
     }
 
     @Test
@@ -529,26 +506,6 @@ class UserServiceTest {
         duplicate.username = dto.username.toUpperCase(Locale.ROOT);
 
         assertThrows(ValidationException.class, () -> this.userService.createUser(duplicate));
-    }
-
-    @Test
-    @DisplayName("findByEmail returns user with matching email")
-    @TestTransaction
-    void testFindByEmail_found() {
-        final UserDto dto = this.buildValidDto();
-        this.userService.createUser(dto);
-
-        final var found = this.userService.findByEmail(dto.email);
-        assertTrue(found.isPresent());
-        assertEquals(dto.username, found.get().username);
-    }
-
-    @Test
-    @DisplayName("findByEmail returns empty for unknown email")
-    @TestTransaction
-    void testFindByEmail_notFound() {
-        final var found = this.userService.findByEmail("nobody@nowheredomain.invalid");
-        assertFalse(found.isPresent());
     }
 
     @Test
@@ -1091,14 +1048,6 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("findByPublicId returns empty for unknown publicId")
-    @TestTransaction
-    void testFindByPublicId_notFound() {
-        final var result = this.userService.findByPublicId("00000000000000000000000000");
-        assertFalse(result.isPresent());
-    }
-
-    @Test
     @DisplayName("deleteUser succeeds and makes the user unfindable")
     @TestTransaction
     void testDeleteUser_success() {
@@ -1108,7 +1057,7 @@ class UserServiceTest {
         final boolean deleted = this.userService.deleteUser(created.publicId);
 
         assertTrue(deleted);
-        assertFalse(this.userService.findByPublicId(created.publicId).isPresent(),
+        assertFalse(this.userRepository.findByPublicId(created.publicId).isPresent(),
                 "User should not be findable after deletion");
     }
 
@@ -1270,18 +1219,6 @@ class UserServiceTest {
         Mockito.doThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE)).when(this.permissionService)
                 .requireAdminView(credentials);
         assertThrows(ValidationException.class, () -> this.userService.searchUsers(credentials, "admin"));
-    }
-
-    @Test
-    @DisplayName("findByPublicId returns user when found")
-    @TestTransaction
-    void testFindByPublicId_found() {
-        final UserDto dto = this.buildValidDto();
-        final UserViewDto created = this.userService.createUser(dto);
-
-        final var found = this.userService.findByPublicId(created.publicId);
-        assertTrue(found.isPresent());
-        assertEquals(dto.username, found.get().username);
     }
 
     @Test

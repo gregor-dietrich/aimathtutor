@@ -44,18 +44,4 @@ public class CommentFlagEntity extends BaseEntity {
     @Column(name = "last_edit")
     @Nullable
     public LocalDateTime lastEdit;
-
-    /**
-     * Check if a user has already flagged a specific comment
-     */
-    public static boolean hasUserFlaggedComment(final Long commentId, final Long flaggerId) {
-        return find("comment.id = ?1 AND flagger.id = ?2", commentId, flaggerId).count() > 0;
-    }
-
-    /**
-     * Get all flags for a comment
-     */
-    public static int countFlagsForComment(final Long commentId) {
-        return (int) find("comment.id", commentId).count();
-    }
 }
