@@ -27,6 +27,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.ProviderTestResultDto;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.service.ai.AiConfigService;
@@ -64,8 +65,8 @@ public class AdminConfigView extends AbstractAdminView {
         // This grants read access only — saving still requires the dedicated aiConfigEdit permission
         // (enforced in AiConfigService), and API keys are never shown (masked, read-only fields).
         final var userRank = this.callerRank;
-        return userRank != null && (userRank.canAdminView() || userRank.hasAnyExercisePermission()
-                || userRank.hasAnyLessonPermission());
+        return userRank != null && (userRank.has(Permission.ADMIN_VIEW) || userRank.hasAny(Permission.Group.EXERCISE)
+                || userRank.hasAny(Permission.Group.LESSON));
     }
 
     /**

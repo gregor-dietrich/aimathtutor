@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import java.util.EnumSet;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
@@ -157,7 +159,7 @@ class PrivilegeCeilingTest {
     void createRankBeyondCallerIsRefused() {
         this.actAsManager();
         final UserRankDto dto = rankDto(true);
-        dto.aiConfigEdit = true;
+        dto.set(Permission.AI_CONFIG_EDIT, true);
 
         assertRefused(() -> this.userRankService.createRank(dto));
     }
@@ -170,7 +172,7 @@ class PrivilegeCeilingTest {
         this.actAsManager();
         final UserRankDto dto = rankDto(true);
         dto.name = this.callerRank.name;
-        dto.aiConfigEdit = true;
+        dto.set(Permission.AI_CONFIG_EDIT, true);
 
         assertRefused(() -> this.userRankService.updateRank(this.callerRank.publicId, dto));
     }
@@ -182,7 +184,7 @@ class PrivilegeCeilingTest {
     void patchOwnRankBeyondCallerIsRefused() {
         this.actAsManager();
         final UserRankDto dto = new UserRankDto();
-        dto.lessonAdd = true;
+        dto.set(Permission.LESSON_ADD, true);
 
         assertRefused(() -> this.userRankService.patchRank(this.callerRank.publicId, dto));
     }
@@ -193,7 +195,7 @@ class PrivilegeCeilingTest {
     void editHigherRankIsRefused() {
         this.actAsManager();
         final UserRankDto strip = new UserRankDto();
-        strip.aiConfigEdit = false;
+        strip.set(Permission.AI_CONFIG_EDIT, false);
 
         assertRefused(() -> this.userRankService.patchRank(ADMIN_RANK_PUBLIC_ID, strip));
     }
@@ -224,7 +226,7 @@ class PrivilegeCeilingTest {
     @TestTransaction
     void deleteHigherRankIsRefused() {
         final UserRankDto dto = rankDto(true);
-        dto.aiConfigEdit = true;
+        dto.set(Permission.AI_CONFIG_EDIT, true);
         final UserRankViewDto higher = this.userRankService.createRank(dto);
         this.actAsManager();
 
@@ -295,6 +297,11 @@ class PrivilegeCeilingTest {
         when(this.permissionService.findCurrentUserRank()).thenReturn(rank);
     }
 
+    /** The caller's permissions: the admin view, user editing and everything on users and ranks. */
+    private static final EnumSet<Permission> MANAGER =
+            EnumSet.of(Permission.ADMIN_VIEW, Permission.USER_ADD, Permission.USER_EDIT, Permission.USER_DELETE,
+                    Permission.USER_RANK_ADD, Permission.USER_RANK_EDIT, Permission.USER_RANK_DELETE);
+
     /**
      * A rank DTO with the caller's permissions ({@code manager}) or a subset of them: the admin view and user editing
      * only.
@@ -302,32 +309,18 @@ class PrivilegeCeilingTest {
     private static UserRankDto rankDto(final boolean manager) {
         final UserRankDto dto = new UserRankDto();
         dto.name = "Rank_" + UUID.randomUUID().toString().substring(0, 8);
-        dto.adminView = true;
-        dto.userEdit = true;
-        dto.userAdd = manager;
-        dto.userDelete = manager;
-        dto.userRankAdd = manager;
-        dto.userRankEdit = manager;
-        dto.userRankDelete = manager;
+        for (final var permission : MANAGER) {
+            dto.set(permission, manager || permission == Permission.ADMIN_VIEW || permission == Permission.USER_EDIT);
+        }
         return dto;
     }
 
     /** A PATCH that switches off every permission the seeded Admin rank holds beyond the caller's rank. */
     private static UserRankDto withoutPermissionsBeyondCaller() {
         final UserRankDto dto = new UserRankDto();
-        dto.exerciseAdd = false;
-        dto.exerciseDelete = false;
-        dto.exerciseEdit = false;
-        dto.lessonAdd = false;
-        dto.lessonDelete = false;
-        dto.lessonEdit = false;
-        dto.commentAdd = false;
-        dto.commentDelete = false;
-        dto.commentEdit = false;
-        dto.userGroupAdd = false;
-        dto.userGroupDelete = false;
-        dto.userGroupEdit = false;
-        dto.aiConfigEdit = false;
+        for (final var permission : EnumSet.complementOf(MANAGER)) {
+            dto.set(permission, false);
+        }
         return dto;
     }
 

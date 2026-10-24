@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -90,7 +91,7 @@ class LastAdministratorConcurrencyTest {
         try {
             banned.addAll(QuarkusTransaction.requiringNew().call(this::banActiveAdministrators));
             ranks.addAll(QuarkusTransaction.requiringNew().call(() -> Stream
-                    .generate(() -> this.userRankService.createRank(TestUserRankFactory.rankWithout("none")).publicId)
+                    .generate(() -> this.userRankService.createRank(TestUserRankFactory.rankWithout(null)).publicId)
                     .limit(2).toList()));
             admins.addAll(
                     QuarkusTransaction.requiringNew().call(() -> ranks.stream().map(this::createActiveUser).toList()));
@@ -154,11 +155,11 @@ class LastAdministratorConcurrencyTest {
             case "deleteUser" -> (admin, rank) -> this.userService.deleteUser(admin.publicId);
             case "patchRank" -> (admin, rank) -> {
                 final var strip = new UserRankDto();
-                strip.userRankEdit = false;
+                strip.set(Permission.USER_RANK_EDIT, false);
                 this.userRankService.patchRank(rank, strip);
             };
-            default ->
-                (admin, rank) -> this.userRankService.updateRank(rank, TestUserRankFactory.rankWithout("userRankEdit"));
+            default -> (admin, rank) -> this.userRankService.updateRank(rank,
+                    TestUserRankFactory.rankWithout(Permission.USER_RANK_EDIT));
         };
     }
 

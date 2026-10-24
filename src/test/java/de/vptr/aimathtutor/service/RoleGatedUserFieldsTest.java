@@ -15,6 +15,7 @@ import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -266,10 +267,10 @@ class RoleGatedUserFieldsTest {
     private String createRank(final boolean adminView, final boolean userRankEdit) {
         final UserRankDto dto = new UserRankDto();
         dto.name = "Rank_" + UUID.randomUUID().toString().substring(0, 8);
-        dto.userAdd = true;
-        dto.userEdit = true;
-        dto.adminView = adminView;
-        dto.userRankEdit = userRankEdit;
+        dto.set(Permission.USER_ADD, true);
+        dto.set(Permission.USER_EDIT, true);
+        dto.set(Permission.ADMIN_VIEW, adminView);
+        dto.set(Permission.USER_RANK_EDIT, userRankEdit);
         return this.userRankService.createRank(dto).publicId;
     }
 

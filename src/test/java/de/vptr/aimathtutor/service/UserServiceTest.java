@@ -17,6 +17,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -39,11 +40,11 @@ import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -1501,7 +1502,7 @@ class UserServiceTest {
     @MethodSource("permissionFlags")
     @DisplayName("An active user whose rank lacks one permission does not count as an administrator")
     @TestTransaction
-    void userMissingOnePermissionIsNoAdministrator(final String missing) {
+    void userMissingOnePermissionIsNoAdministrator(final Permission missing) {
         final UserViewDto admin = this.createSoleAdministrator();
         final UserDto other = this.buildValidDto();
         other.rankPublicId = this.createRankWithout(missing);
@@ -1522,7 +1523,7 @@ class UserServiceTest {
     void lastAdministratorCanMoveToAnotherAdministratorRank(final String method) {
         final UserViewDto admin = this.createSoleAdministrator();
         final UserDto dto = new UserDto();
-        dto.rankPublicId = this.createRankWithout("none");
+        dto.rankPublicId = this.createRankWithout(null);
         if ("updateUser".equals(method)) {
             dto.username = admin.username;
             dto.activated = true;
@@ -1587,13 +1588,13 @@ class UserServiceTest {
                 : () -> this.userService.patchUser(admin.publicId, dto);
     }
 
-    static Stream<String> permissionFlags() {
-        return UserRankEntity.PERMISSION_FIELDS.stream();
+    static Stream<Permission> permissionFlags() {
+        return Arrays.stream(Permission.values());
     }
 
-    /** Creates a rank granting every permission except {@code missing}, or all of them for {@code "none"}. */
+    /** Creates a rank granting every permission except {@code missing}, or all of them for null. */
     @SuppressWarnings("NullAway")
-    private String createRankWithout(final String missing) {
+    private String createRankWithout(@Nullable final Permission missing) {
         return this.userRankService.createRank(TestUserRankFactory.rankWithout(missing)).publicId;
     }
 

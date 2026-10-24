@@ -19,6 +19,7 @@ import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.AdminViewButton;
 import de.vptr.aimathtutor.component.button.LogoutButton;
 import de.vptr.aimathtutor.component.button.SettingsViewButton;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -171,7 +172,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout, BeforeEn
 
         // Only create admin button if user has admin:view permission
         final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank != null && userRank.canAdminView()) {
+        if (userRank != null && userRank.has(Permission.ADMIN_VIEW)) {
             this.adminViewButton =
                     new AdminViewButton(e -> this.getUI().ifPresent(ui -> ui.navigate("admin/dashboard")));
         } else {

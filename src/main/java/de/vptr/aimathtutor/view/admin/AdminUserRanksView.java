@@ -31,6 +31,7 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
@@ -153,32 +154,32 @@ public class AdminUserRanksView extends AbstractAdminView {
             layout.setSpacing(true);
             layout.setPadding(false);
             layout.add(this.permissionIcon(
-                    Boolean.TRUE.equals(rank.adminView) ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
+                    rank.has(Permission.ADMIN_VIEW) ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
                     "Admin View"));
             return layout;
         }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
 
         // CRUD permission columns share the same add/edit/delete icon pattern
-        this.addCrudPermissionColumn("Exercises", "Exercises", rank -> Boolean.TRUE.equals(rank.exerciseAdd),
-                rank -> Boolean.TRUE.equals(rank.exerciseEdit), rank -> Boolean.TRUE.equals(rank.exerciseDelete));
-        this.addCrudPermissionColumn("Lessons", "Lessons", rank -> Boolean.TRUE.equals(rank.lessonAdd),
-                rank -> Boolean.TRUE.equals(rank.lessonEdit), rank -> Boolean.TRUE.equals(rank.lessonDelete));
-        this.addCrudPermissionColumn("Comments", "Comments", rank -> Boolean.TRUE.equals(rank.commentAdd),
-                rank -> Boolean.TRUE.equals(rank.commentEdit), rank -> Boolean.TRUE.equals(rank.commentDelete));
-        this.addCrudPermissionColumn("Users", "Users", rank -> Boolean.TRUE.equals(rank.userAdd),
-                rank -> Boolean.TRUE.equals(rank.userEdit), rank -> Boolean.TRUE.equals(rank.userDelete));
-        this.addCrudPermissionColumn("User Groups", "User Groups", rank -> Boolean.TRUE.equals(rank.userGroupAdd),
-                rank -> Boolean.TRUE.equals(rank.userGroupEdit), rank -> Boolean.TRUE.equals(rank.userGroupDelete));
-        this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> Boolean.TRUE.equals(rank.userRankAdd),
-                rank -> Boolean.TRUE.equals(rank.userRankEdit), rank -> Boolean.TRUE.equals(rank.userRankDelete));
+        this.addCrudPermissionColumn("Exercises", "Exercises", rank -> rank.has(Permission.EXERCISE_ADD),
+                rank -> rank.has(Permission.EXERCISE_EDIT), rank -> rank.has(Permission.EXERCISE_DELETE));
+        this.addCrudPermissionColumn("Lessons", "Lessons", rank -> rank.has(Permission.LESSON_ADD),
+                rank -> rank.has(Permission.LESSON_EDIT), rank -> rank.has(Permission.LESSON_DELETE));
+        this.addCrudPermissionColumn("Comments", "Comments", rank -> rank.has(Permission.COMMENT_ADD),
+                rank -> rank.has(Permission.COMMENT_EDIT), rank -> rank.has(Permission.COMMENT_DELETE));
+        this.addCrudPermissionColumn("Users", "Users", rank -> rank.has(Permission.USER_ADD),
+                rank -> rank.has(Permission.USER_EDIT), rank -> rank.has(Permission.USER_DELETE));
+        this.addCrudPermissionColumn("User Groups", "User Groups", rank -> rank.has(Permission.USER_GROUP_ADD),
+                rank -> rank.has(Permission.USER_GROUP_EDIT), rank -> rank.has(Permission.USER_GROUP_DELETE));
+        this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> rank.has(Permission.USER_RANK_ADD),
+                rank -> rank.has(Permission.USER_RANK_EDIT), rank -> rank.has(Permission.USER_RANK_DELETE));
 
         // AI configuration permission column
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
-            layout.add(this.permissionIconOrPlaceholder(Boolean.TRUE.equals(rank.aiConfigEdit),
-                    LineAwesomeIcon.EDIT_SOLID, "Edit AI Configuration"));
+            layout.add(this.permissionIconOrPlaceholder(rank.has(Permission.AI_CONFIG_EDIT), LineAwesomeIcon.EDIT_SOLID,
+                    "Edit AI Configuration"));
             return layout;
         }).setHeader("AI Config").setWidth("100px").setFlexGrow(0);
 
@@ -312,45 +313,60 @@ public class AdminUserRanksView extends AbstractAdminView {
                 .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
 
         // View permissions bindings
-        this.binder.bind(adminViewField, rank1 -> rank1.adminView, (rank1, value) -> rank1.adminView = value);
+        this.binder.bind(adminViewField, rank1 -> rank1.get(Permission.ADMIN_VIEW),
+                (rank1, value) -> rank1.set(Permission.ADMIN_VIEW, value));
 
         // Exercise permissions bindings
-        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd, (rank1, value) -> rank1.exerciseAdd = value);
-        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit, (rank1, value) -> rank1.exerciseEdit = value);
-        this.binder.bind(exerciseDeleteField, rank1 -> rank1.exerciseDelete,
-                (rank1, value) -> rank1.exerciseDelete = value);
+        this.binder.bind(exerciseAddField, rank1 -> rank1.get(Permission.EXERCISE_ADD),
+                (rank1, value) -> rank1.set(Permission.EXERCISE_ADD, value));
+        this.binder.bind(exerciseEditField, rank1 -> rank1.get(Permission.EXERCISE_EDIT),
+                (rank1, value) -> rank1.set(Permission.EXERCISE_EDIT, value));
+        this.binder.bind(exerciseDeleteField, rank1 -> rank1.get(Permission.EXERCISE_DELETE),
+                (rank1, value) -> rank1.set(Permission.EXERCISE_DELETE, value));
 
         // Lesson permissions bindings
-        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd, (rank1, value) -> rank1.lessonAdd = value);
-        this.binder.bind(lessonEditField, rank1 -> rank1.lessonEdit, (rank1, value) -> rank1.lessonEdit = value);
-        this.binder.bind(lessonDeleteField, rank1 -> rank1.lessonDelete, (rank1, value) -> rank1.lessonDelete = value);
+        this.binder.bind(lessonAddField, rank1 -> rank1.get(Permission.LESSON_ADD),
+                (rank1, value) -> rank1.set(Permission.LESSON_ADD, value));
+        this.binder.bind(lessonEditField, rank1 -> rank1.get(Permission.LESSON_EDIT),
+                (rank1, value) -> rank1.set(Permission.LESSON_EDIT, value));
+        this.binder.bind(lessonDeleteField, rank1 -> rank1.get(Permission.LESSON_DELETE),
+                (rank1, value) -> rank1.set(Permission.LESSON_DELETE, value));
 
         // Comment permissions bindings
-        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd, (rank1, value) -> rank1.commentAdd = value);
-        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit, (rank1, value) -> rank1.commentEdit = value);
-        this.binder.bind(commentDeleteField, rank1 -> rank1.commentDelete,
-                (rank1, value) -> rank1.commentDelete = value);
+        this.binder.bind(commentAddField, rank1 -> rank1.get(Permission.COMMENT_ADD),
+                (rank1, value) -> rank1.set(Permission.COMMENT_ADD, value));
+        this.binder.bind(commentEditField, rank1 -> rank1.get(Permission.COMMENT_EDIT),
+                (rank1, value) -> rank1.set(Permission.COMMENT_EDIT, value));
+        this.binder.bind(commentDeleteField, rank1 -> rank1.get(Permission.COMMENT_DELETE),
+                (rank1, value) -> rank1.set(Permission.COMMENT_DELETE, value));
 
         // User permissions bindings
-        this.binder.bind(userAddField, rank1 -> rank1.userAdd, (rank1, value) -> rank1.userAdd = value);
-        this.binder.bind(userEditField, rank1 -> rank1.userEdit, (rank1, value) -> rank1.userEdit = value);
-        this.binder.bind(userDeleteField, rank1 -> rank1.userDelete, (rank1, value) -> rank1.userDelete = value);
+        this.binder.bind(userAddField, rank1 -> rank1.get(Permission.USER_ADD),
+                (rank1, value) -> rank1.set(Permission.USER_ADD, value));
+        this.binder.bind(userEditField, rank1 -> rank1.get(Permission.USER_EDIT),
+                (rank1, value) -> rank1.set(Permission.USER_EDIT, value));
+        this.binder.bind(userDeleteField, rank1 -> rank1.get(Permission.USER_DELETE),
+                (rank1, value) -> rank1.set(Permission.USER_DELETE, value));
 
         // User group permissions bindings
-        this.binder.bind(userGroupAddField, rank1 -> rank1.userGroupAdd, (rank1, value) -> rank1.userGroupAdd = value);
-        this.binder.bind(userGroupEditField, rank1 -> rank1.userGroupEdit,
-                (rank1, value) -> rank1.userGroupEdit = value);
-        this.binder.bind(userGroupDeleteField, rank1 -> rank1.userGroupDelete,
-                (rank1, value) -> rank1.userGroupDelete = value);
+        this.binder.bind(userGroupAddField, rank1 -> rank1.get(Permission.USER_GROUP_ADD),
+                (rank1, value) -> rank1.set(Permission.USER_GROUP_ADD, value));
+        this.binder.bind(userGroupEditField, rank1 -> rank1.get(Permission.USER_GROUP_EDIT),
+                (rank1, value) -> rank1.set(Permission.USER_GROUP_EDIT, value));
+        this.binder.bind(userGroupDeleteField, rank1 -> rank1.get(Permission.USER_GROUP_DELETE),
+                (rank1, value) -> rank1.set(Permission.USER_GROUP_DELETE, value));
 
         // User rank permissions bindings
-        this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd, (rank1, value) -> rank1.userRankAdd = value);
-        this.binder.bind(userRankEditField, rank1 -> rank1.userRankEdit, (rank1, value) -> rank1.userRankEdit = value);
-        this.binder.bind(userRankDeleteField, rank1 -> rank1.userRankDelete,
-                (rank1, value) -> rank1.userRankDelete = value);
+        this.binder.bind(userRankAddField, rank1 -> rank1.get(Permission.USER_RANK_ADD),
+                (rank1, value) -> rank1.set(Permission.USER_RANK_ADD, value));
+        this.binder.bind(userRankEditField, rank1 -> rank1.get(Permission.USER_RANK_EDIT),
+                (rank1, value) -> rank1.set(Permission.USER_RANK_EDIT, value));
+        this.binder.bind(userRankDeleteField, rank1 -> rank1.get(Permission.USER_RANK_DELETE),
+                (rank1, value) -> rank1.set(Permission.USER_RANK_DELETE, value));
 
         // AI configuration permissions bindings
-        this.binder.bind(aiConfigEditField, rank1 -> rank1.aiConfigEdit, (rank1, value) -> rank1.aiConfigEdit = value);
+        this.binder.bind(aiConfigEditField, rank1 -> rank1.get(Permission.AI_CONFIG_EDIT),
+                (rank1, value) -> rank1.set(Permission.AI_CONFIG_EDIT, value));
 
         form.add(nameField);
 

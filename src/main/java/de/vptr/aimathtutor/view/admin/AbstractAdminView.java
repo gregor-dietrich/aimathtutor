@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -110,8 +111,8 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Determines whether the current user is authorised to access this admin view. The default implementation requires
-     * {@code canAdminView()} on the user's rank, which {@link #isAuthOk} has loaded into {@link #callerRank} (once per
-     * navigation).
+     * {@code has(Permission.ADMIN_VIEW)} on the user's rank, which {@link #isAuthOk} has loaded into {@link #callerRank}
+     * (once per navigation).
      *
      * <p>
      * Subclasses with different permission requirements (e.g. {@link AdminConfigView}) can override this method.
@@ -120,7 +121,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      * @return true if the user is authorised, false otherwise
      */
     protected boolean isAuthorized() {
-        return this.callerRank != null && this.callerRank.canAdminView();
+        return this.callerRank != null && this.callerRank.has(Permission.ADMIN_VIEW);
     }
 
     /**
