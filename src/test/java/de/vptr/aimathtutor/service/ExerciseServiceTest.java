@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -35,6 +36,11 @@ import jakarta.ws.rs.core.Response;
 @QuarkusTest
 @SuppressWarnings("NullAway")
 class ExerciseServiceTest {
+
+    // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
+    // (the guard itself is tested in PermissionServiceTest)
+    private static final SessionCredentials CREDENTIALS =
+            new SessionCredentials("admin-public-id", "stamp", "session-key");
 
     @Inject
     private ExerciseService exerciseService;
@@ -222,7 +228,7 @@ class ExerciseServiceTest {
         assertNotNull(teacher, "Seeded teacher user should exist");
         final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
-        final var byUser = this.exerciseService.findByUserId(teacher.id);
+        final var byUser = this.exerciseService.findByUserId(CREDENTIALS, teacher.id);
 
         assertTrue(byUser.stream().anyMatch(e -> e.publicId.equals(created.publicId)));
     }
@@ -279,7 +285,7 @@ class ExerciseServiceTest {
     @TestTransaction
     void testSearchExercises_blank() {
         this.exerciseService.createExercise(this.buildDto(true));
-        final var results = this.exerciseService.searchExercises("");
+        final var results = this.exerciseService.searchExercises(CREDENTIALS, "");
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Blank query should return all exercises");
     }
@@ -293,7 +299,7 @@ class ExerciseServiceTest {
         dto.title = uniqueTitle;
         this.exerciseService.createExercise(dto);
 
-        final var results = this.exerciseService.searchExercises(uniqueTitle);
+        final var results = this.exerciseService.searchExercises(CREDENTIALS, uniqueTitle);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.stream().anyMatch(e -> uniqueTitle.equals(e.title)));
@@ -303,7 +309,7 @@ class ExerciseServiceTest {
     @DisplayName("searchExercises with non-matching term returns empty list")
     @TestTransaction
     void testSearchExercises_noMatch() {
-        final var results = this.exerciseService.searchExercises("zzz_nonexistent_xyz_9999");
+        final var results = this.exerciseService.searchExercises(CREDENTIALS, "zzz_nonexistent_xyz_9999");
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -340,7 +346,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with null dates returns empty list")
     @TestTransaction
     void testFindByDateRange_nullDates() {
-        final var results = this.exerciseService.findByDateRange(null, null);
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, null, null);
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -351,7 +357,7 @@ class ExerciseServiceTest {
     void testFindByDateRange_today() {
         final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
         final String today = LocalDate.now(ZoneId.systemDefault()).toString();
-        final var results = this.exerciseService.findByDateRange(today, today);
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, today, today);
         assertNotNull(results);
         assertTrue(results.stream().anyMatch(e -> created.publicId.equals(e.publicId)),
                 "Exercise created today should be in today's date range");
@@ -405,7 +411,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with invalid date format returns empty list")
     @TestTransaction
     void findByDateRange_invalidFormat_returnsEmpty() {
-        final var results = this.exerciseService.findByDateRange("not-a-date", "also-not-a-date");
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, "not-a-date", "also-not-a-date");
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -463,7 +469,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with null endDate returns empty list")
     @TestTransaction
     void testFindByDateRange_nullEndDate_returnsEmpty() {
-        final var results = this.exerciseService.findByDateRange("2024-01-01", null);
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, "2024-01-01", null);
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }

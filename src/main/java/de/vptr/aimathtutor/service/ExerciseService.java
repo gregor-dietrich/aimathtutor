@@ -14,9 +14,11 @@ import org.owasp.html.PolicyFactory;
 
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.LessonRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
@@ -62,24 +64,42 @@ public class ExerciseService {
     /**
      * Retrieves all exercises ordered by creation/modification date.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @return a list of all {@link ExerciseViewDto} in the system
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<ExerciseViewDto> getAllExercises() {
-        return this.getAllExercises(0, 500);
+    public List<ExerciseViewDto> getAllExercises(@Nullable final SessionCredentials credentials) {
+        return this.getAllExercises(credentials, 0, 500);
     }
 
     /**
      * Retrieves exercises with pagination.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param page
      *            the page number (0-indexed)
      * @param pageSize
      *            the number of exercises per page
      * @return a paginated list of all {@link ExerciseViewDto} in the system
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<ExerciseViewDto> getAllExercises(final int page, final int pageSize) {
+    public List<ExerciseViewDto> getAllExercises(@Nullable final SessionCredentials credentials, final int page,
+            final int pageSize) {
+        this.permissionService.requireAdminView(credentials);
+        return this.findAllExercises(page, pageSize);
+    }
+
+    private List<ExerciseViewDto> findAllExercises(final int page, final int pageSize) {
         return this.exerciseRepository.findAllOrdered(page, pageSize).stream().map(ExerciseViewDto::new).toList();
     }
 
@@ -124,12 +144,19 @@ public class ExerciseService {
     /**
      * Retrieves all exercises created by a specific user.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param userId
      *            the user ID
      * @return a list of {@link ExerciseViewDto}s authored by the user
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<ExerciseViewDto> findByUserId(final Long userId) {
+    public List<ExerciseViewDto> findByUserId(@Nullable final SessionCredentials credentials, final Long userId) {
+        this.permissionService.requireAdminView(credentials);
         return this.exerciseRepository.findByUserId(userId).stream().map(ExerciseViewDto::new).toList();
     }
 
@@ -405,14 +432,21 @@ public class ExerciseService {
      * Searches exercises by title and content using the provided query string. Returns all exercises if query is null
      * or empty.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param query
      *            the search query string (title/content match)
      * @return a list of matching {@link ExerciseViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<ExerciseViewDto> searchExercises(final String query) {
+    public List<ExerciseViewDto> searchExercises(@Nullable final SessionCredentials credentials, final String query) {
+        this.permissionService.requireAdminView(credentials);
         if (query == null || query.isBlank()) {
-            return this.getAllExercises();
+            return this.findAllExercises(0, 500);
         }
         final List<ExerciseEntity> exercises = this.exerciseRepository.search(query);
         return exercises.stream().map(ExerciseViewDto::new).toList();
@@ -422,14 +456,22 @@ public class ExerciseService {
      * Finds exercises created within a date range (inclusive). Date strings are parsed as ISO-8601 dates. Returns an
      * empty list if parsing fails or dates are null.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param startDate
      *            the start date (ISO-8601 format: YYYY-MM-DD)
      * @param endDate
      *            the end date (ISO-8601 format: YYYY-MM-DD)
      * @return a list of {@link ExerciseViewDto}s created within the date range
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<ExerciseViewDto> findByDateRange(final String startDate, final String endDate) {
+    public List<ExerciseViewDto> findByDateRange(@Nullable final SessionCredentials credentials, final String startDate,
+            final String endDate) {
+        this.permissionService.requireAdminView(credentials);
         if (startDate == null || endDate == null) {
             return List.of();
         }
