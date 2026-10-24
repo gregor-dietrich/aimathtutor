@@ -154,23 +154,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByCompletedAndDateRange_found() {
-        this.createSession("fcompldr");
-        final LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        final List<StudentSessionEntity> result =
-                this.sessionRepository.findByCompletedAndDateRange(true, now.minusDays(1), now);
-        Assertions.assertFalse(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByCompletedAndDateRange_null() {
-        Assertions.assertTrue(this.sessionRepository.findByCompletedAndDateRange(null,
-                LocalDateTime.now(ZoneId.systemDefault()), LocalDateTime.now(ZoneId.systemDefault())).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByStartTimeAfter_found() {
         this.createSession("fstafter");
         final LocalDateTime yesterday = LocalDateTime.now(ZoneId.systemDefault()).minusDays(1);

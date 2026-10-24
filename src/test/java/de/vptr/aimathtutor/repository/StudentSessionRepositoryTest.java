@@ -146,7 +146,8 @@ class StudentSessionRepositoryTest {
         final long halfOpenCount =
                 this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(null, null);
         assertEquals(0L, halfOpenCount);
-        assertTrue(this.studentSessionRepository.findByCompletedAndDateRange(null, null, null).isEmpty());
+        assertEquals(0L, this.studentSessionRepository.countByCompletedAndStartTimeBetween(null, null, null));
+        assertTrue(this.studentSessionRepository.countSessionsPerDay(null, null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm(null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm("").isEmpty());
     }

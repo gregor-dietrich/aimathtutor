@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.Div;
@@ -158,9 +157,7 @@ public class AdminDashboardView extends AbstractAdminView {
             final var totalUsers = this.analyticsService.getUserCount();
             final var publishedExercises = this.analyticsService.getPublishedExerciseCount();
 
-            final var summaries = this.analyticsService.getAllUsersProgressSummary(credentials);
-            final var avgSuccessRate = summaries.stream().filter(s -> s.successRate != null)
-                    .mapToDouble(s -> Objects.requireNonNull(s.successRate)).average().orElse(0.0);
+            final var avgSuccessRate = this.analyticsService.getAverageSuccessRate();
 
             final var dailyCounts = this.analyticsService.getDailySessionCounts(30);
             final var topExercises = this.analyticsService.getProblemCategoryStats();

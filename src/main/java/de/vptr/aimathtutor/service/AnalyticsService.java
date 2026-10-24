@@ -461,13 +461,8 @@ public class AnalyticsService {
         }
         final var end = LocalDateTime.now(zone);
         final var start = end.minusDays(days);
-        final var sessions = this.findSessionsByDateRange(start, end);
-        for (final var session : sessions) {
-            if (session.startTime == null) {
-                continue;
-            }
-            final var date = session.startTime.toLocalDate();
-            counts.merge(date, 1L, (a, b) -> a + b);
+        for (final Object[] row : this.studentSessionRepository.countSessionsPerDay(start, end)) {
+            counts.merge((LocalDate) row[0], ((Number) row[1]).longValue(), Long::sum);
         }
         return counts;
     }
@@ -486,9 +481,9 @@ public class AnalyticsService {
         final var prevTotalSessions = this.studentSessionRepository.countByStartTimeBetween(twoWeeksAgo, weekAgo);
 
         final var completedSessions =
-                this.studentSessionRepository.findByCompletedAndDateRange(Boolean.TRUE, weekAgo, now).size();
+                this.studentSessionRepository.countByCompletedAndStartTimeBetween(Boolean.TRUE, weekAgo, now);
         final var prevCompletedSessions =
-                this.studentSessionRepository.findByCompletedAndDateRange(Boolean.TRUE, twoWeeksAgo, weekAgo).size();
+                this.studentSessionRepository.countByCompletedAndStartTimeBetween(Boolean.TRUE, twoWeeksAgo, weekAgo);
 
         final var activeStudents = this.studentSessionRepository.countActiveStudentsSince(weekAgo);
         final var prevActiveStudents = this.studentSessionRepository.countActiveStudentsBetween(twoWeeksAgo, weekAgo);
@@ -543,6 +538,18 @@ public class AnalyticsService {
             }
         }
         return buckets;
+    }
+
+    /**
+     * Get the mean, over users, of each user's own success rate (correct actions / actions across all their sessions),
+     * counting only users with at least one action. Aggregation runs in SQL.
+     *
+     * @return the mean rate in [0, 1], or 0.0 when no user qualifies
+     */
+    @Transactional
+    public double getAverageSuccessRate() {
+        LOG.trace("Getting average success rate");
+        return this.studentSessionRepository.findAverageUserSuccessRate();
     }
 
     /**

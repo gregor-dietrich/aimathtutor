@@ -38,10 +38,6 @@ import jakarta.validation.constraints.NotNull;
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "WHERE s.user.id = :u and s.exercise.id = :e "
                         + "ORDER BY s.startTime DESC, s.publicId DESC"),
-        @NamedQuery(name = "StudentSession.findByCompletedAndDateRangeWithRelations",
-                query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
-                        + "WHERE s.completed = :c and s.startTime >= :s and s.startTime <= :e "
-                        + "ORDER BY s.startTime DESC, s.publicId DESC"),
         @NamedQuery(name = "StudentSession.findByStartTimeAfterWithRelations",
                 query = "SELECT s FROM StudentSessionEntity s " + "LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise "
                         + "WHERE s.startTime >= :t ORDER BY s.startTime DESC, s.publicId DESC"),
@@ -67,6 +63,16 @@ import jakarta.validation.constraints.NotNull;
                         + "WHERE s.startTime >= :s AND s.startTime < :e"),
         @NamedQuery(name = "StudentSession.countByStartTimeBetween",
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime <= :e"),
+        @NamedQuery(name = "StudentSession.countByCompletedAndStartTimeBetween",
+                query = "SELECT COUNT(s) FROM StudentSessionEntity s "
+                        + "WHERE s.completed = :c and s.startTime >= :s and s.startTime <= :e"),
+        @NamedQuery(name = "StudentSession.countSessionsPerDay",
+                query = "SELECT CAST(s.startTime AS LocalDate), COUNT(s) FROM StudentSessionEntity s "
+                        + "WHERE s.startTime >= :s AND s.startTime <= :e GROUP BY CAST(s.startTime AS LocalDate)"),
+        @NamedQuery(name = "StudentSession.averageUserSuccessRate",
+                query = "SELECT AVG(t.rate) FROM (SELECT CAST(SUM(s.correctActions) AS double) / SUM(s.actionsCount) "
+                        + "AS rate FROM StudentSessionEntity s WHERE s.user IS NOT NULL GROUP BY s.user "
+                        + "HAVING SUM(s.actionsCount) > 0) t"),
         @NamedQuery(name = "StudentSession.countByStartTimeRangeHalfOpen",
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime < :e"),
         @NamedQuery(name = "StudentSession.findProblemCategoryStats",
