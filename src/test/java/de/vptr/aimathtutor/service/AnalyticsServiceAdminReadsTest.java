@@ -28,7 +28,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AnalyticsServiceAdminReadsTest {
 
     // The mocked PermissionService accepts any credentials; the service's own checks are tested with it

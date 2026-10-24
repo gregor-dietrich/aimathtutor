@@ -147,10 +147,11 @@ however.
   Dependabot cannot bump the pin, so bumps are by hand.
 - **Project values stay here:** `pom.xml` keeps overrides of the parent's
   properties (`jacoco.check.*`, `nullaway.annotated.packages`), the project's
-  own plugin configuration (e.g. JaCoCo excludes) and names appended to the
-  parent's license allowlist (the `add-third-party` execution,
-  `combine.children="append"`). Beside it are `checkstyle-project.xml` (the
-  project's own Checkstyle rules, run as checkstyle execution `project`), and
+  own plugin configuration (e.g. JaCoCo excludes) and any spelling the parent's
+  license allowlist lacks (appended in an `add-third-party` execution with
+  `combine.children="append"`; there is none today). Beside it are
+  `checkstyle-project.xml` (the project's own Checkstyle rules, run as
+  checkstyle execution `project`), and
   the suppression/exclusion files (`checkstyle-suppressions.xml`,
   `spotbugs-exclude.xml`, `dependency-check-suppression.xml`).
 - **Hooks:** run `make hooks` once per clone: pre-commit runs `make lint-repo`,
@@ -437,7 +438,7 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 | PMD               | `./mvnw initialize pmd:check`                    | Unused code, complexity, style rules                                                                                                                               |
 | CPD               | `./mvnw pmd:cpd-check`                           | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6.             |
 | OWASP dep-check   | `make audit`                                     | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)                 |
-| License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license the parent's allowlist and `pom.xml`'s appends don't name (`mvn verify` without `-q` lists each)             |
+| License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license neither the parent's allowlist nor a `pom.xml` append names (`mvn verify` without `-q` lists each)           |
 
 CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
 fails, then the Compose validation, then `make test-scripts`, then
@@ -491,9 +492,9 @@ fine-grained as possible.
 
 Not threshold changes: bumping the devkit pin (`[devkit]` `version`/`commit`
 with the parent `<version>`) and changing `[frontend.min-pins]`, each as its
-issue directs (e.g. #165, #207). Appending to `pom.xml`'s license allowlist a
-spelling of a license the parent already allows is not one either; admitting a
-new license (as UPL-1.0 was) needs the maintainer's approval.
+issue directs (e.g. #165, #207). Appending in `pom.xml` a spelling of a license
+the parent already allows is not one either; admitting a new license needs the
+maintainer's approval.
 
 ## Database
 

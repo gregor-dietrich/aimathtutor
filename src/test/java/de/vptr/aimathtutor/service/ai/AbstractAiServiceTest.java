@@ -9,7 +9,6 @@ import io.quarkus.test.InjectMock;
 /**
  * Base class for AI service tests to share common setup.
  */
-@SuppressWarnings("NullAway")
 public abstract class AbstractAiServiceTest {
 
     @InjectMock

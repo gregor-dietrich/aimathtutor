@@ -1,8 +1,8 @@
 [devkit]
 url = "ssh://git@git.vptr.de:222/gregor/devkit.git"
 mirror = "https://github.com/gregor-dietrich/devkit.git"
-version = "v0.7.0"
-commit = "69baa79c1ef916f3309e55b94fdbe7d894496f2e"
+version = "v0.8.0"
+commit = "3fc9ed03eebdde6ceb696fd9e5c3ea286281868d"
 
 [frontend.min-pins]
 react-router = "7.15.0"

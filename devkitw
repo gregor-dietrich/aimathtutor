@@ -2,7 +2,7 @@
 # devkitw: fetch the devkit commit pinned in ./devkit.toml into a per-user
 # cache, point ./.devkit at it and print its path. A project commits this file
 # verbatim; `make lint-devkitw` notices a copy older than the pin's.
-# devkitw revision 2
+# devkitw revision 3
 # Usage, from the project root: ./devkitw [path]
 set -eu
 
@@ -12,7 +12,7 @@ die() {
 }
 
 # The release key: docs/contract.md ("devkitw") says what this line is.
-signers='devkit-release namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGBoBUp+KIF066cVVB6bU+oTkgs9bCQYJucUOUdUMNLK'
+signers='devkit-release namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOKrUPpTwUlDAlB7OmyQm5LYuBpAY6ciIRShkq4Oqbx'
 
 case $#:${1-} in
   0: | 1:path) ;;

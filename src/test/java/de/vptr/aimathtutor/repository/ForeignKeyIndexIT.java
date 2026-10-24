@@ -45,7 +45,7 @@ class ForeignKeyIndexIT {
 
     @Test
     @TestTransaction
-    void reportsAForeignKeyWhoseIndexWasDropped() {
+    void reportsForeignKeyWhoseIndexWasDropped() {
         // Control: PostgreSQL DDL is transactional, so the test transaction's rollback restores the index
         this.em.createNativeQuery("DROP INDEX idx_session_user_start").executeUpdate();
         assertEquals(List.of("student_sessions.student_sessions_user_id_fkey"), this.findUnindexedForeignKeys());
