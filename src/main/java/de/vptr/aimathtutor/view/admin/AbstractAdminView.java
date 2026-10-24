@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -45,6 +46,16 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      */
     @Nullable
     protected transient UserRankViewDto callerRank;
+
+    /**
+     * The permissions the signed-in user's rank holds, which cap what a view offers; empty before {@link #callerRank}
+     * is loaded or if they have no rank, so a view offers nothing it cannot confirm.
+     *
+     * @return the caller's permissions, never null
+     */
+    protected Set<Permission> callerPermissions() {
+        return this.callerRank == null ? Set.of() : this.callerRank.granted();
+    }
 
     /**
      * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
