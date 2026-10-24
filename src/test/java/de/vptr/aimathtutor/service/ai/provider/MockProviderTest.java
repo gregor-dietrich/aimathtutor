@@ -17,7 +17,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class MockProviderTest {
 
     @Inject
@@ -29,12 +28,14 @@ class MockProviderTest {
         assertTrue(this.provider.isAvailable());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction throws for null event")
     void testAnalyzeMathAction_nullEvent() {
         assertThrows(IllegalArgumentException.class, () -> this.provider.analyzeMathAction(null, null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns POSITIVE feedback for correct simplify")
     void testAnalyzeMathAction_simplify_correct() {
@@ -47,6 +48,7 @@ class MockProviderTest {
         assertFalse(feedback.message.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns CORRECTIVE feedback for incorrect simplify")
     void testAnalyzeMathAction_simplify_incorrect() {
@@ -57,6 +59,7 @@ class MockProviderTest {
         assertEquals(FeedbackType.CORRECTIVE, feedback.type);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns null for simplify without correctness info")
     void testAnalyzeMathAction_simplify_noCorrectness() {
@@ -66,6 +69,7 @@ class MockProviderTest {
         assertNull(feedback);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns POSITIVE feedback for expand")
     void testAnalyzeMathAction_expand() {
@@ -76,6 +80,7 @@ class MockProviderTest {
         assertFalse(feedback.suggestedNextSteps.isEmpty(), "Expand should suggest a next step");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns POSITIVE feedback for factor")
     void testAnalyzeMathAction_factor() {
@@ -85,6 +90,7 @@ class MockProviderTest {
         assertEquals(FeedbackType.POSITIVE, feedback.type);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns SUGGESTION feedback for combine")
     void testAnalyzeMathAction_combine() {
@@ -94,6 +100,7 @@ class MockProviderTest {
         assertEquals(FeedbackType.SUGGESTION, feedback.type);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns HINT feedback for AddSubInvertAction")
     void testAnalyzeMathAction_addSubInvert() {
@@ -104,6 +111,7 @@ class MockProviderTest {
         assertFalse(feedback.suggestedNextSteps.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns HINT feedback for MulDivInvertAction")
     void testAnalyzeMathAction_mulDivInvert() {
@@ -113,6 +121,7 @@ class MockProviderTest {
         assertEquals(FeedbackType.HINT, feedback.type);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns POSITIVE for fractionCancelTermsAction")
     void testAnalyzeMathAction_fractionCancel() {
@@ -122,6 +131,7 @@ class MockProviderTest {
         assertEquals(FeedbackType.POSITIVE, feedback.type);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns HINT for move when expression changed")
     void testAnalyzeMathAction_move_changed() {
@@ -131,6 +141,7 @@ class MockProviderTest {
         assertEquals(FeedbackType.HINT, feedback.type);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns null for move when expression unchanged")
     void testAnalyzeMathAction_move_unchanged() {
@@ -139,6 +150,7 @@ class MockProviderTest {
         assertNull(feedback);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns null for unknown event type")
     void testAnalyzeMathAction_unknownType() {
@@ -147,6 +159,7 @@ class MockProviderTest {
         assertNull(feedback);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns null for null event type")
     void testAnalyzeMathAction_nullEventType() {
@@ -156,6 +169,7 @@ class MockProviderTest {
         assertNull(feedback);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction sets confidence to 0.85 on non-null result")
     void testAnalyzeMathAction_confidence() {
@@ -165,6 +179,7 @@ class MockProviderTest {
         assertEquals(0.85, feedback.confidence);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction sets sessionId from event")
     void testAnalyzeMathAction_sessionId() {
@@ -174,6 +189,7 @@ class MockProviderTest {
         assertEquals("my-session-42", feedback.sessionId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns non-blank response for how-to-solve question")
     void testAnswerQuestion_howToSolve() {
@@ -182,6 +198,7 @@ class MockProviderTest {
         assertFalse(answer.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns non-blank response for what-next question")
     void testAnswerQuestion_whatNext() {
@@ -190,6 +207,7 @@ class MockProviderTest {
         assertFalse(answer.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns non-blank response for why question")
     void testAnswerQuestion_why() {
@@ -198,6 +216,7 @@ class MockProviderTest {
         assertFalse(answer.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns non-blank response for stuck question")
     void testAnswerQuestion_stuck() {
@@ -206,6 +225,7 @@ class MockProviderTest {
         assertFalse(answer.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns non-blank response for hint request")
     void testAnswerQuestion_hint() {
@@ -214,6 +234,7 @@ class MockProviderTest {
         assertFalse(answer.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns non-blank fallback for unrecognized question")
     void testAnswerQuestion_fallback() {

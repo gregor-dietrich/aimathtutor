@@ -37,7 +37,6 @@ import jakarta.validation.ValidationException;
  * {@code aiConfigEdit}, so the seeded Admin rank is above it.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class PrivilegeCeilingTest {
 
     private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
@@ -62,6 +61,7 @@ class PrivilegeCeilingTest {
     /** The caller's rank: manages users and ranks, but lacks aiConfigEdit and the content permissions. */
     private UserRankViewDto callerRank;
 
+    @SuppressWarnings("NullAway")
     @BeforeEach
     @Transactional
     void noCeilingForSetup() {
@@ -80,6 +80,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userService.createUser(userDto(ADMIN_RANK_PUBLIC_ID)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Updating a user with a higher rank is refused")
     @TestTransaction
@@ -93,6 +94,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userService.updateUser(admin.publicId, change));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Changing the password of a user with a higher rank is refused")
     @TestTransaction
@@ -105,6 +107,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userService.patchUser(admin.publicId, change));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Deleting a user with a higher rank is refused")
     @TestTransaction
@@ -115,6 +118,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userService.deleteUser(admin.publicId));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Assigning a higher rank to another user is refused")
     @TestTransaction
@@ -127,6 +131,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userService.patchUser(peer.publicId, promote));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Assigning a higher rank to oneself is refused")
     @TestTransaction
@@ -157,6 +162,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userRankService.createRank(dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Granting the caller's own rank a permission it lacks is refused (update)")
     @TestTransaction
@@ -169,6 +175,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userRankService.updateRank(this.callerRank.publicId, dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Granting the caller's own rank a permission it lacks is refused (patch)")
     @TestTransaction
@@ -211,6 +218,7 @@ class PrivilegeCeilingTest {
                 : () -> this.userRankService.patchRank(ADMIN_RANK_PUBLIC_ID, dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Deleting a higher rank is refused")
     @TestTransaction
@@ -223,6 +231,7 @@ class PrivilegeCeilingTest {
         assertRefused(() -> this.userRankService.deleteRank(higher.publicId));
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "createUser", "createRank" })
     @DisplayName("Without a current user rank, user and rank writes are refused")
@@ -238,6 +247,7 @@ class PrivilegeCeilingTest {
 
     // Equal or lower level
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Users with the caller's rank or a lower one can be created, edited and deleted")
     @TestTransaction
@@ -260,6 +270,7 @@ class PrivilegeCeilingTest {
         assertDoesNotThrow(() -> this.userService.deleteUser(peer.publicId));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Ranks with the caller's permissions or fewer can be created, edited and deleted")
     @TestTransaction

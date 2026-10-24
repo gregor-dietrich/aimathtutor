@@ -38,7 +38,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AnalyticsServiceTest {
 
     // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
@@ -83,12 +82,14 @@ class AnalyticsServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     private Long studentId() {
         final var user = this.userRepository.findByUsername("student1");
         assertNotNull(user, "Seeded student1 must exist");
         return user.id;
     }
 
+    @SuppressWarnings("NullAway")
     private Long createExercise() {
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         final var dto = new ExerciseDto("analytics_ex_" + suffix, "content " + suffix, null, true, false);
@@ -146,6 +147,7 @@ class AnalyticsServiceTest {
                 "Seeded session should appear in the list");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getSessionsByUserAndExercise filters by both user and exercise")
@@ -203,6 +205,7 @@ class AnalyticsServiceTest {
                 "Seeded session should be returned within the date range");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getSessionsByDateRange with null bounds returns all sessions")
@@ -240,6 +243,7 @@ class AnalyticsServiceTest {
         assertNull(result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getAiInteractionsBySession returns the session's interaction with user, exercise and event type")
@@ -302,6 +306,7 @@ class AnalyticsServiceTest {
         assertEquals(before + 1, after, "Adding one completed session should increase completed count by 1");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getActiveStudentsCount increases by 1 when adding a student with an active session")
@@ -360,6 +365,7 @@ class AnalyticsServiceTest {
         assertTrue(results.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("searchSessions returns matching sessions by username")
@@ -381,6 +387,7 @@ class AnalyticsServiceTest {
                 "Results should only contain sessions for student1");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getSessionsByUserGroupedByExercise returns empty map for null user")
@@ -390,6 +397,7 @@ class AnalyticsServiceTest {
         assertTrue(result.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getUsersProgressSummaryByUsernameSearch gives a user with no sessions zero sessions and success rate")
@@ -404,6 +412,7 @@ class AnalyticsServiceTest {
         assertEquals(0.0, summary.successRate);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getUsersProgressSummaryByUsernameSearch counts a new session once")
@@ -454,6 +463,7 @@ class AnalyticsServiceTest {
         assertTrue(summaries.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getSessionsByDateRange with only startDate returns sessions after that date")
@@ -470,6 +480,7 @@ class AnalyticsServiceTest {
                 "Session should appear when filtering with only start date");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getSessionsByDateRange with only endDate returns sessions before that date")
@@ -549,6 +560,7 @@ class AnalyticsServiceTest {
         assertTrue(recent.size() <= 10, "Should not exceed the limit");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getTopStudentsByCompletion returns top students sorted by completion")
@@ -562,6 +574,7 @@ class AnalyticsServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getUsersProgressSummaryByDateRange includes users active in range and excludes those outside")

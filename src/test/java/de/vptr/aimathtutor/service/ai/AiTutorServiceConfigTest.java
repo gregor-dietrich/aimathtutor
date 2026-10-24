@@ -27,7 +27,6 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AiTutorServiceConfigTest {
 
     @Inject
@@ -53,6 +52,7 @@ class AiTutorServiceConfigTest {
     @InjectMock
     RateLimitService rateLimitService;
 
+    @SuppressWarnings("NullAway")
     @BeforeEach
     void setUp() {
         when(this.aiConfigService.getConfigValueAsBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true)).thenReturn(true);
@@ -69,11 +69,13 @@ class AiTutorServiceConfigTest {
         return event;
     }
 
+    @SuppressWarnings("NullAway")
     private void configureProvider(final String provider, final boolean rateLimitAllows) {
         when(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock")).thenReturn(provider);
         when(this.rateLimitService.tryConsume(any())).thenReturn(rateLimitAllows);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction returns null when AI is disabled")
     void analyzeMathAction_returnsNullWhenAiDisabled() {
@@ -83,6 +85,7 @@ class AiTutorServiceConfigTest {
         assertNull(result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns offline message when AI is disabled")
     void answerQuestion_returnsOfflineMessageWhenAiDisabled() {
@@ -105,6 +108,7 @@ class AiTutorServiceConfigTest {
         assertTrue(result.message.contains("requests") || result.message.contains("wait"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("answerQuestion returns rate limit message when rate limit exceeded")
     void answerQuestion_returnsRateLimitMessageWhenExceeded() {
@@ -117,6 +121,7 @@ class AiTutorServiceConfigTest {
         assertTrue(result.message.contains("requests") || result.message.contains("wait"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction delegates to Google provider when configured and available")
     void analyzeMathAction_usesGoogleProvider() {
@@ -133,6 +138,7 @@ class AiTutorServiceConfigTest {
         verifyNoInteractions(this.openAiProvider, this.ollamaAiProvider);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction delegates to OpenAI provider when configured and available")
     void analyzeMathAction_usesOpenAiProvider() {
@@ -149,6 +155,7 @@ class AiTutorServiceConfigTest {
         verifyNoInteractions(this.googleAiProvider, this.ollamaAiProvider);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction delegates to Ollama provider when configured and available")
     void analyzeMathAction_usesOllamaProvider() {
@@ -165,6 +172,7 @@ class AiTutorServiceConfigTest {
         verifyNoInteractions(this.googleAiProvider, this.openAiProvider);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction falls back to mock when Google provider is unavailable")
     void analyzeMathAction_fallsBackToMockWhenProviderUnavailable() {
@@ -175,6 +183,7 @@ class AiTutorServiceConfigTest {
         assertNotNull(result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction rethrows NonRetryableProviderException from provider")
     void analyzeMathAction_rethrowsNonRetryableException() {
@@ -186,6 +195,7 @@ class AiTutorServiceConfigTest {
                 .analyzeMathAction(this.buildSignificantEvent(), new ConversationContextDto(), "u1"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("analyzeMathAction falls back to mock on transient RuntimeException from provider")
     void analyzeMathAction_fallsBackToMockOnRuntimeException() {

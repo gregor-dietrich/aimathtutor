@@ -25,7 +25,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AiInteractionLoggerTest {
 
     @Inject
@@ -52,12 +51,14 @@ class AiInteractionLoggerTest {
         Mockito.when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
     }
 
+    @SuppressWarnings("NullAway")
     private Long teacherId() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher, "Seeded teacher must exist");
         return teacher.id;
     }
 
+    @SuppressWarnings("NullAway")
     private Long createExerciseId() {
         return TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
     }
@@ -136,6 +137,7 @@ class AiInteractionLoggerTest {
                 "logQuestionInteraction should persist exactly two records");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("logQuestionInteraction works with null user and exercise ids")
     @TestTransaction
@@ -148,6 +150,7 @@ class AiInteractionLoggerTest {
                 "Two records should be persisted even without ids");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("logQuestionInteraction records have correct event types")
     @TestTransaction
@@ -165,6 +168,7 @@ class AiInteractionLoggerTest {
                 "One record should have eventType QUESTION_ANSWER");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("logInteraction falls back to UNKNOWN when eventType or feedbackType are null")
     @TestTransaction

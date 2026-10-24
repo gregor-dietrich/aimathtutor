@@ -26,7 +26,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AuthServiceRequireUserTest {
 
     private static final String CREDENTIAL_STAMP_KEY = AppConstants.SESSION_KEY_CREDENTIAL_STAMP;
@@ -37,6 +36,7 @@ class AuthServiceRequireUserTest {
     @Inject
     private UserRepository userRepository;
 
+    @SuppressWarnings("NullAway")
     private static SessionCredentials credentialsFor(final UserEntity user) {
         return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
                 UUID.randomUUID().toString());
@@ -46,6 +46,7 @@ class AuthServiceRequireUserTest {
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE, assertThrows(ValidationException.class, call).getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireCurrentUser returns the active session user")
     @TestTransaction
@@ -65,6 +66,7 @@ class AuthServiceRequireUserTest {
         this.assertSessionEnded(() -> this.authService.requireCurrentUser());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireCurrentUser refuses a stale credential stamp")
     @TestTransaction
@@ -79,6 +81,7 @@ class AuthServiceRequireUserTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireCurrentUser refuses a banned user")
     @TestTransaction
@@ -93,6 +96,7 @@ class AuthServiceRequireUserTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireCurrentUser refuses a deactivated user")
     @TestTransaction
@@ -107,6 +111,7 @@ class AuthServiceRequireUserTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireCurrentUser refuses an unknown public ID")
     void testRequireCurrentUser_unknownPublicId() {
@@ -118,6 +123,7 @@ class AuthServiceRequireUserTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireSessionUser returns the user for valid credentials")
     @TestTransaction
@@ -143,6 +149,7 @@ class AuthServiceRequireUserTest {
         this.assertSessionEnded(() -> this.authService.requireSessionUser(credentials));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireSessionUser refuses a stale credential stamp")
     @TestTransaction
@@ -153,6 +160,7 @@ class AuthServiceRequireUserTest {
         this.assertSessionEnded(() -> this.authService.requireSessionUser(credentials));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireSessionUser refuses a banned user")
     @TestTransaction
@@ -163,6 +171,7 @@ class AuthServiceRequireUserTest {
         this.assertSessionEnded(() -> this.authService.requireSessionUser(credentialsFor(admin)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireSessionUser refuses a deactivated user")
     @TestTransaction

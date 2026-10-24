@@ -14,7 +14,6 @@ import jakarta.inject.Inject;
  * Integration tests for {@link AiInteractionRepository}.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 public class AiInteractionRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
@@ -40,6 +39,7 @@ public class AiInteractionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(result.stream().anyMatch(r -> sessionId.equals(r.sessionId)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindBySessionId_null() {
@@ -61,6 +61,7 @@ public class AiInteractionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertNotNull(result.publicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testPersist_null() {

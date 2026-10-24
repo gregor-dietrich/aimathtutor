@@ -33,7 +33,6 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AnalyticsServiceDashboardTest {
 
     // The mocked PermissionService accepts any credentials (the guard is tested in AnalyticsServiceAdminReadsTest)
@@ -118,6 +117,7 @@ class AnalyticsServiceDashboardTest {
      * The mean of per-user rates (correct / actions over each user's sessions), computed in Java over all sessions. The
      * dashboard counts only users with actions; {@code includeUsersWithoutActions} counts the others as 0.
      */
+    @SuppressWarnings("NullAway")
     private double meanOfUserRates(final boolean includeUsersWithoutActions) {
         return this.allUserSessions().stream().collect(Collectors.groupingBy(s -> s.user.id)).values().stream()
                 .filter(sessions -> includeUsersWithoutActions || sessions.stream().anyMatch(s -> s.actionsCount > 0))
@@ -159,6 +159,7 @@ class AnalyticsServiceDashboardTest {
         assertTrue(Math.abs(this.pooledRate() - actual) > 1e-9, "Each user counts once, however many actions");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getDailySessionCounts counts whole days per start date and excludes those outside the window")
@@ -237,6 +238,7 @@ class AnalyticsServiceDashboardTest {
         assertTrue(trend.totalUsers >= 4);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("getTopStudentsByCompletion totals the top user's sessions in SQL, with every field as before")

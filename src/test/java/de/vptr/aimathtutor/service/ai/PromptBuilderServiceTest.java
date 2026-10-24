@@ -19,7 +19,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class PromptBuilderServiceTest {
 
     @Inject
@@ -38,6 +37,7 @@ class PromptBuilderServiceTest {
         assertEquals(input, this.promptBuilderService.sanitizePromptInput(input));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("sanitizePromptInput returns input unchanged at exact limit of 2000 chars")
     void sanitizePromptInput_exactLimit() {
@@ -56,6 +56,7 @@ class PromptBuilderServiceTest {
         assertEquals(expected, result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("sanitizePromptInput escapes XML closing tags to prevent injection")
     void sanitizePromptInput_xmlInjection() {
@@ -65,6 +66,7 @@ class PromptBuilderServiceTest {
         assertTrue(result.contains("<\\/"), "Escaped form should be present");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("buildQuestionAnsweringPrompt with all null expressions omits XML sections")
     void buildQuestionAnsweringPrompt_allNullExpressions() {
@@ -77,6 +79,7 @@ class PromptBuilderServiceTest {
         assertTrue(prompt.contains("<student_question>"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("buildQuestionAnsweringPrompt with all expressions includes all XML sections")
     void buildQuestionAnsweringPrompt_withExpressions() {
@@ -108,6 +111,7 @@ class PromptBuilderServiceTest {
         assertTrue(prompt.contains("<recent_responses>"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("buildQuestionAnsweringPrompt with null context does not throw")
     void buildQuestionAnsweringPrompt_nullContext() {
@@ -119,6 +123,7 @@ class PromptBuilderServiceTest {
         assertFalse(prompt.contains("<recent_responses>"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("buildMathTutoringPrompt throws IllegalArgumentException for null event")
     void buildMathTutoringPrompt_nullEvent() {

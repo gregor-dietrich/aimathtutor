@@ -46,7 +46,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class CommentServiceTest {
 
     // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
@@ -150,6 +149,7 @@ class CommentServiceTest {
         });
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should sanitize HTML tags from comment content")
     @TestTransaction
@@ -169,6 +169,7 @@ class CommentServiceTest {
         verify(this.permissionService).requireCommentAdd();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should store the sessionId of the DTO on the created comment")
     @TestTransaction
@@ -184,6 +185,7 @@ class CommentServiceTest {
         assertEquals(dto.sessionId, stored.sessionId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should reject comment on non-commentable exercise")
     @TestTransaction
@@ -207,6 +209,7 @@ class CommentServiceTest {
         verify(this.permissionService).requireCommentAdd();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should list comments by exercise id")
     @TestTransaction
@@ -223,6 +226,7 @@ class CommentServiceTest {
         assertEquals("comment one", comments.get(0).content);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should soft-delete comment as author")
     @TestTransaction
@@ -245,6 +249,7 @@ class CommentServiceTest {
         verify(this.permissionService, never()).requireCommentDelete();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should hide comment via moderation")
     @TestTransaction
@@ -267,6 +272,7 @@ class CommentServiceTest {
         verify(this.permissionService).requireCommentEdit();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("editComment updates content for the author")
     @TestTransaction
@@ -290,6 +296,7 @@ class CommentServiceTest {
         verify(this.permissionService, never()).requireCommentEdit();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("editComment calls requireCommentEdit for non-author")
     @TestTransaction
@@ -317,6 +324,7 @@ class CommentServiceTest {
         verify(this.permissionService).requireCommentEdit();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("listCommentsByExercise returns paged results")
     @TestTransaction
@@ -346,6 +354,7 @@ class CommentServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByUserId returns only comments by that user")
     @TestTransaction
@@ -373,6 +382,7 @@ class CommentServiceTest {
         assertTrue(results.isEmpty(), "Blank search should return empty list per service contract");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findFlaggedComments with minFlags=0 returns non-null list")
     @TestTransaction
@@ -393,6 +403,7 @@ class CommentServiceTest {
                 "Flagged comment should appear in results");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByStatus VISIBLE returns visible comments")
     @TestTransaction
@@ -410,6 +421,7 @@ class CommentServiceTest {
                 "Newly created comment should have VISIBLE status");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getAllComments returns non-null list that includes newly created comment")
     @TestTransaction
@@ -427,6 +439,7 @@ class CommentServiceTest {
                 "Newly created comment should appear in getAllComments");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("hard delete removes comment from repository")
     @TestTransaction
@@ -444,6 +457,7 @@ class CommentServiceTest {
                 "Hard-deleted comment should be removed from the repository");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findReplies returns replies to a parent comment")
     @TestTransaction
@@ -468,6 +482,7 @@ class CommentServiceTest {
                 "Reply should appear in findReplies for the parent");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createComment rejects unpublished exercise")
     @TestTransaction
@@ -503,6 +518,7 @@ class CommentServiceTest {
         assertThrows(ValidationException.class, () -> this.as(student).createComment(dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createComment with non-existent parent publicId throws BAD_REQUEST")
     @TestTransaction
@@ -518,6 +534,7 @@ class CommentServiceTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createComment with parent from different exercise throws BAD_REQUEST")
     @TestTransaction
@@ -540,6 +557,7 @@ class CommentServiceTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByDateRange returns empty list for null dates")
     @TestTransaction
@@ -554,6 +572,7 @@ class CommentServiceTest {
         assertTrue(this.commentService.findByDateRange(CREDENTIALS, "not-a-date", "also-not-a-date").isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("flagComment calls through to flagging service")
     @TestTransaction
@@ -575,12 +594,14 @@ class CommentServiceTest {
         assertTrue(this.commentFlagRepository.hasUserFlaggedComment(flagged.id, otherStudent.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("searchComments(null) returns empty list")
     void testSearchComments_null() {
         assertTrue(this.commentService.searchComments(CREDENTIALS, null).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByDateRange returns results for valid date strings")
     @TestTransaction
@@ -599,6 +620,7 @@ class CommentServiceTest {
         assertFalse(results.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("listCommentsByExercise with non-null parentPublicId returns replies")
     @TestTransaction
@@ -622,6 +644,7 @@ class CommentServiceTest {
         assertFalse(replies.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("editComment and deleteComment throw NOT_FOUND for non-existent publicId")
     @TestTransaction
@@ -637,6 +660,7 @@ class CommentServiceTest {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), deleteEx.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("every comment write refuses an ended session and changes nothing")
     @TestTransaction
@@ -670,6 +694,7 @@ class CommentServiceTest {
                 "No second comment may be stored");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createComment persists the session user as author and rate-limits on that user")
     @TestTransaction

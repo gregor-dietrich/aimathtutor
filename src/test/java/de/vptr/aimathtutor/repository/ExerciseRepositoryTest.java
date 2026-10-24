@@ -18,12 +18,12 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class ExerciseRepositoryTest {
 
     @Inject
     ExerciseRepository exerciseRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling for repository methods")
     void testNullHandling() {
@@ -58,6 +58,7 @@ class ExerciseRepositoryTest {
         assertTrue(this.exerciseRepository.findByPublicId(pid).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("search with null or blank returns all, search with term filters")
     @TestTransaction

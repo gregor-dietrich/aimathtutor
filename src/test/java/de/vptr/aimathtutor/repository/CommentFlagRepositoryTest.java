@@ -17,7 +17,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class CommentFlagRepositoryTest {
 
     @Inject
@@ -32,6 +31,7 @@ class CommentFlagRepositoryTest {
     @Inject
     ExerciseRepository exerciseRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null and not-found handling for repository methods")
     @TestTransaction
@@ -40,6 +40,7 @@ class CommentFlagRepositoryTest {
         assertFalse(this.commentFlagRepository.hasUserFlaggedComment(1L, null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createFlag should throw when comment or flagger is null")
     @TestTransaction
@@ -50,6 +51,7 @@ class CommentFlagRepositoryTest {
                 () -> this.commentFlagRepository.createFlag(new CommentEntity(), null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createFlag should create a flag")
     @TestTransaction
@@ -75,6 +77,7 @@ class CommentFlagRepositoryTest {
         assertTrue(this.commentFlagRepository.hasUserFlaggedComment(comment.id, student2.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createFlag should throw when user already flagged the comment")
     @TestTransaction

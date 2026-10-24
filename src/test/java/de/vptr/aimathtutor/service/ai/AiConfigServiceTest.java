@@ -30,7 +30,6 @@ import jakarta.transaction.Transactional;
  */
 @QuarkusTest
 @DisplayName("AiConfigService Tests")
-@SuppressWarnings("NullAway")
 class AiConfigServiceTest {
 
     @Inject
@@ -189,6 +188,7 @@ class AiConfigServiceTest {
         assertEquals(false, value);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Update single configuration value")
     @Transactional
@@ -207,6 +207,7 @@ class AiConfigServiceTest {
         assertEquals("updated_value", updated);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Update multiple configurations at once")
     @Transactional
@@ -234,6 +235,7 @@ class AiConfigServiceTest {
         assertEquals("new_value3", this.aiConfigService.getConfigValue("batch.config3", "NOT_FOUND"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - INTEGER type")
     @Transactional
@@ -256,6 +258,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - DOUBLE type")
     @Transactional
@@ -277,6 +280,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - BOOLEAN type")
     @Transactional
@@ -301,6 +305,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - STRING type accepts anything")
     @Transactional
@@ -320,6 +325,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Cache invalidation on update")
     @Transactional
@@ -361,6 +367,7 @@ class AiConfigServiceTest {
         assertEquals("value", value);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null key validation")
     @Transactional
@@ -370,6 +377,7 @@ class AiConfigServiceTest {
                 () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Range validation - temperature out of bounds")
     @Transactional
@@ -419,6 +427,7 @@ class AiConfigServiceTest {
         assertEquals(1, result, "Should clamp to 1");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getAllConfigsByCategory with null returns empty map")
     @Transactional
@@ -445,6 +454,7 @@ class AiConfigServiceTest {
         assertNotNull(configs);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateMultipleConfigs with null/empty list does nothing")
     @Transactional
@@ -453,6 +463,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(List.of(), this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("resetToDefaults restores factory defaults")
     @Transactional
@@ -465,6 +476,7 @@ class AiConfigServiceTest {
         assertEquals("true", this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, ""));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getConfigValue with null key returns default")
     @Transactional
@@ -472,6 +484,7 @@ class AiConfigServiceTest {
         assertEquals("default", this.aiConfigService.getConfigValue(null, "default"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("validateConfigValue - empty value on non-optional config throws")
     @Transactional
@@ -485,6 +498,7 @@ class AiConfigServiceTest {
                 () -> this.aiConfigService.updateConfig("test.nonoptional", "", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("validateConfigValue - configKey with null key throws")
     @Transactional
@@ -493,6 +507,7 @@ class AiConfigServiceTest {
                 () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("URL validation - unresolvable hostname allowed for Ollama ONLY if in allow-list")
     @Transactional
@@ -506,6 +521,7 @@ class AiConfigServiceTest {
                 "http://nonexistent-host.invalid/", this.adminUser.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
     @Transactional
@@ -568,6 +584,7 @@ class AiConfigServiceTest {
                 () -> this.aiConfigService.validateProviderApiUrl("not a url", AiConfigService.ProviderType.OLLAMA));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateConfig - non-provider URL key falls through to generic loopback check")
     @Transactional
@@ -599,6 +616,7 @@ class AiConfigServiceTest {
                 AiConfigService.ProviderType.GOOGLE));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Range validation - max-tokens out of bounds")
     @Transactional

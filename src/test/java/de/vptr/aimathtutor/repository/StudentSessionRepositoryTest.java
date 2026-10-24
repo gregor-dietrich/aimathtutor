@@ -22,7 +22,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class StudentSessionRepositoryTest {
 
     @Inject
@@ -96,6 +95,7 @@ class StudentSessionRepositoryTest {
         assertEquals(2, count);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("searchByUserOrExerciseTerm should find matching sessions")
     @TestTransaction
@@ -121,6 +121,7 @@ class StudentSessionRepositoryTest {
         return session;
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling in repository methods and persist(null) is a no-op")
     void testNullHandling() {
@@ -134,6 +135,7 @@ class StudentSessionRepositoryTest {
         assertEquals(0L, this.studentSessionRepository.countActiveStudentsSince(null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Additional null handling for methods not covered above")
     void testAdditionalNullHandling() {

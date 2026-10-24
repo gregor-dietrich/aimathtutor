@@ -27,7 +27,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class ExerciseServiceAdminReadsTest {
 
     // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
@@ -89,6 +88,7 @@ class ExerciseServiceAdminReadsTest {
         verify(this.permissionService).requireAdminView(CREDENTIALS);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("A date range with null dates requires the administration view once")
     @TestTransaction

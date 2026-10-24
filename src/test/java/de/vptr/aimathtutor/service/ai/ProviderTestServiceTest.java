@@ -24,7 +24,6 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class ProviderTestServiceTest {
 
     @Inject
@@ -54,6 +53,7 @@ class ProviderTestServiceTest {
         this.aiProviderTestService.setHttpClient(this.mockHttpClient);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testGoogle returns success when response is 200")
     void testTestGoogle_success200() throws IOException, InterruptedException {
@@ -63,6 +63,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("successful"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testGoogle returns success when response is 401 (auth required)")
     void testTestGoogle_reachable401() throws IOException, InterruptedException {
@@ -72,7 +73,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("reachable"));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "NullAway", "unchecked" })
     private void setupGoogleMock(final int statusCode) throws IOException, InterruptedException {
         when(this.mockGoogleService.isConfigured()).thenReturn(true);
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.GOOGLE_API_BASE_URL), any()))
@@ -84,7 +85,7 @@ class ProviderTestServiceTest {
 
     @Test
     @DisplayName("testGoogle returns failure when IOException occurs")
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "NullAway", "unchecked" })
     void testTestGoogle_ioException() throws IOException, InterruptedException {
         when(this.mockGoogleService.isConfigured()).thenReturn(true);
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.GOOGLE_API_BASE_URL), any()))
@@ -107,6 +108,7 @@ class ProviderTestServiceTest {
         assertFalse(result.message.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testCurrentProvider returns success when provider is seeded as mock")
     void testTestCurrentProvider_mock() {
@@ -116,6 +118,7 @@ class ProviderTestServiceTest {
         assertTrue(result.success, "Seeded provider is mock — should succeed");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testGoogle returns failure when not configured")
     void testTestGoogle_notConfigured() {
@@ -126,6 +129,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("not configured"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testGoogle returns failure when SSRF guard rejects URL")
     void testTestGoogle_ssrfRejected() {
@@ -135,6 +139,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("SSRF blocked"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testOpenAi returns failure when not configured")
     void testTestOpenAi_notConfigured() {
@@ -145,6 +150,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("not configured"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testOpenAi returns failure when SSRF guard rejects URL")
     void testTestOpenAi_ssrfRejected() {
@@ -154,6 +160,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("SSRF blocked"));
     }
 
+    @SuppressWarnings("NullAway")
     private void setupSsrfMock(final String configKey, final AiConfigService.ProviderType type,
             final boolean isGoogle) {
         if (isGoogle) {
@@ -166,6 +173,7 @@ class ProviderTestServiceTest {
                 .validateProviderApiUrl(eq("http://malicious.com"), eq(type));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testOllama returns failure when not available")
     void testTestOllama_notAvailable() {
@@ -176,6 +184,7 @@ class ProviderTestServiceTest {
         assertTrue(result.message.contains("not available"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testCurrentProvider returns failure for unknown provider name")
     void testTestCurrentProvider_unknownProvider() {
@@ -189,6 +198,7 @@ class ProviderTestServiceTest {
                 "Failure message must mention the unknown provider, got: " + result.message);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testCurrentProvider delegates to testGoogle when provider is google")
     void testTestCurrentProvider_google() {
@@ -199,6 +209,7 @@ class ProviderTestServiceTest {
         assertFalse(result.message.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testCurrentProvider delegates to testOpenAi when provider is openai")
     void testTestCurrentProvider_openai() {
@@ -209,6 +220,7 @@ class ProviderTestServiceTest {
         assertFalse(result.message.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("testCurrentProvider delegates to testOllama when provider is ollama")
     void testTestCurrentProvider_ollama() {

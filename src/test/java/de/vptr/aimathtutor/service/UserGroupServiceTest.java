@@ -33,7 +33,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class UserGroupServiceTest {
 
     // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
@@ -117,6 +116,7 @@ class UserGroupServiceTest {
         assertEquals(dto.name, created.name);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should add user to group and list them")
     @TestTransaction
@@ -135,6 +135,7 @@ class UserGroupServiceTest {
         assertTrue(this.userGroupMetaRepository.isUserInGroup(student.id, groupEntity.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should remove user from group")
     @TestTransaction
@@ -159,6 +160,7 @@ class UserGroupServiceTest {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getUsersInGroup propagates the administration-view refusal")
     @TestTransaction
@@ -171,6 +173,7 @@ class UserGroupServiceTest {
                 () -> this.userGroupService.getUsersInGroup(CREDENTIALS, group.publicId));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should delete group by id")
     @TestTransaction
@@ -184,6 +187,7 @@ class UserGroupServiceTest {
         assertNull(groupEntity);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateGroup replaces group name")
     @TestTransaction
@@ -198,6 +202,7 @@ class UserGroupServiceTest {
         assertEquals("Updated Group Name", updated.name);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchGroup updates only provided fields")
     @TestTransaction
@@ -232,6 +237,7 @@ class UserGroupServiceTest {
         assertTrue(results.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getAllGroups returns non-null list that includes a newly created group")
     @TestTransaction
@@ -255,6 +261,7 @@ class UserGroupServiceTest {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("addUserToGroup throws NOT_FOUND for unknown userPublicId")
     @TestTransaction
@@ -265,6 +272,7 @@ class UserGroupServiceTest {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("addUserToGroup throws NOT_FOUND for unknown groupPublicId")
     @TestTransaction
@@ -276,6 +284,7 @@ class UserGroupServiceTest {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("removeUserFromGroup returns false when user is not a member")
     @TestTransaction
@@ -302,6 +311,7 @@ class UserGroupServiceTest {
         assertTrue(results.stream().anyMatch(g -> uniqueName.equals(g.name)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getGroupsForUser returns groups after adding user")
     @TestTransaction

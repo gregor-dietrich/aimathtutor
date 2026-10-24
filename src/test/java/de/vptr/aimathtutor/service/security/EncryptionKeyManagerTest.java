@@ -25,7 +25,7 @@ import jakarta.enterprise.inject.spi.ObserverMethod;
  * Unit tests for {@link EncryptionKeyManager} using temp directories: its private static methods by reflection, and
  * {@code init()} through the package-private constructor.
  */
-@SuppressWarnings({ "NullAway", "PMD.AvoidAccessibilityAlteration" })
+@SuppressWarnings("PMD.AvoidAccessibilityAlteration")
 public class EncryptionKeyManagerTest {
 
     private static boolean notCalled() {
@@ -92,6 +92,7 @@ public class EncryptionKeyManagerTest {
         Assertions.assertArrayEquals(originalKey, loaded);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     public void testLoadKey_wrongKeyLength_throwsIllegalState() throws Exception {
         final byte[] shortKey = new byte[16];
@@ -104,6 +105,7 @@ public class EncryptionKeyManagerTest {
         Assertions.assertTrue(ex.getCause().getMessage().contains("wrong length"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     public void testLoadKey_nonExistentFile_throwsIllegalState() throws Exception {
         final Path missingPath = this.tempDir.resolve("missing.key");
@@ -188,6 +190,7 @@ public class EncryptionKeyManagerTest {
         Assertions.assertArrayEquals(k1, k2);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     public void testInit_productionMissingKeyWithEncryptedData_refuses() {
         final Path keyPath = this.tempDir.resolve("keys/encryption.key");

@@ -28,7 +28,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class LessonServiceTest {
 
     @Inject
@@ -47,6 +46,7 @@ class LessonServiceTest {
         Mockito.doNothing().when(this.permissionService).requireLessonDelete();
     }
 
+    @SuppressWarnings("NullAway")
     private Long getLessonNumericId(final String publicId) {
         return this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
                 .setParameter("p", publicId).getSingleResult().id;
@@ -108,6 +108,7 @@ class LessonServiceTest {
         assertEquals(0, created.childrenCount);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should create child lesson with parent reference")
     @TestTransaction
@@ -139,6 +140,7 @@ class LessonServiceTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should find children of a parent lesson")
     @TestTransaction
@@ -156,6 +158,7 @@ class LessonServiceTest {
         assertEquals(created.publicId, children.get(0).publicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should reject circular parent reference")
     @TestTransaction
@@ -197,6 +200,7 @@ class LessonServiceTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should delete lesson by id")
     @TestTransaction
@@ -288,6 +292,7 @@ class LessonServiceTest {
         assertEquals("Patched Name", persisted.name, "Patched name should be persisted in the database");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findRootLessons returns only lessons without a parent")
     @TestTransaction
@@ -308,6 +313,7 @@ class LessonServiceTest {
                 "Child lesson should not appear in root lessons");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("searchLessons with blank query returns all lessons")
     @TestTransaction
@@ -320,6 +326,7 @@ class LessonServiceTest {
                 "Blank search should include the newly created lesson");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("searchLessons with matching term finds the lesson")
     @TestTransaction
@@ -376,6 +383,7 @@ class LessonServiceTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), thrown.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateLesson clears parent when lesson.parent is null (PUT semantics)")
     @TestTransaction
@@ -397,6 +405,7 @@ class LessonServiceTest {
         assertTrue(updated.isRootLesson);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchLesson clears parent when parent.id is null")
     @TestTransaction
@@ -418,6 +427,7 @@ class LessonServiceTest {
         assertNull(patched.parentPublicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("deleteLesson throws BAD_REQUEST when lesson has children")
     @TestTransaction

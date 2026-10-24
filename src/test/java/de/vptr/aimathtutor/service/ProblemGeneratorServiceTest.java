@@ -19,7 +19,6 @@ import de.vptr.aimathtutor.dto.ExerciseDto.DifficultyLevel;
 import de.vptr.aimathtutor.dto.GraspableProblemDto;
 import de.vptr.aimathtutor.dto.GraspableProblemDto.ProblemCategory;
 
-@SuppressWarnings("NullAway")
 class ProblemGeneratorServiceTest {
 
     private ProblemGeneratorService service;
@@ -50,6 +49,7 @@ class ProblemGeneratorServiceTest {
         assertFalse(problem.hints.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest
     @EnumSource(DifficultyLevel.class)
     @DisplayName("Should generate linear equation at every difficulty")
@@ -145,6 +145,7 @@ class ProblemGeneratorServiceTest {
         assertEquals("x < 3/4", problem.targetExpression);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should produce factorable quadratic with matching factored form")
     void shouldGenerateFactorableQuadratic() {
@@ -156,6 +157,7 @@ class ProblemGeneratorServiceTest {
         assertTrue(problem.allowedOperations.contains("factor"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should always set sensible operations and hints for exponents")
     void shouldGenerateExponentsProblem() {

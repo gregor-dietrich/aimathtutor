@@ -25,7 +25,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class ExerciseCompletionServiceTest {
 
     @Inject
@@ -70,6 +69,7 @@ class ExerciseCompletionServiceTest {
         assertNull(result.userCompleted, "userCompleted should remain null when not authenticated");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("enrichWithCompletionData returns dto unchanged for null input")
     void testEnrichWithCompletionData_nullInput() {

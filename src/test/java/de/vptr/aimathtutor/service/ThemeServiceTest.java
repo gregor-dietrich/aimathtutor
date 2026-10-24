@@ -39,7 +39,6 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.TestLogCapture;
 
 @DisplayName("ThemeService")
-@SuppressWarnings("NullAway")
 class ThemeServiceTest {
 
     private static final String PAGE = """
@@ -117,6 +116,7 @@ class ThemeServiceTest {
         verify(this.authService, never()).rememberAppearance(any(), any(), any());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("the registered bootstrap listener renders the session appearance into the page")
     void bootstrapListenerRendersSessionAppearance() {
@@ -135,6 +135,7 @@ class ThemeServiceTest {
         assertEquals(List.of("/lumo/lumo.css?v-c=1", "/styles.css?v-c=3"), hrefs(doc));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("render for a Lumo design keeps only the Lumo base link")
     void renderLumoDesign() {
@@ -150,6 +151,7 @@ class ThemeServiceTest {
         assertEquals("", html.attr("theme"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("render for Vellum keeps only the Aura base link")
     void renderVellum() {
@@ -165,6 +167,7 @@ class ThemeServiceTest {
         assertEquals(List.of("/aura/aura.css?v-c=2", "/styles.css?v-c=3"), hrefs(doc));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("render does not throw when the active base link is missing")
     void renderMissingActiveLink() {
@@ -178,6 +181,7 @@ class ThemeServiceTest {
         assertEquals(1, records.stream().filter(r -> r.getLevel().equals(Level.WARNING)).count());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("render does not throw when there is no html element")
     void renderMissingHtml() {

@@ -16,12 +16,12 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class DateTimeFormatterUtilTest {
 
     @Inject
     DateTimeFormatterUtil util;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("formatDate returns null for null input")
     void testFormatDate_null() {
@@ -43,6 +43,7 @@ class DateTimeFormatterUtilTest {
         assertEquals("15.06.2025", result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("formatDateTime returns null for null input")
     void testFormatDateTime_null() {
@@ -80,6 +81,7 @@ class DateTimeFormatterUtilTest {
         assertFalse(format.isBlank());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("formatDate and formatDateTime outputs contain year component")
     void testOutputsContainYear() {

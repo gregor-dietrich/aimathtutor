@@ -15,12 +15,12 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class UserRankRepositoryTest {
 
     @Inject
     UserRankRepository userRankRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling for repository methods and persist(null) is a no-op")
     @TestTransaction
