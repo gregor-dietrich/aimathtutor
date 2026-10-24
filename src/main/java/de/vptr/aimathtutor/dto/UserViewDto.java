@@ -12,6 +12,8 @@ public class UserViewDto {
     @Nullable
     public String publicId;
     @Nullable
+    public Long version;
+    @Nullable
     public String username;
     // Note: password is never exposed in responses for security
     @Nullable
@@ -45,6 +47,7 @@ public class UserViewDto {
     public UserViewDto(@Nullable final UserEntity entity) {
         if (entity != null) {
             this.publicId = entity.publicId;
+            this.version = entity.version;
             this.username = entity.username;
             // password is NEVER exposed
             this.email = entity.email;
@@ -70,6 +73,7 @@ public class UserViewDto {
     public UserDto toUserDto() {
         final var dto = new UserDto();
         dto.publicId = this.publicId;
+        dto.version = this.version;
         dto.username = this.username;
         dto.email = this.email;
         dto.rankPublicId = this.rankPublicId;
