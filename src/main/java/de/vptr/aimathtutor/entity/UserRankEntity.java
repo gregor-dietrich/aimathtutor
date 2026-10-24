@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -159,13 +158,7 @@ public class UserRankEntity extends BaseEntity {
      * @return a new set of the held permissions
      */
     public Set<Permission> granted() {
-        final var granted = EnumSet.noneOf(Permission.class);
-        for (final var permission : Permission.values()) {
-            if (this.has(permission)) {
-                granted.add(permission);
-            }
-        }
-        return granted;
+        return Permission.where(this::has);
     }
 
     /**

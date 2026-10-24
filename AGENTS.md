@@ -268,15 +268,19 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   caps it at 72 characters (`AppConstants.PASSWORD_MAX_LENGTH`, pinned by
   `PasswordSizeConstraintTest`).
 - **Rank permissions** are listed once, in `Permission` (`dto/`).
-  `UserRankEntity` reads each one through `has` and
-  `UserRankService.setPermission` writes it (exhaustive switches over its
-  columns); the DTOs hold them in an `EnumMap`, where a missing key means "not
-  provided" for a PATCH; the privilege ceiling compares `Set<Permission>`s, and
-  `granted()` returns a snapshot. A new permission needs its constant, its
-  entity field and a migration that adds the column and sets it on every rank
-  holding all the others (otherwise no administrator remains), plus the column
-  in the README's recovery SQL. `PermissionTest` and `AdminRecoverySqlTest` fail
-  until the entity and the README match the enum.
+  `UserRankEntity.has` reads them through a switch the compiler refuses
+  without a case for every constant. `UserRankService.setPermission` writes
+  them; its switch needs a `default` (Checkstyle and PMD), so `PermissionTest`
+  catches a missing case there. The DTOs hold them in an `EnumMap`, where a
+  missing key means "not provided" for a PATCH; the privilege ceiling compares
+  `Set<Permission>`s, and `UserRankEntity.granted()` returns a snapshot. A new
+  permission needs its constant, its entity field, a migration that adds the
+  column and sets it on every rank holding all the others (otherwise no
+  administrator remains), the column in the README's recovery SQL, and the
+  check that enforces it: a named `PermissionService.requireXxx()`, kept per
+  permission so that a missing one is a compile error at its caller.
+  `PermissionTest` and `AdminRecoverySqlTest` fail until the entity and the
+  README match the enum.
 - **Entity field `@Nullable` convention (NullAway-driven):** NullAway runs at
   ERROR level and treats unannotated fields as `@NonNull`. JPA entities use a
   no-arg constructor, so reference-type fields are null after construction

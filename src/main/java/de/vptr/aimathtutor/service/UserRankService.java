@@ -94,23 +94,7 @@ public class UserRankService {
     @Transactional
     @CacheResult(cacheName = RANK_CACHE)
     public List<UserRankViewDto> getAllRanks() {
-        return this.getAllRanks(0, 100);
-    }
-
-    /**
-     * Retrieves available user ranks with pagination. Cached per (page, pageSize) tuple; invalidated alongside the
-     * no-arg overload on any rank mutation.
-     *
-     * @param page
-     *            the page number (0-indexed)
-     * @param pageSize
-     *            the number of ranks per page
-     * @return a paginated list of {@link UserRankViewDto} objects
-     */
-    @Transactional
-    @CacheResult(cacheName = RANK_CACHE)
-    public List<UserRankViewDto> getAllRanks(final int page, final int pageSize) {
-        return this.userRankRepository.findAll(page, pageSize).stream().map(UserRankViewDto::new).toList();
+        return this.userRankRepository.findAll().stream().map(UserRankViewDto::new).toList();
     }
 
     /**

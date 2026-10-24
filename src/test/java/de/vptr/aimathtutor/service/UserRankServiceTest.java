@@ -98,7 +98,7 @@ class UserRankServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Create a new rank with default permissions")
-    @Transactional
+    @TestTransaction
     void testCreateRank() {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "TestRank";
@@ -118,7 +118,7 @@ class UserRankServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Retrieve rank by ID")
-    @Transactional
+    @TestTransaction
     void testFindById() {
         // Setup: Create a rank
         final UserRankDto rankDto = new UserRankDto();
@@ -137,7 +137,7 @@ class UserRankServiceTest {
 
     @Test
     @DisplayName("Find rank by name")
-    @Transactional
+    @TestTransaction
     void testFindByName() {
         // Setup: Create a rank
         final UserRankDto rankDto = new UserRankDto();
@@ -184,7 +184,7 @@ class UserRankServiceTest {
 
     @Test
     @DisplayName("Search ranks by query")
-    @Transactional
+    @TestTransaction
     void testSearchRanks() {
         // Setup: Create ranks with unique names
         final UserRankDto rank1 = new UserRankDto();
@@ -204,7 +204,7 @@ class UserRankServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Update rank permissions")
-    @Transactional
+    @TestTransaction
     void testUpdateRank() {
         // Setup: Create a rank
         final UserRankDto rankDto = new UserRankDto();
@@ -230,7 +230,7 @@ class UserRankServiceTest {
     @ParameterizedTest(name = "{0}")
     @EnumSource(Permission.class)
     @DisplayName("updateRank turns a permission the DTO leaves out off")
-    @Transactional
+    @TestTransaction
     void updateRankTreatsMissingPermissionAsFalse(final Permission permission) {
         final UserRankDto createDto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
         createDto.set(permission, true);
@@ -246,7 +246,7 @@ class UserRankServiceTest {
     @ParameterizedTest(name = "{0}")
     @EnumSource(Permission.class)
     @DisplayName("patchRank leaves a permission the DTO leaves out untouched")
-    @Transactional
+    @TestTransaction
     void patchRankLeavesMissingPermissionUntouched(final Permission permission) {
         final UserRankDto createDto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
         createDto.set(permission, true);
@@ -329,7 +329,7 @@ class UserRankServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchRank updates only provided fields")
-    @Transactional
+    @TestTransaction
     void testPatchRank() {
         final UserRankDto createDto = new UserRankDto();
         createDto.name = "PatchTestRank_" + UUID.randomUUID().toString().substring(0, 8);

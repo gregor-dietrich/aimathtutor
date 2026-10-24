@@ -1,8 +1,5 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.EnumMap;
-import java.util.Map;
-
 import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
@@ -60,7 +57,6 @@ public class AdminUserRanksView extends AbstractAdminView {
     private Dialog rankDialog;
     private Binder<UserRankDto> binder;
     private transient UserRankDto currentRank;
-    private final transient Map<Permission, Checkbox> permissionFields = new EnumMap<>(Permission.class);
 
     /**
      * Constructs the AdminUserRanksView with full size and padding.
@@ -144,10 +140,7 @@ public class AdminUserRanksView extends AbstractAdminView {
             if (this.beyondCaller(rank)) {
                 return nameSpan;
             }
-            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
-            nameSpan.getStyle().set("cursor", "pointer");
-            nameSpan.getStyle().set("width", "100%");
-            nameSpan.getStyle().set("display", "block");
+            nameSpan.addClassName(AppStyles.GRID_LINK);
             nameSpan.addClickListener(e -> this.openRankDialog(rank));
             return nameSpan;
         }).setHeader("Name").setFlexGrow(2);
@@ -220,15 +213,6 @@ public class AdminUserRanksView extends AbstractAdminView {
         return rank.grantsBeyond(this.callerPermissions());
     }
 
-    private TextField createBoundNameField() {
-        final var nameField = new TextField("Name");
-        nameField.setRequired(true);
-        nameField.setInvalid(false); // Clear any previous validation state
-        this.binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
-                .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
-        return nameField;
-    }
-
     /**
      * Open a dialog to edit or create a user rank.
      *
@@ -246,18 +230,17 @@ public class AdminUserRanksView extends AbstractAdminView {
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        form.add(this.createBoundNameField());
+        form.add(createNameField(this.binder, rank1 -> rank1.name, (rank1, value) -> rank1.name = value));
 
-        // One section per permission group; the checkboxes stay in a map for callers that enable or disable them
-        this.permissionFields.clear();
+        // One section per permission group; a permission the caller lacks can't be changed
+        final var callerPermissions = this.callerPermissions();
         for (final var group : Permission.Group.values()) {
             form.add(new H3(group.sectionTitle()));
             for (final var permission : group.permissions()) {
                 final var checkbox = new Checkbox(permission.label());
                 this.binder.bind(checkbox, rank1 -> rank1.get(permission),
                         (rank1, value) -> rank1.set(permission, value));
-                checkbox.setEnabled(this.callerPermissions().contains(permission));
-                this.permissionFields.put(permission, checkbox);
+                checkbox.setEnabled(callerPermissions.contains(permission));
                 form.add(checkbox);
             }
         }
@@ -312,6 +295,8 @@ public class AdminUserRanksView extends AbstractAdminView {
             });
             if (saved) {
                 this.rankDialog.close();
+                // The saved rank may be the caller's own, so the ceiling may have changed
+                this.refreshCallerRank();
                 this.loadRanksAsync();
             }
 

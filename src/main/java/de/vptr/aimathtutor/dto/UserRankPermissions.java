@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.dto;
 
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
@@ -72,12 +71,6 @@ public abstract class UserRankPermissions {
      * @return a new set
      */
     public Set<Permission> granted() {
-        final var granted = EnumSet.noneOf(Permission.class);
-        for (final var permission : Permission.values()) {
-            if (this.has(permission)) {
-                granted.add(permission);
-            }
-        }
-        return granted;
+        return Permission.where(this::has);
     }
 }

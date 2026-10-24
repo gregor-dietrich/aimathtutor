@@ -155,7 +155,10 @@ public class AdminUsersView extends AbstractAdminView {
         layout.setSpacing(true);
 
         final var createButton = new CreateButton(e -> this.openUserDialog(null));
-        final var refreshButton = new RefreshButton(e -> this.loadUsersAsync());
+        final var refreshButton = new RefreshButton(e -> {
+            this.loadRanksAsync();
+            this.loadUsersAsync();
+        });
 
         layout.add(createButton, refreshButton);
         return layout;
@@ -172,10 +175,7 @@ public class AdminUsersView extends AbstractAdminView {
             if (this.aboveCaller(user)) {
                 return usernameSpan;
             }
-            usernameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
-            usernameSpan.getStyle().set("cursor", "pointer");
-            usernameSpan.getStyle().set("width", "100%");
-            usernameSpan.getStyle().set("display", "block");
+            usernameSpan.addClassName(AppStyles.GRID_LINK);
             usernameSpan.addClickListener(e -> this.openUserDialog(user));
             return usernameSpan;
         }).setHeader("Username").setFlexGrow(1);
@@ -305,8 +305,7 @@ public class AdminUsersView extends AbstractAdminView {
         rankField.setClearButtonVisible(false);
         rankField.setInvalid(false); // Clear any previous validation state
         // The service keeps an existing user's rank unless the caller may edit ranks
-        final var rankEditable =
-                user == null || (this.callerRank != null && this.callerRank.has(Permission.USER_RANK_EDIT));
+        final var rankEditable = user == null || this.callerPermissions().contains(Permission.USER_RANK_EDIT);
         if (!rankEditable) {
             rankField.setReadOnly(true);
             rankField.setHelperText("Changing the rank needs the permission to edit ranks");
@@ -470,6 +469,9 @@ public class AdminUsersView extends AbstractAdminView {
             });
             if (saved) {
                 this.userDialog.close();
+                // The saved user may be the caller's own, so the ceiling may have changed
+                this.refreshCallerRank();
+                this.loadRanksAsync();
                 this.loadUsersAsync();
             }
 

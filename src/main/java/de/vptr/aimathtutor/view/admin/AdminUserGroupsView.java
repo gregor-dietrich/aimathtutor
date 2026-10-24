@@ -168,10 +168,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         // Make the name column clickable
         this.grid.addComponentColumn(group -> {
             final var nameSpan = new Span(group.name);
-            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
-            nameSpan.getStyle().set("cursor", "pointer");
-            nameSpan.getStyle().set("width", "100%");
-            nameSpan.getStyle().set("display", "block");
+            nameSpan.addClassName(AppStyles.GRID_LINK);
             nameSpan.addClickListener(ignored -> this.openGroupDialog(group));
             return nameSpan;
         }).setHeader("Name").setFlexGrow(2);
@@ -206,16 +203,7 @@ public class AdminUserGroupsView extends AbstractAdminView {
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        // Form fields
-        final var nameField = new TextField("Name");
-        nameField.setRequired(true);
-        nameField.setInvalid(false); // Clear any previous validation state
-
-        // Bind fields
-        this.binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
-                .bind(group1 -> group1.name, (group1, value) -> group1.name = value);
-
-        form.add(nameField);
+        form.add(createNameField(this.binder, group1 -> group1.name, (group1, value) -> group1.name = value));
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();

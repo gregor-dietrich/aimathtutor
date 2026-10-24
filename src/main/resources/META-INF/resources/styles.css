@@ -165,6 +165,14 @@ html[data-color-scheme="dark"] {
     color: var(--vaadin-text-color-secondary);
 }
 
+/* Clickable name in a grid row, in the accent colour. */
+.grid-link {
+    color: var(--app-accent-text);
+    cursor: pointer;
+    width: 100%;
+    display: block;
+}
+
 /*
    Graspable Math overrides. They key on html.gm-dark-theme, the class gmath puts on <html> itself,
    not on html[data-color-scheme]: gmath 3.5.16 cannot switch from dark back to light and keeps

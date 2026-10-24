@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * The permissions a user rank can hold, listed once. {@code UserRankEntity} keeps one boolean column per constant and
@@ -12,8 +13,8 @@ import java.util.Set;
  * <p>
  * A new permission needs its constant here, its entity field and column, a migration that adds the column and sets it
  * on every rank holding all the others (existing databases included; otherwise no administrator remains and nobody can
- * grant it), and the column in the README's administrator recovery SQL. {@code PermissionTest} and
- * {@code AdminRecoverySqlTest} fail until the entity and the README match.
+ * grant it), the column in the README's administrator recovery SQL, and the {@code PermissionService} check that
+ * enforces it. {@code PermissionTest} and {@code AdminRecoverySqlTest} fail until the entity and the README match.
  */
 public enum Permission {
     ADMIN_VIEW(Group.VIEW, Operation.VIEW, "Admin View"),
@@ -86,6 +87,18 @@ public enum Permission {
         return camel.toString();
     }
 
+    /**
+     * The permissions that pass a filter.
+     *
+     * @param filter
+     *            selects the permissions to keep
+     * @return a new set, in declaration order
+     */
+    public static Set<Permission> where(final Predicate<Permission> filter) {
+        return Arrays.stream(values()).filter(filter).collect(() -> EnumSet.noneOf(Permission.class), EnumSet::add,
+                EnumSet::addAll);
+    }
+
     /** The sections the permissions are shown in, in display order. */
     public enum Group {
         VIEW("View Permissions", "Admin View"), EXERCISE("Exercise Permissions", "Exercises"),
@@ -115,8 +128,7 @@ public enum Permission {
          * @return a new set, in declaration order
          */
         public Set<Permission> permissions() {
-            return Arrays.stream(Permission.values()).filter(p -> p.group == this)
-                    .collect(() -> EnumSet.noneOf(Permission.class), EnumSet::add, EnumSet::addAll);
+            return where(p -> p.group == this);
         }
     }
 

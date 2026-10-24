@@ -451,8 +451,7 @@ class PermissionServiceTest {
     @TestTransaction
     @DisplayName("requireAdminView succeeds for an active user whose rank holds adminView")
     void requireAdminViewSucceeds() {
-        final var rank = this.buildRank();
-        rank.adminView = true;
+        final var rank = this.buildRank(Permission.ADMIN_VIEW);
         final var user = this.stubUser(rank);
 
         assertDoesNotThrow(() -> this.permissionService.requireAdminView(credentialsFor(user)));
@@ -485,8 +484,7 @@ class PermissionServiceTest {
     @TestTransaction
     @DisplayName("requireAdminView refuses an ended session")
     void requireAdminViewRefusesEndedSession() {
-        final var rank = this.buildRank();
-        rank.adminView = true;
+        final var rank = this.buildRank(Permission.ADMIN_VIEW);
         final var user = this.stubUser(rank);
         final var stale = new SessionCredentials(user.publicId, "stale", UUID.randomUUID().toString());
 
@@ -498,8 +496,7 @@ class PermissionServiceTest {
     @Test
     @DisplayName("requireAdminView refuses a caller with no transaction")
     void requireAdminViewRequiresTransaction() {
-        final var rank = this.buildRank();
-        rank.adminView = true;
+        final var rank = this.buildRank(Permission.ADMIN_VIEW);
         final var user = this.stubUser(rank);
 
         assertThrows(TransactionalException.class, () -> this.permissionService.requireAdminView(credentialsFor(user)));

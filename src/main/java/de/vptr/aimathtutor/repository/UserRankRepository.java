@@ -16,6 +16,15 @@ import jakarta.transaction.Transactional;
 public class UserRankRepository extends AbstractRepository {
 
     /**
+     * Retrieves every user rank, newest first.
+     *
+     * @return all {@link UserRankEntity} objects
+     */
+    public List<UserRankEntity> findAll() {
+        return this.em.createNamedQuery("UserRank.findAll", UserRankEntity.class).getResultList();
+    }
+
+    /**
      * Retrieves user ranks from the database with pagination.
      *
      * @param page
