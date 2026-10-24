@@ -398,7 +398,8 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   Admin reads of user data (user, group, comment, session and exercise listings,
   session details and progress summaries) call
   `PermissionService.requireAdminView(credentials)`; the dashboard's aggregate
-  counts and charts do not. An AI call or AI-config save
+  counts and charts do not, nor do lesson listings, which hold no user data and
+  which the student lesson list shares. An AI call or AI-config save
   already handed to its worker is not cancelled by a revocation during the
   provider call, and rows a page loaded while its user had access stay readable
   in it until it reloads or navigates: only new loads are refused. Every user

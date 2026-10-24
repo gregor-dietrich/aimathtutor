@@ -192,7 +192,7 @@ class ExerciseServiceTest {
         final ExerciseViewDto pub = this.exerciseService.createExercise(this.buildDto(true));
         final ExerciseViewDto draft = this.exerciseService.createExercise(this.buildDto(false));
 
-        final var published = this.exerciseService.findPublishedExercises();
+        final var published = this.exerciseService.findPublishedExercises(CREDENTIALS);
 
         assertTrue(published.stream().anyMatch(e -> e.publicId.equals(pub.publicId)));
         assertFalse(published.stream().anyMatch(e -> e.publicId.equals(draft.publicId)));

@@ -17,7 +17,8 @@ This file adds how views are built here.
 - **Routing:** `@Route(value = "...", layout = MainLayout.class)` for user
   views, `layout = AdminMainLayout.class` for admin views. The layouts
   enforce authentication; views add no security annotations.
-- **Admin views** extend `AbstractAdminView`.
+- **Admin views** extend `AbstractAdminView`; a search button's call runs
+  through its `loadSearch`.
 - **User messages** go through `NotificationUtil` (`showSuccess`,
   `showError`, `showWarning`, `showInfo`), not `Notification.show`.
 - **Reuse components** before adding one: `component/button/`,

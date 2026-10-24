@@ -62,11 +62,11 @@ public class ExerciseService {
     AuthService authService;
 
     /**
-     * Retrieves all exercises ordered by creation/modification date.
+     * Retrieves the first 500 exercises ordered by creation/modification date.
      *
      * @param credentials
      *            the credentials of the calling session, captured on the UI thread
-     * @return a list of all {@link ExerciseViewDto} in the system
+     * @return a list of at most 500 {@link ExerciseViewDto}s
      * @throws ValidationException
      *             if the session has ended
      * @throws PermissionDeniedException
@@ -96,10 +96,6 @@ public class ExerciseService {
     public List<ExerciseViewDto> getAllExercises(@Nullable final SessionCredentials credentials, final int page,
             final int pageSize) {
         this.permissionService.requireAdminView(credentials);
-        return this.findAllExercises(page, pageSize);
-    }
-
-    private List<ExerciseViewDto> findAllExercises(final int page, final int pageSize) {
         return this.exerciseRepository.findAllOrdered(page, pageSize).stream().map(ExerciseViewDto::new).toList();
     }
 
@@ -130,15 +126,20 @@ public class ExerciseService {
     }
 
     /**
-     * Retrieves all published exercises with user completion tracking.
+     * Retrieves all published exercises.
      *
-     * @return a list of published {@link ExerciseViewDto}s with enriched completion data
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @return a list of published {@link ExerciseViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<ExerciseViewDto> findPublishedExercises() {
-        final List<ExerciseViewDto> dtos =
-                this.exerciseRepository.findPublished().stream().map(ExerciseViewDto::new).toList();
-        return this.exerciseCompletionService.enrichListWithCompletionData(dtos);
+    public List<ExerciseViewDto> findPublishedExercises(@Nullable final SessionCredentials credentials) {
+        this.permissionService.requireAdminView(credentials);
+        return this.exerciseRepository.findPublished().stream().map(ExerciseViewDto::new).toList();
     }
 
     /**
@@ -429,8 +430,8 @@ public class ExerciseService {
     }
 
     /**
-     * Searches exercises by title and content using the provided query string. Returns all exercises if query is null
-     * or empty.
+     * Searches exercises by title and content using the provided query string. Returns the first 500 exercises if query
+     * is null or empty.
      *
      * @param credentials
      *            the credentials of the calling session, captured on the UI thread
@@ -445,11 +446,7 @@ public class ExerciseService {
     @Transactional
     public List<ExerciseViewDto> searchExercises(@Nullable final SessionCredentials credentials, final String query) {
         this.permissionService.requireAdminView(credentials);
-        if (query == null || query.isBlank()) {
-            return this.findAllExercises(0, 500);
-        }
-        final List<ExerciseEntity> exercises = this.exerciseRepository.search(query);
-        return exercises.stream().map(ExerciseViewDto::new).toList();
+        return this.exerciseRepository.search(query).stream().map(ExerciseViewDto::new).toList();
     }
 
     /**

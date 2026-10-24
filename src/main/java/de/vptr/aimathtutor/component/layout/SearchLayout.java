@@ -55,7 +55,7 @@ public class SearchLayout extends HorizontalLayout {
         this.textField.addValueChangeListener(listener);
 
         this.textField.addKeyPressListener(Key.ENTER, event -> {
-            if (searchAction != null) {
+            if (searchAction != null && this.button.isEnabled()) {
                 searchAction.onComponentEvent(new ClickEvent<>(this.button));
             }
         });

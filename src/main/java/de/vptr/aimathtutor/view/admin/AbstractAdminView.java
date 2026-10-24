@@ -113,7 +113,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Runs a search through {@link AsyncDataLoader}, with the search button disabled and labelled "Searching..." until
-     * the search succeeds or fails.
+     * the search succeeds or fails, then restores the button's own label.
      *
      * @param <T>
      *            the search result type
@@ -128,11 +128,12 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      */
     protected <T> void loadSearch(final Button searchButton, final Supplier<T> search, final Consumer<T> onSuccess,
             final String errorMessage) {
+        final var label = searchButton.getText();
         searchButton.setEnabled(false);
         searchButton.setText("Searching...");
         final Runnable reset = () -> {
             searchButton.setEnabled(true);
-            searchButton.setText("Search");
+            searchButton.setText(label);
         };
         AsyncDataLoader.load(search, this, result -> {
             reset.run();

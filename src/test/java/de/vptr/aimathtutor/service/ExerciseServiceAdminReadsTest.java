@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -15,11 +16,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
 
@@ -38,6 +41,9 @@ class ExerciseServiceAdminReadsTest {
     @InjectMock
     private PermissionService permissionService;
 
+    @InjectSpy
+    private ExerciseRepository exerciseRepository;
+
     private static Named<Consumer<ExerciseService>> read(final String name, final Consumer<ExerciseService> call) {
         return Named.of(name, call);
     }
@@ -48,7 +54,8 @@ class ExerciseServiceAdminReadsTest {
                 read("getAllExercises paged", s -> s.getAllExercises(CREDENTIALS, 0, 10)),
                 read("searchExercises", s -> s.searchExercises(CREDENTIALS, "x")),
                 read("findByDateRange", s -> s.findByDateRange(CREDENTIALS, "2024-01-01", "2024-01-02")),
-                read("findByUserId", s -> s.findByUserId(CREDENTIALS, 1L)));
+                read("findByUserId", s -> s.findByUserId(CREDENTIALS, 1L)),
+                read("findPublishedExercises", s -> s.findPublishedExercises(CREDENTIALS)));
     }
 
     @ParameterizedTest
@@ -63,13 +70,14 @@ class ExerciseServiceAdminReadsTest {
 
     @ParameterizedTest
     @MethodSource("guardedReads")
-    @DisplayName("An admin exercise read propagates the refusal")
+    @DisplayName("An admin exercise read propagates the refusal before it queries exercises")
     @TestTransaction
     void shouldPropagateAdminViewRefusal(final Consumer<ExerciseService> call) {
         doThrow(new PermissionDeniedException("view the administration")).when(this.permissionService)
                 .requireAdminView(CREDENTIALS);
 
         assertThrows(PermissionDeniedException.class, () -> call.accept(this.exerciseService));
+        verifyNoInteractions(this.exerciseRepository);
     }
 
     @Test
