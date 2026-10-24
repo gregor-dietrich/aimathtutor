@@ -286,8 +286,8 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindProblemCategoryStats_returnsList() {
-        Assertions.assertNotNull(this.sessionRepository.findProblemCategoryStats());
+    public void testFindCompletedSessionsByExercise_returnsList() {
+        Assertions.assertNotNull(this.sessionRepository.findCompletedSessionsByExercise());
     }
 
     @Test

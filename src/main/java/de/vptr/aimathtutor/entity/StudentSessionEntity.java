@@ -75,7 +75,7 @@ import jakarta.validation.constraints.NotNull;
                         + "HAVING SUM(s.actionsCount) > 0) t"),
         @NamedQuery(name = "StudentSession.countByStartTimeRangeHalfOpen",
                 query = "SELECT COUNT(s) FROM StudentSessionEntity s WHERE s.startTime >= :s and s.startTime < :e"),
-        @NamedQuery(name = "StudentSession.findProblemCategoryStats",
+        @NamedQuery(name = "StudentSession.findCompletedSessionsByExercise",
                 query = "SELECT s.exercise.title, COUNT(s) FROM StudentSessionEntity s "
                         + "WHERE s.completed = true GROUP BY s.exercise.title"),
         @NamedQuery(name = "StudentSession.findCompletionRateBuckets",
@@ -100,7 +100,12 @@ import jakarta.validation.constraints.NotNull;
         @NamedQuery(name = "StudentSession.findTopUsersByCompletion",
                 query = "SELECT s.user.id, COUNT(s) FROM StudentSessionEntity s "
                         + "WHERE s.completed = true AND s.user IS NOT NULL "
-                        + "GROUP BY s.user.id ORDER BY COUNT(s) DESC") })
+                        + "GROUP BY s.user.id ORDER BY COUNT(s) DESC"),
+        @NamedQuery(name = "StudentSession.findProgressTotalsByUserIdIn",
+                query = "SELECT s.user.id, COUNT(s), SUM(CASE WHEN s.completed = true THEN 1 ELSE 0 END), "
+                        + "SUM(s.hintsUsed), SUM(s.actionsCount), SUM(s.correctActions), "
+                        + "MAX(COALESCE(s.endTime, s.startTime)) FROM StudentSessionEntity s "
+                        + "WHERE s.user.id IN :ids GROUP BY s.user.id") })
 public class StudentSessionEntity extends BaseEntity {
 
     @Nullable

@@ -125,7 +125,7 @@ public class AdminDashboardView extends AbstractAdminView {
         this.add(chartRow1);
 
         // Row 4: Top Exercises by Completion + Hints Usage Distribution
-        this.topExercisesChart = new ChartCard("Top Categories by Completion");
+        this.topExercisesChart = new ChartCard("Top Exercises by Completion");
         this.hintsChart = new ChartCard("Hints Usage Distribution");
         final var chartRow2 = new HorizontalLayout(this.topExercisesChart, this.hintsChart);
         chartRow2.setWidthFull();
@@ -163,7 +163,7 @@ public class AdminDashboardView extends AbstractAdminView {
             final var avgSuccessRate = this.analyticsService.getAverageSuccessRate();
 
             final var dailyCounts = this.analyticsService.getDailySessionCounts(30);
-            final var topExercises = this.analyticsService.getProblemCategoryStats();
+            final var topExercises = this.analyticsService.getCompletedSessionsByExercise();
             final var completionHistogram = this.analyticsService.getCompletionRateHistogram();
             final var hintBuckets = this.analyticsService.getHintUsageBuckets();
             final var trends = this.analyticsService.getTrendData();

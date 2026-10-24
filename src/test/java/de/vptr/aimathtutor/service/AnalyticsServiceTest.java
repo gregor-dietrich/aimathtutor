@@ -588,8 +588,8 @@ class AnalyticsServiceTest {
 
     @Test
     @TestTransaction
-    @DisplayName("getProblemCategoryStats returns a non-null map")
-    void testGetProblemCategoryStats() {
+    @DisplayName("getCompletedSessionsByExercise returns a non-null map")
+    void testGetCompletedSessionsByExercise() {
         final Long studentId = this.studentId();
         final Long exerciseId = this.createExercise();
         final ExerciseEntity exercise = this.exerciseRepository.findById(exerciseId);
@@ -599,7 +599,7 @@ class AnalyticsServiceTest {
         session.actionsCount = 5;
         session.correctActions = 4;
 
-        final var stats = this.analyticsService.getProblemCategoryStats();
+        final var stats = this.analyticsService.getCompletedSessionsByExercise();
         assertNotNull(stats);
         assertTrue(stats.containsKey(exercise.title), "Stats should contain the seeded exercise title");
         assertEquals(1, stats.get(exercise.title), "Should have exactly one completed session for the exercise");

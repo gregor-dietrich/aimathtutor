@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
@@ -24,6 +25,8 @@ import de.vptr.aimathtutor.repository.ExerciseRepository;
 import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.PermissionService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -33,8 +36,15 @@ import jakarta.persistence.EntityManager;
 @SuppressWarnings("NullAway")
 class AnalyticsServiceDashboardTest {
 
+    // The mocked PermissionService accepts any credentials (the guard is tested in AnalyticsServiceAdminReadsTest)
+    private static final SessionCredentials CREDENTIALS =
+            new SessionCredentials("admin-public-id", "stamp", "session-key");
+
     @Inject
     AnalyticsService analyticsService;
+
+    @InjectMock
+    PermissionService permissionService;
 
     @Inject
     StudentSessionRepository studentSessionRepository;
@@ -76,7 +86,7 @@ class AnalyticsServiceDashboardTest {
         return ex;
     }
 
-    private void newSession(final UserEntity user, final ExerciseEntity ex, final LocalDateTime start,
+    private StudentSessionEntity newSession(final UserEntity user, final ExerciseEntity ex, final LocalDateTime start,
             final boolean completed, final int actions, final int correct) {
         final var session = new StudentSessionEntity();
         session.sessionId = UUID.randomUUID().toString();
@@ -87,6 +97,15 @@ class AnalyticsServiceDashboardTest {
         session.actionsCount = actions;
         session.correctActions = correct;
         this.studentSessionRepository.persist(session);
+        return session;
+    }
+
+    private StudentSessionEntity newSession(final UserEntity user, final ExerciseEntity ex, final LocalDateTime start,
+            final LocalDateTime end, final boolean completed, final int actions, final int correct, final int hints) {
+        final var session = this.newSession(user, ex, start, completed, actions, correct);
+        session.endTime = end;
+        session.hintsUsed = hints;
+        return session;
     }
 
     private List<StudentSessionEntity> allUserSessions() {
@@ -216,5 +235,43 @@ class AnalyticsServiceDashboardTest {
         assertTrue(trend.activeStudents >= 0);
         assertTrue(trend.todaySessions >= 0);
         assertTrue(trend.totalUsers >= 4);
+    }
+
+    @Test
+    @TestTransaction
+    @DisplayName("getTopStudentsByCompletion totals the top user's sessions in SQL, with every field as before")
+    void testGetTopStudentsByCompletion() {
+        final var user = this.newUser();
+        final var ex = this.newExercise(user);
+        final var base = LocalDateTime.of(2030, 1, 1, 8, 0);
+        // 50 completed sessions: 2 actions (1 correct) and 1 hint each, each ended an hour after its start
+        for (int i = 0; i < 50; i++) {
+            final var start = base.plusDays(i);
+            this.newSession(user, ex, start, start.plusHours(1), true, 2, 1, 1);
+        }
+        // Incomplete, no end time, started later than every end time: lastActivity falls back to its start time
+        final var lastStart = base.plusDays(60);
+        this.newSession(user, ex, lastStart, false, 3, 2);
+        this.entityManager.flush();
+
+        final var top = this.analyticsService.getTopStudentsByCompletion(CREDENTIALS, 3);
+
+        final var summary = top.get(0);
+        assertEquals(user.publicId, summary.userPublicId);
+        assertEquals(user.username, summary.username);
+        assertEquals(51, summary.totalSessions.intValue());
+        assertEquals(50, summary.completedSessions.intValue());
+        assertEquals(51, summary.totalProblems.intValue());
+        assertEquals(50, summary.completedProblems.intValue());
+        assertEquals(50, summary.hintsUsed.intValue());
+        assertEquals(103.0 / 51, summary.averageActionsPerProblem, 1e-9);
+        assertEquals(52.0 / 103, summary.successRate, 1e-9);
+        assertEquals(lastStart, summary.lastActivity);
+
+        // An end time later than the null-end session's start wins
+        this.newSession(user, ex, base, lastStart.plusDays(1), true, 0, 0, 0);
+        this.entityManager.flush();
+        assertEquals(lastStart.plusDays(1),
+                this.analyticsService.getTopStudentsByCompletion(CREDENTIALS, 1).get(0).lastActivity);
     }
 }

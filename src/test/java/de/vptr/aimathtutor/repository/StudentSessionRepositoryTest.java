@@ -153,10 +153,10 @@ class StudentSessionRepositoryTest {
     }
 
     @Test
-    @DisplayName("findAll, countAll and findProblemCategoryStats return non-null results")
+    @DisplayName("findAll, countAll and findCompletedSessionsByExercise return non-null results")
     void testFindAllAndCountAll() {
         assertNotNull(this.studentSessionRepository.findAll());
         assertTrue(this.studentSessionRepository.countAll() >= 0);
-        assertNotNull(this.studentSessionRepository.findProblemCategoryStats());
+        assertNotNull(this.studentSessionRepository.findCompletedSessionsByExercise());
     }
 }

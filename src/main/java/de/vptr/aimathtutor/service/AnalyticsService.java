@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -219,48 +220,38 @@ public class AnalyticsService {
      */
     private StudentProgressSummaryDto computeProgressSummary(final UserEntity user,
             final List<StudentSessionEntity> sessions) {
-        if (sessions.isEmpty()) {
-            return new StudentProgressSummaryDto(user.publicId, user.username, 0, 0, 0, 0, 0, 0.0, 0.0, null);
-        }
-
-        final int totalSessions = sessions.size();
         final int completedSessions = (int) sessions.stream().filter(s -> s.completed).count();
-
-        // Note: one problem = one session/exercise attempt
-        // totalProblems is the number of exercises attempted
-        final int totalProblems = totalSessions;
-
-        // completedProblems is the number of exercises successfully completed
-        final int completedProblems = completedSessions;
-
         final int hintsUsed = sessions.stream().mapToInt(s -> s.hintsUsed).sum();
-
-        // Average actions per problem (per session)
-        final double totalActions = sessions.stream().mapToInt(s -> s.actionsCount).sum();
-        final double averageActionsPerProblem = totalSessions > 0 ? totalActions / totalSessions : 0.0;
-
-        /*
-         * Success rate: percentage of actions that were correct (problem-solving accuracy). Not the same as completion
-         * rate.
-         */
-        final int totalCorrectActions = sessions.stream().mapToInt(s -> s.correctActions).sum();
-        final double successRate = totalActions > 0 ? (double) totalCorrectActions / totalActions : 0.0;
-
+        final long totalActions = sessions.stream().mapToInt(s -> s.actionsCount).sum();
+        final long totalCorrectActions = sessions.stream().mapToInt(s -> s.correctActions).sum();
         final LocalDateTime lastActivity = sessions.stream().map(s -> s.endTime != null ? s.endTime : s.startTime)
                 .max(LocalDateTime::compareTo).orElse(null);
-
-        return new StudentProgressSummaryDto(user.publicId, user.username, totalSessions, completedSessions,
-                totalProblems, completedProblems, hintsUsed, averageActionsPerProblem, successRate, lastActivity);
+        return buildProgressSummary(user, sessions.size(), completedSessions, hintsUsed, totalActions,
+                totalCorrectActions, lastActivity);
     }
 
     /**
-     * Get statistics by problem category Returns a map of category name to number of problems solved
+     * Builds a summary from a user's session totals. One problem = one session/exercise attempt, so the problem counts
+     * equal the session counts. The success rate is the share of actions that were correct (problem-solving accuracy),
+     * not the completion rate.
+     */
+    private static StudentProgressSummaryDto buildProgressSummary(final UserEntity user, final int totalSessions,
+            final int completedSessions, final int hintsUsed, final long totalActions, final long totalCorrectActions,
+            @Nullable final LocalDateTime lastActivity) {
+        final double averageActionsPerProblem = totalSessions > 0 ? (double) totalActions / totalSessions : 0.0;
+        final double successRate = totalActions > 0 ? (double) totalCorrectActions / totalActions : 0.0;
+        return new StudentProgressSummaryDto(user.publicId, user.username, totalSessions, completedSessions,
+                totalSessions, completedSessions, hintsUsed, averageActionsPerProblem, successRate, lastActivity);
+    }
+
+    /**
+     * Get the number of completed sessions per exercise title. Returns a map of exercise title to that number.
      */
     @Transactional
-    public Map<String, Integer> getProblemCategoryStats() {
-        LOG.trace("Getting problem category statistics");
+    public Map<String, Integer> getCompletedSessionsByExercise() {
+        LOG.trace("Getting completed sessions by exercise");
 
-        final List<Object[]> results = this.studentSessionRepository.findProblemCategoryStats();
+        final List<Object[]> results = this.studentSessionRepository.findCompletedSessionsByExercise();
         return results.stream().collect(Collectors.toMap(row -> row[0] != null ? (String) row[0] : "Unknown",
                 row -> ((Number) row[1]).intValue(), (a, ignored) -> a));
     }
@@ -595,8 +586,8 @@ public class AnalyticsService {
 
     /**
      * Get top students by completed sessions count, limited to the given count. Resolves the top user IDs via a SQL
-     * {@code GROUP BY ... ORDER BY ... LIMIT} query and then computes per-user progress summaries for that small set
-     * only — bounded by {@code limit}, not by total user/session counts.
+     * {@code GROUP BY ... ORDER BY ... LIMIT} query, totals those users' sessions in one more {@code GROUP BY} query
+     * (no session is loaded) and looks the users up one by one, so it runs {@code 2 + limit} queries at most.
      *
      * @param credentials
      *            the credentials of the calling session, captured on the UI thread
@@ -620,22 +611,21 @@ public class AnalyticsService {
             return List.of();
         }
         final List<Long> userIds = topRows.stream().map(row -> ((Number) row[0]).longValue()).toList();
-        final List<UserEntity> users =
-                userIds.stream().map(this.userRepository::findById).filter(u -> u != null).toList();
-        if (users.isEmpty()) {
-            return List.of();
+        final Map<Long, Object[]> totalsByUser = this.studentSessionRepository.findProgressTotalsByUserIdIn(userIds)
+                .stream().collect(Collectors.toMap(row -> ((Number) row[0]).longValue(), row -> row));
+
+        // Preserve the SQL ordering (highest completion count first). No by-ids user finder exists: at most `limit`
+        // primary-key lookups, and a user that no longer exists is skipped.
+        final List<StudentProgressSummaryDto> summaries = new ArrayList<>();
+        for (final Long uid : userIds) {
+            final UserEntity user = this.userRepository.findById(uid);
+            final Object[] t = totalsByUser.get(uid);
+            if (user != null && t != null) {
+                summaries.add(buildProgressSummary(user, ((Number) t[1]).intValue(), ((Number) t[2]).intValue(),
+                        ((Number) t[3]).intValue(), ((Number) t[4]).longValue(), ((Number) t[5]).longValue(),
+                        (LocalDateTime) t[6]));
+            }
         }
-        final List<StudentSessionEntity> userSessions = this.studentSessionRepository.findByUserIdIn(userIds);
-        final Map<Long, List<StudentSessionEntity>> sessionsByUser =
-                userSessions.stream().filter(session -> session.user != null)
-                        .collect(Collectors.groupingBy(session -> Objects.requireNonNull(session.user).id));
-
-        final Map<Long, UserEntity> userById = users.stream().collect(Collectors.toMap(u -> u.id, u -> u));
-
-        // Preserve the SQL ordering (highest completion count first)
-        return userIds.stream().map(uid -> {
-            final UserEntity user = userById.get(uid);
-            return user == null ? null : this.computeProgressSummary(user, sessionsByUser.getOrDefault(uid, List.of()));
-        }).filter(summary -> summary != null).toList();
+        return summaries;
     }
 }

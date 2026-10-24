@@ -336,12 +336,12 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Get problem category statistics using a GROUP BY JPQL query.
+     * Count completed sessions per exercise title using a GROUP BY JPQL query.
      *
-     * @return list of object arrays containing [categoryName, count]
+     * @return list of object arrays containing [exerciseTitle, count]
      */
-    public List<Object[]> findProblemCategoryStats() {
-        final var q = this.em.createNamedQuery("StudentSession.findProblemCategoryStats", Object[].class);
+    public List<Object[]> findCompletedSessionsByExercise() {
+        final var q = this.em.createNamedQuery("StudentSession.findCompletedSessionsByExercise", Object[].class);
         return q.getResultList();
     }
 
@@ -378,6 +378,25 @@ public class StudentSessionRepository extends AbstractRepository {
         }
         final var q = this.em.createNamedQuery("StudentSession.findTopUsersByCompletion", Object[].class);
         q.setMaxResults(limit);
+        return q.getResultList();
+    }
+
+    /**
+     * Total each given user's sessions in one {@code GROUP BY} query, so no session is materialised. Users without a
+     * session have no row.
+     *
+     * @param userIds
+     *            list of user database ids
+     * @return list of {@code [userId, sessions, completedSessions, hintsUsed, actions, correctActions, lastActivity]}
+     *         rows, where {@code lastActivity} is the latest end time, or start time for a session without one; empty
+     *         if userIds is null or empty
+     */
+    public List<Object[]> findProgressTotalsByUserIdIn(final List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findProgressTotalsByUserIdIn", Object[].class);
+        q.setParameter("ids", userIds);
         return q.getResultList();
     }
 
