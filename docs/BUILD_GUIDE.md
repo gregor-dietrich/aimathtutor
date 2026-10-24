@@ -15,7 +15,8 @@ If you want to learn more about Quarkus, please visit its website:
 Every Java `make` target needs python3 ≥ 3.11. The first target that runs Maven
 downloads devkit's pinned Maven, so it needs curl, tar and sha256sum/shasum (no
 system Maven is needed; `./mvnw` stays for IDE or bare use). `make lint` and
-`make format` need node ≥ 22.22.2 with npm (the Markdown gate). Fetching a
+`make format` need node ≥ 22.22.2 with npm (the Markdown gate); `make lint` and
+the git hooks also need git 2.36 or later (the secrets scan). Fetching a
 devkit release that isn't cached needs `ssh-keygen` (OpenSSH 8.1 or later),
 which in a container needs the running UID to have a passwd entry.
 

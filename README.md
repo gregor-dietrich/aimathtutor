@@ -175,11 +175,11 @@ user administration.
 Build and gate tooling comes from [devkit](devkit.toml), fetched by `./devkitw`
 and linked as `.devkit`; any `make` target creates the link, so run one before a
 bare `./mvnw`. Besides JDK 25, `make check` needs python3 ≥ 3.11, and
-`make lint` needs node ≥ 22.22.2 with npm. The first target downloads devkit's
-pinned Maven and `make lint` the pinned gitleaks, so curl, tar and
-sha256sum/shasum are needed. Fetching a devkit release that isn't cached also
-needs `ssh-keygen` (OpenSSH 8.1 or later), which in a container needs the
-running UID to have a passwd entry.
+`make lint` needs node ≥ 22.22.2 with npm and git 2.36 or later. The first
+target downloads devkit's pinned Maven and `make lint` the pinned gitleaks, so
+curl, tar and sha256sum/shasum are needed. Fetching a devkit release that isn't
+cached also needs `ssh-keygen` (OpenSSH 8.1 or later), which in a container
+needs the running UID to have a passwd entry.
 
 See the [Makefile](Makefile) or use `make help` for all available commands and
 scripts.
