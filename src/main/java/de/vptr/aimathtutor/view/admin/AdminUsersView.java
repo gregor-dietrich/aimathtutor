@@ -273,6 +273,11 @@ public class AdminUsersView extends AbstractAdminView {
         rankField.setPlaceholder("Select a rank");
         rankField.setClearButtonVisible(false);
         rankField.setInvalid(false); // Clear any previous validation state
+        // The service keeps an existing user's rank unless the caller may edit ranks
+        if (user != null && (this.callerRank == null || !Boolean.TRUE.equals(this.callerRank.userRankEdit))) {
+            rankField.setEnabled(false);
+            rankField.setHelperText("Changing the rank needs the permission to edit ranks");
+        }
 
         final var activatedField = new Checkbox("Activated");
         final var bannedField = new Checkbox("Banned");

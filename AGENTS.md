@@ -411,6 +411,12 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   `UserRankService.requireWithin()` on every rank the write touches, assigns or
   produces. A caller may never create, change, assign or delete a user or rank
   holding a permission their own rank lacks.
+- **Role-gated user fields are ignored, not refused.** `UserService` sets
+  `activated` and `banned` only for a caller with `adminView` (otherwise a new
+  user is neither, and an existing user keeps them), and changes an existing
+  user's rank only for a caller with `userRankEdit`. Creating a user still takes
+  the rank from the form, within the ceiling: there is no default rank, since
+  the old fallback created administrators.
 - **Every user or rank write path a caller triggers must keep an active
   administrator** (activated, unbanned, rank holding every permission;
   `UserRepository.isActiveAdministrator`). A path that can remove one

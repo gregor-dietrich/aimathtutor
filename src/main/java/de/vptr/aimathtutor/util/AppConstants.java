@@ -66,6 +66,13 @@ public final class AppConstants {
     /** Maximum user name length. */
     public static final int USER_USERNAME_MAX_LENGTH = 50;
 
+    /** Characters a username may contain: none in Unicode category Cc or Cf, and no Unicode whitespace. */
+    public static final String USERNAME_PATTERN = "^[^\\p{Cc}\\p{Cf}\\p{IsWhite_Space}]*$";
+
+    /** Message for a username that contains a character {@link #USERNAME_PATTERN} refuses. */
+    public static final String USERNAME_PATTERN_MESSAGE =
+            "Username must not contain spaces, control or invisible characters";
+
     /** Minimum password length. */
     public static final int PASSWORD_MIN_LENGTH = 8;
 
