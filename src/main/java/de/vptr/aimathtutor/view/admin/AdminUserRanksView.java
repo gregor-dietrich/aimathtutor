@@ -138,9 +138,12 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Make the name column clickable
+        // Make the name column clickable, except on ranks beyond the caller's
         this.grid.addComponentColumn(rank -> {
             final var nameSpan = new Span(rank.name);
+            if (this.beyondCaller(rank)) {
+                return nameSpan;
+            }
             nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             nameSpan.getStyle().set("cursor", "pointer");
             nameSpan.getStyle().set("width", "100%");
@@ -204,8 +207,17 @@ public class AdminUserRanksView extends AbstractAdminView {
         final var editButton = new EditButton(e -> this.openRankDialog(rank));
         final var deleteButton = new DeleteButton(e -> this.deleteRank(rank));
 
+        // A rank granting beyond the caller's own permissions is read-only here; the service refuses it anyway
+        final var editable = !this.beyondCaller(rank);
+        editButton.setEnabled(editable);
+        deleteButton.setEnabled(editable);
+
         layout.add(editButton, deleteButton);
         return layout;
+    }
+
+    private boolean beyondCaller(final UserRankViewDto rank) {
+        return rank.grantsBeyond(this.callerPermissions());
     }
 
     private TextField createBoundNameField() {
@@ -244,6 +256,7 @@ public class AdminUserRanksView extends AbstractAdminView {
                 final var checkbox = new Checkbox(permission.label());
                 this.binder.bind(checkbox, rank1 -> rank1.get(permission),
                         (rank1, value) -> rank1.set(permission, value));
+                checkbox.setEnabled(this.callerPermissions().contains(permission));
                 this.permissionFields.put(permission, checkbox);
                 form.add(checkbox);
             }
