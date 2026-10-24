@@ -1,13 +1,18 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.view.LoginView;
 import jakarta.inject.Inject;
 
@@ -104,5 +109,34 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
     protected boolean isAuthorized() {
         final var userRank = this.userRankService.getCurrentUserRank();
         return userRank != null && userRank.canAdminView();
+    }
+
+    /**
+     * Runs a search through {@link AsyncDataLoader}, with the search button disabled and labelled "Searching..." until
+     * the search succeeds or fails.
+     *
+     * @param <T>
+     *            the search result type
+     * @param searchButton
+     *            the button that started the search
+     * @param search
+     *            the blocking search call
+     * @param onSuccess
+     *            applies the result on the UI thread
+     * @param errorMessage
+     *            the message shown when the search fails
+     */
+    protected <T> void loadSearch(final Button searchButton, final Supplier<T> search, final Consumer<T> onSuccess,
+            final String errorMessage) {
+        searchButton.setEnabled(false);
+        searchButton.setText("Searching...");
+        final Runnable reset = () -> {
+            searchButton.setEnabled(true);
+            searchButton.setText("Search");
+        };
+        AsyncDataLoader.load(search, this, result -> {
+            reset.run();
+            onSuccess.accept(result);
+        }, reset, errorMessage);
     }
 }
