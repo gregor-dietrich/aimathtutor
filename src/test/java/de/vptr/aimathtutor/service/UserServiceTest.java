@@ -496,7 +496,7 @@ class UserServiceTest {
         // usernames must be stored lower-cased or the account could never log in.
         final var suffix = UUID.randomUUID().toString().substring(0, 8);
         final UserDto dto = this.buildValidDto();
-        dto.username = "  MixedCase_" + suffix + "  ";
+        dto.username = "MixedCase_" + suffix;
 
         final UserViewDto created = this.userService.createUser(dto);
 

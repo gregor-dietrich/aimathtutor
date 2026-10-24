@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
 
@@ -55,6 +56,8 @@ public class UserService {
 
     /** The demo accounts seeded by releases before 5.0.0. */
     private static final List<String> SEEDED_DEMO_USERNAMES = List.of("teacher", "student1", "student2");
+
+    private static final Pattern USERNAME_PATTERN = Pattern.compile(AppConstants.USERNAME_PATTERN);
 
     @Inject
     PasswordHashingService passwordHashingService;
@@ -157,17 +160,24 @@ public class UserService {
     }
 
     /**
-     * Normalizes a username to the canonical form stored in the database: trimmed and lower-cased.
+     * Normalizes a username to the canonical form stored in the database: lower-cased. A name
+     * {@link AppConstants#USERNAME_PATTERN} refuses is rejected here as well as in the DTO.
      * {@code AuthService.authenticate} lower-cases the login name before its exact-match lookup, so usernames must be
      * persisted in lower case or the account can never authenticate.
      */
     private String normalizeUsername(final String username) {
-        return username.trim().toLowerCase(Locale.ROOT);
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            throw new ValidationException(AppConstants.USERNAME_PATTERN_MESSAGE);
+        }
+        return username.toLowerCase(Locale.ROOT);
     }
 
     /**
      * Creates a new user account with provided information. Validates required fields (username, password), checks for
-     * duplicate username/email, hashes password with bcrypt, and requires an existing rank.
+     * duplicate username/email, hashes password with bcrypt, and requires an existing rank. Without the admin view
+     * permission the caller cannot activate or ban: {@code activated} and {@code banned} in the DTO are ignored and the
+     * new user is neither. The rank is not gated by {@code userRankEdit}; it stays required and bounded by the caller's
+     * own permissions.
      *
      * @param userDto
      *            the user data transfer object with creation details
@@ -181,7 +191,7 @@ public class UserService {
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
         this.permissionService.requireUserAdd();
-        return this.insertUser(userDto, this.userRankService.requireCallerPermissions());
+        return this.insertUser(userDto, this.userRankService.requireCallerRank());
     }
 
     /**
@@ -284,7 +294,7 @@ public class UserService {
                 .filter(user -> this.passwordHashingService.verifyPassword(seededUsername, user.password));
     }
 
-    private UserViewDto insertUser(final UserDto userDto, @Nullable final List<Boolean> ceiling) {
+    private UserViewDto insertUser(final UserDto userDto, @Nullable final UserRankEntity caller) {
         // Validate required fields for POST
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for creating a user");
@@ -310,15 +320,16 @@ public class UserService {
         final UserEntity user = new UserEntity();
         user.username = normalizedUsername;
         user.email = normalizedEmail;
-        user.banned = userDto.banned != null ? userDto.banned : false;
-        user.activated = userDto.activated != null ? userDto.activated : false;
+        final boolean setsStatus = caller == null || caller.adminView;
+        user.banned = setsStatus && Boolean.TRUE.equals(userDto.banned);
+        user.activated = setsStatus && Boolean.TRUE.equals(userDto.activated);
         user.activationKey = UUID.randomUUID().toString();
 
         // Hash password with bcrypt
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
         user.password = hashedPassword;
 
-        this.applyRankToUser(user, userDto.rankPublicId, ceiling);
+        this.applyRankToUser(user, userDto.rankPublicId, caller == null ? null : caller.permissions());
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
@@ -335,7 +346,9 @@ public class UserService {
     /**
      * Completely replaces an existing user account (PUT semantics). Updates username, email, banned/activated status,
      * rank, and password if provided. Validates duplicate username/email (skipping current values) and hashes new
-     * passwords.
+     * passwords. Fields the caller's rank does not entitle them to change are ignored and keep their stored value:
+     * {@code activated} and {@code banned} without the admin view permission, the rank (so {@code rankPublicId} may
+     * then be absent) without the user rank edit permission.
      *
      * @param publicId
      *            the user public ID to update
@@ -363,7 +376,7 @@ public class UserService {
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
-        final List<Boolean> ceiling = this.requireWithinCaller(existingUser);
+        final UserRankEntity caller = this.requireWithinCaller(existingUser);
 
         // Check for duplicate username (only if username is different from current)
         final String normalizedUsername = this.normalizeUsername(userDto.username);
@@ -383,19 +396,25 @@ public class UserService {
         // Complete replacement (PUT semantics)
         existingUser.username = normalizedUsername;
         existingUser.email = normalizedEmail;
-        existingUser.banned = userDto.banned != null ? userDto.banned : false;
-        existingUser.activated = userDto.activated != null ? userDto.activated : false;
+        if (caller.adminView) {
+            existingUser.banned = Boolean.TRUE.equals(userDto.banned);
+            existingUser.activated = Boolean.TRUE.equals(userDto.activated);
+        }
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        this.applyRankToUser(existingUser, userDto.rankPublicId, ceiling);
+        if (caller.userRankEdit) {
+            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.permissions());
+        }
         return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
 
     /**
      * Partially updates an existing user account (PATCH semantics). Only updates user properties that are explicitly
      * provided in the DTO; null values are ignored. Validates duplicate username/email if being changed, and hashes new
-     * passwords if provided.
+     * passwords if provided. Fields the caller's rank does not entitle them to change are ignored as well:
+     * {@code activated} and {@code banned} without the admin view permission, {@code rankPublicId} without the user
+     * rank edit permission.
      *
      * @param publicId
      *            the user public ID to update
@@ -417,7 +436,7 @@ public class UserService {
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
-        final List<Boolean> ceiling = this.requireWithinCaller(existingUser);
+        final UserRankEntity caller = this.requireWithinCaller(existingUser);
 
         // Check for duplicate username if username is being updated
         final String normalizedUsername = userDto.username != null && !userDto.username.isBlank()
@@ -444,17 +463,17 @@ public class UserService {
         if (userDto.email != null) {
             existingUser.email = this.normalizeEmail(userDto.email);
         }
-        if (userDto.banned != null) {
+        if (caller.adminView && userDto.banned != null) {
             existingUser.banned = userDto.banned;
         }
-        if (userDto.activated != null) {
+        if (caller.adminView && userDto.activated != null) {
             existingUser.activated = userDto.activated;
         }
 
         // Handle password and rank updates (PATCH: only if provided)
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        if (userDto.rankPublicId != null) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId, ceiling);
+        if (caller.userRankEdit && userDto.rankPublicId != null) {
+            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.permissions());
         }
         return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
@@ -765,13 +784,13 @@ public class UserService {
      *
      * @param user
      *            the user about to be changed or deleted
-     * @return the caller's permissions, for checking a newly assigned rank
+     * @return the caller's rank facts, for checking a newly assigned rank and gating fields
      * @throws ValidationException
      *             if the user's rank grants a permission the caller's rank lacks
      */
-    private List<Boolean> requireWithinCaller(final UserEntity user) {
-        final List<Boolean> ceiling = this.userRankService.requireCallerPermissions();
-        UserRankService.requireWithin(user.rank, ceiling);
-        return ceiling;
+    private UserRankEntity requireWithinCaller(final UserEntity user) {
+        final UserRankEntity caller = this.userRankService.requireCallerRank();
+        UserRankService.requireWithin(user.rank, caller.permissions());
+        return caller;
     }
 }

@@ -10,10 +10,12 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
+import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.view.LoginView;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -33,6 +35,15 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     @Inject
     protected transient UserRankService userRankService;
+
+    /**
+     * The signed-in user's rank, as {@link #isAuthOk} loaded it for this navigation; null before that, after
+     * deserialization, or if they have none. A null value fails closed: {@link #isAuthorized()} refuses it and views
+     * offer no permission-gated control. It decides which controls a view offers; the services still check every
+     * action.
+     */
+    @Nullable
+    protected transient UserRankViewDto callerRank;
 
     /**
      * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
@@ -89,6 +100,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
             event.forwardTo(LoginView.class);
             return false;
         }
+        this.callerRank = this.userRankService.getCurrentUserRank();
         if (!this.isAuthorized()) {
             event.forwardTo("");
             return false;
@@ -98,7 +110,8 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Determines whether the current user is authorised to access this admin view. The default implementation requires
-     * {@code canAdminView()} on the user's rank.
+     * {@code canAdminView()} on the user's rank, which {@link #isAuthOk} has loaded into {@link #callerRank} (once per
+     * navigation).
      *
      * <p>
      * Subclasses with different permission requirements (e.g. {@link AdminConfigView}) can override this method.
@@ -107,8 +120,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      * @return true if the user is authorised, false otherwise
      */
     protected boolean isAuthorized() {
-        final var userRank = this.userRankService.getCurrentUserRank();
-        return userRank != null && userRank.canAdminView();
+        return this.callerRank != null && this.callerRank.canAdminView();
     }
 
     /**

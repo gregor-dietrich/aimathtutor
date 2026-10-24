@@ -406,11 +406,22 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   write that can end sessions fires `UserAccountChangedEvent`; `AuthService`
   evicts its cache in an `AFTER_SUCCESS` observer, never before commit.
 - **Every user or rank write path must enforce the privilege ceiling.** Read the
-  caller's permissions with `UserRankService.requireCallerPermissions()` before
-  writing (before editing a rank, which may be the caller's own), and call
+  caller's permissions with `UserRankService.requireCallerPermissions()` (user
+  writes: `requireCallerRank()`, the same read) before writing (before editing a
+  rank, which may be the caller's own), and call
   `UserRankService.requireWithin()` on every rank the write touches, assigns or
   produces. A caller may never create, change, assign or delete a user or rank
   holding a permission their own rank lacks.
+- **Role-gated user fields are ignored, not refused.** `UserService` sets
+  `activated` and `banned` only for a caller with `adminView` (otherwise a new
+  user is neither, and an existing user keeps them), and changes an existing
+  user's rank only for a caller with `userRankEdit`. Creating a user takes the
+  rank from the form, within the ceiling: there is deliberately no default rank
+  (see `UserService.applyRankToUser`).
+- **Usernames** match `AppConstants.USERNAME_PATTERN`, an ASCII allowlist
+  (letters, digits, `.`, `_`, `-`), because Unicode files blank characters as
+  letters and has lookalike letters. `UserDto` checks it, and
+  `UserService.normalizeUsername` checks it again for every write.
 - **Every user or rank write path a caller triggers must keep an active
   administrator** (activated, unbanned, rank holding every permission;
   `UserRepository.isActiveAdministrator`). A path that can remove one

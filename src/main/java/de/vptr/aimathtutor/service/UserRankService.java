@@ -329,11 +329,22 @@ public class UserRankService {
      *             if there is no current user with a rank; the permission check that runs first makes that unexpected
      */
     public List<Boolean> requireCallerPermissions() {
+        return this.requireCallerRank().permissions();
+    }
+
+    /**
+     * Returns the current user's rank, for callers that need more of it than its permissions.
+     *
+     * @return the current user's rank
+     * @throws PermissionDeniedException
+     *             if there is no current user with a rank; the permission check that runs first makes that unexpected
+     */
+    public UserRankEntity requireCallerRank() {
         final UserRankEntity rank = this.permissionService.findCurrentUserRank();
         if (rank == null) {
             throw new PermissionDeniedException("You do not have permission to perform this action");
         }
-        return rank.permissions();
+        return rank;
     }
 
     /**

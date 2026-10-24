@@ -118,6 +118,13 @@ public class UserRankViewDto extends UserRankPermissions {
     }
 
     /**
+     * Whether this rank has permission to edit user ranks.
+     */
+    public boolean canUserRankEdit() {
+        return Boolean.TRUE.equals(this.userRankEdit);
+    }
+
+    /**
      * Whether this rank has permission to edit AI configuration.
      */
     public boolean canAiConfigEdit() {
