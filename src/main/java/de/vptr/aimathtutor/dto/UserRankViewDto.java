@@ -20,6 +20,7 @@ public class UserRankViewDto extends UserRankPermissions {
     public UserRankViewDto(final UserRankEntity entity) {
         if (entity != null) {
             this.publicId = entity.publicId;
+            this.version = entity.version;
             this.name = entity.name;
 
             // View permissions
@@ -130,6 +131,7 @@ public class UserRankViewDto extends UserRankPermissions {
     public UserRankDto toUserRankDto() {
         final var dto = new UserRankDto();
         dto.publicId = this.publicId;
+        dto.version = this.version;
         dto.name = this.name;
         dto.adminView = this.adminView;
         dto.exerciseAdd = this.exerciseAdd;
