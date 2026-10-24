@@ -23,6 +23,7 @@ import de.vptr.aimathtutor.component.AdminNavigationTabs;
 import de.vptr.aimathtutor.component.TopBar;
 import de.vptr.aimathtutor.component.button.LogoutButton;
 import de.vptr.aimathtutor.component.button.UserViewButton;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.service.ThemeService;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -136,7 +137,7 @@ public class AdminMainLayout extends VerticalLayout implements RouterLayout, Bef
 
         // Check admin permission for admin views
         final var userRank = this.userRankService.getCurrentUserRank();
-        if (userRank == null || !userRank.canAdminView()) {
+        if (userRank == null || !userRank.has(Permission.ADMIN_VIEW)) {
             LOG.trace("User does not have admin:view permission, redirecting to home");
             event.forwardTo("");
             return;

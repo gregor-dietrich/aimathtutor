@@ -4,6 +4,7 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.RouterLink;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.view.admin.AdminCommentsView;
 import de.vptr.aimathtutor.view.admin.AdminConfigView;
@@ -31,34 +32,34 @@ public class AdminNavigationTabs extends Tabs {
         this.setOrientation(Orientation.VERTICAL);
         this.setWidthFull();
 
-        if (userRank.hasAnyExercisePermission() || userRank.hasAnyLessonPermission()) {
+        if (userRank.hasAny(Permission.Group.EXERCISE) || userRank.hasAny(Permission.Group.LESSON)) {
             this.add(new Tab(new RouterLink("Dashboard", AdminDashboardView.class)));
             this.add(new Tab(new RouterLink("Configuration", AdminConfigView.class)));
             this.add(new Tab(new RouterLink("Sessions", AdminSessionsView.class)));
             this.add(new Tab(new RouterLink("Progress", AdminProgressView.class)));
         }
 
-        if (userRank.hasAnyExercisePermission()) {
+        if (userRank.hasAny(Permission.Group.EXERCISE)) {
             this.add(new Tab(new RouterLink("Exercises", AdminExercisesView.class)));
         }
 
-        if (userRank.hasAnyLessonPermission()) {
+        if (userRank.hasAny(Permission.Group.LESSON)) {
             this.add(new Tab(new RouterLink("Lessons", AdminLessonsView.class)));
         }
 
-        if (userRank.hasAnyCommentPermission()) {
+        if (userRank.hasAny(Permission.Group.COMMENT)) {
             this.add(new Tab(new RouterLink("Comments", AdminCommentsView.class)));
         }
 
-        if (userRank.hasAnyUserPermission()) {
+        if (userRank.hasAny(Permission.Group.USER)) {
             this.add(new Tab(new RouterLink("Users", AdminUsersView.class)));
         }
 
-        if (userRank.hasAnyUserGroupPermission()) {
+        if (userRank.hasAny(Permission.Group.USER_GROUP)) {
             this.add(new Tab(new RouterLink("User Groups", AdminUserGroupsView.class)));
         }
 
-        if (userRank.hasAnyUserRankPermission()) {
+        if (userRank.hasAny(Permission.Group.USER_RANK)) {
             this.add(new Tab(new RouterLink("User Ranks", AdminUserRanksView.class)));
         }
     }

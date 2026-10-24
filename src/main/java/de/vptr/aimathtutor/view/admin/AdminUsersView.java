@@ -33,6 +33,7 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -274,7 +275,7 @@ public class AdminUsersView extends AbstractAdminView {
         rankField.setClearButtonVisible(false);
         rankField.setInvalid(false); // Clear any previous validation state
         // The service keeps an existing user's rank unless the caller may edit ranks
-        if (user != null && (this.callerRank == null || !Boolean.TRUE.equals(this.callerRank.userRankEdit))) {
+        if (user != null && (this.callerRank == null || !this.callerRank.has(Permission.USER_RANK_EDIT))) {
             rankField.setEnabled(false);
             rankField.setHelperText("Changing the rank needs the permission to edit ranks");
         }

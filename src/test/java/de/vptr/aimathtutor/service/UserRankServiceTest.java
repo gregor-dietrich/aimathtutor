@@ -11,6 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,17 +25,18 @@ import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 
 import com.vaadin.flow.server.VaadinSession;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -100,17 +102,17 @@ class UserRankServiceTest {
     void testCreateRank() {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "TestRank";
-        rankDto.adminView = true;
-        rankDto.exerciseAdd = true;
-        rankDto.userEdit = false;
+        rankDto.set(Permission.ADMIN_VIEW, true);
+        rankDto.set(Permission.EXERCISE_ADD, true);
+        rankDto.set(Permission.USER_EDIT, false);
 
         final UserRankViewDto created = this.userRankService.createRank(rankDto);
 
         assertNotNull(created);
         assertEquals("TestRank", created.name);
-        assertTrue(created.adminView);
-        assertTrue(created.exerciseAdd);
-        assertFalse(created.userEdit);
+        assertTrue(created.has(Permission.ADMIN_VIEW));
+        assertTrue(created.has(Permission.EXERCISE_ADD));
+        assertFalse(created.has(Permission.USER_EDIT));
     }
 
     @SuppressWarnings("NullAway")
@@ -121,7 +123,7 @@ class UserRankServiceTest {
         // Setup: Create a rank
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "TestRank";
-        rankDto.adminView = true;
+        rankDto.set(Permission.ADMIN_VIEW, true);
         final UserRankViewDto created = this.userRankService.createRank(rankDto);
 
         // Test: Find by ID
@@ -130,7 +132,7 @@ class UserRankServiceTest {
 
         assertTrue(found.isPresent());
         assertEquals("TestRank", found.get().name);
-        assertTrue(found.get().adminView);
+        assertTrue(found.get().has(Permission.ADMIN_VIEW));
     }
 
     @Test
@@ -207,21 +209,53 @@ class UserRankServiceTest {
         // Setup: Create a rank
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "TestRankToUpdate";
-        rankDto.adminView = false;
-        rankDto.exerciseAdd = false;
+        rankDto.set(Permission.ADMIN_VIEW, false);
+        rankDto.set(Permission.EXERCISE_ADD, false);
         final UserRankViewDto created = this.userRankService.createRank(rankDto);
 
         // Test: Update the rank
         final UserRankDto updateDto = new UserRankDto();
         updateDto.name = "TestRankToUpdate";
-        updateDto.adminView = true;
-        updateDto.exerciseAdd = true;
-        updateDto.exerciseEdit = true;
+        updateDto.set(Permission.ADMIN_VIEW, true);
+        updateDto.set(Permission.EXERCISE_ADD, true);
+        updateDto.set(Permission.EXERCISE_EDIT, true);
         final UserRankViewDto updated = this.userRankService.updateRank(created.publicId, updateDto);
 
-        assertTrue(updated.adminView);
-        assertTrue(updated.exerciseAdd);
-        assertTrue(updated.exerciseEdit);
+        assertTrue(updated.has(Permission.ADMIN_VIEW));
+        assertTrue(updated.has(Permission.EXERCISE_ADD));
+        assertTrue(updated.has(Permission.EXERCISE_EDIT));
+    }
+
+    @SuppressWarnings("NullAway")
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(Permission.class)
+    @DisplayName("updateRank turns a permission the DTO leaves out off")
+    @Transactional
+    void updateRankTreatsMissingPermissionAsFalse(final Permission permission) {
+        final UserRankDto createDto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
+        createDto.set(permission, true);
+        final UserRankViewDto created = this.userRankService.createRank(createDto);
+
+        final UserRankDto updateDto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
+        final UserRankViewDto updated = this.userRankService.updateRank(created.publicId, updateDto);
+
+        assertFalse(updated.has(permission));
+    }
+
+    @SuppressWarnings("NullAway")
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(Permission.class)
+    @DisplayName("patchRank leaves a permission the DTO leaves out untouched")
+    @Transactional
+    void patchRankLeavesMissingPermissionUntouched(final Permission permission) {
+        final UserRankDto createDto = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
+        createDto.set(permission, true);
+        final UserRankViewDto created = this.userRankService.createRank(createDto);
+
+        final UserRankDto patch = new UserRankDto("Rank_" + UUID.randomUUID().toString().substring(0, 8));
+        final UserRankViewDto patched = this.userRankService.patchRank(created.publicId, patch);
+
+        assertTrue(patched.has(permission));
     }
 
     @SuppressWarnings("NullAway")
@@ -299,21 +333,23 @@ class UserRankServiceTest {
     void testPatchRank() {
         final UserRankDto createDto = new UserRankDto();
         createDto.name = "PatchTestRank_" + UUID.randomUUID().toString().substring(0, 8);
-        createDto.exerciseAdd = false;
-        createDto.adminView = false;
-        createDto.commentAdd = true;
+        createDto.set(Permission.EXERCISE_ADD, false);
+        createDto.set(Permission.ADMIN_VIEW, false);
+        createDto.set(Permission.COMMENT_ADD, true);
         final UserRankViewDto created = this.userRankService.createRank(createDto);
 
         final UserRankDto patch = new UserRankDto();
         patch.name = "PatchedName_" + UUID.randomUUID().toString().substring(0, 8);
-        patch.exerciseAdd = true;
+        patch.set(Permission.EXERCISE_ADD, true);
 
         final UserRankViewDto patched = this.userRankService.patchRank(created.publicId, patch);
 
         assertEquals(patch.name, patched.name, "Name should be updated");
-        assertTrue(patched.exerciseAdd, "exerciseAdd should be updated to true");
-        assertEquals(created.adminView, patched.adminView, "adminView should be unchanged after patch");
-        assertEquals(created.commentAdd, patched.commentAdd, "commentAdd should be unchanged after patch");
+        assertTrue(patched.has(Permission.EXERCISE_ADD), "exerciseAdd should be updated to true");
+        assertEquals(created.get(Permission.ADMIN_VIEW), patched.get(Permission.ADMIN_VIEW),
+                "adminView should be unchanged after patch");
+        assertEquals(created.get(Permission.COMMENT_ADD), patched.get(Permission.COMMENT_ADD),
+                "commentAdd should be unchanged after patch");
     }
 
     @Test
@@ -422,7 +458,7 @@ class UserRankServiceTest {
     void testDeleteRank_withAssignedUsers() {
         final UserRankDto rankDto = new UserRankDto();
         rankDto.name = "ConflictRank_" + UUID.randomUUID().toString().substring(0, 8);
-        rankDto.commentAdd = true;
+        rankDto.set(Permission.COMMENT_ADD, true);
         final UserRankViewDto rank = this.userRankService.createRank(rankDto);
         this.createActiveUser(rank.publicId);
 
@@ -435,7 +471,7 @@ class UserRankServiceTest {
     @MethodSource("editsStrippingOneFlag")
     @DisplayName("The rank holding the last active administrators cannot lose a permission")
     @TestTransaction
-    void lastAdministratorRankKeepsAdministration(final String method, final String permission) {
+    void lastAdministratorRankKeepsAdministration(final String method, final Permission permission) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
 
         final var e = assertThrows(ValidationException.class, this.editRank(rank, method, permission));
@@ -449,7 +485,7 @@ class UserRankServiceTest {
     void lastAdministratorRankCanBeEditedWithoutStripping(final String method) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
 
-        assertDoesNotThrow(this.editRank(rank, method, "none"));
+        assertDoesNotThrow(this.editRank(rank, method, null));
         assertTrue(UserRepository
                 .grantsAdministration(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow()));
     }
@@ -458,7 +494,7 @@ class UserRankServiceTest {
     @MethodSource("editsStrippingOneFlag")
     @DisplayName("A rank can lose a permission while an administrator outside it remains")
     @TestTransaction
-    void administratorRankCanLoseAdministrationWhileAnotherRemains(final String method, final String permission) {
+    void administratorRankCanLoseAdministrationWhileAnotherRemains(final String method, final Permission permission) {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
         this.createActiveUser(ADMIN_RANK_PUBLIC_ID);
 
@@ -475,7 +511,7 @@ class UserRankServiceTest {
         final UserRankViewDto rank = this.createAdministratorRankWithUser();
         this.banActiveAdministrators(null);
 
-        assertDoesNotThrow(this.editRank(rank, method, "userEdit"));
+        assertDoesNotThrow(this.editRank(rank, method, Permission.USER_EDIT));
         assertFalse(UserRepository
                 .grantsAdministration(this.userRankRepository.findByPublicId(rank.publicId).orElseThrow()));
     }
@@ -483,7 +519,7 @@ class UserRankServiceTest {
     /** Every rank edit paired with every flag it can strip. */
     static Stream<Arguments> editsStrippingOneFlag() {
         return Stream.of("updateRank", "patchRank")
-                .flatMap(method -> UserRankEntity.PERMISSION_FIELDS.stream().map(flag -> Arguments.of(method, flag)));
+                .flatMap(method -> Arrays.stream(Permission.values()).map(flag -> Arguments.of(method, flag)));
     }
 
     /**
@@ -492,7 +528,7 @@ class UserRankServiceTest {
      */
     @SuppressWarnings("NullAway")
     private UserRankViewDto createAdministratorRankWithUser() {
-        final UserRankViewDto rank = this.userRankService.createRank(TestUserRankFactory.rankWithout("none"));
+        final UserRankViewDto rank = this.userRankService.createRank(TestUserRankFactory.rankWithout(null));
         this.createActiveUser(rank.publicId);
         this.banActiveAdministrators(rank.publicId);
         return rank;
@@ -519,17 +555,17 @@ class UserRankServiceTest {
 
     /**
      * Builds the call that edits a rank granting every permission. The update sends the whole rank under a new name,
-     * switching off {@code stripped}; the patch sends only {@code stripped} switched off, or only a new name for
-     * {@code "none"}, since the rank already grants every permission.
+     * switching off {@code stripped}; the patch sends only {@code stripped} switched off, or only a new name for null,
+     * since the rank already grants every permission.
      */
     @SuppressWarnings("NullAway")
-    private Executable editRank(final UserRankViewDto rank, final String method, final String stripped) {
+    private Executable editRank(final UserRankViewDto rank, final String method, @Nullable final Permission stripped) {
         if ("patchRank".equals(method)) {
             final UserRankDto dto = new UserRankDto();
-            if ("none".equals(stripped)) {
+            if (stripped == null) {
                 dto.name = "Renamed_" + UUID.randomUUID().toString().substring(0, 8);
             } else {
-                TestUserRankFactory.setFlag(dto, stripped, false);
+                dto.set(stripped, false);
             }
             return () -> this.userRankService.patchRank(rank.publicId, dto);
         }

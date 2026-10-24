@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
@@ -60,10 +62,10 @@ public class UserService {
      * The caller's rank, read once per call: the ceiling for the users and ranks they may touch, and the two
      * permissions that gate user fields.
      */
-    private record Caller(List<Boolean> ceiling, boolean adminView, boolean userRankEdit) {
+    private record Caller(Set<Permission> ceiling, boolean adminView, boolean userRankEdit) {
 
         static Caller of(final UserRankEntity rank) {
-            return new Caller(rank.permissions(), rank.adminView, rank.userRankEdit);
+            return new Caller(rank.granted(), rank.has(Permission.ADMIN_VIEW), rank.has(Permission.USER_RANK_EDIT));
         }
     }
 
@@ -777,7 +779,7 @@ public class UserService {
      *             if {@code rankPublicId} is null, no rank has it, or the rank grants a permission the caller lacks
      */
     private void applyRankToUser(final UserEntity user, @Nullable final String rankPublicId,
-            @Nullable final List<Boolean> ceiling) {
+            @Nullable final Set<Permission> ceiling) {
         if (rankPublicId == null) {
             throw new ValidationException("Rank is required");
         }
