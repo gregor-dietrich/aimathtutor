@@ -46,7 +46,6 @@ import jakarta.ws.rs.WebApplicationException;
  * can't share a test transaction, so each test commits its setup and restores it afterwards.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class LastAdministratorConcurrencyTest {
 
     private static final String ADMIN_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
@@ -79,6 +78,7 @@ class LastAdministratorConcurrencyTest {
                 .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(
             strings = { "patchUser", "updateUser", "deleteUser", "patchRank", "updateRank", "patchUser+patchRank" })
@@ -137,6 +137,7 @@ class LastAdministratorConcurrencyTest {
      * Builds the call that removes an administrator: the user change bans or deactivates them, or deletes them, and the
      * rank change takes {@code userRankEdit} from their rank.
      */
+    @SuppressWarnings("NullAway")
     private BiConsumer<UserViewDto, String> removal(final String method) {
         return switch (method) {
             case "patchUser" -> (admin, rank) -> {
@@ -171,6 +172,7 @@ class LastAdministratorConcurrencyTest {
      * @param removals
      *            the removal for each administrator, given the administrator and their rank's public ID
      */
+    @SuppressWarnings("NullAway")
     private void assertOneAdministratorRemains(final List<UserViewDto> admins,
             final List<BiConsumer<UserViewDto, String>> removals) throws InterruptedException {
         final var removed = new CountDownLatch(admins.size());

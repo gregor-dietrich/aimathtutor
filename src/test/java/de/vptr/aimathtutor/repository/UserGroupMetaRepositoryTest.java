@@ -18,7 +18,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class UserGroupMetaRepositoryTest {
 
     @Inject
@@ -30,6 +29,7 @@ class UserGroupMetaRepositoryTest {
     @Inject
     UserGroupRepository userGroupRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByUserPublicIdAndGroupPublicId should find membership")
     @TestTransaction
@@ -46,6 +46,7 @@ class UserGroupMetaRepositoryTest {
         assertEquals(group.id, found.group.id);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("isUserInGroup should return true for members")
     @TestTransaction
@@ -60,6 +61,7 @@ class UserGroupMetaRepositoryTest {
         assertTrue(this.userGroupMetaRepository.isUserInGroup(user.id, group.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByGroupPublicIdWithUsers should load users")
     @TestTransaction
@@ -84,6 +86,7 @@ class UserGroupMetaRepositoryTest {
         return meta;
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling in repository methods")
     void testNullHandling() {

@@ -37,7 +37,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AuthServiceTest {
 
     @Inject
@@ -59,6 +58,7 @@ class AuthServiceTest {
     private static final String LAST_DB_CHECK_KEY = "authenticated.lastDbCheck";
     private static final String APPEARANCE_KEY = "authenticated.appearance";
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should return invalid input when username is null")
     void shouldReturnInvalidInputWhenUsernameIsNull() {
@@ -83,6 +83,7 @@ class AuthServiceTest {
         assertEquals("Username and password are required", result.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should return invalid input when password is null")
     void shouldReturnInvalidInputWhenPasswordIsNull() {
@@ -117,6 +118,7 @@ class AuthServiceTest {
         assertEquals("Authentication successful", result.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("authenticate stores the user's appearance in the session")
     @TestTransaction
@@ -289,6 +291,7 @@ class AuthServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getUsername returns the current username of the session's user")
     @TestTransaction
@@ -301,6 +304,7 @@ class AuthServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getUserId returns userId from session user")
     @TestTransaction
@@ -316,6 +320,7 @@ class AuthServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getCurrentUserEntity returns entity for session user")
     @TestTransaction
@@ -396,6 +401,7 @@ class AuthServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("isAuthenticated performs DB check and returns true when cache is stale")
     @TestTransaction
@@ -409,6 +415,7 @@ class AuthServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("isAuthenticated performs DB check and returns false when user not found")
     void testIsAuthenticated_staleCacheNull_noUser_returnsFalse() {
@@ -437,6 +444,7 @@ class AuthServiceTest {
         return mockSess;
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getUserId returns null when the public ID in the session is not in DB")
     void testGetUserId_unknownPublicId_returnsNull() {
@@ -465,6 +473,7 @@ class AuthServiceTest {
         this.loginAttemptService.recordSuccessfulLogin(compositeKey, null);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("isAuthenticated should re-validate against DB after cache eviction")
     @TestTransaction

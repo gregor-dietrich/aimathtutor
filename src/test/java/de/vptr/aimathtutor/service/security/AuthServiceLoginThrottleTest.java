@@ -26,7 +26,7 @@ import jakarta.inject.Inject;
 
 // The subject of this test is IP address literals
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.AvoidUsingHardCodedIP" })
+@SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 class AuthServiceLoginThrottleTest {
 
     @Inject
@@ -45,6 +45,7 @@ class AuthServiceLoginThrottleTest {
         return "2001:db8:" + randomHextet() + ":" + randomHextet() + "::" + randomHextet();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a successful sign-in in between does not reset the IP bucket for spraying other usernames")
     void successfulLoginDoesNotResetIpBucket() {
@@ -76,6 +77,7 @@ class AuthServiceLoginThrottleTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("two IPv6 addresses in one /64 share the IP bucket")
     void ipv6AddressesOfOnePrefixShareTheIpBucket() {
@@ -104,6 +106,7 @@ class AuthServiceLoginThrottleTest {
         assertTrue(result.getMessage().contains("Too many failed attempts"), result.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a second account signing in from the client forgives exactly one other failure")
     void secondAccountForgivesOneFailure() {
@@ -116,6 +119,7 @@ class AuthServiceLoginThrottleTest {
         this.assertLocksOnSecondFailure(client, clientKey);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a sign-in subtracts that account's own failures from the client bucket")
     void signInSubtractsOwnFailures() {

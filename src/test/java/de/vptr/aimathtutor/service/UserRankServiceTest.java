@@ -55,7 +55,6 @@ import jakarta.ws.rs.core.Response;
  * Integration tests for UserRankService. Tests CRUD operations, searching, and permission management for user ranks.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 @DisplayName("UserRankService Tests")
 class UserRankServiceTest {
 
@@ -76,6 +75,7 @@ class UserRankServiceTest {
     @InjectMock
     PermissionService permissionService;
 
+    @SuppressWarnings("NullAway")
     @BeforeEach
     @Transactional
     void setUp() {
@@ -93,6 +93,7 @@ class UserRankServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Create a new rank with default permissions")
     @Transactional
@@ -112,6 +113,7 @@ class UserRankServiceTest {
         assertFalse(created.userEdit);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Retrieve rank by ID")
     @Transactional
@@ -197,6 +199,7 @@ class UserRankServiceTest {
         assertTrue(results.stream().anyMatch(r -> "TestAdminRank123".equals(r.name)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Update rank permissions")
     @Transactional
@@ -221,6 +224,7 @@ class UserRankServiceTest {
         assertTrue(updated.exerciseEdit);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Search with empty query returns all ranks")
     @Transactional
@@ -288,6 +292,7 @@ class UserRankServiceTest {
         assertFalse(result.isPresent());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchRank updates only provided fields")
     @Transactional
@@ -410,6 +415,7 @@ class UserRankServiceTest {
                 .thenReturn(AuthService.credentialStamp(user.password));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("deleteRank throws CONFLICT when users are assigned to the rank")
     @TestTransaction
@@ -484,6 +490,7 @@ class UserRankServiceTest {
      * Creates a rank granting every permission, with one active user, and bans every active administrator outside it,
      * so that user is the only one. The test transaction rolls the bans back.
      */
+    @SuppressWarnings("NullAway")
     private UserRankViewDto createAdministratorRankWithUser() {
         final UserRankViewDto rank = this.userRankService.createRank(TestUserRankFactory.rankWithout("none"));
         this.createActiveUser(rank.publicId);
@@ -492,12 +499,14 @@ class UserRankServiceTest {
     }
 
     /** Bans every active administrator, except those holding the given rank if it is not null. */
+    @SuppressWarnings("NullAway")
     private void banActiveAdministrators(@Nullable final String keptRankPublicId) {
         this.userRepository.findAll().stream().filter(
                 u -> UserRepository.isActiveAdministrator(u) && !Objects.equals(keptRankPublicId, u.rank.publicId))
                 .forEach(u -> u.banned = true);
     }
 
+    @SuppressWarnings("NullAway")
     private String createActiveUser(final String rankPublicId) {
         final UserDto userDto = new UserDto();
         final String suffix = UUID.randomUUID().toString().substring(0, 8);
@@ -513,6 +522,7 @@ class UserRankServiceTest {
      * switching off {@code stripped}; the patch sends only {@code stripped} switched off, or only a new name for
      * {@code "none"}, since the rank already grants every permission.
      */
+    @SuppressWarnings("NullAway")
     private Executable editRank(final UserRankViewDto rank, final String method, final String stripped) {
         if ("patchRank".equals(method)) {
             final UserRankDto dto = new UserRankDto();

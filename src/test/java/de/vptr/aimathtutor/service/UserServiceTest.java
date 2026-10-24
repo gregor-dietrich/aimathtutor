@@ -58,6 +58,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -66,7 +67,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
+@SuppressWarnings("PMD.TooManyMethods")
 class UserServiceTest {
 
     private static final String VALID_PASSWORD = "P@ssw0rd1";
@@ -111,6 +112,7 @@ class UserServiceTest {
                 .thenReturn(this.userRankRepository.findByPublicId(ADMIN_RANK_PUBLIC_ID).orElseThrow());
     }
 
+    @SuppressWarnings("NullAway")
     private SessionCredentials adminCredentials() {
         return credentialsFor(this.userRepository.findByUsername("admin"));
     }
@@ -205,6 +207,7 @@ class UserServiceTest {
         assertEquals(STUDENT_RANK_PUBLIC_ID, created.rankPublicId);
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0} with {1} rank")
     @CsvSource({ "createUser, missing, true", "createUser, unknown, true", "updateUser, missing, true",
             "updateUser, unknown, true", "patchUser, missing, false", "patchUser, unknown, true" })
@@ -244,6 +247,7 @@ class UserServiceTest {
         assertTrue(this.userRepository.findByUsernameOptional("root").isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createInitialAdmin creates an activated admin when no user exists")
     @TestTransaction
@@ -325,6 +329,7 @@ class UserServiceTest {
         assertTrue(this.userService.deactivateSeededDemoAccounts().isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "survivingAdministrator={0}")
     @ValueSource(booleans = { false, true })
     @DisplayName("Administrator detection reflects seeded account deactivation")
@@ -342,6 +347,7 @@ class UserServiceTest {
         assertEquals(survivingAdministrator, this.userService.hasActiveAdministrator());
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "activated={0}, banned={1}, administratorRank={2}")
     @CsvSource({ "true, false, true", "false, false, true", "true, true, true", "true, false, false" })
     @DisplayName("hasActiveAdministrator requires an active unbanned user with every permission")
@@ -385,6 +391,7 @@ class UserServiceTest {
         assertThrows(ValidationException.class, () -> this.userService.createUser(duplicate));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should hash password on create rather than store plaintext")
     @TestTransaction
@@ -408,6 +415,7 @@ class UserServiceTest {
         assertTrue(users.size() >= 4, "Expected ≥4 seeded users, got " + users.size());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser updates only the provided field")
     @TestTransaction
@@ -495,6 +503,7 @@ class UserServiceTest {
         assertEquals("mixedcase_" + suffix, created.username);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createUser rejects duplicate usernames regardless of case")
     @TestTransaction
@@ -508,6 +517,7 @@ class UserServiceTest {
         assertThrows(ValidationException.class, () -> this.userService.createUser(duplicate));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("changePassword succeeds with correct current password")
     @TestTransaction
@@ -550,6 +560,7 @@ class UserServiceTest {
         assertEquals("Password must be between 8 and 72 characters", e.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("changePassword rejects a multi-byte password under 72 characters but over 72 bytes")
     @TestTransaction
@@ -573,6 +584,7 @@ class UserServiceTest {
         assertEquals(AuthService.credentialStamp(entity.password), stamp);
     }
 
+    @SuppressWarnings("NullAway")
     private static SessionCredentials credentialsFor(final UserEntity user) {
         return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
                 UUID.randomUUID().toString());
@@ -605,6 +617,7 @@ class UserServiceTest {
         verify(this.passwordHashingService, never()).verifyPassword(any(), any());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("A seeded user loads with the default appearance")
     @TestTransaction
@@ -613,6 +626,7 @@ class UserServiceTest {
         assertEquals(Appearance.DEFAULT, new Appearance(student.design, student.colorMode));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAppearance with a design only leaves the colour mode as stored")
     @TestTransaction
@@ -627,6 +641,7 @@ class UserServiceTest {
         assertReloaded(entity.id, result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAppearance with a colour mode only leaves the design as stored")
     @TestTransaction
@@ -640,6 +655,7 @@ class UserServiceTest {
         assertReloaded(entity.id, result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAppearance persists both fields")
     @TestTransaction
@@ -653,6 +669,7 @@ class UserServiceTest {
         assertReloaded(entity.id, result);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAppearance with both null changes nothing and returns the stored appearance")
     @TestTransaction
@@ -667,6 +684,7 @@ class UserServiceTest {
         assertReloaded(entity.id, result);
     }
 
+    @SuppressWarnings("NullAway")
     private void assertReloaded(final Long id, final Appearance expected) {
         this.em.flush();
         this.em.clear();
@@ -674,6 +692,7 @@ class UserServiceTest {
         assertEquals(expected, new Appearance(reloaded.design, reloaded.colorMode));
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "stale stamp", "banned", "deactivated" })
     @DisplayName("updateAppearance refuses a revoked session and leaves the row unchanged")
@@ -787,6 +806,7 @@ class UserServiceTest {
         assertEquals("Too many failed attempts. Try again later.", e.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a correct current password clears only its own session's failed attempts")
     @TestTransaction
@@ -816,6 +836,7 @@ class UserServiceTest {
         assertEquals("Too many failed attempts. Try again later.", e.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("failed password changes leave the login unaffected")
     @TestTransaction
@@ -865,6 +886,7 @@ class UserServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     private UserEntity createCommittedUser() {
         final var created = new UserEntity[1];
         inCommittedTransaction(() -> {
@@ -876,6 +898,7 @@ class UserServiceTest {
         return created[0];
     }
 
+    @SuppressWarnings("NullAway")
     private void deleteCommittedUser(final UserEntity user) {
         inCommittedTransaction(() -> this.userRepository.deleteByPublicId(user.publicId));
     }
@@ -892,6 +915,7 @@ class UserServiceTest {
         return evicted[0];
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser evicts the account's cached authentication only after commit")
     void testPatchUser_evictsAfterCommit() {
@@ -909,6 +933,7 @@ class UserServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("deleteUser evicts only after commit, and a rolled-back deleteUser evicts nothing")
     void testDeleteUser_evictsOnlyAfterCommit() {
@@ -958,6 +983,7 @@ class UserServiceTest {
         return mockedSession;
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a committed password patch of another account leaves the acting session's stamp alone")
     void testPatchPassword_leavesActingSessionStampAlone() {
@@ -977,6 +1003,7 @@ class UserServiceTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "patchUser", "updateUser" })
     @DisplayName("the admin path refuses to change the caller's own password, which needs the current one")
@@ -995,6 +1022,7 @@ class UserServiceTest {
         assertEquals(hash, user.password);
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "patchUser", "updateUser" })
     @DisplayName("the admin path still saves the caller's own account when no password is given")
@@ -1012,6 +1040,7 @@ class UserServiceTest {
         assertEquals(dto.username, user.username);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAvatars persists emoji values")
     @TestTransaction
@@ -1047,6 +1076,7 @@ class UserServiceTest {
         assertNotNull(settings.tutorAvatarEmoji);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("deleteUser succeeds and makes the user unfindable")
     @TestTransaction
@@ -1069,6 +1099,7 @@ class UserServiceTest {
         assertFalse(deleted);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateUser replaces username and email")
     @TestTransaction
@@ -1103,6 +1134,7 @@ class UserServiceTest {
                 () -> this.userService.updateUser("00000000000000000000000000", update));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateUser throws ValidationException for duplicate username")
     @TestTransaction
@@ -1131,6 +1163,7 @@ class UserServiceTest {
                 () -> this.userService.patchUser("00000000000000000000000000", patch));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser with null email is handled gracefully")
     @TestTransaction
@@ -1274,15 +1307,10 @@ class UserServiceTest {
     @Test
     @DisplayName("getCurrentUser throws UNAUTHORIZED when session has no user public ID attribute")
     void testGetCurrentUser_nullPublicId_throwsUnauthorized() {
-        try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(null);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
-            final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
-            assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), ex.getResponse().getStatus());
-        }
+        this.assertGetCurrentUserUnauthorizedForPublicId(null);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getCurrentUser returns user DTO when session has a valid user public ID and stamp")
     @TestTransaction
@@ -1297,15 +1325,20 @@ class UserServiceTest {
     @Test
     @DisplayName("getCurrentUser throws UNAUTHORIZED when the session's public ID has no matching user")
     void testGetCurrentUser_userNotFound_throwsUnauthorized() {
+        this.assertGetCurrentUserUnauthorizedForPublicId("no-such-public-id");
+    }
+
+    private void assertGetCurrentUserUnauthorizedForPublicId(@Nullable final String publicId) {
         try (MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class)) {
             final VaadinSession mockSess = mock(VaadinSession.class);
-            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn("no-such-public-id");
+            when(mockSess.getAttribute(AppConstants.SESSION_KEY_USER_PUBLIC_ID)).thenReturn(publicId);
             mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
             final var ex = assertThrows(WebApplicationException.class, () -> this.userService.getCurrentUser());
             assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), ex.getResponse().getStatus());
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateUser throws ValidationException when new email is already in use")
     @TestTransaction
@@ -1323,6 +1356,7 @@ class UserServiceTest {
         assertThrows(ValidationException.class, () -> this.userService.updateUser(created.publicId, update));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser throws ValidationException when new username is already taken")
     @TestTransaction
@@ -1338,6 +1372,7 @@ class UserServiceTest {
         assertThrows(ValidationException.class, () -> this.userService.patchUser(created.publicId, patch));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser throws ValidationException when new email is already in use")
     @TestTransaction
@@ -1353,6 +1388,7 @@ class UserServiceTest {
         assertThrows(ValidationException.class, () -> this.userService.patchUser(created.publicId, patch));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser with blank email normalizes to null and clears the stored email")
     @TestTransaction
@@ -1367,6 +1403,7 @@ class UserServiceTest {
         assertNull(patched.email);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("createUser with explicit banned and activated applies those values")
     @TestTransaction
@@ -1413,6 +1450,7 @@ class UserServiceTest {
         assertThrows(ValidationException.class, () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", ""));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAvatars throws ValidationException for null user emoji")
     @TestTransaction
@@ -1422,6 +1460,7 @@ class UserServiceTest {
                 () -> this.userService.updateAvatars(credentialsFor(entity), null, "🤖"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateAvatars throws ValidationException for null tutor emoji")
     @TestTransaction
@@ -1431,6 +1470,7 @@ class UserServiceTest {
                 () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchUser with invalid rankPublicId throws ValidationException")
     @TestTransaction
@@ -1456,6 +1496,7 @@ class UserServiceTest {
         assertEquals(AppConstants.LAST_ADMINISTRATOR_MESSAGE, e.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "other user's rank without {0}")
     @MethodSource("permissionFlags")
     @DisplayName("An active user whose rank lacks one permission does not count as an administrator")
@@ -1473,6 +1514,7 @@ class UserServiceTest {
         assertEquals(AppConstants.LAST_ADMINISTRATOR_MESSAGE, e.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "updateUser", "patchUser" })
     @DisplayName("The last active administrator can move to another rank granting every permission")
@@ -1493,6 +1535,7 @@ class UserServiceTest {
         assertTrue(UserRepository.isActiveAdministrator(moved));
     }
 
+    @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0} ({1})")
     @CsvSource({ "deleteUser, delete", "updateUser, ban", "updateUser, deactivate", "updateUser, demote",
             "patchUser, ban", "patchUser, deactivate", "patchUser, demote" })
@@ -1507,6 +1550,7 @@ class UserServiceTest {
                 .isPresent());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("The last active administrator can still be edited when the change keeps them one")
     @TestTransaction
@@ -1522,6 +1566,7 @@ class UserServiceTest {
      * Builds the call that takes administrator status from {@code admin}: deleting, banning, deactivating, or moving
      * them to the Teacher rank, which lacks user and rank editing.
      */
+    @SuppressWarnings("NullAway")
     private Executable removeAdministrator(final UserViewDto admin, final String method, final String change) {
         if ("deleteUser".equals(method)) {
             return () -> this.userService.deleteUser(admin.publicId);
@@ -1547,6 +1592,7 @@ class UserServiceTest {
     }
 
     /** Creates a rank granting every permission except {@code missing}, or all of them for {@code "none"}. */
+    @SuppressWarnings("NullAway")
     private String createRankWithout(final String missing) {
         return this.userRankService.createRank(TestUserRankFactory.rankWithout(missing)).publicId;
     }
@@ -1562,6 +1608,7 @@ class UserServiceTest {
      * Creates an active administrator and bans every other one, so the test does not depend on which administrators the
      * seed data or other tests left behind. The test transaction rolls the bans back.
      */
+    @SuppressWarnings("NullAway")
     private UserViewDto createSoleAdministrator() {
         final UserViewDto admin = this.createAdministrator();
         this.userRepository.findAll().stream()
@@ -1570,6 +1617,7 @@ class UserServiceTest {
         return admin;
     }
 
+    @SuppressWarnings("NullAway")
     private UserEntity createAndFetchUser() {
         final UserDto dto = this.buildValidDto();
         dto.activated = true;

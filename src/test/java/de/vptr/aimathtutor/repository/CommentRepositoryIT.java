@@ -20,7 +20,6 @@ import jakarta.inject.Inject;
  * Integration tests for {@link CommentRepository}.
  */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 public class CommentRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
@@ -119,36 +118,42 @@ public class CommentRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(result.stream().anyMatch(c -> "UniqueSearchableContent_XYZ".equals(c.content)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByPublicId_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findByPublicId(null).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByExerciseIdWithRelations_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findByExerciseIdWithRelations(null, 0, 10).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByUserIdWithRelations_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findByUserIdWithRelations(null).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindRepliesWithRelations_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findRepliesWithRelations(null).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindRepliesPaged_nullReturnsEmpty() {
         Assertions.assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testPersist_nullReturnsNull() {

@@ -15,12 +15,12 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class LessonRepositoryTest {
 
     @Inject
     LessonRepository lessonRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling for repository methods")
     void testNullHandling() {
@@ -37,6 +37,7 @@ class LessonRepositoryTest {
         assertNotNull(this.lessonRepository.findRootLessons());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("search with null or blank returns all, search with term filters results")
     @TestTransaction

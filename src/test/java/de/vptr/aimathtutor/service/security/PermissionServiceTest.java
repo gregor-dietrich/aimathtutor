@@ -33,7 +33,7 @@ import jakarta.transaction.TransactionalException;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods" })
+@SuppressWarnings("PMD.TooManyMethods")
 class PermissionServiceTest {
 
     @InjectMock
@@ -483,6 +483,7 @@ class PermissionServiceTest {
         return user;
     }
 
+    @SuppressWarnings("NullAway")
     private static SessionCredentials credentialsFor(final UserEntity user) {
         return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
                 UUID.randomUUID().toString());
@@ -510,6 +511,7 @@ class PermissionServiceTest {
         assertEquals("You do not have permission to view the administration", ex.getMessage());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("requireAdminView throws for a user without a rank")
@@ -520,6 +522,7 @@ class PermissionServiceTest {
                 () -> this.permissionService.requireAdminView(credentialsFor(user)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     @DisplayName("requireAdminView refuses an ended session")

@@ -50,5 +50,5 @@ classes add a `@DisplayName` sentence.
 inject `DataSource`, read the raw column over JDBC, and check the versioned
 envelope (`1|...`) and the blind index, rolling back with `@TestTransaction`
 where the test writes. Its one test that deliberately passes `null` to a
-non-null parameter carries `@SuppressWarnings("NullAway")` on that method;
-many other test classes carry the suppression at class level.
+non-null parameter carries `@SuppressWarnings("NullAway")` on that method, as
+every test does: no test class carries the suppression at class level.

@@ -30,7 +30,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class GraspableMathServiceTest {
 
     @Inject
@@ -65,6 +64,7 @@ class GraspableMathServiceTest {
         return user;
     }
 
+    @SuppressWarnings("NullAway")
     private Long createExercise() {
         return TestExerciseFactory.createExercise(this.userRepository, this.exerciseService).id;
     }
@@ -98,6 +98,7 @@ class GraspableMathServiceTest {
         assertEquals(before, this.studentSessionRepository.countAll());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should refuse writes on another user's session and an ended session, leaving counters unchanged")
     @TestTransaction
@@ -156,6 +157,7 @@ class GraspableMathServiceTest {
         assertThrows(IllegalArgumentException.class, () -> this.graspableMathService.createSession(999_999L));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should increment actions count and track correctness on processEvent")
     @TestTransaction
@@ -203,6 +205,7 @@ class GraspableMathServiceTest {
         assertNull(this.graspableMathService.getSessionAccuracy("not-a-session"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should record hint usage")
     @TestTransaction
@@ -216,6 +219,7 @@ class GraspableMathServiceTest {
         assertEquals(2, session.hintsUsed);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should mark session as complete")
     @TestTransaction
@@ -242,6 +246,7 @@ class GraspableMathServiceTest {
         assertTrue(this.graspableMathService.checkCompletion("5 = x", "x = 5"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should not detect completion when expressions differ")
     void shouldNotDetectCompletionForDifferentExpressions() {
@@ -250,6 +255,7 @@ class GraspableMathServiceTest {
         assertFalse(this.graspableMathService.checkCompletion("x = 5", null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("checkCompletion returns false for both null inputs")
     void testCheckCompletion_bothNull() {

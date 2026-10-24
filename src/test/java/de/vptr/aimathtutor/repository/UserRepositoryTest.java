@@ -16,7 +16,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class UserRepositoryTest {
 
     @Inject
@@ -48,6 +47,7 @@ class UserRepositoryTest {
         assertNotNull(found.get().emailBlindIndex);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("countByRankPublicId should count users with rank")
     @TestTransaction
@@ -105,6 +105,7 @@ class UserRepositoryTest {
         assertFalse(this.userRepository.findByPublicId(user.publicId).isPresent());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling in repository methods")
     void testNullHandling() {

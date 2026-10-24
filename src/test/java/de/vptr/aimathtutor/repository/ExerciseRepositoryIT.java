@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 /**
  * Integration tests for {@link ExerciseRepository}.
  */
-@SuppressWarnings("NullAway")
 @QuarkusTest
 public class ExerciseRepositoryIT {
 
@@ -138,6 +137,7 @@ public class ExerciseRepositoryIT {
                 "Blank search should include the test exercise");
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testSearch_nullReturnsAll() {
@@ -166,6 +166,7 @@ public class ExerciseRepositoryIT {
         Assertions.assertEquals(ex.publicId, found.get().publicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByPublicId_null() {
@@ -182,6 +183,7 @@ public class ExerciseRepositoryIT {
         Assertions.assertEquals(ex.id, found.id);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindById_null() {
@@ -196,6 +198,7 @@ public class ExerciseRepositoryIT {
         Assertions.assertTrue(this.exerciseRepository.countPublished() >= 1);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testPersist_null_returnsNull() {

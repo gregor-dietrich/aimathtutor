@@ -63,14 +63,6 @@
   </Match>
 
   <!--
-    THROWS_METHOD_THROWS_RUNTIMEEXCEPTION:
-    Intentional pattern for validation and error-handling methods.
-  -->
-  <Match>
-    <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION" />
-  </Match>
-
-  <!--
     DM_EXIT:
     PasswordUtil is a CLI utility (make password) where System.exit is appropriate.
   -->

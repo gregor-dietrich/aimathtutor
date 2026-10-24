@@ -16,12 +16,12 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AiConfigRepositoryTest {
 
     @Inject
     AiConfigRepository aiConfigRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null handling for repository methods")
     void testNullHandling() {

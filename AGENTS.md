@@ -40,11 +40,11 @@ however.
 - **Primary interface:** `make` commands. Run `make help` for all targets.
 - **Java 25 required.** `make check` enforces JDK 25 + python3 ≥3.11, and checks
   the devkit parent POM; the parent's enforcer checks the JDK that Maven runs
-  on. `make lint` also needs node ≥22.22.2 with npm (lint-md) and curl, tar and
-  sha256sum/shasum (the gitleaks download). `devkitw` needs `ssh-keygen`
-  (OpenSSH 8.1 or later) whenever it fetches a devkit release it has not cached;
-  in a container, the running UID needs a passwd entry for it. CI uses Temurin
-  25.
+  on. `make lint` also needs node ≥22.22.2 with npm (lint-md), curl, tar and
+  sha256sum/shasum (the gitleaks download), and git 2.36 or later (lint-secrets,
+  which the git hooks also run). `devkitw` needs `ssh-keygen` (OpenSSH 8.1 or
+  later) whenever it fetches a devkit release it has not cached; in a container,
+  the running UID needs a passwd entry for it. CI uses Temurin 25.
 - **Maven:** every target that runs Maven, the project's own included, runs
   devkit's pinned Maven, downloaded and checksum-verified on first use into
   devkit's tools cache (`${XDG_CACHE_HOME:-~/.cache}/devkit/tools`; needs curl,
@@ -128,7 +128,7 @@ however.
 ### Shared tooling (devkit)
 
 - **Pinned, not copied:** the shared Make targets, scripts,
-  Checkstyle/PMD/formatter configs and the parent POM
+  Checkstyle/PMD/formatter configs, the SpotBugs baseline and the parent POM
   (`de.vptr.devkit:devkit-parent`, which configures and activates every Maven
   gate plugin and pins their versions) come from devkit, pinned by `version` and
   `commit` in `devkit.toml`. `./devkitw` fetches that pin into a read-only
@@ -147,8 +147,8 @@ however.
   Dependabot cannot bump the pin, so bumps are by hand.
 - **Project values stay here:** `pom.xml` keeps overrides of the parent's
   properties (`jacoco.check.*`, `nullaway.annotated.packages`), the project's
-  own plugin configuration (e.g. JaCoCo excludes) and names appended to the
-  parent's license allowlist (the `add-third-party` execution,
+  own plugin configuration (e.g. JaCoCo excludes) and any spelling the parent's
+  license allowlist lacks (appended in an `add-third-party` execution with
   `combine.children="append"`). Beside it are `checkstyle-project.xml` (the
   project's own Checkstyle rules, run as checkstyle execution `project`), and
   the suppression/exclusion files (`checkstyle-suppressions.xml`,
@@ -432,12 +432,12 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 | Spotless          | `./mvnw spotless:check`                          | Enforces code formatting (runs at `verify` phase); use `make format` to fix                                                                                        |
 | Tests             | `make test`                                      | CI runs `make test` with `MAVEN_ARGS=-DskipITs=false` (unit + ITs); `make test` alone runs unit tests only                                                         |
 | Coverage          | `make coverage`                                  | Runs all tests (including ITs) and generates report                                                                                                                |
-| SpotBugs          | `./mvnw spotbugs:check`                          | Exclusions in `spotbugs-exclude.xml`                                                                                                                               |
+| SpotBugs          | `./mvnw spotbugs:check`                          | Exclusions in `spotbugs-exclude.xml`, read after devkit's `spotbugs-baseline.xml`                                                                                  |
 | Checkstyle        | `make lint`                                      | Google Java Style; shared config from devkit, project rules in `checkstyle-project.xml`; alone: `./mvnw checkstyle:check checkstyle:check@project`                 |
 | PMD               | `./mvnw initialize pmd:check`                    | Unused code, complexity, style rules                                                                                                                               |
 | CPD               | `./mvnw pmd:cpd-check`                           | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6.             |
 | OWASP dep-check   | `make audit`                                     | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)                 |
-| License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license the parent's allowlist and `pom.xml`'s appends don't name (`mvn verify` without `-q` lists each)             |
+| License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license neither the parent's allowlist nor a `pom.xml` append names (`mvn verify` without `-q` lists each)           |
 
 CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
 fails, then the Compose validation, then `make test-scripts`, then
@@ -491,9 +491,9 @@ fine-grained as possible.
 
 Not threshold changes: bumping the devkit pin (`[devkit]` `version`/`commit`
 with the parent `<version>`) and changing `[frontend.min-pins]`, each as its
-issue directs (e.g. #165, #207). Appending to `pom.xml`'s license allowlist a
-spelling of a license the parent already allows is not one either; admitting a
-new license (as UPL-1.0 was) needs the maintainer's approval.
+issue directs (e.g. #165, #207). Appending in `pom.xml` a spelling of a license
+the parent already allows is not one either; admitting a new license needs the
+maintainer's approval.
 
 ## Database
 

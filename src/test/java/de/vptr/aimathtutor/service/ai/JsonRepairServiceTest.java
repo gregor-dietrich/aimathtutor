@@ -12,7 +12,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class JsonRepairServiceTest {
 
     @Inject
@@ -22,6 +21,7 @@ class JsonRepairServiceTest {
     // stripQuotationMarks Tests
     // =========================================================================
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("stripQuotationMarks should handle null input")
     void stripQuotationMarksShouldHandleNull() {
@@ -111,6 +111,7 @@ class JsonRepairServiceTest {
     // repairTruncatedJson Tests
     // =========================================================================
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("repairTruncatedJson should handle null input")
     void repairTruncatedJsonShouldHandleNull() {
@@ -180,6 +181,7 @@ class JsonRepairServiceTest {
     // extractFeedbackFromTruncatedResponse Tests
     // =========================================================================
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("extractFeedbackFromTruncatedResponse should handle null input")
     void extractFeedbackFromTruncatedResponseShouldHandleNull() {

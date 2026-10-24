@@ -15,7 +15,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AbstractProviderServiceTest {
 
     @Inject
@@ -84,6 +83,7 @@ class AbstractProviderServiceTest {
         assertTrue(AbstractProviderService.isApiKeyConfigured("sk-abc123"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireApiKey throws NonRetryableProviderException for null key")
     void testRequireApiKey_throwsWhenKeyNull() {
@@ -97,6 +97,7 @@ class AbstractProviderServiceTest {
                 () -> PROVIDER.callRequireApiKey("${TEST_KEY}", "app.test.api.key"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireNonEmptyContent throws NonRetryableProviderException for null content")
     void testRequireNonEmptyContent_throwsWhenNull() {
@@ -116,6 +117,7 @@ class AbstractProviderServiceTest {
         assertEquals("valid content", content);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("requireConfigured throws NonRetryableProviderException for null value")
     void testRequireConfigured_throwsWhenNull() {

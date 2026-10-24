@@ -18,7 +18,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class CommentRepositoryTest {
 
     @Inject
@@ -30,6 +29,7 @@ class CommentRepositoryTest {
     @Inject
     ExerciseRepository exerciseRepository;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByExerciseIdWithRelations should load relations")
     @TestTransaction
@@ -53,6 +53,7 @@ class CommentRepositoryTest {
         assertEquals("student1", found.get().user.username);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("countByUserInLastSeconds should count correctly")
     @TestTransaction
@@ -73,6 +74,7 @@ class CommentRepositoryTest {
         assertEquals(preCount + 1, postCount);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("countByUserInLastDays should count correctly")
     @TestTransaction
@@ -93,6 +95,7 @@ class CommentRepositoryTest {
         assertEquals(preCount + 1, postCount);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findTopLevelByExercise should filter replies and status")
     @TestTransaction
@@ -150,6 +153,7 @@ class CommentRepositoryTest {
         assertFalse(this.commentRepository.deleteByPublicId("non-existent-public-id"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null guard paths for optional and relation-loading methods")
     void testNullGuardPaths() {
@@ -160,6 +164,7 @@ class CommentRepositoryTest {
         assertTrue(this.commentRepository.findRepliesPaged(null, 0, 10).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("persist(null) returns null and deleteById covers both found and not-found paths")
     @TestTransaction
@@ -178,6 +183,7 @@ class CommentRepositoryTest {
         assertTrue(this.commentRepository.deleteById(comment.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("countByUserInLastSeconds and countByUserInLastDays throw on non-positive values")
     void testCountByUserInLastSeconds_invalidArgs() {

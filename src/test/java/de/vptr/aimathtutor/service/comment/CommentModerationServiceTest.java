@@ -29,7 +29,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class CommentModerationServiceTest {
 
     @Inject
@@ -47,6 +46,7 @@ class CommentModerationServiceTest {
     @InjectMock
     PermissionService permissionService;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should throw NOT_FOUND for non-existent comment")
     @TestTransaction
@@ -57,6 +57,7 @@ class CommentModerationServiceTest {
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), ex.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should hide comment and set moderation fields")
     @TestTransaction
@@ -73,6 +74,7 @@ class CommentModerationServiceTest {
         assertEquals(fixture.moderator().id, fixture.comment().moderator.id);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should show comment and clear flags")
     @TestTransaction
@@ -90,6 +92,7 @@ class CommentModerationServiceTest {
         assertNull(fixture.comment().deletedAt);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should restore deleted comment")
     @TestTransaction
@@ -104,6 +107,7 @@ class CommentModerationServiceTest {
         assertEquals("RESTORE", fixture.comment().moderationAction);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should delete comment and set deleted fields")
     @TestTransaction
@@ -118,6 +122,7 @@ class CommentModerationServiceTest {
         assertEquals(fixture.moderator().id, fixture.comment().deletedBy.id);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should throw ValidationException for invalid action")
     @TestTransaction
@@ -128,6 +133,7 @@ class CommentModerationServiceTest {
                 "INVALID", fixture.moderator(), "reason"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should throw ValidationException for reason exceeding 500 chars")
     @TestTransaction
@@ -139,6 +145,7 @@ class CommentModerationServiceTest {
                 "HIDE", fixture.moderator(), longReason));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should throw ValidationException for null action")
     @TestTransaction
@@ -152,6 +159,7 @@ class CommentModerationServiceTest {
     private record ModerationFixture(UserEntity moderator, CommentEntity comment) {
     }
 
+    @SuppressWarnings("NullAway")
     private ModerationFixture createModerationFixture() {
         final UserEntity moderator = this.userRepository.findById(1L);
         final UserEntity author = this.userRepository.findById(3L);

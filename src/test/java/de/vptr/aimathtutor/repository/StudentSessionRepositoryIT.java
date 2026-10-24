@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 /**
  * Integration tests for {@link StudentSessionRepository}.
  */
-@SuppressWarnings("NullAway")
 @QuarkusTest
 public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
@@ -123,6 +122,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertNull(this.sessionRepository.findBySessionIdWithRelations(null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByUserId_null() {
@@ -160,6 +160,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertFalse(this.sessionRepository.findByStartTimeAfter(yesterday).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByStartTimeAfter_null() {
@@ -174,6 +175,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertFalse(this.sessionRepository.findByStartTimeBefore(tomorrow).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByStartTimeBefore_null() {
@@ -189,6 +191,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertFalse(result.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByUserIdIn_null() {
@@ -210,6 +213,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertFalse(result.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testFindByStartTimeBetween_null() {
@@ -224,6 +228,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(count >= 1);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testCountByCompleted_null() {
@@ -246,6 +251,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(count >= 0);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testCountActiveStudentsBetween_null() {
@@ -261,6 +267,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(count >= 0);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testCountByStartTimeBetween_null() {
@@ -277,6 +284,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(count >= 0);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testCountByStartTimeRangeHalfOpen_null() {
@@ -290,12 +298,14 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertNotNull(this.sessionRepository.findCompletedSessionsByExercise());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testPersist_null_doesNotThrow() {
         Assertions.assertDoesNotThrow(() -> this.sessionRepository.persist(null));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testSearchByUserOrExerciseTerm_null() {
@@ -308,6 +318,7 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
         Assertions.assertTrue(this.sessionRepository.searchByUserOrExerciseTerm("").isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @TestTransaction
     public void testCountActiveStudentsSince_null() {

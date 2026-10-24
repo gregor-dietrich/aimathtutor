@@ -14,7 +14,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.BadRequestException;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class UlidUtilTest {
 
     @Test
@@ -42,6 +41,7 @@ class UlidUtilTest {
         assertTrue(UlidUtil.isValid("01ARZ3NDEKTSV4RRFFQ69G5FAV"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should reject null ULID")
     void shouldRejectNullUlid() {
@@ -85,6 +85,7 @@ class UlidUtilTest {
         assertThrows(BadRequestException.class, () -> UlidUtil.requireValid("invalid"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should throw BadRequestException for null ULID")
     void shouldThrowBadRequestExceptionForNullUlid() {

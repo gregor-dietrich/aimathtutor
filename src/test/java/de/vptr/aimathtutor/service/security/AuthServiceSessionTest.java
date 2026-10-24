@@ -41,7 +41,6 @@ import jakarta.inject.Inject;
 
 /** Tests of the session binding: credential stamps, session tokens and revocation. */
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class AuthServiceSessionTest {
 
     @Inject
@@ -72,6 +71,7 @@ class AuthServiceSessionTest {
         return mockSess;
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("login stores the public ID and credential stamp, not the username")
     @TestTransaction
@@ -99,6 +99,7 @@ class AuthServiceSessionTest {
         assertNotEquals(AuthService.credentialStamp("hash-a"), AuthService.credentialStamp("hash-b"));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("isAuthenticated is false once the password hash changed since login, after eviction")
     @TestTransaction
@@ -117,6 +118,7 @@ class AuthServiceSessionTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a stale public ID resolves to no one, even though a user with the old name and password exists")
     @TestTransaction
@@ -135,6 +137,7 @@ class AuthServiceSessionTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a renamed user with the same public ID and hash stays authenticated")
     @TestTransaction
@@ -184,6 +187,7 @@ class AuthServiceSessionTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("renewCredentialStamp sets the stamp only when it matches the DB")
     @TestTransaction
@@ -201,6 +205,7 @@ class AuthServiceSessionTest {
         verify(mockSess).unlock();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("the account-changed observer evicts only its own account, and never re-stamps a session")
     @TestTransaction
@@ -234,6 +239,7 @@ class AuthServiceSessionTest {
         return session;
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("a failed re-validation clears the session, and a later unban does not revive it")
     @TestTransaction
@@ -264,6 +270,7 @@ class AuthServiceSessionTest {
         }
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("login stores a random per-session token, and currentSessionCredentials reads the session only")
     @TestTransaction
@@ -296,6 +303,7 @@ class AuthServiceSessionTest {
         assertNull(this.authService.currentSessionCredentials());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("renewCredentialStamp sets nothing once the session signed out or into another account")
     @TestTransaction
@@ -313,6 +321,7 @@ class AuthServiceSessionTest {
         verify(otherAccount, never()).setAttribute(any(String.class), any());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("rememberAppearance writes for the owning session")
     @TestTransaction
@@ -327,6 +336,7 @@ class AuthServiceSessionTest {
         verify(owner).unlock();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("rememberAppearance writes nothing once the session signed out or into another account")
     @TestTransaction
@@ -371,6 +381,7 @@ class AuthServiceSessionTest {
         verify(mockSess, never()).lock();
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getCurrentUserEntity is null when the session has a public ID but no stamp")
     @TestTransaction

@@ -22,7 +22,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class CommentRateLimitServiceTest {
 
     @Inject
@@ -40,6 +39,7 @@ class CommentRateLimitServiceTest {
     @Inject
     EntityManager em;
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should reject null user ID")
     void shouldRejectNullUserId() {
@@ -47,6 +47,7 @@ class CommentRateLimitServiceTest {
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), ex.getResponse().getStatus());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should pass when user has no recent comments")
     @TestTransaction
@@ -55,6 +56,7 @@ class CommentRateLimitServiceTest {
         assertDoesNotThrow(() -> this.rateLimitService.checkRateLimit(user.id));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should reject when user posted within 5 seconds")
     @TestTransaction
@@ -74,6 +76,7 @@ class CommentRateLimitServiceTest {
         assertRateLimited(ex);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should reject when user reached daily limit")
     @TestTransaction

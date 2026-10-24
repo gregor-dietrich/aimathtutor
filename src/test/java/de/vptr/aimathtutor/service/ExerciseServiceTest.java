@@ -33,7 +33,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
-@SuppressWarnings("NullAway")
 class ExerciseServiceTest {
 
     // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
@@ -56,6 +55,7 @@ class ExerciseServiceTest {
     @Inject
     private UserRepository userRepository;
 
+    @SuppressWarnings("NullAway")
     @BeforeEach
     void setUpMocks() {
         Mockito.doNothing().when(this.permissionService).requireExerciseAdd();
@@ -67,6 +67,7 @@ class ExerciseServiceTest {
         Mockito.when(this.authService.getCurrentUserEntity()).thenReturn(teacher);
     }
 
+    @SuppressWarnings("NullAway")
     private String teacherPublicId() {
         final var teacher = this.userRepository.findByUsername("teacher");
         assertNotNull(teacher, "Seeded teacher user should exist");
@@ -153,6 +154,7 @@ class ExerciseServiceTest {
         assertThrows(ValidationException.class, () -> this.exerciseService.createExercise(dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should create exercise with valid data")
     @TestTransaction
@@ -168,6 +170,7 @@ class ExerciseServiceTest {
         assertTrue(created.published);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should find only published exercises")
     @TestTransaction
@@ -197,6 +200,7 @@ class ExerciseServiceTest {
         assertEquals(lesson.publicId, created.lessonPublicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should find exercises by user id")
     @TestTransaction
@@ -210,6 +214,7 @@ class ExerciseServiceTest {
         assertTrue(byUser.stream().anyMatch(e -> e.publicId.equals(created.publicId)));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Should delete exercise by id")
     @TestTransaction
@@ -222,6 +227,7 @@ class ExerciseServiceTest {
         assertTrue(this.exerciseService.findByPublicId(created.publicId).isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateExercise replaces all fields")
     @TestTransaction
@@ -242,6 +248,7 @@ class ExerciseServiceTest {
         assertTrue(updated.commentable);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchExercise updates only the provided field")
     @TestTransaction
@@ -299,6 +306,7 @@ class ExerciseServiceTest {
         assertNotNull(map);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByDateRange with null dates returns empty list")
     @TestTransaction
@@ -308,6 +316,7 @@ class ExerciseServiceTest {
         assertTrue(results.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByDateRange with today's range includes recently created exercise")
     @TestTransaction
@@ -337,6 +346,7 @@ class ExerciseServiceTest {
         assertThrows(ValidationException.class, () -> this.exerciseService.createExercise(dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateExercise throws ValidationException for graspable exercise without target expression")
     @TestTransaction
@@ -373,6 +383,7 @@ class ExerciseServiceTest {
         assertTrue(results.isEmpty());
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchExercise updates graspable fields when provided")
     @TestTransaction
@@ -390,6 +401,7 @@ class ExerciseServiceTest {
         assertEquals("x = 5", patched.graspableTargetExpression);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchExercise attaches lesson when lessonPublicId provided")
     @TestTransaction
@@ -406,6 +418,7 @@ class ExerciseServiceTest {
         assertEquals(lesson.publicId, patched.lessonPublicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchExercise updates title and content when provided as non-blank values")
     @TestTransaction
@@ -422,6 +435,7 @@ class ExerciseServiceTest {
         assertEquals("Patched content text", patched.content);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("findByDateRange with null endDate returns empty list")
     @TestTransaction
@@ -441,6 +455,7 @@ class ExerciseServiceTest {
         assertThrows(ValidationException.class, () -> this.exerciseService.createExercise(dto));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateExercise with valid lessonPublicId attaches the lesson")
     @TestTransaction
@@ -459,6 +474,7 @@ class ExerciseServiceTest {
         assertEquals(lesson.publicId, updated.lessonPublicId);
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateExercise throws ValidationException for unknown lessonPublicId")
     @TestTransaction
@@ -473,6 +489,7 @@ class ExerciseServiceTest {
         assertThrows(ValidationException.class, () -> this.exerciseService.updateExercise(created.publicId, update));
     }
 
+    @SuppressWarnings("NullAway")
     @Test
     @DisplayName("patchExercise with blank lessonPublicId keeps the existing lesson (clearIfMissing=false)")
     @TestTransaction
