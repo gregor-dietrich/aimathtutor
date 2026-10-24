@@ -393,8 +393,13 @@ public class AdminUsersView extends AbstractAdminView {
             passwordUpdateDto.publicId = userPublicId;
             passwordUpdateDto.password = newPassword;
 
-            if (ServiceRejectionUtil
-                    .runOrShowRejection(() -> this.userService.patchUser(userPublicId, passwordUpdateDto))) {
+            final var changed = ServiceRejectionUtil
+                    .callOrShowRejection(() -> this.userService.patchUser(userPublicId, passwordUpdateDto));
+            if (changed != null) {
+                // The user dialog stays open: its save must carry the version this change produced, or it is stale
+                if (userPublicId.equals(this.currentUser.publicId)) {
+                    this.currentUser.version = changed.version;
+                }
                 NotificationUtil.showSuccess("Password changed successfully");
                 this.passwordDialog.close();
             }

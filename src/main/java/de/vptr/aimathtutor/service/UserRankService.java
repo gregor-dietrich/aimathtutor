@@ -202,7 +202,9 @@ public class UserRankService {
 
     /**
      * Updates an existing user rank with new permission values. Performs complete replacement of all permissions (PUT
-     * semantics).
+     * semantics). A non-null {@code rankDto.version} must equal the stored version, or the update is refused as stale;
+     * the check runs after the target is loaded and the privilege ceiling is checked, before anything is modified. Null
+     * skips the check.
      *
      * @param publicId
      *            the public ID of the rank to update
@@ -213,7 +215,7 @@ public class UserRankService {
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
      *             if the rank, before or after the change, grants a permission the caller's rank lacks, or the change
-     *             would leave no active Administrator
+     *             would leave no active Administrator, or the DTO's version is stale
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -225,6 +227,9 @@ public class UserRankService {
         // Read before the edit: the caller's own rank may be the one being edited
         final List<Boolean> ceiling = this.requireCallerPermissions();
         requireWithin(existingRank, ceiling);
+        if (rankDto.version != null && !rankDto.version.equals(existingRank.version)) {
+            throw new ValidationException(AppConstants.STALE_EDIT_MESSAGE);
+        }
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Complete replacement (PUT semantics)
@@ -234,6 +239,8 @@ public class UserRankService {
         requireAdministrationKept(existingRank, holdsLastAdministrators);
 
         this.userRankRepository.persist(existingRank);
+        // @Version advances at flush: flush so the returned DTO carries the new version
+        this.userRankRepository.flush();
         return new UserRankViewDto(existingRank);
     }
 
@@ -274,6 +281,8 @@ public class UserRankService {
         requireAdministrationKept(existingRank, holdsLastAdministrators);
 
         this.userRankRepository.persist(existingRank);
+        // @Version advances at flush: flush so the returned DTO carries the new version
+        this.userRankRepository.flush();
         return new UserRankViewDto(existingRank);
     }
 

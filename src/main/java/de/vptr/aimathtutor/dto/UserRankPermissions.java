@@ -13,6 +13,12 @@ public abstract class UserRankPermissions {
     @Nullable
     public String publicId;
 
+    /**
+     * The version the caller loaded; a full update is refused when the stored version differs. Null skips the check.
+     */
+    @Nullable
+    public Long version;
+
     // View permissions
     @Nullable
     public Boolean adminView;
