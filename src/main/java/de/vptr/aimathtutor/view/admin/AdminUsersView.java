@@ -274,8 +274,9 @@ public class AdminUsersView extends AbstractAdminView {
         rankField.setClearButtonVisible(false);
         rankField.setInvalid(false); // Clear any previous validation state
         // The service keeps an existing user's rank unless the caller may edit ranks
-        if (user != null && (this.callerRank == null || !Boolean.TRUE.equals(this.callerRank.userRankEdit))) {
-            rankField.setEnabled(false);
+        final var rankEditable = user == null || (this.callerRank != null && this.callerRank.canUserRankEdit());
+        if (!rankEditable) {
+            rankField.setReadOnly(true);
             rankField.setHelperText("Changing the rank needs the permission to edit ranks");
         }
 
@@ -295,15 +296,19 @@ public class AdminUsersView extends AbstractAdminView {
         this.binder.bind(bannedField, user1 -> user1.banned, (user1, value) -> user1.banned = value);
 
         // Rank binding - convert between UserRankViewDto and rankPublicId
-        this.binder.forField(rankField).asRequired("Rank is required").bind(user1 -> {
+        // A read-only rank is not required and never written back: the item may be missing from the loaded ranks
+        final var rankBinding = this.binder.forField(rankField).asRequired("Rank is required").bind(user1 -> {
             if (user1.rankPublicId != null && this.availableRanks != null) {
                 return this.availableRanks.stream().filter(rank -> Objects.equals(rank.publicId, user1.rankPublicId))
                         .findFirst().orElse(null);
             }
             return null;
         }, (user1, value) -> {
-            user1.rankPublicId = value != null ? value.publicId : null;
+            if (rankEditable) {
+                user1.rankPublicId = value != null ? value.publicId : null;
+            }
         });
+        rankBinding.setAsRequiredEnabled(rankEditable);
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();

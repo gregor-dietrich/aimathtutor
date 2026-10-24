@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
 
@@ -56,16 +57,7 @@ public class UserService {
     /** The demo accounts seeded by releases before 5.0.0. */
     private static final List<String> SEEDED_DEMO_USERNAMES = List.of("teacher", "student1", "student2");
 
-    /**
-     * The caller's rank, read once per call: the ceiling for the users and ranks they may touch, and the two
-     * permissions that gate user fields.
-     */
-    private record Caller(List<Boolean> ceiling, boolean adminView, boolean userRankEdit) {
-
-        static Caller of(final UserRankEntity rank) {
-            return new Caller(rank.permissions(), rank.adminView, rank.userRankEdit);
-        }
-    }
+    private static final Pattern USERNAME_PATTERN = Pattern.compile(AppConstants.USERNAME_PATTERN);
 
     @Inject
     PasswordHashingService passwordHashingService;
@@ -168,12 +160,16 @@ public class UserService {
     }
 
     /**
-     * Normalizes a username to the canonical form stored in the database: trimmed and lower-cased.
+     * Normalizes a username to the canonical form stored in the database: lower-cased. A name
+     * {@link AppConstants#USERNAME_PATTERN} refuses is rejected here as well as in the DTO.
      * {@code AuthService.authenticate} lower-cases the login name before its exact-match lookup, so usernames must be
      * persisted in lower case or the account can never authenticate.
      */
     private String normalizeUsername(final String username) {
-        return username.trim().toLowerCase(Locale.ROOT);
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            throw new ValidationException(AppConstants.USERNAME_PATTERN_MESSAGE);
+        }
+        return username.toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -195,7 +191,7 @@ public class UserService {
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
         this.permissionService.requireUserAdd();
-        return this.insertUser(userDto, Caller.of(this.userRankService.requireCallerRank()));
+        return this.insertUser(userDto, this.userRankService.requireCallerRank());
     }
 
     /**
@@ -298,7 +294,7 @@ public class UserService {
                 .filter(user -> this.passwordHashingService.verifyPassword(seededUsername, user.password));
     }
 
-    private UserViewDto insertUser(final UserDto userDto, @Nullable final Caller caller) {
+    private UserViewDto insertUser(final UserDto userDto, @Nullable final UserRankEntity caller) {
         // Validate required fields for POST
         if (userDto.username == null || userDto.username.isBlank()) {
             throw new ValidationException("Username is required for creating a user");
@@ -324,7 +320,7 @@ public class UserService {
         final UserEntity user = new UserEntity();
         user.username = normalizedUsername;
         user.email = normalizedEmail;
-        final boolean setsStatus = caller == null || caller.adminView();
+        final boolean setsStatus = caller == null || caller.adminView;
         user.banned = setsStatus && Boolean.TRUE.equals(userDto.banned);
         user.activated = setsStatus && Boolean.TRUE.equals(userDto.activated);
         user.activationKey = UUID.randomUUID().toString();
@@ -333,7 +329,7 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
         user.password = hashedPassword;
 
-        this.applyRankToUser(user, userDto.rankPublicId, caller == null ? null : caller.ceiling());
+        this.applyRankToUser(user, userDto.rankPublicId, caller == null ? null : caller.permissions());
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
@@ -380,7 +376,7 @@ public class UserService {
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
-        final Caller caller = this.requireWithinCaller(existingUser);
+        final UserRankEntity caller = this.requireWithinCaller(existingUser);
 
         // Check for duplicate username (only if username is different from current)
         final String normalizedUsername = this.normalizeUsername(userDto.username);
@@ -400,15 +396,15 @@ public class UserService {
         // Complete replacement (PUT semantics)
         existingUser.username = normalizedUsername;
         existingUser.email = normalizedEmail;
-        if (caller.adminView()) {
-            existingUser.banned = userDto.banned != null ? userDto.banned : false;
-            existingUser.activated = userDto.activated != null ? userDto.activated : false;
+        if (caller.adminView) {
+            existingUser.banned = Boolean.TRUE.equals(userDto.banned);
+            existingUser.activated = Boolean.TRUE.equals(userDto.activated);
         }
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        if (caller.userRankEdit()) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.ceiling());
+        if (caller.userRankEdit) {
+            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.permissions());
         }
         return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
@@ -440,7 +436,7 @@ public class UserService {
         if (existingUser == null) {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
-        final Caller caller = this.requireWithinCaller(existingUser);
+        final UserRankEntity caller = this.requireWithinCaller(existingUser);
 
         // Check for duplicate username if username is being updated
         final String normalizedUsername = userDto.username != null && !userDto.username.isBlank()
@@ -467,17 +463,17 @@ public class UserService {
         if (userDto.email != null) {
             existingUser.email = this.normalizeEmail(userDto.email);
         }
-        if (caller.adminView() && userDto.banned != null) {
+        if (caller.adminView && userDto.banned != null) {
             existingUser.banned = userDto.banned;
         }
-        if (caller.adminView() && userDto.activated != null) {
+        if (caller.adminView && userDto.activated != null) {
             existingUser.activated = userDto.activated;
         }
 
         // Handle password and rank updates (PATCH: only if provided)
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        if (caller.userRankEdit() && userDto.rankPublicId != null) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.ceiling());
+        if (caller.userRankEdit && userDto.rankPublicId != null) {
+            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.permissions());
         }
         return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
@@ -792,9 +788,9 @@ public class UserService {
      * @throws ValidationException
      *             if the user's rank grants a permission the caller's rank lacks
      */
-    private Caller requireWithinCaller(final UserEntity user) {
-        final Caller caller = Caller.of(this.userRankService.requireCallerRank());
-        UserRankService.requireWithin(user.rank, caller.ceiling());
+    private UserRankEntity requireWithinCaller(final UserEntity user) {
+        final UserRankEntity caller = this.userRankService.requireCallerRank();
+        UserRankService.requireWithin(user.rank, caller.permissions());
         return caller;
     }
 }

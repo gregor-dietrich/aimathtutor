@@ -63,7 +63,7 @@ public class AdminConfigView extends AbstractAdminView {
         // exercise or lesson permissions, so they can see which provider/model/prompts are active.
         // This grants read access only — saving still requires the dedicated aiConfigEdit permission
         // (enforced in AiConfigService), and API keys are never shown (masked, read-only fields).
-        final var userRank = this.userRankService.getCurrentUserRank();
+        final var userRank = this.callerRank;
         return userRank != null && (userRank.canAdminView() || userRank.hasAnyExercisePermission()
                 || userRank.hasAnyLessonPermission());
     }

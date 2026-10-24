@@ -66,12 +66,16 @@ public final class AppConstants {
     /** Maximum user name length. */
     public static final int USER_USERNAME_MAX_LENGTH = 50;
 
-    /** Characters a username may contain: none in Unicode category Cc or Cf, and no Unicode whitespace. */
-    public static final String USERNAME_PATTERN = "^[^\\p{Cc}\\p{Cf}\\p{IsWhite_Space}]*$";
+    /**
+     * Characters a username may contain: ASCII letters, digits, dot, underscore and hyphen. An allowlist, because
+     * Unicode files blank characters (Hangul fillers) as letters and invisible ones as marks, and has lookalike
+     * letters.
+     */
+    public static final String USERNAME_PATTERN = "^[a-zA-Z0-9._-]*$";
 
     /** Message for a username that contains a character {@link #USERNAME_PATTERN} refuses. */
     public static final String USERNAME_PATTERN_MESSAGE =
-            "Username must not contain spaces, control or invisible characters";
+            "Username may contain only letters a-z, digits, dots, underscores and hyphens";
 
     /** Minimum password length. */
     public static final int PASSWORD_MIN_LENGTH = 8;
