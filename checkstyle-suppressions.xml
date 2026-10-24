@@ -5,12 +5,6 @@
     <suppress id="IllegalImport.UlidCreator" files="UlidUtil\.java$" />
     <!-- REST Assured may only be imported by TestUtil itself -->
     <suppress id="IllegalImport.RestAssured" files="TestUtil\.java$" />
-    <!-- Jackson response DTOs: the no-arg deserialization constructor legitimately
-         leaves fields unset until Jackson populates them via setters; marking every
-         field @Nullable would be pessimistic for the hundreds of reliably-populated
-         read sites. -->
-    <suppress id="SuppressWarningsNullAway"
-        files="[/\\]de[/\\]vptr[/\\]aimathtutor[/\\]dto[/\\]" />
     <!-- EXISTING DEBT, not an exemption on the merits: 18 class- and method-level
          @SuppressWarnings("NullAway") remain across 16 Vaadin view/component classes.
          The way to close the hole is to annotate the lazily-built UI fields
