@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.dto;
 import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -14,6 +15,7 @@ public class UserDto {
 
     @Size(min = AppConstants.USER_USERNAME_MIN_LENGTH, max = AppConstants.USER_USERNAME_MAX_LENGTH,
             message = "Username must be between {min} and {max} characters")
+    @Pattern(regexp = AppConstants.USERNAME_PATTERN, message = AppConstants.USERNAME_PATTERN_MESSAGE)
     @Nullable
     public String username;
 

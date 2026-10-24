@@ -10,10 +10,12 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
+import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.view.LoginView;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 
 /**
@@ -33,6 +35,13 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     @Inject
     protected transient UserRankService userRankService;
+
+    /**
+     * The signed-in user's rank, as {@link #isAuthorized()} loaded it for this navigation; null before that, or if they
+     * have none. It decides which controls a view offers; the services still check every action.
+     */
+    @Nullable
+    protected transient UserRankViewDto callerRank;
 
     /**
      * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
@@ -108,6 +117,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      */
     protected boolean isAuthorized() {
         final var userRank = this.userRankService.getCurrentUserRank();
+        this.callerRank = userRank;
         return userRank != null && userRank.canAdminView();
     }
 
