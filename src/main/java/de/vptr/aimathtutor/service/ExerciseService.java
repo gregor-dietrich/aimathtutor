@@ -100,19 +100,6 @@ public class ExerciseService {
     }
 
     /**
-     * Retrieves a single exercise by ID with user completion tracking.
-     *
-     * @param id
-     *            the exercise ID
-     * @return an {@link Optional} containing the {@link ExerciseViewDto} with completion data, or empty if not found
-     */
-    @Transactional
-    public Optional<ExerciseViewDto> findById(final Long id) {
-        return this.exerciseRepository.findByIdOptional(id)
-                .map(entity -> this.exerciseCompletionService.enrichWithCompletionData(new ExerciseViewDto(entity)));
-    }
-
-    /**
      * Retrieves a single exercise by its public ID with user completion tracking.
      *
      * @param publicId
@@ -162,20 +149,6 @@ public class ExerciseService {
     }
 
     /**
-     * Retrieves all exercises in a specific lesson with user completion tracking.
-     *
-     * @param lessonId
-     *            the lesson ID
-     * @return a list of {@link ExerciseViewDto}s in the lesson with enriched completion data
-     */
-    @Transactional
-    public List<ExerciseViewDto> findByLessonId(final Long lessonId) {
-        final List<ExerciseViewDto> dtos =
-                this.exerciseRepository.findByLessonId(lessonId).stream().map(ExerciseViewDto::new).toList();
-        return this.exerciseCompletionService.enrichListWithCompletionData(dtos);
-    }
-
-    /**
      * Retrieves all published exercises grouped by lesson ID. Used to avoid N+1 queries when loading lesson cards.
      *
      * @return a map of lesson ID to list of published {@link ExerciseViewDto}s
@@ -203,29 +176,6 @@ public class ExerciseService {
         return enriched.stream().collect(HashMap::new,
                 (map, dto) -> map.computeIfAbsent(dto.lessonPublicId, ignored -> new ArrayList<>()).add(dto),
                 Map::putAll);
-    }
-
-    /**
-     * Retrieves all exercises that use Graspable Math symbolic manipulation.
-     *
-     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s
-     */
-    @Transactional
-    public List<ExerciseViewDto> findGraspableMathExercises() {
-        return this.exerciseRepository.findGraspableMathExercises().stream().map(ExerciseViewDto::new).toList();
-    }
-
-    /**
-     * Retrieves all Graspable Math exercises within a specific lesson.
-     *
-     * @param lessonId
-     *            the lesson ID
-     * @return a list of Graspable Math enabled {@link ExerciseViewDto}s in the lesson
-     */
-    @Transactional
-    public List<ExerciseViewDto> findGraspableMathExercisesByLesson(final Long lessonId) {
-        return this.exerciseRepository.findGraspableMathExercisesByLesson(lessonId).stream().map(ExerciseViewDto::new)
-                .toList();
     }
 
     /**

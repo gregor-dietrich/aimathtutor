@@ -29,7 +29,6 @@ class ExerciseRepositoryTest {
     void testNullHandling() {
         assertTrue(this.exerciseRepository.findByPublicId(null).isEmpty());
         assertNull(this.exerciseRepository.findById(null));
-        assertTrue(this.exerciseRepository.findByIdOptional(null).isEmpty());
         assertNull(this.exerciseRepository.persist(null));
     }
 
