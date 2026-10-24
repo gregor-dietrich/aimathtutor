@@ -1,10 +1,12 @@
 package de.vptr.aimathtutor.repository;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.service.security.EncryptionService;
@@ -27,7 +29,7 @@ public class UserRepository extends AbstractRepository {
      */
     private static final String COUNT_ACTIVE_ADMINISTRATORS =
             "SELECT COUNT(u) FROM UserEntity u WHERE u.activated = true AND u.banned = false"
-                    + UserRankEntity.PERMISSION_FIELDS.stream().map(f -> " AND u.rank." + f + " = true")
+                    + Arrays.stream(Permission.values()).map(p -> " AND u.rank." + p.field() + " = true")
                             .collect(Collectors.joining());
 
     /**
@@ -206,7 +208,7 @@ public class UserRepository extends AbstractRepository {
      * @return true if the rank grants every permission
      */
     public static boolean grantsAdministration(@Nullable final UserRankEntity rank) {
-        return rank != null && !rank.permissions().contains(false);
+        return rank != null && rank.granted().size() == Permission.values().length;
     }
 
     /**

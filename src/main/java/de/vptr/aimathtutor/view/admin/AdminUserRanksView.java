@@ -1,12 +1,9 @@
 package de.vptr.aimathtutor.view.admin;
 
-import java.util.function.Predicate;
-
 import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -31,6 +28,7 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
@@ -136,99 +134,56 @@ public class AdminUserRanksView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Make the name column clickable
+        // Make the name column clickable, except on ranks beyond the caller's
         this.grid.addComponentColumn(rank -> {
             final var nameSpan = new Span(rank.name);
-            nameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
-            nameSpan.getStyle().set("cursor", "pointer");
-            nameSpan.getStyle().set("width", "100%");
-            nameSpan.getStyle().set("display", "block");
+            if (this.beyondCaller(rank)) {
+                return nameSpan;
+            }
+            nameSpan.addClassName(AppStyles.GRID_LINK);
             nameSpan.addClickListener(e -> this.openRankDialog(rank));
             return nameSpan;
         }).setHeader("Name").setFlexGrow(2);
 
-        // View permissions: single check/ban icon
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-            layout.add(this.permissionIcon(
-                    Boolean.TRUE.equals(rank.adminView) ? LineAwesomeIcon.CHECK_SOLID : LineAwesomeIcon.BAN_SOLID,
-                    "Admin View"));
-            return layout;
-        }).setHeader("Admin View").setWidth("110px").setFlexGrow(0);
-
-        // CRUD permission columns share the same add/edit/delete icon pattern
-        this.addCrudPermissionColumn("Exercises", "Exercises", rank -> Boolean.TRUE.equals(rank.exerciseAdd),
-                rank -> Boolean.TRUE.equals(rank.exerciseEdit), rank -> Boolean.TRUE.equals(rank.exerciseDelete));
-        this.addCrudPermissionColumn("Lessons", "Lessons", rank -> Boolean.TRUE.equals(rank.lessonAdd),
-                rank -> Boolean.TRUE.equals(rank.lessonEdit), rank -> Boolean.TRUE.equals(rank.lessonDelete));
-        this.addCrudPermissionColumn("Comments", "Comments", rank -> Boolean.TRUE.equals(rank.commentAdd),
-                rank -> Boolean.TRUE.equals(rank.commentEdit), rank -> Boolean.TRUE.equals(rank.commentDelete));
-        this.addCrudPermissionColumn("Users", "Users", rank -> Boolean.TRUE.equals(rank.userAdd),
-                rank -> Boolean.TRUE.equals(rank.userEdit), rank -> Boolean.TRUE.equals(rank.userDelete));
-        this.addCrudPermissionColumn("User Groups", "User Groups", rank -> Boolean.TRUE.equals(rank.userGroupAdd),
-                rank -> Boolean.TRUE.equals(rank.userGroupEdit), rank -> Boolean.TRUE.equals(rank.userGroupDelete));
-        this.addCrudPermissionColumn("User Ranks", "Ranks", rank -> Boolean.TRUE.equals(rank.userRankAdd),
-                rank -> Boolean.TRUE.equals(rank.userRankEdit), rank -> Boolean.TRUE.equals(rank.userRankDelete));
-
-        // AI configuration permission column
-        this.grid.addComponentColumn(rank -> {
-            final var layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-            layout.add(this.permissionIconOrPlaceholder(Boolean.TRUE.equals(rank.aiConfigEdit),
-                    LineAwesomeIcon.EDIT_SOLID, "Edit AI Configuration"));
-            return layout;
-        }).setHeader("AI Config").setWidth("100px").setFlexGrow(0);
+        // One column per permission group, showing an icon for each granted permission
+        for (final var group : Permission.Group.values()) {
+            this.addPermissionColumn(group);
+        }
 
         this.grid.addComponentColumn(this::createActionButtons).setHeader("Actions")
                 .setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
     }
 
     /**
-     * Append a CRUD permission column showing add/edit/delete icons whose visibility is driven by per-rank booleans.
+     * Append a column showing one icon per permission of the group that the rank holds.
      *
-     * @param header
-     *            column header text (e.g. "Exercises")
-     * @param entityName
-     *            entity noun used in tooltips (e.g. "Exercises", "Ranks")
+     * @param group
+     *            the permission group the column shows
      */
-    private void addCrudPermissionColumn(final String header, final String entityName,
-            final Predicate<UserRankViewDto> canAdd, final Predicate<UserRankViewDto> canEdit,
-            final Predicate<UserRankViewDto> canDelete) {
+    private void addPermissionColumn(final Permission.Group group) {
+        final var permissions = group.permissions();
         this.grid.addComponentColumn(rank -> {
             final var layout = new HorizontalLayout();
             layout.setSpacing(true);
             layout.setPadding(false);
-            layout.add(
-                    this.permissionIconOrPlaceholder(canAdd.test(rank), LineAwesomeIcon.PLUS_SOLID,
-                            "Add " + entityName),
-                    this.permissionIconOrPlaceholder(canEdit.test(rank), LineAwesomeIcon.EDIT_SOLID,
-                            "Edit " + entityName),
-                    this.permissionIconOrPlaceholder(canDelete.test(rank), LineAwesomeIcon.TRASH_ALT_SOLID,
-                            "Delete " + entityName));
+            permissions.stream().filter(rank::has).forEach(permission -> layout.add(this.permissionIcon(permission)));
             return layout;
-        }).setHeader(header).setWidth(AppConstants.GRID_ACTION_WIDTH).setFlexGrow(0);
+        }).setHeader(group.columnHeader()).setWidth(permissions.size() == 1 ? "110px" : AppConstants.GRID_ACTION_WIDTH)
+                .setFlexGrow(0);
     }
 
-    private Component permissionIconOrPlaceholder(final boolean enabled, final LineAwesomeIcon icon,
-            final String label) {
-        return enabled ? this.permissionIcon(icon, label) : this.iconPlaceholder();
-    }
-
-    private SvgIcon permissionIcon(final LineAwesomeIcon icon, final String label) {
+    private SvgIcon permissionIcon(final Permission permission) {
+        final var icon = switch (permission.operation()) {
+            case VIEW -> LineAwesomeIcon.CHECK_SOLID;
+            case ADD -> LineAwesomeIcon.PLUS_SOLID;
+            case EDIT -> LineAwesomeIcon.EDIT_SOLID;
+            case DELETE -> LineAwesomeIcon.TRASH_ALT_SOLID;
+        };
         final var svg = icon.create();
         svg.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-        svg.setTooltipText(label);
-        svg.getElement().setAttribute("aria-label", label);
+        svg.setTooltipText(permission.label());
+        svg.getElement().setAttribute("aria-label", permission.label());
         return svg;
-    }
-
-    private Component iconPlaceholder() {
-        final var span = new Span("");
-        span.getElement().getStyle().set("width", "16px").set("height", "16px").set("flex-shrink", "0");
-        return span;
     }
 
     /**
@@ -245,8 +200,17 @@ public class AdminUserRanksView extends AbstractAdminView {
         final var editButton = new EditButton(e -> this.openRankDialog(rank));
         final var deleteButton = new DeleteButton(e -> this.deleteRank(rank));
 
+        // A rank granting beyond the caller's own permissions is read-only here; the service refuses it anyway
+        final var editable = !this.beyondCaller(rank);
+        editButton.setEnabled(editable);
+        deleteButton.setEnabled(editable);
+
         layout.add(editButton, deleteButton);
         return layout;
+    }
+
+    private boolean beyondCaller(final UserRankViewDto rank) {
+        return rank.grantsBeyond(this.callerPermissions());
     }
 
     /**
@@ -266,119 +230,20 @@ public class AdminUserRanksView extends AbstractAdminView {
         final var form = new FormLayout();
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
 
-        // Form fields
-        final var nameField = new TextField("Name");
-        nameField.setRequired(true);
-        nameField.setInvalid(false); // Clear any previous validation state
+        form.add(createNameField(this.binder, rank1 -> rank1.name, (rank1, value) -> rank1.name = value));
 
-        // Viewpermissions
-        final var adminViewField = new Checkbox("Admin View");
-
-        // Exercise permissions
-        final var exerciseAddField = new Checkbox("Can Add Exercises");
-        final var exerciseEditField = new Checkbox("Can Edit Exercises");
-        final var exerciseDeleteField = new Checkbox("Can Delete Exercises");
-
-        // Lesson permissions
-        final var lessonAddField = new Checkbox("Can Add Lessons");
-        final var lessonEditField = new Checkbox("Can Edit Lessons");
-        final var lessonDeleteField = new Checkbox("Can Delete Lessons");
-
-        // Comment permissions
-        final var commentAddField = new Checkbox("Can Add Comments");
-        final var commentEditField = new Checkbox("Can Edit Comments");
-        final var commentDeleteField = new Checkbox("Can Delete Comments");
-
-        // User permissions
-        final var userAddField = new Checkbox("Can Add Users");
-        final var userEditField = new Checkbox("Can Edit Users");
-        final var userDeleteField = new Checkbox("Can Delete Users");
-
-        // User group permissions
-        final var userGroupAddField = new Checkbox("Can Add User Groups");
-        final var userGroupEditField = new Checkbox("Can Edit User Groups");
-        final var userGroupDeleteField = new Checkbox("Can Delete User Groups");
-
-        // User rank permissions
-        final var userRankAddField = new Checkbox("Can Add User Ranks");
-        final var userRankEditField = new Checkbox("Can Edit User Ranks");
-        final var userRankDeleteField = new Checkbox("Can Delete User Ranks");
-
-        // AI configuration permissions
-        final var aiConfigEditField = new Checkbox("Can Edit AI Configuration");
-
-        // Bind fields
-        this.binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
-                .bind(rank1 -> rank1.name, (rank1, value) -> rank1.name = value);
-
-        // View permissions bindings
-        this.binder.bind(adminViewField, rank1 -> rank1.adminView, (rank1, value) -> rank1.adminView = value);
-
-        // Exercise permissions bindings
-        this.binder.bind(exerciseAddField, rank1 -> rank1.exerciseAdd, (rank1, value) -> rank1.exerciseAdd = value);
-        this.binder.bind(exerciseEditField, rank1 -> rank1.exerciseEdit, (rank1, value) -> rank1.exerciseEdit = value);
-        this.binder.bind(exerciseDeleteField, rank1 -> rank1.exerciseDelete,
-                (rank1, value) -> rank1.exerciseDelete = value);
-
-        // Lesson permissions bindings
-        this.binder.bind(lessonAddField, rank1 -> rank1.lessonAdd, (rank1, value) -> rank1.lessonAdd = value);
-        this.binder.bind(lessonEditField, rank1 -> rank1.lessonEdit, (rank1, value) -> rank1.lessonEdit = value);
-        this.binder.bind(lessonDeleteField, rank1 -> rank1.lessonDelete, (rank1, value) -> rank1.lessonDelete = value);
-
-        // Comment permissions bindings
-        this.binder.bind(commentAddField, rank1 -> rank1.commentAdd, (rank1, value) -> rank1.commentAdd = value);
-        this.binder.bind(commentEditField, rank1 -> rank1.commentEdit, (rank1, value) -> rank1.commentEdit = value);
-        this.binder.bind(commentDeleteField, rank1 -> rank1.commentDelete,
-                (rank1, value) -> rank1.commentDelete = value);
-
-        // User permissions bindings
-        this.binder.bind(userAddField, rank1 -> rank1.userAdd, (rank1, value) -> rank1.userAdd = value);
-        this.binder.bind(userEditField, rank1 -> rank1.userEdit, (rank1, value) -> rank1.userEdit = value);
-        this.binder.bind(userDeleteField, rank1 -> rank1.userDelete, (rank1, value) -> rank1.userDelete = value);
-
-        // User group permissions bindings
-        this.binder.bind(userGroupAddField, rank1 -> rank1.userGroupAdd, (rank1, value) -> rank1.userGroupAdd = value);
-        this.binder.bind(userGroupEditField, rank1 -> rank1.userGroupEdit,
-                (rank1, value) -> rank1.userGroupEdit = value);
-        this.binder.bind(userGroupDeleteField, rank1 -> rank1.userGroupDelete,
-                (rank1, value) -> rank1.userGroupDelete = value);
-
-        // User rank permissions bindings
-        this.binder.bind(userRankAddField, rank1 -> rank1.userRankAdd, (rank1, value) -> rank1.userRankAdd = value);
-        this.binder.bind(userRankEditField, rank1 -> rank1.userRankEdit, (rank1, value) -> rank1.userRankEdit = value);
-        this.binder.bind(userRankDeleteField, rank1 -> rank1.userRankDelete,
-                (rank1, value) -> rank1.userRankDelete = value);
-
-        // AI configuration permissions bindings
-        this.binder.bind(aiConfigEditField, rank1 -> rank1.aiConfigEdit, (rank1, value) -> rank1.aiConfigEdit = value);
-
-        form.add(nameField);
-
-        // Add section headers and organize permissions in sections
-        form.add(new H3("View Permissions"));
-        form.add(adminViewField);
-
-        // Add section headers and organize permissions in sections
-        form.add(new H3("Exercise Permissions"));
-        form.add(exerciseAddField, exerciseEditField, exerciseDeleteField);
-
-        form.add(new H3("Lesson Permissions"));
-        form.add(lessonAddField, lessonEditField, lessonDeleteField);
-
-        form.add(new H3("Comment Permissions"));
-        form.add(commentAddField, commentEditField, commentDeleteField);
-
-        form.add(new H3("User Permissions"));
-        form.add(userAddField, userEditField, userDeleteField);
-
-        form.add(new H3("User Group Permissions"));
-        form.add(userGroupAddField, userGroupEditField, userGroupDeleteField);
-
-        form.add(new H3("User Rank Permissions"));
-        form.add(userRankAddField, userRankEditField, userRankDeleteField);
-
-        form.add(new H3("AI Configuration Permissions"));
-        form.add(aiConfigEditField);
+        // One section per permission group; a permission the caller lacks can't be changed
+        final var callerPermissions = this.callerPermissions();
+        for (final var group : Permission.Group.values()) {
+            form.add(new H3(group.sectionTitle()));
+            for (final var permission : group.permissions()) {
+                final var checkbox = new Checkbox(permission.label());
+                this.binder.bind(checkbox, rank1 -> rank1.get(permission),
+                        (rank1, value) -> rank1.set(permission, value));
+                checkbox.setEnabled(callerPermissions.contains(permission));
+                form.add(checkbox);
+            }
+        }
 
         // Button layout
         final var buttonLayout = new HorizontalLayout();
@@ -430,6 +295,8 @@ public class AdminUserRanksView extends AbstractAdminView {
             });
             if (saved) {
                 this.rankDialog.close();
+                // The saved rank may be the caller's own, so the ceiling may have changed
+                this.refreshCallerRank();
                 this.loadRanksAsync();
             }
 

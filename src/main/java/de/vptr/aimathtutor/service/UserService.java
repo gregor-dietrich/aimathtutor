@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserSettingsDto;
@@ -320,7 +322,7 @@ public class UserService {
         final UserEntity user = new UserEntity();
         user.username = normalizedUsername;
         user.email = normalizedEmail;
-        final boolean setsStatus = caller == null || caller.adminView;
+        final boolean setsStatus = caller == null || caller.has(Permission.ADMIN_VIEW);
         user.banned = setsStatus && Boolean.TRUE.equals(userDto.banned);
         user.activated = setsStatus && Boolean.TRUE.equals(userDto.activated);
         user.activationKey = UUID.randomUUID().toString();
@@ -329,7 +331,7 @@ public class UserService {
         final var hashedPassword = this.passwordHashingService.hashPassword(password);
         user.password = hashedPassword;
 
-        this.applyRankToUser(user, userDto.rankPublicId, caller == null ? null : caller.permissions());
+        this.applyRankToUser(user, userDto.rankPublicId, caller == null ? null : caller.granted());
 
         // Ensure avatar emoji defaults are set so Hibernate doesn't insert NULL
         if (user.userAvatarEmoji == null) {
@@ -399,15 +401,15 @@ public class UserService {
         // Complete replacement (PUT semantics)
         existingUser.username = normalizedUsername;
         existingUser.email = normalizedEmail;
-        if (caller.adminView) {
+        if (caller.has(Permission.ADMIN_VIEW)) {
             existingUser.banned = Boolean.TRUE.equals(userDto.banned);
             existingUser.activated = Boolean.TRUE.equals(userDto.activated);
         }
 
         // Handle password and rank updates
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        if (caller.userRankEdit) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.permissions());
+        if (caller.has(Permission.USER_RANK_EDIT)) {
+            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.granted());
         }
         return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
@@ -468,17 +470,17 @@ public class UserService {
         if (userDto.email != null) {
             existingUser.email = this.normalizeEmail(userDto.email);
         }
-        if (caller.adminView && userDto.banned != null) {
+        if (caller.has(Permission.ADMIN_VIEW) && userDto.banned != null) {
             existingUser.banned = userDto.banned;
         }
-        if (caller.adminView && userDto.activated != null) {
+        if (caller.has(Permission.ADMIN_VIEW) && userDto.activated != null) {
             existingUser.activated = userDto.activated;
         }
 
         // Handle password and rank updates (PATCH: only if provided)
         this.applyPasswordToUser(existingUser, userDto.password != null ? userDto.password : "");
-        if (caller.userRankEdit && userDto.rankPublicId != null) {
-            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.permissions());
+        if (caller.has(Permission.USER_RANK_EDIT) && userDto.rankPublicId != null) {
+            this.applyRankToUser(existingUser, userDto.rankPublicId, caller.granted());
         }
         return this.saveUpdatedUser(existingUser, wasAdministrator);
     }
@@ -773,7 +775,7 @@ public class UserService {
      *             if {@code rankPublicId} is null, no rank has it, or the rank grants a permission the caller lacks
      */
     private void applyRankToUser(final UserEntity user, @Nullable final String rankPublicId,
-            @Nullable final List<Boolean> ceiling) {
+            @Nullable final Set<Permission> ceiling) {
         if (rankPublicId == null) {
             throw new ValidationException("Rank is required");
         }
@@ -797,7 +799,7 @@ public class UserService {
      */
     private UserRankEntity requireWithinCaller(final UserEntity user) {
         final UserRankEntity caller = this.userRankService.requireCallerRank();
-        UserRankService.requireWithin(user.rank, caller.permissions());
+        UserRankService.requireWithin(user.rank, caller.granted());
         return caller;
     }
 }

@@ -203,10 +203,7 @@ public class AdminExercisesView extends AbstractAdminView {
         // Make the title column clickable
         this.grid.addComponentColumn(exercise -> {
             final var titleSpan = new Span(exercise.title);
-            titleSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
-            titleSpan.getStyle().set("cursor", "pointer");
-            titleSpan.getStyle().set("width", "100%");
-            titleSpan.getStyle().set("display", "block");
+            titleSpan.addClassName(AppStyles.GRID_LINK);
             titleSpan.addClickListener(ignored -> this.openExerciseDialog(exercise));
             return titleSpan;
         }).setHeader("Title").setFlexGrow(2);

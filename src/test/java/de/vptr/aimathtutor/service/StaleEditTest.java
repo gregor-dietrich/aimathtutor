@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.Appearance;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
@@ -253,8 +254,8 @@ class StaleEditTest {
         this.userService.patchUser(admin.publicId, ban);
         final UserRankDto lowerDto = new UserRankDto();
         lowerDto.name = "Rank_" + UUID.randomUUID().toString().substring(0, 8);
-        lowerDto.adminView = true;
-        lowerDto.userEdit = true;
+        lowerDto.set(Permission.ADMIN_VIEW, true);
+        lowerDto.set(Permission.USER_EDIT, true);
         final UserRankViewDto lower = this.userRankService.createRank(lowerDto);
         when(this.permissionService.findCurrentUserRank())
                 .thenReturn(this.userRankRepository.findByPublicId(lower.publicId).orElseThrow());
@@ -279,7 +280,7 @@ class StaleEditTest {
     void nullRankVersionSkipsCheck() {
         final UserRankViewDto loaded = this.createRank();
         final UserRankDto removal = new UserRankDto();
-        removal.userAdd = false;
+        removal.set(Permission.USER_ADD, false);
         this.userRankService.patchRank(loaded.publicId, removal);
         final UserRankDto dto = loaded.toUserRankDto();
         dto.version = null;
@@ -341,7 +342,7 @@ class StaleEditTest {
         final UserRankViewDto loaded = this.createRank();
         final UserRankDto stale = loaded.toUserRankDto();
         final UserRankDto removal = new UserRankDto();
-        removal.userAdd = false;
+        removal.set(Permission.USER_ADD, false);
         this.userRankService.patchRank(loaded.publicId, removal);
         stale.name = "Renamed_" + UUID.randomUUID().toString().substring(0, 8);
 
@@ -349,7 +350,7 @@ class StaleEditTest {
 
         assertEquals(AppConstants.STALE_EDIT_MESSAGE, ex.getMessage());
         final var stored = this.userRankRepository.findByPublicId(loaded.publicId).orElseThrow();
-        assertFalse(stored.userAdd);
+        assertFalse(stored.has(Permission.USER_ADD));
         assertEquals(loaded.name, stored.name);
     }
 
@@ -370,8 +371,8 @@ class StaleEditTest {
     private UserRankViewDto createRank() {
         final UserRankDto dto = new UserRankDto();
         dto.name = "Rank_" + UUID.randomUUID().toString().substring(0, 8);
-        dto.userAdd = true;
-        dto.userEdit = true;
+        dto.set(Permission.USER_ADD, true);
+        dto.set(Permission.USER_EDIT, true);
         return this.userRankService.createRank(dto);
     }
 

@@ -83,9 +83,7 @@ public class AdminSessionsView extends AbstractAdminView {
         // Make the username column clickable like a hyperlink
         this.grid.addComponentColumn(session -> {
             final var usernameSpan = new Span(session.username);
-            usernameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
-            usernameSpan.getStyle().set("cursor", "pointer");
-            usernameSpan.getStyle().set("display", "block");
+            usernameSpan.addClassName(AppStyles.GRID_LINK);
             usernameSpan.addClickListener(ignored -> UI.getCurrent().navigate("admin/session/" + session.sessionId));
             return usernameSpan;
         }).setHeader("Student").setFlexGrow(1);

@@ -78,4 +78,7 @@ public final class AppStyles {
 
     /** Subtitle below a page heading. */
     public static final String PAGE_SUBTITLE = "page-subtitle";
+
+    /** Clickable name in a grid row, in the accent colour. */
+    public static final String GRID_LINK = "grid-link";
 }

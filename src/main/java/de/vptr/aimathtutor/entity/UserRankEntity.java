@@ -2,13 +2,14 @@ package de.vptr.aimathtutor.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Set;
 
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.vptr.aimathtutor.dto.Permission;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,12 +30,6 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "UserRank.searchByName",
                 query = "FROM UserRankEntity WHERE LOWER(name) LIKE :s ESCAPE '!' ORDER BY created DESC, id DESC") })
 public class UserRankEntity extends BaseEntity {
-
-    /** The names of the permission flags, in the order of {@link #permissions()}, for building queries over them. */
-    public static final List<String> PERMISSION_FIELDS = List.of("adminView", "exerciseAdd", "exerciseDelete",
-            "exerciseEdit", "lessonAdd", "lessonDelete", "lessonEdit", "commentAdd", "commentDelete", "commentEdit",
-            "userAdd", "userDelete", "userEdit", "userGroupAdd", "userGroupDelete", "userGroupEdit", "userRankAdd",
-            "userRankDelete", "userRankEdit", "aiConfigEdit");
 
     @NotBlank
     @Column(nullable = false)
@@ -124,32 +119,56 @@ public class UserRankEntity extends BaseEntity {
     public LocalDateTime lastEdit;
 
     /**
-     * Every permission flag of this rank, in declaration order, so two ranks' lists can be compared position by
-     * position. A new permission flag must be added here and to {@link #PERMISSION_FIELDS}, or
-     * {@link #grantsBeyond(List)} and the administrator definition ignore it. Because an administrator holds every
-     * flag, the same change must also set the new flag on every rank that held all the others, existing databases
-     * included, and add it to the README's administrator recovery SQL; otherwise nobody is an administrator any more
-     * and nobody can grant the new flag.
+     * Whether this rank holds a permission. A new {@link Permission} constant must be added here (the compiler refuses
+     * a missing case), together with its field and column; see {@link Permission}.
      *
-     * @return the permission flags in a fixed order
+     * @param permission
+     *            the permission to read
+     * @return true if the rank holds it
      */
-    public List<Boolean> permissions() {
-        return List.of(this.adminView, this.exerciseAdd, this.exerciseDelete, this.exerciseEdit, this.lessonAdd,
-                this.lessonDelete, this.lessonEdit, this.commentAdd, this.commentDelete, this.commentEdit, this.userAdd,
-                this.userDelete, this.userEdit, this.userGroupAdd, this.userGroupDelete, this.userGroupEdit,
-                this.userRankAdd, this.userRankDelete, this.userRankEdit, this.aiConfigEdit);
+    public boolean has(final Permission permission) {
+        return switch (permission) {
+            case ADMIN_VIEW -> this.adminView;
+            case EXERCISE_ADD -> this.exerciseAdd;
+            case EXERCISE_EDIT -> this.exerciseEdit;
+            case EXERCISE_DELETE -> this.exerciseDelete;
+            case LESSON_ADD -> this.lessonAdd;
+            case LESSON_EDIT -> this.lessonEdit;
+            case LESSON_DELETE -> this.lessonDelete;
+            case COMMENT_ADD -> this.commentAdd;
+            case COMMENT_EDIT -> this.commentEdit;
+            case COMMENT_DELETE -> this.commentDelete;
+            case USER_ADD -> this.userAdd;
+            case USER_EDIT -> this.userEdit;
+            case USER_DELETE -> this.userDelete;
+            case USER_GROUP_ADD -> this.userGroupAdd;
+            case USER_GROUP_EDIT -> this.userGroupEdit;
+            case USER_GROUP_DELETE -> this.userGroupDelete;
+            case USER_RANK_ADD -> this.userRankAdd;
+            case USER_RANK_EDIT -> this.userRankEdit;
+            case USER_RANK_DELETE -> this.userRankDelete;
+            case AI_CONFIG_EDIT -> this.aiConfigEdit;
+        };
     }
 
     /**
-     * Whether this rank grants a permission that {@code ceiling} lacks. Takes the other rank's {@link #permissions()}
-     * rather than the rank itself, so a caller can capture its own permissions before editing its own rank.
+     * The permissions this rank holds, as a snapshot: later changes to the rank do not show in the returned set, so a
+     * caller can capture its own permissions before editing its own rank.
+     *
+     * @return a new set of the held permissions
+     */
+    public Set<Permission> granted() {
+        return Permission.where(this::has);
+    }
+
+    /**
+     * Whether this rank grants a permission that {@code ceiling} lacks.
      *
      * @param ceiling
-     *            the permissions to compare against, as returned by {@link #permissions()}
-     * @return true if some flag is set here but not in {@code ceiling}
+     *            the permissions to compare against, e.g. another rank's {@link #granted()}
+     * @return true if some permission is held here but not in {@code ceiling}
      */
-    public boolean grantsBeyond(final List<Boolean> ceiling) {
-        final List<Boolean> granted = this.permissions();
-        return IntStream.range(0, granted.size()).anyMatch(i -> granted.get(i) && !ceiling.get(i));
+    public boolean grantsBeyond(final Set<Permission> ceiling) {
+        return !ceiling.containsAll(this.granted());
     }
 }

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -7,9 +8,14 @@ import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.Setter;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -44,6 +50,16 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      */
     @Nullable
     protected transient UserRankViewDto callerRank;
+
+    /**
+     * The permissions the signed-in user's rank holds, which cap what a view offers; empty before {@link #callerRank}
+     * is loaded or if they have no rank, so a view offers nothing it cannot confirm.
+     *
+     * @return the caller's permissions, never null
+     */
+    protected Set<Permission> callerPermissions() {
+        return this.callerRank == null ? Set.of() : this.callerRank.granted();
+    }
 
     /**
      * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
@@ -100,7 +116,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
             event.forwardTo(LoginView.class);
             return false;
         }
-        this.callerRank = this.userRankService.getCurrentUserRank();
+        this.refreshCallerRank();
         if (!this.isAuthorized()) {
             event.forwardTo("");
             return false;
@@ -110,8 +126,8 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Determines whether the current user is authorised to access this admin view. The default implementation requires
-     * {@code canAdminView()} on the user's rank, which {@link #isAuthOk} has loaded into {@link #callerRank} (once per
-     * navigation).
+     * {@code has(Permission.ADMIN_VIEW)} on the user's rank, which {@link #isAuthOk} has loaded into {@link #callerRank}
+     * (once per navigation).
      *
      * <p>
      * Subclasses with different permission requirements (e.g. {@link AdminConfigView}) can override this method.
@@ -120,7 +136,42 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      * @return true if the user is authorised, false otherwise
      */
     protected boolean isAuthorized() {
-        return this.callerRank != null && this.callerRank.canAdminView();
+        return this.callerRank != null && this.callerRank.has(Permission.ADMIN_VIEW);
+    }
+
+    /**
+     * Re-reads the signed-in user's rank into {@link #callerRank}. Call it on the UI thread only: the rank comes from
+     * the {@code VaadinSession}, which a worker thread cannot see (it would read null and disable every action).
+     *
+     * @return the caller's rank, or null if there is none
+     */
+    @Nullable
+    protected UserRankViewDto refreshCallerRank() {
+        this.callerRank = this.userRankService.getCurrentUserRank();
+        return this.callerRank;
+    }
+
+    /**
+     * Creates a required "Name" field bound to the given binder, refusing a blank name.
+     *
+     * @param <T>
+     *            the bound bean type
+     * @param binder
+     *            the dialog's binder
+     * @param getter
+     *            reads the name from the bean
+     * @param setter
+     *            writes the name to the bean
+     * @return the bound name field
+     */
+    protected static <T> TextField createNameField(final Binder<T> binder, final ValueProvider<T, String> getter,
+            final Setter<T, String> setter) {
+        final var nameField = new TextField("Name");
+        nameField.setRequired(true);
+        nameField.setInvalid(false); // Clear any previous validation state
+        binder.forField(nameField).withValidator(value -> value != null && !value.isBlank(), "Name is required")
+                .bind(getter, setter);
+        return nameField;
     }
 
     /**

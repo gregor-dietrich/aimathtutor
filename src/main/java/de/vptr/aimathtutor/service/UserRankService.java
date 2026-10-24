@@ -3,8 +3,10 @@ package de.vptr.aimathtutor.service;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.entity.UserRankEntity;
@@ -92,23 +94,7 @@ public class UserRankService {
     @Transactional
     @CacheResult(cacheName = RANK_CACHE)
     public List<UserRankViewDto> getAllRanks() {
-        return this.getAllRanks(0, 100);
-    }
-
-    /**
-     * Retrieves available user ranks with pagination. Cached per (page, pageSize) tuple; invalidated alongside the
-     * no-arg overload on any rank mutation.
-     *
-     * @param page
-     *            the page number (0-indexed)
-     * @param pageSize
-     *            the number of ranks per page
-     * @return a paginated list of {@link UserRankViewDto} objects
-     */
-    @Transactional
-    @CacheResult(cacheName = RANK_CACHE)
-    public List<UserRankViewDto> getAllRanks(final int page, final int pageSize) {
-        return this.userRankRepository.findAll(page, pageSize).stream().map(UserRankViewDto::new).toList();
+        return this.userRankRepository.findAll().stream().map(UserRankViewDto::new).toList();
     }
 
     /**
@@ -184,7 +170,7 @@ public class UserRankService {
     @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto createRank(final @Valid UserRankDto rankDto) {
         this.permissionService.requireUserRankAdd();
-        final List<Boolean> ceiling = this.requireCallerPermissions();
+        final Set<Permission> ceiling = this.requireCallerPermissions();
 
         final UserRankEntity rank = new UserRankEntity();
 
@@ -193,7 +179,7 @@ public class UserRankService {
         // would corrupt those lookups and the displayed value.
         rank.name = this.normalizeAndValidateRankName(rankDto.name);
 
-        this.applyAllPermissions(rank, rankDto);
+        applyPermissions(rank, rankDto, false);
         requireWithin(rank, ceiling);
 
         this.userRankRepository.persist(rank);
@@ -222,12 +208,12 @@ public class UserRankService {
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
         final var target = this.loadRankForEdit(publicId, rankDto.version);
         final UserRankEntity existingRank = target.rank();
-        final List<Boolean> ceiling = target.ceiling();
+        final Set<Permission> ceiling = target.ceiling();
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Complete replacement (PUT semantics)
         existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
-        this.applyAllPermissions(existingRank, rankDto);
+        applyPermissions(existingRank, rankDto, false);
         requireWithin(existingRank, ceiling);
         requireAdministrationKept(existingRank, holdsLastAdministrators);
 
@@ -258,7 +244,7 @@ public class UserRankService {
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
         final var target = this.loadRankForEdit(publicId, rankDto.version);
         final UserRankEntity existingRank = target.rank();
-        final List<Boolean> ceiling = target.ceiling();
+        final Set<Permission> ceiling = target.ceiling();
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Partial update (PATCH semantics) - only update provided fields. A provided name is still
@@ -266,7 +252,7 @@ public class UserRankService {
         if (rankDto.name != null) {
             existingRank.name = this.normalizeAndValidateRankName(rankDto.name);
         }
-        this.applyProvidedPermissions(existingRank, rankDto);
+        applyPermissions(existingRank, rankDto, true);
         requireWithin(existingRank, ceiling);
         requireAdministrationKept(existingRank, holdsLastAdministrators);
 
@@ -323,12 +309,12 @@ public class UserRankService {
      * Returns the current user's permissions: the ceiling for the users and ranks they may change, assign or grant.
      * Callers editing a rank must read it before the edit, because the rank may be the caller's own.
      *
-     * @return the current user's rank permissions, as returned by {@link UserRankEntity#permissions()}
+     * @return the current user's rank permissions, as returned by {@link UserRankEntity#granted()}
      * @throws PermissionDeniedException
      *             if there is no current user with a rank; the permission check that runs first makes that unexpected
      */
-    public List<Boolean> requireCallerPermissions() {
-        return this.requireCallerRank().permissions();
+    public Set<Permission> requireCallerPermissions() {
+        return this.requireCallerRank().granted();
     }
 
     /**
@@ -357,7 +343,7 @@ public class UserRankService {
      * @throws ValidationException
      *             if the rank grants a permission the caller's rank lacks
      */
-    public static void requireWithin(@Nullable final UserRankEntity rank, final List<Boolean> ceiling) {
+    public static void requireWithin(@Nullable final UserRankEntity rank, final Set<Permission> ceiling) {
         if (rank != null && rank.grantsBeyond(ceiling)) {
             throw new ValidationException(AppConstants.PRIVILEGE_CEILING_MESSAGE);
         }
@@ -396,117 +382,97 @@ public class UserRankService {
     }
 
     /**
-     * Applies all permission booleans from the DTO to the entity, treating null DTO values as false.
+     * The one writer of a rank's permission flags. A constant without a case here fails {@code PermissionTest}.
      *
-     * @param target
-     *            the entity to update
-     * @param source
-     *            the DTO to read from
+     * @param rank
+     *            the rank to change
+     * @param permission
+     *            the permission to write
+     * @param value
+     *            true to grant it
      */
-    private void applyAllPermissions(final UserRankEntity target, final UserRankDto source) {
-        target.adminView = Boolean.TRUE.equals(source.adminView);
-        this.applyExercisePermissions(target, source, false);
-        this.applyLessonPermissions(target, source, false);
-        this.applyCommentPermissions(target, source, false);
-        this.applyUserPermissions(target, source, false);
-        this.applyGroupPermissions(target, source, false);
-        this.applyRankPermissions(target, source, false);
-        target.aiConfigEdit = Boolean.TRUE.equals(source.aiConfigEdit);
+    public static void setPermission(final UserRankEntity rank, final Permission permission, final boolean value) {
+        switch (permission) {
+            case ADMIN_VIEW -> {
+                rank.adminView = value;
+            }
+            case EXERCISE_ADD -> {
+                rank.exerciseAdd = value;
+            }
+            case EXERCISE_EDIT -> {
+                rank.exerciseEdit = value;
+            }
+            case EXERCISE_DELETE -> {
+                rank.exerciseDelete = value;
+            }
+            case LESSON_ADD -> {
+                rank.lessonAdd = value;
+            }
+            case LESSON_EDIT -> {
+                rank.lessonEdit = value;
+            }
+            case LESSON_DELETE -> {
+                rank.lessonDelete = value;
+            }
+            case COMMENT_ADD -> {
+                rank.commentAdd = value;
+            }
+            case COMMENT_EDIT -> {
+                rank.commentEdit = value;
+            }
+            case COMMENT_DELETE -> {
+                rank.commentDelete = value;
+            }
+            case USER_ADD -> {
+                rank.userAdd = value;
+            }
+            case USER_EDIT -> {
+                rank.userEdit = value;
+            }
+            case USER_DELETE -> {
+                rank.userDelete = value;
+            }
+            case USER_GROUP_ADD -> {
+                rank.userGroupAdd = value;
+            }
+            case USER_GROUP_EDIT -> {
+                rank.userGroupEdit = value;
+            }
+            case USER_GROUP_DELETE -> {
+                rank.userGroupDelete = value;
+            }
+            case USER_RANK_ADD -> {
+                rank.userRankAdd = value;
+            }
+            case USER_RANK_EDIT -> {
+                rank.userRankEdit = value;
+            }
+            case USER_RANK_DELETE -> {
+                rank.userRankDelete = value;
+            }
+            case AI_CONFIG_EDIT -> {
+                rank.aiConfigEdit = value;
+            }
+            default -> throw new IllegalArgumentException("No field for " + permission);
+        }
     }
 
     /**
-     * Applies only the permission booleans that are explicitly provided (non-null) in the DTO to the entity. Used for
-     * PATCH semantics.
+     * Applies the DTO's permissions to the entity. A permission the DTO does not provide becomes false in a full update
+     * and stays as it is in a partial one.
      *
      * @param target
      *            the entity to update
      * @param source
      *            the DTO to read from
+     * @param patch
+     *            true for PATCH semantics
      */
-    private void applyProvidedPermissions(final UserRankEntity target, final UserRankDto source) {
-        if (source.adminView != null) {
-            target.adminView = source.adminView;
-        }
-        this.applyExercisePermissions(target, source, true);
-        this.applyLessonPermissions(target, source, true);
-        this.applyCommentPermissions(target, source, true);
-        this.applyUserPermissions(target, source, true);
-        this.applyGroupPermissions(target, source, true);
-        this.applyRankPermissions(target, source, true);
-        if (source.aiConfigEdit != null) {
-            target.aiConfigEdit = source.aiConfigEdit;
-        }
-    }
-
-    private void applyExercisePermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
-        if (!patch || source.exerciseAdd != null) {
-            target.exerciseAdd = Boolean.TRUE.equals(source.exerciseAdd);
-        }
-        if (!patch || source.exerciseEdit != null) {
-            target.exerciseEdit = Boolean.TRUE.equals(source.exerciseEdit);
-        }
-        if (!patch || source.exerciseDelete != null) {
-            target.exerciseDelete = Boolean.TRUE.equals(source.exerciseDelete);
-        }
-    }
-
-    private void applyLessonPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
-        if (!patch || source.lessonAdd != null) {
-            target.lessonAdd = Boolean.TRUE.equals(source.lessonAdd);
-        }
-        if (!patch || source.lessonEdit != null) {
-            target.lessonEdit = Boolean.TRUE.equals(source.lessonEdit);
-        }
-        if (!patch || source.lessonDelete != null) {
-            target.lessonDelete = Boolean.TRUE.equals(source.lessonDelete);
-        }
-    }
-
-    private void applyCommentPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
-        if (!patch || source.commentAdd != null) {
-            target.commentAdd = Boolean.TRUE.equals(source.commentAdd);
-        }
-        if (!patch || source.commentEdit != null) {
-            target.commentEdit = Boolean.TRUE.equals(source.commentEdit);
-        }
-        if (!patch || source.commentDelete != null) {
-            target.commentDelete = Boolean.TRUE.equals(source.commentDelete);
-        }
-    }
-
-    private void applyUserPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
-        if (!patch || source.userAdd != null) {
-            target.userAdd = Boolean.TRUE.equals(source.userAdd);
-        }
-        if (!patch || source.userEdit != null) {
-            target.userEdit = Boolean.TRUE.equals(source.userEdit);
-        }
-        if (!patch || source.userDelete != null) {
-            target.userDelete = Boolean.TRUE.equals(source.userDelete);
-        }
-    }
-
-    private void applyGroupPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
-        if (!patch || source.userGroupAdd != null) {
-            target.userGroupAdd = Boolean.TRUE.equals(source.userGroupAdd);
-        }
-        if (!patch || source.userGroupEdit != null) {
-            target.userGroupEdit = Boolean.TRUE.equals(source.userGroupEdit);
-        }
-        if (!patch || source.userGroupDelete != null) {
-            target.userGroupDelete = Boolean.TRUE.equals(source.userGroupDelete);
-        }
-    }
-
-    private void applyRankPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
-        if (!patch || source.userRankAdd != null) {
-            target.userRankAdd = Boolean.TRUE.equals(source.userRankAdd);
-        }
-        if (!patch || source.userRankEdit != null) {
-            target.userRankEdit = Boolean.TRUE.equals(source.userRankEdit);
-        }
-        if (!patch || source.userRankDelete != null) {
-            target.userRankDelete = Boolean.TRUE.equals(source.userRankDelete);
+    private static void applyPermissions(final UserRankEntity target, final UserRankDto source, final boolean patch) {
+        for (final var permission : Permission.values()) {
+            if (!patch || source.get(permission) != null) {
+                setPermission(target, permission, source.has(permission));
+            }
         }
     }
 
@@ -552,7 +518,7 @@ public class UserRankService {
     }
 
     /** A rank loaded for an edit and the caller's permissions, read before the edit. */
-    private record RankEdit(UserRankEntity rank, List<Boolean> ceiling) {
+    private record RankEdit(UserRankEntity rank, Set<Permission> ceiling) {
     }
 
     /**
@@ -565,7 +531,7 @@ public class UserRankService {
 
         final UserRankEntity rank = this.requireRankFound(publicId);
         // Read before the edit: the caller's own rank may be the one being edited
-        final List<Boolean> ceiling = this.requireCallerPermissions();
+        final Set<Permission> ceiling = this.requireCallerPermissions();
         requireWithin(rank, ceiling);
         rank.requireVersion(version);
         return new RankEdit(rank, ceiling);
