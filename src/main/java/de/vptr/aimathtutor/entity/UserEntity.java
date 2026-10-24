@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.OptimisticLock;
@@ -46,6 +47,7 @@ import jakarta.validation.constraints.NotBlank;
                 query = "FROM UserEntity u LEFT JOIN FETCH u.rank "
                         + "WHERE LOWER(u.username) LIKE :s ESCAPE '!' ORDER BY u.created DESC") })
 @Entity
+@DynamicUpdate
 @Table(name = "users")
 public class UserEntity extends BaseEntity {
 
@@ -83,7 +85,8 @@ public class UserEntity extends BaseEntity {
     @Column(nullable = false)
     public boolean activated = false;
 
-    // The user's own settings stay out of the version: changing them must not make an admin's open edit stale
+    // The four @OptimisticLock(excluded) fields are the user's own settings: they stay out of the version so they
+    // never make an admin's open edit stale. @DynamicUpdate writes only changed columns, so a write can't revert one.
     @OptimisticLock(excluded = true)
     @Column(name = "design", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)

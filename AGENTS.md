@@ -422,6 +422,17 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   (letters, digits, `.`, `_`, `-`), because Unicode files blank characters as
   letters and has lookalike letters. `UserDto` checks it, and
   `UserService.normalizeUsername` checks it again for every write.
+- **User and rank writes are version-checked.** `UserService` and
+  `UserRankService` refuse a DTO whose non-null `version` differs from the
+  stored one (`BaseEntity.requireVersion`, `AppConstants.STALE_EDIT_MESSAGE`),
+  after the lock, permission and ceiling checks. A null version skips the check,
+  so an admin dialog sends the version it loaded (`toUserDto()`,
+  `toUserRankDto()`), and adopts a returned version only from a write that sent
+  it. A user's own settings (design, colour mode, avatars) carry
+  `@OptimisticLock(excluded = true)` so they never make an admin's edit stale;
+  a new self-service column gets it too, an admin-visible one never.
+  `@DynamicUpdate` on `UserEntity` keeps a write from rewriting columns it did
+  not change.
 - **Every user or rank write path a caller triggers must keep an active
   administrator** (activated, unbanned, rank holding every permission;
   `UserRepository.isActiveAdministrator`). A path that can remove one

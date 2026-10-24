@@ -214,22 +214,15 @@ public class UserRankService {
      * @throws WebApplicationException
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if the rank, before or after the change, grants a permission the caller's rank lacks, or the change
+     *             if the rank, before or after the change, grants a permission the caller's rank lacks, the change
      *             would leave no active Administrator, or the DTO's version is stale
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto updateRank(final String publicId, final @Valid UserRankDto rankDto) {
-        this.userRepository.lockAdministrators();
-        this.permissionService.requireUserRankEdit();
-
-        final UserRankEntity existingRank = this.requireRankFound(publicId);
-        // Read before the edit: the caller's own rank may be the one being edited
-        final List<Boolean> ceiling = this.requireCallerPermissions();
-        requireWithin(existingRank, ceiling);
-        if (rankDto.version != null && !rankDto.version.equals(existingRank.version)) {
-            throw new ValidationException(AppConstants.STALE_EDIT_MESSAGE);
-        }
+        final var target = this.loadRankForEdit(publicId, rankDto.version);
+        final UserRankEntity existingRank = target.rank();
+        final List<Boolean> ceiling = target.ceiling();
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Complete replacement (PUT semantics)
@@ -246,7 +239,8 @@ public class UserRankService {
 
     /**
      * Partially updates an existing user rank (PATCH semantics). Only updates permissions that are explicitly provided
-     * in the DTO; null values are ignored.
+     * in the DTO; null values are ignored. A non-null {@code rankDto.version} is checked like a full update's; null
+     * skips the check.
      *
      * @param publicId
      *            the public ID of the rank to update
@@ -257,18 +251,14 @@ public class UserRankService {
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
      *             if the rank, before or after the change, grants a permission the caller's rank lacks, or the change
-     *             would leave no active Administrator
+     *             would leave no active Administrator, or the DTO's version is stale
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
     public UserRankViewDto patchRank(final String publicId, final @Valid UserRankDto rankDto) {
-        this.userRepository.lockAdministrators();
-        this.permissionService.requireUserRankEdit();
-
-        final UserRankEntity existingRank = this.requireRankFound(publicId);
-        // Read before the edit: the caller's own rank may be the one being edited
-        final List<Boolean> ceiling = this.requireCallerPermissions();
-        requireWithin(existingRank, ceiling);
+        final var target = this.loadRankForEdit(publicId, rankDto.version);
+        final UserRankEntity existingRank = target.rank();
+        final List<Boolean> ceiling = target.ceiling();
         final boolean holdsLastAdministrators = this.holdsLastAdministrators(existingRank);
 
         // Partial update (PATCH semantics) - only update provided fields. A provided name is still
@@ -559,6 +549,26 @@ public class UserRankService {
                     + AppConstants.USERRANK_NAME_MAX_LENGTH + " characters");
         }
         return normalized;
+    }
+
+    /** A rank loaded for an edit and the caller's permissions, read before the edit. */
+    private record RankEdit(UserRankEntity rank, List<Boolean> ceiling) {
+    }
+
+    /**
+     * Takes the administrator lock, checks the edit permission, loads the rank, and refuses it above the caller's
+     * ceiling or when {@code version} is stale, all before anything is modified.
+     */
+    private RankEdit loadRankForEdit(final String publicId, @Nullable final Long version) {
+        this.userRepository.lockAdministrators();
+        this.permissionService.requireUserRankEdit();
+
+        final UserRankEntity rank = this.requireRankFound(publicId);
+        // Read before the edit: the caller's own rank may be the one being edited
+        final List<Boolean> ceiling = this.requireCallerPermissions();
+        requireWithin(rank, ceiling);
+        rank.requireVersion(version);
+        return new RankEdit(rank, ceiling);
     }
 
     private UserRankEntity requireRankFound(final String publicId) {

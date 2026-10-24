@@ -374,7 +374,7 @@ public class AdminUsersView extends AbstractAdminView {
                 NotificationUtil.showError("User ID is missing");
                 return;
             }
-            this.changeUserPassword(user.publicId, newPassword);
+            this.changeUserPassword(user, user.publicId, newPassword);
         });
         saveButton.addThemeVariants(ButtonVariant.PRIMARY);
 
@@ -391,20 +391,20 @@ public class AdminUsersView extends AbstractAdminView {
         this.passwordDialog.open();
     }
 
-    private void changeUserPassword(final String userPublicId, final String newPassword) {
+    private void changeUserPassword(final UserViewDto user, final String userPublicId, final String newPassword) {
         try {
-            // Create a UserDto with only the password field set
+            // Only the password, checked against the version the open user dialog loaded
             final var passwordUpdateDto = new UserDto();
             passwordUpdateDto.publicId = userPublicId;
             passwordUpdateDto.password = newPassword;
+            passwordUpdateDto.version = this.currentUser.version;
 
             final var changed = ServiceRejectionUtil
                     .callOrShowRejection(() -> this.userService.patchUser(userPublicId, passwordUpdateDto));
             if (changed != null) {
-                // The user dialog stays open: its save must carry the version this change produced, or it is stale
-                if (userPublicId.equals(this.currentUser.publicId)) {
-                    this.currentUser.version = changed.version;
-                }
+                // The version check passed, so nothing else changed: the dialog and its grid row take the new version
+                this.currentUser.version = changed.version;
+                user.version = changed.version;
                 NotificationUtil.showSuccess("Password changed successfully");
                 this.passwordDialog.close();
             }
