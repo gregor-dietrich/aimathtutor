@@ -4,12 +4,15 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import de.vptr.aimathtutor.util.ExecutorShutdownUtil;
@@ -19,11 +22,14 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * In-memory service for tracking and throttling login attempts. The username+IP and IP keys use exponential backoff to
- * mitigate brute-force attacks: the failure count of a key survives its lock and is forgotten only an hour after the
- * lock ends, so repeated lockouts escalate up to the one-hour cap. The per-account bucket is a fixed window: 25
- * failures per 15 minutes, then a 10-minute lock. The caches are bounded (10,000 unlocked entries plus the locked ones)
- * with automatic cleanup to prevent DoS via unbounded growth.
+ * In-memory service for tracking and throttling login attempts. The username+IP and client keys (an IPv4 address or an
+ * IPv6 /64 prefix) use exponential backoff to mitigate brute-force attacks: the failure count of a key survives its
+ * lock and is forgotten only an hour after the lock ends, so repeated lockouts escalate up to the one-hour cap. The
+ * per-account bucket is a fixed window: 25 failures per 15 minutes, then a 10-minute lock. The caches are bounded
+ * (10,000 unlocked entries plus the locked ones) with automatic cleanup to prevent DoS via unbounded growth.
+ * <p>
+ * A successful sign-in forgives the failures a client has recorded: its own account's, plus one for each account beyond
+ * the first that signs in from that client within an hour (see {@link #recordSuccessfulLogin(String, String)}).
  */
 @ApplicationScoped
 public class LoginAttemptService {
@@ -33,6 +39,8 @@ public class LoginAttemptService {
     private static final long MAX_LOCKOUT_SECONDS = 3600; // 1 hour
     // A key's failures are forgotten this long after its lock ends, so that the next lock is longer
     private static final long FORGET_AFTER_SECONDS = 3600;
+    // How long the accounts that signed in from one client are collected for the sign-in credit
+    private static final long SIGN_IN_WINDOW_SECONDS = 3600;
     private static final int MAX_CACHE_SIZE = 10_000;
     private static final long CLEANUP_INTERVAL_SECONDS = 300; // 5 minutes
 
@@ -43,6 +51,8 @@ public class LoginAttemptService {
     private static final Policy PASSWORD_CHANGE_POLICY = new Policy(5, 900, 900);
 
     private final Map<String, LoginAttempt> attempts = new ConcurrentHashMap<>();
+    // Per client key: the accounts that signed in within the current window. Holds no lock state.
+    private final Map<String, SignInWindow> signIns = new ConcurrentHashMap<>();
     private final Map<String, WindowedAttempt> accountAttempts = new ConcurrentHashMap<>();
     // Own key space: login keys include the client-chosen username, so they must never share a map with the per-session
     // password-change tokens.
@@ -75,6 +85,7 @@ public class LoginAttemptService {
     private void cleanupExpiredEntries() {
         final var now = this.clock.instant();
         this.attempts.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+        this.signIns.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
         this.accountAttempts.entrySet().removeIf(entry -> entry.getValue().isExpired(ACCOUNT_POLICY, now));
         this.passwordChangeAttempts.entrySet()
                 .removeIf(entry -> entry.getValue().isExpired(PASSWORD_CHANGE_POLICY, now));
@@ -87,6 +98,10 @@ public class LoginAttemptService {
         trimLowest(this.attempts, attempt -> !attempt.isLocked(now),
                 Comparator.comparingInt((final LoginAttempt attempt) -> attempt.count)
                         .thenComparing(attempt -> attempt.lastAttempt));
+        // A sign-in window holds no lock, so evicting one only withholds future credit. Fewest accounts go first.
+        trimLowest(this.signIns, window -> true,
+                Comparator.comparingInt((final SignInWindow window) -> window.accounts().size())
+                        .thenComparing(SignInWindow::since));
         trimLowest(this.accountAttempts, attempt -> attempt.count < ACCOUNT_POLICY.maxAttempts,
                 Comparator.comparingInt((final WindowedAttempt attempt) -> attempt.count)
                         .thenComparing(attempt -> attempt.lastAttempt));
@@ -110,13 +125,13 @@ public class LoginAttemptService {
     }
 
     /**
-     * Records a failed login attempt for the given key (username or IP). Returns the number of seconds the client
-     * should wait before retrying. The count survives the lock (callers record nothing while a key is locked) and is
-     * forgotten only {@value #FORGET_AFTER_SECONDS} seconds after the lock ends, so each lock lasts longer than the one
-     * before. Enforces maximum cache size to prevent DoS attacks.
+     * Records a failed login attempt for the given key (a username+client key or a client key). Returns the number of
+     * seconds the client should wait before retrying. The count survives the lock (callers record nothing while a key
+     * is locked) and is forgotten only {@value #FORGET_AFTER_SECONDS} seconds after the lock ends, so each lock lasts
+     * longer than the one before. Enforces maximum cache size to prevent DoS attacks.
      *
      * @param key
-     *            the username or IP address
+     *            a username+client key or a client key (an IPv4 address or an IPv6 /64 prefix)
      * @return lockout duration in seconds
      */
     public long recordFailedAttempt(final String key) {
@@ -190,13 +205,60 @@ public class LoginAttemptService {
     }
 
     /**
-     * Records a successful login, clearing any previous failed attempts.
+     * Records a successful login. It forgives failures of the client bucket in two ways, and never touches a lock
+     * beyond lowering that count: the username+client bucket is removed and its count is subtracted (the account's own
+     * failures), and one more failure is forgiven for each account beyond the first that signs in from the client
+     * within its {@value #SIGN_IN_WINDOW_SECONDS}-second sign-in window, so a school behind one NAT heals as its users
+     * sign in. The first account of a window and a repeated account forgive nothing extra: an account holder could
+     * otherwise shrink the bound on spraying other usernames by signing in between guesses. The credit is never banked:
+     * with no client bucket, or a count already at zero, it does nothing. The client bucket is removed when nothing is
+     * left, and keeps its last attempt otherwise. The failures of other usernames stay, beyond the credit.
      *
-     * @param key
-     *            the username or IP address
+     * @param usernameIpKey
+     *            the username+client key
+     * @param clientKey
+     *            the client key (IPv4 address or IPv6 /64 prefix), or null if the client is unknown
      */
-    public void recordSuccessfulLogin(final String key) {
-        this.attempts.remove(key);
+    public void recordSuccessfulLogin(final String usernameIpKey, @Nullable final String clientKey) {
+        final var own = this.attempts.remove(usernameIpKey);
+        if (clientKey == null) {
+            return;
+        }
+        final var now = this.clock.instant();
+        final var forgiven = own == null || own.isExpired(now) ? 0 : own.count;
+        final var credit = this.signInCredit(usernameIpKey, clientKey, now);
+        if (forgiven + credit == 0) {
+            return;
+        }
+        this.attempts.computeIfPresent(clientKey, (k, v) -> {
+            final var remaining = v.isExpired(now) ? 0 : v.count - forgiven - credit;
+            return remaining > 0 ? new LoginAttempt(remaining, v.lastAttempt) : null;
+        });
+    }
+
+    /**
+     * Notes the account in the client's sign-in window, atomically per client.
+     *
+     * @return 1 if the account is new to a window that already holds another, else 0
+     */
+    private int signInCredit(final String account, final String clientKey, final Instant now) {
+        if (this.signIns.size() >= MAX_CACHE_SIZE && !this.signIns.containsKey(clientKey)) {
+            this.cleanupExpiredEntries();
+        }
+        final var credit = new AtomicInteger();
+        this.signIns.compute(clientKey, (k, v) -> {
+            if (v == null || v.isExpired(now)) {
+                return new SignInWindow(now, Set.of(account));
+            }
+            if (v.accounts().contains(account)) {
+                return v;
+            }
+            credit.set(1);
+            final var accounts = new HashSet<>(v.accounts());
+            accounts.add(account);
+            return new SignInWindow(v.since(), Set.copyOf(accounts));
+        });
+        return credit.get();
     }
 
     /**
@@ -213,7 +275,7 @@ public class LoginAttemptService {
      * Checks whether the given key is currently locked out due to too many failed attempts.
      *
      * @param key
-     *            the username or IP address
+     *            a username+client key or a client key (an IPv4 address or an IPv6 /64 prefix)
      * @return true if the key is locked out
      */
     public boolean isLockedOut(final String key) {
@@ -252,7 +314,7 @@ public class LoginAttemptService {
      * Returns the remaining lockout duration in seconds for the given key.
      *
      * @param key
-     *            the username or IP address
+     *            a username+client key or a client key (an IPv4 address or an IPv6 /64 prefix)
      * @return remaining lockout seconds, or 0 if not locked out
      */
     public long getRemainingLockoutSeconds(final String key) {
@@ -306,6 +368,13 @@ public class LoginAttemptService {
         boolean isExpired(final Instant now) {
             return ChronoUnit.SECONDS.between(this.lastAttempt, now) > lockoutSeconds(this.count)
                     + FORGET_AFTER_SECONDS;
+        }
+    }
+
+    /** The accounts that signed in from one client since {@code since}; immutable, replaced on every change. */
+    private record SignInWindow(Instant since, Set<String> accounts) {
+        boolean isExpired(final Instant now) {
+            return ChronoUnit.SECONDS.between(this.since, now) > SIGN_IN_WINDOW_SECONDS;
         }
     }
 

@@ -16,15 +16,6 @@ import jakarta.transaction.Transactional;
 public class UserRankRepository extends AbstractRepository {
 
     /**
-     * Retrieves all user ranks from the database.
-     *
-     * @return a list of all {@link UserRankEntity} objects
-     */
-    public List<UserRankEntity> findAll() {
-        return this.findAll(0, 100);
-    }
-
-    /**
      * Retrieves user ranks from the database with pagination.
      *
      * @param page
@@ -122,23 +113,6 @@ public class UserRankRepository extends AbstractRepository {
             return;
         }
         this.em.persist(rank);
-    }
-
-    /**
-     * Deletes a user rank by its unique identifier.
-     *
-     * @param id
-     *            the ID of the user rank to delete
-     * @return true if the rank was successfully deleted, false if not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        final UserRankEntity e = this.findById(id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
     }
 
     /**

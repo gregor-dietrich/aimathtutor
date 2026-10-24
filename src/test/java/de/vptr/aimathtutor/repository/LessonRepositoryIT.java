@@ -156,21 +156,6 @@ public class LessonRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testDeleteById_existingLesson() {
-        final LessonEntity lesson = this.createLesson("To Delete");
-        final Long id = Objects.requireNonNull(lesson.id);
-        Assertions.assertTrue(this.lessonRepository.deleteById(id));
-        Assertions.assertNull(this.lessonRepository.findById(id));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.lessonRepository.deleteById(999_999L));
-    }
-
-    @Test
-    @TestTransaction
     public void testDeleteByPublicId_existingLesson() {
         final LessonEntity lesson = this.createLesson("To Delete By PublicId");
         final String publicId = Objects.requireNonNull(lesson.publicId);

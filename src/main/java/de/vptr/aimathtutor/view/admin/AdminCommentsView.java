@@ -129,12 +129,13 @@ public class AdminCommentsView extends AbstractAdminView {
         super.onAttach(event);
         final var publicId = this.queryExercisePublicId;
         if (publicId != null && !publicId.isBlank()) {
+            final var credentials = this.authService.currentSessionCredentials();
             AsyncDataLoader.load(() -> {
                 final var exercise = this.exerciseService.findByPublicId(publicId).orElse(null);
                 if (exercise == null) {
                     return Collections.<CommentViewDto>emptyList();
                 }
-                return this.commentService.findByExerciseId(exercise.id);
+                return this.commentService.findByExerciseId(credentials, exercise.id);
             }, this, comments -> this.grid.setItems(comments), "Failed to load comments. Please try again.");
             this.queryExercisePublicId = null; // Clear it so it doesn't reload on every re-attach
         } else {
@@ -145,8 +146,9 @@ public class AdminCommentsView extends AbstractAdminView {
     private void loadCommentsAsync() {
         LOG.info("Loading comments");
 
-        AsyncDataLoader.load(() -> this.commentService.getAllComments(), this, data -> this.grid.setItems(data),
-                "Failed to load comments. Please try again.");
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.commentService.getAllComments(credentials), this,
+                data -> this.grid.setItems(data), "Failed to load comments. Please try again.");
     }
 
     /**
@@ -406,8 +408,9 @@ public class AdminCommentsView extends AbstractAdminView {
         }
 
         this.searchButton.setEnabled(false);
-        LOG.infof("Searching comments with query: %s", query);
-        AsyncDataLoader.load(() -> this.commentService.searchComments(query.trim()), this, comments -> {
+        LOG.infof("Searching comments with query length: %s", query.length());
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.commentService.searchComments(credentials, query.trim()), this, comments -> {
             LOG.infof("Successfully found %s comments", comments.size());
             this.grid.setItems(comments);
             this.searchButton.setEnabled(true);
@@ -420,8 +423,10 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
+        final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(
-                () -> this.commentService.findByDateRange(range.get().start().toString(), range.get().end().toString()),
+                () -> this.commentService.findByDateRange(credentials, range.get().start().toString(),
+                        range.get().end().toString()),
                 this, comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -433,7 +438,8 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.commentService.findByUserId(userId.longValue()), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.commentService.findByUserId(credentials, userId.longValue()), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -445,7 +451,8 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.commentService.findByExerciseId(exerciseId.longValue()), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.commentService.findByExerciseId(credentials, exerciseId.longValue()), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
@@ -457,8 +464,9 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.commentService.findByStatus(CommentStatus.fromString(status)), this,
-                comments -> this.grid.setItems(comments),
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.commentService.findByStatus(credentials, CommentStatus.fromString(status)),
+                this, comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }
 
@@ -469,7 +477,8 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.commentService.findFlaggedComments(minFlags), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.commentService.findFlaggedComments(credentials, minFlags), this,
                 comments -> this.grid.setItems(comments),
                 "An error occurred while filtering comments. Please try again.");
     }

@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -156,5 +157,31 @@ class ClientIpUtilTest {
         assertNull(ClientIpUtil.parseLiteral("  "));
         assertNull(ClientIpUtil.parseLiteral("localhost"));
         assertNotNull(ClientIpUtil.parseLiteral(" " + CLIENT + " "));
+    }
+
+    @Test
+    @DisplayName("loginClientKey keys IPv6 addresses by their /64 prefix")
+    void loginClientKeyUsesIpv6Prefix() {
+        final var key = ClientIpUtil.loginClientKey("2001:db8:1:2::1");
+        assertEquals("2001:db8:1:2:0:0:0:0/64", key);
+        assertEquals(key, ClientIpUtil.loginClientKey("2001:db8:1:2:ffff:eeee:dddd:cccc"));
+        assertEquals(key, ClientIpUtil.loginClientKey("2001:0db8:0001:0002:0000:0000:0000:0001"));
+        assertEquals(key, ClientIpUtil.loginClientKey("2001:DB8:1:2::1"));
+        assertNotEquals(key, ClientIpUtil.loginClientKey("2001:db8:1:3::1"));
+    }
+
+    @Test
+    @DisplayName("loginClientKey keeps IPv4 whole, IPv4-mapped IPv6 included")
+    void loginClientKeyKeepsIpv4() {
+        assertEquals(CLIENT, ClientIpUtil.loginClientKey(CLIENT));
+        assertEquals(CLIENT, ClientIpUtil.loginClientKey("::ffff:" + CLIENT));
+        assertNotEquals(CLIENT, ClientIpUtil.loginClientKey(FORGED));
+    }
+
+    @Test
+    @DisplayName("loginClientKey returns null for null and other text unchanged")
+    void loginClientKeyPassesThroughNonAddresses() {
+        assertNull(ClientIpUtil.loginClientKey(null));
+        assertEquals("not-an-ip", ClientIpUtil.loginClientKey("not-an-ip"));
     }
 }

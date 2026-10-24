@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import de.vptr.aimathtutor.entity.StudentSessionEntity;
 import jakarta.annotation.Nullable;
@@ -32,23 +31,6 @@ public class StudentSessionRepository extends AbstractRepository {
         q.setParameter("s", sessionId);
         q.setMaxResults(1);
         return q.getResultStream().findFirst().orElse(null);
-    }
-
-    /**
-     * Retrieves a student session by its public identifier.
-     *
-     * @param publicId
-     *            the public ID of the session
-     * @return an {@link Optional} containing the session if found, empty otherwise
-     */
-    public Optional<StudentSessionEntity> findByPublicId(final String publicId) {
-        if (publicId == null) {
-            return Optional.empty();
-        }
-        final var q = this.em.createNamedQuery("StudentSession.findByPublicId", StudentSessionEntity.class);
-        q.setParameter("p", publicId);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst();
     }
 
     /**
@@ -88,49 +70,12 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Find all sessions for a given exercise id with relations eagerly loaded.
-     *
-     * @param exerciseId
-     *            database id of the exercise
-     * @return list of sessions, empty list if exerciseId is null or none found
-     */
-    public List<StudentSessionEntity> findByExerciseId(final Long exerciseId) {
-        if (exerciseId == null) {
-            return List.of();
-        }
-        final var q =
-                this.em.createNamedQuery("StudentSession.findByExerciseIdWithRelations", StudentSessionEntity.class);
-        q.setParameter("e", exerciseId);
-        return q.getResultList();
-    }
-
-    /**
      * List all student sessions ordered by id descending with relations eagerly loaded.
      *
      * @return list of all student sessions
      */
     public List<StudentSessionEntity> findAll() {
         return this.listNamed("StudentSession.findAllWithRelations", StudentSessionEntity.class);
-    }
-
-    /**
-     * Find a session by database id.
-     *
-     * @param id
-     *            primary key of the session
-     * @return session entity or null if id is null or not found
-     */
-    @Nullable
-    public StudentSessionEntity findById(final Long id) {
-        if (id == null) {
-            return null;
-        }
-        final var q = this.em.createQuery(
-                "SELECT s FROM StudentSessionEntity s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.exercise WHERE s.id = :id",
-                StudentSessionEntity.class);
-        q.setParameter("id", id);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst().orElse(null);
     }
 
     /**
@@ -145,38 +90,6 @@ public class StudentSessionRepository extends AbstractRepository {
                 StudentSessionEntity.class);
         q.setParameter("u", userId);
         q.setParameter("e", exerciseId);
-        return q.getResultList();
-    }
-
-    /**
-     * Finds student sessions by user ID and date range with relations eagerly loaded.
-     */
-    public List<StudentSessionEntity> findByUserIdAndDateRange(final Long userId, final LocalDateTime start,
-            final LocalDateTime end) {
-        if (userId == null || start == null || end == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("StudentSession.findByUserAndDateRangeWithRelations",
-                StudentSessionEntity.class);
-        q.setParameter("u", userId);
-        q.setParameter("s", start);
-        q.setParameter("e", end);
-        return q.getResultList();
-    }
-
-    /**
-     * Finds student sessions by exercise ID and date range with relations eagerly loaded.
-     */
-    public List<StudentSessionEntity> findByExerciseIdAndDateRange(final Long exerciseId, final LocalDateTime start,
-            final LocalDateTime end) {
-        if (exerciseId == null || start == null || end == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("StudentSession.findByExerciseAndDateRangeWithRelations",
-                StudentSessionEntity.class);
-        q.setParameter("e", exerciseId);
-        q.setParameter("s", start);
-        q.setParameter("en", end);
         return q.getResultList();
     }
 
@@ -459,25 +372,5 @@ public class StudentSessionRepository extends AbstractRepository {
             return;
         }
         this.em.persist(session);
-    }
-
-    /**
-     * Delete a session by id.
-     *
-     * @param id
-     *            primary key of session to remove
-     * @return true if removed, false if id was null or entity not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        if (id == null) {
-            return false;
-        }
-        final StudentSessionEntity e = this.em.find(StudentSessionEntity.class, id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
     }
 }

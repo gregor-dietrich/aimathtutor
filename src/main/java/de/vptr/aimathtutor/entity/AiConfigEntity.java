@@ -27,7 +27,6 @@ import jakarta.validation.constraints.NotBlank;
 @Entity
 @Table(name = "ai_config")
 @NamedQueries({ @NamedQuery(name = "AiConfig.findByKey", query = "FROM AiConfigEntity WHERE configKey = :key"),
-        @NamedQuery(name = "AiConfig.findByPublicId", query = "FROM AiConfigEntity WHERE publicId = :p"),
         @NamedQuery(name = "AiConfig.findByCategory",
                 query = "FROM AiConfigEntity WHERE category = :category ORDER BY configKey"),
         @NamedQuery(name = "AiConfig.findAll", query = "FROM AiConfigEntity ORDER BY category, configKey"), })

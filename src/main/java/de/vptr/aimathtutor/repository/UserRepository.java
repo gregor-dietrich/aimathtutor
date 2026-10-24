@@ -181,44 +181,6 @@ public class UserRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all active users from the database.
-     *
-     * @return a list of active {@link UserEntity} objects
-     */
-    public List<UserEntity> findActiveUsers() {
-        return this.listNamed("User.findActive", UserEntity.class);
-    }
-
-    /**
-     * Retrieves all users with a specific rank.
-     *
-     * @param rankId
-     *            the rank ID to filter by
-     * @return a list of {@link UserEntity} objects with the specified rank
-     */
-    public List<UserEntity> findByRankId(final Long rankId) {
-        final var q = this.em.createNamedQuery("User.findByRankId", UserEntity.class);
-        q.setParameter("r", rankId);
-        return q.getResultList();
-    }
-
-    /**
-     * Counts users with a specific rank.
-     *
-     * @param rankId
-     *            the rank ID to filter by
-     * @return the count of users with the specified rank
-     */
-    public long countByRankId(final Long rankId) {
-        if (rankId == null) {
-            return 0L;
-        }
-        final var q = this.em.createNamedQuery("User.countByRankId", Long.class);
-        q.setParameter("r", rankId);
-        return q.getSingleResult();
-    }
-
-    /**
      * Counts users with a specific rank by public ID.
      *
      * @param rankPublicId
@@ -339,23 +301,6 @@ public class UserRepository extends AbstractRepository {
         final var q = this.em.createNamedQuery("User.searchByTerm", UserEntity.class);
         q.setParameter("s", pattern);
         return q.getResultList();
-    }
-
-    /**
-     * Deletes a user by its unique identifier.
-     *
-     * @param id
-     *            the ID of the user to delete
-     * @return true if the user was successfully deleted, false if not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        final UserEntity e = this.findById(id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
     }
 
     /**

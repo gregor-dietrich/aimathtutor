@@ -45,23 +45,6 @@ public class AiConfigRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves an AI configuration by its public identifier.
-     *
-     * @param publicId
-     *            the public ID of the configuration
-     * @return an {@link Optional} containing the configuration if found, empty otherwise
-     */
-    public Optional<AiConfigEntity> findByPublicId(@Nullable final String publicId) {
-        if (publicId == null) {
-            return Optional.empty();
-        }
-        final var q = this.em.createNamedQuery("AiConfig.findByPublicId", AiConfigEntity.class);
-        q.setParameter("p", publicId);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst();
-    }
-
-    /**
      * Retrieves all configuration entries in a specific category.
      *
      * @param category
@@ -99,19 +82,5 @@ public class AiConfigRepository extends AbstractRepository {
     @Transactional
     public AiConfigEntity update(final AiConfigEntity entity) {
         return this.em.merge(entity);
-    }
-
-    /**
-     * Removes an AI configuration entity by ID.
-     *
-     * @param id
-     *            the ID of the entity to delete
-     */
-    @Transactional
-    public void deleteById(final Long id) {
-        final var entity = this.em.find(AiConfigEntity.class, id);
-        if (entity != null) {
-            this.em.remove(entity);
-        }
     }
 }

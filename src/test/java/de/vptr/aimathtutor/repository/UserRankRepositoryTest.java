@@ -35,24 +35,8 @@ class UserRankRepositoryTest {
     @Test
     @DisplayName("findAll returns non-null list with seeded entries")
     void testFindAll() {
-        final var all = this.userRankRepository.findAll();
+        final var all = this.userRankRepository.findAll(0, 100);
         assertNotNull(all);
-    }
-
-    @Test
-    @DisplayName("persist and deleteById cover both found and not-found paths")
-    @TestTransaction
-    void testPersistAndDeleteById() {
-        final var rank = new UserRankEntity();
-        rank.name = "TestRank " + UlidUtil.generate();
-        rank.publicId = UlidUtil.generate();
-        this.userRankRepository.persist(rank);
-        this.userRankRepository.flush();
-
-        assertNotNull(this.userRankRepository.findById(rank.id));
-        assertFalse(this.userRankRepository.deleteById(999_999L));
-        assertTrue(this.userRankRepository.deleteById(rank.id));
-        assertNull(this.userRankRepository.findById(rank.id));
     }
 
     @Test

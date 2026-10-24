@@ -54,22 +54,6 @@ class LessonRepositoryTest {
     }
 
     @Test
-    @DisplayName("persist and deleteById cover both found and not-found paths")
-    @TestTransaction
-    void testPersistAndDeleteById() {
-        final var lesson = new LessonEntity();
-        lesson.name = "PersistTest " + UlidUtil.generate();
-        lesson.publicId = UlidUtil.generate();
-        this.lessonRepository.persist(lesson);
-        this.lessonRepository.flush();
-
-        assertNotNull(this.lessonRepository.findById(lesson.id));
-        assertFalse(this.lessonRepository.deleteById(999_999L));
-        assertTrue(this.lessonRepository.deleteById(lesson.id));
-        assertNull(this.lessonRepository.findById(lesson.id));
-    }
-
-    @Test
     @DisplayName("deleteByPublicId covers found and not-found paths")
     @TestTransaction
     void testDeleteByPublicId() {

@@ -31,7 +31,7 @@ public class UserRankRepositoryIT {
     @TestTransaction
     public void testFindAll_returnsRanks() {
         final UserRankEntity created = this.createRank("Rank_fall");
-        final List<UserRankEntity> all = this.userRankRepository.findAll();
+        final List<UserRankEntity> all = this.userRankRepository.findAll(0, 100);
         Assertions.assertTrue(all.stream().anyMatch(r -> Objects.equals(r.id, created.id)),
                 "findAll must include the rank that was just created");
     }
@@ -133,21 +133,6 @@ public class UserRankRepositoryIT {
     @SuppressWarnings("NullAway")
     public void testPersist_null_doesNotThrow() {
         Assertions.assertDoesNotThrow(() -> this.userRankRepository.persist(null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_existingRank() {
-        final UserRankEntity rank = this.createRank("Rank_delid");
-        final Long id = Objects.requireNonNull(rank.id);
-        Assertions.assertTrue(this.userRankRepository.deleteById(id));
-        Assertions.assertNull(this.userRankRepository.findById(id));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.userRankRepository.deleteById(999_999L));
     }
 
     @Test

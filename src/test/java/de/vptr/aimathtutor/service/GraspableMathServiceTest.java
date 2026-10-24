@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 
 import de.vptr.aimathtutor.dto.GraspableEventDto;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.repository.StudentSessionRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
@@ -41,6 +42,9 @@ class GraspableMathServiceTest {
     @Inject
     private UserRepository userRepository;
 
+    @Inject
+    private StudentSessionRepository studentSessionRepository;
+
     @InjectMock
     private PermissionService permissionService;
 
@@ -59,12 +63,6 @@ class GraspableMathServiceTest {
         final var user = this.userRepository.findByUsername("student1");
         assertNotNull(user, "Seeded student1 user should exist");
         return user;
-    }
-
-    private Long studentId() {
-        final var user = this.userRepository.findByUsername("student1");
-        assertNotNull(user, "Seeded student1 user should exist");
-        return user.id;
     }
 
     private Long createExercise() {
@@ -92,12 +90,12 @@ class GraspableMathServiceTest {
         final Long exerciseId = this.createExercise();
         Mockito.when(this.authService.requireCurrentUser())
                 .thenThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE));
-        final long before = this.graspableMathService.getExerciseSessions(exerciseId).size();
+        final long before = this.studentSessionRepository.countAll();
 
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE,
                 assertThrows(ValidationException.class, () -> this.graspableMathService.createSession(exerciseId))
                         .getMessage());
-        assertEquals(before, this.graspableMathService.getExerciseSessions(exerciseId).size());
+        assertEquals(before, this.studentSessionRepository.countAll());
     }
 
     @Test
@@ -250,24 +248,6 @@ class GraspableMathServiceTest {
         assertFalse(this.graspableMathService.checkCompletion("x = 5", "x = 6"));
         assertFalse(this.graspableMathService.checkCompletion(null, "x = 5"));
         assertFalse(this.graspableMathService.checkCompletion("x = 5", null));
-    }
-
-    @Test
-    @DisplayName("Should list user and exercise sessions")
-    @TestTransaction
-    void shouldListUserAndExerciseSessions() {
-        final Long exerciseId = this.createExercise();
-        final Long userId = this.studentId();
-        final int userSessionsBefore = this.graspableMathService.getUserSessions(userId).size();
-        final int exerciseSessionsBefore = this.graspableMathService.getExerciseSessions(exerciseId).size();
-
-        this.graspableMathService.createSession(exerciseId);
-
-        final int userSessionsAfter = this.graspableMathService.getUserSessions(userId).size();
-        final int exerciseSessionsAfter = this.graspableMathService.getExerciseSessions(exerciseId).size();
-
-        assertEquals(userSessionsBefore + 1, userSessionsAfter);
-        assertEquals(exerciseSessionsBefore + 1, exerciseSessionsAfter);
     }
 
     @Test

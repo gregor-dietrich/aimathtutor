@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.repository;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -22,23 +21,6 @@ import jakarta.ws.rs.core.Response;
 public class CommentFlagRepository extends AbstractRepository {
 
     /**
-     * Retrieves a comment flag by its public identifier.
-     *
-     * @param publicId
-     *            the public ID of the flag
-     * @return an {@link Optional} containing the flag if found, empty otherwise
-     */
-    public Optional<CommentFlagEntity> findByPublicId(final String publicId) {
-        if (publicId == null) {
-            return Optional.empty();
-        }
-        final var q = super.em.createNamedQuery("CommentFlag.findByPublicId", CommentFlagEntity.class);
-        q.setParameter("p", publicId);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst();
-    }
-
-    /**
      * Checks if a specific user has already flagged a given comment.
      *
      * @param commentId
@@ -55,20 +37,6 @@ public class CommentFlagRepository extends AbstractRepository {
         q.setParameter("c", commentId);
         q.setParameter("u", userId);
         return q.getSingleResult() > 0;
-    }
-
-    /**
-     * Persists a comment flag entity to the database.
-     *
-     * @param flag
-     *            the comment flag to persist; null values are ignored
-     */
-    @Transactional
-    public void persist(final CommentFlagEntity flag) {
-        if (flag == null) {
-            return;
-        }
-        super.em.persist(flag);
     }
 
     /**
@@ -104,19 +72,5 @@ public class CommentFlagRepository extends AbstractRepository {
             throw e;
         }
         return flag;
-    }
-
-    /**
-     * Retrieves an optional comment flag by its unique identifier.
-     *
-     * @param id
-     *            the comment flag ID
-     * @return an {@link Optional} containing the flag if found, empty otherwise; returns empty if id is null
-     */
-    public Optional<CommentFlagEntity> findByIdOptional(final Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(super.em.find(CommentFlagEntity.class, id));
     }
 }

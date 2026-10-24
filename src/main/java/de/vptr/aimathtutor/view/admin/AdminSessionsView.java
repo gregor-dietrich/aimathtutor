@@ -130,7 +130,8 @@ public class AdminSessionsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.analyticsService.searchSessions(searchTerm), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.analyticsService.searchSessions(credentials, searchTerm), this,
                 sessions -> this.grid.setItems(sessions),
                 "An error occurred while searching sessions. Please try again.");
     }
@@ -139,7 +140,8 @@ public class AdminSessionsView extends AbstractAdminView {
      * Load all sessions asynchronously and populate the grid.
      */
     private void loadSessions() {
-        AsyncDataLoader.load(() -> this.analyticsService.getAllSessions(), this, sessions -> {
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.analyticsService.getAllSessions(credentials), this, sessions -> {
             this.grid.setItems(sessions);
         }, "Failed to load sessions");
     }
@@ -164,7 +166,9 @@ public class AdminSessionsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.analyticsService.getSessionsByDateRange(startDateTime, endDateTime), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getSessionsByDateRange(credentials, startDateTime, endDateTime), this,
                 sessions -> this.grid.setItems(sessions),
                 "An error occurred while filtering by date range. Please try again.");
     }

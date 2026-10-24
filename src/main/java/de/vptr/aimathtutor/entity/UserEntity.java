@@ -41,15 +41,9 @@ import jakarta.validation.constraints.NotBlank;
                 query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.publicId = :p"),
         @NamedQuery(name = "User.findAllOrdered",
                 query = "FROM UserEntity u LEFT JOIN FETCH u.rank ORDER BY u.created DESC"),
-        @NamedQuery(name = "User.findActive",
-                query = "FROM UserEntity u LEFT JOIN FETCH u.rank "
-                        + "WHERE u.activated = true AND u.banned = false ORDER BY u.created DESC"),
-        @NamedQuery(name = "User.findByRankId",
-                query = "FROM UserEntity u LEFT JOIN FETCH u.rank WHERE u.rank.id = :r ORDER BY u.created DESC"),
         @NamedQuery(name = "User.searchByTerm",
                 query = "FROM UserEntity u LEFT JOIN FETCH u.rank "
-                        + "WHERE LOWER(u.username) LIKE :s ESCAPE '!' ORDER BY u.created DESC"),
-        @NamedQuery(name = "User.countByRankId", query = "SELECT COUNT(u) FROM UserEntity u WHERE u.rank.id = :r") })
+                        + "WHERE LOWER(u.username) LIKE :s ESCAPE '!' ORDER BY u.created DESC") })
 @Entity
 @Table(name = "users")
 public class UserEntity extends BaseEntity {

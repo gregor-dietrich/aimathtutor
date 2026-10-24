@@ -37,6 +37,7 @@ import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.ValidationException;
 
 /**
@@ -264,8 +265,8 @@ public class AuthService {
         }
 
         final String usernameKey = username.toLowerCase(Locale.ROOT).trim();
-        final String clientIp = this.extractClientIp();
-        final String usernameIpKey = usernameKey + ":" + (clientIp != null ? clientIp : "unknown");
+        final String clientKey = ClientIpUtil.loginClientKey(this.extractClientIp());
+        final String usernameIpKey = usernameKey + ":" + (clientKey != null ? clientKey : "unknown");
 
         // Check login attempt throttling by account (username only)
         if (this.loginAttemptService.isAccountLockedOut(usernameKey)) {
@@ -282,9 +283,9 @@ public class AuthService {
         }
 
         // Check login attempt throttling by IP
-        if (clientIp != null && this.loginAttemptService.isLockedOut(clientIp)) {
-            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientIp);
-            LOG.warnf("Authentication throttled by IP (%ss remaining)", remaining);
+        if (clientKey != null && this.loginAttemptService.isLockedOut(clientKey)) {
+            final long remaining = this.loginAttemptService.getRemainingLockoutSeconds(clientKey);
+            LOG.warnf("Authentication throttled by client %s (%ss remaining)", clientKey, remaining);
             return AuthResultDto.backendUnavailable("Too many failed attempts. Try again later.");
         }
 
@@ -296,7 +297,7 @@ public class AuthService {
                 LOG.trace("Authentication failed - user not found");
                 // Dummy bcrypt call to normalise timing and prevent username enumeration
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
-                this.recordFailure(usernameKey, usernameIpKey, clientIp);
+                this.recordFailure(usernameKey, usernameIpKey, clientKey);
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -304,7 +305,7 @@ public class AuthService {
             if (user.banned) {
                 LOG.trace("Authentication failed - user is banned");
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
-                this.recordFailure(usernameKey, usernameIpKey, clientIp);
+                this.recordFailure(usernameKey, usernameIpKey, clientKey);
                 return AuthResultDto.invalidCredentials();
             }
 
@@ -312,23 +313,20 @@ public class AuthService {
             if (!user.activated) {
                 LOG.trace("Authentication failed - user is not activated");
                 this.passwordHashingService.verifyPassword(password, DUMMY_BCRYPT_HASH);
-                this.recordFailure(usernameKey, usernameIpKey, clientIp);
+                this.recordFailure(usernameKey, usernameIpKey, clientKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             // Verify password using password hashing service
             if (!this.passwordHashingService.verifyPassword(password, user.password)) {
                 LOG.trace("Authentication failed - invalid password");
-                this.recordFailure(usernameKey, usernameIpKey, clientIp);
+                this.recordFailure(usernameKey, usernameIpKey, clientKey);
                 return AuthResultDto.invalidCredentials();
             }
 
             try {
                 this.loginAttemptService.recordSuccessfulAccountLogin(usernameKey);
-                this.loginAttemptService.recordSuccessfulLogin(usernameIpKey);
-                if (clientIp != null) {
-                    this.loginAttemptService.recordSuccessfulLogin(clientIp);
-                }
+                this.loginAttemptService.recordSuccessfulLogin(usernameIpKey, clientKey);
                 // Regenerate session ID to defeat session-fixation attacks where an
                 // attacker pre-sets the victim's session ID before login.
                 final VaadinRequest request = VaadinRequest.getCurrent();
@@ -360,11 +358,11 @@ public class AuthService {
         }
     }
 
-    private void recordFailure(final String usernameKey, final String usernameIpKey, @Nullable final String clientIp) {
+    private void recordFailure(final String usernameKey, final String usernameIpKey, @Nullable final String clientKey) {
         this.loginAttemptService.recordFailedAccountAttempt(usernameKey);
         this.loginAttemptService.recordFailedAttempt(usernameIpKey);
-        if (clientIp != null) {
-            this.loginAttemptService.recordFailedAttempt(clientIp);
+        if (clientKey != null) {
+            this.loginAttemptService.recordFailedAttempt(clientKey);
         }
     }
 
@@ -541,7 +539,7 @@ public class AuthService {
 
     /**
      * Verifies captured session credentials against the database and returns their user. Any thread; it reads through
-     * the repository in the caller's transaction.
+     * the repository in the caller's transaction, which it requires.
      *
      * @param credentials
      *            the credentials captured by {@link #currentSessionCredentials()}, or null
@@ -550,6 +548,7 @@ public class AuthService {
      *             if the credentials are null, the user is unknown, the credential stamp is stale, or the account is
      *             deactivated or banned
      */
+    @Transactional(TxType.MANDATORY)
     public UserEntity requireSessionUser(@Nullable final SessionCredentials credentials) {
         if (credentials == null) {
             throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);

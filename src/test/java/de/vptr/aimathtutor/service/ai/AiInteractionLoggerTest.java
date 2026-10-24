@@ -66,8 +66,6 @@ class AiInteractionLoggerTest {
     @DisplayName("logInteraction persists one AI interaction record")
     @TestTransaction
     void testLogInteraction_persistsRecord() {
-        final long countBefore = this.aiInteractionRepository.findAll().size();
-
         final var event = new GraspableEventDto();
         event.sessionId = "test-session-" + UUID.randomUUID();
         event.eventType = "simplify";
@@ -81,16 +79,14 @@ class AiInteractionLoggerTest {
 
         this.aiInteractionLogger.logInteraction(event, feedback);
 
-        final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 1, countAfter, "One interaction record should be persisted");
+        assertEquals(1, this.aiInteractionRepository.findBySessionId(event.sessionId).size(),
+                "One interaction record should be persisted");
     }
 
     @Test
     @DisplayName("logInteraction works without user or exercise ids")
     @TestTransaction
     void testLogInteraction_noUserOrExercise() {
-        final long countBefore = this.aiInteractionRepository.findAll().size();
-
         final var event = new GraspableEventDto();
         event.sessionId = "anon-session-" + UUID.randomUUID();
         event.eventType = "expand";
@@ -101,8 +97,8 @@ class AiInteractionLoggerTest {
 
         this.aiInteractionLogger.logInteraction(event, feedback);
 
-        final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 1, countAfter, "Record should be persisted even without user/exercise ids");
+        assertEquals(1, this.aiInteractionRepository.findBySessionId(event.sessionId).size(),
+                "Record should be persisted even without user/exercise ids");
     }
 
     @Test
@@ -131,27 +127,25 @@ class AiInteractionLoggerTest {
     @DisplayName("logQuestionInteraction persists two records (question + answer)")
     @TestTransaction
     void testLogQuestionInteraction_persistsTwoRecords() {
-        final long countBefore = this.aiInteractionRepository.findAll().size();
         final String sessionId = "q-session-" + UUID.randomUUID();
 
         this.aiInteractionLogger.logQuestionInteraction(sessionId, this.teacherId(), this.createExerciseId(),
                 "What is the next step?", "Try factoring the expression.");
 
-        final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 2, countAfter, "logQuestionInteraction should persist exactly two records");
+        assertEquals(2, this.aiInteractionRepository.findBySessionId(sessionId).size(),
+                "logQuestionInteraction should persist exactly two records");
     }
 
     @Test
     @DisplayName("logQuestionInteraction works with null user and exercise ids")
     @TestTransaction
     void testLogQuestionInteraction_noUserOrExercise() {
-        final long countBefore = this.aiInteractionRepository.findAll().size();
         final String sessionId = "q-anon-session-" + UUID.randomUUID();
 
         this.aiInteractionLogger.logQuestionInteraction(sessionId, null, null, "Help me.", "Sure, here is help.");
 
-        final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 2, countAfter, "Two records should be persisted even without ids");
+        assertEquals(2, this.aiInteractionRepository.findBySessionId(sessionId).size(),
+                "Two records should be persisted even without ids");
     }
 
     @Test
@@ -175,8 +169,6 @@ class AiInteractionLoggerTest {
     @DisplayName("logInteraction falls back to UNKNOWN when eventType or feedbackType are null")
     @TestTransaction
     void testLogInteraction_nullEventTypeAndFeedbackType() {
-        final long countBefore = this.aiInteractionRepository.findAll().size();
-
         final var event = new GraspableEventDto();
         event.sessionId = "null-type-session-" + UUID.randomUUID();
         event.eventType = null;
@@ -187,8 +179,8 @@ class AiInteractionLoggerTest {
 
         this.aiInteractionLogger.logInteraction(event, feedback);
 
-        final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 1, countAfter, "One interaction record should be persisted even with null types");
+        assertEquals(1, this.aiInteractionRepository.findBySessionId(event.sessionId).size(),
+                "One interaction record should be persisted even with null types");
 
         final var records = this.aiInteractionRepository.findBySessionId(event.sessionId);
         assertNotNull(records);
@@ -202,12 +194,11 @@ class AiInteractionLoggerTest {
     @DisplayName("logQuestionInteraction persists two records when user and exercise are not found")
     @TestTransaction
     void testLogQuestionInteraction_persistsTwoRecordsWhenUserAndExerciseNotFound() {
-        final long countBefore = this.aiInteractionRepository.findAll().size();
         final String sessionId = "notfound-session-" + UUID.randomUUID();
 
         this.aiInteractionLogger.logQuestionInteraction(sessionId, 999_999L, 999_999L, "Question?", "Answer.");
 
-        final long countAfter = this.aiInteractionRepository.findAll().size();
-        assertEquals(countBefore + 2, countAfter, "Two records should still be persisted when user/exercise not found");
+        assertEquals(2, this.aiInteractionRepository.findBySessionId(sessionId).size(),
+                "Two records should still be persisted when user/exercise not found");
     }
 }

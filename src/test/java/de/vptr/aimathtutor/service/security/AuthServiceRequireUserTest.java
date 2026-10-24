@@ -128,12 +128,14 @@ class AuthServiceRequireUserTest {
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireSessionUser refuses null credentials")
     void testRequireSessionUser_null() {
         this.assertSessionEnded(() -> this.authService.requireSessionUser(null));
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireSessionUser refuses an unknown public ID")
     void testRequireSessionUser_unknown() {
         final var credentials = new SessionCredentials("no-such-public-id", "stamp", UUID.randomUUID().toString());

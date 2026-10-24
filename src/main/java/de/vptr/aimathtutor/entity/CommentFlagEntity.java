@@ -21,11 +21,8 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "comment_flags")
-@NamedQueries({
-        @NamedQuery(name = "CommentFlag.countByCommentAndFlagger",
-                query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u"),
-        @NamedQuery(name = "CommentFlag.findByComment", query = "FROM CommentFlagEntity WHERE comment.id = :c"),
-        @NamedQuery(name = "CommentFlag.findByPublicId", query = "FROM CommentFlagEntity WHERE publicId = :p") })
+@NamedQueries({ @NamedQuery(name = "CommentFlag.countByCommentAndFlagger",
+        query = "SELECT COUNT(f) FROM CommentFlagEntity f WHERE f.comment.id = :c AND f.flagger.id = :u") })
 public class CommentFlagEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,18 +44,4 @@ public class CommentFlagEntity extends BaseEntity {
     @Column(name = "last_edit")
     @Nullable
     public LocalDateTime lastEdit;
-
-    /**
-     * Check if a user has already flagged a specific comment
-     */
-    public static boolean hasUserFlaggedComment(final Long commentId, final Long flaggerId) {
-        return find("comment.id = ?1 AND flagger.id = ?2", commentId, flaggerId).count() > 0;
-    }
-
-    /**
-     * Get all flags for a comment
-     */
-    public static int countFlagsForComment(final Long commentId) {
-        return (int) find("comment.id", commentId).count();
-    }
 }

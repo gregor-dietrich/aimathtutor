@@ -8,7 +8,6 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
@@ -18,13 +17,14 @@ import org.owasp.html.PolicyFactory;
 import de.vptr.aimathtutor.dto.CommentDto;
 import de.vptr.aimathtutor.dto.CommentDto.CommentStatus;
 import de.vptr.aimathtutor.dto.CommentViewDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.CommentEntity;
 import de.vptr.aimathtutor.entity.ExerciseEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.event.CommentCreatedEvent;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.CommentRepository;
 import de.vptr.aimathtutor.repository.ExerciseRepository;
-import de.vptr.aimathtutor.service.UserService;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.SearchPatternUtil;
@@ -50,9 +50,6 @@ public class CommentService {
     // Strict policy: disallow all HTML elements/attributes. Tags are dropped and
     // residual <, >, & characters are HTML-escaped, yielding safe plain text.
     private static final PolicyFactory STRICT_HTML_POLICY = new HtmlPolicyBuilder().toFactory();
-
-    @Inject
-    UserService userService;
 
     @Inject
     Event<CommentCreatedEvent> commentCreatedEvent;
@@ -84,77 +81,66 @@ public class CommentService {
     /**
      * Retrieves all comments in the system with loaded relationships.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @return a list of all {@link CommentViewDto}s with exercise, user, and parent data
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> getAllComments() {
-        return this.getAllComments(0, 1000);
+    public List<CommentViewDto> getAllComments(@Nullable final SessionCredentials credentials) {
+        return this.getAllComments(credentials, 0, 1000);
     }
 
     /**
      * Retrieves comments with pagination.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param page
      *            the page number (0-indexed)
      * @param pageSize
      *            the number of comments per page
      * @return a paginated list of {@link CommentViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> getAllComments(final int page, final int pageSize) {
+    public List<CommentViewDto> getAllComments(@Nullable final SessionCredentials credentials, final int page,
+            final int pageSize) {
+        this.permissionService.requireAdminView(credentials);
         final List<CommentEntity> comments = this.commentRepository.findAllOrderedWithRelations(page, pageSize);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
-     * Finds a single comment by ID with loaded relationships.
-     *
-     * @param id
-     *            the comment ID
-     * @return an {@link Optional} containing the {@link CommentViewDto} with exercise/user data, or empty if not found
-     */
-    @Transactional
-    public Optional<CommentViewDto> findById(final Long id) {
-        final Optional<CommentEntity> comment = this.commentRepository.findByIdOptionalWithRelations(id);
-        if (comment.isPresent()) {
-            final CommentEntity entity = comment.get();
-            return Optional.of(new CommentViewDto(entity));
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Finds a single comment by its public ID with loaded relationships.
-     *
-     * @param publicId
-     *            the comment public ID
-     * @return an {@link Optional} containing the {@link CommentViewDto} with exercise/user data, or empty if not found
-     */
-    @Transactional
-    public Optional<CommentViewDto> findByPublicId(final String publicId) {
-        final Optional<CommentEntity> comment = this.commentRepository.findByPublicIdWithRelations(publicId);
-        if (comment.isPresent()) {
-            final CommentEntity entity = comment.get();
-            return Optional.of(new CommentViewDto(entity));
-        }
-        return Optional.empty();
-    }
-
-    /**
      * Retrieves all top-level and threaded comments for a specific exercise.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param exerciseId
      *            the exercise ID
      * @return a list of {@link CommentViewDto}s in the exercise with loaded relationships
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> findByExerciseId(final Long exerciseId) {
-        return this.findByExerciseId(exerciseId, 0, 1000);
+    public List<CommentViewDto> findByExerciseId(@Nullable final SessionCredentials credentials,
+            final Long exerciseId) {
+        return this.findByExerciseId(credentials, exerciseId, 0, 1000);
     }
 
     /**
      * Retrieves comments for a specific exercise with pagination.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param exerciseId
      *            the exercise ID
      * @param page
@@ -162,9 +148,15 @@ public class CommentService {
      * @param pageSize
      *            the number of comments per page
      * @return a paginated list of {@link CommentViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> findByExerciseId(final Long exerciseId, final int page, final int pageSize) {
+    public List<CommentViewDto> findByExerciseId(@Nullable final SessionCredentials credentials, final Long exerciseId,
+            final int page, final int pageSize) {
+        this.permissionService.requireAdminView(credentials);
         final List<CommentEntity> comments =
                 this.commentRepository.findByExerciseIdWithRelations(exerciseId, page, pageSize);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
@@ -173,26 +165,20 @@ public class CommentService {
     /**
      * Retrieves all comments authored by a specific user.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param userId
      *            the user ID
      * @return a list of {@link CommentViewDto}s authored by the user with loaded relationships
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> findByUserId(final Long userId) {
+    public List<CommentViewDto> findByUserId(@Nullable final SessionCredentials credentials, final Long userId) {
+        this.permissionService.requireAdminView(credentials);
         final List<CommentEntity> comments = this.commentRepository.findByUserIdWithRelations(userId);
-        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
-    }
-
-    /**
-     * Retrieves the most recently created comments with a limit on count.
-     *
-     * @param limit
-     *            the maximum number of comments to return
-     * @return a list of up to {@code limit} recent {@link CommentViewDto}s with loaded relationships
-     */
-    @Transactional
-    public List<CommentViewDto> findRecentComments(final int limit) {
-        final List<CommentEntity> comments = this.commentRepository.findRecentCommentsWithRelations(limit);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
@@ -497,16 +483,6 @@ public class CommentService {
     }
 
     /**
-     * List comments by session
-     */
-    @Transactional
-    public List<CommentViewDto> listCommentsBySession(final String sessionId) {
-        final List<CommentEntity> comments = this.commentRepository.findBySessionIdWithRelations(sessionId);
-
-        return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
-    }
-
-    /**
      * Moderate a comment (hide/unhide/delete) as the signed-in user. Requires the {@code commentEdit} permission.
      *
      * @throws ValidationException
@@ -533,11 +509,19 @@ public class CommentService {
      * Searches comments by content using the provided query string (case-insensitive). Returns an empty list if query
      * is null or empty to avoid loading full datasets.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param query
      *            the search query string (content match)
      * @return a list of matching {@link CommentViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
-    public List<CommentViewDto> searchComments(final String query) {
+    @Transactional
+    public List<CommentViewDto> searchComments(@Nullable final SessionCredentials credentials, final String query) {
+        this.permissionService.requireAdminView(credentials);
         if (query == null || query.isBlank()) {
             return List.of();
         }
@@ -550,14 +534,22 @@ public class CommentService {
      * Finds comments created within a date range (inclusive). Date strings are parsed as ISO-8601 dates. Returns an
      * empty list if parsing fails or dates are null.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param startDate
      *            the start date (ISO-8601 format: YYYY-MM-DD)
      * @param endDate
      *            the end date (ISO-8601 format: YYYY-MM-DD)
      * @return a list of {@link CommentViewDto}s created within the date range
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> findByDateRange(final String startDate, final String endDate) {
+    public List<CommentViewDto> findByDateRange(@Nullable final SessionCredentials credentials, final String startDate,
+            final String endDate) {
+        this.permissionService.requireAdminView(credentials);
         if (startDate == null || endDate == null) {
             return List.of();
         }
@@ -579,18 +571,36 @@ public class CommentService {
 
     /**
      * Find comments by status (VISIBLE, HIDDEN, DELETED).
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> findByStatus(final CommentStatus status) {
+    public List<CommentViewDto> findByStatus(@Nullable final SessionCredentials credentials,
+            final CommentStatus status) {
+        this.permissionService.requireAdminView(credentials);
         final List<CommentEntity> comments = this.commentRepository.findByStatus(status);
         return comments.stream().map(CommentViewDto::new).collect(Collectors.toList());
     }
 
     /**
      * Find comments with N or more flags (for moderation).
+     *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<CommentViewDto> findFlaggedComments(final Integer minFlags) {
+    public List<CommentViewDto> findFlaggedComments(@Nullable final SessionCredentials credentials,
+            final Integer minFlags) {
+        this.permissionService.requireAdminView(credentials);
         return this.commentFlaggingService.findFlaggedComments(minFlags);
     }
 }

@@ -19,33 +19,12 @@ import jakarta.inject.Inject;
 /**
  * Integration tests for {@link StudentSessionRepository}.
  */
-@SuppressWarnings({ "NullAway", "PMD.TooManyMethods", "PMD.ExcessivePublicCount" })
+@SuppressWarnings("NullAway")
 @QuarkusTest
 public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Inject
     StudentSessionRepository sessionRepository;
-
-    @Test
-    @TestTransaction
-    public void testFindByUserAndDateRange() {
-        final UserEntity user = this.createUser("drng", "sessuser_");
-        final ExerciseEntity ex = this.createExercise(user, "DateRangeExercise", "x + 2");
-
-        final StudentSessionEntity session = new StudentSessionEntity();
-        session.sessionId = "sess-drng-" + UUID.randomUUID();
-        session.user = user;
-        session.exercise = ex;
-        session.startTime = LocalDateTime.now(ZoneId.systemDefault()).minusDays(1);
-        session.completed = true;
-        this.sessionRepository.persist(session);
-
-        final List<StudentSessionEntity> found = this.sessionRepository.findByUserIdAndDateRange(
-                Objects.requireNonNull(user.id), LocalDateTime.now(ZoneId.systemDefault()).minusDays(2),
-                LocalDateTime.now(ZoneId.systemDefault()));
-        Assertions.assertFalse(found.isEmpty());
-        Assertions.assertTrue(found.stream().anyMatch(s -> Objects.equals(s.sessionId, session.sessionId)));
-    }
 
     @Test
     @TestTransaction
@@ -131,21 +110,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByPublicId_found() {
-        final StudentSessionEntity s = this.createSession("fpub");
-        final var found = this.sessionRepository.findByPublicId(Objects.requireNonNull(s.publicId));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(s.publicId, found.get().publicId);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByPublicId_null() {
-        Assertions.assertTrue(this.sessionRepository.findByPublicId(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindBySessionIdWithRelations_found() {
         final StudentSessionEntity s = this.createSession("fsidwr");
         final StudentSessionEntity found = this.sessionRepository.findBySessionIdWithRelations(s.sessionId);
@@ -167,38 +131,9 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByExerciseId_found() {
-        final StudentSessionEntity s = this.createSession("fexid");
-        final Long exId = Objects.requireNonNull(Objects.requireNonNull(s.exercise).id);
-        final List<StudentSessionEntity> result = this.sessionRepository.findByExerciseId(exId);
-        Assertions.assertFalse(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseId_null() {
-        Assertions.assertTrue(this.sessionRepository.findByExerciseId(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindAll_returnsResults() {
         this.createSession("fall");
         Assertions.assertFalse(this.sessionRepository.findAll().isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindById_found() {
-        final StudentSessionEntity s = this.createSession("fid");
-        final StudentSessionEntity found = this.sessionRepository.findById(Objects.requireNonNull(s.id));
-        Assertions.assertNotNull(found);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindById_null() {
-        Assertions.assertNull(this.sessionRepository.findById(null));
     }
 
     @Test
@@ -215,31 +150,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testFindByUserIdAndExerciseId_nullUserId() {
         Assertions.assertTrue(this.sessionRepository.findByUserIdAndExerciseId(null, 1L).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByUserIdAndDateRange_nullUserId() {
-        final LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        Assertions.assertTrue(this.sessionRepository.findByUserIdAndDateRange(null, now.minusDays(1), now).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseIdAndDateRange_found() {
-        final StudentSessionEntity s = this.createSession("fexdr");
-        final Long exId = Objects.requireNonNull(Objects.requireNonNull(s.exercise).id);
-        final LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
-        final List<StudentSessionEntity> result =
-                this.sessionRepository.findByExerciseIdAndDateRange(exId, now.minusDays(1), now);
-        Assertions.assertFalse(result.isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByExerciseIdAndDateRange_null() {
-        Assertions.assertTrue(this.sessionRepository.findByExerciseIdAndDateRange(null,
-                LocalDateTime.now(ZoneId.systemDefault()), LocalDateTime.now(ZoneId.systemDefault())).isEmpty());
     }
 
     @Test
@@ -401,27 +311,6 @@ public class StudentSessionRepositoryIT extends AbstractRepositoryIT {
     @TestTransaction
     public void testPersist_null_doesNotThrow() {
         Assertions.assertDoesNotThrow(() -> this.sessionRepository.persist(null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_existingSession() {
-        final StudentSessionEntity s = this.createSession("delid");
-        final Long id = Objects.requireNonNull(s.id);
-        Assertions.assertTrue(this.sessionRepository.deleteById(id));
-        Assertions.assertNull(this.sessionRepository.findById(id));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_null() {
-        Assertions.assertFalse(this.sessionRepository.deleteById(null));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.sessionRepository.deleteById(999_999L));
     }
 
     @Test

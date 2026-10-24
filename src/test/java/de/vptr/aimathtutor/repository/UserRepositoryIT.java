@@ -3,7 +3,6 @@ package de.vptr.aimathtutor.repository;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -148,54 +147,6 @@ public class UserRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindActiveUsers_excludesBanned() {
-        this.createUser("actv");
-
-        final UserEntity banned = new UserEntity();
-        final UserRankEntity rank = new UserRankEntity();
-        rank.name = "Rank_banned";
-        this.userRankRepository.persist(rank);
-        banned.username = "usr_banned_" + UUID.randomUUID();
-        banned.password = "pw";
-        banned.email = "banned@example.com";
-        banned.activated = true;
-        banned.banned = true;
-        banned.rank = rank;
-        this.userRepository.persist(banned);
-
-        final List<UserEntity> active = this.userRepository.findActiveUsers();
-        Assertions.assertTrue(active.stream().allMatch(u -> u.activated && !u.banned));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByRankId_returnsUsersWithRank() {
-        final UserEntity user = this.createUser("frank");
-        final UserRankEntity rank = Objects.requireNonNull(user.rank);
-        final List<UserEntity> ranked = this.userRepository.findByRankId(Objects.requireNonNull(rank.id));
-        Assertions.assertFalse(ranked.isEmpty());
-        Assertions
-                .assertTrue(ranked.stream().allMatch(u -> Objects.equals(Objects.requireNonNull(u.rank).id, rank.id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testCountByRankId_returnsCount() {
-        final UserEntity user = this.createUser("cntrk");
-        final UserRankEntity rank = Objects.requireNonNull(user.rank);
-        final long count = this.userRepository.countByRankId(Objects.requireNonNull(rank.id));
-        Assertions.assertTrue(count >= 1);
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testCountByRankId_null() {
-        Assertions.assertEquals(0L, this.userRepository.countByRankId(null));
-    }
-
-    @Test
-    @TestTransaction
     public void testCountByRankPublicId_returnsCount() {
         final UserEntity user = this.createUser("cntrpi");
         final UserRankEntity rank = Objects.requireNonNull(user.rank);
@@ -238,22 +189,6 @@ public class UserRepositoryIT {
     @TestTransaction
     public void testSearch_blankReturnsAll() {
         Assertions.assertFalse(this.userRepository.search("").isEmpty());
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_existingUser() {
-        final UserEntity user = this.createUser("delid");
-        final Long id = Objects.requireNonNull(user.id);
-        Assertions.assertTrue(this.userRepository.deleteById(id));
-        Assertions.assertNull(this.userRepository.findById(id));
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.userRepository.deleteById(999_999L));
     }
 
     @Test

@@ -92,7 +92,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
     private void loadGroupsAsync() {
         LOG.info("Starting async group loading");
 
-        AsyncDataLoader.load(() -> this.groupService.getAllGroups(), this, data -> this.grid.setItems(data),
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.groupService.getAllGroups(credentials), this, data -> this.grid.setItems(data),
                 "Failed to load groups. Please try again.");
     }
 
@@ -301,7 +302,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
         this.searchButton.setEnabled(false);
         LOG.debugf("Starting async group search with query length: %s", query.length());
 
-        AsyncDataLoader.load(() -> this.groupService.searchGroups(query), this, groups -> {
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.groupService.searchGroups(credentials, query), this, groups -> {
             this.searchButton.setEnabled(true);
             this.grid.setItems(groups);
         }, () -> this.searchButton.setEnabled(true), "Failed to search groups. Please try again.");
@@ -440,7 +442,8 @@ public class AdminUserGroupsView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.groupService.getGroupsForUser(userPublicId), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.groupService.getGroupsForUser(credentials, userPublicId), this,
                 groups -> this.grid.setItems(groups), "Failed to filter groups");
     }
 }

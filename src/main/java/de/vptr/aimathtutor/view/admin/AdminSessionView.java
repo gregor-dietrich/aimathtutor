@@ -187,12 +187,13 @@ public class AdminSessionView extends AbstractAdminView {
     }
 
     private void loadSessionDetails() {
+        final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(() -> {
-            this.session = this.analyticsService.getSessionBySessionId(this.sessionId);
+            this.session = this.analyticsService.getSessionBySessionId(credentials, this.sessionId);
             if (this.session == null) {
                 return null;
             }
-            return this.analyticsService.getAiInteractionsBySession(this.sessionId);
+            return this.analyticsService.getAiInteractionsBySession(credentials, this.sessionId);
         }, this, interactions -> {
             if (interactions == null) {
                 NotificationUtil.showError("Session not found");

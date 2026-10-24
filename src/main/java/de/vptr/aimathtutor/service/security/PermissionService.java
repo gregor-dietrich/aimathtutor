@@ -9,6 +9,8 @@ import de.vptr.aimathtutor.service.UserRankService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.ValidationException;
 
 /**
@@ -57,7 +59,7 @@ public class PermissionService {
 
     /**
      * Requires that the captured session still belongs to an active user whose rank may view the administration. Any
-     * thread; it joins the caller's transaction.
+     * thread; it joins the caller's transaction, which it requires.
      *
      * @param credentials
      *            the credentials captured by {@link AuthService#currentSessionCredentials()}, or null
@@ -66,6 +68,7 @@ public class PermissionService {
      * @throws PermissionDeniedException
      *             if the user's rank lacks the permission
      */
+    @Transactional(TxType.MANDATORY)
     public void requireAdminView(@Nullable final SessionCredentials credentials) {
         final var user = this.authService.requireSessionUser(credentials);
         this.require(user.rank != null && user.rank.adminView, "view the administration");

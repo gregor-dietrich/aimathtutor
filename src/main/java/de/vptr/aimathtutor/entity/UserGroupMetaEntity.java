@@ -20,15 +20,8 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "user_groups_meta")
-@NamedQueries({ @NamedQuery(name = "UserGroupMeta.findByUserId", query = "FROM UserGroupMetaEntity WHERE user.id = :u"),
-        @NamedQuery(name = "UserGroupMeta.findByPublicId", query = "FROM UserGroupMetaEntity WHERE publicId = :p"),
-        @NamedQuery(name = "UserGroupMeta.findByUserAndGroup",
-                query = "FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.countByUserAndGroup",
-                query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.findByGroupId", query = "FROM UserGroupMetaEntity WHERE group.id = :g"),
-        @NamedQuery(name = "UserGroupMeta.findByGroupIdWithUsers",
-                query = "SELECT m FROM UserGroupMetaEntity m LEFT JOIN FETCH m.user WHERE m.group.id = :g") })
+@NamedQueries({ @NamedQuery(name = "UserGroupMeta.countByUserAndGroup",
+        query = "SELECT COUNT(m) FROM UserGroupMetaEntity m WHERE m.user.id = :u AND m.group.id = :g") })
 public class UserGroupMetaEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,20 +43,4 @@ public class UserGroupMetaEntity extends BaseEntity {
     @Column(name = "last_edit")
     @Nullable
     public LocalDateTime lastEdit;
-
-    // Helper method to check if user is in group
-
-    /**
-     * Checks if a user is a member of a specific group.
-     *
-     * @param userId
-     *            the ID of the user to check
-     * @param groupId
-     *            the ID of the group to check
-     * @return true if the user is a member of the group, false otherwise
-     */
-    public static boolean isUserInGroup(final Long userId, final Long groupId) {
-        return count("user.id = ?1 AND group.id = ?2", userId, groupId) > 0;
-    }
-
 }

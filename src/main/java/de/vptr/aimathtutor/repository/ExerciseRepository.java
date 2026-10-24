@@ -171,23 +171,6 @@ public class ExerciseRepository extends AbstractRepository {
     }
 
     /**
-     * Deletes an exercise by its unique identifier.
-     *
-     * @param id
-     *            the ID of the exercise to delete
-     * @return true if the exercise was successfully deleted, false if not found
-     */
-    @Transactional
-    public boolean deleteById(final Long id) {
-        final ExerciseEntity e = this.findById(id);
-        if (e == null) {
-            return false;
-        }
-        this.em.remove(e);
-        return true;
-    }
-
-    /**
      * Deletes the exercise with the given public ID.
      *
      * @param publicId

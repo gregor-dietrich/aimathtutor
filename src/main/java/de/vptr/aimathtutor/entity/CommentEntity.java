@@ -22,42 +22,19 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * Entity representing comments on exercises.
  */
-@NamedQueries({ @NamedQuery(name = "Comment.findAllOrdered", query = "FROM CommentEntity ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.findByPublicId", query = "FROM CommentEntity WHERE publicId = :id"),
+@NamedQueries({ @NamedQuery(name = "Comment.findByPublicId", query = "FROM CommentEntity WHERE publicId = :id"),
         @NamedQuery(name = "Comment.findAllWithRelations",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
                         + "ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findByIdWithRelations",
-                query = "SELECT c FROM CommentEntity c "
-                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                        + "WHERE c.id = :id"),
-        @NamedQuery(name = "Comment.findByExerciseId",
-                query = "FROM CommentEntity WHERE exercise.id = :e ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findByExerciseIdWithRelations",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
                         + "WHERE c.exercise.id = :e ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findByUserId",
-                query = "FROM CommentEntity WHERE user.id = :u ORDER BY created DESC"),
         @NamedQuery(name = "Comment.findByUserIdWithRelations",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
                         + "WHERE c.user.id = :u ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findRecent", query = "FROM CommentEntity ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.findRecentWithRelations",
-                query = "SELECT c FROM CommentEntity c "
-                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                        + "ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findBySessionId",
-                query = "FROM CommentEntity WHERE sessionId = :s ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.findBySessionIdWithRelations",
-                query = "SELECT c FROM CommentEntity c "
-                        + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
-                        + "WHERE c.sessionId = :s ORDER BY c.created DESC"),
-        @NamedQuery(name = "Comment.findReplies",
-                query = "FROM CommentEntity " + "WHERE parentComment.publicId = :p AND status = 'VISIBLE' "
-                        + "ORDER BY created ASC"),
         @NamedQuery(name = "Comment.findRepliesWithRelations",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "
@@ -67,8 +44,6 @@ import jakarta.validation.constraints.NotBlank;
                         + "ORDER BY created ASC"),
         @NamedQuery(name = "Comment.findTopLevelByExercise", query = "FROM CommentEntity "
                 + "WHERE exercise.id = :e AND parentComment IS NULL AND status = 'VISIBLE' " + "ORDER BY created DESC"),
-        @NamedQuery(name = "Comment.countByUserSince",
-                query = "SELECT COUNT(c) FROM CommentEntity c WHERE c.user.id = :u AND c.created >= :s"),
         @NamedQuery(name = "Comment.searchByTerm",
                 query = "SELECT c FROM CommentEntity c "
                         + "LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment "

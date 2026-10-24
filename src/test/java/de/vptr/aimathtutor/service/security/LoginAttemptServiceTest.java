@@ -32,12 +32,12 @@ class LoginAttemptServiceTest {
     @BeforeEach
     void setUp() {
         // Clear any leftover state from previous tests
-        this.loginAttemptService.recordSuccessfulLogin("testuser");
-        this.loginAttemptService.recordSuccessfulLogin("testip");
-        this.loginAttemptService.recordSuccessfulLogin("bruteuser");
-        this.loginAttemptService.recordSuccessfulLogin("legituser");
-        this.loginAttemptService.recordSuccessfulLogin("escalating");
-        this.loginAttemptService.recordSuccessfulLogin("newuser");
+        this.loginAttemptService.recordSuccessfulLogin("testuser", null);
+        this.loginAttemptService.recordSuccessfulLogin("testip", null);
+        this.loginAttemptService.recordSuccessfulLogin("bruteuser", null);
+        this.loginAttemptService.recordSuccessfulLogin("legituser", null);
+        this.loginAttemptService.recordSuccessfulLogin("escalating", null);
+        this.loginAttemptService.recordSuccessfulLogin("newuser", null);
     }
 
     @Test
@@ -74,7 +74,7 @@ class LoginAttemptServiceTest {
         }
         assertTrue(this.loginAttemptService.isLockedOut(key));
 
-        this.loginAttemptService.recordSuccessfulLogin(key);
+        this.loginAttemptService.recordSuccessfulLogin(key, null);
         assertFalse(this.loginAttemptService.isLockedOut(key));
         assertEquals(0, this.loginAttemptService.getRemainingLockoutSeconds(key));
     }
@@ -241,7 +241,7 @@ class LoginAttemptServiceTest {
     }
 
     /** A clock the test moves by hand, to cross the throttle windows without waiting. */
-    private static final class MutableClock extends Clock {
+    static final class MutableClock extends Clock {
         private Instant now = Instant.parse("2026-01-01T00:00:00Z");
 
         void advance(final Duration duration) {
@@ -264,13 +264,13 @@ class LoginAttemptServiceTest {
         }
     }
 
-    private static LoginAttemptService serviceWith(final MutableClock clock) {
+    static LoginAttemptService serviceWith(final MutableClock clock) {
         final var service = new LoginAttemptService();
         service.clock = clock;
         return service;
     }
 
-    private static void fail(final LoginAttemptService service, final String key, final int times) {
+    static void fail(final LoginAttemptService service, final String key, final int times) {
         for (int i = 0; i < times; i++) {
             service.recordFailedAttempt(key);
         }
@@ -337,7 +337,7 @@ class LoginAttemptServiceTest {
         fail(service, "k", 5);
         clock.advance(Duration.ofSeconds(31));
 
-        service.recordSuccessfulLogin("k");
+        service.recordSuccessfulLogin("k", null);
 
         assertEquals(0, service.recordFailedAttempt("k"));
     }
@@ -446,7 +446,7 @@ class LoginAttemptServiceTest {
             assertTrue(this.loginAttemptService.tryRecordPasswordChangeAttempt(token));
         }
         assertFalse(this.loginAttemptService.tryRecordPasswordChangeAttempt(token));
-        this.loginAttemptService.recordSuccessfulLogin(token);
+        this.loginAttemptService.recordSuccessfulLogin(token, null);
         this.loginAttemptService.recordSuccessfulAccountLogin(token);
         assertFalse(this.loginAttemptService.tryRecordPasswordChangeAttempt(token), "login success does not clear it");
     }
@@ -475,5 +475,76 @@ class LoginAttemptServiceTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    @DisplayName("A successful login forgives only that username's failures on the client key")
+    void successfulLoginSubtractsOwnFailures() {
+        final var service = serviceWith(new MutableClock());
+        fail(service, "me:c", 2);
+        fail(service, "other:c", 2);
+        fail(service, "c", 4);
+
+        service.recordSuccessfulLogin("me:c", "c");
+
+        assertEquals(0, service.recordFailedAttempt("me:c"), "the username+IP bucket is gone");
+        for (var i = 0; i < 2; i++) {
+            assertEquals(0, service.recordFailedAttempt("c"));
+        }
+        assertFalse(service.isLockedOut("c"), "2 kept + 2 more is 4");
+        assertTrue(service.recordFailedAttempt("c") > 0, "the fifth failure locks");
+    }
+
+    @Test
+    @DisplayName("A successful login without own failures leaves the client bucket untouched")
+    void successfulLoginWithoutOwnFailuresKeepsClientBucket() {
+        final var service = serviceWith(new MutableClock());
+        fail(service, "c", 4);
+
+        service.recordSuccessfulLogin("me:c", "c");
+
+        assertTrue(service.recordFailedAttempt("c") > 0);
+    }
+
+    @Test
+    @DisplayName("The client bucket is removed when the subtraction reaches zero")
+    void successfulLoginRemovesEmptiedClientBucket() {
+        final var service = serviceWith(new MutableClock());
+        fail(service, "me:c", 3);
+        fail(service, "c", 3);
+
+        service.recordSuccessfulLogin("me:c", "c");
+
+        assertEquals(0, service.recordFailedAttempt("c"));
+        assertFalse(service.isLockedOut("c"));
+        assertEquals(0, service.getRemainingLockoutSeconds("c"));
+    }
+
+    @Test
+    @DisplayName("A successful login keeps the lastAttempt of the reduced client bucket")
+    void successfulLoginKeepsLastAttempt() {
+        final var clock = new MutableClock();
+        final var service = serviceWith(clock);
+        fail(service, "me:c", 1);
+        fail(service, "c", 6);
+        clock.advance(Duration.ofSeconds(10));
+
+        service.recordSuccessfulLogin("me:c", "c");
+
+        // 5 left and locked since the sixth failure: 30 s lock, 10 s elapsed
+        assertEquals(20, service.getRemainingLockoutSeconds("c"));
+    }
+
+    @Test
+    @DisplayName("A null client key only clears the username+IP bucket")
+    void successfulLoginWithoutClientKey() {
+        final var service = serviceWith(new MutableClock());
+        fail(service, "me:unknown", 5);
+        fail(service, "c", 4);
+
+        service.recordSuccessfulLogin("me:unknown", null);
+
+        assertFalse(service.isLockedOut("me:unknown"));
+        assertTrue(service.recordFailedAttempt("c") > 0);
     }
 }

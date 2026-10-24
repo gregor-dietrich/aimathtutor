@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.service;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -51,36 +50,22 @@ public class UserGroupService {
     /**
      * Retrieves all user groups.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @return a list of all {@link UserGroupViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<UserGroupViewDto> getAllGroups() {
+    public List<UserGroupViewDto> getAllGroups(@Nullable final SessionCredentials credentials) {
+        this.permissionService.requireAdminView(credentials);
+        return this.findAllGroups();
+    }
+
+    private List<UserGroupViewDto> findAllGroups() {
         return this.userGroupRepository.findAll().stream().map(UserGroupViewDto::new).toList();
-    }
-
-    /**
-     * Finds a user group by ID.
-     *
-     * @param id
-     *            the group ID
-     * @return an {@link Optional} containing the {@link UserGroupViewDto}, or empty if not found
-     */
-    @Transactional
-    public Optional<UserGroupViewDto> findById(final Long id) {
-        return this.userGroupRepository.findByIdOptional(id).map(UserGroupViewDto::new);
-    }
-
-    /**
-     * Finds a user group by name.
-     *
-     * @param name
-     *            the group name
-     * @return an {@link Optional} containing the {@link UserGroupViewDto}, or empty if not found
-     */
-    @Transactional
-    public Optional<UserGroupViewDto> findByName(final String name) {
-        final var group = this.userGroupRepository.findByName(name);
-        return Optional.ofNullable(group).map(UserGroupViewDto::new);
     }
 
     /**
@@ -113,12 +98,20 @@ public class UserGroupService {
     /**
      * Retrieves all groups that a specific user belongs to.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param userPublicId
      *            the user public ID
      * @return a list of {@link UserGroupViewDto}s the user is in
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<UserGroupViewDto> getGroupsForUser(final String userPublicId) {
+    public List<UserGroupViewDto> getGroupsForUser(@Nullable final SessionCredentials credentials,
+            final String userPublicId) {
+        this.permissionService.requireAdminView(credentials);
         final var metas = this.userGroupMetaRepository.findByUserPublicId(userPublicId);
         return metas.stream().map(meta -> new UserGroupViewDto(meta.group)).toList();
     }
@@ -290,30 +283,24 @@ public class UserGroupService {
     }
 
     /**
-     * Checks if a user is a member of a specific group.
-     *
-     * @param userId
-     *            the user ID
-     * @param groupId
-     *            the group ID
-     * @return {@code true} if user is in group, {@code false} otherwise
-     */
-    public boolean isUserInGroup(final Long userId, final Long groupId) {
-        return this.userGroupMetaRepository.isUserInGroup(userId, groupId);
-    }
-
-    /**
      * Searches groups by name using the provided query string (case-insensitive). Returns all groups if query is null
      * or empty.
      *
+     * @param credentials
+     *            the credentials of the calling session, captured on the UI thread
      * @param query
      *            the search query string (group name match)
      * @return a list of matching {@link UserGroupViewDto}s
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not view the administration
      */
     @Transactional
-    public List<UserGroupViewDto> searchGroups(final String query) {
+    public List<UserGroupViewDto> searchGroups(@Nullable final SessionCredentials credentials, final String query) {
+        this.permissionService.requireAdminView(credentials);
         if (query == null || query.isBlank()) {
-            return this.getAllGroups();
+            return this.findAllGroups();
         }
         final var searchTerm = SearchPatternUtil.containsPattern(query.trim().toLowerCase(Locale.ROOT));
         return this.userGroupRepository.search(searchTerm).stream().map(UserGroupViewDto::new).toList();

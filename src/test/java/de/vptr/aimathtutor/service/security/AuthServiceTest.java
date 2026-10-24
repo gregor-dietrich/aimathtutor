@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -112,56 +111,32 @@ class AuthServiceTest {
     @DisplayName("Should authenticate valid seeded user")
     @TestTransaction
     void shouldAuthenticateValidSeededUser() {
-        try (MockedStatic<VaadinRequest> mockedRequest = mockStatic(VaadinRequest.class);
-                MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class);
-                MockedStatic<VaadinService> mockedService = mockStatic(VaadinService.class)) {
-
-            final VaadinRequest mockReq = mock(VaadinRequest.class);
-            final String loopback = AppConstants.BLOCKED_HOST_LOOPBACK_IPV4;
-            when(mockReq.getRemoteAddr()).thenReturn(loopback);
-            mockedRequest.when(VaadinRequest::getCurrent).thenReturn(mockReq);
-
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
-
-            // Stub reinitializeSession to do nothing and avoid internal Vaadin logic
-            mockedService.when(() -> VaadinService.reinitializeSession(any())).thenAnswer(i -> null);
-
-            final AuthResultDto result = this.authService.authenticate("admin", "admin");
-            assertTrue(result.isSuccess(), "Expected success but got: " + result.getMessage());
-            assertEquals("Authentication successful", result.getMessage());
-        }
+        final AuthResultDto result = AuthServiceLoginThrottleTest.authenticateFrom(this.authService,
+                mock(VaadinSession.class), "admin", "admin", AuthServiceLoginThrottleTest.randomDocumentationIpv6());
+        assertTrue(result.isSuccess(), "Expected success but got: " + result.getMessage());
+        assertEquals("Authentication successful", result.getMessage());
     }
 
     @Test
     @DisplayName("authenticate stores the user's appearance in the session")
     @TestTransaction
     void authenticateStoresAppearance() {
-        try (MockedStatic<VaadinRequest> mockedRequest = mockStatic(VaadinRequest.class);
-                MockedStatic<VaadinSession> mockedSession = mockStatic(VaadinSession.class);
-                MockedStatic<VaadinService> mockedService = mockStatic(VaadinService.class)) {
-            final VaadinRequest mockReq = mock(VaadinRequest.class);
-            when(mockReq.getRemoteAddr()).thenReturn(AppConstants.BLOCKED_HOST_LOOPBACK_IPV4);
-            mockedRequest.when(VaadinRequest::getCurrent).thenReturn(mockReq);
-            final VaadinSession mockSess = mock(VaadinSession.class);
-            mockedSession.when(VaadinSession::getCurrent).thenReturn(mockSess);
-            mockedService.when(() -> VaadinService.reinitializeSession(any())).thenAnswer(i -> null);
+        final VaadinSession mockSess = mock(VaadinSession.class);
+        final var user = new UserEntity();
+        user.username = "appearance_" + UUID.randomUUID().toString().substring(0, 8);
+        user.password = this.passwordHashingService.hashPassword(PASSWORD);
+        user.rank = this.userRepository.findByUsername("student1").rank;
+        user.publicId = UlidUtil.generate();
+        user.activated = true;
+        user.design = Appearance.Design.CHALKBOARD;
+        user.colorMode = Appearance.ColorMode.DARK;
+        this.userRepository.persist(user);
 
-            final var user = new UserEntity();
-            user.username = "appearance_" + UUID.randomUUID().toString().substring(0, 8);
-            user.password = this.passwordHashingService.hashPassword(PASSWORD);
-            user.rank = this.userRepository.findByUsername("student1").rank;
-            user.publicId = UlidUtil.generate();
-            user.activated = true;
-            user.design = Appearance.Design.CHALKBOARD;
-            user.colorMode = Appearance.ColorMode.DARK;
-            this.userRepository.persist(user);
+        assertTrue(AuthServiceLoginThrottleTest.authenticateFrom(this.authService, mockSess, user.username, PASSWORD,
+                AuthServiceLoginThrottleTest.randomDocumentationIpv6()).isSuccess());
 
-            assertTrue(this.authService.authenticate(user.username, PASSWORD).isSuccess());
-
-            verify(mockSess).setAttribute(APPEARANCE_KEY,
-                    new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK));
-        }
+        verify(mockSess).setAttribute(APPEARANCE_KEY,
+                new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK));
     }
 
     private AuthResultDto authenticateBehindProxy(final String username, final String forwarded) {
@@ -172,12 +147,6 @@ class AuthServiceTest {
             mockedRequest.when(VaadinRequest::getCurrent).thenReturn(mockReq);
             return this.authService.authenticate(username, "wrong-" + PASSWORD);
         }
-    }
-
-    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
-    private static String randomDocumentationIpv6() {
-        return "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff)) + ":"
-                + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x1000, 0xffff));
     }
 
     private void lock(final String key) {
@@ -191,15 +160,15 @@ class AuthServiceTest {
     @DisplayName("authenticate throttles by the rightmost X-Forwarded-For entry, in normalised form")
     void authenticateThrottlesByRightmostForwardedEntry() {
         final var username = UUID.randomUUID().toString();
-        final var forged = randomDocumentationIpv6();
-        final var real = randomDocumentationIpv6();
-        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        final var forged = AuthServiceLoginThrottleTest.randomDocumentationIpv6();
+        final var real = AuthServiceLoginThrottleTest.randomDocumentationIpv6();
+        final var realKey = username + ":" + ClientIpUtil.loginClientKey(real);
         try {
             this.lock(realKey);
             final var result = this.authenticateBehindProxy(username, forged + ", " + real.toUpperCase(Locale.ROOT));
             assertTrue(result.getMessage().contains("Too many failed attempts"), result.getMessage());
         } finally {
-            this.loginAttemptService.recordSuccessfulLogin(realKey);
+            this.loginAttemptService.recordSuccessfulLogin(realKey, null);
         }
     }
 
@@ -207,8 +176,8 @@ class AuthServiceTest {
     @DisplayName("a throttled authenticate records no failure, so attempts while locked do not escalate")
     void throttledAuthenticateRecordsNothing() {
         final var username = UUID.randomUUID().toString();
-        final var real = randomDocumentationIpv6();
-        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        final var real = AuthServiceLoginThrottleTest.randomDocumentationIpv6();
+        final var realKey = username + ":" + ClientIpUtil.loginClientKey(real);
         try {
             this.lock(realKey);
             final var result = this.authenticateBehindProxy(username, real);
@@ -216,7 +185,7 @@ class AuthServiceTest {
             // the 6th failure locks for 60s; a recorded attempt while locked would have made it longer
             assertEquals(60, this.loginAttemptService.recordFailedAttempt(realKey));
         } finally {
-            this.loginAttemptService.recordSuccessfulLogin(realKey);
+            this.loginAttemptService.recordSuccessfulLogin(realKey, null);
         }
     }
 
@@ -224,17 +193,17 @@ class AuthServiceTest {
     @DisplayName("authenticate ignores a locked bucket of the forged leading X-Forwarded-For entry")
     void authenticateIgnoresForgedForwardedEntry() {
         final var username = UUID.randomUUID().toString();
-        final var forged = randomDocumentationIpv6();
-        final var real = randomDocumentationIpv6();
-        final var forgedKey = username + ":" + ClientIpUtil.parseLiteral(forged).getHostAddress();
-        final var realKey = username + ":" + ClientIpUtil.parseLiteral(real).getHostAddress();
+        final var forged = AuthServiceLoginThrottleTest.randomDocumentationIpv6();
+        final var real = AuthServiceLoginThrottleTest.randomDocumentationIpv6();
+        final var forgedKey = username + ":" + ClientIpUtil.loginClientKey(forged);
+        final var realKey = username + ":" + ClientIpUtil.loginClientKey(real);
         try {
             this.lock(forgedKey);
             final var result = this.authenticateBehindProxy(username, forged + ", " + real);
             assertEquals("Invalid username or password", result.getMessage());
         } finally {
-            this.loginAttemptService.recordSuccessfulLogin(forgedKey);
-            this.loginAttemptService.recordSuccessfulLogin(realKey);
+            this.loginAttemptService.recordSuccessfulLogin(forgedKey, null);
+            this.loginAttemptService.recordSuccessfulLogin(realKey, null);
         }
     }
 
@@ -493,7 +462,7 @@ class AuthServiceTest {
         assertTrue(result.getMessage().contains("Too many failed attempts"),
                 "Expected throttle message, got: " + result.getMessage());
 
-        this.loginAttemptService.recordSuccessfulLogin(compositeKey);
+        this.loginAttemptService.recordSuccessfulLogin(compositeKey, null);
     }
 
     @Test

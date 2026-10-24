@@ -56,7 +56,7 @@ class AiConfigServiceIntegrationTest {
 
         // Clean up any leftover test key from previous interrupted runs
         final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
-        existing.ifPresent(e -> this.aiConfigRepository.deleteById(Objects.requireNonNull(e.id)));
+        existing.ifPresent(AiConfigEntity::delete);
     }
 
     @AfterEach
@@ -69,7 +69,7 @@ class AiConfigServiceIntegrationTest {
 
         // Remove test key if it still exists
         final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
-        existing.ifPresent(e -> this.aiConfigRepository.deleteById(Objects.requireNonNull(e.id)));
+        existing.ifPresent(AiConfigEntity::delete);
     }
 
     @Test

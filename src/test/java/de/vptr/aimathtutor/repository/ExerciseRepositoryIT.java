@@ -294,22 +294,6 @@ public class ExerciseRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testDeleteById_existing() {
-        final UserEntity user = this.createUser("delid");
-        final ExerciseEntity ex = this.createExercise(user, "delid");
-        final Long id = Objects.requireNonNull(ex.id);
-        Assertions.assertTrue(this.exerciseRepository.deleteById(id));
-        Assertions.assertNull(this.exerciseRepository.findById(id));
-    }
-
-    @Test
-    @TestTransaction
-    public void testDeleteById_nonExisting() {
-        Assertions.assertFalse(this.exerciseRepository.deleteById(999_999L));
-    }
-
-    @Test
-    @TestTransaction
     public void testDeleteByPublicId_existing() {
         final UserEntity user = this.createUser("delpub");
         final ExerciseEntity ex = this.createExercise(user, "delpub");

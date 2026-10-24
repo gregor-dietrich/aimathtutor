@@ -18,29 +18,6 @@ import jakarta.transaction.Transactional;
 public class CommentRepository extends AbstractRepository {
 
     /**
-     * Cap on the no-arg convenience overloads. The grid views call these to populate Vaadin grids with all results in
-     * memory; uncapped, a production-sized comments table would exhaust heap. Callers that need true pagination should
-     * use the explicit (page, pageSize) overloads.
-     */
-    private static final int DEFAULT_PAGE_SIZE = 500;
-
-    /**
-     * Retrieves all comments from the database in a defined order.
-     *
-     * @return a list of all {@link CommentEntity} objects ordered
-     */
-    public List<CommentEntity> findAllOrdered() {
-        return this.listNamed("Comment.findAllOrdered", CommentEntity.class);
-    }
-
-    /**
-     * Fetch comments with related user, exercise and parentComment eagerly to avoid lazy-loading in service layer.
-     */
-    public List<CommentEntity> findAllOrderedWithRelations() {
-        return this.findAllOrderedWithRelations(0, DEFAULT_PAGE_SIZE);
-    }
-
-    /**
      * Fetch comments with related user, exercise and parentComment eagerly, using pagination.
      *
      * @param page
@@ -54,20 +31,6 @@ public class CommentRepository extends AbstractRepository {
         q.setFirstResult(page * pageSize);
         q.setMaxResults(pageSize);
         return q.getResultList();
-    }
-
-    /**
-     * Retrieves an optional comment by its unique identifier.
-     *
-     * @param id
-     *            the comment ID
-     * @return an {@link Optional} containing the comment if found, empty otherwise
-     */
-    public Optional<CommentEntity> findByIdOptional(final Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(this.em.find(CommentEntity.class, id));
     }
 
     /**
@@ -88,43 +51,6 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves a comment by its public identifier with related entities eagerly loaded.
-     *
-     * @param publicId
-     *            the public ID of the comment
-     * @return an {@link Optional} containing the comment with relations if found, empty otherwise
-     */
-    public Optional<CommentEntity> findByPublicIdWithRelations(final String publicId) {
-        if (publicId == null) {
-            return Optional.empty();
-        }
-        final var q = this.em.createQuery(
-                "SELECT c FROM CommentEntity c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.exercise LEFT JOIN FETCH c.parentComment WHERE c.publicId = :p",
-                CommentEntity.class);
-        q.setParameter("p", publicId);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst();
-    }
-
-    /**
-     * Retrieves an optional comment by its unique identifier with related entities eagerly loaded. This prevents
-     * lazy-loading issues by fetching user, exercise, and parent comment in one query.
-     *
-     * @param id
-     *            the comment ID
-     * @return an {@link Optional} containing the comment with relations if found, empty otherwise
-     */
-    public Optional<CommentEntity> findByIdOptionalWithRelations(final Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        final var q = this.em.createNamedQuery("Comment.findByIdWithRelations", CommentEntity.class);
-        q.setParameter("id", id);
-        q.setMaxResults(1);
-        return q.getResultStream().findFirst();
-    }
-
-    /**
      * Retrieves a comment by its unique identifier.
      *
      * @param id
@@ -133,30 +59,6 @@ public class CommentRepository extends AbstractRepository {
      */
     public CommentEntity findById(final Long id) {
         return this.em.find(CommentEntity.class, id);
-    }
-
-    /**
-     * Retrieves all comments for a specific exercise.
-     *
-     * @param exerciseId
-     *            the exercise ID to filter by
-     * @return a list of {@link CommentEntity} objects for the exercise
-     */
-    public List<CommentEntity> findByExerciseId(final Long exerciseId) {
-        final var q = this.em.createNamedQuery("Comment.findByExerciseId", CommentEntity.class);
-        q.setParameter("e", exerciseId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all comments for a specific exercise with related entities eagerly loaded.
-     *
-     * @param exerciseId
-     *            the exercise ID to filter by
-     * @return a list of {@link CommentEntity} objects with relations for the exercise
-     */
-    public List<CommentEntity> findByExerciseIdWithRelations(final Long exerciseId) {
-        return this.findByExerciseIdWithRelations(exerciseId, 0, DEFAULT_PAGE_SIZE);
     }
 
     /**
@@ -183,19 +85,6 @@ public class CommentRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves all comments created by a specific user.
-     *
-     * @param userId
-     *            the user ID to filter by
-     * @return a list of {@link CommentEntity} objects created by the user
-     */
-    public List<CommentEntity> findByUserId(final Long userId) {
-        final var q = this.em.createNamedQuery("Comment.findByUserId", CommentEntity.class);
-        q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
      * Retrieves all comments created by a specific user with related entities eagerly loaded.
      *
      * @param userId
@@ -208,35 +97,6 @@ public class CommentRepository extends AbstractRepository {
         }
         final var q = this.em.createNamedQuery("Comment.findByUserIdWithRelations", CommentEntity.class);
         q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves the most recent comments from the database, up to a specified limit.
-     *
-     * @param limit
-     *            the maximum number of comments to retrieve (0 or negative returns empty list)
-     * @return a list of recent {@link CommentEntity} objects
-     */
-    public List<CommentEntity> findRecentComments(final int limit) {
-        final var q = this.em.createNamedQuery("Comment.findRecent", CommentEntity.class);
-        q.setMaxResults(Math.max(0, limit));
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves the most recent comments with related entities eagerly loaded.
-     *
-     * @param limit
-     *            the maximum number of comments to retrieve (0 or negative returns empty list)
-     * @return a list of recent {@link CommentEntity} objects with relations
-     */
-    public List<CommentEntity> findRecentCommentsWithRelations(final int limit) {
-        if (limit <= 0) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("Comment.findRecentWithRelations", CommentEntity.class);
-        q.setMaxResults(limit);
         return q.getResultList();
     }
 
@@ -289,51 +149,6 @@ public class CommentRepository extends AbstractRepository {
         }
         this.em.remove(e);
         return true;
-    }
-
-    /**
-     * Retrieves all comments associated with a specific student session.
-     *
-     * @param sessionId
-     *            the session ID to filter by
-     * @return a list of {@link CommentEntity} objects in the session
-     */
-    public List<CommentEntity> findBySessionId(final String sessionId) {
-        final var q = this.em.createNamedQuery("Comment.findBySessionId", CommentEntity.class);
-        q.setParameter("s", sessionId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all comments associated with a specific student session with related entities eagerly loaded.
-     *
-     * @param sessionId
-     *            the session ID to filter by
-     * @return a list of {@link CommentEntity} objects with relations in the session
-     */
-    public List<CommentEntity> findBySessionIdWithRelations(final String sessionId) {
-        if (sessionId == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("Comment.findBySessionIdWithRelations", CommentEntity.class);
-        q.setParameter("s", sessionId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all reply comments to a specific parent comment.
-     *
-     * @param parentPublicId
-     *            the public ID of the parent comment to filter by
-     * @return a list of {@link CommentEntity} objects that are replies to the parent
-     */
-    public List<CommentEntity> findReplies(final String parentPublicId) {
-        if (parentPublicId == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("Comment.findReplies", CommentEntity.class);
-        q.setParameter("p", parentPublicId);
-        return q.getResultList();
     }
 
     /**
@@ -391,22 +206,6 @@ public class CommentRepository extends AbstractRepository {
         q.setFirstResult(page * pageSize);
         q.setMaxResults(pageSize);
         return q.getResultList();
-    }
-
-    /**
-     * Counts comments created by a specific user since a given date and time.
-     *
-     * @param userId
-     *            the user ID to filter by
-     * @param since
-     *            the date and time threshold (inclusive)
-     * @return the count of comments created by the user since the given date
-     */
-    public long countByUserSince(final Long userId, final LocalDateTime since) {
-        final var q = this.em.createNamedQuery("Comment.countByUserSince", Long.class);
-        q.setParameter("u", userId);
-        q.setParameter("s", since);
-        return q.getSingleResult();
     }
 
     /**

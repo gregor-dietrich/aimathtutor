@@ -58,32 +58,6 @@ class StudentSessionRepositoryTest {
     }
 
     @Test
-    @DisplayName("findByUserIdAndDateRange should filter correctly")
-    @TestTransaction
-    void testFindByUserIdAndDateRange() {
-        final var user = this.userRepository.findByUsername("student1");
-        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
-        final var now = LocalDateTime.now(ZoneId.systemDefault());
-
-        final var session = new StudentSessionEntity();
-        session.sessionId = UlidUtil.generate();
-        session.user = user;
-        session.exercise = exercise;
-        session.startTime = now;
-        session.publicId = UlidUtil.generate();
-        this.studentSessionRepository.persist(session);
-        this.studentSessionRepository.flush();
-
-        final var found = this.studentSessionRepository.findByUserIdAndDateRange(user.id, now.minusMinutes(1),
-                now.plusMinutes(1));
-        assertFalse(found.isEmpty());
-
-        final var notFound =
-                this.studentSessionRepository.findByUserIdAndDateRange(user.id, now.plusMinutes(2), now.plusMinutes(3));
-        assertTrue(notFound.isEmpty());
-    }
-
-    @Test
     @DisplayName("countActiveStudentsSince should count unique users")
     @TestTransaction
     void testCountActiveStudentsSince() {
@@ -136,21 +110,6 @@ class StudentSessionRepositoryTest {
         assertTrue(results.stream().anyMatch(s -> s.user != null && "student1".equals(s.user.username)));
     }
 
-    @Test
-    @DisplayName("findById should return session with relations")
-    @TestTransaction
-    void testFindById() {
-        final var user = this.userRepository.findByUsername("student1");
-        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
-
-        final var session = createAndPersistSession(user, exercise);
-
-        final var found = this.studentSessionRepository.findById(session.id);
-        assertNotNull(found);
-        assertNotNull(found.user);
-        assertEquals("student1", found.user.username);
-    }
-
     private StudentSessionEntity createAndPersistSession(UserEntity user, ExerciseEntity exercise) {
         final var session = new StudentSessionEntity();
         session.sessionId = UlidUtil.generate();
@@ -163,15 +122,13 @@ class StudentSessionRepositoryTest {
     }
 
     @Test
-    @DisplayName("Null handling in repository methods")
+    @DisplayName("Null handling in repository methods and persist(null) is a no-op")
     void testNullHandling() {
+        this.studentSessionRepository.persist(null);
         assertNull(this.studentSessionRepository.findBySessionId(null));
         assertNull(this.studentSessionRepository.findBySessionIdWithRelations(null));
         assertTrue(this.studentSessionRepository.findByUserId(null).isEmpty());
-        assertTrue(this.studentSessionRepository.findByExerciseId(null).isEmpty());
-        assertNull(this.studentSessionRepository.findById(null));
         assertTrue(this.studentSessionRepository.findByUserIdAndExerciseId(null, 1L).isEmpty());
-        assertTrue(this.studentSessionRepository.findByUserIdAndDateRange(null, null, null).isEmpty());
         assertTrue(this.studentSessionRepository.findByStartTimeAfter(null).isEmpty());
         assertEquals(0L, this.studentSessionRepository.countByCompleted(null));
         assertEquals(0L, this.studentSessionRepository.countActiveStudentsSince(null));
@@ -180,7 +137,6 @@ class StudentSessionRepositoryTest {
     @Test
     @DisplayName("Additional null handling for methods not covered above")
     void testAdditionalNullHandling() {
-        assertTrue(this.studentSessionRepository.findByPublicId(null).isEmpty());
         assertTrue(this.studentSessionRepository.findByStartTimeBefore(null).isEmpty());
         assertTrue(this.studentSessionRepository.findByUserIdIn(null).isEmpty());
         assertTrue(this.studentSessionRepository.findByUserIdIn(List.of()).isEmpty());
@@ -190,7 +146,6 @@ class StudentSessionRepositoryTest {
         final long halfOpenCount =
                 this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(null, null);
         assertEquals(0L, halfOpenCount);
-        assertTrue(this.studentSessionRepository.findByExerciseIdAndDateRange(null, null, null).isEmpty());
         assertTrue(this.studentSessionRepository.findByCompletedAndDateRange(null, null, null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm(null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm("").isEmpty());
@@ -202,20 +157,5 @@ class StudentSessionRepositoryTest {
         assertNotNull(this.studentSessionRepository.findAll());
         assertTrue(this.studentSessionRepository.countAll() >= 0);
         assertNotNull(this.studentSessionRepository.findProblemCategoryStats());
-    }
-
-    @Test
-    @DisplayName("persist(null) is no-op and deleteById covers null, not-found, and found paths")
-    @TestTransaction
-    void testPersistNullAndDeleteById() {
-        this.studentSessionRepository.persist(null);
-        assertFalse(this.studentSessionRepository.deleteById(null));
-        assertFalse(this.studentSessionRepository.deleteById(999_999L));
-
-        final var user = this.userRepository.findByUsername("student1");
-        final var exercise = this.exerciseRepository.findAllOrdered().get(0);
-        final var session = createAndPersistSession(user, exercise);
-
-        assertTrue(this.studentSessionRepository.deleteById(session.id));
     }
 }

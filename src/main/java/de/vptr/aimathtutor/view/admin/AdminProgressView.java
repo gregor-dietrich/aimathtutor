@@ -133,7 +133,9 @@ public class AdminProgressView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.analyticsService.getUsersProgressSummaryByUsernameSearch(searchTerm), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getUsersProgressSummaryByUsernameSearch(credentials, searchTerm), this,
                 progress -> this.grid.setItems(progress),
                 "An error occurred while searching students. Please try again.");
     }
@@ -142,9 +144,11 @@ public class AdminProgressView extends AbstractAdminView {
      * Load aggregated progress data asynchronously and populate the grid.
      */
     private void loadProgressData() {
-        AsyncDataLoader.load(() -> this.analyticsService.getAllUsersProgressSummary(), this, progressData -> {
-            this.grid.setItems(progressData);
-        }, "Failed to load progress data");
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.analyticsService.getAllUsersProgressSummary(credentials), this,
+                progressData -> {
+                    this.grid.setItems(progressData);
+                }, "Failed to load progress data");
     }
 
     /**
@@ -163,7 +167,9 @@ public class AdminProgressView extends AbstractAdminView {
         final var endDateTime =
                 endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.of(2099, 12, 31, 23, 59, 59);
 
-        AsyncDataLoader.load(() -> this.analyticsService.getUsersProgressSummaryByDateRange(startDateTime, endDateTime),
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(
+                () -> this.analyticsService.getUsersProgressSummaryByDateRange(credentials, startDateTime, endDateTime),
                 this, progress -> this.grid.setItems(progress),
                 "An error occurred while filtering by date range. Please try again.");
     }

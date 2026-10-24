@@ -328,6 +328,19 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
     its own address.
   - Addresses are parsed only with `InetAddress.ofLiteral` (never a DNS lookup),
     IPv4 only in four-part dotted form.
+  - The client and username+client buckets key an IPv6 client by its /64
+    prefix, an IPv4 one (IPv4-mapped included) by its address (ADR-3).
+  - A successful sign-in clears its username+client bucket and subtracts that
+    bucket's failures from the client bucket. It forgives one more failure
+    there when its account is new to that client's sign-in window (an hour
+    from the window's first sign-in) and another account already signed in
+    within it; nothing is banked while the count is zero. Never forgive more
+    for the window's first account or a repeated one, and never forgive other
+    usernames' failures on a success: an account holder could then shrink the
+    bound on spraying other usernames by signing in between guesses (ADR-3).
+  - The per-client sign-in windows have their own map under the same size cap,
+    evicting the windows with the fewest accounts first; evicting one only
+    withholds forgiveness and never touches a lock.
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded
   strings cause state leakage (`@ApplicationScoped`).
 - **AdminConfigView save methods must null-check `authService.getUserId()`.**
@@ -382,8 +395,10 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   one action may go with that action (the AI rate-limit key and interaction
   log, the lesson list's completion badges, and `AdminConfigView.requireUserId()`,
   whose worker re-checks the user through `PermissionService.requireAiConfigEdit`).
-  Admin reads of user data call `PermissionService.requireAdminView(credentials)`;
-  #255 tracks the admin reads that don't yet. An AI call or AI-config save
+  Admin reads of user data (user, group, comment and session listings, session
+  details and progress summaries) call
+  `PermissionService.requireAdminView(credentials)`; the dashboard's aggregate
+  counts and charts do not. An AI call or AI-config save
   already handed to its worker is not cancelled by a revocation during the
   provider call, and rows a page loaded while its user had access stay readable
   in it until it reloads or navigates: only new loads are refused. Every user
