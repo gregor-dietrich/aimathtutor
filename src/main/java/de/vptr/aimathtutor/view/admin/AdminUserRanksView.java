@@ -477,12 +477,8 @@ public class AdminUserRanksView extends AbstractAdminView {
             return;
         }
 
-        this.searchButton.setEnabled(false);
-        LOG.infof("Starting async rank search with query: %s", query);
-
-        AsyncDataLoader.load(() -> this.userRankService.searchRanks(query), this, ranks -> {
-            this.searchButton.setEnabled(true);
-            this.grid.setItems(ranks);
-        }, () -> this.searchButton.setEnabled(true), "Failed to search ranks. Please try again.");
+        LOG.debugf("Starting async rank search with query length: %s", query.length());
+        this.loadSearch(this.searchButton, () -> this.userRankService.searchRanks(query),
+                ranks -> this.grid.setItems(ranks), "Failed to search ranks. Please try again.");
     }
 }

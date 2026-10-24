@@ -44,17 +44,6 @@ public class ExerciseRepository extends AbstractRepository {
     }
 
     /**
-     * Retrieves an optional exercise by its unique identifier.
-     *
-     * @param id
-     *            the exercise ID
-     * @return an {@link Optional} containing the exercise if found, empty otherwise
-     */
-    public Optional<ExerciseEntity> findByIdOptional(final Long id) {
-        return Optional.ofNullable(this.findById(id));
-    }
-
-    /**
      * Retrieves an exercise by its public identifier.
      *
      * @param publicId
@@ -115,41 +104,6 @@ public class ExerciseRepository extends AbstractRepository {
     public List<ExerciseEntity> findByUserId(final Long userId) {
         final var q = this.em.createNamedQuery("Exercise.findByUserId", ExerciseEntity.class);
         q.setParameter("u", userId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all exercises belonging to a specific lesson.
-     *
-     * @param lessonId
-     *            the lesson ID to filter by
-     * @return a list of {@link ExerciseEntity} objects in the lesson
-     */
-    public List<ExerciseEntity> findByLessonId(final Long lessonId) {
-        final var q = this.em.createNamedQuery("Exercise.findByLessonId", ExerciseEntity.class);
-        q.setParameter("l", lessonId);
-        return q.getResultList();
-    }
-
-    /**
-     * Retrieves all exercises that use Graspable Math.
-     *
-     * @return a list of Graspable Math enabled {@link ExerciseEntity} objects
-     */
-    public List<ExerciseEntity> findGraspableMathExercises() {
-        return this.listNamed("Exercise.findGraspableEnabled", ExerciseEntity.class);
-    }
-
-    /**
-     * Retrieves all Graspable Math exercises in a specific lesson.
-     *
-     * @param lessonId
-     *            the lesson ID to filter by
-     * @return a list of Graspable Math enabled {@link ExerciseEntity} objects in the lesson
-     */
-    public List<ExerciseEntity> findGraspableMathExercisesByLesson(final Long lessonId) {
-        final var q = this.em.createNamedQuery("Exercise.findGraspableByLesson", ExerciseEntity.class);
-        q.setParameter("l", lessonId);
         return q.getResultList();
     }
 

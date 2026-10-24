@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import de.vptr.aimathtutor.dto.ExerciseDto;
 import de.vptr.aimathtutor.dto.ExerciseViewDto;
 import de.vptr.aimathtutor.dto.LessonViewDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -26,7 +27,6 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import jakarta.ws.rs.WebApplicationException;
@@ -35,6 +35,11 @@ import jakarta.ws.rs.core.Response;
 @QuarkusTest
 @SuppressWarnings("NullAway")
 class ExerciseServiceTest {
+
+    // The mocked PermissionService accepts any credentials; the service's own checks are tested with it
+    // (the guard itself is tested in PermissionServiceTest)
+    private static final SessionCredentials CREDENTIALS =
+            new SessionCredentials("admin-public-id", "stamp", "session-key");
 
     @Inject
     private ExerciseService exerciseService;
@@ -50,9 +55,6 @@ class ExerciseServiceTest {
 
     @Inject
     private UserRepository userRepository;
-
-    @Inject
-    private EntityManager em;
 
     @BeforeEach
     void setUpMocks() {
@@ -167,26 +169,13 @@ class ExerciseServiceTest {
     }
 
     @Test
-    @DisplayName("Should find exercise by id and route through completion enrichment")
-    @TestTransaction
-    void shouldFindExerciseById() {
-        final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
-
-        final var found = this.exerciseService.findById(created.id);
-
-        assertTrue(found.isPresent());
-        assertEquals(created.publicId, found.get().publicId);
-        assertEquals(created.title, found.get().title);
-    }
-
-    @Test
     @DisplayName("Should find only published exercises")
     @TestTransaction
     void shouldFindPublishedExercisesOnly() {
         final ExerciseViewDto pub = this.exerciseService.createExercise(this.buildDto(true));
         final ExerciseViewDto draft = this.exerciseService.createExercise(this.buildDto(false));
 
-        final var published = this.exerciseService.findPublishedExercises();
+        final var published = this.exerciseService.findPublishedExercises(CREDENTIALS);
 
         assertTrue(published.stream().anyMatch(e -> e.publicId.equals(pub.publicId)));
         assertFalse(published.stream().anyMatch(e -> e.publicId.equals(draft.publicId)));
@@ -206,12 +195,6 @@ class ExerciseServiceTest {
         final ExerciseViewDto created = this.exerciseService.createExercise(dto);
 
         assertEquals(lesson.publicId, created.lessonPublicId);
-        final var lessonEntityForLookup =
-                this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                        .setParameter("p", lesson.publicId).getSingleResult();
-        final var exercises = this.exerciseService.findByLessonId(lessonEntityForLookup.id);
-        assertEquals(1, exercises.size());
-        assertEquals(created.publicId, exercises.get(0).publicId);
     }
 
     @Test
@@ -222,7 +205,7 @@ class ExerciseServiceTest {
         assertNotNull(teacher, "Seeded teacher user should exist");
         final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
 
-        final var byUser = this.exerciseService.findByUserId(teacher.id);
+        final var byUser = this.exerciseService.findByUserId(CREDENTIALS, teacher.id);
 
         assertTrue(byUser.stream().anyMatch(e -> e.publicId.equals(created.publicId)));
     }
@@ -236,7 +219,7 @@ class ExerciseServiceTest {
         final boolean deleted = this.exerciseService.deleteExercise(created.publicId);
 
         assertTrue(deleted);
-        assertTrue(this.exerciseService.findById(created.id).isEmpty());
+        assertTrue(this.exerciseService.findByPublicId(created.publicId).isEmpty());
     }
 
     @Test
@@ -279,7 +262,7 @@ class ExerciseServiceTest {
     @TestTransaction
     void testSearchExercises_blank() {
         this.exerciseService.createExercise(this.buildDto(true));
-        final var results = this.exerciseService.searchExercises("");
+        final var results = this.exerciseService.searchExercises(CREDENTIALS, "");
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Blank query should return all exercises");
     }
@@ -293,7 +276,7 @@ class ExerciseServiceTest {
         dto.title = uniqueTitle;
         this.exerciseService.createExercise(dto);
 
-        final var results = this.exerciseService.searchExercises(uniqueTitle);
+        final var results = this.exerciseService.searchExercises(CREDENTIALS, uniqueTitle);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.stream().anyMatch(e -> uniqueTitle.equals(e.title)));
@@ -303,29 +286,9 @@ class ExerciseServiceTest {
     @DisplayName("searchExercises with non-matching term returns empty list")
     @TestTransaction
     void testSearchExercises_noMatch() {
-        final var results = this.exerciseService.searchExercises("zzz_nonexistent_xyz_9999");
+        final var results = this.exerciseService.searchExercises(CREDENTIALS, "zzz_nonexistent_xyz_9999");
         assertNotNull(results);
         assertTrue(results.isEmpty());
-    }
-
-    @Test
-    @DisplayName("findGraspableMathExercises returns only graspable exercises")
-    @TestTransaction
-    void testFindGraspableMathExercises() {
-        final ExerciseDto graspableDto = this.buildDto(true);
-        graspableDto.graspableEnabled = Boolean.TRUE;
-        graspableDto.graspableTargetExpression = "x=1";
-        final ExerciseViewDto graspableExercise = this.exerciseService.createExercise(graspableDto);
-
-        this.exerciseService.createExercise(this.buildDto(true));
-
-        final var results = this.exerciseService.findGraspableMathExercises();
-        assertNotNull(results);
-        assertFalse(results.isEmpty(), "Should find at least the seeded graspable exercise");
-        assertTrue(results.stream().anyMatch(e -> graspableExercise.publicId.equals(e.publicId)),
-                "Seeded graspable exercise should be in results");
-        assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
-                "All returned exercises should have graspableEnabled=true");
     }
 
     @Test
@@ -340,7 +303,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with null dates returns empty list")
     @TestTransaction
     void testFindByDateRange_nullDates() {
-        final var results = this.exerciseService.findByDateRange(null, null);
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, null, null);
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -351,7 +314,7 @@ class ExerciseServiceTest {
     void testFindByDateRange_today() {
         final ExerciseViewDto created = this.exerciseService.createExercise(this.buildDto(true));
         final String today = LocalDate.now(ZoneId.systemDefault()).toString();
-        final var results = this.exerciseService.findByDateRange(today, today);
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, today, today);
         assertNotNull(results);
         assertTrue(results.stream().anyMatch(e -> created.publicId.equals(e.publicId)),
                 "Exercise created today should be in today's date range");
@@ -405,7 +368,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with invalid date format returns empty list")
     @TestTransaction
     void findByDateRange_invalidFormat_returnsEmpty() {
-        final var results = this.exerciseService.findByDateRange("not-a-date", "also-not-a-date");
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, "not-a-date", "also-not-a-date");
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -463,7 +426,7 @@ class ExerciseServiceTest {
     @DisplayName("findByDateRange with null endDate returns empty list")
     @TestTransaction
     void testFindByDateRange_nullEndDate_returnsEmpty() {
-        final var results = this.exerciseService.findByDateRange("2024-01-01", null);
+        final var results = this.exerciseService.findByDateRange(CREDENTIALS, "2024-01-01", null);
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
@@ -529,44 +492,4 @@ class ExerciseServiceTest {
         assertEquals(lesson.publicId, patched.lessonPublicId);
     }
 
-    @Test
-    @DisplayName("findGraspableMathExercisesByLesson returns only GM exercises in that lesson")
-    @TestTransaction
-    void testFindGraspableMathExercisesByLesson() {
-        final var lessonEntity = new LessonEntity();
-        lessonEntity.name = "gm_lesson_" + UUID.randomUUID().toString().substring(0, 8);
-        final LessonViewDto lesson = this.lessonService.createLesson(lessonEntity);
-        final var lessonDb =
-                this.em.createQuery("SELECT l FROM LessonEntity l WHERE l.publicId = :p", LessonEntity.class)
-                        .setParameter("p", lesson.publicId).getSingleResult();
-
-        final ExerciseDto gmDto = this.buildDto(true);
-        gmDto.lessonPublicId = lesson.publicId;
-        gmDto.graspableEnabled = Boolean.TRUE;
-        gmDto.graspableTargetExpression = "x=1";
-        final ExerciseViewDto gmExercise = this.exerciseService.createExercise(gmDto);
-
-        final ExerciseDto nonGmDto = this.buildDto(true);
-        nonGmDto.lessonPublicId = lesson.publicId;
-        this.exerciseService.createExercise(nonGmDto);
-
-        // Graspable exercise in a different lesson — must not appear in results
-        final var otherLessonEntity = new LessonEntity();
-        otherLessonEntity.name = "other_lesson_" + UUID.randomUUID().toString().substring(0, 8);
-        final LessonViewDto otherLesson = this.lessonService.createLesson(otherLessonEntity);
-        final ExerciseDto otherGmDto = this.buildDto(true);
-        otherGmDto.lessonPublicId = otherLesson.publicId;
-        otherGmDto.graspableEnabled = Boolean.TRUE;
-        otherGmDto.graspableTargetExpression = "y=2";
-        final ExerciseViewDto otherGmExercise = this.exerciseService.createExercise(otherGmDto);
-
-        final var results = this.exerciseService.findGraspableMathExercisesByLesson(lessonDb.id);
-        assertNotNull(results);
-        assertTrue(results.stream().anyMatch(e -> gmExercise.publicId.equals(e.publicId)),
-                "GM exercise should be in results");
-        assertTrue(results.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
-                "All returned exercises should have graspableEnabled=true");
-        assertFalse(results.stream().anyMatch(e -> otherGmExercise.publicId.equals(e.publicId)),
-                "GM exercise from a different lesson should not be in results");
-    }
 }

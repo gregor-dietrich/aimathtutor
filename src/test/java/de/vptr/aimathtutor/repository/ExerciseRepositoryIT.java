@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.entity.ExerciseEntity;
-import de.vptr.aimathtutor.entity.LessonEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import io.quarkus.test.TestTransaction;
@@ -104,34 +103,6 @@ public class ExerciseRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindGraspableMathExercises_returnsOnlyGraspable() {
-        final UserEntity user = this.createUser("grsp");
-
-        final ExerciseEntity graspable = new ExerciseEntity();
-        graspable.title = "GraspableEx";
-        graspable.content = "2x + 1";
-        graspable.user = user;
-        graspable.published = true;
-        graspable.graspableEnabled = true;
-        graspable.graspableTargetExpression = "x=1";
-        this.exerciseRepository.persist(graspable);
-
-        final ExerciseEntity plain = new ExerciseEntity();
-        plain.title = "PlainEx";
-        plain.content = "3y";
-        plain.user = user;
-        plain.published = true;
-        plain.graspableEnabled = false;
-        this.exerciseRepository.persist(plain);
-
-        final List<ExerciseEntity> result = this.exerciseRepository.findGraspableMathExercises();
-        Assertions.assertTrue(result.stream().allMatch(e -> Boolean.TRUE.equals(e.graspableEnabled)),
-                "All returned exercises should have graspableEnabled=true");
-        Assertions.assertTrue(result.stream().anyMatch(e -> "GraspableEx".equals(e.title)));
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByDateRange_includesRecentExercise() {
         final UserEntity user = this.createUser("drng");
 
@@ -186,22 +157,6 @@ public class ExerciseRepositoryIT {
 
     @Test
     @TestTransaction
-    public void testFindByIdOptional_found() {
-        final UserEntity user = this.createUser("fido");
-        final ExerciseEntity ex = this.createExercise(user, "fido");
-        final Optional<ExerciseEntity> found = this.exerciseRepository.findByIdOptional(Objects.requireNonNull(ex.id));
-        Assertions.assertTrue(found.isPresent());
-        Assertions.assertEquals(ex.id, found.get().id);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByIdOptional_null() {
-        Assertions.assertTrue(this.exerciseRepository.findByIdOptional(null).isEmpty());
-    }
-
-    @Test
-    @TestTransaction
     public void testFindByPublicId_found() {
         final UserEntity user = this.createUser("fpub");
         final ExerciseEntity ex = this.createExercise(user, "fpub");
@@ -239,51 +194,6 @@ public class ExerciseRepositoryIT {
         final UserEntity user = this.createUser("cntpub");
         this.createExercise(user, "cntpub");
         Assertions.assertTrue(this.exerciseRepository.countPublished() >= 1);
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindByLessonId_found() {
-        final UserEntity user = this.createUser("flsn");
-        final LessonEntity lesson = new LessonEntity();
-        lesson.name = "Lesson_flsn";
-        this.lessonRepository.persist(lesson);
-
-        final ExerciseEntity ex = new ExerciseEntity();
-        ex.title = "Ex_flsn";
-        ex.content = "x";
-        ex.user = user;
-        ex.published = true;
-        ex.lesson = lesson;
-        this.exerciseRepository.persist(ex);
-
-        final List<ExerciseEntity> result = this.exerciseRepository.findByLessonId(Objects.requireNonNull(lesson.id));
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(e -> Objects.equals(e.id, ex.id)));
-    }
-
-    @Test
-    @TestTransaction
-    public void testFindGraspableMathExercisesByLesson_found() {
-        final UserEntity user = this.createUser("fgmbl");
-        final LessonEntity lesson = new LessonEntity();
-        lesson.name = "Lesson_fgmbl";
-        this.lessonRepository.persist(lesson);
-
-        final ExerciseEntity ex = new ExerciseEntity();
-        ex.title = "GraspableByLesson_fgmbl";
-        ex.content = "2x";
-        ex.user = user;
-        ex.published = true;
-        ex.graspableEnabled = true;
-        ex.graspableTargetExpression = "x=1";
-        ex.lesson = lesson;
-        this.exerciseRepository.persist(ex);
-
-        final List<ExerciseEntity> result =
-                this.exerciseRepository.findGraspableMathExercisesByLesson(Objects.requireNonNull(lesson.id));
-        Assertions.assertFalse(result.isEmpty());
-        Assertions.assertTrue(result.stream().anyMatch(e -> Objects.equals(e.id, ex.id)));
     }
 
     @Test

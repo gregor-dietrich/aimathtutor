@@ -106,7 +106,8 @@ public class AdminExercisesView extends AbstractAdminView {
 
     private void loadExercises() {
         LOG.info("Loading exercises");
-        AsyncDataLoader.load(() -> this.exerciseService.getAllExercises(), this, exercises -> {
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.exerciseService.getAllExercises(credentials), this, exercises -> {
             LOG.infof("Successfully loaded %s exercises", exercises.size());
             this.grid.setItems(exercises);
         }, "Failed to load exercises. Please try again.");
@@ -114,9 +115,8 @@ public class AdminExercisesView extends AbstractAdminView {
 
     private void loadPublishedExercises() {
         LOG.info("Loading published exercises");
-        // Admin management grid: lists all published exercises and does not display per-user completion
-        // badges, so the per-user completion enrichment in findPublishedExercises is not relied upon here.
-        AsyncDataLoader.load(() -> this.exerciseService.findPublishedExercises(), this, exercises -> {
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.exerciseService.findPublishedExercises(credentials), this, exercises -> {
             LOG.infof("Successfully loaded %s published exercises", exercises.size());
             this.grid.setItems(exercises);
         }, "Failed to load published exercises. Please try again.");
@@ -523,16 +523,10 @@ public class AdminExercisesView extends AbstractAdminView {
             NotificationUtil.showWarning("Please enter a search query");
             return;
         }
-        this.searchButton.setEnabled(false);
-        this.searchButton.setText("Searching...");
-        AsyncDataLoader.load(() -> this.exerciseService.searchExercises(query.trim()), this, exercises -> {
-            this.grid.setItems(exercises);
-            this.searchButton.setEnabled(true);
-            this.searchButton.setText("Search");
-        }, () -> {
-            this.searchButton.setEnabled(true);
-            this.searchButton.setText("Search");
-        }, "An error occurred while searching exercises. Please try again.");
+        final var credentials = this.authService.currentSessionCredentials();
+        this.loadSearch(this.searchButton, () -> this.exerciseService.searchExercises(credentials, query.trim()),
+                exercises -> this.grid.setItems(exercises),
+                "An error occurred while searching exercises. Please try again.");
     }
 
     /**
@@ -544,8 +538,9 @@ public class AdminExercisesView extends AbstractAdminView {
             return;
         }
 
+        final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(
-                () -> this.exerciseService.findByDateRange(range.get().start().toString(),
+                () -> this.exerciseService.findByDateRange(credentials, range.get().start().toString(),
                         range.get().end().toString()),
                 this, exercises -> this.grid.setItems(exercises),
                 "An error occurred while filtering exercises. Please try again.");
@@ -558,7 +553,8 @@ public class AdminExercisesView extends AbstractAdminView {
             return;
         }
 
-        AsyncDataLoader.load(() -> this.exerciseService.findByUserId(userId.longValue()), this,
+        final var credentials = this.authService.currentSessionCredentials();
+        AsyncDataLoader.load(() -> this.exerciseService.findByUserId(credentials, userId.longValue()), this,
                 exercises -> this.grid.setItems(exercises),
                 "An error occurred while filtering exercises. Please try again.");
     }

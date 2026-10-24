@@ -43,16 +43,6 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name = "Exercise.findByUserId",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
                         + "LEFT JOIN FETCH e.lesson WHERE e.user.id = :u ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findByLessonId",
-                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user "
-                        + "LEFT JOIN FETCH e.lesson WHERE e.lesson.id = :l ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findGraspableEnabled",
-                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.lesson "
-                        + "WHERE e.graspableEnabled = true AND e.published = true ORDER BY e.created DESC"),
-        @NamedQuery(name = "Exercise.findGraspableByLesson",
-                query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.lesson "
-                        + "WHERE e.graspableEnabled = true AND e.published = true AND e.lesson.id = :l "
-                        + "ORDER BY e.created DESC"),
         @NamedQuery(name = "Exercise.searchByTerm",
                 query = "FROM ExerciseEntity e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.lesson "
                         + "WHERE LOWER(e.title) LIKE :s ESCAPE '!' OR LOWER(e.content) LIKE :s ESCAPE '!' "

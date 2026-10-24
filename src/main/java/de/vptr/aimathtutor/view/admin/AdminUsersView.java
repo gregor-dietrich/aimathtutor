@@ -462,16 +462,8 @@ public class AdminUsersView extends AbstractAdminView {
             NotificationUtil.showWarning("Please enter a search query");
             return;
         }
-        this.searchButton.setEnabled(false);
-        this.searchButton.setText("Searching...");
         final var credentials = this.authService.currentSessionCredentials();
-        AsyncDataLoader.load(() -> this.userService.searchUsers(credentials, query.trim()), this, users -> {
-            this.searchButton.setEnabled(true);
-            this.searchButton.setText("Search");
-            this.grid.setItems(users);
-        }, () -> {
-            this.searchButton.setEnabled(true);
-            this.searchButton.setText("Search");
-        }, "An error occurred while searching users. Please try again.");
+        this.loadSearch(this.searchButton, () -> this.userService.searchUsers(credentials, query.trim()),
+                users -> this.grid.setItems(users), "An error occurred while searching users. Please try again.");
     }
 }

@@ -407,14 +407,13 @@ public class AdminCommentsView extends AbstractAdminView {
             return;
         }
 
-        this.searchButton.setEnabled(false);
         LOG.infof("Searching comments with query length: %s", query.length());
         final var credentials = this.authService.currentSessionCredentials();
-        AsyncDataLoader.load(() -> this.commentService.searchComments(credentials, query.trim()), this, comments -> {
-            LOG.infof("Successfully found %s comments", comments.size());
-            this.grid.setItems(comments);
-            this.searchButton.setEnabled(true);
-        }, () -> this.searchButton.setEnabled(true), "An error occurred while searching comments. Please try again.");
+        this.loadSearch(this.searchButton, () -> this.commentService.searchComments(credentials, query.trim()),
+                comments -> {
+                    LOG.infof("Successfully found %s comments", comments.size());
+                    this.grid.setItems(comments);
+                }, "An error occurred while searching comments. Please try again.");
     }
 
     private void filterByDateRange() {

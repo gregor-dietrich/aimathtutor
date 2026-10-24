@@ -171,7 +171,8 @@ class AnalyticsServiceTest {
         assertFalse(sessions.isEmpty());
         assertTrue(sessions.stream().anyMatch(s -> sessionId.equals(s.sessionId)),
                 "Expected session should be present");
-        final var exercise = this.exerciseService.findById(exerciseId).orElseThrow();
+        final var exercise = this.exerciseRepository.findById(exerciseId);
+        assertNotNull(exercise);
         final String expectedExercisePublicId = exercise.publicId;
         for (final StudentSessionViewDto s : sessions) {
             assertEquals("student1", s.username, "All sessions should belong to student1");

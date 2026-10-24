@@ -299,14 +299,10 @@ public class AdminUserGroupsView extends AbstractAdminView {
             return;
         }
 
-        this.searchButton.setEnabled(false);
         LOG.debugf("Starting async group search with query length: %s", query.length());
-
         final var credentials = this.authService.currentSessionCredentials();
-        AsyncDataLoader.load(() -> this.groupService.searchGroups(credentials, query), this, groups -> {
-            this.searchButton.setEnabled(true);
-            this.grid.setItems(groups);
-        }, () -> this.searchButton.setEnabled(true), "Failed to search groups. Please try again.");
+        this.loadSearch(this.searchButton, () -> this.groupService.searchGroups(credentials, query),
+                groups -> this.grid.setItems(groups), "Failed to search groups. Please try again.");
     }
 
     private void openUserManagementDialog(final UserGroupViewDto group) {
