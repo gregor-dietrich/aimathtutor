@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.vptr.aimathtutor.dto.Appearance;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
@@ -79,6 +80,28 @@ class StaleEditTest {
                 assertThrows(ValidationException.class, () -> this.userService.updateUser(loaded.publicId, stale));
 
         assertEquals(AppConstants.STALE_EDIT_MESSAGE, ex.getMessage());
+        assertTrue(this.userRepository.findByPublicId(loaded.publicId).orElseThrow().banned);
+    }
+
+    @SuppressWarnings("NullAway")
+    @Test
+    @DisplayName("The user's own appearance and avatar changes do not make an update stale")
+    @TestTransaction
+    void ownSettingsKeepTheVersion() {
+        final UserViewDto loaded = this.userService.createUser(newUser());
+        final var stored = this.userRepository.findByPublicId(loaded.publicId).orElseThrow();
+        stored.colorMode = Appearance.ColorMode.DARK;
+        stored.design = Appearance.Design.CHALKBOARD;
+        stored.userAvatarEmoji = "🦊";
+        stored.tutorAvatarEmoji = "🦉";
+        this.userRepository.flush();
+        assertEquals(loaded.version, stored.version);
+
+        final UserDto dto = loaded.toUserDto();
+        dto.password = null;
+        dto.banned = true;
+        this.userService.updateUser(loaded.publicId, dto);
+
         assertTrue(this.userRepository.findByPublicId(loaded.publicId).orElseThrow().banned);
     }
 

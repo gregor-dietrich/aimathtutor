@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.OptimisticLock;
 import org.hibernate.generator.EventType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -82,10 +83,13 @@ public class UserEntity extends BaseEntity {
     @Column(nullable = false)
     public boolean activated = false;
 
+    // The user's own settings stay out of the version: changing them must not make an admin's open edit stale
+    @OptimisticLock(excluded = true)
     @Column(name = "design", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     public Appearance.Design design = Appearance.DEFAULT.design();
 
+    @OptimisticLock(excluded = true)
     @Column(name = "color_mode", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
     public Appearance.ColorMode colorMode = Appearance.DEFAULT.colorMode();
@@ -104,10 +108,12 @@ public class UserEntity extends BaseEntity {
     @Nullable
     public LocalDateTime lastEdit;
 
+    @OptimisticLock(excluded = true)
     @Column(name = "user_avatar_emoji", length = 10)
     @Nullable
     public String userAvatarEmoji;
 
+    @OptimisticLock(excluded = true)
     @Column(name = "tutor_avatar_emoji", length = 10)
     @Nullable
     public String tutorAvatarEmoji;
