@@ -38,6 +38,12 @@ public class UserDto {
     @Nullable
     public Boolean activated;
 
+    /**
+     * The version the caller loaded; a write is refused when the stored version differs. Null skips the check.
+     */
+    @Nullable
+    public Long version;
+
     public UserDto() {
     }
 

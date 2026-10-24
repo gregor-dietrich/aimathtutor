@@ -348,7 +348,9 @@ public class UserService {
      * rank, and password if provided. Validates duplicate username/email (skipping current values) and hashes new
      * passwords. Fields the caller's rank does not entitle them to change are ignored and keep their stored value:
      * {@code activated} and {@code banned} without the admin view permission, the rank (so {@code rankPublicId} may
-     * then be absent) without the user rank edit permission.
+     * then be absent) without the user rank edit permission. A non-null {@code userDto.version} must equal the stored
+     * version, or the update is refused as stale; the check runs after the target is loaded and the privilege ceiling
+     * is checked, before anything is modified. Null skips the check.
      *
      * @param publicId
      *            the user public ID to update
@@ -359,8 +361,8 @@ public class UserService {
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
      *             if username/email is duplicate, required fields missing, the user's current or new rank grants a
-     *             permission the caller's rank lacks, the change would leave no active Administrator, or it sets the
-     *             caller's own password
+     *             permission the caller's rank lacks, the change would leave no active Administrator, it sets the
+     *             caller's own password, or the DTO's version is stale
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
@@ -377,6 +379,7 @@ public class UserService {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
         final UserRankEntity caller = this.requireWithinCaller(existingUser);
+        existingUser.requireVersion(userDto.version);
 
         // Check for duplicate username (only if username is different from current)
         final String normalizedUsername = this.normalizeUsername(userDto.username);
@@ -414,7 +417,7 @@ public class UserService {
      * provided in the DTO; null values are ignored. Validates duplicate username/email if being changed, and hashes new
      * passwords if provided. Fields the caller's rank does not entitle them to change are ignored as well:
      * {@code activated} and {@code banned} without the admin view permission, {@code rankPublicId} without the user
-     * rank edit permission.
+     * rank edit permission. A non-null {@code userDto.version} is checked like a full update's; null skips the check.
      *
      * @param publicId
      *            the user public ID to update
@@ -425,7 +428,8 @@ public class UserService {
      *             if user not found (NOT_FOUND status)
      * @throws ValidationException
      *             if username/email is duplicate, the user's current or new rank grants a permission the caller's rank
-     *             lacks, the change would leave no active Administrator, or it sets the caller's own password
+     *             lacks, the change would leave no active Administrator, it sets the caller's own password, or the
+     *             DTO's version is stale
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
@@ -437,6 +441,7 @@ public class UserService {
             throw new WebApplicationException("User not found", Response.Status.NOT_FOUND);
         }
         final UserRankEntity caller = this.requireWithinCaller(existingUser);
+        existingUser.requireVersion(userDto.version);
 
         // Check for duplicate username if username is being updated
         final String normalizedUsername = userDto.username != null && !userDto.username.isBlank()
@@ -518,6 +523,8 @@ public class UserService {
     private UserViewDto saveUpdatedUser(final UserEntity user, final boolean wasAdministrator) {
         this.requireAdministratorRemains(user, wasAdministrator, UserRepository.isActiveAdministrator(user));
         this.userRepository.persist(user);
+        // @Version advances at flush: flush so the returned DTO carries the new version
+        this.userRepository.flush();
         this.fireAccountChanged(user);
         return new UserViewDto(user);
     }

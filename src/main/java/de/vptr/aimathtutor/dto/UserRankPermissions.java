@@ -3,7 +3,8 @@ package de.vptr.aimathtutor.dto;
 import jakarta.annotation.Nullable;
 
 /**
- * Shared permission fields for {@link UserRankDto} and {@link UserRankViewDto}. Extracted to eliminate CPD duplication.
+ * Shared identity, version and permission fields for {@link UserRankDto} and {@link UserRankViewDto}. Extracted to
+ * eliminate CPD duplication.
  */
 public abstract class UserRankPermissions {
 
@@ -12,6 +13,13 @@ public abstract class UserRankPermissions {
 
     @Nullable
     public String publicId;
+
+    /**
+     * The stored version; on an update DTO, a write is refused when it differs from the stored one (null skips the
+     * check).
+     */
+    @Nullable
+    public Long version;
 
     // View permissions
     @Nullable

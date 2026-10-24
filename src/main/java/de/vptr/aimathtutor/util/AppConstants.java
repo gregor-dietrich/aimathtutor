@@ -152,6 +152,13 @@ public final class AppConstants {
      */
     public static final String OWN_PASSWORD_MESSAGE = "Change your own password on the Settings page";
 
+    /**
+     * Rejection message for a write to a user or rank that changed after the caller loaded it (the version the caller
+     * sent no longer matches the stored one).
+     */
+    public static final String STALE_EDIT_MESSAGE =
+            "This entry was changed after the list was loaded. Refresh the list and edit it again.";
+
     /** Message shown when the caller's session is no longer valid. */
     public static final String SESSION_ENDED_MESSAGE = "Your session has ended. Please sign in again.";
 
