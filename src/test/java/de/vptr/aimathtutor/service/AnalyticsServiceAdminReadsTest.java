@@ -115,9 +115,10 @@ class AnalyticsServiceAdminReadsTest {
         this.analyticsService.getUserCount();
         this.analyticsService.getPublishedExerciseCount();
         this.analyticsService.getDailySessionCounts(7);
-        this.analyticsService.getProblemCategoryStats();
+        this.analyticsService.getCompletedSessionsByExercise();
         this.analyticsService.getCompletionRateHistogram();
         this.analyticsService.getHintUsageBuckets();
+        this.analyticsService.getAverageSuccessRate();
         this.analyticsService.getTrendData();
 
         verify(this.permissionService, never()).requireAdminView(any());

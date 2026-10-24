@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.Div;
@@ -126,7 +125,7 @@ public class AdminDashboardView extends AbstractAdminView {
         this.add(chartRow1);
 
         // Row 4: Top Exercises by Completion + Hints Usage Distribution
-        this.topExercisesChart = new ChartCard("Top Categories by Completion");
+        this.topExercisesChart = new ChartCard("Top Exercises by Completion");
         this.hintsChart = new ChartCard("Hints Usage Distribution");
         final var chartRow2 = new HorizontalLayout(this.topExercisesChart, this.hintsChart);
         chartRow2.setWidthFull();
@@ -151,6 +150,9 @@ public class AdminDashboardView extends AbstractAdminView {
     private void loadDashboardData() {
         final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(() -> {
+            // The guarded reads go first, so a session that ended is refused before the aggregates run
+            final var recentSessions = this.analyticsService.getRecentSessions(credentials, 10);
+            final var topStudents = this.analyticsService.getTopStudentsByCompletion(credentials, 5);
             final var totalSessions = this.analyticsService.getTotalSessionsCount();
             final var completedSessions = this.analyticsService.getCompletedSessionsCount();
             final var activeStudents = this.analyticsService.getActiveStudentsCount();
@@ -158,16 +160,12 @@ public class AdminDashboardView extends AbstractAdminView {
             final var totalUsers = this.analyticsService.getUserCount();
             final var publishedExercises = this.analyticsService.getPublishedExerciseCount();
 
-            final var summaries = this.analyticsService.getAllUsersProgressSummary(credentials);
-            final var avgSuccessRate = summaries.stream().filter(s -> s.successRate != null)
-                    .mapToDouble(s -> Objects.requireNonNull(s.successRate)).average().orElse(0.0);
+            final var avgSuccessRate = this.analyticsService.getAverageSuccessRate();
 
             final var dailyCounts = this.analyticsService.getDailySessionCounts(30);
-            final var topExercises = this.analyticsService.getProblemCategoryStats();
+            final var topExercises = this.analyticsService.getCompletedSessionsByExercise();
             final var completionHistogram = this.analyticsService.getCompletionRateHistogram();
             final var hintBuckets = this.analyticsService.getHintUsageBuckets();
-            final var recentSessions = this.analyticsService.getRecentSessions(credentials, 10);
-            final var topStudents = this.analyticsService.getTopStudentsByCompletion(credentials, 5);
             final var trends = this.analyticsService.getTrendData();
 
             return new DashboardData(totalSessions, completedSessions, activeStudents, todaySessions, totalUsers,

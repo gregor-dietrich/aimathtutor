@@ -94,22 +94,6 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Finds student sessions by completion status and date range with relations eagerly loaded.
-     */
-    public List<StudentSessionEntity> findByCompletedAndDateRange(final Boolean completed, final LocalDateTime start,
-            final LocalDateTime end) {
-        if (completed == null || start == null || end == null) {
-            return List.of();
-        }
-        final var q = this.em.createNamedQuery("StudentSession.findByCompletedAndDateRangeWithRelations",
-                StudentSessionEntity.class);
-        q.setParameter("c", completed);
-        q.setParameter("s", start);
-        q.setParameter("e", end);
-        return q.getResultList();
-    }
-
-    /**
      * Find sessions that started at or after the provided time with relations eagerly loaded.
      *
      * @param time
@@ -278,6 +262,60 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
+     * Count sessions with the given completion flag and a start time in the provided range.
+     *
+     * @param completed
+     *            completion flag to match
+     * @param start
+     *            inclusive range start
+     * @param end
+     *            inclusive range end
+     * @return count of matching sessions, or 0 on null inputs
+     */
+    public long countByCompletedAndStartTimeBetween(final Boolean completed, final LocalDateTime start,
+            final LocalDateTime end) {
+        if (completed == null || start == null || end == null) {
+            return 0L;
+        }
+        final var q = this.em.createNamedQuery("StudentSession.countByCompletedAndStartTimeBetween", Long.class);
+        q.setParameter("c", completed);
+        q.setParameter("s", start);
+        q.setParameter("e", end);
+        return q.getSingleResult();
+    }
+
+    /**
+     * Count sessions per start date within an inclusive range, computed in SQL.
+     *
+     * @param start
+     *            inclusive range start
+     * @param end
+     *            inclusive range end
+     * @return list of {@code [LocalDate, count]} pairs, only for dates that have sessions; empty on null inputs
+     */
+    public List<Object[]> countSessionsPerDay(final LocalDateTime start, final LocalDateTime end) {
+        if (start == null || end == null) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.countSessionsPerDay", Object[].class);
+        q.setParameter("s", start);
+        q.setParameter("e", end);
+        return q.getResultList();
+    }
+
+    /**
+     * Mean over users of each user's own success rate ({@code SUM(correct) / SUM(actions)} across their sessions),
+     * counting only users with at least one action. Computed in SQL.
+     *
+     * @return the mean rate in [0, 1], or 0.0 when no user qualifies
+     */
+    public double findAverageUserSuccessRate() {
+        final var q = this.em.createNamedQuery("StudentSession.averageUserSuccessRate", Double.class);
+        final Double avg = q.getSingleResult();
+        return avg == null ? 0.0 : avg;
+    }
+
+    /**
      * Count sessions with start times in a half-open range [start, end).
      *
      * @param start
@@ -298,12 +336,12 @@ public class StudentSessionRepository extends AbstractRepository {
     }
 
     /**
-     * Get problem category statistics using a GROUP BY JPQL query.
+     * Count completed sessions per exercise title using a GROUP BY JPQL query.
      *
-     * @return list of object arrays containing [categoryName, count]
+     * @return list of object arrays containing [exerciseTitle, count]
      */
-    public List<Object[]> findProblemCategoryStats() {
-        final var q = this.em.createNamedQuery("StudentSession.findProblemCategoryStats", Object[].class);
+    public List<Object[]> findCompletedSessionsByExercise() {
+        final var q = this.em.createNamedQuery("StudentSession.findCompletedSessionsByExercise", Object[].class);
         return q.getResultList();
     }
 
@@ -340,6 +378,25 @@ public class StudentSessionRepository extends AbstractRepository {
         }
         final var q = this.em.createNamedQuery("StudentSession.findTopUsersByCompletion", Object[].class);
         q.setMaxResults(limit);
+        return q.getResultList();
+    }
+
+    /**
+     * Total each given user's sessions in one {@code GROUP BY} query, so no session is materialised. Users without a
+     * session have no row.
+     *
+     * @param userIds
+     *            list of user database ids
+     * @return list of {@code [userId, sessions, completedSessions, hintsUsed, actions, correctActions, lastActivity]}
+     *         rows, where {@code lastActivity} is the latest end time, or start time for a session without one; empty
+     *         if userIds is null or empty
+     */
+    public List<Object[]> findProgressTotalsByUserIdIn(final List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        final var q = this.em.createNamedQuery("StudentSession.findProgressTotalsByUserIdIn", Object[].class);
+        q.setParameter("ids", userIds);
         return q.getResultList();
     }
 

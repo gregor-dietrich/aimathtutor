@@ -146,16 +146,17 @@ class StudentSessionRepositoryTest {
         final long halfOpenCount =
                 this.studentSessionRepository.countByStartTimeGreaterThanEqualAndStartTimeLessThan(null, null);
         assertEquals(0L, halfOpenCount);
-        assertTrue(this.studentSessionRepository.findByCompletedAndDateRange(null, null, null).isEmpty());
+        assertEquals(0L, this.studentSessionRepository.countByCompletedAndStartTimeBetween(null, null, null));
+        assertTrue(this.studentSessionRepository.countSessionsPerDay(null, null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm(null).isEmpty());
         assertTrue(this.studentSessionRepository.searchByUserOrExerciseTerm("").isEmpty());
     }
 
     @Test
-    @DisplayName("findAll, countAll and findProblemCategoryStats return non-null results")
+    @DisplayName("findAll, countAll and findCompletedSessionsByExercise return non-null results")
     void testFindAllAndCountAll() {
         assertNotNull(this.studentSessionRepository.findAll());
         assertTrue(this.studentSessionRepository.countAll() >= 0);
-        assertNotNull(this.studentSessionRepository.findProblemCategoryStats());
+        assertNotNull(this.studentSessionRepository.findCompletedSessionsByExercise());
     }
 }
