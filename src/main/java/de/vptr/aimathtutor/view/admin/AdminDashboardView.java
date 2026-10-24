@@ -150,6 +150,9 @@ public class AdminDashboardView extends AbstractAdminView {
     private void loadDashboardData() {
         final var credentials = this.authService.currentSessionCredentials();
         AsyncDataLoader.load(() -> {
+            // The guarded reads go first, so a session that ended is refused before the aggregates run
+            final var recentSessions = this.analyticsService.getRecentSessions(credentials, 10);
+            final var topStudents = this.analyticsService.getTopStudentsByCompletion(credentials, 5);
             final var totalSessions = this.analyticsService.getTotalSessionsCount();
             final var completedSessions = this.analyticsService.getCompletedSessionsCount();
             final var activeStudents = this.analyticsService.getActiveStudentsCount();
@@ -163,8 +166,6 @@ public class AdminDashboardView extends AbstractAdminView {
             final var topExercises = this.analyticsService.getProblemCategoryStats();
             final var completionHistogram = this.analyticsService.getCompletionRateHistogram();
             final var hintBuckets = this.analyticsService.getHintUsageBuckets();
-            final var recentSessions = this.analyticsService.getRecentSessions(credentials, 10);
-            final var topStudents = this.analyticsService.getTopStudentsByCompletion(credentials, 5);
             final var trends = this.analyticsService.getTrendData();
 
             return new DashboardData(totalSessions, completedSessions, activeStudents, todaySessions, totalUsers,

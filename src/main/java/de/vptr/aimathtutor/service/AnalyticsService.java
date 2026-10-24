@@ -114,11 +114,6 @@ public class AnalyticsService {
     public List<StudentSessionViewDto> getSessionsByDateRange(@Nullable final SessionCredentials credentials,
             final LocalDateTime startDate, final LocalDateTime endDate) {
         this.permissionService.requireAdminView(credentials);
-        return this.findSessionsByDateRange(startDate, endDate);
-    }
-
-    private List<StudentSessionViewDto> findSessionsByDateRange(final LocalDateTime startDate,
-            final LocalDateTime endDate) {
         LOG.tracef("Getting sessions between %s and %s", startDate, endDate);
         final List<StudentSessionEntity> sessions;
         if (startDate != null && endDate != null) {
@@ -276,7 +271,6 @@ public class AnalyticsService {
     @Transactional
     public long getTotalSessionsCount() {
         LOG.trace("Getting total sessions count");
-        // repository can expose count; fall back to list size
         return this.studentSessionRepository.countAll();
     }
 
@@ -449,19 +443,21 @@ public class AnalyticsService {
     }
 
     /**
-     * Get daily session counts for the last N days. Returns a LinkedHashMap with every day filled (0 for missing days).
+     * Get daily session counts for today and the N days before it. Returns a LinkedHashMap with every day filled (0 for
+     * missing days); counting runs in SQL (GROUP BY start date).
      */
     @Transactional
     public Map<LocalDate, Long> getDailySessionCounts(final int days) {
         LOG.tracef("Getting daily session counts for last %d days", days);
         final var zone = ZoneId.systemDefault();
+        final var now = LocalDateTime.now(zone);
+        final var today = now.toLocalDate();
         final var counts = new LinkedHashMap<LocalDate, Long>();
         for (int i = days; i >= 0; i--) {
-            counts.put(LocalDate.now(zone).minusDays(i), 0L);
+            counts.put(today.minusDays(i), 0L);
         }
-        final var end = LocalDateTime.now(zone);
-        final var start = end.minusDays(days);
-        for (final Object[] row : this.studentSessionRepository.countSessionsPerDay(start, end)) {
+        for (final Object[] row : this.studentSessionRepository
+                .countSessionsPerDay(today.minusDays(days).atStartOfDay(), now)) {
             counts.merge((LocalDate) row[0], ((Number) row[1]).longValue(), Long::sum);
         }
         return counts;

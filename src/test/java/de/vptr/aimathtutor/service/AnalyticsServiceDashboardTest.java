@@ -1,6 +1,7 @@
 package de.vptr.aimathtutor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -88,18 +89,31 @@ class AnalyticsServiceDashboardTest {
         this.studentSessionRepository.persist(session);
     }
 
-    /** The per-user mean success rate, computed in Java over all sessions with the operator's definition. */
-    private double expectedAverageSuccessRate(final boolean countZeroActionUsers) {
+    private List<StudentSessionEntity> allUserSessions() {
         this.entityManager.flush();
-        final List<StudentSessionEntity> all =
-                this.entityManager.createQuery("SELECT s FROM StudentSessionEntity s WHERE s.user IS NOT NULL",
-                        StudentSessionEntity.class).getResultList();
-        final var byUser = all.stream().collect(Collectors.groupingBy(s -> s.user.id));
-        return byUser.values().stream().mapToDouble(sessions -> {
-            final double actions = sessions.stream().mapToInt(s -> s.actionsCount).sum();
-            final double correct = sessions.stream().mapToInt(s -> s.correctActions).sum();
-            return actions > 0 ? correct / actions : (countZeroActionUsers ? 0.0 : Double.NaN);
-        }).filter(r -> !Double.isNaN(r)).average().orElse(0.0);
+        return this.entityManager.createQuery("SELECT s FROM StudentSessionEntity s WHERE s.user IS NOT NULL",
+                StudentSessionEntity.class).getResultList();
+    }
+
+    /**
+     * The mean of per-user rates (correct / actions over each user's sessions), computed in Java over all sessions. The
+     * dashboard counts only users with actions; {@code includeUsersWithoutActions} counts the others as 0.
+     */
+    private double meanOfUserRates(final boolean includeUsersWithoutActions) {
+        return this.allUserSessions().stream().collect(Collectors.groupingBy(s -> s.user.id)).values().stream()
+                .filter(sessions -> includeUsersWithoutActions || sessions.stream().anyMatch(s -> s.actionsCount > 0))
+                .mapToDouble(sessions -> {
+                    final double actions = sessions.stream().mapToInt(s -> s.actionsCount).sum();
+                    final double correct = sessions.stream().mapToInt(s -> s.correctActions).sum();
+                    return actions > 0 ? correct / actions : 0.0;
+                }).average().orElse(0.0);
+    }
+
+    /** The pooled rate over all sessions (sum of correct / sum of actions), which the dashboard does not use. */
+    private double pooledRate() {
+        final var sessions = this.allUserSessions();
+        final double actions = sessions.stream().mapToInt(s -> s.actionsCount).sum();
+        return sessions.stream().mapToInt(s -> s.correctActions).sum() / actions;
     }
 
     @Test
@@ -120,15 +134,16 @@ class AnalyticsServiceDashboardTest {
         final double actual = this.analyticsService.getAverageSuccessRate();
 
         // The seeded demo sessions also count, so compare against the same definition computed in Java
-        assertEquals(this.expectedAverageSuccessRate(false), actual, 1e-9);
-        assertTrue(Math.abs(this.expectedAverageSuccessRate(true) - actual) > 1e-9,
+        assertEquals(this.meanOfUserRates(false), actual, 1e-9);
+        assertTrue(Math.abs(this.meanOfUserRates(true) - actual) > 1e-9,
                 "A user with only 0-action sessions must not pull the mean down");
+        assertTrue(Math.abs(this.pooledRate() - actual) > 1e-9, "Each user counts once, however many actions");
     }
 
     @Test
     @TestTransaction
-    @DisplayName("getDailySessionCounts counts sessions per start date and excludes those outside the window")
-    void testGetDailySessionCountsSeeded() {
+    @DisplayName("getDailySessionCounts counts whole days per start date and excludes those outside the window")
+    void testGetDailySessionCounts_seeded() {
         final var user = this.newUser();
         final var ex = this.newExercise(user);
         final var zone = ZoneId.systemDefault();
@@ -139,21 +154,23 @@ class AnalyticsServiceDashboardTest {
         this.newSession(user, ex, twoDaysAgo, false, 0, 0);
         this.newSession(user, ex, twoDaysAgo.plusHours(1), false, 0, 0);
         this.newSession(user, ex, today.minusDays(4).atTime(9, 0), false, 0, 0);
+        this.newSession(user, ex, today.minusDays(7).atStartOfDay(), false, 0, 0);
         this.newSession(user, ex, today.minusDays(30).atTime(9, 0), false, 0, 0);
 
         final var after = this.analyticsService.getDailySessionCounts(7);
         assertEquals(before.get(today.minusDays(2)) + 2, after.get(today.minusDays(2)));
         assertEquals(before.get(today.minusDays(4)) + 1, after.get(today.minusDays(4)));
-        assertEquals(8, after.size());
-        assertTrue(!after.containsKey(today.minusDays(30)), "A session outside the window must not appear");
-        assertEquals(before.values().stream().mapToLong(Long::longValue).sum() + 3,
+        assertEquals(before.get(today.minusDays(7)) + 1, after.get(today.minusDays(7)),
+                "The first day counts from its start, not from the current time of day");
+        assertFalse(after.containsKey(today.minusDays(30)), "A session outside the window must not appear");
+        assertEquals(before.values().stream().mapToLong(Long::longValue).sum() + 4,
                 after.values().stream().mapToLong(Long::longValue).sum());
     }
 
     @Test
     @TestTransaction
     @DisplayName("getTrendData counts completed sessions of the current week only")
-    void testGetTrendDataCompleted() {
+    void testGetTrendData_completed() {
         final var user = this.newUser();
         final var ex = this.newExercise(user);
         final var now = LocalDateTime.now(ZoneId.systemDefault());
