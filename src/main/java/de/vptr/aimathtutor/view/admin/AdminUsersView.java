@@ -1,7 +1,10 @@
 package de.vptr.aimathtutor.view.admin;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 import org.vaadin.lineawesome.LineAwesomeIcon;
@@ -33,6 +36,7 @@ import de.vptr.aimathtutor.component.button.EditButton;
 import de.vptr.aimathtutor.component.button.RefreshButton;
 import de.vptr.aimathtutor.component.dialog.FormDialog;
 import de.vptr.aimathtutor.component.layout.SearchLayout;
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
@@ -70,7 +74,10 @@ public class AdminUsersView extends AbstractAdminView {
     private transient Dialog passwordDialog;
     private transient Binder<UserDto> binder;
     private transient UserDto currentUser;
+    /** The ranks the caller may assign: those not granting beyond the caller's permissions. */
     private transient List<UserRankViewDto> availableRanks;
+    /** Every rank by public ID; a user whose rank is missing here counts as above the caller. */
+    private transient Map<String, UserRankViewDto> ranksById = Map.of();
 
     /**
      * Construct the admin users view and initialize default layout settings.
@@ -102,7 +109,14 @@ public class AdminUsersView extends AbstractAdminView {
         LOG.info("Starting async rank loading");
         AsyncDataLoader.load(() -> this.userRankService.getAllRanks(), this, ranks -> {
             LOG.infof("Successfully loaded %s ranks", ranks.size());
-            this.availableRanks = ranks;
+            final var callerPermissions = this.callerPermissions();
+            this.availableRanks = ranks.stream().filter(rank -> !rank.grantsBeyond(callerPermissions)).toList();
+            this.ranksById = ranks.stream().filter(rank -> rank.publicId != null)
+                    .collect(Collectors.toMap(rank -> rank.publicId, Function.identity()));
+            // The users may have loaded first, and their rows depend on the ranks
+            if (this.grid != null) {
+                this.grid.getDataProvider().refreshAll();
+            }
         }, "Failed to load ranks. Please try again.");
     }
 
@@ -152,9 +166,12 @@ public class AdminUsersView extends AbstractAdminView {
         this.grid.addThemeVariants(GridVariant.ROW_STRIPES);
         this.grid.setSizeFull();
 
-        // Make the username column clickable
+        // Make the username column clickable, except on users above the caller
         this.grid.addComponentColumn(user -> {
             final var usernameSpan = new Span(user.username);
+            if (this.aboveCaller(user)) {
+                return usernameSpan;
+            }
             usernameSpan.getStyle().set("color", AppStyles.ACCENT_TEXT);
             usernameSpan.getStyle().set("cursor", "pointer");
             usernameSpan.getStyle().set("width", "100%");
@@ -196,8 +213,22 @@ public class AdminUsersView extends AbstractAdminView {
         final var editButton = new EditButton(e -> this.openUserDialog(user));
         final var deleteButton = new DeleteButton(e -> this.deleteUser(user));
 
+        // Fail closed: a user whose rank is unknown or not yet loaded is above the caller
+        final var editable = !this.aboveCaller(user);
+        editButton.setEnabled(editable);
+        deleteButton.setEnabled(editable);
+
         layout.add(editButton, deleteButton);
         return layout;
+    }
+
+    /** A user with no rank is within the caller's ceiling; one whose rank is unknown or grants beyond it is above. */
+    private boolean aboveCaller(final UserViewDto user) {
+        if (user.rankPublicId == null) {
+            return false;
+        }
+        final var rank = this.ranksById.get(user.rankPublicId);
+        return rank == null || rank.grantsBeyond(this.callerPermissions());
     }
 
     private void openUserDialog(@Nullable final UserViewDto user) {
@@ -274,7 +305,7 @@ public class AdminUsersView extends AbstractAdminView {
         rankField.setClearButtonVisible(false);
         rankField.setInvalid(false); // Clear any previous validation state
         // The service keeps an existing user's rank unless the caller may edit ranks
-        if (user != null && (this.callerRank == null || !Boolean.TRUE.equals(this.callerRank.userRankEdit))) {
+        if (user != null && (this.callerRank == null || !this.callerRank.has(Permission.USER_RANK_EDIT))) {
             rankField.setEnabled(false);
             rankField.setHelperText("Changing the rank needs the permission to edit ranks");
         }

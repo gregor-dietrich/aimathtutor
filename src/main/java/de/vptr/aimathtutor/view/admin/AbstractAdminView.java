@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.view.admin;
 
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -10,6 +11,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 
+import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.service.security.AuthService;
@@ -42,6 +44,16 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
      */
     @Nullable
     protected transient UserRankViewDto callerRank;
+
+    /**
+     * The permissions the signed-in user's rank holds, which cap what a view offers; empty before {@link #callerRank}
+     * is loaded or if they have no rank, so a view offers nothing it cannot confirm.
+     *
+     * @return the caller's permissions, never null
+     */
+    protected Set<Permission> callerPermissions() {
+        return this.callerRank == null ? Set.of() : this.callerRank.granted();
+    }
 
     /**
      * Performs authentication and authorization checks before the view is shown. Redirects unauthenticated users to the
@@ -107,7 +119,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Determines whether the current user is authorised to access this admin view. The default implementation requires
-     * {@code canAdminView()} on the user's rank.
+     * {@code has(Permission.ADMIN_VIEW)} on the user's rank.
      *
      * <p>
      * Subclasses with different permission requirements (e.g. {@link AdminConfigView}) can override this method.
@@ -118,7 +130,7 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
     protected boolean isAuthorized() {
         final var userRank = this.userRankService.getCurrentUserRank();
         this.callerRank = userRank;
-        return userRank != null && userRank.canAdminView();
+        return userRank != null && userRank.has(Permission.ADMIN_VIEW);
     }
 
     /**
