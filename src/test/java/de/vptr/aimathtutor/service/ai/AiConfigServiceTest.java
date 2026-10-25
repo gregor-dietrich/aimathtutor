@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,9 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
+import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 /**
@@ -50,23 +51,9 @@ class AiConfigServiceTest {
     private SessionCredentials credentials;
 
     @BeforeEach
-    @Transactional
     @SuppressWarnings("NullAway")
     void setUp() {
-        // Clean up any test configuration records from previous test runs
-        // This ensures tests are isolated and don't fail on subsequent runs
-        final var testKeys = List.of("nonexistent.key", "test.key", "nonexistent.int", "test.int", "test.invalid.int",
-                "nonexistent.double", "test.double", "test.invalid.double", "nonexistent.bool", "test.bool.true",
-                "test.bool.false", "test.bool.one", "test.bool.zero", "test.config1", "test.config2", "test.config3",
-                "update.test", "batch.config1", "batch.config2", "batch.config3", "cache.test", "cache.clear.test",
-                "test.integer", "test.boolean", "test.string", "test.temperature", "test.max-tokens", "test.config3",
-                "ollama.base-url", "google.base-url");
-        for (final var key : testKeys) {
-            final var entity = this.aiConfigRepository.findByConfigKey(key);
-            if (entity.isPresent()) {
-                entity.get().delete();
-            }
-        }
+        this.aiConfigService.clearCache();
 
         // The seeded admin, so the session credentials' stamp matches its stored password hash
         this.adminUser =
@@ -75,9 +62,14 @@ class AiConfigServiceTest {
                 AuthService.credentialStamp(this.adminUser.password), UUID.randomUUID().toString());
     }
 
+    @AfterEach
+    void tearDown() {
+        this.aiConfigService.clearCache();
+    }
+
     @Test
     @DisplayName("Get configuration value as String with default fallback")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueWithDefault() {
         final String value = this.aiConfigService.getConfigValue("nonexistent.key", "defaultValue");
         assertEquals("defaultValue", value);
@@ -93,7 +85,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("Get configuration value as Integer with default fallback")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueAsInt() {
         // Non-existent key returns default
         Integer value = this.aiConfigService.getConfigValueAsInt("nonexistent.int", 42);
@@ -119,7 +111,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("Get configuration value as Double with default fallback")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueAsDouble() {
         // Non-existent key returns default
         Double value = this.aiConfigService.getConfigValueAsDouble("nonexistent.double", 3.14);
@@ -145,7 +137,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("Get configuration value as Boolean with various formats")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueAsBoolean() {
         // Non-existent key returns default
         Boolean value = this.aiConfigService.getConfigValueAsBoolean("nonexistent.bool", false);
@@ -184,7 +176,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Update single configuration value")
-    @Transactional
+    @TestTransaction
     void testUpdateConfig() {
         // Create initial config
         final var entity =
@@ -203,7 +195,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Update multiple configurations at once")
-    @Transactional
+    @TestTransaction
     void testUpdateMultipleConfigs() {
         // Create initial configs
         final var config1 = new AiConfigEntity("batch.config1", "value1", ConfigType.STRING, ConfigCategory.GENERAL);
@@ -231,7 +223,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - INTEGER type")
-    @Transactional
+    @TestTransaction
     void testValidateIntegerType() {
         // Create an INTEGER type config (marked as optional so empty values are
         // allowed)
@@ -254,7 +246,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - DOUBLE type")
-    @Transactional
+    @TestTransaction
     void testValidateDoubleType() {
         // Create a DOUBLE type config (marked as optional so empty values are allowed)
         final var entity =
@@ -276,7 +268,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - BOOLEAN type")
-    @Transactional
+    @TestTransaction
     void testValidateBooleanType() {
         // Create a BOOLEAN type config (marked as optional so empty values are allowed)
         final var entity =
@@ -301,7 +293,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Type validation - STRING type accepts anything")
-    @Transactional
+    @TestTransaction
     void testValidateStringType() {
         // Create a STRING type config (marked as optional so empty values are allowed)
         final var entity =
@@ -321,7 +313,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Cache invalidation on update")
-    @Transactional
+    @TestTransaction
     void testCacheInvalidation() {
         // Create a config
         final var entity = new AiConfigEntity("cache.test", "original", ConfigType.STRING, ConfigCategory.GENERAL);
@@ -342,7 +334,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("Clear cache method")
-    @Transactional
+    @TestTransaction
     void testClearCache() {
         // Create a config and cache it
         final var entity = new AiConfigEntity("cache.clear.test", "value", ConfigType.STRING, ConfigCategory.GENERAL);
@@ -363,7 +355,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Null key validation")
-    @Transactional
+    @TestTransaction
     void testNullValidation() {
         // Null key must throw exception
         assertThrows(ValidationException.class,
@@ -373,7 +365,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Range validation - temperature out of bounds")
-    @Transactional
+    @TestTransaction
     void testValidateTemperatureRange() {
         final var entity =
                 new AiConfigEntity("test.temperature", "0.5", ConfigType.DOUBLE, ConfigCategory.GENERAL, null, true);
@@ -394,7 +386,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("getClampedTemperature clamps values to [0.0, 2.0]")
-    @Transactional
+    @TestTransaction
     void testGetClampedTemperature() {
         double result = this.aiConfigService.getClampedTemperature("nonexistent.key", 0.5);
         assertEquals(0.5, result);
@@ -408,7 +400,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("getClampedTokens clamps values to [1, 8192]")
-    @Transactional
+    @TestTransaction
     void testGetClampedTokens() {
         int result = this.aiConfigService.getClampedTokens("nonexistent.key", 1000);
         assertEquals(1000, result);
@@ -423,7 +415,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getAllConfigsByCategory with null returns empty map")
-    @Transactional
+    @TestTransaction
     void testGetAllConfigsByCategory_null() {
         final var result = this.aiConfigService.getAllConfigsByCategory(null);
         assertNotNull(result);
@@ -432,7 +424,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("getAllConfigs returns non-null list")
-    @Transactional
+    @TestTransaction
     void testGetAllConfigs() {
         final var configs = this.aiConfigService.getAllConfigs();
         assertNotNull(configs);
@@ -441,7 +433,7 @@ class AiConfigServiceTest {
 
     @Test
     @DisplayName("getConfigsByCategory returns configs in that category")
-    @Transactional
+    @TestTransaction
     void testGetConfigsByCategory() {
         final var configs = this.aiConfigService.getConfigsByCategory(ConfigCategory.GENERAL);
         assertNotNull(configs);
@@ -450,7 +442,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateMultipleConfigs with null/empty list does nothing")
-    @Transactional
+    @TestTransaction
     void testUpdateMultipleConfigs_nullOrEmpty() {
         assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(null, this.credentials));
         assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(List.of(), this.credentials));
@@ -459,7 +451,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("resetToDefaults restores factory defaults")
-    @Transactional
+    @TestTransaction
     void testResetToDefaults() {
         this.aiConfigService.updateConfig(AiConfigKeys.AI_TUTOR_ENABLED, "false", this.credentials);
         assertEquals("false", this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, ""));
@@ -472,7 +464,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("getConfigValue with null key returns default")
-    @Transactional
+    @TestTransaction
     void testGetConfigValue_nullKey() {
         assertEquals("default", this.aiConfigService.getConfigValue(null, "default"));
     }
@@ -480,7 +472,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("validateConfigValue - empty value on non-optional config throws")
-    @Transactional
+    @TestTransaction
     void testValidateConfigValue_nonOptionalEmpty() {
         final var entity =
                 new AiConfigEntity("test.nonoptional", "value", ConfigType.STRING, ConfigCategory.GENERAL, null, false);
@@ -494,7 +486,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("URL validation - unresolvable hostname allowed for Ollama ONLY if in allow-list")
-    @Transactional
+    @TestTransaction
     void testUrlValidationUnresolvableHostOllamaAllowlist() {
         // 'ollama' is in the default allow-list
         assertDoesNotThrow(
@@ -508,7 +500,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
-    @Transactional
+    @TestTransaction
     void testUrlValidationUnresolvableHostRejectedForNonOllama() {
         assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("google.base-url",
                 "https://nonexistent-google-host.invalid/", this.credentials));
@@ -571,7 +563,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("updateConfig - non-provider URL key falls through to generic loopback check")
-    @Transactional
+    @TestTransaction
     void testUpdateConfigGenericUrlKeyRejectsLoopback() {
         // 'custom.url' does not match any provider keyword, so the generic-URL fallback is exercised.
         assertThrows(ValidationException.class,
@@ -603,7 +595,7 @@ class AiConfigServiceTest {
     @SuppressWarnings("NullAway")
     @Test
     @DisplayName("Range validation - max-tokens out of bounds")
-    @Transactional
+    @TestTransaction
     void testValidateMaxTokensRange() {
         final var entity =
                 new AiConfigEntity("test.max-tokens", "1000", ConfigType.INTEGER, ConfigCategory.GENERAL, null, true);
