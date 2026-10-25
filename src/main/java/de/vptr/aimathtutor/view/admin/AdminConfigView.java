@@ -32,6 +32,7 @@ import de.vptr.aimathtutor.dto.ProviderTestResultDto;
 import de.vptr.aimathtutor.service.ai.AiConfigKeys;
 import de.vptr.aimathtutor.service.ai.AiConfigService;
 import de.vptr.aimathtutor.service.ai.ProviderTestService;
+import de.vptr.aimathtutor.util.AsyncDataLoader;
 import de.vptr.aimathtutor.util.NotificationUtil;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -340,14 +341,8 @@ public class AdminConfigView extends AbstractAdminView {
     private void onProviderSaveOrTest(final boolean withTest, final Button saveBtn, final Button testBtn,
             final Button resetBtn, final Supplier<Optional<List<AiConfigUpdateDto>>> buildUpdates,
             final ComboBox<String> providerCombo, final Runnable updateEnabledState) {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-        final Long userId = this.requireUserId("save settings");
-        if (userId == null) {
-            return;
-        }
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
         final var updatesOpt = buildUpdates.get();
         if (updatesOpt.isEmpty()) {
             return;
@@ -357,71 +352,45 @@ public class AdminConfigView extends AbstractAdminView {
         saveBtn.setEnabled(false);
         testBtn.setEnabled(false);
         resetBtn.setEnabled(false);
-        final var _ = CompletableFuture
-                .supplyAsync(() -> this.persistConfig("Provider", updates, userId), this.managedExecutor)
-                .thenAccept(success -> {
-                    final var _ = ui.access(() -> {
-                        saveBtn.setEnabled(true);
-                        resetBtn.setEnabled(true);
-                        updateEnabledState.run();
-                        if (success) {
-                            if (withTest) {
-                                if ("google".equals(provider)) {
-                                    this.testGoogleConnection();
-                                } else if ("openai".equals(provider)) {
-                                    this.testOpenAiConnection();
-                                } else if ("ollama".equals(provider)) {
-                                    this.testOllamaConnection();
-                                }
-                            } else {
-                                NotificationUtil.showSuccess("Provider configuration updated successfully");
-                            }
-                        } else {
-                            NotificationUtil.showError("Error saving configuration. Please try again later.");
-                        }
-                    });
-                }).exceptionally(ex -> {
-                    final var _ = ui.access(() -> {
-                        NotificationUtil.showError("Error saving configuration. Please try again later.");
-                        LOG.errorf(ex, "Error saving Provider config");
-                        saveBtn.setEnabled(true);
-                        resetBtn.setEnabled(true);
-                        updateEnabledState.run();
-                    });
-                    return null;
-                });
+        // updateEnabledState re-enables the save and test buttons
+        final Runnable reenable = () -> {
+            resetBtn.setEnabled(true);
+            updateEnabledState.run();
+        };
+        AsyncDataLoader.load(() -> {
+            this.aiConfigService.updateMultipleConfigs(updates, credentials);
+            return Boolean.TRUE;
+        }, this, ignored -> {
+            reenable.run();
+            if (!withTest) {
+                NotificationUtil.showSuccess("Provider configuration updated successfully");
+            } else if ("google".equals(provider)) {
+                this.testGoogleConnection();
+            } else if ("openai".equals(provider)) {
+                this.testOpenAiConnection();
+            } else if ("ollama".equals(provider)) {
+                this.testOllamaConnection();
+            }
+        }, reenable, "Error saving configuration. Please try again later.");
     }
 
     private void onProviderReset(final Button saveBtn, final Button testBtn, final Button resetBtn,
             final Runnable updateEnabledState) {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-        final Long userId = this.requireUserId("reset settings");
-        if (userId == null) {
-            return;
-        }
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
         saveBtn.setEnabled(false);
         testBtn.setEnabled(false);
         resetBtn.setEnabled(false);
-        final var _ = CompletableFuture
-                .runAsync(() -> this.aiConfigService.resetToDefaults(userId), this.managedExecutor).thenRun(() -> {
-                    final var _ = ui.access(() -> {
-                        NotificationUtil.showSuccess("All settings reset to defaults");
-                        LOG.infof("Reset all AI configs to defaults");
-                        this.buildUi();
-                    });
-                }).exceptionally(ex -> {
-                    final var _ = ui.access(() -> {
-                        NotificationUtil.showError("Error resetting defaults. Please try again later.");
-                        LOG.errorf(ex, "Error resetting defaults: %s", ex.getMessage());
-                        saveBtn.setEnabled(true);
-                        resetBtn.setEnabled(true);
-                        updateEnabledState.run();
-                    });
-                    return null;
-                });
+        AsyncDataLoader.load(() -> {
+            this.aiConfigService.resetToDefaults(credentials);
+            return Boolean.TRUE;
+        }, this, ignored -> {
+            NotificationUtil.showSuccess("All settings reset to defaults");
+            this.buildUi();
+        }, () -> {
+            resetBtn.setEnabled(true);
+            updateEnabledState.run();
+        }, "Error resetting defaults. Please try again later.");
     }
 
     // --- Connection tests ---------------------------------------------------
@@ -464,64 +433,23 @@ public class AdminConfigView extends AbstractAdminView {
 
     // --- Save helpers -------------------------------------------------------
 
-    // requireUserId helper: every save method must null-check getUserId()
-    // before proceeding. Do NOT move getUserId() below first use.
-    @Nullable
-    private Long requireUserId(final String action) {
-        final Long userId = this.authService.getUserId();
-        if (userId == null) {
-            NotificationUtil.showError("You must be logged in to " + action);
-            return null;
-        }
-        return userId;
-    }
-
     private void onPromptsSave(final Button saveBtn, final TextArea questionPrefixArea,
             final TextArea questionPostfixArea, final TextArea tutoringPrefixArea, final TextArea tutoringPostfixArea) {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-        final Long userId = this.requireUserId("save settings");
-        if (userId == null) {
-            return;
-        }
+        // Captured here on the UI thread: the supplier runs off it, and the session may end meanwhile.
+        final var credentials = this.authService.currentSessionCredentials();
         final var updates =
                 List.of(new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_PREFIX, questionPrefixArea.getValue()),
                         new AiConfigUpdateDto(AiConfigKeys.PROMPT_QUESTION_POSTFIX, questionPostfixArea.getValue()),
                         new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_PREFIX, tutoringPrefixArea.getValue()),
                         new AiConfigUpdateDto(AiConfigKeys.PROMPT_TUTORING_POSTFIX, tutoringPostfixArea.getValue()));
         saveBtn.setEnabled(false);
-        final var _ = CompletableFuture
-                .supplyAsync(() -> this.persistConfig("Prompts", updates, userId), this.managedExecutor)
-                .thenAccept(success -> {
-                    final var _ = ui.access(() -> {
-                        saveBtn.setEnabled(true);
-                        if (success) {
-                            NotificationUtil.showSuccess("Prompts configuration updated successfully");
-                        } else {
-                            NotificationUtil.showError("Error saving configuration. Please try again later.");
-                        }
-                    });
-                }).exceptionally(ex -> {
-                    final var _ = ui.access(() -> {
-                        NotificationUtil.showError("Error saving configuration. Please try again later.");
-                        LOG.errorf(ex, "Error saving Prompts config");
-                        saveBtn.setEnabled(true);
-                    });
-                    return null;
-                });
-    }
-
-    private boolean persistConfig(final String label, final List<AiConfigUpdateDto> updates, final Long userId) {
-        try {
-            this.aiConfigService.updateMultipleConfigs(updates, userId);
-            LOG.infof("%s config saved", label);
-            return true;
-        } catch (final Exception e) {
-            LOG.errorf(e, "Error saving %s config", label);
-            return false;
-        }
+        AsyncDataLoader.load(() -> {
+            this.aiConfigService.updateMultipleConfigs(updates, credentials);
+            return Boolean.TRUE;
+        }, this, ignored -> {
+            saveBtn.setEnabled(true);
+            NotificationUtil.showSuccess("Prompts configuration updated successfully");
+        }, () -> saveBtn.setEnabled(true), "Error saving configuration. Please try again later.");
     }
 
     private static String temperatureOrDefault(final NumberField field) {

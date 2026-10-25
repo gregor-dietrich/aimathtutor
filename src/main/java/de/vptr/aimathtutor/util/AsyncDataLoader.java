@@ -109,8 +109,8 @@ public final class AsyncDataLoader {
                         NotificationUtil.showError(denied.getMessage() != null ? denied.getMessage() : errorMessage);
                     } else if (cause instanceof TimeoutException) {
                         LOG.warnf("Async call timed out after %s: %s", timeout, errorMessage);
-                        NotificationUtil.showError(errorMessage
-                                + ". The server did not respond in time; reload the page to see the current state.");
+                        NotificationUtil.showError(errorMessage + (errorMessage.endsWith(".") ? "" : ".")
+                                + " The server did not respond in time; reload the page to see the current state.");
                     } else {
                         LOG.errorf(cause, "Async load failed: %s", errorMessage);
                         NotificationUtil.showError(errorMessage);

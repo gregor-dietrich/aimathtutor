@@ -357,8 +357,13 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
     withholds forgiveness and never touches a lock.
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded
   strings cause state leakage (`@ApplicationScoped`).
-- **AdminConfigView save methods must null-check `authService.getUserId()`.**
-  Use `requireUserId()` helper.
+- **AdminConfigView saves pass session credentials, never a user ID.** Each
+  save or reset captures `AuthService.currentSessionCredentials()` on the UI
+  thread when the user acts and runs through `AsyncDataLoader`; `AiConfigService`
+  checks them with `PermissionService.requireAiConfigEdit(credentials)` in a
+  short transaction before it validates any value or URL (so an ended or
+  unauthorised session never triggers a DNS lookup) and again in the write's
+  transaction.
 - **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to
   `StartupEvent`**, even though Maven builds log a Quarkus warning recommending
   it. Flyway (with a dev/test profile's clean-at-start) and Hibernate's schema
@@ -410,15 +415,14 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   permission error; views call every write those checks guard through
   `ServiceRejectionUtil`. A view keeps the user's ID for display only; an ID it
   resolves on the UI thread for one action may go with that action (the AI
-  rate-limit key and interaction log, the lesson list's completion badges, and
-  `AdminConfigView.requireUserId()`, whose worker re-checks the user through
-  `PermissionService.requireAiConfigEdit`).
+  rate-limit key and interaction log, and the lesson list's completion badges).
   Admin reads of user data (user, group, comment, session and exercise listings,
   session details and progress summaries) call
   `PermissionService.requireAdminView(credentials)`; the dashboard's aggregate
   counts and charts do not, nor do lesson listings, which hold no user data and
-  which the student lesson list shares. An AI call or AI-config save
-  already handed to its worker is not cancelled by a revocation during the
+  which the student lesson list shares. AI-config writes check the caller with
+  `PermissionService.requireAiConfigEdit(credentials)`. An AI call or AI-config
+  save already handed to its worker is not cancelled by a revocation during the
   provider call, and rows a page loaded while its user had access stay readable
   in it until it reloads or navigates: only new loads are refused. Every user
   write that can end sessions fires `UserAccountChangedEvent`; `AuthService`

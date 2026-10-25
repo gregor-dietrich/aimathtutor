@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,14 +18,16 @@ import org.junit.jupiter.api.Test;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
-import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 
 /**
  * Unit tests for AiConfigService. Tests configuration CRUD operations, type conversions, validation, and caching.
@@ -43,8 +47,11 @@ class AiConfigServiceTest {
 
     private UserEntity adminUser;
 
+    private SessionCredentials credentials;
+
     @BeforeEach
     @Transactional
+    @SuppressWarnings("NullAway")
     void setUp() {
         // Clean up any test configuration records from previous test runs
         // This ensures tests are isolated and don't fail on subsequent runs
@@ -61,25 +68,11 @@ class AiConfigServiceTest {
             }
         }
 
-        // Setup: Get or create admin user for testing
-        final var adminRank = new UserRankEntity();
-        adminRank.id = 1L;
-        adminRank.name = "Admin";
-        adminRank.version = 0L;
-
-        this.adminUser = new UserEntity();
-        this.adminUser.id = 1L;
-        this.adminUser.username = "testadmin";
-        this.adminUser.rank = adminRank;
-        this.adminUser.version = 0L;
-
-        // Ensure admin user exists
-        final var existing = this.userRepository.findById(1L);
-        if (existing == null) {
-            this.userRepository.persist(this.adminUser);
-        } else {
-            this.adminUser = existing;
-        }
+        // The seeded admin, so the session credentials' stamp matches its stored password hash
+        this.adminUser =
+                Objects.requireNonNull(this.userRepository.findByUsername("admin"), "Seeded admin should exist");
+        this.credentials = new SessionCredentials(this.adminUser.publicId,
+                AuthService.credentialStamp(this.adminUser.password), UUID.randomUUID().toString());
     }
 
     @Test
@@ -200,7 +193,7 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // Update it
-        this.aiConfigService.updateConfig("update.test", "updated_value", this.adminUser.id);
+        this.aiConfigService.updateConfig("update.test", "updated_value", this.credentials);
 
         // Verify update
         final var updated = this.aiConfigService.getConfigValue("update.test", "NOT_FOUND");
@@ -227,7 +220,7 @@ class AiConfigServiceTest {
                 new AiConfigUpdateDto("batch.config3", "new_value3") // New config
         );
 
-        this.aiConfigService.updateMultipleConfigs(updates, this.adminUser.id);
+        this.aiConfigService.updateMultipleConfigs(updates, this.credentials);
 
         // Verify all updates
         assertEquals("new_value1", this.aiConfigService.getConfigValue("batch.config1", "NOT_FOUND"));
@@ -248,14 +241,14 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // Valid integer update
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "200", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "200", this.credentials));
 
         // Invalid integer (not a number)
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.integer", "not_a_number", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.integer", "not_a_number", this.credentials));
 
         // Empty value is allowed
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -270,14 +263,14 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // Valid double update
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "2.71", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "2.71", this.credentials));
 
         // Invalid double (not a number)
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.double", "not_a_double", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.double", "not_a_double", this.credentials));
 
         // Empty value is allowed
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -292,17 +285,17 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // Valid boolean values
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "true", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "false", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "1", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "0", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "true", this.credentials));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "false", this.credentials));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "1", this.credentials));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "0", this.credentials));
 
         // Invalid boolean value
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.boolean", "maybe", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.boolean", "maybe", this.credentials));
 
         // Empty value is allowed
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -317,12 +310,12 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // STRING type accepts any value (no format constraints)
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "anything goes!", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "123", this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "true", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "anything goes!", this.credentials));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "123", this.credentials));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "true", this.credentials));
 
         // Empty value is allowed
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.string", "", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -340,7 +333,7 @@ class AiConfigServiceTest {
         assertEquals("original", value);
 
         // Update the config
-        this.aiConfigService.updateConfig("cache.test", "updated", this.adminUser.id);
+        this.aiConfigService.updateConfig("cache.test", "updated", this.credentials);
 
         // Get value again (should reflect updated value due to cache invalidation)
         value = this.aiConfigService.getConfigValue("cache.test", "NOT_FOUND");
@@ -373,8 +366,8 @@ class AiConfigServiceTest {
     @Transactional
     void testNullValidation() {
         // Null key must throw exception
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig(null, "value", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -388,15 +381,15 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // Valid temperature
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.temperature", "1.5", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.temperature", "1.5", this.credentials));
 
         // Too high
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.temperature", "3.0", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.temperature", "3.0", this.credentials));
 
         // Too low
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.credentials));
     }
 
     @Test
@@ -459,8 +452,8 @@ class AiConfigServiceTest {
     @DisplayName("updateMultipleConfigs with null/empty list does nothing")
     @Transactional
     void testUpdateMultipleConfigs_nullOrEmpty() {
-        assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(null, this.adminUser.id));
-        assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(List.of(), this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(null, this.credentials));
+        assertDoesNotThrow(() -> this.aiConfigService.updateMultipleConfigs(List.of(), this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -468,10 +461,10 @@ class AiConfigServiceTest {
     @DisplayName("resetToDefaults restores factory defaults")
     @Transactional
     void testResetToDefaults() {
-        this.aiConfigService.updateConfig(AiConfigKeys.AI_TUTOR_ENABLED, "false", this.adminUser.id);
+        this.aiConfigService.updateConfig(AiConfigKeys.AI_TUTOR_ENABLED, "false", this.credentials);
         assertEquals("false", this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, ""));
 
-        this.aiConfigService.resetToDefaults(this.adminUser.id);
+        this.aiConfigService.resetToDefaults(this.credentials);
 
         assertEquals("true", this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, ""));
     }
@@ -494,17 +487,8 @@ class AiConfigServiceTest {
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.nonoptional", "", this.adminUser.id));
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
-    @DisplayName("validateConfigValue - configKey with null key throws")
-    @Transactional
-    void testUpdateConfig_nullKey() {
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig(null, "value", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.nonoptional", "", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -514,11 +498,11 @@ class AiConfigServiceTest {
     void testUrlValidationUnresolvableHostOllamaAllowlist() {
         // 'ollama' is in the default allow-list
         assertDoesNotThrow(
-                () -> this.aiConfigService.updateConfig("ollama.base-url", "http://ollama:11434/", this.adminUser.id));
+                () -> this.aiConfigService.updateConfig("ollama.base-url", "http://ollama:11434/", this.credentials));
 
         // 'nonexistent-host' is NOT in the allow-list and won't resolve
-        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("ollama.base-url",
-                "http://nonexistent-host.invalid/", this.adminUser.id));
+        assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("ollama.base-url",
+                "http://nonexistent-host.invalid/", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
@@ -526,8 +510,8 @@ class AiConfigServiceTest {
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
     @Transactional
     void testUrlValidationUnresolvableHostRejectedForNonOllama() {
-        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("google.base-url",
-                "https://nonexistent-google-host.invalid/", this.adminUser.id));
+        assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("google.base-url",
+                "https://nonexistent-google-host.invalid/", this.credentials));
     }
 
     @Test
@@ -590,8 +574,8 @@ class AiConfigServiceTest {
     @Transactional
     void testUpdateConfigGenericUrlKeyRejectsLoopback() {
         // 'custom.url' does not match any provider keyword, so the generic-URL fallback is exercised.
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("custom.url", "http://127.0.0.1:8080/", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("custom.url", "http://127.0.0.1:8080/", this.credentials));
     }
 
     @Test
@@ -627,14 +611,14 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(entity);
 
         // Valid max-tokens
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.max-tokens", "4096", this.adminUser.id));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.max-tokens", "4096", this.credentials));
 
         // Too high
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.max-tokens", "10000", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.max-tokens", "10000", this.credentials));
 
         // Too low
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("test.max-tokens", "0", this.adminUser.id));
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.max-tokens", "0", this.credentials));
     }
 }
