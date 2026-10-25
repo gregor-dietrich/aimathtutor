@@ -126,8 +126,8 @@ public abstract class AbstractAdminView extends VerticalLayout implements Before
 
     /**
      * Determines whether the current user is authorised to access this admin view. The default implementation requires
-     * {@code has(Permission.ADMIN_VIEW)} on the user's rank, which {@link #isAuthOk} has loaded into {@link #callerRank}
-     * (once per navigation).
+     * {@code has(Permission.ADMIN_VIEW)} on the user's rank, which {@link #isAuthOk} has loaded into
+     * {@link #callerRank} (once per navigation).
      *
      * <p>
      * Subclasses with different permission requirements (e.g. {@link AdminConfigView}) can override this method.
