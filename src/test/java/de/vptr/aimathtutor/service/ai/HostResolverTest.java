@@ -9,10 +9,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("HostResolver Tests")
-@SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 class HostResolverTest {
 
     @Test
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
     @DisplayName("resolveAll returns the address of an address literal")
     void testResolveAllLiteral() throws UnknownHostException {
         assertArrayEquals(new InetAddress[] { InetAddress.ofLiteral("203.0.113.10") },

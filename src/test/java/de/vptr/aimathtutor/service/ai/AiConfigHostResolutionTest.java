@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -73,10 +74,7 @@ class AiConfigHostResolutionTest {
         when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
                 .thenReturn(new InetAddress[] { InetAddress.ofLiteral(address) });
 
-        final var ex = assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.validateProviderApiUrl("https://generativelanguage.googleapis.com",
-                        AiConfigService.ProviderType.GOOGLE));
-        assertTrue(Objects.requireNonNull(ex.getMessage()).contains("non-public address"), ex.getMessage());
+        assertGoogleUrlRejected("non-public address");
     }
 
     @Test
@@ -92,7 +90,7 @@ class AiConfigHostResolutionTest {
 
         final var ex = assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
                 .validateProviderApiUrl("https://api.openai.com/v1", AiConfigService.ProviderType.OPENAI));
-        assertTrue(Objects.requireNonNull(ex.getMessage()).contains("non-public address"), ex.getMessage());
+        assertMessageContains(ex, "non-public address");
     }
 
     @Test
@@ -101,13 +99,20 @@ class AiConfigHostResolutionTest {
         when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
                 .thenThrow(new UnknownHostException("test"));
 
+        assertGoogleUrlRejected("could not be resolved");
+    }
+
+    private void assertGoogleUrlRejected(final String message) {
         final var ex = assertThrows(IllegalArgumentException.class,
                 () -> this.aiConfigService.validateProviderApiUrl("https://generativelanguage.googleapis.com",
                         AiConfigService.ProviderType.GOOGLE));
-        assertTrue(Objects.requireNonNull(ex.getMessage()).contains("could not be resolved"), ex.getMessage());
+        assertMessageContains(ex, message);
     }
 
-    @SuppressWarnings("NullAway")
+    private static void assertMessageContains(final Exception ex, final String expected) {
+        assertTrue(Objects.requireNonNull(ex.getMessage()).contains(expected), ex.getMessage());
+    }
+
     @Test
     @DisplayName("updateConfig - generic URL key whose host resolves to a private address is refused")
     @TestTransaction
@@ -115,10 +120,34 @@ class AiConfigHostResolutionTest {
         when(this.hostResolver.resolveAll("custom.example"))
                 .thenReturn(new InetAddress[] { InetAddress.ofLiteral("10.0.0.1") });
 
+        assertGenericUrlRefused("Private IP addresses are not allowed");
+    }
+
+    @Test
+    @DisplayName("updateConfig - generic URL key whose host does not resolve is refused")
+    @TestTransaction
+    void testUpdateConfigGenericUrlKeyRejectsUnresolvableHost() throws UnknownHostException {
+        when(this.hostResolver.resolveAll("custom.example")).thenThrow(new UnknownHostException("test"));
+
+        assertGenericUrlRefused("URL host must resolve to a public address");
+    }
+
+    @Test
+    @DisplayName("updateConfig - generic URL key whose host resolves to a public address is saved")
+    @TestTransaction
+    void testUpdateConfigGenericUrlKeyAcceptsPublicResolution() throws UnknownHostException {
+        when(this.hostResolver.resolveAll("custom.example"))
+                .thenReturn(new InetAddress[] { InetAddress.ofLiteral(TestHostResolver.PUBLIC_ADDRESS) });
+
+        this.aiConfigService.updateConfig("custom.url", "https://custom.example/", this.credentials);
+
+        assertEquals("https://custom.example/", this.aiConfigService.getConfigValue("custom.url", null));
+    }
+
+    private void assertGenericUrlRefused(final String message) {
         final var ex = assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("custom.url", "https://custom.example/", this.credentials));
-        assertTrue(Objects.requireNonNull(ex.getMessage()).contains("Private IP addresses are not allowed"),
-                ex.getMessage());
+        assertMessageContains(ex, message);
     }
 
     @Test

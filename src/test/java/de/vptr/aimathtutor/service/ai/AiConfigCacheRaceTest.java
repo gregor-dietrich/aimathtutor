@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +37,6 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.narayana.jta.QuarkusTransactionException;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 
@@ -69,22 +69,18 @@ class AiConfigCacheRaceTest {
 
     private final String key = "test.cache-race-" + UUID.randomUUID();
 
-    @Nullable
     private SessionCredentials credentials;
 
     static Stream<BiConsumer<AiConfigCacheRaceTest, String>> writes() {
         return Stream.<BiConsumer<AiConfigCacheRaceTest, String>>of(
-                (t, value) -> t.aiConfigService.updateConfig(t.key, value, t.credentials()),
+                (t, value) -> t.aiConfigService.updateConfig(t.key, value, t.credentials),
                 (t, value) -> t.aiConfigService.updateMultipleConfigs(List.of(new AiConfigUpdateDto(t.key, value)),
-                        t.credentials()));
-    }
-
-    private SessionCredentials credentials() {
-        return Objects.requireNonNull(this.credentials, "seed() not called");
+                        t.credentials));
     }
 
     /** Commits the key with V0 and the admin's credentials, each in a short transaction of its own. */
-    private void seed() {
+    @BeforeEach
+    void seed() {
         this.credentials = QuarkusTransaction.requiringNew().call(() -> {
             final var entity = new AiConfigEntity();
             entity.configKey = this.key;
@@ -101,8 +97,7 @@ class AiConfigCacheRaceTest {
 
     @AfterEach
     void deleteKey() {
-        QuarkusTransaction.requiringNew()
-                .run(() -> this.aiConfigRepository.findByConfigKey(this.key).ifPresent(this.entityManager::remove));
+        AiConfigTestSupport.deleteCommittedKey(this.aiConfigRepository, this.entityManager, this.key);
         this.aiConfigService.clearCache();
     }
 
@@ -110,7 +105,6 @@ class AiConfigCacheRaceTest {
     @MethodSource("writes")
     @DisplayName("A fill that read the old row before a commit and caches after it does not keep the old value")
     void fillCachingAfterCommitIsDiscarded(final BiConsumer<AiConfigCacheRaceTest, String> write) throws Exception {
-        this.seed();
         final var readDone = new CountDownLatch(1);
         final var committed = new CountDownLatch(1);
         final var reader = new Thread[1];
@@ -140,13 +134,12 @@ class AiConfigCacheRaceTest {
     @Test
     @DisplayName("A value read while the write is uncommitted is not kept after the commit")
     void readBeforeCommitIsEvictedAfterIt() throws Exception {
-        this.seed();
         final var written = new CountDownLatch(1);
         final var release = new CountDownLatch(1);
 
         try (var executor = Executors.newSingleThreadExecutor()) {
             final Future<?> writer = executor.submit(() -> QuarkusTransaction.requiringNew().run(() -> {
-                this.aiConfigService.updateConfig(this.key, V1, this.credentials());
+                this.aiConfigService.updateConfig(this.key, V1, this.credentials);
                 written.countDown();
                 try {
                     assertTrue(release.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "The writer was never released");
@@ -167,11 +160,9 @@ class AiConfigCacheRaceTest {
     @Test
     @DisplayName("A value read inside a transaction that rolls back is not left cached")
     void rollbackEvictsTheUncommittedValue() {
-        this.seed();
-
         // Running to the end of a transaction marked for rollback reports the rollback as an exception
         assertThrows(QuarkusTransactionException.class, () -> QuarkusTransaction.requiringNew().run(() -> {
-            this.aiConfigService.updateConfig(this.key, V1, this.credentials());
+            this.aiConfigService.updateConfig(this.key, V1, this.credentials);
             assertEquals(V1, this.aiConfigService.getConfigValue(this.key, null));
             QuarkusTransaction.setRollbackOnly();
         }));
@@ -182,8 +173,6 @@ class AiConfigCacheRaceTest {
     @Test
     @DisplayName("A fill inside a transaction already marked for rollback is not cached")
     void fillInsideRollbackOnlyTransactionIsNotCached() {
-        this.seed();
-
         assertThrows(QuarkusTransactionException.class, () -> QuarkusTransaction.requiringNew().run(() -> {
             // Enlists the connection, so the write is not refused for lack of a resource
             try (var connection = this.dataSource.getConnection()) {
@@ -192,7 +181,7 @@ class AiConfigCacheRaceTest {
                 throw new IllegalStateException(e);
             }
             QuarkusTransaction.setRollbackOnly();
-            this.aiConfigService.updateConfig(this.key, V1, this.credentials());
+            this.aiConfigService.updateConfig(this.key, V1, this.credentials);
             assertEquals(V1, this.aiConfigService.getConfigValue(this.key, null));
         }));
 

@@ -14,23 +14,18 @@ import jakarta.enterprise.context.ApplicationScoped;
  */
 @Mock
 @ApplicationScoped
-@SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class TestHostResolver extends HostResolver {
 
     /** Google Public DNS: globally routable unicast, in no IANA special-purpose registry entry. */
+    @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
     public static final String PUBLIC_ADDRESS = "8.8.8.8";
 
     @Override
     public InetAddress[] resolveAll(final String host) throws UnknownHostException {
-        return new InetAddress[] { InetAddress.ofLiteral(isLiteral(host) ? host : PUBLIC_ADDRESS) };
-    }
-
-    private static boolean isLiteral(final String host) {
         try {
-            InetAddress.ofLiteral(host);
-            return true;
+            return new InetAddress[] { InetAddress.ofLiteral(host) };
         } catch (final IllegalArgumentException e) {
-            return false;
+            return new InetAddress[] { InetAddress.ofLiteral(PUBLIC_ADDRESS) };
         }
     }
 }

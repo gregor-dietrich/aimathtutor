@@ -55,4 +55,14 @@ class AiConfigCacheTest {
         assertNull(this.cache.get("a"));
         assertEquals("2", this.cache.get("b"));
     }
+
+    @Test
+    @DisplayName("A clear removes existing entries")
+    void clearRemovesEntries() {
+        this.cache.putIfCurrent("a", "1", this.cache.generation());
+        this.cache.putIfCurrent("b", "2", this.cache.generation());
+        this.cache.clear();
+        assertNull(this.cache.get("a"));
+        assertNull(this.cache.get("b"));
+    }
 }

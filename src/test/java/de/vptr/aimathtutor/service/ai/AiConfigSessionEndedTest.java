@@ -50,7 +50,9 @@ class AiConfigSessionEndedTest {
 
     private static final String KEY = AiConfigKeys.GOOGLE_TEMPERATURE;
     private static final String SEEDED_VALUE = "1.7";
-    private static final String BLOCKED_URL_KEY = AiConfigKeys.OLLAMA_API_URL;
+    /** A generic URL key: its host is resolved by the validation, so a resolver call shows validation ran. */
+    private static final String EXTERNAL_URL_KEY = "custom.url";
+    private static final String EXTERNAL_URL = "https://attacker.example/";
 
     @Inject
     AiConfigService aiConfigService;
@@ -74,8 +76,8 @@ class AiConfigSessionEndedTest {
     static Stream<Arguments> writes() {
         final BiConsumer<AiConfigSessionEndedTest, SessionCredentials> save = (t,
                 credentials) -> t.aiConfigService.updateMultipleConfigs(List.of(new AiConfigUpdateDto(KEY, "0.3"),
-                        // Would fail URL validation if the session check did not come first
-                        new AiConfigUpdateDto(BLOCKED_URL_KEY, "http://evil.invalid")), credentials);
+                        // Would resolve its host if the session check did not come first
+                        new AiConfigUpdateDto(EXTERNAL_URL_KEY, EXTERNAL_URL)), credentials);
         final BiConsumer<AiConfigSessionEndedTest, SessionCredentials> reset =
                 (t, credentials) -> t.aiConfigService.resetToDefaults(credentials);
         final Consumer<UserEntity> stale = admin -> {
@@ -132,8 +134,7 @@ class AiConfigSessionEndedTest {
         if (key == null) {
             return;
         }
-        QuarkusTransaction.requiringNew()
-                .run(() -> this.aiConfigRepository.findByConfigKey(key).ifPresent(this.entityManager::remove));
+        AiConfigTestSupport.deleteCommittedKey(this.aiConfigRepository, this.entityManager, key);
     }
 
     @ParameterizedTest(name = "{0}: {2}")
@@ -146,7 +147,7 @@ class AiConfigSessionEndedTest {
         final var credentials = this.credentialsFor(admin, staleStamp);
         change.accept(admin);
 
-        // The session refusal arriving instead of the URL validation's rejection proves authorisation runs first
+        // The session refusal, with no host resolved, proves authorisation runs before validation
         final var ex = assertThrows(ValidationException.class, () -> write.accept(this, credentials));
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
 
@@ -155,7 +156,7 @@ class AiConfigSessionEndedTest {
         final var unchanged = this.aiConfigRepository.findByConfigKey(KEY).orElseThrow();
         assertEquals(SEEDED_VALUE, unchanged.configValue);
         assertNull(unchanged.lastUpdatedBy);
-        // The reset's default Google and OpenAI URLs would be resolved if validation ran first
+        // The save's external URL would be resolved, and so would the reset's default URLs, if validation ran first
         verifyNoInteractions(this.hostResolver);
     }
 
@@ -178,12 +179,12 @@ class AiConfigSessionEndedTest {
     @DisplayName("Without a caller transaction, an ended session is refused with the session-ended message")
     void endedSessionIsRefusedWithoutCallerTransaction() {
         final var credentials = this.committedCredentials(true);
-        final var updates = List.of(new AiConfigUpdateDto(KEY, "0.3"));
+        final var updates = List.of(new AiConfigUpdateDto(EXTERNAL_URL_KEY, EXTERNAL_URL));
 
         // A broken transaction interceptor would surface as a TransactionalException instead
         for (final Runnable write : List.<Runnable>of(
                 () -> this.aiConfigService.updateMultipleConfigs(updates, credentials),
-                () -> this.aiConfigService.updateConfig(KEY, "0.3", credentials),
+                () -> this.aiConfigService.updateConfig(EXTERNAL_URL_KEY, EXTERNAL_URL, credentials),
                 () -> this.aiConfigService.resetToDefaults(credentials))) {
             final var ex = assertThrows(ValidationException.class, write::run);
             assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());

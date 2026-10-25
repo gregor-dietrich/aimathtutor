@@ -492,16 +492,16 @@ class AiConfigServiceTest {
         assertDoesNotThrow(
                 () -> this.aiConfigService.updateConfig("ollama.base-url", "http://ollama:11434/", this.credentials));
 
-        // 'nonexistent-host' is NOT in the allow-list and won't resolve
+        // 'nonexistent-host' is NOT in the allow-list and is rejected without being resolved
         assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("ollama.base-url",
                 "http://nonexistent-host.invalid/", this.credentials));
     }
 
     @SuppressWarnings("NullAway")
     @Test
-    @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
+    @DisplayName("URL validation - host outside the provider allow-list rejected for non-Ollama providers")
     @TestTransaction
-    void testUrlValidationUnresolvableHostRejectedForNonOllama() {
+    void testUrlValidationUnlistedHostRejectedForNonOllama() {
         assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("google.base-url",
                 "https://nonexistent-google-host.invalid/", this.credentials));
     }
@@ -566,8 +566,10 @@ class AiConfigServiceTest {
     @TestTransaction
     void testUpdateConfigGenericUrlKeyRejectsLoopback() {
         // 'custom.url' does not match any provider keyword, so the generic-URL fallback is exercised.
-        assertThrows(ValidationException.class,
-                () -> this.aiConfigService.updateConfig("custom.url", "http://127.0.0.1:8080/", this.credentials));
+        final var ex = assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("custom.url", "https://127.0.0.1:8080/", this.credentials));
+        assertTrue(Objects.requireNonNull(ex.getMessage()).contains("Loopback addresses are not allowed"),
+                ex.getMessage());
     }
 
     @Test
