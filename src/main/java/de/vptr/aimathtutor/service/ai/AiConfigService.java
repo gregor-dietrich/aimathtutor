@@ -536,7 +536,8 @@ public class AiConfigService {
     /**
      * Validates that a provider API URL is safe to call. Used by {@link #validateUrlSafe} and immediately before HTTP
      * calls. This method re-runs SSRF checks immediately before each HTTP request to close the TOCTOU window between
-     * admin save and use. Ollama is allow-list-only; private addresses are permitted because Docker service names like
+     * admin save and use. The HTTP client resolves the host again when it connects, so DNS rebinding is narrowed, not
+     * closed (#293). Ollama is allow-list-only; private addresses are permitted because Docker service names like
      * {@code ollama} intentionally resolve into the container network. The allow-list itself is the trust boundary.
      *
      * @param url

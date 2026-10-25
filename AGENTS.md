@@ -658,7 +658,7 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 - **API keys:** `app.google.api.key`, `app.openai.api.key`.
 - **SSRF protection:** `app.security.allowed-ollama-hosts` — comma-separated
   list of permitted hostnames for Ollama (defaults to `ollama,localhost`).
-  Prevents SSRF via DNS rebinding.
+  It is the trust boundary for Ollama URLs, which skip the address check.
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
   and the optional OpenAI Organization ID — configured via Admin Settings UI
   at `/admin/config`. The Organization ID has no property/environment input.
