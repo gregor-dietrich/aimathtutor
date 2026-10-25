@@ -662,6 +662,15 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
   and the optional OpenAI Organization ID — configured via Admin Settings UI
   at `/admin/config`. The Organization ID has no property/environment input.
+- **Config cache:** `AiConfigService` caches values in `AiConfigCache`. A fill
+  caches only if no eviction happened since its read began (a generation taken
+  before the read); a write evicts its keys in its transaction and again in an
+  `AFTER_COMPLETION` observer of `AiConfigChangedEvent`, also on rollback, since
+  a read inside the writing transaction caches its uncommitted value. Do not
+  narrow that observer to `AFTER_SUCCESS` or drop the generation check;
+  `AiConfigCacheRaceTest` pins both.
+- **Host resolution:** the SSRF checks resolve hosts only through `HostResolver`;
+  tests replace it with `@InjectMock`, so no test resolves a real host name.
 
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on AI provider calls, sets 1s
