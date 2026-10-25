@@ -39,7 +39,8 @@ class ServiceCredentialsTransactionalTest {
                 .filter(method -> !method.isAnnotationPresent(Transactional.class)).map(Method::toGenericString)
                 .sorted().toList();
 
-        // MANDATORY for a guard that joins its caller's transaction, NEVER for one that must commit before it acts
+        // MANDATORY for a guard that joins its caller's transaction, NEVER for one that must commit before it acts,
+        // SUPPORTS for one that must hold no connection across slow work and opens its own short transactions inside
         assertTrue(missing.isEmpty(),
                 "Public service methods taking SessionCredentials need @Transactional: " + missing);
     }

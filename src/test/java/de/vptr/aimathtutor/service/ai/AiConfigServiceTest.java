@@ -27,6 +27,7 @@ import de.vptr.aimathtutor.service.security.AuthService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 
 /**
  * Unit tests for AiConfigService. Tests configuration CRUD operations, type conversions, validation, and caching.
@@ -243,7 +244,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.integer", "200", this.credentials));
 
         // Invalid integer (not a number)
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.integer", "not_a_number", this.credentials));
 
         // Empty value is allowed
@@ -265,7 +266,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.double", "2.71", this.credentials));
 
         // Invalid double (not a number)
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.double", "not_a_double", this.credentials));
 
         // Empty value is allowed
@@ -290,7 +291,7 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.boolean", "0", this.credentials));
 
         // Invalid boolean value
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.boolean", "maybe", this.credentials));
 
         // Empty value is allowed
@@ -383,11 +384,11 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.temperature", "1.5", this.credentials));
 
         // Too high
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.temperature", "3.0", this.credentials));
 
         // Too low
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.credentials));
     }
 
@@ -486,7 +487,7 @@ class AiConfigServiceTest {
         entity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(entity);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.nonoptional", "", this.credentials));
     }
 
@@ -509,7 +510,7 @@ class AiConfigServiceTest {
                 () -> this.aiConfigService.updateConfig("ollama.base-url", "http://ollama:11434/", this.credentials));
 
         // 'nonexistent-host' is NOT in the allow-list and won't resolve
-        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("ollama.base-url",
+        assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("ollama.base-url",
                 "http://nonexistent-host.invalid/", this.credentials));
     }
 
@@ -518,7 +519,7 @@ class AiConfigServiceTest {
     @DisplayName("URL validation - unresolvable hostname rejected for non-Ollama providers")
     @Transactional
     void testUrlValidationUnresolvableHostRejectedForNonOllama() {
-        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("google.base-url",
+        assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("google.base-url",
                 "https://nonexistent-google-host.invalid/", this.credentials));
     }
 
@@ -582,7 +583,7 @@ class AiConfigServiceTest {
     @Transactional
     void testUpdateConfigGenericUrlKeyRejectsLoopback() {
         // 'custom.url' does not match any provider keyword, so the generic-URL fallback is exercised.
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("custom.url", "http://127.0.0.1:8080/", this.credentials));
     }
 
@@ -622,11 +623,11 @@ class AiConfigServiceTest {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("test.max-tokens", "4096", this.credentials));
 
         // Too high
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.max-tokens", "10000", this.credentials));
 
         // Too low
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.max-tokens", "0", this.credentials));
     }
 }

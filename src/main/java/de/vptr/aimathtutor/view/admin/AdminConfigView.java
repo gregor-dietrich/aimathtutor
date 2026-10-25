@@ -352,14 +352,16 @@ public class AdminConfigView extends AbstractAdminView {
         saveBtn.setEnabled(false);
         testBtn.setEnabled(false);
         resetBtn.setEnabled(false);
-        AsyncDataLoader.load(() -> {
-            this.aiConfigService.updateMultipleConfigs(updates, credentials);
-            LOG.info("Provider config saved");
-            return Boolean.TRUE;
-        }, this, ignored -> {
-            saveBtn.setEnabled(true);
+        // updateEnabledState re-enables the save and test buttons
+        final Runnable reenable = () -> {
             resetBtn.setEnabled(true);
             updateEnabledState.run();
+        };
+        AsyncDataLoader.load(() -> {
+            this.aiConfigService.updateMultipleConfigs(updates, credentials);
+            return Boolean.TRUE;
+        }, this, ignored -> {
+            reenable.run();
             if (!withTest) {
                 NotificationUtil.showSuccess("Provider configuration updated successfully");
             } else if ("google".equals(provider)) {
@@ -369,11 +371,7 @@ public class AdminConfigView extends AbstractAdminView {
             } else if ("ollama".equals(provider)) {
                 this.testOllamaConnection();
             }
-        }, () -> {
-            saveBtn.setEnabled(true);
-            resetBtn.setEnabled(true);
-            updateEnabledState.run();
-        }, "Error saving configuration. Please try again later.");
+        }, reenable, "Error saving configuration. Please try again later.");
     }
 
     private void onProviderReset(final Button saveBtn, final Button testBtn, final Button resetBtn,
@@ -388,10 +386,8 @@ public class AdminConfigView extends AbstractAdminView {
             return Boolean.TRUE;
         }, this, ignored -> {
             NotificationUtil.showSuccess("All settings reset to defaults");
-            LOG.infof("Reset all AI configs to defaults");
             this.buildUi();
         }, () -> {
-            saveBtn.setEnabled(true);
             resetBtn.setEnabled(true);
             updateEnabledState.run();
         }, "Error resetting defaults. Please try again later.");
@@ -449,7 +445,6 @@ public class AdminConfigView extends AbstractAdminView {
         saveBtn.setEnabled(false);
         AsyncDataLoader.load(() -> {
             this.aiConfigService.updateMultipleConfigs(updates, credentials);
-            LOG.info("Prompts config saved");
             return Boolean.TRUE;
         }, this, ignored -> {
             saveBtn.setEnabled(true);

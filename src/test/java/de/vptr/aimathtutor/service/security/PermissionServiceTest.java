@@ -45,7 +45,8 @@ class PermissionServiceTest {
     @InjectMock
     UserRepository userRepository;
 
-    // A spy, because the requireAdminView tests below run the real AuthService against the mocked repository.
+    // A spy, because the requireAdminView and requireAiConfigEdit tests below run the real AuthService against the
+    // mocked repository.
     @InjectSpy
     AuthService authService;
 
@@ -431,6 +432,16 @@ class PermissionServiceTest {
         final var ex = assertThrows(ValidationException.class, () -> this.permissionService.requireAiConfigEdit(stale));
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
         assertThrows(ValidationException.class, () -> this.permissionService.requireAiConfigEdit(null));
+    }
+
+    @Test
+    @DisplayName("requireAiConfigEdit refuses a caller with no transaction")
+    void requireAiConfigEditRequiresTransaction() {
+        final var rank = this.buildRank(Permission.AI_CONFIG_EDIT);
+        final var user = this.stubUser(rank);
+
+        assertThrows(TransactionalException.class,
+                () -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
     }
 
     @Test

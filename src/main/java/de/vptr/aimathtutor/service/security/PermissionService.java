@@ -4,7 +4,6 @@ import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
-import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,9 +24,6 @@ public class PermissionService {
 
     @Inject
     UserRankService userRankService;
-
-    @Inject
-    UserRepository userRepository;
 
     @Inject
     AuthService authService;

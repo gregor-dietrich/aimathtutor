@@ -247,8 +247,8 @@ public class AiConfigService {
 
     /**
      * Updates a single configuration value. Validates the input before persisting. Starts no transaction of its own
-     * ({@code SUPPORTS}, which only declares that contract): the URL validation's DNS resolution must not hold a
-     * connection.
+     * ({@code SUPPORTS}): the URL validation's DNS resolution must not hold a connection. Inside a caller's transaction
+     * it runs in that one, and any exception it throws marks it for rollback.
      *
      * @param configKey
      *            the configuration key to update
@@ -258,11 +258,9 @@ public class AiConfigService {
      *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
      *            null
      * @throws ValidationException
-     *             if the session has ended
+     *             if the session has ended or validation fails
      * @throws PermissionDeniedException
      *             if the user's rank lacks the permission
-     * @throws IllegalArgumentException
-     *             if validation fails
      */
     @Transactional(TxType.SUPPORTS)
     public void updateConfig(final String configKey, final String configValue,
@@ -277,14 +275,7 @@ public class AiConfigService {
         // transaction this runs in a short one of its own, closed before any validation or DNS lookup.
         this.requireConfigEditPermission(credentials);
 
-        this.validateConfigValue(configKey, configValue);
-
-        // Perform URL validation outside of any DB transaction to avoid holding
-        // a connection during potentially slow DNS resolution.
-        if (configValue != null && !configValue.isBlank()
-                && (configKey.endsWith(".base-url") || configKey.endsWith(".url"))) {
-            this.validateUrlSafe(configKey, configValue);
-        }
+        this.validateUpdate(configKey, configValue);
 
         this.persistConfigUpdate(configKey, configValue, credentials);
     }
@@ -324,8 +315,8 @@ public class AiConfigService {
 
     /**
      * Updates multiple configuration values at once. All updates are validated before any are persisted. Starts no
-     * transaction of its own ({@code SUPPORTS}, which only declares that contract): the URL validation's DNS resolution
-     * must not hold a connection.
+     * transaction of its own ({@code SUPPORTS}): the URL validation's DNS resolution must not hold a connection. Inside
+     * a caller's transaction it runs in that one, and any exception it throws marks it for rollback.
      *
      * @param updates
      *            a list of {@link AiConfigUpdateDto} objects containing key-value pairs
@@ -333,11 +324,9 @@ public class AiConfigService {
      *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
      *            null
      * @throws ValidationException
-     *             if the session has ended
+     *             if the session has ended or any validation fails
      * @throws PermissionDeniedException
      *             if the user's rank lacks the permission
-     * @throws IllegalArgumentException
-     *             if any validation fails
      */
     @Transactional(TxType.SUPPORTS)
     public void updateMultipleConfigs(final List<AiConfigUpdateDto> updates,
@@ -353,14 +342,7 @@ public class AiConfigService {
 
         // Validate all updates first (outside any DB transaction)
         for (final AiConfigUpdateDto update : updates) {
-            if (update.configKey == null) {
-                throw new IllegalArgumentException("Configuration key cannot be null");
-            }
-            this.validateConfigValue(update.configKey, update.configValue);
-            if (update.configValue != null && !update.configValue.isBlank()
-                    && (update.configKey.endsWith(".base-url") || update.configKey.endsWith(".url"))) {
-                this.validateUrlSafe(update.configKey, update.configValue);
-            }
+            this.validateUpdate(update.configKey, update.configValue);
         }
 
         this.persistMultipleConfigUpdates(updates, credentials);
@@ -399,6 +381,27 @@ public class AiConfigService {
         }
 
         LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'", updates.size(), user.username);
+    }
+
+    /**
+     * Validates one update, outside any DB transaction so a slow DNS resolution holds no connection.
+     *
+     * @throws ValidationException
+     *             if the key is null or the value is invalid
+     */
+    private void validateUpdate(@Nullable final String configKey, @Nullable final String configValue) {
+        try {
+            if (configKey == null) {
+                throw new IllegalArgumentException("Configuration key cannot be null");
+            }
+            this.validateConfigValue(configKey, configValue);
+            if (configValue != null && !configValue.isBlank()
+                    && (configKey.endsWith(".base-url") || configKey.endsWith(".url"))) {
+                this.validateUrlSafe(configKey, configValue);
+            }
+        } catch (final IllegalArgumentException e) {
+            throw new ValidationException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -642,15 +645,15 @@ public class AiConfigService {
 
     /**
      * Resets all known AI configuration values to their factory defaults. Deliberately starts no transaction
-     * ({@code SUPPORTS}, which only declares that contract): {@link #updateMultipleConfigs} validates URLs (including
-     * DNS resolution) before opening its own transaction, and wrapping the whole reset in a transaction would hold a DB
-     * connection during that resolution.
+     * ({@code SUPPORTS}, joining a caller's): {@link #updateMultipleConfigs} validates URLs (including DNS resolution)
+     * before opening its write transaction, and wrapping the whole reset in a transaction would hold a DB connection
+     * during that resolution.
      *
      * @param credentials
      *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
      *            null
      * @throws ValidationException
-     *             if the session has ended
+     *             if the session has ended or validation fails
      * @throws PermissionDeniedException
      *             if the user's rank lacks the permission
      */
@@ -677,8 +680,8 @@ public class AiConfigService {
 
     /**
      * Authorizes the captured session for AI-config edits. Transactional because resolving the session user needs a
-     * transaction: called from the public methods it runs in its own short one, before any validation or DNS lookup;
-     * from the persist methods it joins theirs.
+     * transaction: called from the public methods with no caller transaction it runs in its own short one, before any
+     * validation or DNS lookup; from the persist methods it joins theirs.
      */
     @Transactional
     UserEntity requireConfigEditPermission(@Nullable final SessionCredentials credentials) {
