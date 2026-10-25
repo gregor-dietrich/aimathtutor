@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +23,7 @@ import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -51,15 +50,13 @@ class AiConfigServiceTest {
     private SessionCredentials credentials;
 
     @BeforeEach
-    @SuppressWarnings("NullAway")
     void setUp() {
         this.aiConfigService.clearCache();
 
         // The seeded admin, so the session credentials' stamp matches its stored password hash
         this.adminUser =
                 Objects.requireNonNull(this.userRepository.findByUsername("admin"), "Seeded admin should exist");
-        this.credentials = new SessionCredentials(this.adminUser.publicId,
-                AuthService.credentialStamp(this.adminUser.password), UUID.randomUUID().toString());
+        this.credentials = TestSessionCredentials.of(this.adminUser);
     }
 
     @AfterEach

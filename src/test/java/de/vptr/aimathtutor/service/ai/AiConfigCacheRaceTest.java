@@ -32,7 +32,7 @@ import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.narayana.jta.QuarkusTransactionException;
 import io.quarkus.test.junit.QuarkusTest;
@@ -89,8 +89,7 @@ class AiConfigCacheRaceTest {
             entity.category = ConfigCategory.GENERAL;
             this.aiConfigRepository.persist(entity);
             final var admin = Objects.requireNonNull(this.userRepository.findByUsername("admin"), "Seeded admin");
-            return new SessionCredentials(Objects.requireNonNull(admin.publicId),
-                    Objects.requireNonNull(AuthService.credentialStamp(admin.password)), UUID.randomUUID().toString());
+            return TestSessionCredentials.of(admin);
         });
         this.aiConfigService.clearCache();
     }

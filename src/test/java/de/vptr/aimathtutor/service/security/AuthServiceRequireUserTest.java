@@ -17,9 +17,9 @@ import org.mockito.MockedStatic;
 import com.vaadin.flow.server.VaadinSession;
 
 import de.vptr.aimathtutor.dto.SessionCredentials;
-import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -35,12 +35,6 @@ class AuthServiceRequireUserTest {
 
     @Inject
     private UserRepository userRepository;
-
-    @SuppressWarnings("NullAway")
-    private static SessionCredentials credentialsFor(final UserEntity user) {
-        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
-                UUID.randomUUID().toString());
-    }
 
     private void assertSessionEnded(final Executable call) {
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE, assertThrows(ValidationException.class, call).getMessage());
@@ -130,7 +124,7 @@ class AuthServiceRequireUserTest {
     void testRequireSessionUser_valid() {
         final var admin = this.userRepository.findByUsername("admin");
 
-        assertSame(admin, this.authService.requireSessionUser(credentialsFor(admin)));
+        assertSame(admin, this.authService.requireSessionUser(TestSessionCredentials.of(admin)));
     }
 
     @Test
@@ -168,7 +162,7 @@ class AuthServiceRequireUserTest {
         final var admin = this.userRepository.findByUsername("admin");
         admin.banned = true;
 
-        this.assertSessionEnded(() -> this.authService.requireSessionUser(credentialsFor(admin)));
+        this.assertSessionEnded(() -> this.authService.requireSessionUser(TestSessionCredentials.of(admin)));
     }
 
     @SuppressWarnings("NullAway")
@@ -179,6 +173,6 @@ class AuthServiceRequireUserTest {
         final var admin = this.userRepository.findByUsername("admin");
         admin.activated = false;
 
-        this.assertSessionEnded(() -> this.authService.requireSessionUser(credentialsFor(admin)));
+        this.assertSessionEnded(() -> this.authService.requireSessionUser(TestSessionCredentials.of(admin)));
     }
 }

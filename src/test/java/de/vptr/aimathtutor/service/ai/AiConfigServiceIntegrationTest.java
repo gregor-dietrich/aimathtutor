@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +22,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -46,9 +45,7 @@ class AiConfigServiceIntegrationTest {
 
     @SuppressWarnings("NullAway")
     private SessionCredentials credentialsFor(final String username) {
-        final var user = this.userRepository.findByUsername(username);
-        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
-                UUID.randomUUID().toString());
+        return TestSessionCredentials.of(this.userRepository.findByUsername(username));
     }
 
     @BeforeEach
