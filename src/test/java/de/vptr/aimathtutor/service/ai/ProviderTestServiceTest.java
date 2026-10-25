@@ -2,11 +2,16 @@ package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -16,15 +21,23 @@ import java.net.http.HttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.vptr.aimathtutor.dto.ProviderTestResultDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.validation.ValidationException;
 
 @QuarkusTest
 class ProviderTestServiceTest {
+
+    private static final SessionCredentials CREDENTIALS = new SessionCredentials("pub", "stamp", "key");
 
     @Inject
     ProviderTestService aiProviderTestService;
@@ -58,7 +71,7 @@ class ProviderTestServiceTest {
     @DisplayName("testGoogle returns success when response is 200")
     void testTestGoogle_success200() throws IOException, InterruptedException {
         this.setupGoogleMock(200);
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle();
+        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
         assertTrue(result.success);
         assertTrue(result.message.contains("successful"));
     }
@@ -68,7 +81,7 @@ class ProviderTestServiceTest {
     @DisplayName("testGoogle returns success when response is 401 (auth required)")
     void testTestGoogle_reachable401() throws IOException, InterruptedException {
         this.setupGoogleMock(401);
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle();
+        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
         assertTrue(result.success);
         assertTrue(result.message.contains("reachable"));
     }
@@ -93,7 +106,7 @@ class ProviderTestServiceTest {
         when(this.mockHttpClient.send(any(), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IOException("Connection refused"));
 
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle();
+        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
         assertFalse(result.success);
         assertTrue(result.message.contains("reach Google endpoint"));
     }
@@ -113,7 +126,7 @@ class ProviderTestServiceTest {
     @DisplayName("testCurrentProvider returns success when provider is seeded as mock")
     void testTestCurrentProvider_mock() {
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("mock");
-        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider(CREDENTIALS);
         assertNotNull(result);
         assertTrue(result.success, "Seeded provider is mock — should succeed");
     }
@@ -123,7 +136,7 @@ class ProviderTestServiceTest {
     @DisplayName("testGoogle returns failure when not configured")
     void testTestGoogle_notConfigured() {
         when(this.mockGoogleService.isConfigured()).thenReturn(false);
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle();
+        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
         assertNotNull(result);
         assertFalse(result.success);
         assertTrue(result.message.contains("not configured"));
@@ -134,7 +147,7 @@ class ProviderTestServiceTest {
     @DisplayName("testGoogle returns failure when SSRF guard rejects URL")
     void testTestGoogle_ssrfRejected() {
         this.setupSsrfMock(AiConfigKeys.GOOGLE_API_BASE_URL, AiConfigService.ProviderType.GOOGLE, true);
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle();
+        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
         assertFalse(result.success);
         assertTrue(result.message.contains("SSRF blocked"));
     }
@@ -144,7 +157,7 @@ class ProviderTestServiceTest {
     @DisplayName("testOpenAi returns failure when not configured")
     void testTestOpenAi_notConfigured() {
         when(this.mockOpenAiService.isConfigured()).thenReturn(false);
-        final ProviderTestResultDto result = this.aiProviderTestService.testOpenAi();
+        final ProviderTestResultDto result = this.aiProviderTestService.testOpenAi(CREDENTIALS);
         assertNotNull(result);
         assertFalse(result.success);
         assertTrue(result.message.contains("not configured"));
@@ -155,7 +168,7 @@ class ProviderTestServiceTest {
     @DisplayName("testOpenAi returns failure when SSRF guard rejects URL")
     void testTestOpenAi_ssrfRejected() {
         this.setupSsrfMock(AiConfigKeys.OPENAI_API_BASE_URL, AiConfigService.ProviderType.OPENAI, false);
-        final ProviderTestResultDto result = this.aiProviderTestService.testOpenAi();
+        final ProviderTestResultDto result = this.aiProviderTestService.testOpenAi(CREDENTIALS);
         assertFalse(result.success);
         assertTrue(result.message.contains("SSRF blocked"));
     }
@@ -178,7 +191,7 @@ class ProviderTestServiceTest {
     @DisplayName("testOllama returns failure when not available")
     void testTestOllama_notAvailable() {
         when(this.mockOllamaService.isAvailable()).thenReturn(false);
-        final ProviderTestResultDto result = this.aiProviderTestService.testOllama();
+        final ProviderTestResultDto result = this.aiProviderTestService.testOllama(CREDENTIALS);
         assertNotNull(result);
         assertFalse(result.success);
         assertTrue(result.message.contains("not available"));
@@ -190,7 +203,7 @@ class ProviderTestServiceTest {
     void testTestCurrentProvider_unknownProvider() {
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any()))
                 .thenReturn("unknown_provider_xyz");
-        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider(CREDENTIALS);
         assertNotNull(result);
         assertFalse(result.success, "Unknown provider must produce a failure result");
         assertNotNull(result.message);
@@ -203,7 +216,7 @@ class ProviderTestServiceTest {
     @DisplayName("testCurrentProvider delegates to testGoogle when provider is google")
     void testTestCurrentProvider_google() {
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("google");
-        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider(CREDENTIALS);
         assertNotNull(result);
         assertNotNull(result.message);
         assertFalse(result.message.isBlank());
@@ -214,7 +227,7 @@ class ProviderTestServiceTest {
     @DisplayName("testCurrentProvider delegates to testOpenAi when provider is openai")
     void testTestCurrentProvider_openai() {
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("openai");
-        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider(CREDENTIALS);
         assertNotNull(result);
         assertNotNull(result.message);
         assertFalse(result.message.isBlank());
@@ -225,9 +238,58 @@ class ProviderTestServiceTest {
     @DisplayName("testCurrentProvider delegates to testOllama when provider is ollama")
     void testTestCurrentProvider_ollama() {
         when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.AI_TUTOR_PROVIDER), any())).thenReturn("ollama");
-        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider();
+        final ProviderTestResultDto result = this.aiProviderTestService.testCurrentProvider(CREDENTIALS);
         assertNotNull(result);
         assertNotNull(result.message);
         assertFalse(result.message.isBlank());
+    }
+
+    private ProviderTestResultDto callProvider(final String provider, final SessionCredentials credentials) {
+        return switch (provider) {
+            case "google" -> this.aiProviderTestService.testGoogle(credentials);
+            case "openai" -> this.aiProviderTestService.testOpenAi(credentials);
+            default -> this.aiProviderTestService.testOllama(credentials);
+        };
+    }
+
+    @SuppressWarnings("NullAway")
+    private void verifyNothingTouched() {
+        verifyNoInteractions(this.mockGoogleService, this.mockOpenAiService, this.mockOllamaService,
+                this.mockHttpClient);
+        verify(this.mockAiConfigService, never()).getConfigValue(any(), any());
+        verify(this.mockAiConfigService, never()).validateProviderApiUrl(any(), any());
+    }
+
+    @SuppressWarnings("NullAway")
+    @ParameterizedTest
+    @ValueSource(strings = { "google", "openai", "ollama" })
+    @DisplayName("provider tests refuse an ended session before any lookup or request")
+    void testProviderTest_sessionEnded(final String provider) {
+        final var ended = new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
+        doThrow(ended).when(this.mockAiConfigService).requireConfigEditPermission(any());
+        final var thrown = assertThrows(ValidationException.class, () -> this.callProvider(provider, CREDENTIALS));
+        assertSame(ended, thrown);
+        this.verifyNothingTouched();
+    }
+
+    @SuppressWarnings("NullAway")
+    @ParameterizedTest
+    @ValueSource(strings = { "google", "openai", "ollama" })
+    @DisplayName("provider tests refuse a caller without the permission before any lookup or request")
+    void testProviderTest_permissionDenied(final String provider) {
+        doThrow(new PermissionDeniedException("denied")).when(this.mockAiConfigService)
+                .requireConfigEditPermission(any());
+        assertThrows(PermissionDeniedException.class, () -> this.callProvider(provider, CREDENTIALS));
+        this.verifyNothingTouched();
+    }
+
+    @SuppressWarnings("NullAway")
+    @Test
+    @DisplayName("testCurrentProvider refuses before reading the provider config")
+    void testTestCurrentProvider_refusedBeforeConfigRead() {
+        doThrow(new ValidationException(AppConstants.SESSION_ENDED_MESSAGE)).when(this.mockAiConfigService)
+                .requireConfigEditPermission(any());
+        assertThrows(ValidationException.class, () -> this.aiProviderTestService.testCurrentProvider(CREDENTIALS));
+        this.verifyNothingTouched();
     }
 }

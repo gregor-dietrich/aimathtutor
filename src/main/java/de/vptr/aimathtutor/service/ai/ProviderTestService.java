@@ -11,11 +11,19 @@ import java.util.Locale;
 import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ProviderTestResultDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
+import jakarta.validation.ValidationException;
 
 /**
- * Service for testing connectivity to AI providers. Performs lightweight health checks without consuming API quota.
+ * Service for testing connectivity to AI providers. Performs lightweight health checks without consuming API quota. The
+ * tests that take session credentials start no transaction ({@code SUPPORTS}): the permission check runs in a short one
+ * of its own, and the request holds no database connection.
  */
 @ApplicationScoped
 public class ProviderTestService {
@@ -50,8 +58,19 @@ public class ProviderTestService {
 
     /**
      * Tests connection to Google. Verifies API key is configured and the endpoint is reachable.
+     *
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @return the test result
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      */
-    public ProviderTestResultDto testGoogle() {
+    @Transactional(TxType.SUPPORTS)
+    public ProviderTestResultDto testGoogle(@Nullable final SessionCredentials credentials) {
+        this.aiConfigService.requireConfigEditPermission(credentials);
         if (!this.googleService.isConfigured()) {
             return ProviderTestResultDto.fail("Google API key not configured. Set the app.google.api.key property.");
         }
@@ -89,8 +108,19 @@ public class ProviderTestService {
 
     /**
      * Tests connection to OpenAI. Verifies API key is configured and the endpoint is reachable.
+     *
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @return the test result
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      */
-    public ProviderTestResultDto testOpenAi() {
+    @Transactional(TxType.SUPPORTS)
+    public ProviderTestResultDto testOpenAi(@Nullable final SessionCredentials credentials) {
+        this.aiConfigService.requireConfigEditPermission(credentials);
         if (!this.openAiService.isConfigured()) {
             return ProviderTestResultDto.fail("OpenAI API key not configured. Set the app.openai.api.key property.");
         }
@@ -128,8 +158,19 @@ public class ProviderTestService {
 
     /**
      * Tests connection to Ollama. Uses the Ollama /api/tags endpoint to verify the server is running.
+     *
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @return the test result
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      */
-    public ProviderTestResultDto testOllama() {
+    @Transactional(TxType.SUPPORTS)
+    public ProviderTestResultDto testOllama(@Nullable final SessionCredentials credentials) {
+        this.aiConfigService.requireConfigEditPermission(credentials);
         if (!this.ollamaService.isAvailable()) {
             return ProviderTestResultDto
                     .fail("Ollama server is not available. Check that Ollama is running and the URL is correct.");
@@ -145,13 +186,25 @@ public class ProviderTestService {
 
     /**
      * Tests the currently configured AI provider.
+     *
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @return the test result
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      */
-    public ProviderTestResultDto testCurrentProvider() {
+    @Transactional(TxType.SUPPORTS)
+    public ProviderTestResultDto testCurrentProvider(@Nullable final SessionCredentials credentials) {
+        // Checked first so the mock and unknown-provider paths are refused too, before the provider config is read.
+        this.aiConfigService.requireConfigEditPermission(credentials);
         final String provider = this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
         return switch (provider != null ? provider.toLowerCase(Locale.ROOT) : "mock") {
-            case "google" -> this.testGoogle();
-            case "openai" -> this.testOpenAi();
-            case "ollama" -> this.testOllama();
+            case "google" -> this.testGoogle(credentials);
+            case "openai" -> this.testOpenAi(credentials);
+            case "ollama" -> this.testOllama(credentials);
             case "mock" -> this.testMock();
             default -> ProviderTestResultDto
                     .fail("Unknown AI provider: " + provider + ". Supported providers: google, openai, ollama");
