@@ -14,10 +14,11 @@ import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.ValidationException;
 
 /**
- * Service for checking user permissions based on their rank. All permission checks are enforced against the currently
- * authenticated user's rank. Throws {@link PermissionDeniedException} when the permission is missing or false, and
- * {@link ValidationException} with the session-ended message when the session has ended (none, revoked credentials, or
- * a banned, deactivated or deleted account).
+ * Service for checking user permissions based on their rank. Throws {@link PermissionDeniedException} when the
+ * permission is missing or false. The session checks (the {@code require*} methods without a parameter, and
+ * {@link #requireAdminView(SessionCredentials)}) throw {@link ValidationException} with the session-ended message when
+ * the session has ended (none, revoked credentials, or a banned, deactivated or deleted account);
+ * {@link #requireAiConfigEdit(Long)} refuses those with {@link PermissionDeniedException}.
  */
 @ApplicationScoped
 public class PermissionService {
@@ -47,13 +48,13 @@ public class PermissionService {
 
     /**
      * Returns the current user's rank entity, the ceiling for the users and ranks they may change, assign or grant.
-     * This only delegates to {@link UserRankService#getCurrentUserRankEntity()}; it exists as the seam that service
-     * tests stub, since they mock this service; the {@code require*} checks resolve the caller through
+     * This only delegates to {@link UserRankService#getCurrentUserRankEntity()}. It exists as the seam that service
+     * tests stub, since they mock this service. The session checks resolve the caller through
      * {@link AuthService#requireCurrentUser()} instead. It joins the caller's transaction, so it returns the same
      * managed rank the caller may be about to edit.
      *
      * @return the current user's {@link UserRankEntity}, or null if no user is authenticated, the user no longer
-     *         exists, has no rank, or is banned or not activated
+     *         exists, has no rank, is banned or not activated, or the session's credentials are revoked
      */
     @Nullable
     public UserRankEntity findCurrentUserRank() {
@@ -165,7 +166,7 @@ public class PermissionService {
         final UserEntity user = this.userRepository.findById(userId);
         // Read only the flag; the view DTO this replaced counted the rank's members. The pre-DNS authorization check in
         // AiConfigService is non-transactional and may run on a background thread.
-        if (user == null || !user.activated || user.banned || user.rank == null || !user.rank.aiConfigEdit) {
+        if (user == null || !user.isActive() || user.rank == null || !user.rank.aiConfigEdit) {
             throw new PermissionDeniedException("You do not have permission to edit AI configuration");
         }
         return user;

@@ -408,11 +408,11 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   `PermissionService`'s session `require*` checks resolve the caller through
   `requireCurrentUser()`, so an ended session gets that message, not a
   permission error; views call every write those checks guard through
-  `ServiceRejectionUtil`. A view
-  keeps the user's ID for display only; an ID it resolves on the UI thread for
-  one action may go with that action (the AI rate-limit key and interaction
-  log, the lesson list's completion badges, and `AdminConfigView.requireUserId()`,
-  whose worker re-checks the user through `PermissionService.requireAiConfigEdit`).
+  `ServiceRejectionUtil`. A view keeps the user's ID for display only; an ID it
+  resolves on the UI thread for one action may go with that action (the AI
+  rate-limit key and interaction log, the lesson list's completion badges, and
+  `AdminConfigView.requireUserId()`, whose worker re-checks the user through
+  `PermissionService.requireAiConfigEdit`).
   Admin reads of user data (user, group, comment, session and exercise listings,
   session details and progress summaries) call
   `PermissionService.requireAdminView(credentials)`; the dashboard's aggregate

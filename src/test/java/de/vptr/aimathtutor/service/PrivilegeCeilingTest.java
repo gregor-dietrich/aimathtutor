@@ -3,6 +3,7 @@ package de.vptr.aimathtutor.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.util.EnumSet;
@@ -20,15 +21,18 @@ import de.vptr.aimathtutor.dto.UserDto;
 import de.vptr.aimathtutor.dto.UserRankDto;
 import de.vptr.aimathtutor.dto.UserRankViewDto;
 import de.vptr.aimathtutor.dto.UserViewDto;
+import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.entity.UserRankEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRankRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
@@ -59,6 +63,10 @@ class PrivilegeCeilingTest {
     // require* checks do nothing; the ceiling reads the caller's rank from findCurrentUserRank
     @InjectMock
     PermissionService permissionService;
+
+    // Real unless a test stubs it: the ceiling re-checks the session when it finds no rank
+    @InjectSpy
+    AuthService authService;
 
     /** The caller's rank: manages users and ranks, but lacks aiConfigEdit and the content permissions. */
     private UserRankViewDto callerRank;
@@ -236,15 +244,33 @@ class PrivilegeCeilingTest {
     @SuppressWarnings("NullAway")
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "createUser", "createRank" })
-    @DisplayName("Without a current user rank, user and rank writes are refused")
+    @DisplayName("A signed-in caller without a rank is refused user and rank writes")
     @TestTransaction
     void noCurrentRankIsRefused(final String method) {
         final String lowerRank = this.userRankService.createRank(rankDto(false)).publicId;
         when(this.permissionService.findCurrentUserRank()).thenReturn(null);
+        doReturn(new UserEntity()).when(this.authService).requireCurrentUser();
 
-        assertThrows(PermissionDeniedException.class,
-                "createUser".equals(method) ? () -> this.userService.createUser(userDto(lowerRank))
-                        : () -> this.userRankService.createRank(rankDto(false)));
+        assertThrows(PermissionDeniedException.class, this.createWrite(method, lowerRank));
+    }
+
+    @SuppressWarnings("NullAway")
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "createUser", "createRank" })
+    @DisplayName("A caller gone since the permission check gets the session-ended refusal, not a permission error")
+    @TestTransaction
+    void endedSessionWithoutRankIsSessionEnded(final String method) {
+        final String lowerRank = this.userRankService.createRank(rankDto(false)).publicId;
+        // No Vaadin session here, so the real AuthService finds no caller either
+        when(this.permissionService.findCurrentUserRank()).thenReturn(null);
+
+        final var e = assertThrows(ValidationException.class, this.createWrite(method, lowerRank));
+        assertEquals(AppConstants.SESSION_ENDED_MESSAGE, e.getMessage());
+    }
+
+    private Executable createWrite(final String method, final String rankPublicId) {
+        return "createUser".equals(method) ? () -> this.userService.createUser(userDto(rankPublicId))
+                : () -> this.userRankService.createRank(rankDto(false));
     }
 
     // Equal or lower level

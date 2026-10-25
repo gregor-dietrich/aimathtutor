@@ -445,7 +445,7 @@ public class AuthService {
         }
 
         final var user = this.getCurrentUserEntity();
-        final var result = user != null && user.activated && !user.banned;
+        final var result = user != null && user.isActive();
         // Store the time taken before the read: a read that began before a commit must not outlive an eviction
         // recorded after that commit.
         if (result) {
@@ -558,7 +558,7 @@ public class AuthService {
     }
 
     private static UserEntity requireActive(@Nullable final UserEntity user) {
-        if (user == null || !user.activated || user.banned) {
+        if (user == null || !user.isActive()) {
             throw new ValidationException(AppConstants.SESSION_ENDED_MESSAGE);
         }
         return user;

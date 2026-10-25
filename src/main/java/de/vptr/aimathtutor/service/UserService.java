@@ -186,9 +186,11 @@ public class UserService {
      * @return the created {@link UserViewDto}
      * @throws ValidationException
      *             if username/email is duplicate, required fields are missing, or the rank grants a permission the
-     *             caller's rank lacks
+     *             caller's rank lacks, or the session has ended
      * @throws WebApplicationException
      *             if password hashing fails
+     * @throws PermissionDeniedException
+     *             if the caller may not add users
      */
     @Transactional
     public UserViewDto createUser(final @Valid UserDto userDto) {
@@ -364,7 +366,9 @@ public class UserService {
      * @throws ValidationException
      *             if username/email is duplicate, required fields missing, the user's current or new rank grants a
      *             permission the caller's rank lacks, the change would leave no active Administrator, it sets the
-     *             caller's own password, or the DTO's version is stale
+     *             caller's own password, or the DTO's version is stale, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit users
      */
     @Transactional
     public UserViewDto updateUser(final String publicId, final @Valid UserDto userDto) {
@@ -431,7 +435,9 @@ public class UserService {
      * @throws ValidationException
      *             if username/email is duplicate, the user's current or new rank grants a permission the caller's rank
      *             lacks, the change would leave no active Administrator, it sets the caller's own password, or the
-     *             DTO's version is stale
+     *             DTO's version is stale, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit users
      */
     @Transactional
     public UserViewDto patchUser(final String publicId, final @Valid UserDto userDto) {
@@ -493,7 +499,9 @@ public class UserService {
      * @return {@code true} if deletion succeeded, {@code false} if user not found
      * @throws ValidationException
      *             if the user's rank grants a permission the caller's rank lacks, or the user is the last active
-     *             Administrator
+     *             Administrator, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not delete users
      */
     @Transactional
     public boolean deleteUser(final String publicId) {

@@ -71,8 +71,9 @@ public class UserRankService {
 
     /**
      * Retrieves the rank entity of the currently authenticated user. Fails closed: a user who was banned or deactivated
-     * while a page was open gets no rank, so every permission check and the privilege ceiling refuse them. A session
-     * revoked by a password change gets no rank either.
+     * while a page was open gets no rank, so the privilege ceiling and the admin views' gating refuse them. A session
+     * revoked by a password change gets no rank either. The {@link PermissionService} session checks refuse those cases
+     * themselves, through {@link AuthService#requireCurrentUser()}.
      *
      * @return the current user's {@link UserRankEntity}, or null if no user is authenticated, the user no longer
      *         exists, has no rank, is banned or not activated, or the session's credentials are revoked
@@ -81,7 +82,7 @@ public class UserRankService {
     @Nullable
     public UserRankEntity getCurrentUserRankEntity() {
         final var user = this.authService.getCurrentUserEntity();
-        return user != null && user.activated && !user.banned ? user.rank : null;
+        return user != null && user.isActive() ? user.rank : null;
     }
 
     /**
@@ -164,7 +165,10 @@ public class UserRankService {
      *            the rank data including name and permissions
      * @return the newly created {@link UserRankViewDto}
      * @throws ValidationException
-     *             if the rank name is invalid, or the rank grants a permission the caller's rank lacks
+     *             if the rank name is invalid, or the rank grants a permission the caller's rank lacks, or the session
+     *             has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not add ranks
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -201,7 +205,9 @@ public class UserRankService {
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
      *             if the rank, before or after the change, grants a permission the caller's rank lacks, the change
-     *             would leave no active Administrator, or the DTO's version is stale
+     *             would leave no active Administrator, or the DTO's version is stale, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit ranks
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -237,7 +243,9 @@ public class UserRankService {
      *             if rank is not found (NOT_FOUND status)
      * @throws ValidationException
      *             if the rank, before or after the change, grants a permission the caller's rank lacks, or the change
-     *             would leave no active Administrator, or the DTO's version is stale
+     *             would leave no active Administrator, or the DTO's version is stale, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit ranks
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -271,7 +279,9 @@ public class UserRankService {
      * @throws WebApplicationException
      *             if rank has assigned users (CONFLICT status)
      * @throws ValidationException
-     *             if the rank grants a permission the caller's rank lacks
+     *             if the rank grants a permission the caller's rank lacks, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not delete ranks
      */
     @Transactional
     @CacheInvalidateAll(cacheName = RANK_CACHE)
@@ -321,12 +331,16 @@ public class UserRankService {
      * Returns the current user's rank, for callers that need more of it than its permissions.
      *
      * @return the current user's rank
+     * @throws ValidationException
+     *             if the session has ended, e.g. the caller was deleted after the permission check that runs first
      * @throws PermissionDeniedException
-     *             if there is no current user with a rank; the permission check that runs first makes that unexpected
+     *             if the current user has no rank; the permission check that runs first makes that unexpected
      */
     public UserRankEntity requireCallerRank() {
         final UserRankEntity rank = this.permissionService.findCurrentUserRank();
         if (rank == null) {
+            // Without the administrator lock, the caller may have been deleted since the permission check read it
+            this.authService.requireCurrentUser();
             throw new PermissionDeniedException("You do not have permission to perform this action");
         }
         return rank;

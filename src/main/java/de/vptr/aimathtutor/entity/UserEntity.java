@@ -156,4 +156,15 @@ public class UserEntity extends BaseEntity {
     @Formula("(SELECT COUNT(*) FROM comments c WHERE c.user_id = id)")
     @Nullable
     public Long commentsCount;
+
+    /**
+     * Whether this account may act: activated and not banned. The one definition the session checks, the privilege
+     * ceiling and the administrator count share.
+     *
+     * @return true if the account is activated and not banned
+     */
+    @JsonIgnore
+    public boolean isActive() {
+        return this.activated && !this.banned;
+    }
 }

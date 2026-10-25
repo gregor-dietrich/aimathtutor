@@ -41,7 +41,8 @@ import jakarta.validation.ValidationException;
 class SessionEndedWriteTest {
 
     private static final String STUDENT_RANK_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAX";
-    private static final String STUDENT_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FB3";
+    // The seeded student2; every write is refused before it is touched
+    private static final String TARGET_USER_PUBLIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FB3";
 
     @Inject
     UserService userService;
@@ -69,10 +70,10 @@ class SessionEndedWriteTest {
     static Stream<Arguments> writes() {
         final Consumer<SessionEndedWriteTest> createUser = t -> t.userService.createUser(validUserDto());
         final Consumer<SessionEndedWriteTest> updateUser =
-                t -> t.userService.updateUser(STUDENT_PUBLIC_ID, validUserDto());
+                t -> t.userService.updateUser(TARGET_USER_PUBLIC_ID, validUserDto());
         final Consumer<SessionEndedWriteTest> patchUser =
-                t -> t.userService.patchUser(STUDENT_PUBLIC_ID, new UserDto());
-        final Consumer<SessionEndedWriteTest> deleteUser = t -> t.userService.deleteUser(STUDENT_PUBLIC_ID);
+                t -> t.userService.patchUser(TARGET_USER_PUBLIC_ID, new UserDto());
+        final Consumer<SessionEndedWriteTest> deleteUser = t -> t.userService.deleteUser(TARGET_USER_PUBLIC_ID);
         final Consumer<SessionEndedWriteTest> createRank = t -> t.userRankService.createRank(validRankDto());
         final Consumer<SessionEndedWriteTest> updateRank =
                 t -> t.userRankService.updateRank(STUDENT_RANK_PUBLIC_ID, validRankDto());
@@ -120,7 +121,7 @@ class SessionEndedWriteTest {
     @TestTransaction
     void bannedEndsSession() {
         this.assertSessionEnded(admin -> admin.banned = true, null,
-                t -> t.userService.updateUser(STUDENT_PUBLIC_ID, validUserDto()));
+                t -> t.userService.updateUser(TARGET_USER_PUBLIC_ID, validUserDto()));
     }
 
     @Test
@@ -128,7 +129,7 @@ class SessionEndedWriteTest {
     @TestTransaction
     void deactivatedEndsSession() {
         this.assertSessionEnded(admin -> admin.activated = false, null,
-                t -> t.userService.updateUser(STUDENT_PUBLIC_ID, validUserDto()));
+                t -> t.userService.updateUser(TARGET_USER_PUBLIC_ID, validUserDto()));
     }
 
     @Test
