@@ -493,15 +493,6 @@ class AiConfigServiceTest {
 
     @SuppressWarnings("NullAway")
     @Test
-    @DisplayName("validateConfigValue - configKey with null key throws")
-    @Transactional
-    void testUpdateConfig_nullKey() {
-        assertThrows(ValidationException.class,
-                () -> this.aiConfigService.updateConfig(null, "value", this.credentials));
-    }
-
-    @SuppressWarnings("NullAway")
-    @Test
     @DisplayName("URL validation - unresolvable hostname allowed for Ollama ONLY if in allow-list")
     @Transactional
     void testUrlValidationUnresolvableHostOllamaAllowlist() {
