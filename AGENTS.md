@@ -201,7 +201,8 @@ however.
   Never use the common ForkJoinPool directly: under `make dev` its threads lack
   the app's class loader, so a bean first created there cannot read its config.
   `AsyncDataLoader` runs on it only because it hands the caller's context class
-  loader to the worker thread for the call.
+  loader to the worker thread for the call and to the thread that runs its UI
+  callback, so a load started from a callback inherits it.
 
 ```java
 final var ui = getUI().orElse(null);
@@ -358,12 +359,14 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 - **RateLimitServiceTest must use `UUID.randomUUID()` for user IDs.** Hardcoded
   strings cause state leakage (`@ApplicationScoped`).
 - **AdminConfigView saves pass session credentials, never a user ID.** Each
-  save or reset captures `AuthService.currentSessionCredentials()` on the UI
-  thread when the user acts and runs through `AsyncDataLoader`; `AiConfigService`
-  checks them with `PermissionService.requireAiConfigEdit(credentials)` in a
-  short transaction before it validates any value or URL (so an ended or
-  unauthorised session never triggers a DNS lookup) and again in the write's
-  transaction.
+  save, reset or connection test captures
+  `AuthService.currentSessionCredentials()` on the UI thread when the user acts
+  and runs through `AsyncDataLoader`; `AiConfigService` checks them with
+  `PermissionService.requireAiConfigEdit(credentials)` in a short transaction
+  before it validates any value or URL (so an ended or unauthorised session
+  never triggers a DNS lookup) and again in the write's transaction.
+  `ProviderTestService` checks them the same way before any config read, URL
+  validation or request.
 - **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to
   `StartupEvent`**, even though Maven builds log a Quarkus warning recommending
   it. Flyway (with a dev/test profile's clean-at-start) and Hibernate's schema
@@ -420,9 +423,10 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   session details and progress summaries) call
   `PermissionService.requireAdminView(credentials)`; the dashboard's aggregate
   counts and charts do not, nor do lesson listings, which hold no user data and
-  which the student lesson list shares. AI-config writes check the caller with
-  `PermissionService.requireAiConfigEdit(credentials)`. An AI call or AI-config
-  save already handed to its worker is not cancelled by a revocation during the
+  which the student lesson list shares. AI-config writes and connection tests
+  check the caller with `PermissionService.requireAiConfigEdit(credentials)`. An
+  AI call or AI-config save already handed to its worker is not cancelled by a
+  revocation during the
   provider call, and rows a page loaded while its user had access stay readable
   in it until it reloads or navigates: only new loads are refused. Every user
   write that can end sessions fires `UserAccountChangedEvent`; `AuthService`

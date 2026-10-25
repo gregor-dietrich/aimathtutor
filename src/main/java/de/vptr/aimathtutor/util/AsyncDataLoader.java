@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import jakarta.annotation.Nullable;
@@ -79,48 +80,55 @@ public final class AsyncDataLoader {
             throw new IllegalArgumentException("timeout must be a positive duration");
         }
         // Common-pool threads carry the system class loader, which in dev mode is not the app's: a bean first created
-        // in the supplier would fail to load its config or classes through it.
+        // in the supplier would fail to load its config or classes through it. The callback runs under the caller's
+        // loader too, so a load started from a callback (and any bean the callback creates) gets the app's loader.
         final var classLoader = Thread.currentThread().getContextClassLoader();
-        final var _ = CompletableFuture.supplyAsync(() -> {
-            final var thread = Thread.currentThread();
-            final var previous = thread.getContextClassLoader();
-            thread.setContextClassLoader(classLoader);
-            try {
-                return dataSupplier.get();
-            } finally {
-                thread.setContextClassLoader(previous);
-            }
-        }).orTimeout(timeout.toNanos(), TimeUnit.NANOSECONDS).whenComplete((data, throwable) -> {
-            component.getUI().ifPresent(ui -> {
-                final var _ = ui.access(() -> {
-                    if (throwable == null) {
-                        onSuccess.accept(data);
-                        return;
-                    }
-                    final var cause = throwable instanceof CompletionException && throwable.getCause() != null
-                            ? throwable.getCause() : throwable;
-                    if (cause instanceof final ValidationException rejection
-                            && ServiceRejectionUtil.isRejection(rejection)) {
-                        // Expected service rejection; the message can carry user data, so it is never logged.
-                        ServiceRejectionUtil.showRejection(ui, ServiceRejectionUtil.rejectionMessage(rejection));
-                    } else if (cause instanceof final PermissionDeniedException denied) {
-                        // The message names the missing permission, not user data; expected, so DEBUG without it.
-                        LOG.debug("Service denied a permission");
-                        NotificationUtil.showError(denied.getMessage() != null ? denied.getMessage() : errorMessage);
-                    } else if (cause instanceof TimeoutException) {
-                        LOG.warnf("Async call timed out after %s: %s", timeout, errorMessage);
-                        NotificationUtil.showError(errorMessage + (errorMessage.endsWith(".") ? "" : ".")
-                                + " The server did not respond in time; reload the page to see the current state.");
-                    } else {
-                        LOG.errorf(cause, "Async load failed: %s", errorMessage);
-                        NotificationUtil.showError(errorMessage);
-                    }
-                    if (onError == null) {
-                        return;
-                    }
-                    onError.run();
+        final var _ = CompletableFuture.supplyAsync(() -> withContextClassLoader(classLoader, dataSupplier))
+                .orTimeout(timeout.toNanos(), TimeUnit.NANOSECONDS).whenComplete((data, throwable) -> {
+                    final var _ =
+                            withContextClassLoader(classLoader, () -> component.getUI().map(ui -> ui.access(() -> {
+                                if (throwable == null) {
+                                    onSuccess.accept(data);
+                                } else {
+                                    showFailure(ui, throwable, onError, timeout, errorMessage);
+                                }
+                            })));
                 });
-            });
-        });
+    }
+
+    private static void showFailure(final UI ui, final Throwable throwable, @Nullable final Runnable onError,
+            final Duration timeout, final String errorMessage) {
+        final var cause = throwable instanceof CompletionException && throwable.getCause() != null
+                ? throwable.getCause() : throwable;
+        if (cause instanceof final ValidationException rejection && ServiceRejectionUtil.isRejection(rejection)) {
+            // Expected service rejection; the message can carry user data, so it is never logged.
+            ServiceRejectionUtil.showRejection(ui, ServiceRejectionUtil.rejectionMessage(rejection));
+        } else if (cause instanceof final PermissionDeniedException denied) {
+            // The message names the missing permission, not user data; expected, so DEBUG without it.
+            LOG.debug("Service denied a permission");
+            NotificationUtil.showError(denied.getMessage() != null ? denied.getMessage() : errorMessage);
+        } else if (cause instanceof TimeoutException) {
+            LOG.warnf("Async call timed out after %s: %s", timeout, errorMessage);
+            NotificationUtil.showError(errorMessage + (errorMessage.endsWith(".") ? "" : ".")
+                    + " The server did not respond in time; reload the page to see the current state.");
+        } else {
+            LOG.errorf(cause, "Async load failed: %s", errorMessage);
+            NotificationUtil.showError(errorMessage);
+        }
+        if (onError == null) {
+            return;
+        }
+        onError.run();
+    }
+
+    private static <T> T withContextClassLoader(final ClassLoader loader, final Supplier<T> work) {
+        final var thread = Thread.currentThread();
+        final var previous = thread.getContextClassLoader();
+        thread.setContextClassLoader(loader);
+        try {
+            return work.get();
+        } finally {
+            thread.setContextClassLoader(previous);
+        }
     }
 }

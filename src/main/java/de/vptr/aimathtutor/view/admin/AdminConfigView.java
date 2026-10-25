@@ -356,15 +356,18 @@ public class AdminConfigView extends AbstractAdminView {
             this.aiConfigService.updateMultipleConfigs(updates, credentials);
             return Boolean.TRUE;
         }, this, ignored -> {
-            reenable.run();
-            if (!withTest) {
-                NotificationUtil.showSuccess("Provider configuration updated successfully");
-            } else if ("google".equals(provider)) {
-                this.testConnection(() -> this.aiProviderTestService.testGoogle(credentials), "Google");
+            // With a test, the buttons stay disabled until it completes.
+            if ("google".equals(provider)) {
+                this.testConnection(() -> this.aiProviderTestService.testGoogle(credentials), "Google", reenable);
             } else if ("openai".equals(provider)) {
-                this.testConnection(() -> this.aiProviderTestService.testOpenAi(credentials), "OpenAI");
+                this.testConnection(() -> this.aiProviderTestService.testOpenAi(credentials), "OpenAI", reenable);
             } else if ("ollama".equals(provider)) {
-                this.testConnection(() -> this.aiProviderTestService.testOllama(credentials), "Ollama");
+                this.testConnection(() -> this.aiProviderTestService.testOllama(credentials), "Ollama", reenable);
+            } else {
+                reenable.run();
+                if (!withTest) {
+                    NotificationUtil.showSuccess("Provider configuration updated successfully");
+                }
             }
         }, reenable, "Error saving configuration. Please try again later.");
     }
@@ -390,8 +393,10 @@ public class AdminConfigView extends AbstractAdminView {
 
     // --- Connection tests ---------------------------------------------------
 
-    private void testConnection(final Supplier<ProviderTestResultDto> testCall, final String providerName) {
+    private void testConnection(final Supplier<ProviderTestResultDto> testCall, final String providerName,
+            final Runnable onDone) {
         AsyncDataLoader.load(testCall, this, result -> {
+            onDone.run();
             final String msg = result.message != null ? result.message : "No response";
             if (result.success) {
                 NotificationUtil.showSuccess(msg);
@@ -399,7 +404,7 @@ public class AdminConfigView extends AbstractAdminView {
                 NotificationUtil.showError(msg);
             }
             LOG.infof("%s connection test: %s", providerName, result.message);
-        }, "Connection test failed. Please try again later.");
+        }, onDone, "Connection test failed. Please try again later.");
     }
 
     // --- Save helpers -------------------------------------------------------

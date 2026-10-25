@@ -1,12 +1,21 @@
 package de.vptr.aimathtutor.util;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.DisplayName;
@@ -66,6 +75,78 @@ class AsyncDataLoaderTest {
 
             notifications.verify(() -> NotificationUtil.showError(AppConstants.SESSION_ENDED_MESSAGE));
             login.verify(() -> LoginView.reloadToLogin(ui));
+        }
+    }
+
+    @Test
+    @DisplayName("An unexpected exception shows the plain error message, not its text")
+    void unexpectedExceptionShowsPlainMessage() {
+        final var ui = mock(UI.class);
+        try (MockedStatic<NotificationUtil> notifications = mockStatic(NotificationUtil.class);
+                MockedStatic<LoginView> login = mockStatic(LoginView.class)) {
+            loadFailing(new IllegalStateException("internal detail"), ui);
+
+            notifications.verify(() -> NotificationUtil.showError("Load failed"));
+            login.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    @DisplayName("A timeout tells the user to reload and still runs the error callback")
+    void timeoutShowsReloadHintAndRunsOnError() throws InterruptedException {
+        final var ui = mock(UI.class);
+        final var component = mock(Component.class);
+        when(component.getUI()).thenReturn(Optional.of(ui));
+        final var release = new CountDownLatch(1);
+        final var errorRan = new AtomicBoolean();
+        try (MockedStatic<NotificationUtil> notifications = mockStatic(NotificationUtil.class)) {
+            try {
+                AsyncDataLoader.<String>load(() -> {
+                    try {
+                        release.await();
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return "late";
+                }, component, data -> {
+                }, () -> errorRan.set(true), Duration.ofMillis(50), "Load failed");
+
+                final var command = ArgumentCaptor.forClass(Command.class);
+                verify(ui, timeout(5000)).access(command.capture());
+                command.getValue().execute();
+            } finally {
+                release.countDown();
+            }
+
+            notifications.verify(() -> NotificationUtil.showError(
+                    "Load failed. The server did not respond in time; reload the page to see the current state."));
+            assertTrue(errorRan.get());
+        }
+    }
+
+    @Test
+    @DisplayName("The UI callback runs under the caller's context class loader")
+    void callbackRunsUnderCallersClassLoader() throws Exception {
+        final var ui = mock(UI.class);
+        final var component = mock(Component.class);
+        when(component.getUI()).thenReturn(Optional.of(ui));
+        final var seen = new AtomicReference<ClassLoader>();
+        when(ui.access(any())).thenAnswer(invocation -> {
+            seen.set(Thread.currentThread().getContextClassLoader());
+            return null;
+        });
+        final var thread = Thread.currentThread();
+        final var original = thread.getContextClassLoader();
+        try (var marker = new URLClassLoader(new URL[0], original)) {
+            thread.setContextClassLoader(marker);
+            try {
+                AsyncDataLoader.load(() -> "data", component, data -> {
+                }, "Load failed");
+                verify(ui, timeout(5000)).access(any());
+            } finally {
+                thread.setContextClassLoader(original);
+            }
+            assertSame(marker, seen.get());
         }
     }
 }

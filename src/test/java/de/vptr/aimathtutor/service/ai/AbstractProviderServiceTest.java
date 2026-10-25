@@ -78,6 +78,12 @@ class AbstractProviderServiceTest {
     }
 
     @Test
+    @DisplayName("isApiKeyConfigured returns false for the shipped not-configured placeholder")
+    void testIsApiKeyConfigured_notConfiguredPlaceholder() {
+        assertFalse(AbstractProviderService.isApiKeyConfigured("not-configured"));
+    }
+
+    @Test
     @DisplayName("isApiKeyConfigured returns true for valid non-placeholder key")
     void testIsApiKeyConfigured_validKey() {
         assertTrue(AbstractProviderService.isApiKeyConfigured("sk-abc123"));

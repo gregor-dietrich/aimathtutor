@@ -6,7 +6,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Locale;
 
 import org.jboss.logging.Logger;
 
@@ -22,8 +21,8 @@ import jakarta.validation.ValidationException;
 
 /**
  * Service for testing connectivity to AI providers. Performs lightweight health checks without consuming API quota. The
- * tests that take session credentials start no transaction ({@code SUPPORTS}): the permission check runs in a short one
- * of its own, and the request holds no database connection.
+ * tests start no transaction ({@code SUPPORTS}): with no caller transaction the permission check runs in a short one of
+ * its own and the request holds no database connection; inside a caller's transaction they run in that one.
  */
 @ApplicationScoped
 public class ProviderTestService {
@@ -47,13 +46,6 @@ public class ProviderTestService {
 
     void setHttpClient(final HttpClient httpClient) {
         this.httpClient = httpClient;
-    }
-
-    /**
-     * Tests connection to the mock provider (always succeeds).
-     */
-    public ProviderTestResultDto testMock() {
-        return ProviderTestResultDto.ok("Mock provider is always available");
     }
 
     /**
@@ -182,32 +174,5 @@ public class ProviderTestService {
         final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
                 .timeout(Duration.ofSeconds(TEST_TIMEOUT_SECONDS)).GET().build();
         return this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    /**
-     * Tests the currently configured AI provider.
-     *
-     * @param credentials
-     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
-     *            null
-     * @return the test result
-     * @throws ValidationException
-     *             if the session has ended
-     * @throws PermissionDeniedException
-     *             if the user's rank lacks the permission
-     */
-    @Transactional(TxType.SUPPORTS)
-    public ProviderTestResultDto testCurrentProvider(@Nullable final SessionCredentials credentials) {
-        // Checked first so the mock and unknown-provider paths are refused too, before the provider config is read.
-        this.aiConfigService.requireConfigEditPermission(credentials);
-        final String provider = this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock");
-        return switch (provider != null ? provider.toLowerCase(Locale.ROOT) : "mock") {
-            case "google" -> this.testGoogle(credentials);
-            case "openai" -> this.testOpenAi(credentials);
-            case "ollama" -> this.testOllama(credentials);
-            case "mock" -> this.testMock();
-            default -> ProviderTestResultDto
-                    .fail("Unknown AI provider: " + provider + ". Supported providers: google, openai, ollama");
-        };
     }
 }
