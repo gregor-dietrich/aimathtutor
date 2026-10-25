@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -23,13 +22,19 @@ import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.event.AiConfigChangedEvent;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
+import jakarta.transaction.Status;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.ValidationException;
@@ -44,7 +49,7 @@ public class AiConfigService {
     private static final Logger LOG = Logger.getLogger(AiConfigService.class);
 
     // Internal cache for configuration values to reduce database hits.
-    private final Map<String, String> configCache = new ConcurrentHashMap<>();
+    private final AiConfigCache cache = new AiConfigCache();
 
     // Default values for runtime reset to factory defaults.
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
@@ -69,6 +74,12 @@ public class AiConfigService {
     @Inject
     private PermissionService permissionService;
 
+    @Inject
+    private HostResolver hostResolver;
+
+    @Inject
+    Event<AiConfigChangedEvent> configChangedEvent;
+
     @ConfigProperty(name = "app.security.allowed-ollama-hosts", defaultValue = "ollama,localhost")
     Set<String> allowedOllamaHosts = Set.of("ollama", "localhost");
 
@@ -79,7 +90,11 @@ public class AiConfigService {
     Set<String> allowedOpenAiHosts = Set.of("api.openai.com");
 
     /**
-     * Retrieves a configuration value as a String. Falls back to defaultValue if not found.
+     * Retrieves a configuration value as a String. Falls back to defaultValue if not found. A miss reads the row and
+     * caches it only if no write evicted anything meanwhile (see {@link AiConfigCache}). A miss read while the calling
+     * thread has a transaction, whatever its status (rollback-only included), is returned but never cached: it may be
+     * an uncommitted value or an entity loaded before a concurrent commit, and a transaction that is not active gets no
+     * after-completion notification to evict it. A cache hit is returned in any case.
      *
      * @param key
      *            the configuration key
@@ -93,16 +108,18 @@ public class AiConfigService {
             return defaultValue;
         }
 
-        final String cached = this.configCache.get(key);
+        final String cached = this.cache.get(key);
         if (cached != null) {
             return cached;
         }
 
+        // Every status but NO_TRANSACTION counts, a rollback-only transaction included
+        final boolean inTransaction = QuarkusTransaction.getStatus() != Status.STATUS_NO_TRANSACTION;
+        // Read before the row, so an eviction after this point discards the fill
+        final long seen = this.cache.generation();
         return this.aiConfigRepository.findByConfigKey(key).map(entity -> {
-            if (entity.configValue != null) {
-                this.configCache.put(entity.configKey, entity.configValue);
-            } else {
-                this.configCache.remove(entity.configKey);
+            if (!inTransaction) {
+                this.cache.putIfCurrent(key, entity.configValue, seen);
             }
             return entity.configValue;
         }).orElse(defaultValue);
@@ -283,6 +300,10 @@ public class AiConfigService {
         // user entity recorded as lastUpdatedBy.
         final UserEntity user = this.requireConfigEditPermission(credentials);
 
+        // Defensive: fills inside a transaction are never cached, but firing before the first write also keeps the
+        // eviction after completion when a later step fails
+        this.configChangedEvent.fire(new AiConfigChangedEvent(List.of(configKey)));
+
         // Find existing or create new
         final var existing = this.aiConfigRepository.findByConfigKey(configKey);
         final var entity = existing.orElseGet(() -> {
@@ -303,7 +324,7 @@ public class AiConfigService {
         }
 
         // Invalidate cache
-        this.configCache.remove(configKey);
+        this.cache.evict(List.of(configKey));
 
         LOG.infof("Configuration updated: key='%s', updatedBy='%s'", configKey, user.username);
     }
@@ -351,6 +372,11 @@ public class AiConfigService {
         // user entity recorded as lastUpdatedBy.
         final UserEntity user = this.requireConfigEditPermission(credentials);
 
+        // Defensive: fills inside a transaction are never cached, but firing before the first write also keeps the
+        // eviction after completion when a later step fails
+        this.configChangedEvent
+                .fire(new AiConfigChangedEvent(updates.stream().map(update -> update.configKey).toList()));
+
         // Persist all updates
         for (final AiConfigUpdateDto update : updates) {
             final Optional<AiConfigEntity> existing = this.aiConfigRepository.findByConfigKey(update.configKey);
@@ -372,7 +398,7 @@ public class AiConfigService {
             }
 
             // Invalidate cache
-            this.configCache.remove(update.configKey);
+            this.cache.evict(List.of(update.configKey));
         }
 
         LOG.infof("Multiple configurations updated: count=%s, updatedBy='%s'", updates.size(), user.username);
@@ -510,7 +536,8 @@ public class AiConfigService {
     /**
      * Validates that a provider API URL is safe to call. Used by {@link #validateUrlSafe} and immediately before HTTP
      * calls. This method re-runs SSRF checks immediately before each HTTP request to close the TOCTOU window between
-     * admin save and use. Ollama is allow-list-only; private addresses are permitted because Docker service names like
+     * admin save and use. The HTTP client resolves the host again when it connects, so DNS rebinding is narrowed, not
+     * closed (#293). Ollama is allow-list-only; private addresses are permitted because Docker service names like
      * {@code ollama} intentionally resolve into the container network. The allow-list itself is the trust boundary.
      *
      * @param url
@@ -554,7 +581,7 @@ public class AiConfigService {
             throw new IllegalArgumentException(providerType + " API URL must use HTTPS");
         }
         try {
-            final InetAddress[] addresses = InetAddress.getAllByName(host);
+            final InetAddress[] addresses = this.hostResolver.resolveAll(host);
             for (final InetAddress address : addresses) {
                 if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(providerType + " API host '" + host
@@ -617,7 +644,7 @@ public class AiConfigService {
             throw new IllegalArgumentException("Loopback addresses are not allowed for key '" + configKey + "'");
         }
         try {
-            final InetAddress[] addresses = InetAddress.getAllByName(host);
+            final InetAddress[] addresses = this.hostResolver.resolveAll(host);
             for (final InetAddress address : addresses) {
                 if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(
@@ -631,10 +658,21 @@ public class AiConfigService {
     }
 
     /**
-     * Clears the configuration cache. Called when configurations are updated or when cache needs to be refreshed.
+     * Evicts the written keys once the writing transaction has completed, on commit and on rollback. It serves readers
+     * outside that transaction, whose fill may have read the old row before the commit.
+     *
+     * @param event
+     *            the keys the completed transaction wrote
+     */
+    void onConfigChanged(@Observes(during = TransactionPhase.AFTER_COMPLETION) final AiConfigChangedEvent event) {
+        this.cache.evict(event.configKeys());
+    }
+
+    /**
+     * Clears the configuration cache; for tests and manual refreshes, no production code calls it.
      */
     public void clearCache() {
-        this.configCache.clear();
+        this.cache.clear();
         LOG.info("Configuration cache cleared");
     }
 

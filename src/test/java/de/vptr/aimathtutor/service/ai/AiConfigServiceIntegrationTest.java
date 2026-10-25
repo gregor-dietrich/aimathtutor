@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
@@ -25,10 +24,9 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
+import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 
 @QuarkusTest
@@ -45,8 +43,6 @@ class AiConfigServiceIntegrationTest {
 
     private static final String ADMIN_USERNAME = "admin";
     private static final String TEST_KEY = "it.test.config";
-    @Nullable
-    private String originalTemperature;
 
     @SuppressWarnings("NullAway")
     private SessionCredentials credentialsFor(final String username) {
@@ -56,37 +52,22 @@ class AiConfigServiceIntegrationTest {
     }
 
     @BeforeEach
-    @Transactional
     void setUp() {
+        this.aiConfigService.clearCache();
+
         // Ensure admin user exists (seeded by V1__baseline.sql)
         final UserEntity admin = this.userRepository.findByUsername(ADMIN_USERNAME);
         assertNotNull(admin, "Admin user should exist in test database");
-
-        // Save original value so we can restore it after tests
-        this.originalTemperature = this.aiConfigService.getConfigValue("google.temperature", "0.7");
-
-        // Clean up any leftover test key from previous interrupted runs
-        final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
-        existing.ifPresent(AiConfigEntity::delete);
     }
 
     @AfterEach
-    @Transactional
     void tearDown() {
-        // Restore google.temperature to its original value
-        if (this.originalTemperature != null) {
-            this.aiConfigService.updateConfig("google.temperature", this.originalTemperature,
-                    this.credentialsFor(ADMIN_USERNAME));
-        }
-
-        // Remove test key if it still exists
-        final var existing = this.aiConfigRepository.findByConfigKey(TEST_KEY);
-        existing.ifPresent(AiConfigEntity::delete);
+        this.aiConfigService.clearCache();
     }
 
     @Test
     @DisplayName("Read seeded integer config value")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueAsIntFromSeed() {
         final Integer value = this.aiConfigService.getConfigValueAsInt("google.max-tokens", 0);
         assertEquals(2000, value);
@@ -94,7 +75,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Read seeded double config value")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueAsDoubleFromSeed() {
         final Double value = this.aiConfigService.getConfigValueAsDouble("google.temperature", 0.0);
         assertEquals(0.7, value);
@@ -102,7 +83,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Read seeded boolean config value")
-    @Transactional
+    @TestTransaction
     void testGetConfigValueAsBooleanFromSeed() {
         final Boolean value = this.aiConfigService.getConfigValueAsBoolean("ai.tutor.enabled", false);
         assertTrue(value);
@@ -110,7 +91,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Update config and read back updated value")
-    @Transactional
+    @TestTransaction
     void testUpdateConfigAndReadBack() {
         // Create a test config
         final var entity = new AiConfigEntity(TEST_KEY, "initial", ConfigType.STRING, ConfigCategory.GENERAL);
@@ -127,7 +108,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Get all configs by category using seeded data")
-    @Transactional
+    @TestTransaction
     void testGetAllConfigsByCategory() {
         final Map<String, String> googleConfigs = this.aiConfigService.getAllConfigsByCategory(ConfigCategory.GOOGLE);
         assertFalse(googleConfigs.isEmpty());
@@ -137,7 +118,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Reset to defaults restores seeded values")
-    @Transactional
+    @TestTransaction
     void testResetToDefaults() {
         // Change a seeded value away from default
         this.aiConfigService.updateConfig("google.temperature", "1.5", this.credentialsFor(ADMIN_USERNAME));
@@ -153,7 +134,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Cache invalidation after update reflects new value immediately")
-    @Transactional
+    @TestTransaction
     void testCacheInvalidation() {
         // Create test config
         final var entity = new AiConfigEntity(TEST_KEY, "v1", ConfigType.STRING, ConfigCategory.GENERAL);
@@ -172,7 +153,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Validation rejects out-of-range max-tokens")
-    @Transactional
+    @TestTransaction
     void testValidationRejectsOutOfRangeMaxTokens() {
         assertThrows(ValidationException.class, () -> this.aiConfigService.updateConfig("google.max-tokens", "99999",
                 this.credentialsFor(ADMIN_USERNAME)));
@@ -180,7 +161,7 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Validation failure is a ValidationException that keeps the validation message")
-    @Transactional
+    @TestTransaction
     void testValidationFailureKeepsMessage() {
         final var ex = assertThrows(ValidationException.class, () -> this.aiConfigService
                 .updateConfig("google.temperature", "5.0", this.credentialsFor(ADMIN_USERNAME)));
@@ -191,19 +172,15 @@ class AiConfigServiceIntegrationTest {
 
     @Test
     @DisplayName("Validation accepts in-range temperature")
-    @Transactional
+    @TestTransaction
     void testValidationAcceptsInRangeTemperature() {
         assertDoesNotThrow(() -> this.aiConfigService.updateConfig("google.temperature", "1.2",
                 this.credentialsFor(ADMIN_USERNAME)));
-
-        // Restore
-        this.aiConfigService.updateConfig("google.temperature", Objects.requireNonNull(this.originalTemperature),
-                this.credentialsFor(ADMIN_USERNAME));
     }
 
     @Test
     @DisplayName("Permission check rejects non-admin user")
-    @Transactional
+    @TestTransaction
     void testPermissionCheckRejectsNonAdmin() {
         // student1 has rank Student (no exercise/lesson permissions)
         final var studentUsername = "student1";

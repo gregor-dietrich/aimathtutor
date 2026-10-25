@@ -29,6 +29,9 @@ The test-specific rules in `AGENTS.md` (`RateLimitServiceTest`,
   `Client`, `WebTarget` and `Invocation.Builder`), or run with
   `ai.tutor.provider=mock` / `ai.tutor.enabled=false`; no test calls a real AI
   API.
+- No test resolves a real host name: the test-scope `TestHostResolver` replaces
+  `HostResolver` in every `@QuarkusTest`. A class needing specific answers or
+  interaction checks uses `@InjectMock HostResolver`.
 
 ## Naming
 
