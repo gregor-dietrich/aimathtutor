@@ -673,7 +673,9 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   transaction. Do not narrow that observer to `AFTER_SUCCESS` or drop the
   generation check; `AiConfigCacheRaceTest` pins both.
 - **Host resolution:** the SSRF checks resolve hosts only through `HostResolver`;
-  tests replace it with `@InjectMock`, so no test resolves a real host name.
+  a test-scope `TestHostResolver` replaces it in every `@QuarkusTest`, so no
+  test resolves a real host name; a class needing specific answers uses
+  `@InjectMock`.
 
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on AI provider calls, sets 1s

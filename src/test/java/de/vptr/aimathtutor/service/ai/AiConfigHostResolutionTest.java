@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +51,7 @@ class AiConfigHostResolutionTest {
     @SuppressWarnings("NullAway")
     void setUp() throws UnknownHostException {
         this.aiConfigService.clearCache();
-        HostResolverStubs.resolveEverythingPublic(this.hostResolver);
+        when(this.hostResolver.resolveAll(anyString())).thenCallRealMethod();
 
         // The seeded admin, so the session credentials' stamp matches its stored password hash
         final var admin =
@@ -81,8 +82,13 @@ class AiConfigHostResolutionTest {
     @Test
     @DisplayName("validateProviderApiUrl - one non-public address among public ones is rejected")
     void testValidateProviderApiUrlRejectsMixedResolution() throws UnknownHostException {
-        when(this.hostResolver.resolveAll("api.openai.com")).thenReturn(
-                new InetAddress[] { InetAddress.ofLiteral("203.0.113.10"), InetAddress.ofLiteral("10.0.0.1") });
+        final var publicAddress = InetAddress.ofLiteral(TestHostResolver.PUBLIC_ADDRESS);
+        // The public address alone passes, so the rejection below is the private one's
+        when(this.hostResolver.resolveAll("api.openai.com")).thenReturn(new InetAddress[] { publicAddress });
+        this.aiConfigService.validateProviderApiUrl("https://api.openai.com/v1", AiConfigService.ProviderType.OPENAI);
+
+        when(this.hostResolver.resolveAll("api.openai.com"))
+                .thenReturn(new InetAddress[] { publicAddress, InetAddress.ofLiteral("10.0.0.1") });
 
         final var ex = assertThrows(IllegalArgumentException.class, () -> this.aiConfigService
                 .validateProviderApiUrl("https://api.openai.com/v1", AiConfigService.ProviderType.OPENAI));
