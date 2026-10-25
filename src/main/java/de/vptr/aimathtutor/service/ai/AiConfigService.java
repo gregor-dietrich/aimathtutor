@@ -27,12 +27,14 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
+import jakarta.transaction.Status;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.ValidationException;
@@ -89,10 +91,10 @@ public class AiConfigService {
 
     /**
      * Retrieves a configuration value as a String. Falls back to defaultValue if not found. A miss reads the row and
-     * caches it only if no write evicted anything meanwhile (see {@link AiConfigCache}). A reader running inside a
-     * caller's transaction may get an entity already managed by that persistence context, loaded before a concurrent
-     * commit; no production reader does, since {@code findByConfigKey} opens its own transaction and its callers have
-     * none.
+     * caches it only if no write evicted anything meanwhile (see {@link AiConfigCache}). A miss read while the calling
+     * thread has a transaction, whatever its status (rollback-only included), is returned but never cached: it may be
+     * an uncommitted value or an entity loaded before a concurrent commit, and a transaction that is not active gets no
+     * after-completion notification to evict it. A cache hit is returned in any case.
      *
      * @param key
      *            the configuration key
@@ -111,10 +113,14 @@ public class AiConfigService {
             return cached;
         }
 
+        // Every status but NO_TRANSACTION counts, a rollback-only transaction included
+        final boolean inTransaction = QuarkusTransaction.getStatus() != Status.STATUS_NO_TRANSACTION;
         // Read before the row, so an eviction after this point discards the fill
         final long seen = this.cache.generation();
         return this.aiConfigRepository.findByConfigKey(key).map(entity -> {
-            this.cache.putIfCurrent(key, entity.configValue, seen);
+            if (!inTransaction) {
+                this.cache.putIfCurrent(key, entity.configValue, seen);
+            }
             return entity.configValue;
         }).orElse(defaultValue);
     }
@@ -294,7 +300,8 @@ public class AiConfigService {
         // user entity recorded as lastUpdatedBy.
         final UserEntity user = this.requireConfigEditPermission(credentials);
 
-        // Before the first write, so a failure part-way through still gets the eviction after completion
+        // Defensive: fills inside a transaction are never cached, but firing before the first write also keeps the
+        // eviction after completion when a later step fails
         this.configChangedEvent.fire(new AiConfigChangedEvent(List.of(configKey)));
 
         // Find existing or create new
@@ -365,7 +372,8 @@ public class AiConfigService {
         // user entity recorded as lastUpdatedBy.
         final UserEntity user = this.requireConfigEditPermission(credentials);
 
-        // Before the first write, so a failure part-way through still gets the eviction after completion
+        // Defensive: fills inside a transaction are never cached, but firing before the first write also keeps the
+        // eviction after completion when a later step fails
         this.configChangedEvent
                 .fire(new AiConfigChangedEvent(updates.stream().map(update -> update.configKey).toList()));
 
@@ -649,8 +657,8 @@ public class AiConfigService {
     }
 
     /**
-     * Evicts the written keys once the writing transaction has completed. It runs on commit and on rollback: a read
-     * inside the writing transaction sees, and caches, its uncommitted value, which a rollback must not leave behind.
+     * Evicts the written keys once the writing transaction has completed, on commit and on rollback. It serves readers
+     * outside that transaction, whose fill may have read the old row before the commit.
      *
      * @param event
      *            the keys the completed transaction wrote
@@ -660,7 +668,7 @@ public class AiConfigService {
     }
 
     /**
-     * Clears the configuration cache. Called when configurations are updated or when cache needs to be refreshed.
+     * Clears the configuration cache; for tests and manual refreshes, no production code calls it.
      */
     public void clearCache() {
         this.cache.clear();

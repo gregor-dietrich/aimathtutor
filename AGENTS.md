@@ -664,11 +664,14 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   at `/admin/config`. The Organization ID has no property/environment input.
 - **Config cache:** `AiConfigService` caches values in `AiConfigCache`. A fill
   caches only if no eviction happened since its read began (a generation taken
-  before the read); a write evicts its keys in its transaction and again in an
-  `AFTER_COMPLETION` observer of `AiConfigChangedEvent`, also on rollback, since
-  a read inside the writing transaction caches its uncommitted value. Do not
-  narrow that observer to `AFTER_SUCCESS` or drop the generation check;
-  `AiConfigCacheRaceTest` pins both.
+  before the read), and never when the calling thread has a transaction of any
+  status but `STATUS_NO_TRANSACTION` (rollback-only included): it may be an
+  uncommitted value, and CDI notifies a transactional observer at once, not
+  after completion, when the transaction is not active. A write evicts its keys
+  in its transaction and again in an `AFTER_COMPLETION` observer of
+  `AiConfigChangedEvent`, also on rollback, for readers outside the writing
+  transaction. Do not narrow that observer to `AFTER_SUCCESS` or drop the
+  generation check; `AiConfigCacheRaceTest` pins both.
 - **Host resolution:** the SSRF checks resolve hosts only through `HostResolver`;
   tests replace it with `@InjectMock`, so no test resolves a real host name.
 

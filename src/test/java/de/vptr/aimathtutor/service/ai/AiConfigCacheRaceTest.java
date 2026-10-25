@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +63,9 @@ class AiConfigCacheRaceTest {
 
     @Inject
     EntityManager entityManager;
+
+    @Inject
+    DataSource dataSource;
 
     private final String key = "test.cache-race-" + UUID.randomUUID();
 
@@ -159,7 +165,7 @@ class AiConfigCacheRaceTest {
     }
 
     @Test
-    @DisplayName("A value cached inside a transaction that rolls back is evicted")
+    @DisplayName("A value read inside a transaction that rolls back is not left cached")
     void rollbackEvictsTheUncommittedValue() {
         this.seed();
 
@@ -168,6 +174,26 @@ class AiConfigCacheRaceTest {
             this.aiConfigService.updateConfig(this.key, V1, this.credentials());
             assertEquals(V1, this.aiConfigService.getConfigValue(this.key, null));
             QuarkusTransaction.setRollbackOnly();
+        }));
+
+        assertEquals(V0, this.aiConfigService.getConfigValue(this.key, null));
+    }
+
+    @Test
+    @DisplayName("A fill inside a transaction already marked for rollback is not cached")
+    void fillInsideRollbackOnlyTransactionIsNotCached() {
+        this.seed();
+
+        assertThrows(QuarkusTransactionException.class, () -> QuarkusTransaction.requiringNew().run(() -> {
+            // Enlists the connection, so the write is not refused for lack of a resource
+            try (var connection = this.dataSource.getConnection()) {
+                assertTrue(connection.isValid(1));
+            } catch (final SQLException e) {
+                throw new IllegalStateException(e);
+            }
+            QuarkusTransaction.setRollbackOnly();
+            this.aiConfigService.updateConfig(this.key, V1, this.credentials());
+            assertEquals(V1, this.aiConfigService.getConfigValue(this.key, null));
         }));
 
         assertEquals(V0, this.aiConfigService.getConfigValue(this.key, null));
