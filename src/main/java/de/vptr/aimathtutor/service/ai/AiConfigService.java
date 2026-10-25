@@ -73,6 +73,9 @@ public class AiConfigService {
     private PermissionService permissionService;
 
     @Inject
+    private HostResolver hostResolver;
+
+    @Inject
     Event<AiConfigChangedEvent> configChangedEvent;
 
     @ConfigProperty(name = "app.security.allowed-ollama-hosts", defaultValue = "ollama,localhost")
@@ -569,7 +572,7 @@ public class AiConfigService {
             throw new IllegalArgumentException(providerType + " API URL must use HTTPS");
         }
         try {
-            final InetAddress[] addresses = InetAddress.getAllByName(host);
+            final InetAddress[] addresses = this.hostResolver.resolveAll(host);
             for (final InetAddress address : addresses) {
                 if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(providerType + " API host '" + host
@@ -632,7 +635,7 @@ public class AiConfigService {
             throw new IllegalArgumentException("Loopback addresses are not allowed for key '" + configKey + "'");
         }
         try {
-            final InetAddress[] addresses = InetAddress.getAllByName(host);
+            final InetAddress[] addresses = this.hostResolver.resolveAll(host);
             for (final InetAddress address : addresses) {
                 if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(

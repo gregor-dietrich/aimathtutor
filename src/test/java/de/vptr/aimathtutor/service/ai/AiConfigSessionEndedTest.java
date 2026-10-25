@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.annotation.Nullable;
@@ -61,6 +63,9 @@ class AiConfigSessionEndedTest {
 
     @Inject
     UserRepository userRepository;
+
+    @InjectMock
+    HostResolver hostResolver;
 
     /** The unique key a test committed; null when it committed nothing. */
     @Nullable
@@ -150,6 +155,8 @@ class AiConfigSessionEndedTest {
         final var unchanged = this.aiConfigRepository.findByConfigKey(KEY).orElseThrow();
         assertEquals(SEEDED_VALUE, unchanged.configValue);
         assertNull(unchanged.lastUpdatedBy);
+        // The reset's default Google and OpenAI URLs would be resolved if validation ran first
+        verifyNoInteractions(this.hostResolver);
     }
 
     @Test
@@ -181,6 +188,7 @@ class AiConfigSessionEndedTest {
             final var ex = assertThrows(ValidationException.class, write::run);
             assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
         }
+        verifyNoInteractions(this.hostResolver);
     }
 
     @Test

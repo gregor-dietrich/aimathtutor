@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -25,6 +26,7 @@ import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -46,14 +48,18 @@ class AiConfigServiceTest {
     @Inject
     UserRepository userRepository;
 
+    @InjectMock
+    HostResolver hostResolver;
+
     private UserEntity adminUser;
 
     private SessionCredentials credentials;
 
     @BeforeEach
     @SuppressWarnings("NullAway")
-    void setUp() {
+    void setUp() throws UnknownHostException {
         this.aiConfigService.clearCache();
+        HostResolverStubs.resolveEverythingPublic(this.hostResolver);
 
         // The seeded admin, so the session credentials' stamp matches its stored password hash
         this.adminUser =

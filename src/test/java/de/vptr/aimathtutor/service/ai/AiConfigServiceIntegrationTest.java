@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,6 +25,7 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.security.AuthService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -41,6 +43,9 @@ class AiConfigServiceIntegrationTest {
     @Inject
     UserRepository userRepository;
 
+    @InjectMock
+    HostResolver hostResolver;
+
     private static final String ADMIN_USERNAME = "admin";
     private static final String TEST_KEY = "it.test.config";
 
@@ -52,8 +57,9 @@ class AiConfigServiceIntegrationTest {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws UnknownHostException {
         this.aiConfigService.clearCache();
+        HostResolverStubs.resolveEverythingPublic(this.hostResolver);
 
         // Ensure admin user exists (seeded by V1__baseline.sql)
         final UserEntity admin = this.userRepository.findByUsername(ADMIN_USERNAME);
