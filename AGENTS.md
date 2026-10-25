@@ -404,7 +404,11 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   with `AuthService.requireSessionUser()` in its own transaction. Both refuse a
   revoked, banned, deactivated or deleted account with
   `AppConstants.SESSION_ENDED_MESSAGE`, which `AsyncDataLoader` and
-  `ServiceRejectionUtil.runOrShowRejection` turn into a return to login. A view
+  `ServiceRejectionUtil.runOrShowRejection` turn into a return to login.
+  `PermissionService`'s session `require*` checks resolve the caller through
+  `requireCurrentUser()`, so an ended session gets that message, not a
+  permission error; views call every write those checks guard through
+  `ServiceRejectionUtil`. A view
   keeps the user's ID for display only; an ID it resolves on the UI thread for
   one action may go with that action (the AI rate-limit key and interaction
   log, the lesson list's completion badges, and `AdminConfigView.requireUserId()`,
