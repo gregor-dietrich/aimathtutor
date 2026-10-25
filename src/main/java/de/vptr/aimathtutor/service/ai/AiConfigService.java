@@ -714,7 +714,8 @@ public class AiConfigService {
     /**
      * Authorizes the captured session for AI-config edits. Transactional because resolving the session user needs a
      * transaction: called from the public methods with no caller transaction it runs in its own short one, before any
-     * validation or DNS lookup; from the persist methods it joins theirs.
+     * validation or DNS lookup; from the persist methods it joins theirs. {@link ProviderTestService}'s connection
+     * tests ({@code SUPPORTS}) rely on that short transaction too.
      */
     @Transactional
     UserEntity requireConfigEditPermission(@Nullable final SessionCredentials credentials) {

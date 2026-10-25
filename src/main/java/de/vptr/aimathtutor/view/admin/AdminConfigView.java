@@ -3,10 +3,8 @@ package de.vptr.aimathtutor.view.admin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logging.Logger;
 
 import com.vaadin.flow.component.button.Button;
@@ -55,9 +53,6 @@ public class AdminConfigView extends AbstractAdminView {
 
     @Inject
     private transient ProviderTestService aiProviderTestService;
-
-    @Inject
-    private transient ManagedExecutor managedExecutor;
 
     @Override
     protected boolean isAuthorized() {
@@ -361,15 +356,18 @@ public class AdminConfigView extends AbstractAdminView {
             this.aiConfigService.updateMultipleConfigs(updates, credentials);
             return Boolean.TRUE;
         }, this, ignored -> {
-            reenable.run();
-            if (!withTest) {
-                NotificationUtil.showSuccess("Provider configuration updated successfully");
-            } else if ("google".equals(provider)) {
-                this.testGoogleConnection();
+            // With a test, the buttons stay disabled until it completes.
+            if ("google".equals(provider)) {
+                this.testConnection(() -> this.aiProviderTestService.testGoogle(credentials), "Google", reenable);
             } else if ("openai".equals(provider)) {
-                this.testOpenAiConnection();
+                this.testConnection(() -> this.aiProviderTestService.testOpenAi(credentials), "OpenAI", reenable);
             } else if ("ollama".equals(provider)) {
-                this.testOllamaConnection();
+                this.testConnection(() -> this.aiProviderTestService.testOllama(credentials), "Ollama", reenable);
+            } else {
+                reenable.run();
+                if (!withTest) {
+                    NotificationUtil.showSuccess("Provider configuration updated successfully");
+                }
             }
         }, reenable, "Error saving configuration. Please try again later.");
     }
@@ -395,40 +393,18 @@ public class AdminConfigView extends AbstractAdminView {
 
     // --- Connection tests ---------------------------------------------------
 
-    private void testConnection(final Supplier<ProviderTestResultDto> testCall, final String providerName) {
-        final var ui = this.getUI().orElse(null);
-        if (ui == null) {
-            return;
-        }
-        final var _ = CompletableFuture.supplyAsync(testCall, this.managedExecutor).thenAccept(result -> {
-            final var _ = ui.access(() -> {
-                final String msg = result.message != null ? result.message : "No response";
-                if (result.success) {
-                    NotificationUtil.showSuccess(msg);
-                } else {
-                    NotificationUtil.showError(msg);
-                }
-                LOG.infof("%s connection test: %s", providerName, result.message);
-            });
-        }).exceptionally(ex -> {
-            final var _ = ui.access(() -> {
-                NotificationUtil.showError("Connection test failed: " + ex.getMessage());
-                LOG.errorf(ex, "%s connection test failed", providerName);
-            });
-            return null;
-        });
-    }
-
-    private void testGoogleConnection() {
-        this.testConnection(this.aiProviderTestService::testGoogle, "Google");
-    }
-
-    private void testOpenAiConnection() {
-        this.testConnection(this.aiProviderTestService::testOpenAi, "OpenAI");
-    }
-
-    private void testOllamaConnection() {
-        this.testConnection(this.aiProviderTestService::testOllama, "Ollama");
+    private void testConnection(final Supplier<ProviderTestResultDto> testCall, final String providerName,
+            final Runnable onDone) {
+        AsyncDataLoader.load(testCall, this, result -> {
+            onDone.run();
+            final String msg = result.message != null ? result.message : "No response";
+            if (result.success) {
+                NotificationUtil.showSuccess(msg);
+            } else {
+                NotificationUtil.showError(msg);
+            }
+            LOG.infof("%s connection test: %s", providerName, result.message);
+        }, onDone, "Connection test failed. Please try again later.");
     }
 
     // --- Save helpers -------------------------------------------------------

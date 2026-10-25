@@ -122,11 +122,12 @@ public abstract class AbstractProviderService {
     }
 
     /**
-     * Returns true if the API key is non-null, non-blank, and not an unresolved placeholder (e.g.
-     * {@code ${app.openai.api.key}}).
+     * Returns true if the API key is non-null, non-blank, and neither an unresolved placeholder (e.g.
+     * {@code ${app.openai.api.key}}) nor the {@code not-configured} placeholder that {@code application.properties}
+     * ships.
      */
     protected static boolean isApiKeyConfigured(@Nullable final String apiKey) {
-        return apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("${");
+        return apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("${") && !"not-configured".equals(apiKey);
     }
 
     /**
