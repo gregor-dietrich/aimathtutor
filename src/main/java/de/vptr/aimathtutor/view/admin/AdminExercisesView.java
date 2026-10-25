@@ -496,13 +496,15 @@ public class AdminExercisesView extends AbstractAdminView {
      */
     private void deleteExercise(final ExerciseViewDto exercise) {
         try {
-            if (this.exerciseService.deleteExercise(exercise.publicId)) {
-                NotificationUtil.showSuccess("Exercise deleted successfully");
-                this.loadExercises();
-                this.loadLessons();
-            } else {
-                NotificationUtil.showError("Failed to delete exercise");
-            }
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.exerciseService.deleteExercise(exercise.publicId)) {
+                    NotificationUtil.showSuccess("Exercise deleted successfully");
+                    this.loadExercises();
+                    this.loadLessons();
+                } else {
+                    NotificationUtil.showError("Failed to delete exercise");
+                }
+            });
         } catch (final PermissionDeniedException e) {
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {

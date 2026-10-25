@@ -45,6 +45,8 @@ import de.vptr.aimathtutor.util.NotificationUtil;
 import de.vptr.aimathtutor.util.ServiceRejectionUtil;
 import de.vptr.aimathtutor.util.UlidUtil;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Admin view for managing user groups and their memberships.
@@ -266,12 +268,14 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
     private void deleteGroup(final UserGroupViewDto group) {
         try {
-            if (this.groupService.deleteGroup(group.publicId)) {
-                NotificationUtil.showSuccess("Group deleted successfully");
-                this.loadGroupsAsync();
-            } else {
-                NotificationUtil.showError("Failed to delete group");
-            }
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.groupService.deleteGroup(group.publicId)) {
+                    NotificationUtil.showSuccess("Group deleted successfully");
+                    this.loadGroupsAsync();
+                } else {
+                    NotificationUtil.showError("Failed to delete group");
+                }
+            });
         } catch (final PermissionDeniedException e) {
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
@@ -389,13 +393,26 @@ public class AdminUserGroupsView extends AbstractAdminView {
         }
 
         try {
-            this.groupService.addUserToGroup(selectedUser.publicId, this.selectedGroup.publicId);
-            NotificationUtil.showSuccess("User added to group successfully");
-            // Refresh user lists for the dialog
-            this.loadGroupUsers();
-            // Also refresh the main groups grid so computed columns (user count) update
-            this.loadGroupsAsync();
-            this.availableUsersCombo.clear();
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                this.groupService.addUserToGroup(selectedUser.publicId, this.selectedGroup.publicId);
+                NotificationUtil.showSuccess("User added to group successfully");
+                // Refresh user lists for the dialog
+                this.loadGroupUsers();
+                // Also refresh the main groups grid so computed columns (user count) update
+                this.loadGroupsAsync();
+                this.availableUsersCombo.clear();
+            });
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
+        } catch (final WebApplicationException e) {
+            // CONFLICT carries a user-facing reason (already in the group); other statuses are unexpected
+            final String reason = e.getMessage();
+            if (e.getResponse().getStatus() == Response.Status.CONFLICT.getStatusCode() && reason != null) {
+                NotificationUtil.showError(reason);
+            } else {
+                LOG.error("Unexpected error adding user to group", e);
+                NotificationUtil.showError("Unexpected error occurred");
+            }
         } catch (final Exception e) {
             LOG.error("Unexpected error adding user to group", e);
             NotificationUtil.showError("Unexpected error occurred");
@@ -404,15 +421,19 @@ public class AdminUserGroupsView extends AbstractAdminView {
 
     private void removeUserFromGroup(final UserViewDto user) {
         try {
-            if (this.groupService.removeUserFromGroup(user.publicId, this.selectedGroup.publicId)) {
-                NotificationUtil.showSuccess("User removed from group successfully");
-                // Refresh user lists for the dialog
-                this.loadGroupUsers();
-                // Also refresh the main groups grid so computed columns (user count) update
-                this.loadGroupsAsync();
-            } else {
-                NotificationUtil.showError("Failed to remove user from group");
-            }
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.groupService.removeUserFromGroup(user.publicId, this.selectedGroup.publicId)) {
+                    NotificationUtil.showSuccess("User removed from group successfully");
+                    // Refresh user lists for the dialog
+                    this.loadGroupUsers();
+                    // Also refresh the main groups grid so computed columns (user count) update
+                    this.loadGroupsAsync();
+                } else {
+                    NotificationUtil.showError("Failed to remove user from group");
+                }
+            });
+        } catch (final PermissionDeniedException e) {
+            NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
             LOG.error("Unexpected error removing user from group", e);
             NotificationUtil.showError("Unexpected error occurred");

@@ -123,7 +123,9 @@ public class UserGroupService {
      *            the group data transfer object with name
      * @return the created {@link UserGroupViewDto}
      * @throws ValidationException
-     *             if name is missing or empty
+     *             if name is missing or empty, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not add groups
      */
     @Transactional
     public UserGroupViewDto createGroup(final @Valid UserGroupDto groupDto) {
@@ -154,7 +156,9 @@ public class UserGroupService {
      * @throws WebApplicationException
      *             if group not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if name is missing or empty
+     *             if name is missing or empty, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit groups
      */
     @Transactional
     public UserGroupViewDto updateGroup(final String publicId, final @Valid UserGroupDto groupDto) {
@@ -187,6 +191,10 @@ public class UserGroupService {
      * @return the updated {@link UserGroupViewDto}
      * @throws WebApplicationException
      *             if group not found (NOT_FOUND status)
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit groups
      */
     @Transactional
     public UserGroupViewDto patchGroup(final Long id, final @Valid UserGroupDto groupDto) {
@@ -212,6 +220,10 @@ public class UserGroupService {
      * @param publicId
      *            the group public ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if group not found
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not delete groups
      */
     @Transactional
     public boolean deleteGroup(final String publicId) {
@@ -229,6 +241,10 @@ public class UserGroupService {
      * @return the created {@link UserGroupMetaEntity} membership record
      * @throws WebApplicationException
      *             if user/group not found or user already in group (CONFLICT)
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit groups
      */
     @Transactional
     public UserGroupMetaEntity addUserToGroup(final String userPublicId, final String groupPublicId) {
@@ -269,6 +285,10 @@ public class UserGroupService {
      * @param groupPublicId
      *            the group public ID to remove user from
      * @return {@code true} if removal succeeded, {@code false} if membership not found
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit groups
      */
     @Transactional
     public boolean removeUserFromGroup(final String userPublicId, final String groupPublicId) {

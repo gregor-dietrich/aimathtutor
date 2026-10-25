@@ -9,6 +9,7 @@ import org.owasp.html.PolicyFactory;
 
 import de.vptr.aimathtutor.dto.LessonViewDto;
 import de.vptr.aimathtutor.entity.LessonEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.LessonRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import jakarta.annotation.Nullable;
@@ -100,9 +101,11 @@ public class LessonService {
      *            the lesson entity with creation details
      * @return the created {@link LessonViewDto}
      * @throws ValidationException
-     *             if name is missing or empty
+     *             if name is missing or empty, or the session has ended
      * @throws WebApplicationException
      *             if parent lesson not found or circular reference detected (BAD_REQUEST)
+     * @throws PermissionDeniedException
+     *             if the caller may not add lessons
      */
     @Transactional
     public LessonViewDto createLesson(final LessonEntity lesson) {
@@ -138,7 +141,9 @@ public class LessonService {
      * @throws WebApplicationException
      *             if lesson/parent not found or circular reference (NOT_FOUND/BAD_REQUEST)
      * @throws ValidationException
-     *             if name is missing or empty
+     *             if name is missing or empty, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit lessons
      */
     @Transactional
     public LessonViewDto updateLesson(final LessonEntity lesson) {
@@ -184,6 +189,10 @@ public class LessonService {
      * @return the updated {@link LessonViewDto}
      * @throws WebApplicationException
      *             if lesson/parent not found or circular reference (NOT_FOUND/BAD_REQUEST)
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit lessons
      */
     @Transactional
     public LessonViewDto patchLesson(final LessonEntity lesson) {
@@ -240,6 +249,10 @@ public class LessonService {
      * @param publicId
      *            the lesson ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if lesson not found
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not delete lessons
      */
     @Transactional
     public boolean deleteLesson(final String publicId) {

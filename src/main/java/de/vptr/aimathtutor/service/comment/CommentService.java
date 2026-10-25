@@ -188,6 +188,8 @@ public class CommentService {
      *
      * @throws ValidationException
      *             if the session has ended or the input is invalid
+     * @throws PermissionDeniedException
+     *             if the caller may not add comments
      */
     @Transactional
     public CommentViewDto createComment(final @Valid CommentDto dto) {
@@ -385,6 +387,9 @@ public class CommentService {
      *
      * @throws ValidationException
      *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller deletes another user's comment, or hard-deletes one, without permission to delete
+     *             comments
      */
     @Transactional
     public void deleteComment(final String commentPublicId, final boolean softDelete) {
@@ -422,6 +427,8 @@ public class CommentService {
      *
      * @throws ValidationException
      *             if the session has ended or the input is invalid
+     * @throws PermissionDeniedException
+     *             if the caller may not edit other users' comments
      */
     @Transactional
     public CommentViewDto editComment(final String commentPublicId, final @Valid CommentDto dto) {
@@ -487,6 +494,8 @@ public class CommentService {
      *
      * @throws ValidationException
      *             if the session has ended or the input is invalid
+     * @throws PermissionDeniedException
+     *             if the caller may not edit comments
      */
     @Transactional
     public void moderateComment(final String commentPublicId, final String action, final String reason) {

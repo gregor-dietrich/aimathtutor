@@ -220,7 +220,7 @@ public class UserRepository extends AbstractRepository {
      * @return true if the user is an active Administrator
      */
     public static boolean isActiveAdministrator(final UserEntity user) {
-        return user.activated && !user.banned && grantsAdministration(user.rank);
+        return user.isActive() && grantsAdministration(user.rank);
     }
 
     /**

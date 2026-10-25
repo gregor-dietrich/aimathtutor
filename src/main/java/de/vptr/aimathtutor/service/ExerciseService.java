@@ -187,7 +187,9 @@ public class ExerciseService {
      *            the exercise data transfer object with creation details
      * @return the created {@link ExerciseViewDto}
      * @throws ValidationException
-     *             if required fields are missing or references are invalid
+     *             if required fields are missing or references are invalid, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not add exercises
      */
     @Transactional
     public ExerciseViewDto createExercise(final @Valid ExerciseDto exerciseDto) {
@@ -253,7 +255,9 @@ public class ExerciseService {
      * @throws WebApplicationException
      *             if exercise not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if required fields are missing or references are invalid
+     *             if required fields are missing or references are invalid, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit exercises
      */
     @Transactional
     public ExerciseViewDto updateExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
@@ -315,7 +319,9 @@ public class ExerciseService {
      * @throws WebApplicationException
      *             if exercise not found (NOT_FOUND status)
      * @throws ValidationException
-     *             if provided references are invalid
+     *             if provided references are invalid, or the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not edit exercises
      */
     @Transactional
     public ExerciseViewDto patchExercise(final String publicId, final @Valid ExerciseDto exerciseDto) {
@@ -372,6 +378,10 @@ public class ExerciseService {
      * @param publicId
      *            the exercise ID to delete
      * @return {@code true} if deletion succeeded, {@code false} if exercise not found
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the caller may not delete exercises
      */
     @Transactional
     public boolean deleteExercise(final String publicId) {

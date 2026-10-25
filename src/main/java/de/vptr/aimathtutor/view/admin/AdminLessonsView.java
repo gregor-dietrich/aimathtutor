@@ -392,12 +392,14 @@ public class AdminLessonsView extends AbstractAdminView {
         }
 
         try {
-            if (this.lessonService.deleteLesson(lesson.publicId)) {
-                NotificationUtil.showSuccess("Lesson deleted successfully");
-                this.loadLessonsAsync();
-            } else {
-                NotificationUtil.showError("Failed to delete lesson");
-            }
+            ServiceRejectionUtil.runOrShowRejection(() -> {
+                if (this.lessonService.deleteLesson(lesson.publicId)) {
+                    NotificationUtil.showSuccess("Lesson deleted successfully");
+                    this.loadLessonsAsync();
+                } else {
+                    NotificationUtil.showError("Failed to delete lesson");
+                }
+            });
         } catch (final PermissionDeniedException e) {
             NotificationUtil.showError(e.getMessage());
         } catch (final Exception e) {
