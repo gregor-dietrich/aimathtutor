@@ -17,8 +17,6 @@ import java.util.UUID;
 import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.SessionCredentials;
@@ -381,70 +379,58 @@ class PermissionServiceTest {
     }
 
     @Test
-    @DisplayName("requireAiConfigEdit reads the permission flag without touching the lazy users collection")
+    @TestTransaction
+    @DisplayName("requireAiConfigEdit returns the user without touching the lazy users collection")
     void requireAiConfigEditDoesNotInitializeLazyUsers() {
-        // Regression: requireAiConfigEdit runs in the non-transactional, possibly background-thread pre-DNS
-        // check in AiConfigService. Building a UserRankViewDto there used to read the lazy `users`
-        // collection and fail with a LazyInitializationException on the detached rank. Simulate that
-        // detached collection and assert the authorization check no longer touches it.
+        // Regression: building a UserRankViewDto here used to read the lazy `users` collection and fail with a
+        // LazyInitializationException on a detached rank. The check now runs in a transaction, but must still read
+        // only the flag. Simulate the detached collection and assert the check does not touch it.
         @SuppressWarnings("unchecked")
         final List<UserEntity> detachedUsers = mock(List.class);
         when(detachedUsers.size()).thenThrow(new LazyInitializationException("simulated detached users collection"));
 
-        final var rank = new UserRankEntity();
-        rank.aiConfigEdit = true;
+        final var rank = this.buildRank(Permission.AI_CONFIG_EDIT);
         rank.users = detachedUsers;
-        final var user = new UserEntity();
-        user.activated = true;
-        user.rank = rank;
-        when(this.userRepository.findById(1L)).thenReturn(user);
+        final var user = this.stubUser(rank);
 
-        final var result = assertDoesNotThrow(() -> this.permissionService.requireAiConfigEdit(1L));
+        final var result = assertDoesNotThrow(() -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
         assertSame(user, result);
+        verifyNoInteractions(detachedUsers);
     }
 
     @Test
+    @TestTransaction
     @DisplayName("requireAiConfigEdit throws when the rank lacks the permission")
     void requireAiConfigEditThrowsWhenNotPermitted() {
-        final var rank = new UserRankEntity();
-        rank.aiConfigEdit = false;
-        final var user = new UserEntity();
-        user.activated = true;
-        user.rank = rank;
-        when(this.userRepository.findById(2L)).thenReturn(user);
+        final var user = this.stubUser(this.buildRank());
 
-        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(2L));
+        final var ex = assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
+        assertEquals("You do not have permission to edit AI configuration", ex.getMessage());
     }
 
-    @ParameterizedTest(name = "banned={0}, activated={1}")
-    @CsvSource({ "true, true", "false, false" })
-    @DisplayName("requireAiConfigEdit throws for a banned or deactivated user whose rank holds the permission")
-    void requireAiConfigEditThrowsWhenBannedOrInactive(final boolean banned, final boolean activated) {
-        final var rank = new UserRankEntity();
-        rank.aiConfigEdit = true;
-        final var user = new UserEntity();
-        user.banned = banned;
-        user.activated = activated;
-        user.rank = rank;
-        when(this.userRepository.findById(4L)).thenReturn(user);
-
-        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(4L));
-    }
-
+    @SuppressWarnings("NullAway")
     @Test
-    @DisplayName("requireAiConfigEdit throws when the user does not exist")
-    void requireAiConfigEditThrowsWhenUserMissing() {
-        when(this.userRepository.findById(3L)).thenReturn(null);
-        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
-    }
-
-    @Test
+    @TestTransaction
     @DisplayName("requireAiConfigEdit throws when the user has a null rank")
     void requireAiConfigEditThrowsWhenRankIsNull() {
-        final var user = new UserEntity();
-        user.rank = null;
-        when(this.userRepository.findById(3L)).thenReturn(user);
-        assertThrows(PermissionDeniedException.class, () -> this.permissionService.requireAiConfigEdit(3L));
+        final var user = this.stubUser(null);
+
+        assertThrows(PermissionDeniedException.class,
+                () -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
+    }
+
+    @SuppressWarnings("NullAway")
+    @Test
+    @TestTransaction
+    @DisplayName("requireAiConfigEdit passes an ended session through as the session-ended ValidationException")
+    void requireAiConfigEditRefusesEndedSession() {
+        final var user = this.stubUser(this.buildRank(Permission.AI_CONFIG_EDIT));
+        final var stale = new SessionCredentials(user.publicId, "stale", UUID.randomUUID().toString());
+
+        final var ex = assertThrows(ValidationException.class, () -> this.permissionService.requireAiConfigEdit(stale));
+        assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
+        assertThrows(ValidationException.class, () -> this.permissionService.requireAiConfigEdit(null));
     }
 
     @Test

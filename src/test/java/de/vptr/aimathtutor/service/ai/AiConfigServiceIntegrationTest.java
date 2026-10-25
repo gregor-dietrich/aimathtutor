@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +18,13 @@ import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
+import de.vptr.aimathtutor.service.security.AuthService;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -44,6 +47,13 @@ class AiConfigServiceIntegrationTest {
     @Nullable
     private String originalTemperature;
 
+    @SuppressWarnings("NullAway")
+    private SessionCredentials credentialsFor(final Long userId) {
+        final var user = this.userRepository.findById(userId);
+        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
+                UUID.randomUUID().toString());
+    }
+
     @BeforeEach
     @Transactional
     void setUp() {
@@ -64,7 +74,8 @@ class AiConfigServiceIntegrationTest {
     void tearDown() {
         // Restore google.temperature to its original value
         if (this.originalTemperature != null) {
-            this.aiConfigService.updateConfig("google.temperature", this.originalTemperature, ADMIN_USER_ID);
+            this.aiConfigService.updateConfig("google.temperature", this.originalTemperature,
+                    this.credentialsFor(ADMIN_USER_ID));
         }
 
         // Remove test key if it still exists
@@ -106,7 +117,7 @@ class AiConfigServiceIntegrationTest {
         this.aiConfigRepository.persist(entity);
 
         // Update via service
-        this.aiConfigService.updateConfig(TEST_KEY, "updated", ADMIN_USER_ID);
+        this.aiConfigService.updateConfig(TEST_KEY, "updated", this.credentialsFor(ADMIN_USER_ID));
 
         // Read back
         final String value = this.aiConfigService.getConfigValue(TEST_KEY, "NOT_FOUND");
@@ -128,11 +139,11 @@ class AiConfigServiceIntegrationTest {
     @Transactional
     void testResetToDefaults() {
         // Change a seeded value away from default
-        this.aiConfigService.updateConfig("google.temperature", "1.5", ADMIN_USER_ID);
+        this.aiConfigService.updateConfig("google.temperature", "1.5", this.credentialsFor(ADMIN_USER_ID));
         assertEquals("1.5", this.aiConfigService.getConfigValue("google.temperature", ""));
 
         // Reset all to defaults
-        this.aiConfigService.resetToDefaults(ADMIN_USER_ID);
+        this.aiConfigService.resetToDefaults(this.credentialsFor(ADMIN_USER_ID));
 
         // Verify restored
         final String restored = this.aiConfigService.getConfigValue("google.temperature", "");
@@ -152,7 +163,7 @@ class AiConfigServiceIntegrationTest {
         assertEquals("v1", this.aiConfigService.getConfigValue(TEST_KEY, ""));
 
         // Update via service (should invalidate cache)
-        this.aiConfigService.updateConfig(TEST_KEY, "v2", ADMIN_USER_ID);
+        this.aiConfigService.updateConfig(TEST_KEY, "v2", this.credentialsFor(ADMIN_USER_ID));
 
         // Read again — should see updated value without stale cache
         assertEquals("v2", this.aiConfigService.getConfigValue(TEST_KEY, ""));
@@ -162,19 +173,20 @@ class AiConfigServiceIntegrationTest {
     @DisplayName("Validation rejects out-of-range max-tokens")
     @Transactional
     void testValidationRejectsOutOfRangeMaxTokens() {
-        assertThrows(IllegalArgumentException.class,
-                () -> this.aiConfigService.updateConfig("google.max-tokens", "99999", ADMIN_USER_ID));
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.updateConfig("google.max-tokens",
+                "99999", this.credentialsFor(ADMIN_USER_ID)));
     }
 
     @Test
     @DisplayName("Validation accepts in-range temperature")
     @Transactional
     void testValidationAcceptsInRangeTemperature() {
-        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("google.temperature", "1.2", ADMIN_USER_ID));
+        assertDoesNotThrow(() -> this.aiConfigService.updateConfig("google.temperature", "1.2",
+                this.credentialsFor(ADMIN_USER_ID)));
 
         // Restore
         this.aiConfigService.updateConfig("google.temperature", Objects.requireNonNull(this.originalTemperature),
-                ADMIN_USER_ID);
+                this.credentialsFor(ADMIN_USER_ID));
     }
 
     @Test
@@ -187,6 +199,6 @@ class AiConfigServiceIntegrationTest {
         assertNotNull(student, "Student user should exist");
 
         assertThrows(PermissionDeniedException.class,
-                () -> this.aiConfigService.updateConfig("google.temperature", "0.5", studentId));
+                () -> this.aiConfigService.updateConfig("google.temperature", "0.5", this.credentialsFor(studentId)));
     }
 }

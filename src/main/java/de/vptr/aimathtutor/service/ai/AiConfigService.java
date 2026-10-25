@@ -20,8 +20,10 @@ import de.vptr.aimathtutor.dto.AiConfigDto;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigCategory;
 import de.vptr.aimathtutor.dto.AiConfigDto.ConfigType;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
+import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
+import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
@@ -29,6 +31,8 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
+import jakarta.validation.ValidationException;
 
 /**
  * Service for managing AI configuration at runtime. Provides methods to retrieve, validate, and update AI settings from
@@ -242,28 +246,36 @@ public class AiConfigService {
     }
 
     /**
-     * Updates a single configuration value. Validates the input before persisting.
+     * Updates a single configuration value. Validates the input before persisting. Starts no transaction of its own
+     * ({@code SUPPORTS}, which only declares that contract): the URL validation's DNS resolution must not hold a
+     * connection.
      *
      * @param configKey
      *            the configuration key to update
      * @param configValue
      *            the new value
-     * @param userId
-     *            the ID of the user making the update (for audit trail)
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      * @throws IllegalArgumentException
      *             if validation fails
-     * @throws IllegalStateException
-     *             if user is not an admin
      */
-    public void updateConfig(final String configKey, final String configValue, final Long userId) {
+    @Transactional(TxType.SUPPORTS)
+    public void updateConfig(final String configKey, final String configValue,
+            @Nullable final SessionCredentials credentials) {
         // Only require configKey to be non-null. Values can be null or empty
         if (configKey == null) {
             throw new IllegalArgumentException("Configuration key cannot be null");
         }
 
         // Authorize before validating values or resolving any host names, so an unauthorized caller
-        // can never trigger DNS resolution of an attacker-supplied host via a generic URL key.
-        this.permissionService.requireAiConfigEdit(userId);
+        // can never trigger DNS resolution of an attacker-supplied host via a generic URL key. Without a caller's
+        // transaction this runs in a short one of its own, closed before any validation or DNS lookup.
+        this.requireConfigEditPermission(credentials);
 
         this.validateConfigValue(configKey, configValue);
 
@@ -274,15 +286,16 @@ public class AiConfigService {
             this.validateUrlSafe(configKey, configValue);
         }
 
-        this.persistConfigUpdate(configKey, configValue, userId);
+        this.persistConfigUpdate(configKey, configValue, credentials);
     }
 
     @Transactional
-    void persistConfigUpdate(final String configKey, final String configValue, final Long userId) {
+    void persistConfigUpdate(final String configKey, final String configValue,
+            @Nullable final SessionCredentials credentials) {
         // Re-authorize inside the transaction (not redundant with the caller's pre-DNS check): this guards
         // against permission revocation between that check and the write (TOCTOU) and yields the managed
         // user entity recorded as lastUpdatedBy.
-        final UserEntity user = this.requireConfigEditPermission(userId);
+        final UserEntity user = this.requireConfigEditPermission(credentials);
 
         // Find existing or create new
         final var existing = this.aiConfigRepository.findByConfigKey(configKey);
@@ -310,25 +323,33 @@ public class AiConfigService {
     }
 
     /**
-     * Updates multiple configuration values at once. All updates are validated before any are persisted.
+     * Updates multiple configuration values at once. All updates are validated before any are persisted. Starts no
+     * transaction of its own ({@code SUPPORTS}, which only declares that contract): the URL validation's DNS resolution
+     * must not hold a connection.
      *
      * @param updates
      *            a list of {@link AiConfigUpdateDto} objects containing key-value pairs
-     * @param userId
-     *            the ID of the user making the updates
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      * @throws IllegalArgumentException
      *             if any validation fails
-     * @throws IllegalStateException
-     *             if user is not an admin
      */
-    public void updateMultipleConfigs(final List<AiConfigUpdateDto> updates, final Long userId) {
+    @Transactional(TxType.SUPPORTS)
+    public void updateMultipleConfigs(final List<AiConfigUpdateDto> updates,
+            @Nullable final SessionCredentials credentials) {
         if (updates == null || updates.isEmpty()) {
             return;
         }
 
         // Authorize before validating values or resolving any host names, so an unauthorized caller
-        // can never trigger DNS resolution of an attacker-supplied host via a generic URL key.
-        this.permissionService.requireAiConfigEdit(userId);
+        // can never trigger DNS resolution of an attacker-supplied host via a generic URL key. Without a caller's
+        // transaction this runs in a short one of its own, closed before any validation or DNS lookup.
+        this.requireConfigEditPermission(credentials);
 
         // Validate all updates first (outside any DB transaction)
         for (final AiConfigUpdateDto update : updates) {
@@ -342,15 +363,16 @@ public class AiConfigService {
             }
         }
 
-        this.persistMultipleConfigUpdates(updates, userId);
+        this.persistMultipleConfigUpdates(updates, credentials);
     }
 
     @Transactional
-    void persistMultipleConfigUpdates(final List<AiConfigUpdateDto> updates, final Long userId) {
+    void persistMultipleConfigUpdates(final List<AiConfigUpdateDto> updates,
+            @Nullable final SessionCredentials credentials) {
         // Re-authorize inside the transaction (not redundant with the caller's pre-DNS check): this guards
         // against permission revocation between that check and the write (TOCTOU) and yields the managed
         // user entity recorded as lastUpdatedBy.
-        final UserEntity user = this.requireConfigEditPermission(userId);
+        final UserEntity user = this.requireConfigEditPermission(credentials);
 
         // Persist all updates
         for (final AiConfigUpdateDto update : updates) {
@@ -619,18 +641,25 @@ public class AiConfigService {
     }
 
     /**
-     * Resets all known AI configuration values to their factory defaults. Deliberately NOT {@code @Transactional}:
-     * {@link #updateMultipleConfigs} validates URLs (including DNS resolution) before opening its own transaction, and
-     * wrapping the whole reset in a transaction would hold a DB connection during that resolution.
+     * Resets all known AI configuration values to their factory defaults. Deliberately starts no transaction
+     * ({@code SUPPORTS}, which only declares that contract): {@link #updateMultipleConfigs} validates URLs (including
+     * DNS resolution) before opening its own transaction, and wrapping the whole reset in a transaction would hold a DB
+     * connection during that resolution.
      *
-     * @param userId
-     *            the ID of the user performing the reset
+     * @param credentials
+     *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
+     *            null
+     * @throws ValidationException
+     *             if the session has ended
+     * @throws PermissionDeniedException
+     *             if the user's rank lacks the permission
      */
-    public void resetToDefaults(final Long userId) {
+    @Transactional(TxType.SUPPORTS)
+    public void resetToDefaults(@Nullable final SessionCredentials credentials) {
         final var updates =
                 DEFAULT_VALUES.entrySet().stream().map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue())).toList();
-        this.updateMultipleConfigs(updates, userId);
-        LOG.infof("All AI configurations reset to defaults by userId='%s'", userId);
+        this.updateMultipleConfigs(updates, credentials);
+        LOG.info("All AI configurations reset to defaults");
     }
 
     /**
@@ -646,7 +675,13 @@ public class AiConfigService {
                 entity.category, entity.description, entity.lastEdit, lastUpdatedByName);
     }
 
-    private UserEntity requireConfigEditPermission(final Long userId) {
-        return this.permissionService.requireAiConfigEdit(userId);
+    /**
+     * Authorizes the captured session for AI-config edits. Transactional because resolving the session user needs a
+     * transaction: called from the public methods it runs in its own short one, before any validation or DNS lookup;
+     * from the persist methods it joins theirs.
+     */
+    @Transactional
+    UserEntity requireConfigEditPermission(@Nullable final SessionCredentials credentials) {
+        return this.permissionService.requireAiConfigEdit(credentials);
     }
 }

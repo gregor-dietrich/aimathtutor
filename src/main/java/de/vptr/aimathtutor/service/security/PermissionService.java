@@ -16,9 +16,9 @@ import jakarta.validation.ValidationException;
 /**
  * Service for checking user permissions based on their rank. Throws {@link PermissionDeniedException} when the
  * permission is missing or false. The session checks (the {@code require*} methods without a parameter, and
- * {@link #requireAdminView(SessionCredentials)}) throw {@link ValidationException} with the session-ended message when
- * the session has ended (none, revoked credentials, or a banned, deactivated or deleted account);
- * {@link #requireAiConfigEdit(Long)} refuses those with {@link PermissionDeniedException}.
+ * {@link #requireAdminView(SessionCredentials)} and {@link #requireAiConfigEdit(SessionCredentials)}) throw
+ * {@link ValidationException} with the session-ended message when the session has ended (none, revoked credentials, or
+ * a banned, deactivated or deleted account).
  */
 @ApplicationScoped
 public class PermissionService {
@@ -148,27 +148,25 @@ public class PermissionService {
         this.require(this.getCurrentRank().userGroupDelete, "delete user groups");
     }
 
-    // AI config permissions (userId-based, for use in async/non-session contexts)
+    // AI config permissions
 
     /**
-     * Checks that the user identified by {@code userId} has permission to edit AI configuration. Intended for async
-     * contexts where no Vaadin session is available. Returns the resolved {@link UserEntity} so callers can use it for
-     * audit-trail purposes without a second DB lookup.
+     * Requires that the captured session still belongs to an active user whose rank may edit the AI configuration, and
+     * returns that user for the audit trail. Any thread; it joins the caller's transaction, which it requires.
      *
-     * @param userId
-     *            the ID of the user to authorise
-     * @return the resolved {@link UserEntity}
+     * @param credentials
+     *            the credentials captured by {@link AuthService#currentSessionCredentials()}, or null
+     * @return the resolved, managed {@link UserEntity}
+     * @throws ValidationException
+     *             if the session has ended
      * @throws PermissionDeniedException
-     *             if the user does not exist, is banned or not activated, has no rank, or lacks the required
-     *             permissions
+     *             if the user's rank lacks the permission
      */
-    public UserEntity requireAiConfigEdit(final Long userId) {
-        final UserEntity user = this.userRepository.findById(userId);
-        // Read only the flag; the view DTO this replaced counted the rank's members. The pre-DNS authorization check in
-        // AiConfigService is non-transactional and may run on a background thread.
-        if (user == null || !user.isActive() || user.rank == null || !user.rank.aiConfigEdit) {
-            throw new PermissionDeniedException("You do not have permission to edit AI configuration");
-        }
+    @Transactional(TxType.MANDATORY)
+    public UserEntity requireAiConfigEdit(@Nullable final SessionCredentials credentials) {
+        final var user = this.authService.requireSessionUser(credentials);
+        // Read only the flag, never the rank's lazy users collection.
+        this.require(user.rank != null && user.rank.aiConfigEdit, "edit AI configuration");
         return user;
     }
 
