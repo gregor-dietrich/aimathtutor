@@ -265,11 +265,6 @@ public class AiConfigService {
     @Transactional(TxType.SUPPORTS)
     public void updateConfig(final String configKey, final String configValue,
             @Nullable final SessionCredentials credentials) {
-        // Only require configKey to be non-null. Values can be null or empty
-        if (configKey == null) {
-            throw new IllegalArgumentException("Configuration key cannot be null");
-        }
-
         // Authorize before validating values or resolving any host names, so an unauthorized caller
         // can never trigger DNS resolution of an attacker-supplied host via a generic URL key. Without a caller's
         // transaction this runs in a short one of its own, closed before any validation or DNS lookup.

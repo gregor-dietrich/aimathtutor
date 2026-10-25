@@ -366,7 +366,7 @@ class AiConfigServiceTest {
     @Transactional
     void testNullValidation() {
         // Null key must throw exception
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig(null, "value", this.credentials));
     }
 
@@ -496,7 +496,7 @@ class AiConfigServiceTest {
     @DisplayName("validateConfigValue - configKey with null key throws")
     @Transactional
     void testUpdateConfig_nullKey() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig(null, "value", this.credentials));
     }
 
