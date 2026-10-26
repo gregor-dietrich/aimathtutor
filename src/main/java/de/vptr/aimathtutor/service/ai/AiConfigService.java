@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -530,10 +531,21 @@ public class AiConfigService {
         /** Parses CIDR notation such as {@code 10.0.0.0/8}, without any name lookup. */
         static Cidr parse(final String cidr) {
             final int slash = cidr.indexOf('/');
-            return new Cidr(InetAddress.ofLiteral(cidr.substring(0, slash)).getAddress(),
-                    Integer.parseInt(cidr.substring(slash + 1)));
+            final byte[] bytes = InetAddress.ofLiteral(cidr.substring(0, slash)).getAddress();
+            final int length = Integer.parseInt(cidr.substring(slash + 1));
+            if (length < 0 || length > bytes.length * Byte.SIZE) {
+                throw new IllegalArgumentException("Prefix length out of range: " + cidr);
+            }
+            return new Cidr(bytes, length);
         }
 
+        /** The four bytes right after the prefix: the IPv4 address a translation prefix embeds. */
+        byte[] embeddedBytes(final byte[] candidate) {
+            final int offset = this.length / Byte.SIZE;
+            return Arrays.copyOfRange(candidate, offset, offset + 4);
+        }
+
+        /** Whether the first {@code length} bits of the candidate equal the prefix's; false for the other family. */
         boolean matches(final byte[] candidate) {
             if (candidate.length != this.prefix.length) {
                 return false;
@@ -555,30 +567,29 @@ public class AiConfigService {
 
     /**
      * The ranges the IANA IPv4 and IPv6 special-purpose address registries mark "Globally Reachable: False", as of
-     * 2026-10. {@code 192.0.0.0/24} and {@code 2001::/23} are refused whole, including their sub-ranges marked True,
-     * none of which holds a provider.
+     * 2026-10 (https://www.iana.org/assignments/iana-ipv4-special-registry/ and
+     * https://www.iana.org/assignments/iana-ipv6-special-registry/). {@code 192.0.0.0/24} and {@code 2001::/23} are
+     * refused whole, including the sub-ranges inside them marked True, N/A or nothing, Teredo among them; none holds a
+     * provider. Ranges marked True or N/A elsewhere are not refused for that reason alone.
      */
-    private static final List<Cidr> NON_PUBLIC_RANGES = List.of(Cidr.parse("0.0.0.0/8"), Cidr.parse("10.0.0.0/8"),
-            Cidr.parse("100.64.0.0/10"), Cidr.parse("127.0.0.0/8"), Cidr.parse("169.254.0.0/16"),
-            Cidr.parse("172.16.0.0/12"), Cidr.parse("192.0.0.0/24"), Cidr.parse("192.0.2.0/24"),
-            Cidr.parse("192.88.99.2/32"), Cidr.parse("192.168.0.0/16"), Cidr.parse("198.18.0.0/15"),
-            Cidr.parse("198.51.100.0/24"), Cidr.parse("203.0.113.0/24"), Cidr.parse("240.0.0.0/4"),
-            Cidr.parse("255.255.255.255/32"), Cidr.parse("::/128"), Cidr.parse("::1/128"), Cidr.parse("64:ff9b:1::/48"),
-            Cidr.parse("100::/64"), Cidr.parse("100:0:0:1::/64"), Cidr.parse("2001::/23"), Cidr.parse("2001:db8::/32"),
-            Cidr.parse("3fff::/20"), Cidr.parse("5f00::/16"), Cidr.parse("fc00::/7"), Cidr.parse("fe80::/10"));
+    private static final List<Cidr> NON_PUBLIC_RANGES = Stream.of("0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10",
+            "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.2/32",
+            "192.168.0.0/16", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "240.0.0.0/4", "255.255.255.255/32",
+            "::/128", "::1/128", "64:ff9b:1::/48", "100::/64", "100:0:0:1::/64", "2001::/23", "2001:db8::/32",
+            "3fff::/20", "5f00::/16", "fc00::/7", "fe80::/10").map(Cidr::parse).toList();
 
-    private static final Cidr NAT64_PREFIX = Cidr.parse("64:ff9b::/96");
-
-    private static final Cidr SIX_TO_FOUR_PREFIX = Cidr.parse("2002::/16");
+    /**
+     * The IPv6 prefixes that embed an IPv4 address, which then decides: IPv4-mapped, NAT64 and 6to4. The mapped prefix
+     * is built from 16 explicit bytes because {@code ofLiteral} collapses {@code ::ffff:0:0} to a 4-byte IPv4 address.
+     */
+    private static final List<Cidr> TRANSLATION_PREFIXES =
+            List.of(new Cidr(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte) 0xFF, (byte) 0xFF, 0, 0, 0, 0 }, 96),
+                    Cidr.parse("64:ff9b::/96"), Cidr.parse("2002::/16"));
 
     /**
      * Checks if the provided {@link InetAddress} is a non-public address: loopback, site-local, link-local, multicast
-     * or unspecified per the JDK, or inside any range the IANA special-purpose registries mark "Globally Reachable:
-     * False" (https://www.iana.org/assignments/iana-ipv4-special-registry/ and
-     * https://www.iana.org/assignments/iana-ipv6-special-registry/, as of 2026-10). Ranges marked True or N/A are not
-     * refused for that reason alone. An IPv6 address in the NAT64 prefix {@code 64:ff9b::/96} or the 6to4 prefix
-     * {@code 2002::/16} is judged by the IPv4 address it embeds. The IPv4-mapped prefix {@code ::ffff:0:0/96} needs no
-     * entry: the JDK returns an {@code Inet4Address} for a mapped literal or lookup answer, so it is checked as IPv4.
+     * or unspecified per the JDK, or inside a range of {@link #NON_PUBLIC_RANGES}. An IPv6 address in one of the
+     * {@link #TRANSLATION_PREFIXES} (IPv4-mapped, NAT64, 6to4) is judged by the IPv4 address it embeds.
      *
      * @param address
      *            the address to check
@@ -591,19 +602,19 @@ public class AiConfigService {
         }
         final byte[] bytes = address.getAddress();
         if (address instanceof Inet6Address) {
-            if (NAT64_PREFIX.matches(bytes)) {
-                return this.isNonPublicAddress(embeddedIpv4(bytes, 12));
-            }
-            if (SIX_TO_FOUR_PREFIX.matches(bytes)) {
-                return this.isNonPublicAddress(embeddedIpv4(bytes, 2));
+            for (final Cidr prefix : TRANSLATION_PREFIXES) {
+                if (prefix.matches(bytes)) {
+                    return this.isNonPublicAddress(embeddedIpv4(prefix.embeddedBytes(bytes)));
+                }
             }
         }
         return NON_PUBLIC_RANGES.stream().anyMatch(range -> range.matches(bytes));
     }
 
-    private static InetAddress embeddedIpv4(final byte[] ipv6, final int offset) {
+    /** Wraps four bytes as an {@link InetAddress}. */
+    private static InetAddress embeddedIpv4(final byte[] ipv4) {
         try {
-            return InetAddress.getByAddress(Arrays.copyOfRange(ipv6, offset, offset + 4));
+            return InetAddress.getByAddress(ipv4);
         } catch (final UnknownHostException e) {
             // Only a length other than 4 or 16 throws, and four bytes are passed
             throw new IllegalStateException("Embedded IPv4 address is malformed", e);
@@ -686,7 +697,7 @@ public class AiConfigService {
         } else if (configKey.contains("openai")) {
             providerType = ProviderType.OPENAI;
         } else {
-            // Unknown provider key — fall back to a strict check: require HTTPS and reject private/loopback.
+            // Unknown provider key — fall back to a strict check: require HTTPS and reject non-public addresses.
             this.validateGenericUrlSafe(configKey, configValue);
             return;
         }
@@ -699,7 +710,7 @@ public class AiConfigService {
 
     /**
      * Strict URL validation for keys that do not correspond to a known provider (e.g. future custom endpoints). Blocks
-     * loopback and private IP ranges.
+     * non-public IP ranges.
      */
     private void validateGenericUrlSafe(final String configKey, final String configValue) {
         final URI uri;
@@ -726,7 +737,7 @@ public class AiConfigService {
             for (final InetAddress address : addresses) {
                 if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(
-                            "Private IP addresses are not allowed for key '" + configKey + "'");
+                            "Non-public IP addresses are not allowed for key '" + configKey + "'");
                 }
             }
         } catch (final UnknownHostException e) {

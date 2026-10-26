@@ -167,7 +167,7 @@ public abstract class AbstractProviderService {
 
     /**
      * Re-validates a provider URL at HTTP-call time. Closes the TOCTOU gap between admin save and dispatch: if the URL
-     * has been changed (or its hostname now resolves to a private address) the request is aborted before any traffic
+     * has been changed (or its hostname now resolves to a non-public address) the request is aborted before any traffic
      * leaves the JVM. The HTTP client resolves the host again when it connects; that DNS-rebinding window is an
      * accepted risk (AGENTS.md, "AI Configuration"). Wraps {@link AiConfigService#validateProviderApiUrl} so the caller
      * gets a {@link NonRetryableProviderException} (which aborts {@code @Retry}) instead of a raw

@@ -2,6 +2,7 @@ package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -10,6 +11,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.function.Executable;
@@ -55,11 +58,18 @@ public abstract class AbstractJaxRsAiServiceTest extends AbstractAiServiceTest {
         assertEquals(status, failure.getHttpStatus());
     }
 
-    protected void assertRejectedUrlStopsRequest(final AiConfigService.ProviderType provider,
-            final Executable request) {
+    /** Makes the SSRF validator refuse every URL of the provider. */
+    protected void rejectProviderUrl(final AiConfigService.ProviderType provider) {
         doThrow(new IllegalArgumentException("URL not allowed")).when(this.aiConfigService)
                 .validateProviderApiUrl(anyString(), eq(provider));
-        assertThrowsExactly(NonRetryableProviderException.class, request);
+    }
+
+    protected void assertRejectedUrlStopsRequest(final AiConfigService.ProviderType provider,
+            final Executable request) {
+        this.rejectProviderUrl(provider);
+        final var failure = assertThrowsExactly(NonRetryableProviderException.class, request);
+        assertTrue(Objects.requireNonNull(failure.getMessage()).contains("rejected by SSRF guard: URL not allowed"),
+                failure.getMessage());
         verify(this.mockClient, never()).target(anyString());
     }
 
