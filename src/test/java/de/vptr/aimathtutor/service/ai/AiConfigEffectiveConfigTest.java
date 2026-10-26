@@ -64,12 +64,13 @@ class AiConfigEffectiveConfigTest {
     }
 
     @Test
-    @DisplayName("A stored value is returned, a malformed temperature or token limit becomes its default")
+    @DisplayName("A stored value is returned, a malformed or NaN temperature or token limit becomes its default")
     @TestTransaction
     void storedValueIsReturnedAndMalformedNumbersFallBack() {
         setStoredValue(this.aiConfigRepository, AiConfigKeys.OPENAI_MODEL, "stored-model");
         setStoredValue(this.aiConfigRepository, AiConfigKeys.GOOGLE_TEMPERATURE, "warm");
         setStoredValue(this.aiConfigRepository, AiConfigKeys.GOOGLE_MAX_TOKENS, "many");
+        setStoredValue(this.aiConfigRepository, AiConfigKeys.OPENAI_TEMPERATURE, "NaN");
         this.entityManager.flush();
 
         final var config = this.aiConfigService.getEffectiveConfig();
@@ -77,6 +78,7 @@ class AiConfigEffectiveConfigTest {
         assertEquals("stored-model", config.get(AiConfigKeys.OPENAI_MODEL));
         assertEquals(defaults().get(AiConfigKeys.GOOGLE_TEMPERATURE), config.get(AiConfigKeys.GOOGLE_TEMPERATURE));
         assertEquals(defaults().get(AiConfigKeys.GOOGLE_MAX_TOKENS), config.get(AiConfigKeys.GOOGLE_MAX_TOKENS));
+        assertEquals(defaults().get(AiConfigKeys.OPENAI_TEMPERATURE), config.get(AiConfigKeys.OPENAI_TEMPERATURE));
     }
 
     @Test

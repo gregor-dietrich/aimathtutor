@@ -4,7 +4,6 @@ import org.jboss.logging.Logger;
 
 import de.vptr.aimathtutor.dto.ConversationContextDto;
 import de.vptr.aimathtutor.dto.GraspableEventDto;
-import de.vptr.aimathtutor.util.AppConstants;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -43,10 +42,8 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_PREFIX,
-                AppConstants.PROMPT_QUESTION_ANSWERING_PREFIX);
-        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_POSTFIX,
-                AppConstants.PROMPT_QUESTION_ANSWERING_POSTFIX);
+        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_PREFIX);
+        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_POSTFIX);
 
         prompt.append(prefix);
         prompt.append("\n\n");
@@ -93,10 +90,8 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix =
-                this.getConfigString(AiConfigKeys.PROMPT_TUTORING_PREFIX, AppConstants.PROMPT_MATH_TUTORING_PREFIX);
-        final var postfix =
-                this.getConfigString(AiConfigKeys.PROMPT_TUTORING_POSTFIX, AppConstants.PROMPT_MATH_TUTORING_POSTFIX);
+        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_PREFIX);
+        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_POSTFIX);
 
         prompt.append(prefix);
         prompt.append("\n\n<student_action>\n- Action Type: ");
@@ -155,13 +150,12 @@ public class PromptBuilderService {
      * Null-safe getter for string configuration values. Falls back to default if aiConfigService is not injected or
      * value is missing.
      */
-    @Nullable
-    private String getConfigString(final String key, final String defaultValue) {
+    private String getConfigString(final String key) {
         if (this.aiConfigService == null) {
             LOG.debugf("AiConfigService not injected, using default for key=%s", key);
-            return defaultValue;
+            return AiConfigService.defaultValue(key);
         }
-        return this.aiConfigService.getConfigValue(key, defaultValue);
+        return this.aiConfigService.getConfigValue(key);
     }
 
     private void appendConversationContext(final StringBuilder prompt, final ConversationContextDto context) {

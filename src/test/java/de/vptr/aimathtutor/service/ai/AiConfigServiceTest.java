@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static de.vptr.aimathtutor.service.ai.AiConfigTestSupport.setStoredValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -135,13 +136,22 @@ class AiConfigServiceTest {
         value = this.aiConfigService.getConfigValueAsDouble("test.invalid.double", 1.23);
         assertEquals(1.23, value);
 
-        // NaN parses, but counts as unparseable
+        // NaN parses, but is not finite
         final var nanEntity = new AiConfigEntity("test.nan.double", "NaN", ConfigType.DOUBLE, ConfigCategory.GENERAL);
         nanEntity.lastUpdatedBy = this.adminUser;
         this.aiConfigRepository.persist(nanEntity);
 
         value = this.aiConfigService.getConfigValueAsDouble("test.nan.double", 1.23);
         assertEquals(1.23, value);
+
+        // Infinities parse too, but are not finite
+        for (final var infinite : new String[] { "Infinity", "-Infinity" }) {
+            nanEntity.configValue = infinite;
+            this.aiConfigRepository.update(nanEntity);
+            this.aiConfigService.clearCache();
+            value = this.aiConfigService.getConfigValueAsDouble("test.nan.double", 1.23);
+            assertEquals(1.23, value, infinite + " should give the default");
+        }
     }
 
     @Test
@@ -397,34 +407,53 @@ class AiConfigServiceTest {
                 () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.credentials));
     }
 
-    private void storeValue(final String key, final String value) {
-        this.aiConfigRepository.findByConfigKey(key).orElseThrow().configValue = value;
-    }
-
     @Test
-    @DisplayName("getClampedTemperature clamps values to [0.0, 2.0] and defaults a missing, unparseable or NaN one")
+    @DisplayName("getClampedTemperature clamps to [0.0, 2.0] and defaults a missing, unparseable or non-finite one")
     @TestTransaction
     void testGetClampedTemperature() {
         final var key = AiConfigKeys.OPENAI_TEMPERATURE;
         final var builtIn = Double.parseDouble(AiConfigService.defaultValue(key));
 
-        this.storeValue(key, "0.5");
+        setStoredValue(this.aiConfigRepository, key, "0.5");
         assertEquals(0.5, this.aiConfigService.getClampedTemperature(key));
 
-        this.storeValue(key, "3.0");
+        setStoredValue(this.aiConfigRepository, key, "3.0");
         assertEquals(2.0, this.aiConfigService.getClampedTemperature(key), "Should clamp to 2.0");
 
-        this.storeValue(key, "-1.0");
+        setStoredValue(this.aiConfigRepository, key, "-1.0");
         assertEquals(0.0, this.aiConfigService.getClampedTemperature(key), "Should clamp to 0.0");
 
-        this.storeValue(key, "NaN");
+        setStoredValue(this.aiConfigRepository, key, "NaN");
         assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key), "NaN should give the default");
 
-        this.storeValue(key, "warm");
+        setStoredValue(this.aiConfigRepository, key, "Infinity");
+        assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key), "Infinity should give the default");
+
+        setStoredValue(this.aiConfigRepository, key, "-Infinity");
+        assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key), "-Infinity should give the default");
+
+        setStoredValue(this.aiConfigRepository, key, "warm");
         assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key));
 
         this.em.remove(this.aiConfigRepository.findByConfigKey(key).orElseThrow());
         assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key));
+    }
+
+    @Test
+    @DisplayName("getConfigValue(key) returns the stored value, else the built-in default, and refuses an unknown key")
+    @TestTransaction
+    void testGetConfigValueWithBuiltInDefault() {
+        final var key = AiConfigKeys.OPENAI_MODEL;
+
+        setStoredValue(this.aiConfigRepository, key, "stored-model");
+        assertEquals("stored-model", this.aiConfigService.getConfigValue(key));
+
+        this.em.remove(this.aiConfigRepository.findByConfigKey(key).orElseThrow());
+        this.em.flush();
+        this.aiConfigService.clearCache();
+        assertEquals(AiConfigService.defaultValue(key), this.aiConfigService.getConfigValue(key));
+
+        assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.getConfigValue("no.such.key"));
     }
 
     @Test
@@ -434,16 +463,16 @@ class AiConfigServiceTest {
         final var key = AiConfigKeys.OPENAI_MAX_TOKENS;
         final var builtIn = Integer.parseInt(AiConfigService.defaultValue(key));
 
-        this.storeValue(key, "1000");
+        setStoredValue(this.aiConfigRepository, key, "1000");
         assertEquals(1000, this.aiConfigService.getClampedTokens(key));
 
-        this.storeValue(key, "10000");
+        setStoredValue(this.aiConfigRepository, key, "10000");
         assertEquals(8192, this.aiConfigService.getClampedTokens(key), "Should clamp to 8192");
 
-        this.storeValue(key, "0");
+        setStoredValue(this.aiConfigRepository, key, "0");
         assertEquals(1, this.aiConfigService.getClampedTokens(key), "Should clamp to 1");
 
-        this.storeValue(key, "many");
+        setStoredValue(this.aiConfigRepository, key, "many");
         assertEquals(builtIn, this.aiConfigService.getClampedTokens(key));
 
         this.em.remove(this.aiConfigRepository.findByConfigKey(key).orElseThrow());

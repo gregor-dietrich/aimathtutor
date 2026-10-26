@@ -53,7 +53,7 @@ public class AiConfigService {
     // Internal cache for configuration values to reduce database hits.
     private final AiConfigCache cache = new AiConfigCache();
 
-    // The built-in defaults: what a reset writes and what the settings snapshot falls back to.
+    // The built-in defaults; read one through defaultValue(key).
     private static final Map<String, String> DEFAULT_VALUES = Map.ofEntries(
             Map.entry(AiConfigKeys.AI_TUTOR_ENABLED, "true"), Map.entry(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"),
             Map.entry(AiConfigKeys.GOOGLE_MODEL, "gemini-3.1-flash-lite"),
@@ -145,9 +145,23 @@ public class AiConfigService {
     }
 
     /**
+     * Returns the stored value of a setting, or its built-in default when the row or its value is missing.
+     *
+     * @param key
+     *            one of the keys of the built-in defaults
+     * @return the stored value or the built-in default
+     * @throws IllegalArgumentException
+     *             if the key has no built-in default
+     */
+    public String getConfigValue(final String key) {
+        final var fallback = defaultValue(key);
+        return Objects.requireNonNullElse(this.getConfigValue(key, fallback), fallback);
+    }
+
+    /**
      * Returns every known AI setting: the stored value, or the built-in default for a missing row. A stored temperature
-     * that does not parse or is NaN, or a token limit that does not parse, is replaced by its default, so a caller can
-     * parse those values without a fallback of its own.
+     * that does not parse or is not finite, or a token limit that does not parse, is replaced by its default, so a
+     * caller can parse those values without a fallback of its own.
      * <p>
      * Deliberately not {@code @Transactional}: the reads go through {@link #getConfigValue}, which fills the cache only
      * outside a transaction, so a transactional snapshot would never fill it. There is no permission check: the values
@@ -164,7 +178,7 @@ public class AiConfigService {
             } else if (key.endsWith(AiConfigKeys.SUFFIX_MAX_TOKENS)) {
                 values.put(key, String.valueOf(this.getConfigValueAsInt(key, Integer.valueOf(defaultValue))));
             } else {
-                values.put(key, Objects.requireNonNullElse(this.getConfigValue(key, defaultValue), defaultValue));
+                values.put(key, this.getConfigValue(key));
             }
         });
         return Map.copyOf(values);
@@ -199,12 +213,12 @@ public class AiConfigService {
 
     /**
      * Retrieves a configuration value as a Double. Falls back to defaultValue if not found, if parsing fails or if the
-     * value is NaN.
+     * value is not finite.
      *
      * @param key
      *            the configuration key
      * @param defaultValue
-     *            the default value if not found, unparseable or NaN
+     *            the default value if not found, unparseable or not finite
      * @return the configuration value or default
      */
     public Double getConfigValueAsDouble(final String key, final Double defaultValue) {
@@ -214,8 +228,8 @@ public class AiConfigService {
         }
         try {
             final double parsed = Double.parseDouble(value);
-            if (Double.isNaN(parsed)) {
-                LOG.warnf("Ignoring NaN double config '%s'", key);
+            if (!Double.isFinite(parsed)) {
+                LOG.warnf("Ignoring non-finite double config '%s'", key);
                 return defaultValue;
             }
             return parsed;
@@ -252,12 +266,14 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a temperature configuration value clamped to the valid range [0.0, 2.0]. A missing, unparseable or NaN
-     * value yields the built-in default of the key.
+     * Retrieves a temperature configuration value clamped to the valid range [0.0, 2.0]. A missing, unparseable or
+     * non-finite value yields the built-in default of the key.
      *
      * @param key
-     *            the configuration key, one of the {@link AiConfigKeys} constants
+     *            the key of a temperature setting (an {@link AiConfigKeys} {@code *_TEMPERATURE} constant)
      * @return the clamped temperature value
+     * @throws IllegalArgumentException
+     *             if the key has no numeric built-in default
      */
     public double getClampedTemperature(final String key) {
         final double value = this.getConfigValueAsDouble(key, Double.valueOf(defaultValue(key)));
@@ -269,8 +285,10 @@ public class AiConfigService {
      * yields the built-in default of the key.
      *
      * @param key
-     *            the configuration key, one of the {@link AiConfigKeys} constants
+     *            the key of a max-tokens setting (an {@link AiConfigKeys} {@code *_MAX_TOKENS} constant)
      * @return the clamped token limit
+     * @throws IllegalArgumentException
+     *             if the key has no numeric built-in default
      */
     public int getClampedTokens(final String key) {
         final int value = this.getConfigValueAsInt(key, Integer.valueOf(defaultValue(key)));

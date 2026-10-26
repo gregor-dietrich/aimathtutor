@@ -58,19 +58,12 @@ public class GoogleService extends AbstractProviderService {
 
         // Load dynamic configuration
         final String model = this.getModel();
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL,
-                AiConfigService.defaultValue(AiConfigKeys.GOOGLE_API_BASE_URL));
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL);
         final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.GOOGLE_TEMPERATURE);
         final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.GOOGLE_MAX_TOKENS);
 
         this.requireConfigured(model, "Google model");
         this.requireConfigured(baseUrl, "Google API URL");
-
-        // The following checks satisfy NullAway; requireConfigured already threw if null
-        if (model == null || baseUrl == null) {
-            throw new IllegalStateException(
-                    "GoogleService: missing configuration — " + (model == null ? "google.model" : "google.base-url"));
-        }
 
         this.requireSafeProviderUrl(baseUrl, AiConfigService.ProviderType.GOOGLE);
 

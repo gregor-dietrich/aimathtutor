@@ -78,19 +78,13 @@ public class OpenAiService extends AbstractProviderService {
         this.requireApiKey(this.apiKey, "app.openai.api.key");
 
         final String model = this.getModel();
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL,
-                AiConfigService.defaultValue(AiConfigKeys.OPENAI_API_BASE_URL));
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL);
         final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OPENAI_TEMPERATURE);
         final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OPENAI_MAX_TOKENS);
         final String organizationId = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_ORGANIZATION_ID, null);
 
         this.requireConfigured(model, "OpenAI model");
         this.requireConfigured(baseUrl, "OpenAI API URL");
-
-        // The following checks satisfy NullAway; requireConfigured already threw if null
-        if (model == null || baseUrl == null) {
-            return "";
-        }
 
         this.requireSafeProviderUrl(baseUrl, AiConfigService.ProviderType.OPENAI);
 

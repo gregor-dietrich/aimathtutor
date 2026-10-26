@@ -45,6 +45,7 @@ public class AiFeedbackDto {
     @JsonProperty("related_concepts")
     public List<String> relatedConcepts; // Math concepts related to this feedback
 
+    @Nullable
     public Double confidence; // AI confidence score (0.0 to 1.0)
 
     public LocalDateTime timestamp;
@@ -145,11 +146,11 @@ public class AiFeedbackDto {
     }
 
     /**
-     * Clamps the confidence score to the valid range [0.0, 1.0].
+     * Clamps the confidence score to the valid range [0.0, 1.0]; a NaN confidence becomes {@code null}.
      */
     public void clampConfidence() {
         if (this.confidence != null) {
-            this.confidence = Math.max(0.0, Math.min(1.0, this.confidence));
+            this.confidence = this.confidence.isNaN() ? null : Math.max(0.0, Math.min(1.0, this.confidence));
         }
     }
 

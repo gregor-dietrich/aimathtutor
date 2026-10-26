@@ -90,7 +90,7 @@ class ProviderTestServiceTest {
     @SuppressWarnings({ "NullAway", "unchecked" })
     private void setupGoogleMock(final int statusCode) throws IOException, InterruptedException {
         when(this.mockGoogleService.isConfigured()).thenReturn(true);
-        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.GOOGLE_API_BASE_URL), any()))
+        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.GOOGLE_API_BASE_URL)))
                 .thenReturn("https://google.com");
         final HttpResponse<String> mockResponse = mock(HttpResponse.class);
         when(mockResponse.statusCode()).thenReturn(statusCode);
@@ -104,8 +104,8 @@ class ProviderTestServiceTest {
     void testProviderTest_ioException(final String provider) throws IOException, InterruptedException {
         final var isGoogle = "google".equals(provider);
         when(isGoogle ? this.mockGoogleService.isConfigured() : this.mockOpenAiService.isConfigured()).thenReturn(true);
-        when(this.mockAiConfigService.getConfigValue(
-                eq(isGoogle ? AiConfigKeys.GOOGLE_API_BASE_URL : AiConfigKeys.OPENAI_API_BASE_URL), any()))
+        when(this.mockAiConfigService
+                .getConfigValue(eq(isGoogle ? AiConfigKeys.GOOGLE_API_BASE_URL : AiConfigKeys.OPENAI_API_BASE_URL)))
                 .thenReturn("https://example.com");
         when(this.mockHttpClient.send(any(), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IOException("Connection refused"));
@@ -174,7 +174,7 @@ class ProviderTestServiceTest {
         } else {
             when(this.mockOpenAiService.isConfigured()).thenReturn(true);
         }
-        when(this.mockAiConfigService.getConfigValue(eq(configKey), any())).thenReturn("http://malicious.com");
+        when(this.mockAiConfigService.getConfigValue(eq(configKey))).thenReturn("http://malicious.com");
         doThrow(new IllegalArgumentException("SSRF blocked")).when(this.mockAiConfigService)
                 .validateProviderApiUrl(eq("http://malicious.com"), eq(type));
     }
@@ -203,6 +203,7 @@ class ProviderTestServiceTest {
     private void verifyNothingTouched() {
         verifyNoInteractions(this.mockGoogleService, this.mockOpenAiService, this.mockOllamaService,
                 this.mockHttpClient);
+        verify(this.mockAiConfigService, never()).getConfigValue(any());
         verify(this.mockAiConfigService, never()).getConfigValue(any(), any());
         verify(this.mockAiConfigService, never()).validateProviderApiUrl(any(), any());
     }

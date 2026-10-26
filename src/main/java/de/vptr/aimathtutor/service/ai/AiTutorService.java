@@ -94,9 +94,8 @@ public class AiTutorService {
                 event.expressionAfter != null ? event.expressionAfter.length() : 0,
                 context != null ? context.getRecentActions().size() : 0);
 
-        // Load dynamic configuration (null-safe)
-        final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED);
-        if (!Boolean.TRUE.equals(aiEnabled)) {
+        // Load dynamic configuration
+        if (!this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED)) {
             LOG.debug("AI is disabled, returning null");
             return null; // Don't provide feedback if AI is disabled
         }
@@ -118,8 +117,7 @@ public class AiTutorService {
         LOG.infof("Action is significant, generating feedback with provider: %s", aiProvider);
 
         // Use different AI provider based on configuration
-        final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT)
-                : AiConfigService.defaultValue(AiConfigKeys.AI_TUTOR_PROVIDER);
+        final var provider = aiProvider.toLowerCase(Locale.ROOT);
 
         // Apply per-user rate limiting for non-mock providers
         if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
@@ -247,17 +245,15 @@ public class AiTutorService {
         LOG.debugf("Answering question (session: %s, questionLen: %s, contextActions: %s)", sessionId,
                 question.length(), context != null ? context.getRecentActions().size() : 0);
 
-        // Load dynamic configuration (null-safe)
-        final Boolean aiEnabled = this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED);
-        if (!Boolean.TRUE.equals(aiEnabled)) {
+        // Load dynamic configuration
+        if (!this.getConfigBoolean(AiConfigKeys.AI_TUTOR_ENABLED)) {
             return ChatMessageDto.aiAnswer(
                     "I'm currently offline, but keep working on the problem! You can ask your teacher for help.");
         }
 
         // Use different AI provider based on configuration
         final var aiProvider = this.getConfigString(AiConfigKeys.AI_TUTOR_PROVIDER);
-        final var provider = (aiProvider != null) ? aiProvider.toLowerCase(Locale.ROOT)
-                : AiConfigService.defaultValue(AiConfigKeys.AI_TUTOR_PROVIDER);
+        final var provider = aiProvider.toLowerCase(Locale.ROOT);
 
         // Apply per-user rate limiting for non-mock providers
         if (!"mock".equals(provider) && !this.checkAiRateLimit(userIdStr)) {
@@ -382,18 +378,15 @@ public class AiTutorService {
         }
     }
 
-    @Nullable
     private String getConfigString(final String key) {
-        final var defaultValue = AiConfigService.defaultValue(key);
         if (this.aiConfigService == null) {
             LOG.debugf("AiConfigService not injected, using default for key=%s", key);
-            return defaultValue;
+            return AiConfigService.defaultValue(key);
         }
-        return this.aiConfigService.getConfigValue(key, defaultValue);
+        return this.aiConfigService.getConfigValue(key);
     }
 
-    @Nullable
-    private Boolean getConfigBoolean(final String key) {
+    private boolean getConfigBoolean(final String key) {
         final var defaultValue = Boolean.parseBoolean(AiConfigService.defaultValue(key));
         if (this.aiConfigService == null) {
             LOG.debugf("AiConfigService not injected, using default for key=%s", key);
