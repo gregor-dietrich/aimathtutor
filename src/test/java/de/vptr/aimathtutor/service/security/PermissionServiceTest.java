@@ -26,6 +26,7 @@ import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.UserRepository;
 import de.vptr.aimathtutor.service.UserRankService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -394,7 +395,8 @@ class PermissionServiceTest {
         rank.users = detachedUsers;
         final var user = this.stubUser(rank);
 
-        final var result = assertDoesNotThrow(() -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
+        final var result =
+                assertDoesNotThrow(() -> this.permissionService.requireAiConfigEdit(TestSessionCredentials.of(user)));
         assertSame(user, result);
         verifyNoInteractions(detachedUsers);
     }
@@ -406,7 +408,7 @@ class PermissionServiceTest {
         final var user = this.stubUser(this.buildRank());
 
         final var ex = assertThrows(PermissionDeniedException.class,
-                () -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
+                () -> this.permissionService.requireAiConfigEdit(TestSessionCredentials.of(user)));
         assertEquals("You do not have permission to edit AI configuration", ex.getMessage());
     }
 
@@ -418,7 +420,7 @@ class PermissionServiceTest {
         final var user = this.stubUser(null);
 
         assertThrows(PermissionDeniedException.class,
-                () -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
+                () -> this.permissionService.requireAiConfigEdit(TestSessionCredentials.of(user)));
     }
 
     @SuppressWarnings("NullAway")
@@ -441,7 +443,7 @@ class PermissionServiceTest {
         final var user = this.stubUser(rank);
 
         assertThrows(TransactionalException.class,
-                () -> this.permissionService.requireAiConfigEdit(credentialsFor(user)));
+                () -> this.permissionService.requireAiConfigEdit(TestSessionCredentials.of(user)));
     }
 
     @Test
@@ -462,12 +464,6 @@ class PermissionServiceTest {
         return user;
     }
 
-    @SuppressWarnings("NullAway")
-    private static SessionCredentials credentialsFor(final UserEntity user) {
-        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
-                UUID.randomUUID().toString());
-    }
-
     @Test
     @TestTransaction
     @DisplayName("requireAdminView succeeds for an active user whose rank holds adminView")
@@ -475,7 +471,7 @@ class PermissionServiceTest {
         final var rank = this.buildRank(Permission.ADMIN_VIEW);
         final var user = this.stubUser(rank);
 
-        assertDoesNotThrow(() -> this.permissionService.requireAdminView(credentialsFor(user)));
+        assertDoesNotThrow(() -> this.permissionService.requireAdminView(TestSessionCredentials.of(user)));
     }
 
     @Test
@@ -485,7 +481,7 @@ class PermissionServiceTest {
         final var user = this.stubUser(this.buildRank());
 
         final var ex = assertThrows(PermissionDeniedException.class,
-                () -> this.permissionService.requireAdminView(credentialsFor(user)));
+                () -> this.permissionService.requireAdminView(TestSessionCredentials.of(user)));
         assertEquals("You do not have permission to view the administration", ex.getMessage());
     }
 
@@ -497,7 +493,7 @@ class PermissionServiceTest {
         final var user = this.stubUser(null);
 
         assertThrows(PermissionDeniedException.class,
-                () -> this.permissionService.requireAdminView(credentialsFor(user)));
+                () -> this.permissionService.requireAdminView(TestSessionCredentials.of(user)));
     }
 
     @SuppressWarnings("NullAway")
@@ -520,6 +516,7 @@ class PermissionServiceTest {
         final var rank = this.buildRank(Permission.ADMIN_VIEW);
         final var user = this.stubUser(rank);
 
-        assertThrows(TransactionalException.class, () -> this.permissionService.requireAdminView(credentialsFor(user)));
+        assertThrows(TransactionalException.class,
+                () -> this.permissionService.requireAdminView(TestSessionCredentials.of(user)));
     }
 }

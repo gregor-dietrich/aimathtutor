@@ -29,8 +29,8 @@ import de.vptr.aimathtutor.entity.AiConfigEntity;
 import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.security.AuthService;
 import de.vptr.aimathtutor.util.AppConstants;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
@@ -94,8 +94,8 @@ class AiConfigSessionEndedTest {
 
     @SuppressWarnings("NullAway")
     private SessionCredentials credentialsFor(final UserEntity admin, final boolean staleStamp) {
-        return new SessionCredentials(admin.publicId,
-                staleStamp ? "stale" : AuthService.credentialStamp(admin.password), UUID.randomUUID().toString());
+        return staleStamp ? new SessionCredentials(admin.publicId, "stale", UUID.randomUUID().toString())
+                : TestSessionCredentials.of(admin);
     }
 
     @SuppressWarnings("NullAway")

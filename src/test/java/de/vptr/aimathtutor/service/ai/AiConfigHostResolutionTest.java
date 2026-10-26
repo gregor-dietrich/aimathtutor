@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import de.vptr.aimathtutor.dto.SessionCredentials;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.service.security.AuthService;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
@@ -57,8 +56,7 @@ class AiConfigHostResolutionTest {
         // The seeded admin, so the session credentials' stamp matches its stored password hash
         final var admin =
                 Objects.requireNonNull(this.userRepository.findByUsername("admin"), "Seeded admin should exist");
-        this.credentials = new SessionCredentials(admin.publicId, AuthService.credentialStamp(admin.password),
-                UUID.randomUUID().toString());
+        this.credentials = TestSessionCredentials.of(admin);
     }
 
     @AfterEach

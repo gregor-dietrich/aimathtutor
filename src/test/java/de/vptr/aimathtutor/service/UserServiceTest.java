@@ -53,6 +53,7 @@ import de.vptr.aimathtutor.service.security.PasswordHashingService;
 import de.vptr.aimathtutor.service.security.PermissionService;
 import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.TestLogCapture;
+import de.vptr.aimathtutor.util.TestSessionCredentials;
 import de.vptr.aimathtutor.util.TestUserRankFactory;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
@@ -115,7 +116,7 @@ class UserServiceTest {
 
     @SuppressWarnings("NullAway")
     private SessionCredentials adminCredentials() {
-        return credentialsFor(this.userRepository.findByUsername("admin"));
+        return TestSessionCredentials.of(this.userRepository.findByUsername("admin"));
     }
 
     private UserDto buildValidDto() {
@@ -530,7 +531,7 @@ class UserServiceTest {
         final String originalHash = entity.password;
         final String newPassword = "N3wP@ssword!";
 
-        this.userService.changePassword(credentialsFor(entity), VALID_PASSWORD, newPassword);
+        this.userService.changePassword(TestSessionCredentials.of(entity), VALID_PASSWORD, newPassword);
 
         final var updated = this.userRepository.findById(entity.id);
         assertNotNull(updated);
@@ -547,7 +548,7 @@ class UserServiceTest {
         final var entity = this.createAndFetchUser();
 
         assertThrows(ValidationException.class,
-                () -> this.userService.changePassword(credentialsFor(entity), "WrongP@ss1", "N3wP@ssword!"));
+                () -> this.userService.changePassword(TestSessionCredentials.of(entity), "WrongP@ss1", "N3wP@ssword!"));
     }
 
     @Test
@@ -556,8 +557,8 @@ class UserServiceTest {
     void testChangePassword_73Characters_namesLimit() {
         final var entity = this.createAndFetchUser();
 
-        final var e = assertThrows(ValidationException.class,
-                () -> this.userService.changePassword(credentialsFor(entity), VALID_PASSWORD, "A1!" + "a".repeat(70)));
+        final var e = assertThrows(ValidationException.class, () -> this.userService
+                .changePassword(TestSessionCredentials.of(entity), VALID_PASSWORD, "A1!" + "a".repeat(70)));
         assertEquals("Password must be between 8 and 72 characters", e.getMessage());
     }
 
@@ -569,8 +570,8 @@ class UserServiceTest {
         final var entity = this.createAndFetchUser();
 
         // 38 characters, 73 UTF-8 bytes
-        final var e = assertThrows(ValidationException.class,
-                () -> this.userService.changePassword(credentialsFor(entity), VALID_PASSWORD, "A1!" + "ä".repeat(35)));
+        final var e = assertThrows(ValidationException.class, () -> this.userService
+                .changePassword(TestSessionCredentials.of(entity), VALID_PASSWORD, "A1!" + "ä".repeat(35)));
         assertTrue(e.getMessage().startsWith("Password must not exceed 72 bytes"), e.getMessage());
     }
 
@@ -580,15 +581,10 @@ class UserServiceTest {
     void testChangePassword_returnsStamp() {
         final var entity = this.createAndFetchUser();
 
-        final var stamp = this.userService.changePassword(credentialsFor(entity), VALID_PASSWORD, "N3wP@ssword!");
+        final var stamp =
+                this.userService.changePassword(TestSessionCredentials.of(entity), VALID_PASSWORD, "N3wP@ssword!");
 
         assertEquals(AuthService.credentialStamp(entity.password), stamp);
-    }
-
-    @SuppressWarnings("NullAway")
-    private static SessionCredentials credentialsFor(final UserEntity user) {
-        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password),
-                UUID.randomUUID().toString());
     }
 
     private void failToChangePassword(final SessionCredentials credentials) {
@@ -603,7 +599,7 @@ class UserServiceTest {
     @TestTransaction
     void testChangePassword_refusesRevokedSession(final String revocation) {
         final var entity = this.createAndFetchUser();
-        final var credentials = credentialsFor(entity);
+        final var credentials = TestSessionCredentials.of(entity);
         switch (revocation) {
             case "banned" -> entity.banned = true;
             case "deactivated" -> entity.activated = false;
@@ -635,8 +631,8 @@ class UserServiceTest {
         final var entity = this.createAndFetchUser();
         entity.colorMode = Appearance.ColorMode.DARK;
 
-        final var result =
-                this.userService.updateAppearance(credentialsFor(entity), Appearance.Design.CHALKBOARD, null);
+        final var result = this.userService.updateAppearance(TestSessionCredentials.of(entity),
+                Appearance.Design.CHALKBOARD, null);
 
         assertEquals(new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK), result);
         assertReloaded(entity.id, result);
@@ -650,7 +646,8 @@ class UserServiceTest {
         final var entity = this.createAndFetchUser();
         entity.design = Appearance.Design.VIBRANIUM;
 
-        final var result = this.userService.updateAppearance(credentialsFor(entity), null, Appearance.ColorMode.LIGHT);
+        final var result =
+                this.userService.updateAppearance(TestSessionCredentials.of(entity), null, Appearance.ColorMode.LIGHT);
 
         assertEquals(new Appearance(Appearance.Design.VIBRANIUM, Appearance.ColorMode.LIGHT), result);
         assertReloaded(entity.id, result);
@@ -663,8 +660,8 @@ class UserServiceTest {
     void testUpdateAppearance_persists() {
         final var entity = this.createAndFetchUser();
 
-        final var result = this.userService.updateAppearance(credentialsFor(entity), Appearance.Design.CHALKBOARD,
-                Appearance.ColorMode.DARK);
+        final var result = this.userService.updateAppearance(TestSessionCredentials.of(entity),
+                Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK);
 
         assertEquals(new Appearance(Appearance.Design.CHALKBOARD, Appearance.ColorMode.DARK), result);
         assertReloaded(entity.id, result);
@@ -679,7 +676,7 @@ class UserServiceTest {
         entity.design = Appearance.Design.POWER_UP;
         entity.colorMode = Appearance.ColorMode.DARK;
 
-        final var result = this.userService.updateAppearance(credentialsFor(entity), null, null);
+        final var result = this.userService.updateAppearance(TestSessionCredentials.of(entity), null, null);
 
         assertEquals(new Appearance(Appearance.Design.POWER_UP, Appearance.ColorMode.DARK), result);
         assertReloaded(entity.id, result);
@@ -700,7 +697,7 @@ class UserServiceTest {
     @TestTransaction
     void testUpdateAppearance_refusesRevokedSession(final String revocation) {
         final var entity = this.createAndFetchUser();
-        final var credentials = credentialsFor(entity);
+        final var credentials = TestSessionCredentials.of(entity);
         switch (revocation) {
             case "banned" -> entity.banned = true;
             case "deactivated" -> entity.activated = false;
@@ -740,7 +737,7 @@ class UserServiceTest {
     @DisplayName("changePassword refuses the 6th attempt after 5 wrong guesses without checking the password")
     @TestTransaction
     void testChangePassword_throttledAfterFiveWrongGuesses() {
-        final var credentials = credentialsFor(this.createAndFetchUser());
+        final var credentials = TestSessionCredentials.of(this.createAndFetchUser());
         for (int i = 0; i < 5; i++) {
             this.failToChangePassword(credentials);
         }
@@ -758,7 +755,7 @@ class UserServiceTest {
     @TestTransaction
     void testChangePassword_throttleRefusalLogged() {
         final var user = this.createAndFetchUser();
-        final var credentials = credentialsFor(user);
+        final var credentials = TestSessionCredentials.of(user);
         for (int i = 0; i < 5; i++) {
             this.failToChangePassword(credentials);
         }
@@ -777,7 +774,7 @@ class UserServiceTest {
     @DisplayName("changePassword rejects an invalid new password before checking the current password")
     @TestTransaction
     void testChangePassword_invalidNewPasswordRejectedBeforeCurrentPasswordCheck() {
-        final var credentials = credentialsFor(this.createAndFetchUser());
+        final var credentials = TestSessionCredentials.of(this.createAndFetchUser());
 
         final var e = assertThrows(ValidationException.class,
                 () -> this.userService.changePassword(credentials, "WrongP@ss1", "alllowercase"));
@@ -795,8 +792,8 @@ class UserServiceTest {
     @TestTransaction
     void testChangePassword_throttleIsPerSession() {
         final var entity = this.createAndFetchUser();
-        final var locked = credentialsFor(entity);
-        final var other = credentialsFor(entity);
+        final var locked = TestSessionCredentials.of(entity);
+        final var other = TestSessionCredentials.of(entity);
         for (int i = 0; i < 5; i++) {
             this.failToChangePassword(locked);
         }
@@ -813,20 +810,18 @@ class UserServiceTest {
     @TestTransaction
     void testChangePassword_successClearsOnlyOwnSession() {
         final var entity = this.createAndFetchUser();
-        final var changing = credentialsFor(entity);
-        final var bystander = credentialsFor(entity);
+        final var changing = TestSessionCredentials.of(entity);
+        final var bystander = TestSessionCredentials.of(entity);
         for (int i = 0; i < 4; i++) {
             this.failToChangePassword(changing);
             this.failToChangePassword(bystander);
         }
         this.userService.changePassword(changing, VALID_PASSWORD, "N3wP@ssword!");
         // the password changed, so the bystander's stamp is stale now; its bucket is what is under test, so renew it
-        final var renewed = new SessionCredentials(entity.publicId, AuthService.credentialStamp(entity.password),
-                bystander.throttleKey());
+        final var renewed = TestSessionCredentials.of(entity, bystander.throttleKey());
 
         // the changing session got its attempts back: 4 more wrong guesses are not yet throttled
-        final var again = new SessionCredentials(entity.publicId, AuthService.credentialStamp(entity.password),
-                changing.throttleKey());
+        final var again = TestSessionCredentials.of(entity, changing.throttleKey());
         for (int i = 0; i < 4; i++) {
             this.failToChangePassword(again);
         }
@@ -844,7 +839,7 @@ class UserServiceTest {
     void testChangePassword_throttleLeavesLoginAlone() {
         final var entity = this.createAndFetchUser();
         entity.activated = true;
-        final var credentials = credentialsFor(entity);
+        final var credentials = TestSessionCredentials.of(entity);
         for (int i = 0; i < 5; i++) {
             this.failToChangePassword(credentials);
         }
@@ -961,7 +956,7 @@ class UserServiceTest {
         final var user = this.createCommittedUser();
         final long before = System.currentTimeMillis();
         try {
-            final var credentials = credentialsFor(user);
+            final var credentials = TestSessionCredentials.of(user);
 
             assertFalse(
                     this.evictedBeforeCommit(user, before,
@@ -1048,7 +1043,7 @@ class UserServiceTest {
     void testUpdateAvatars_success() {
         final var entity = this.createAndFetchUser();
 
-        this.userService.updateAvatars(credentialsFor(entity), "🧑", "🤖");
+        this.userService.updateAvatars(TestSessionCredentials.of(entity), "🧑", "🤖");
 
         final var updated = this.userRepository.findById(entity.id);
         assertNotNull(updated);
@@ -1062,7 +1057,8 @@ class UserServiceTest {
     void testUpdateAvatars_blankUserEmoji() {
         final var entity = this.createAndFetchUser();
 
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(credentialsFor(entity), "", "🤖"));
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(TestSessionCredentials.of(entity), "", "🤖"));
     }
 
     @Test
@@ -1071,7 +1067,7 @@ class UserServiceTest {
     void testGetSettings_returnsDefaults() {
         final var entity = this.createAndFetchUser();
 
-        final var settings = this.userService.getSettings(credentialsFor(entity));
+        final var settings = this.userService.getSettings(TestSessionCredentials.of(entity));
         assertNotNull(settings);
         assertNotNull(settings.userAvatarEmoji);
         assertNotNull(settings.tutorAvatarEmoji);
@@ -1186,9 +1182,9 @@ class UserServiceTest {
         final var entity = this.createAndFetchUser();
 
         assertThrows(ValidationException.class,
-                () -> this.userService.updateAvatars(credentialsFor(entity), "a".repeat(11), "🤖"));
+                () -> this.userService.updateAvatars(TestSessionCredentials.of(entity), "a".repeat(11), "🤖"));
         assertThrows(ValidationException.class,
-                () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", "a".repeat(11)));
+                () -> this.userService.updateAvatars(TestSessionCredentials.of(entity), "🧑", "a".repeat(11)));
     }
 
     @Test
@@ -1216,13 +1212,13 @@ class UserServiceTest {
         final var stale = this.createAndFetchUser();
         final var userBefore = stale.userAvatarEmoji;
         final var tutorBefore = stale.tutorAvatarEmoji;
-        final var staleCredentials = credentialsFor(stale);
+        final var staleCredentials = TestSessionCredentials.of(stale);
         stale.password = this.passwordHashingService.hashPassword("An0ther!Pass");
         final var banned = this.createAndFetchUser();
-        final var bannedCredentials = credentialsFor(banned);
+        final var bannedCredentials = TestSessionCredentials.of(banned);
         banned.banned = true;
         final var deactivated = this.createAndFetchUser();
-        final var deactivatedCredentials = credentialsFor(deactivated);
+        final var deactivatedCredentials = TestSessionCredentials.of(deactivated);
         deactivated.activated = false;
 
         for (final var pair : List.of(Map.entry(stale, staleCredentials), Map.entry(banned, bannedCredentials),
@@ -1448,7 +1444,8 @@ class UserServiceTest {
     @TestTransaction
     void testUpdateAvatars_blankTutorEmoji_throwsValidationException() {
         final var entity = this.createAndFetchUser();
-        assertThrows(ValidationException.class, () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", ""));
+        assertThrows(ValidationException.class,
+                () -> this.userService.updateAvatars(TestSessionCredentials.of(entity), "🧑", ""));
     }
 
     @SuppressWarnings("NullAway")
@@ -1458,7 +1455,7 @@ class UserServiceTest {
     void testUpdateAvatars_nullUserEmoji_throwsValidationException() {
         final var entity = this.createAndFetchUser();
         assertThrows(ValidationException.class,
-                () -> this.userService.updateAvatars(credentialsFor(entity), null, "🤖"));
+                () -> this.userService.updateAvatars(TestSessionCredentials.of(entity), null, "🤖"));
     }
 
     @SuppressWarnings("NullAway")
@@ -1468,7 +1465,7 @@ class UserServiceTest {
     void testUpdateAvatars_nullTutorEmoji_throwsValidationException() {
         final var entity = this.createAndFetchUser();
         assertThrows(ValidationException.class,
-                () -> this.userService.updateAvatars(credentialsFor(entity), "🧑", null));
+                () -> this.userService.updateAvatars(TestSessionCredentials.of(entity), "🧑", null));
     }
 
     @SuppressWarnings("NullAway")
