@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -96,19 +97,31 @@ class ProviderTestServiceTest {
         when(this.mockHttpClient.send(any(), any(HttpResponse.BodyHandler.class))).thenReturn(mockResponse);
     }
 
-    @Test
-    @DisplayName("testGoogle returns failure when IOException occurs")
+    @ParameterizedTest
+    @ValueSource(strings = { "google", "openai" })
+    @DisplayName("provider tests report an unreachable endpoint without the transport error's text")
     @SuppressWarnings({ "NullAway", "unchecked" })
-    void testTestGoogle_ioException() throws IOException, InterruptedException {
-        when(this.mockGoogleService.isConfigured()).thenReturn(true);
-        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.GOOGLE_API_BASE_URL), any()))
-                .thenReturn("https://google.com");
+    void testProviderTest_ioException(final String provider) throws IOException, InterruptedException {
+        final var isGoogle = "google".equals(provider);
+        when(isGoogle ? this.mockGoogleService.isConfigured() : this.mockOpenAiService.isConfigured()).thenReturn(true);
+        when(this.mockAiConfigService.getConfigValue(
+                eq(isGoogle ? AiConfigKeys.GOOGLE_API_BASE_URL : AiConfigKeys.OPENAI_API_BASE_URL), any()))
+                .thenReturn("https://example.com");
         when(this.mockHttpClient.send(any(), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IOException("Connection refused"));
 
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
+        final ProviderTestResultDto result = this.callProvider(provider, CREDENTIALS);
         assertFalse(result.success);
-        assertTrue(result.message.contains("reach Google endpoint"));
+        assertEquals("Cannot reach " + (isGoogle ? "Google" : "OpenAI") + " endpoint. The server log has the details.",
+                result.message);
+    }
+
+    @Test
+    @DisplayName("the connection test client follows no redirects (the DNS-rebinding accepted risk relies on it)")
+    void testDefaultHttpClientFollowsNoRedirects() {
+        try (var client = new ProviderTestService().httpClient) {
+            assertEquals(HttpClient.Redirect.NEVER, client.followRedirects());
+        }
     }
 
     @SuppressWarnings("NullAway")

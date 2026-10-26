@@ -153,4 +153,18 @@ class OpenAiServiceTest extends AbstractJaxRsAiServiceTest {
     void testGetProviderName() {
         assertEquals("OpenAI", this.openAiService.getProviderName());
     }
+
+    @Test
+    @DisplayName("generateContent should not call the client when the URL is rejected")
+    void testGenerateContentRejectedUrl() {
+        this.assertRejectedUrlStopsRequest(AiConfigService.ProviderType.OPENAI,
+                () -> this.openAiService.generateContent("Test prompt"));
+    }
+
+    @Test
+    @DisplayName("generateJsonContent should not call the client when the URL is rejected")
+    void testGenerateJsonContentRejectedUrl() {
+        this.assertRejectedUrlStopsRequest(AiConfigService.ProviderType.OPENAI,
+                () -> this.openAiService.generateJsonContent("Test prompt"));
+    }
 }

@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -7,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Objects;
@@ -28,8 +30,8 @@ import jakarta.inject.Inject;
 import jakarta.validation.ValidationException;
 
 /**
- * The SSRF checks of {@link AiConfigService} on what a host resolves to: the mocked {@link HostResolver} returns
- * non-public addresses, or fails, without any real DNS lookup.
+ * The SSRF checks of {@link AiConfigService} on what a host resolves to: the mocked {@link HostResolver} returns chosen
+ * addresses, or fails, without any real DNS lookup.
  */
 @QuarkusTest
 @DisplayName("AiConfigService host resolution checks")
@@ -66,13 +68,59 @@ class AiConfigHostResolutionTest {
 
     @ParameterizedTest(name = "resolver returning {0} is rejected")
     @ValueSource(strings = { "127.0.0.1", "10.0.0.1", "172.16.0.1", "192.168.1.1", "169.254.169.254", "0.0.0.0",
-            "224.0.0.1", "::1", "fe80::1", "fd00::1" })
+            "224.0.0.1", "::1", "fe80::1", "fd00::1", "100.64.0.1", "100.127.255.254", "198.18.0.1", "198.19.255.254",
+            "192.0.0.8", "192.0.2.1", "192.88.99.2", "198.51.100.1", "203.0.113.1", "240.0.0.1", "255.255.255.255",
+            "0.1.2.3", "64:ff9b:1::1", "100::1", "100:0:0:1::1", "2001:db8::1", "2001:2::1", "3fff::1", "5f00::1",
+            "64:ff9b::a00:1", "2002:a00:1::1", "::ffff:10.0.0.1", "2001:1ff:ffff::1", "64:ff9b::6440:1",
+            "2002:c612:1::1" })
     @DisplayName("validateProviderApiUrl - allow-listed host resolving to a non-public address is rejected")
     void testValidateProviderApiUrlRejectsNonPublicResolution(final String address) throws UnknownHostException {
         when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
                 .thenReturn(new InetAddress[] { InetAddress.ofLiteral(address) });
 
         assertGoogleUrlRejected("non-public address");
+    }
+
+    @ParameterizedTest(name = "resolver returning {0} is accepted")
+    @ValueSource(strings = { "100.63.255.255", "100.128.0.0", "198.17.255.255", "198.20.0.0", "192.88.99.1", "8.8.8.8",
+            "2001:4860:4860::8888", "64:ff9b::808:808", "2002:808:808::1", "::ffff:8.8.8.8", "2001:200::1",
+            "3fff:1000::1", "fe00::1" })
+    @DisplayName("validateProviderApiUrl - allow-listed host resolving to a public address is accepted")
+    void testValidateProviderApiUrlAcceptsPublicResolution(final String address) throws UnknownHostException {
+        when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
+                .thenReturn(new InetAddress[] { InetAddress.ofLiteral(address) });
+
+        assertDoesNotThrow(() -> this.aiConfigService.validateProviderApiUrl(
+                "https://generativelanguage.googleapis.com", AiConfigService.ProviderType.GOOGLE));
+    }
+
+    @ParameterizedTest(name = "resolver returning an Inet6Address holding {0} is rejected")
+    @ValueSource(strings = { "10.0.0.1", "100.64.0.1" })
+    @DisplayName("validateProviderApiUrl - an Inet6Address holding a mapped non-public IPv4 address is rejected")
+    void testValidateProviderApiUrlRejectsMappedInet6Address(final String embedded) throws UnknownHostException {
+        when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
+                .thenReturn(new InetAddress[] { mappedInet6Address(embedded) });
+
+        assertGoogleUrlRejected("non-public address");
+    }
+
+    @Test
+    @DisplayName("validateProviderApiUrl - an Inet6Address holding a mapped public IPv4 address is accepted")
+    void testValidateProviderApiUrlAcceptsMappedInet6Address() throws UnknownHostException {
+        when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
+                .thenReturn(new InetAddress[] { mappedInet6Address("8.8.8.8") });
+
+        assertDoesNotThrow(() -> this.aiConfigService.validateProviderApiUrl(
+                "https://generativelanguage.googleapis.com", AiConfigService.ProviderType.GOOGLE));
+    }
+
+    /** Builds {@code ::ffff:<ipv4>} as an {@link Inet6Address}, which {@code ofLiteral} would collapse to IPv4. */
+    private static InetAddress mappedInet6Address(final String ipv4) throws UnknownHostException {
+        final var bytes = new byte[16];
+        bytes[10] = (byte) 0xFF;
+        bytes[11] = (byte) 0xFF;
+        System.arraycopy(InetAddress.ofLiteral(ipv4).getAddress(), 0, bytes, 12, 4);
+        return Inet6Address.getByAddress(null, bytes, -1);
     }
 
     @Test
@@ -112,13 +160,13 @@ class AiConfigHostResolutionTest {
     }
 
     @Test
-    @DisplayName("updateConfig - generic URL key whose host resolves to a private address is refused")
+    @DisplayName("updateConfig - generic URL key whose host resolves to a non-public address is refused")
     @TestTransaction
-    void testUpdateConfigGenericUrlKeyRejectsPrivateResolution() throws UnknownHostException {
+    void testUpdateConfigGenericUrlKeyRejectsNonPublicResolution() throws UnknownHostException {
         when(this.hostResolver.resolveAll("custom.example"))
                 .thenReturn(new InetAddress[] { InetAddress.ofLiteral("10.0.0.1") });
 
-        assertGenericUrlRefused("Private IP addresses are not allowed");
+        assertGenericUrlRefused("Non-public IP addresses are not allowed");
     }
 
     @Test

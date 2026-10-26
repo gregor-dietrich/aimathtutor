@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,5 +131,34 @@ class OllamaServiceTest extends AbstractJaxRsAiServiceTest {
     @DisplayName("getProviderName returns Ollama")
     void testGetProviderName() {
         assertEquals("Ollama", this.ollamaService.getProviderName());
+    }
+
+    @Test
+    @DisplayName("generateContent should not call the client when the URL is rejected")
+    void testGenerateContentRejectedUrl() {
+        this.assertRejectedUrlStopsRequest(AiConfigService.ProviderType.OLLAMA,
+                () -> this.ollamaService.generateContent("Test prompt"));
+    }
+
+    @Test
+    @DisplayName("isAvailable should return false without calling the client when the URL is rejected")
+    void testIsAvailableRejectedUrl() {
+        this.rejectProviderUrl(AiConfigService.ProviderType.OLLAMA);
+        assertFalse(this.ollamaService.isAvailable());
+        this.assertValidatorRejectedAndClientUnused();
+    }
+
+    @Test
+    @DisplayName("isModelInstalled should return false without calling the client when the URL is rejected")
+    void testIsModelInstalledRejectedUrl() {
+        this.rejectProviderUrl(AiConfigService.ProviderType.OLLAMA);
+        assertFalse(this.ollamaService.isModelInstalled("llama3"));
+        this.assertValidatorRejectedAndClientUnused();
+    }
+
+    private void assertValidatorRejectedAndClientUnused() {
+        // The rejection, not a blank URL, is what kept the client unused
+        verify(this.aiConfigService).validateProviderApiUrl(anyString(), eq(AiConfigService.ProviderType.OLLAMA));
+        verify(this.mockClient, never()).target(anyString());
     }
 }

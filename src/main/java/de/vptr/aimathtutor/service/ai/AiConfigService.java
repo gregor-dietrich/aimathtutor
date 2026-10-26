@@ -4,6 +4,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -513,8 +515,83 @@ public class AiConfigService {
     }
 
     /**
-     * Checks if the provided {@link InetAddress} is a non-public address (loopback, site-local, link-local, multicast,
-     * or IPv6 unique-local).
+     * An address prefix of the IANA special-purpose registries: the network address bytes (4 for IPv4, 16 for IPv6) and
+     * the prefix length in bits. A class, not a record, because Error Prone refuses array record components.
+     */
+    private static final class Cidr {
+
+        private final byte[] prefix;
+        private final int length;
+
+        private Cidr(final byte[] prefix, final int length) {
+            this.prefix = prefix;
+            this.length = length;
+        }
+
+        /** Parses CIDR notation such as {@code 10.0.0.0/8}, without any name lookup. */
+        static Cidr parse(final String cidr) {
+            final int slash = cidr.indexOf('/');
+            final byte[] bytes = InetAddress.ofLiteral(cidr.substring(0, slash)).getAddress();
+            final int length = Integer.parseInt(cidr.substring(slash + 1));
+            if (length < 0 || length > bytes.length * Byte.SIZE) {
+                throw new IllegalArgumentException("Prefix length out of range: " + cidr);
+            }
+            return new Cidr(bytes, length);
+        }
+
+        /** The four bytes right after the prefix: the IPv4 address a translation prefix embeds. */
+        byte[] embeddedBytes(final byte[] candidate) {
+            final int offset = this.length / Byte.SIZE;
+            return Arrays.copyOfRange(candidate, offset, offset + Integer.BYTES);
+        }
+
+        /** Whether the first {@code length} bits of the candidate equal the prefix's; false for the other family. */
+        boolean matches(final byte[] candidate) {
+            if (candidate.length != this.prefix.length) {
+                return false;
+            }
+            final int fullBytes = this.length / Byte.SIZE;
+            for (int i = 0; i < fullBytes; i++) {
+                if (candidate[i] != this.prefix[i]) {
+                    return false;
+                }
+            }
+            final int rest = this.length % Byte.SIZE;
+            if (rest == 0) {
+                return true;
+            }
+            final int mask = (0xFF << (Byte.SIZE - rest)) & 0xFF;
+            return (candidate[fullBytes] & mask) == (this.prefix[fullBytes] & mask);
+        }
+    }
+
+    /**
+     * The ranges the IANA IPv4 and IPv6 special-purpose address registries mark "Globally Reachable: False", as of
+     * 2026-10 (https://www.iana.org/assignments/iana-ipv4-special-registry/ and
+     * https://www.iana.org/assignments/iana-ipv6-special-registry/). {@code 192.0.0.0/24} and {@code 2001::/23} are
+     * refused whole, including the sub-ranges inside them marked True, N/A or nothing, Teredo among them; none holds a
+     * provider. Ranges marked True or N/A elsewhere are not refused for that reason alone. The IPv4-mapped
+     * {@code ::ffff:0:0/96}, also marked False, is not listed: {@link #TRANSLATION_PREFIXES} judges it by its embedded
+     * IPv4.
+     */
+    private static final List<Cidr> NON_PUBLIC_RANGES = Stream.of("0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10",
+            "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.2/32",
+            "192.168.0.0/16", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "240.0.0.0/4", "255.255.255.255/32",
+            "::/128", "::1/128", "64:ff9b:1::/48", "100::/64", "100:0:0:1::/64", "2001::/23", "2001:db8::/32",
+            "3fff::/20", "5f00::/16", "fc00::/7", "fe80::/10").map(Cidr::parse).toList();
+
+    /**
+     * The IPv6 prefixes that embed an IPv4 address, which then decides: IPv4-mapped, NAT64 and 6to4. The mapped prefix
+     * is built from 16 explicit bytes because {@code ofLiteral} collapses {@code ::ffff:0:0} to a 4-byte IPv4 address.
+     */
+    private static final List<Cidr> TRANSLATION_PREFIXES =
+            List.of(new Cidr(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte) 0xFF, (byte) 0xFF, 0, 0, 0, 0 }, 96),
+                    Cidr.parse("64:ff9b::/96"), Cidr.parse("2002::/16"));
+
+    /**
+     * Checks if the provided {@link InetAddress} is a non-public address: loopback, site-local, link-local, multicast
+     * or unspecified per the JDK, or inside a range of {@link #NON_PUBLIC_RANGES}. An IPv6 address in one of the
+     * {@link #TRANSLATION_PREFIXES} (IPv4-mapped, NAT64, 6to4) is judged by the IPv4 address it embeds.
      *
      * @param address
      *            the address to check
@@ -525,20 +602,34 @@ public class AiConfigService {
                 || address.isMulticastAddress() || address.isAnyLocalAddress()) {
             return true;
         }
+        final byte[] bytes = address.getAddress();
         if (address instanceof Inet6Address) {
-            final byte[] bytes = address.getAddress();
-            // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
-            return (bytes[0] & 0xFE) == 0xFC;
+            for (final Cidr prefix : TRANSLATION_PREFIXES) {
+                if (prefix.matches(bytes)) {
+                    return this.isNonPublicAddress(embeddedIpv4(prefix.embeddedBytes(bytes)));
+                }
+            }
         }
-        return false;
+        return NON_PUBLIC_RANGES.stream().anyMatch(range -> range.matches(bytes));
+    }
+
+    /** Wraps four bytes as an {@link InetAddress}. */
+    private static InetAddress embeddedIpv4(final byte[] ipv4) {
+        try {
+            return InetAddress.getByAddress(ipv4);
+        } catch (final UnknownHostException e) {
+            // Only a length other than 4 or 16 throws, and four bytes are passed
+            throw new IllegalStateException("Embedded IPv4 address is malformed", e);
+        }
     }
 
     /**
      * Validates that a provider API URL is safe to call. Used by {@link #validateUrlSafe} and immediately before HTTP
      * calls. This method re-runs SSRF checks immediately before each HTTP request to close the TOCTOU window between
-     * admin save and use. The HTTP client resolves the host again when it connects, so DNS rebinding is narrowed, not
-     * closed (#293). Ollama is allow-list-only; private addresses are permitted because Docker service names like
-     * {@code ollama} intentionally resolve into the container network. The allow-list itself is the trust boundary.
+     * admin save and use. The HTTP client resolves the host again when it connects; that DNS-rebinding window is an
+     * accepted risk (AGENTS.md, "AI Configuration"). Ollama is allow-list-only; private addresses are permitted because
+     * Docker service names like {@code ollama} intentionally resolve into the container network. The allow-list itself
+     * is the trust boundary.
      *
      * @param url
      *            the URL to validate
@@ -608,7 +699,7 @@ public class AiConfigService {
         } else if (configKey.contains("openai")) {
             providerType = ProviderType.OPENAI;
         } else {
-            // Unknown provider key — fall back to a strict check: require HTTPS and reject private/loopback.
+            // Unknown provider key — fall back to a strict check: require HTTPS and reject non-public addresses.
             this.validateGenericUrlSafe(configKey, configValue);
             return;
         }
@@ -621,7 +712,7 @@ public class AiConfigService {
 
     /**
      * Strict URL validation for keys that do not correspond to a known provider (e.g. future custom endpoints). Blocks
-     * loopback and private IP ranges.
+     * non-public IP ranges.
      */
     private void validateGenericUrlSafe(final String configKey, final String configValue) {
         final URI uri;
@@ -648,7 +739,7 @@ public class AiConfigService {
             for (final InetAddress address : addresses) {
                 if (this.isNonPublicAddress(address)) {
                     throw new IllegalArgumentException(
-                            "Private IP addresses are not allowed for key '" + configKey + "'");
+                            "Non-public IP addresses are not allowed for key '" + configKey + "'");
                 }
             }
         } catch (final UnknownHostException e) {

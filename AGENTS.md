@@ -663,6 +663,10 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 - **SSRF protection:** `app.security.allowed-ollama-hosts` — comma-separated
   list of permitted hostnames for Ollama (defaults to `ollama,localhost`).
   It is the trust boundary for Ollama URLs, which skip the address check.
+  For Google and OpenAI URLs and other URL settings, that check refuses every
+  address in an IANA special-purpose range that is not globally reachable,
+  judging an IPv4-mapped, NAT64 or 6to4 address by the IPv4 address it embeds
+  (`AiConfigService.isNonPublicAddress`).
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
   and the optional OpenAI Organization ID — configured via Admin Settings UI
   at `/admin/config`. The Organization ID has no property/environment input.
@@ -680,6 +684,36 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   a test-scope `TestHostResolver` replaces it in every `@QuarkusTest`, so no
   test resolves a real host name; a class needing specific answers uses
   `@InjectMock`.
+- **DNS rebinding (accepted risk):** the call-time URL check and the HTTP
+  connection resolve a Google or OpenAI host separately, so a name that answers
+  differently to the second lookup reaches an address the check never saw.
+  - Both providers require https, and both clients verify the certificate
+    against the URL's host name before sending the API key or any request: the
+    REST client keeps `verifyHost` on and follows no redirects, the connection
+    test's JDK `HttpClient` does the same by default (`ProviderTestServiceTest`
+    pins its redirect policy). An endpoint without a trusted certificate for
+    that name therefore gets only a TCP connect and a TLS ClientHello on the
+    configured port.
+  - The connection test says only that the endpoint could not be reached, not
+    why; how long it took still shows.
+  - This does not hold for an internal endpoint holding a certificate for that
+    name that the JVM trusts. An attacker who also holds one can put bytes of
+    its choice (a session ticket from an earlier connection) into that
+    ClientHello. Exploiting it needs control of an allow-listed name's DNS
+    answers or of the resolver.
+  - It assumes the JVM's default trust store and no option that relaxes TLS
+    verification, such as a `JDK_JAVA_OPTIONS` trust store or a `quarkus.tls.*`
+    setting; an operator who sets one takes the risk on without any change
+    here.
+  - Reopen it (pin the connect address) if Google or OpenAI URLs may use http,
+    if certificate or host-name verification is relaxed (a trust-all setting, a
+    trust store with an internal CA, a custom verifier), if a client follows
+    redirects, if a provider gets an address check without TLS, or if a URL
+    setting checked only when saved and against no allow-list (`custom.url`
+    and the like, `validateGenericUrlSafe`) gets a consumer that sends to it.
+  - Pinning was not done because the REST client exposes no per-request
+    connect address and a separate client would cost more than the probe it
+    closes.
 
 - **Mock provider:** `ai.tutor.provider=mock` or `ai.tutor.enabled=false`.
 - **Test profile:** Disables `@Retry` delays on AI provider calls, sets 1s
