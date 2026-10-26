@@ -1,5 +1,6 @@
 package de.vptr.aimathtutor.util;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import de.vptr.aimathtutor.dto.SessionCredentials;
@@ -34,8 +35,8 @@ public final class TestSessionCredentials {
      *            the session's throttle key
      * @return the credentials
      */
-    @SuppressWarnings("NullAway")
     public static SessionCredentials of(final UserEntity user, final String throttleKey) {
-        return new SessionCredentials(user.publicId, AuthService.credentialStamp(user.password), throttleKey);
+        return new SessionCredentials(Objects.requireNonNull(user.publicId, "User public ID"),
+                Objects.requireNonNull(AuthService.credentialStamp(user.password), "User password hash"), throttleKey);
     }
 }
