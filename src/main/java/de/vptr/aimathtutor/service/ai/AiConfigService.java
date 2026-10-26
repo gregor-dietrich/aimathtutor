@@ -542,7 +542,7 @@ public class AiConfigService {
         /** The four bytes right after the prefix: the IPv4 address a translation prefix embeds. */
         byte[] embeddedBytes(final byte[] candidate) {
             final int offset = this.length / Byte.SIZE;
-            return Arrays.copyOfRange(candidate, offset, offset + 4);
+            return Arrays.copyOfRange(candidate, offset, offset + Integer.BYTES);
         }
 
         /** Whether the first {@code length} bits of the candidate equal the prefix's; false for the other family. */
@@ -570,7 +570,9 @@ public class AiConfigService {
      * 2026-10 (https://www.iana.org/assignments/iana-ipv4-special-registry/ and
      * https://www.iana.org/assignments/iana-ipv6-special-registry/). {@code 192.0.0.0/24} and {@code 2001::/23} are
      * refused whole, including the sub-ranges inside them marked True, N/A or nothing, Teredo among them; none holds a
-     * provider. Ranges marked True or N/A elsewhere are not refused for that reason alone.
+     * provider. Ranges marked True or N/A elsewhere are not refused for that reason alone. The IPv4-mapped
+     * {@code ::ffff:0:0/96}, also marked False, is not listed: {@link #TRANSLATION_PREFIXES} judges it by its embedded
+     * IPv4.
      */
     private static final List<Cidr> NON_PUBLIC_RANGES = Stream.of("0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10",
             "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.2/32",

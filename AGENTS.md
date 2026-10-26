@@ -664,7 +664,8 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   list of permitted hostnames for Ollama (defaults to `ollama,localhost`).
   It is the trust boundary for Ollama URLs, which skip the address check.
   For Google and OpenAI URLs and other URL settings, that check refuses every
-  address in an IANA special-purpose range that is not globally reachable
+  address in an IANA special-purpose range that is not globally reachable,
+  judging an IPv4-mapped, NAT64 or 6to4 address by the IPv4 address it embeds
   (`AiConfigService.isNonPublicAddress`).
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
   and the optional OpenAI Organization ID — configured via Admin Settings UI
@@ -690,14 +691,16 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
     against the URL's host name before sending the API key or any request: the
     REST client keeps `verifyHost` on and follows no redirects, the connection
     test's JDK `HttpClient` does the same by default (`ProviderTestServiceTest`
-    pins its redirect policy). An endpoint without a
-    trusted certificate for that name therefore gets only a TCP connect and a
-    TLS ClientHello on the configured port.
+    pins its redirect policy). An endpoint without a trusted certificate for
+    that name therefore gets only a TCP connect and a TLS ClientHello on the
+    configured port.
   - The connection test says only that the endpoint could not be reached, not
     why; how long it took still shows.
-  - This does not hold for an internal endpoint, or an attacker, holding a
-    certificate for that name that the JVM trusts. Exploiting it needs control
-    of an allow-listed name's DNS answers or of the resolver.
+  - This does not hold for an internal endpoint holding a certificate for that
+    name that the JVM trusts. An attacker who also holds one can put bytes of
+    its choice (a session ticket from an earlier connection) into that
+    ClientHello. Exploiting it needs control of an allow-listed name's DNS
+    answers or of the resolver.
   - It assumes the JVM's default trust store and no option that relaxes TLS
     verification, such as a `JDK_JAVA_OPTIONS` trust store or a `quarkus.tls.*`
     setting; an operator who sets one takes the risk on without any change

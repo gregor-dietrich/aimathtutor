@@ -119,7 +119,9 @@ class ProviderTestServiceTest {
     @Test
     @DisplayName("the connection test client follows no redirects (the DNS-rebinding accepted risk relies on it)")
     void testDefaultHttpClientFollowsNoRedirects() {
-        assertEquals(HttpClient.Redirect.NEVER, new ProviderTestService().httpClient.followRedirects());
+        try (var client = new ProviderTestService().httpClient) {
+            assertEquals(HttpClient.Redirect.NEVER, client.followRedirects());
+        }
     }
 
     @SuppressWarnings("NullAway")

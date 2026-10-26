@@ -2,7 +2,6 @@ package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -121,9 +120,7 @@ class AiConfigHostResolutionTest {
         bytes[10] = (byte) 0xFF;
         bytes[11] = (byte) 0xFF;
         System.arraycopy(InetAddress.ofLiteral(ipv4).getAddress(), 0, bytes, 12, 4);
-        final var address = Inet6Address.getByAddress(null, bytes, -1);
-        assertInstanceOf(Inet6Address.class, address);
-        return address;
+        return Inet6Address.getByAddress(null, bytes, -1);
     }
 
     @Test
@@ -165,7 +162,7 @@ class AiConfigHostResolutionTest {
     @Test
     @DisplayName("updateConfig - generic URL key whose host resolves to a non-public address is refused")
     @TestTransaction
-    void testUpdateConfigGenericUrlKeyRejectsPrivateResolution() throws UnknownHostException {
+    void testUpdateConfigGenericUrlKeyRejectsNonPublicResolution() throws UnknownHostException {
         when(this.hostResolver.resolveAll("custom.example"))
                 .thenReturn(new InetAddress[] { InetAddress.ofLiteral("10.0.0.1") });
 
