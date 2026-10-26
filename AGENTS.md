@@ -676,6 +676,15 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
   and the optional OpenAI Organization ID — configured via Admin Settings UI
   at `/admin/config`. The Organization ID has no property/environment input.
+- **Missing settings rows (accepted risk):** V1 seeds a row for every key, and
+  only direct SQL removes one. A save or reset of a key without a row recreates
+  it as `STRING`/`GENERAL` and not optional. Saves of a recreated numeric or
+  boolean key then skip its type and range checks (URL checks go by key and
+  still apply; the runtime falls back to the default for an unparseable number
+  and clamps temperature and max tokens), and a recreated
+  `openai.organization-id` refuses a blank value. Restore the row as V1 seeds
+  it; per-key metadata in the code would duplicate the migration. Reopen if
+  anything but SQL can delete a row.
 - **Config cache:** `AiConfigService` caches values in `AiConfigCache`. A fill
   caches only if no eviction happened since its read began (a generation taken
   before the read), and never when the calling thread has a transaction of any
