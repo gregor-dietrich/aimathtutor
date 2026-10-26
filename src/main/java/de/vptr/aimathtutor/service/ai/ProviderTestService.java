@@ -91,7 +91,7 @@ public class ProviderTestService {
             return ProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
             LOG.warnf(e, "Google endpoint unreachable: %s", e.getMessage());
-            return ProviderTestResultDto.fail("Cannot reach Google endpoint: " + e.getMessage());
+            return ProviderTestResultDto.fail("Cannot reach Google endpoint. The server log has the details.");
         } catch (final IllegalArgumentException e) {
             LOG.warnf(e, "Invalid Google base URL: %s", baseUrl);
             return ProviderTestResultDto.fail("Invalid Google base URL: " + e.getMessage());
@@ -141,7 +141,7 @@ public class ProviderTestService {
             return ProviderTestResultDto.fail("Connection test interrupted");
         } catch (final IOException e) {
             LOG.warnf(e, "OpenAI endpoint unreachable: %s", e.getMessage());
-            return ProviderTestResultDto.fail("Cannot reach OpenAI endpoint: " + e.getMessage());
+            return ProviderTestResultDto.fail("Cannot reach OpenAI endpoint. The server log has the details.");
         } catch (final IllegalArgumentException e) {
             LOG.warnf(e, "Invalid OpenAI base URL: %s", baseUrl);
             return ProviderTestResultDto.fail("Invalid OpenAI base URL: " + e.getMessage());

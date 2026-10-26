@@ -4,7 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +53,14 @@ public abstract class AbstractJaxRsAiServiceTest extends AbstractAiServiceTest {
         when(this.mockResponse.readEntity(String.class)).thenReturn("Request rejected");
         final var failure = assertThrowsExactly(NonRetryableProviderException.class, request);
         assertEquals(status, failure.getHttpStatus());
+    }
+
+    protected void assertRejectedUrlStopsRequest(final AiConfigService.ProviderType provider,
+            final Executable request) {
+        doThrow(new IllegalArgumentException("URL not allowed")).when(this.aiConfigService)
+                .validateProviderApiUrl(anyString(), eq(provider));
+        assertThrowsExactly(NonRetryableProviderException.class, request);
+        verify(this.mockClient, never()).target(anyString());
     }
 
     /**

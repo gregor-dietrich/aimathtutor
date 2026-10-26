@@ -1,12 +1,15 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Objects;
@@ -66,13 +69,34 @@ class AiConfigHostResolutionTest {
 
     @ParameterizedTest(name = "resolver returning {0} is rejected")
     @ValueSource(strings = { "127.0.0.1", "10.0.0.1", "172.16.0.1", "192.168.1.1", "169.254.169.254", "0.0.0.0",
-            "224.0.0.1", "::1", "fe80::1", "fd00::1" })
+            "224.0.0.1", "::1", "fe80::1", "fd00::1", "100.64.0.1", "100.127.255.254", "198.18.0.1", "198.19.255.254",
+            "192.0.0.8", "192.0.2.1", "192.88.99.2", "198.51.100.1", "203.0.113.1", "240.0.0.1", "255.255.255.255",
+            "0.1.2.3", "64:ff9b:1::1", "100::1", "100:0:0:1::1", "2001:db8::1", "2001:2::1", "3fff::1", "5f00::1",
+            "64:ff9b::a00:1", "2002:a00:1::1", "::ffff:10.0.0.1" })
     @DisplayName("validateProviderApiUrl - allow-listed host resolving to a non-public address is rejected")
     void testValidateProviderApiUrlRejectsNonPublicResolution(final String address) throws UnknownHostException {
         when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
                 .thenReturn(new InetAddress[] { InetAddress.ofLiteral(address) });
 
         assertGoogleUrlRejected("non-public address");
+    }
+
+    @ParameterizedTest(name = "resolver returning {0} is accepted")
+    @ValueSource(strings = { "100.63.255.255", "100.128.0.0", "198.17.255.255", "198.20.0.0", "192.88.99.1", "8.8.8.8",
+            "2001:4860:4860::8888", "64:ff9b::808:808", "2002:808:808::1", "::ffff:8.8.8.8" })
+    @DisplayName("validateProviderApiUrl - allow-listed host resolving to a public address is accepted")
+    void testValidateProviderApiUrlAcceptsPublicResolution(final String address) throws UnknownHostException {
+        when(this.hostResolver.resolveAll("generativelanguage.googleapis.com"))
+                .thenReturn(new InetAddress[] { InetAddress.ofLiteral(address) });
+
+        assertDoesNotThrow(() -> this.aiConfigService.validateProviderApiUrl(
+                "https://generativelanguage.googleapis.com", AiConfigService.ProviderType.GOOGLE));
+    }
+
+    @Test
+    @DisplayName("InetAddress.ofLiteral - an IPv4-mapped literal is an Inet4Address")
+    void testMappedLiteralIsInet4Address() {
+        assertInstanceOf(Inet4Address.class, InetAddress.ofLiteral("::ffff:10.0.0.1"));
     }
 
     @Test

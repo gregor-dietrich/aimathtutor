@@ -86,4 +86,11 @@ class GoogleServiceTest extends AbstractJaxRsAiServiceTest {
         final boolean configured = this.googleService.isConfigured();
         assertEquals(configured, this.googleService.isConfigured());
     }
+
+    @Test
+    @DisplayName("generateContent should not call the client when the URL is rejected")
+    void testGenerateContentRejectedUrl() {
+        this.assertRejectedUrlStopsRequest(AiConfigService.ProviderType.GOOGLE,
+                () -> this.googleService.generateContent("Test prompt"));
+    }
 }

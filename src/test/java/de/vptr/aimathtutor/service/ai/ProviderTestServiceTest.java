@@ -96,19 +96,22 @@ class ProviderTestServiceTest {
         when(this.mockHttpClient.send(any(), any(HttpResponse.BodyHandler.class))).thenReturn(mockResponse);
     }
 
-    @Test
-    @DisplayName("testGoogle returns failure when IOException occurs")
+    @ParameterizedTest
+    @ValueSource(strings = { "google", "openai" })
+    @DisplayName("provider tests report an unreachable endpoint without the transport error's text")
     @SuppressWarnings({ "NullAway", "unchecked" })
-    void testTestGoogle_ioException() throws IOException, InterruptedException {
-        when(this.mockGoogleService.isConfigured()).thenReturn(true);
-        when(this.mockAiConfigService.getConfigValue(eq(AiConfigKeys.GOOGLE_API_BASE_URL), any()))
-                .thenReturn("https://google.com");
+    void testProviderTest_ioException(final String provider) throws IOException, InterruptedException {
+        final var isGoogle = "google".equals(provider);
+        when(isGoogle ? this.mockGoogleService.isConfigured() : this.mockOpenAiService.isConfigured()).thenReturn(true);
+        when(this.mockAiConfigService.getConfigValue(any(), any())).thenReturn("https://example.com");
         when(this.mockHttpClient.send(any(), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IOException("Connection refused"));
 
-        final ProviderTestResultDto result = this.aiProviderTestService.testGoogle(CREDENTIALS);
+        final ProviderTestResultDto result = this.callProvider(provider, CREDENTIALS);
         assertFalse(result.success);
-        assertTrue(result.message.contains("reach Google endpoint"));
+        assertTrue(result.message.contains("Cannot reach " + (isGoogle ? "Google" : "OpenAI") + " endpoint"),
+                result.message);
+        assertFalse(result.message.contains("Connection refused"), result.message);
     }
 
     @SuppressWarnings("NullAway")

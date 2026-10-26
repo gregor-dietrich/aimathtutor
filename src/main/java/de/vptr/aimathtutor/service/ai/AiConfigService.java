@@ -4,6 +4,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -513,8 +514,71 @@ public class AiConfigService {
     }
 
     /**
-     * Checks if the provided {@link InetAddress} is a non-public address (loopback, site-local, link-local, multicast,
-     * or IPv6 unique-local).
+     * An address prefix of the IANA special-purpose registries: the network address bytes (4 for IPv4, 16 for IPv6) and
+     * the prefix length in bits. A class, not a record, because Error Prone refuses array record components.
+     */
+    private static final class Cidr {
+
+        private final byte[] prefix;
+        private final int length;
+
+        private Cidr(final byte[] prefix, final int length) {
+            this.prefix = prefix;
+            this.length = length;
+        }
+
+        /** Parses CIDR notation such as {@code 10.0.0.0/8}, without any name lookup. */
+        static Cidr parse(final String cidr) {
+            final int slash = cidr.indexOf('/');
+            return new Cidr(InetAddress.ofLiteral(cidr.substring(0, slash)).getAddress(),
+                    Integer.parseInt(cidr.substring(slash + 1)));
+        }
+
+        boolean matches(final byte[] candidate) {
+            if (candidate.length != this.prefix.length) {
+                return false;
+            }
+            final int fullBytes = this.length / Byte.SIZE;
+            for (int i = 0; i < fullBytes; i++) {
+                if (candidate[i] != this.prefix[i]) {
+                    return false;
+                }
+            }
+            final int rest = this.length % Byte.SIZE;
+            if (rest == 0) {
+                return true;
+            }
+            final int mask = (0xFF << (Byte.SIZE - rest)) & 0xFF;
+            return (candidate[fullBytes] & mask) == (this.prefix[fullBytes] & mask);
+        }
+    }
+
+    /**
+     * The ranges the IANA IPv4 and IPv6 special-purpose address registries mark "Globally Reachable: False", as of
+     * 2026-10. {@code 192.0.0.0/24} and {@code 2001::/23} are refused whole, including their sub-ranges marked True,
+     * none of which holds a provider.
+     */
+    private static final List<Cidr> NON_PUBLIC_RANGES = List.of(Cidr.parse("0.0.0.0/8"), Cidr.parse("10.0.0.0/8"),
+            Cidr.parse("100.64.0.0/10"), Cidr.parse("127.0.0.0/8"), Cidr.parse("169.254.0.0/16"),
+            Cidr.parse("172.16.0.0/12"), Cidr.parse("192.0.0.0/24"), Cidr.parse("192.0.2.0/24"),
+            Cidr.parse("192.88.99.2/32"), Cidr.parse("192.168.0.0/16"), Cidr.parse("198.18.0.0/15"),
+            Cidr.parse("198.51.100.0/24"), Cidr.parse("203.0.113.0/24"), Cidr.parse("240.0.0.0/4"),
+            Cidr.parse("255.255.255.255/32"), Cidr.parse("::/128"), Cidr.parse("::1/128"), Cidr.parse("64:ff9b:1::/48"),
+            Cidr.parse("100::/64"), Cidr.parse("100:0:0:1::/64"), Cidr.parse("2001::/23"), Cidr.parse("2001:db8::/32"),
+            Cidr.parse("3fff::/20"), Cidr.parse("5f00::/16"), Cidr.parse("fc00::/7"), Cidr.parse("fe80::/10"));
+
+    private static final Cidr NAT64_PREFIX = Cidr.parse("64:ff9b::/96");
+
+    private static final Cidr SIX_TO_FOUR_PREFIX = Cidr.parse("2002::/16");
+
+    /**
+     * Checks if the provided {@link InetAddress} is a non-public address: loopback, site-local, link-local, multicast
+     * or unspecified per the JDK, or inside any range the IANA special-purpose registries mark "Globally Reachable:
+     * False" (https://www.iana.org/assignments/iana-ipv4-special-registry/ and
+     * https://www.iana.org/assignments/iana-ipv6-special-registry/, as of 2026-10). Ranges marked True or N/A are not
+     * refused for that reason alone. An IPv6 address in the NAT64 prefix {@code 64:ff9b::/96} or the 6to4 prefix
+     * {@code 2002::/16} is judged by the IPv4 address it embeds. The IPv4-mapped prefix {@code ::ffff:0:0/96} needs no
+     * entry: the JDK returns an {@code Inet4Address} for a mapped literal or lookup answer, so it is checked as IPv4.
      *
      * @param address
      *            the address to check
@@ -525,20 +589,34 @@ public class AiConfigService {
                 || address.isMulticastAddress() || address.isAnyLocalAddress()) {
             return true;
         }
+        final byte[] bytes = address.getAddress();
         if (address instanceof Inet6Address) {
-            final byte[] bytes = address.getAddress();
-            // Block IPv6 unique-local fc00::/7 (first byte 0xFC or 0xFD)
-            return (bytes[0] & 0xFE) == 0xFC;
+            if (NAT64_PREFIX.matches(bytes)) {
+                return this.isNonPublicAddress(embeddedIpv4(bytes, 12));
+            }
+            if (SIX_TO_FOUR_PREFIX.matches(bytes)) {
+                return this.isNonPublicAddress(embeddedIpv4(bytes, 2));
+            }
         }
-        return false;
+        return NON_PUBLIC_RANGES.stream().anyMatch(range -> range.matches(bytes));
+    }
+
+    private static InetAddress embeddedIpv4(final byte[] ipv6, final int offset) {
+        try {
+            return InetAddress.getByAddress(Arrays.copyOfRange(ipv6, offset, offset + 4));
+        } catch (final UnknownHostException e) {
+            // Only a length other than 4 or 16 throws, and four bytes are passed
+            throw new IllegalStateException("Embedded IPv4 address is malformed", e);
+        }
     }
 
     /**
      * Validates that a provider API URL is safe to call. Used by {@link #validateUrlSafe} and immediately before HTTP
      * calls. This method re-runs SSRF checks immediately before each HTTP request to close the TOCTOU window between
-     * admin save and use. The HTTP client resolves the host again when it connects, so DNS rebinding is narrowed, not
-     * closed (#293). Ollama is allow-list-only; private addresses are permitted because Docker service names like
-     * {@code ollama} intentionally resolve into the container network. The allow-list itself is the trust boundary.
+     * admin save and use. The HTTP client resolves the host again when it connects; that DNS-rebinding window is an
+     * accepted risk (AGENTS.md, "AI Configuration"). Ollama is allow-list-only; private addresses are permitted because
+     * Docker service names like {@code ollama} intentionally resolve into the container network. The allow-list itself
+     * is the trust boundary.
      *
      * @param url
      *            the URL to validate
