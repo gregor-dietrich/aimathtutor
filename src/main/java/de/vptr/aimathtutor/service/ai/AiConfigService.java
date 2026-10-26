@@ -128,6 +128,37 @@ public class AiConfigService {
     }
 
     /**
+     * Returns every known AI setting as the runtime reads it: the stored value, or the built-in default for a missing
+     * row. A stored temperature or token limit that does not parse is replaced by its default, so a caller can parse
+     * those values without a fallback of its own.
+     * <p>
+     * Deliberately not {@code @Transactional}: the reads go through {@link #getConfigValue}, which fills the cache only
+     * outside a transaction, so a transactional snapshot would never fill it. There is no permission check: the values
+     * hold no API keys and no user data, and the settings page is readable without the edit permission. The map is a
+     * set of per-key reads, not one atomic read, so a concurrent save can leave it mixing old and new values.
+     *
+     * @return an unmodifiable map holding a value for every key of the built-in defaults
+     */
+    public Map<String, String> getEffectiveConfig() {
+        final var values = new HashMap<String, String>();
+        DEFAULT_VALUES.forEach((key, defaultValue) -> {
+            if (key.endsWith(AiConfigKeys.SUFFIX_TEMPERATURE)) {
+                values.put(key, String.valueOf(this.getConfigValueAsDouble(key, Double.valueOf(defaultValue))));
+            } else if (key.endsWith(AiConfigKeys.SUFFIX_MAX_TOKENS)) {
+                values.put(key, String.valueOf(this.getConfigValueAsInt(key, Integer.valueOf(defaultValue))));
+            } else {
+                values.put(key, Objects.requireNonNullElse(this.getConfigValue(key, defaultValue), defaultValue));
+            }
+        });
+        return Map.copyOf(values);
+    }
+
+    /** The built-in defaults as updates, in no particular order. */
+    static List<AiConfigUpdateDto> defaultUpdates() {
+        return DEFAULT_VALUES.entrySet().stream().map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue())).toList();
+    }
+
+    /**
      * Retrieves a configuration value as an Integer. Falls back to defaultValue if not found or if parsing fails.
      *
      * @param key
@@ -768,24 +799,23 @@ public class AiConfigService {
     }
 
     /**
-     * Resets all known AI configuration values to their factory defaults. Deliberately starts no transaction
-     * ({@code SUPPORTS}, joining a caller's): {@link #updateMultipleConfigs} validates URLs (including DNS resolution)
-     * before opening its write transaction, and wrapping the whole reset in a transaction would hold a DB connection
-     * during that resolution.
+     * Resets all known AI configuration values to their built-in defaults. The defaults are written without validation:
+     * they are constants, and every provider call and connection test validates the stored URL again, so a reset needs
+     * no DNS lookup and succeeds where the built-in hosts do not resolve. A default whose host the operator removed
+     * from an allow-list is written anyway and refused when it is used. The session is checked in the write's own
+     * transaction, which joins a caller's; the reset is all-or-nothing.
      *
      * @param credentials
      *            the credentials captured by {@code AuthService.currentSessionCredentials()} when the user acted, or
      *            null
      * @throws ValidationException
-     *             if the session has ended or validation fails
+     *             if the session has ended
      * @throws PermissionDeniedException
      *             if the user's rank lacks the permission
      */
     @Transactional(TxType.SUPPORTS)
     public void resetToDefaults(@Nullable final SessionCredentials credentials) {
-        final var updates =
-                DEFAULT_VALUES.entrySet().stream().map(e -> new AiConfigUpdateDto(e.getKey(), e.getValue())).toList();
-        this.updateMultipleConfigs(updates, credentials);
+        this.persistMultipleConfigUpdates(defaultUpdates(), credentials);
         LOG.info("All AI configurations reset to defaults");
     }
 

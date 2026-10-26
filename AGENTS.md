@@ -365,6 +365,12 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
   `PermissionService.requireAiConfigEdit(credentials)` in a short transaction
   before it validates any value or URL (so an ended or unauthorised session
   never triggers a DNS lookup) and again in the write's transaction.
+  Reset to Defaults writes the built-in defaults without validating them and
+  checks the session only in the write's transaction: they are constants,
+  every provider call and connection test re-validates the stored URL, and
+  `AiConfigResetTest` pins that each default passes a save's validation. The
+  page loads its values through `AiConfigService.getEffectiveConfig()` off the
+  UI thread; that method stays non-transactional so its reads fill the cache.
   `ProviderTestService` checks them the same way before any config read, URL
   validation or request.
 - **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to

@@ -156,7 +156,7 @@ class AiConfigSessionEndedTest {
         final var unchanged = this.aiConfigRepository.findByConfigKey(KEY).orElseThrow();
         assertEquals(SEEDED_VALUE, unchanged.configValue);
         assertNull(unchanged.lastUpdatedBy);
-        // The save's external URL would be resolved, and so would the reset's default URLs, if validation ran first
+        // The save's external URL would be resolved if validation ran first; a reset resolves nothing
         verifyNoInteractions(this.hostResolver);
     }
 
