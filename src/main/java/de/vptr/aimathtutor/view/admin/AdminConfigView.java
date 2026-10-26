@@ -61,8 +61,9 @@ public class AdminConfigView extends AbstractAdminView {
     private transient ProviderTestService aiProviderTestService;
 
     /**
-     * Identifies the newest settings load; the callbacks of an older one, or of one finishing after detach, do nothing.
-     * Its failure notification still shows, since {@link AsyncDataLoader} shows it before the error callback runs.
+     * Identifies the newest settings load; the callbacks of an older one, or of one whose callback runs after detach,
+     * do nothing. A superseded load's failure notification still shows, since {@link AsyncDataLoader} shows it before
+     * the error callback runs.
      */
     private int loadRequestId;
 

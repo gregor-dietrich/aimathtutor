@@ -7,7 +7,7 @@ import de.vptr.aimathtutor.repository.AiConfigRepository;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.persistence.EntityManager;
 
-/** Shared helpers of the AI-config tests that commit rows of their own. */
+/** Shared helpers of the AI-config tests. */
 final class AiConfigTestSupport {
 
     private AiConfigTestSupport() {
