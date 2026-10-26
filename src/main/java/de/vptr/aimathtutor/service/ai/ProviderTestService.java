@@ -67,8 +67,7 @@ public class ProviderTestService {
             return ProviderTestResultDto.fail("Google API key not configured. Set the app.google.api.key property.");
         }
 
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL,
-                "https://generativelanguage.googleapis.com");
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL);
         try {
             this.aiConfigService.validateProviderApiUrl(baseUrl, AiConfigService.ProviderType.GOOGLE);
         } catch (final IllegalArgumentException e) {
@@ -117,8 +116,7 @@ public class ProviderTestService {
             return ProviderTestResultDto.fail("OpenAI API key not configured. Set the app.openai.api.key property.");
         }
 
-        final String baseUrl =
-                this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1");
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL);
         try {
             this.aiConfigService.validateProviderApiUrl(baseUrl, AiConfigService.ProviderType.OPENAI);
         } catch (final IllegalArgumentException e) {

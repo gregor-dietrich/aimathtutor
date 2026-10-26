@@ -1,7 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
@@ -104,9 +103,7 @@ class OpenAiServiceTest extends AbstractJaxRsAiServiceTest {
     @Test
     @DisplayName("Should expose model name from config (default gpt-5-nano)")
     void shouldReturnConfiguredModel() {
-        final String model = this.openAiService.getModel();
-        assertNotNull(model);
-        assertFalse(model.isBlank());
+        assertEquals(AiConfigService.defaultValue(AiConfigKeys.OPENAI_MODEL), this.openAiService.getModel());
     }
 
     @Test
@@ -140,12 +137,6 @@ class OpenAiServiceTest extends AbstractJaxRsAiServiceTest {
     @DisplayName("getConfigPrefix returns the OpenAI prefix")
     void testGetConfigPrefix() {
         assertEquals("openai", this.openAiService.getConfigPrefix());
-    }
-
-    @Test
-    @DisplayName("getDefaultModel returns the default model")
-    void testGetDefaultModel() {
-        assertEquals("gpt-5-nano", this.openAiService.getDefaultModel());
     }
 
     @Test

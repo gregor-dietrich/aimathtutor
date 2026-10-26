@@ -1,7 +1,5 @@
 package de.vptr.aimathtutor.service.ai;
 
-import java.util.Objects;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.logging.Logger;
@@ -27,8 +25,6 @@ import jakarta.ws.rs.core.Response;
 public class OllamaService extends AbstractProviderService {
 
     private static final Logger LOG = Logger.getLogger(OllamaService.class);
-    private static final String DEFAULT_MODEL = "llama3.2:3b";
-    private static final String DEFAULT_API_URL = "http://ollama:11434";
 
     @Inject
     @ConfigProperty(name = "ollama.client.connect-timeout-seconds", defaultValue = "10")
@@ -41,11 +37,6 @@ public class OllamaService extends AbstractProviderService {
     @Override
     protected String getConfigPrefix() {
         return AiConfigKeys.OLLAMA_PREFIX;
-    }
-
-    @Override
-    protected String getDefaultModel() {
-        return DEFAULT_MODEL;
     }
 
     @Override
@@ -84,25 +75,22 @@ public class OllamaService extends AbstractProviderService {
         LOG.debugf("Generating content with Ollama for prompt length: %s", prompt != null ? prompt.length() : 0);
 
         // Load dynamic configuration
-        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
-        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_MODEL, DEFAULT_MODEL);
-        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OLLAMA_TEMPERATURE, 0.7);
-        // Default to 2000 tokens to prevent truncated JSON responses
-        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OLLAMA_MAX_TOKENS, 2000);
+        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL);
+        final String model = this.getModel();
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OLLAMA_TEMPERATURE);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OLLAMA_MAX_TOKENS);
 
         this.requireConfigured(apiUrl, "Ollama API URL");
         this.requireConfigured(model, "Ollama model");
 
-        final var effectiveModel = Objects.requireNonNull(model);
-        final var effectiveApiUrl = Objects.requireNonNull(apiUrl);
-        this.requireSafeProviderUrl(effectiveApiUrl, AiConfigService.ProviderType.OLLAMA);
+        this.requireSafeProviderUrl(apiUrl, AiConfigService.ProviderType.OLLAMA);
 
         try {
             // Create request
-            final var request = OllamaRequestDto.createGenerateRequest(prompt, effectiveModel, temperature, maxTokens);
+            final var request = OllamaRequestDto.createGenerateRequest(prompt, model, temperature, maxTokens);
 
             // Build API URL
-            final String url = effectiveApiUrl + "/api/generate";
+            final String url = apiUrl + "/api/generate";
 
             // Make API call
             final long startTime = System.currentTimeMillis();
@@ -160,8 +148,8 @@ public class OllamaService extends AbstractProviderService {
      */
     @Nullable
     private String resolveValidatedApiUrl() {
-        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
-        if (apiUrl == null || apiUrl.isBlank()) {
+        final String apiUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL);
+        if (apiUrl.isBlank()) {
             return null;
         }
         try {
@@ -228,13 +216,5 @@ public class OllamaService extends AbstractProviderService {
             LOG.debugf("Error checking if model %s is installed: %s", modelName, e.getMessage());
             return false;
         }
-    }
-
-    /**
-     * Get the API URL
-     */
-    @Nullable
-    public String getApiUrl() {
-        return this.aiConfigService.getConfigValue(AiConfigKeys.OLLAMA_API_URL, DEFAULT_API_URL);
     }
 }

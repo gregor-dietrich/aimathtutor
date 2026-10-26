@@ -1,8 +1,6 @@
 package de.vptr.aimathtutor.service.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.Mockito.when;
 
@@ -75,9 +73,7 @@ class GoogleServiceTest extends AbstractJaxRsAiServiceTest {
     @Test
     @DisplayName("Should expose model name from config (default gemini-3.1-flash-lite)")
     void shouldReturnConfiguredModel() {
-        final String model = this.googleService.getModel();
-        assertNotNull(model);
-        assertFalse(model.isBlank());
+        assertEquals(AiConfigService.defaultValue(AiConfigKeys.GOOGLE_MODEL), this.googleService.getModel());
     }
 
     @Test

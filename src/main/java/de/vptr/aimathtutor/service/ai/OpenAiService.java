@@ -24,8 +24,6 @@ import jakarta.ws.rs.core.Response;
 public class OpenAiService extends AbstractProviderService {
 
     private static final Logger LOG = Logger.getLogger(OpenAiService.class);
-    private static final String DEFAULT_MODEL = "gpt-5-nano";
-    private static final String DEFAULT_BASE_URL = "https://api.openai.com/v1";
     private static final String CHAT_SYSTEM_PROMPT =
             "You are an encouraging AI math tutor helping students learn algebra. "
                     + "Provide clear, supportive feedback that guides students' thinking without giving away answers.";
@@ -39,11 +37,6 @@ public class OpenAiService extends AbstractProviderService {
     @Override
     protected String getConfigPrefix() {
         return AiConfigKeys.OPENAI_PREFIX;
-    }
-
-    @Override
-    protected String getDefaultModel() {
-        return DEFAULT_MODEL;
     }
 
     @Override
@@ -84,19 +77,14 @@ public class OpenAiService extends AbstractProviderService {
 
         this.requireApiKey(this.apiKey, "app.openai.api.key");
 
-        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_MODEL, DEFAULT_MODEL);
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL, DEFAULT_BASE_URL);
-        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OPENAI_TEMPERATURE, 0.7);
-        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OPENAI_MAX_TOKENS, 2000);
-        final String organizationId = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_ORGANIZATION_ID, null);
+        final String model = this.getModel();
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL);
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OPENAI_TEMPERATURE);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OPENAI_MAX_TOKENS);
+        final String organizationId = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_ORGANIZATION_ID);
 
         this.requireConfigured(model, "OpenAI model");
         this.requireConfigured(baseUrl, "OpenAI API URL");
-
-        // The following checks satisfy NullAway; requireConfigured already threw if null
-        if (model == null || baseUrl == null) {
-            return "";
-        }
 
         this.requireSafeProviderUrl(baseUrl, AiConfigService.ProviderType.OPENAI);
 
@@ -107,7 +95,7 @@ public class OpenAiService extends AbstractProviderService {
         try {
             Invocation.Builder builder = this.getClient().target(baseUrl).path("/chat/completions")
                     .request(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + this.apiKey);
-            if (organizationId != null && !organizationId.isBlank()) {
+            if (!organizationId.isBlank()) {
                 builder = builder.header("OpenAI-Organization", organizationId);
             }
             try (Response response = builder.post(Entity.json(requestDto))) {

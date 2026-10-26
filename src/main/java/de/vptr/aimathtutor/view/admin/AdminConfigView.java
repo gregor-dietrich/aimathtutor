@@ -30,6 +30,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.ProviderTestResultDto;
@@ -50,9 +51,10 @@ import jakarta.inject.Inject;
 public class AdminConfigView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminConfigView.class);
-    private static final String TEMPERATURE_HELPER =
-            "Temperature (0.0-2.0): Lower = more focused, Higher = more creative";
-    private static final String MAX_TOKENS_HELPER = "Maximum tokens in response (1-8192)";
+    private static final String TEMPERATURE_HELPER = "Temperature (" + AiConfigService.TEMPERATURE_MIN + "-"
+            + AiConfigService.TEMPERATURE_MAX + "): Lower = more focused, Higher = more creative";
+    private static final String MAX_TOKENS_HELPER = "Maximum tokens in response (" + AiConfigService.MAX_TOKENS_MIN
+            + "-" + AiConfigService.MAX_TOKENS_MAX + ")";
 
     @Inject
     private transient AiConfigService aiConfigService;
@@ -223,8 +225,7 @@ public class AdminConfigView extends AbstractAdminView {
                 "Ollama model name (e.g., gemma3:1b, llama3.2:3b, qwen3:8b, phi4:14b, ...)");
         final var ollamaTempField = this.createTemperatureField(configValue(config, AiConfigKeys.OLLAMA_TEMPERATURE));
         final var ollamaMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.OLLAMA_MAX_TOKENS));
-        ollamaMaxTokensField
-                .setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
+        ollamaMaxTokensField.setHelperText(MAX_TOKENS_HELPER + ". Use 2000+ to prevent truncated responses.");
         final var ollamaSection =
                 new VerticalLayout(ollamaApiUrlField, ollamaModelField, ollamaTempField, ollamaMaxTokensField);
         ollamaSection.setSpacing(true);
@@ -268,33 +269,34 @@ public class AdminConfigView extends AbstractAdminView {
             final var updates = new ArrayList<AiConfigUpdateDto>();
             updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED,
                     enabledCheckbox.getValue() ? "true" : "false"));
-            updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, provider != null ? provider : "mock"));
+            updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER,
+                    provider != null ? provider : AiConfigService.defaultValue(AiConfigKeys.AI_TUTOR_PROVIDER)));
             try {
                 if ("google".equals(provider)) {
                     updates.addAll(
                             List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, googleModelField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, googleUrlField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE,
-                                            temperatureOrDefault(googleTempField)),
+                                            temperatureOrDefault(googleTempField, AiConfigKeys.GOOGLE_TEMPERATURE)),
                                     new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS,
-                                            intOrDefault(googleMaxTokensField, "2000"))));
+                                            intOrDefault(googleMaxTokensField, AiConfigKeys.GOOGLE_MAX_TOKENS))));
                 } else if ("openai".equals(provider)) {
                     updates.addAll(List.of(
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, openaiOrgIdField.getValue()),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, openaiModelField.getValue()),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, openaiUrlField.getValue()),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE,
-                                    temperatureOrDefault(openaiTempField)),
+                                    temperatureOrDefault(openaiTempField, AiConfigKeys.OPENAI_TEMPERATURE)),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS,
-                                    intOrDefault(openaiMaxTokensField, "2000"))));
+                                    intOrDefault(openaiMaxTokensField, AiConfigKeys.OPENAI_MAX_TOKENS))));
                 } else if ("ollama".equals(provider)) {
                     updates.addAll(
                             List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, ollamaApiUrlField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, ollamaModelField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE,
-                                            temperatureOrDefault(ollamaTempField)),
+                                            temperatureOrDefault(ollamaTempField, AiConfigKeys.OLLAMA_TEMPERATURE)),
                                     new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS,
-                                            intOrDefault(ollamaMaxTokensField, "2000"))));
+                                            intOrDefault(ollamaMaxTokensField, AiConfigKeys.OLLAMA_MAX_TOKENS))));
                 }
             } catch (final IllegalArgumentException e) {
                 NotificationUtil.showError("Validation error: " + e.getMessage());
@@ -307,7 +309,11 @@ public class AdminConfigView extends AbstractAdminView {
                 providerCombo, updateEnabledState));
         testBtn.addClickListener(ignored -> this.onProviderSaveOrTest(true, saveBtn, testBtn, resetBtn, buildUpdates,
                 providerCombo, updateEnabledState));
-        resetBtn.addClickListener(ignored -> this.onProviderReset(saveBtn, testBtn, resetBtn, updateEnabledState));
+        resetBtn.addClickListener(ignored -> new ConfirmationDialog(
+                confirmed -> this.onProviderReset(saveBtn, testBtn, resetBtn, updateEnabledState), "Reset to defaults?",
+                "This replaces all AI settings, including the prompts, with the built-in defaults."
+                        + " The current values are not kept.",
+                "Reset").open());
 
         panel.add(enabledCheckbox, providerCombo, googleSection, openaiSection, ollamaSection, buttonRow);
         return panel;
@@ -362,8 +368,8 @@ public class AdminConfigView extends AbstractAdminView {
     private NumberField createTemperatureField(final String value) {
         final var field = new NumberField("Temperature");
         field.setValue(Double.parseDouble(value));
-        field.setMin(0.0);
-        field.setMax(2.0);
+        field.setMin(AiConfigService.TEMPERATURE_MIN);
+        field.setMax(AiConfigService.TEMPERATURE_MAX);
         field.setStep(0.1);
         field.setHelperText(TEMPERATURE_HELPER);
         return field;
@@ -372,8 +378,8 @@ public class AdminConfigView extends AbstractAdminView {
     private NumberField createMaxTokensField(final String value) {
         final var field = new NumberField("Max Tokens");
         field.setValue(Double.parseDouble(value));
-        field.setMin(1);
-        field.setMax(8192);
+        field.setMin(AiConfigService.MAX_TOKENS_MIN);
+        field.setMax(AiConfigService.MAX_TOKENS_MAX);
         field.setStep(1);
         field.setHelperText(MAX_TOKENS_HELPER);
         return field;
@@ -490,15 +496,15 @@ public class AdminConfigView extends AbstractAdminView {
         return Objects.requireNonNull(config.get(key), key);
     }
 
-    private static String temperatureOrDefault(final NumberField field) {
+    private static String temperatureOrDefault(final NumberField field, final String key) {
         final var value = field.getValue();
-        return value != null ? value.toString() : "0.7";
+        return value != null ? value.toString() : AiConfigService.defaultValue(key);
     }
 
-    private static String intOrDefault(final NumberField field, final String defaultValue) {
+    private static String intOrDefault(final NumberField field, final String key) {
         final var value = field.getValue();
         if (value == null) {
-            return defaultValue;
+            return AiConfigService.defaultValue(key);
         }
         if (value % 1 != 0) {
             throw new IllegalArgumentException(field.getLabel() + " must be a whole number, but got: " + value);

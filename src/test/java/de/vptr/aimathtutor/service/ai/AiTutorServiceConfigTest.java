@@ -56,7 +56,7 @@ class AiTutorServiceConfigTest {
     @BeforeEach
     void setUp() {
         when(this.aiConfigService.getConfigValueAsBoolean(AiConfigKeys.AI_TUTOR_ENABLED, true)).thenReturn(true);
-        when(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock")).thenReturn("mock");
+        when(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER)).thenReturn("mock");
         when(this.rateLimitService.tryConsume(any())).thenReturn(true);
     }
 
@@ -71,7 +71,7 @@ class AiTutorServiceConfigTest {
 
     @SuppressWarnings("NullAway")
     private void configureProvider(final String provider, final boolean rateLimitAllows) {
-        when(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock")).thenReturn(provider);
+        when(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER)).thenReturn(provider);
         when(this.rateLimitService.tryConsume(any())).thenReturn(rateLimitAllows);
     }
 

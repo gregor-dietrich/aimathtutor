@@ -1,6 +1,5 @@
 package de.vptr.aimathtutor.service.ai;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -18,9 +17,9 @@ public abstract class AbstractAiServiceTest {
      * Mocks common configuration values used by AI services.
      */
     protected void mockCommonConfig() {
-        when(this.aiConfigService.getConfigValue(anyString(), anyString()))
-                .thenAnswer(invocation -> invocation.getArgument(1));
-        when(this.aiConfigService.getClampedTemperature(anyString(), any(Double.class))).thenReturn(0.7);
-        when(this.aiConfigService.getClampedTokens(anyString(), any(Integer.class))).thenReturn(2000);
+        when(this.aiConfigService.getConfigValue(anyString()))
+                .thenAnswer(invocation -> AiConfigService.defaultValue(invocation.getArgument(0)));
+        when(this.aiConfigService.getClampedTemperature(anyString())).thenReturn(0.7);
+        when(this.aiConfigService.getClampedTokens(anyString())).thenReturn(2000);
     }
 }

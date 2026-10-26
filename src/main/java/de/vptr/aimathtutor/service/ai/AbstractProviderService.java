@@ -93,14 +93,10 @@ public abstract class AbstractProviderService {
     }
 
     /**
-     * The configuration key prefix for this provider (e.g. "openai", "google", "ollama").
+     * The configuration key prefix for this provider (e.g. "openai", "google", "ollama"). Its {@code <prefix>.model}
+     * key needs a built-in default in {@link AiConfigService}.
      */
     protected abstract String getConfigPrefix();
-
-    /**
-     * The default model name returned when no override is configured.
-     */
-    protected abstract String getDefaultModel();
 
     /**
      * Human-readable provider name used in error messages and logs.
@@ -115,10 +111,8 @@ public abstract class AbstractProviderService {
     /**
      * The currently configured model name.
      */
-    @Nullable
     public String getModel() {
-        return this.aiConfigService.getConfigValue(this.getConfigPrefix() + AiConfigKeys.SUFFIX_MODEL,
-                this.getDefaultModel());
+        return this.aiConfigService.getConfigValue(this.getConfigPrefix() + AiConfigKeys.SUFFIX_MODEL);
     }
 
     /**
