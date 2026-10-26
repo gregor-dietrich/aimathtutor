@@ -166,9 +166,5 @@
     <Bug pattern="DLS_DEAD_LOCAL_STORE" />
     <Class name="de.vptr.aimathtutor.view.MathWorkspaceView" />
   </Match>
-  <Match>
-    <Bug pattern="DLS_DEAD_LOCAL_STORE" />
-    <Class name="de.vptr.aimathtutor.view.admin.AdminConfigView" />
-  </Match>
 
 </FindBugsFilter>

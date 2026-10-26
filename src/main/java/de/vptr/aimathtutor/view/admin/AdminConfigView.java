@@ -2,16 +2,22 @@ package de.vptr.aimathtutor.view.admin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.jboss.logging.Logger;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -54,6 +60,13 @@ public class AdminConfigView extends AbstractAdminView {
     @Inject
     private transient ProviderTestService aiProviderTestService;
 
+    /**
+     * Identifies the newest settings load; the callbacks of an older one, or of one whose callback runs after detach,
+     * do nothing. A superseded load's failure notification still shows, since {@link AsyncDataLoader} shows it before
+     * the error callback runs.
+     */
+    private int loadRequestId;
+
     @Override
     protected boolean isAuthorized() {
         // Intentional: viewing the AI configuration is allowed for admins and for any teacher with
@@ -75,33 +88,80 @@ public class AdminConfigView extends AbstractAdminView {
     }
 
     /**
-     * Constructs the UI for the AI configuration admin view.
+     * Shows the title and a loading placeholder, and starts loading the settings once the view is attached.
      */
     @Override
     protected void buildUi() {
+        this.showLoading();
+        if (this.isAttached()) {
+            this.loadConfig();
+        }
+    }
+
+    @Override
+    protected void onAttach(final AttachEvent event) {
+        super.onAttach(event);
+        this.loadConfig();
+    }
+
+    @Override
+    protected void onDetach(final DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        this.loadRequestId++;
+    }
+
+    private void loadConfig() {
+        final int requestId = ++this.loadRequestId;
+        AsyncDataLoader.load(this.aiConfigService::getEffectiveConfig, this, config -> {
+            if (requestId == this.loadRequestId) {
+                this.showConfig(config);
+            }
+        }, () -> {
+            if (requestId == this.loadRequestId) {
+                this.showLoadFailure();
+            }
+        }, "Failed to load AI settings. Please try again.");
+    }
+
+    /** Replaces everything below the title with the given content. */
+    private void showBelowTitle(final Component... content) {
         this.removeAll();
+        this.add(new H2("AI Configuration"));
+        this.add(content);
+    }
 
-        final var title = new H2("AI Configuration");
-        this.add(title);
+    private void showLoading() {
+        this.showBelowTitle(new Span("Loading AI settings..."));
+    }
 
+    private void reload() {
+        this.showLoading();
+        this.loadConfig();
+    }
+
+    private void showLoadFailure() {
+        final var retryBtn = new Button("Retry", ignored -> this.reload());
+        this.showBelowTitle(new Span("The AI settings could not be loaded."), retryBtn);
+    }
+
+    private void showConfig(final Map<String, String> config) {
         final var tabs = new Tabs();
         tabs.setWidthFull();
 
         final var providerTab = new Tab("Provider");
-        final var providerPanel = this.buildProviderPanel();
+        final var providerPanel = this.buildProviderPanel(config);
 
         final var promptsTab = new Tab("Prompts");
-        final var promptsPanel = this.buildPromptsPanel();
+        final var promptsPanel = this.buildPromptsPanel(config);
 
         tabs.add(providerTab, promptsTab);
-        this.add(tabs);
 
         final var contentContainer = new VerticalLayout();
         contentContainer.setSpacing(true);
         contentContainer.setPadding(false);
         contentContainer.setWidthFull();
         contentContainer.add(providerPanel);
-        this.add(contentContainer);
+        this.showBelowTitle(tabs, contentContainer);
 
         tabs.addSelectedChangeListener(event -> {
             contentContainer.removeAll();
@@ -113,30 +173,28 @@ public class AdminConfigView extends AbstractAdminView {
         });
     }
 
-    private VerticalLayout buildProviderPanel() {
+    private VerticalLayout buildProviderPanel(final Map<String, String> config) {
         final var panel = new VerticalLayout();
         panel.setSpacing(true);
         panel.setPadding(true);
 
         final var enabledCheckbox = new Checkbox("Enable AI Tutor");
-        enabledCheckbox.setValue(
-                "true".equalsIgnoreCase(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_ENABLED, "true")));
+        enabledCheckbox.setValue("true".equalsIgnoreCase(configValue(config, AiConfigKeys.AI_TUTOR_ENABLED)));
 
         final var providerCombo = new ComboBox<String>("AI Provider");
         providerCombo.setItems("mock", "google", "ollama", "openai");
-        providerCombo.setValue(this.aiConfigService.getConfigValue(AiConfigKeys.AI_TUTOR_PROVIDER, "mock"));
+        providerCombo.setValue(configValue(config, AiConfigKeys.AI_TUTOR_PROVIDER));
         providerCombo.setWidthFull();
 
         // Google provider fields
         final var googleApiKeyField =
                 this.createReadOnlyApiKeyField("app.google.api.key", "https://aistudio.google.com/app/apikey");
-        final var googleModelField =
-                this.createTextConfigField("Model", AiConfigKeys.GOOGLE_MODEL, "gemini-3.1-flash-lite",
-                        "Google AI model name (e.g., gemini-2.5-flash-lite, gemma-4-31b-it, gemini-3.1-pro, ...)");
-        final var googleUrlField = this.createTextConfigField("API Base URL", AiConfigKeys.GOOGLE_API_BASE_URL,
-                "https://generativelanguage.googleapis.com", null);
-        final var googleTempField = this.createTemperatureField(AiConfigKeys.GOOGLE_PREFIX);
-        final var googleMaxTokensField = this.createMaxTokensField(AiConfigKeys.GOOGLE_PREFIX);
+        final var googleModelField = this.createTextConfigField("Model", configValue(config, AiConfigKeys.GOOGLE_MODEL),
+                "Google AI model name (e.g., gemini-2.5-flash-lite, gemma-4-31b-it, gemini-3.1-pro, ...)");
+        final var googleUrlField =
+                this.createTextConfigField("API Base URL", configValue(config, AiConfigKeys.GOOGLE_API_BASE_URL), null);
+        final var googleTempField = this.createTemperatureField(configValue(config, AiConfigKeys.GOOGLE_TEMPERATURE));
+        final var googleMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.GOOGLE_MAX_TOKENS));
         final var googleSection = new VerticalLayout(googleApiKeyField, googleModelField, googleUrlField,
                 googleTempField, googleMaxTokensField);
         googleSection.setSpacing(true);
@@ -145,26 +203,26 @@ public class AdminConfigView extends AbstractAdminView {
         // OpenAI provider fields
         final var openaiApiKeyField =
                 this.createReadOnlyApiKeyField("app.openai.api.key", "https://platform.openai.com/api-keys");
-        final var openaiOrgIdField =
-                this.createTextConfigField("Organization ID (Optional)", AiConfigKeys.OPENAI_ORGANIZATION_ID, "", null);
-        final var openaiModelField = this.createTextConfigField("Model", AiConfigKeys.OPENAI_MODEL, "gpt-4.1-mini",
+        final var openaiOrgIdField = this.createTextConfigField("Organization ID (Optional)",
+                configValue(config, AiConfigKeys.OPENAI_ORGANIZATION_ID), null);
+        final var openaiModelField = this.createTextConfigField("Model", configValue(config, AiConfigKeys.OPENAI_MODEL),
                 "OpenAI model name (e.g., gpt-5-nano, gpt-5.4-mini, gpt-5.5, ...)");
-        final var openaiUrlField = this.createTextConfigField("API Base URL", AiConfigKeys.OPENAI_API_BASE_URL,
-                "https://api.openai.com/v1", null);
-        final var openaiTempField = this.createTemperatureField(AiConfigKeys.OPENAI_PREFIX);
-        final var openaiMaxTokensField = this.createMaxTokensField(AiConfigKeys.OPENAI_PREFIX);
+        final var openaiUrlField =
+                this.createTextConfigField("API Base URL", configValue(config, AiConfigKeys.OPENAI_API_BASE_URL), null);
+        final var openaiTempField = this.createTemperatureField(configValue(config, AiConfigKeys.OPENAI_TEMPERATURE));
+        final var openaiMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.OPENAI_MAX_TOKENS));
         final var openaiSection = new VerticalLayout(openaiApiKeyField, openaiOrgIdField, openaiModelField,
                 openaiUrlField, openaiTempField, openaiMaxTokensField);
         openaiSection.setSpacing(true);
         openaiSection.setPadding(false);
 
         // Ollama provider fields
-        final var ollamaApiUrlField = this.createTextConfigField("API URL", AiConfigKeys.OLLAMA_API_URL,
-                "http://ollama:11434", "Ollama API URL (e.g., http://localhost:11434)");
-        final var ollamaModelField = this.createTextConfigField("Model", AiConfigKeys.OLLAMA_MODEL, "llama3.2:3b",
+        final var ollamaApiUrlField = this.createTextConfigField("API URL",
+                configValue(config, AiConfigKeys.OLLAMA_API_URL), "Ollama API URL (e.g., http://localhost:11434)");
+        final var ollamaModelField = this.createTextConfigField("Model", configValue(config, AiConfigKeys.OLLAMA_MODEL),
                 "Ollama model name (e.g., gemma3:1b, llama3.2:3b, qwen3:8b, phi4:14b, ...)");
-        final var ollamaTempField = this.createTemperatureField(AiConfigKeys.OLLAMA_PREFIX);
-        final var ollamaMaxTokensField = this.createMaxTokensField(AiConfigKeys.OLLAMA_PREFIX);
+        final var ollamaTempField = this.createTemperatureField(configValue(config, AiConfigKeys.OLLAMA_TEMPERATURE));
+        final var ollamaMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.OLLAMA_MAX_TOKENS));
         ollamaMaxTokensField
                 .setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
         final var ollamaSection =
@@ -255,19 +313,19 @@ public class AdminConfigView extends AbstractAdminView {
         return panel;
     }
 
-    private VerticalLayout buildPromptsPanel() {
+    private VerticalLayout buildPromptsPanel(final Map<String, String> config) {
         final var panel = new VerticalLayout();
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        final var qaPrefix = this.createPromptArea("Question Answering Prefix", AiConfigKeys.PROMPT_QUESTION_PREFIX,
-                "Prefix for question answering prompts");
-        final var qaPostfix = this.createPromptArea("Question Answering Postfix", AiConfigKeys.PROMPT_QUESTION_POSTFIX,
-                "Postfix for question answering prompts");
-        final var mtPrefix = this.createPromptArea("Math Tutoring Prefix", AiConfigKeys.PROMPT_TUTORING_PREFIX,
-                "Prefix for math tutoring prompts");
-        final var mtPostfix = this.createPromptArea("Math Tutoring Postfix", AiConfigKeys.PROMPT_TUTORING_POSTFIX,
-                "Postfix for math tutoring prompts");
+        final var qaPrefix = this.createPromptArea("Question Answering Prefix",
+                configValue(config, AiConfigKeys.PROMPT_QUESTION_PREFIX), "Prefix for question answering prompts");
+        final var qaPostfix = this.createPromptArea("Question Answering Postfix",
+                configValue(config, AiConfigKeys.PROMPT_QUESTION_POSTFIX), "Postfix for question answering prompts");
+        final var mtPrefix = this.createPromptArea("Math Tutoring Prefix",
+                configValue(config, AiConfigKeys.PROMPT_TUTORING_PREFIX), "Prefix for math tutoring prompts");
+        final var mtPostfix = this.createPromptArea("Math Tutoring Postfix",
+                configValue(config, AiConfigKeys.PROMPT_TUTORING_POSTFIX), "Postfix for math tutoring prompts");
 
         final var grid = new FormLayout();
         grid.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
@@ -291,10 +349,9 @@ public class AdminConfigView extends AbstractAdminView {
         return field;
     }
 
-    private TextField createTextConfigField(final String label, final String configKey, final String defaultValue,
-            @Nullable final String helperText) {
+    private TextField createTextConfigField(final String label, final String value, @Nullable final String helperText) {
         final var field = new TextField(label);
-        field.setValue(this.aiConfigService.getConfigValue(configKey, defaultValue));
+        field.setValue(value);
         field.setWidthFull();
         if (helperText != null) {
             field.setHelperText(helperText);
@@ -302,9 +359,9 @@ public class AdminConfigView extends AbstractAdminView {
         return field;
     }
 
-    private NumberField createTemperatureField(final String configPrefix) {
+    private NumberField createTemperatureField(final String value) {
         final var field = new NumberField("Temperature");
-        field.setValue(this.aiConfigService.getConfigValueAsDouble(configPrefix + ".temperature", 0.7));
+        field.setValue(Double.parseDouble(value));
         field.setMin(0.0);
         field.setMax(2.0);
         field.setStep(0.1);
@@ -312,9 +369,9 @@ public class AdminConfigView extends AbstractAdminView {
         return field;
     }
 
-    private NumberField createMaxTokensField(final String configPrefix) {
+    private NumberField createMaxTokensField(final String value) {
         final var field = new NumberField("Max Tokens");
-        field.setValue(this.aiConfigService.getConfigValueAsInt(configPrefix + ".max-tokens", 2000).doubleValue());
+        field.setValue(Double.parseDouble(value));
         field.setMin(1);
         field.setMax(8192);
         field.setStep(1);
@@ -322,9 +379,9 @@ public class AdminConfigView extends AbstractAdminView {
         return field;
     }
 
-    private TextArea createPromptArea(final String label, final String configKey, final String helperText) {
+    private TextArea createPromptArea(final String label, final String value, final String helperText) {
         final var area = new TextArea(label);
-        area.setValue(this.aiConfigService.getConfigValue(configKey, ""));
+        area.setValue(value);
         area.setWidthFull();
         area.setMinRows(18);
         area.setHelperText(helperText);
@@ -384,7 +441,7 @@ public class AdminConfigView extends AbstractAdminView {
             return Boolean.TRUE;
         }, this, ignored -> {
             NotificationUtil.showSuccess("All settings reset to defaults");
-            this.buildUi();
+            this.reload();
         }, () -> {
             resetBtn.setEnabled(true);
             updateEnabledState.run();
@@ -426,6 +483,11 @@ public class AdminConfigView extends AbstractAdminView {
             saveBtn.setEnabled(true);
             NotificationUtil.showSuccess("Prompts configuration updated successfully");
         }, () -> saveBtn.setEnabled(true), "Error saving configuration. Please try again later.");
+    }
+
+    /** The snapshot holds every key (see {@code AiConfigService.getEffectiveConfig()}); a missing one is a bug. */
+    private static String configValue(final Map<String, String> config, final String key) {
+        return Objects.requireNonNull(config.get(key), key);
     }
 
     private static String temperatureOrDefault(final NumberField field) {

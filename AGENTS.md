@@ -361,12 +361,18 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 - **AdminConfigView saves pass session credentials, never a user ID.** Each
   save, reset or connection test captures
   `AuthService.currentSessionCredentials()` on the UI thread when the user acts
-  and runs through `AsyncDataLoader`; `AiConfigService` checks them with
-  `PermissionService.requireAiConfigEdit(credentials)` in a short transaction
-  before it validates any value or URL (so an ended or unauthorised session
-  never triggers a DNS lookup) and again in the write's transaction.
-  `ProviderTestService` checks them the same way before any config read, URL
-  validation or request.
+  and runs through `AsyncDataLoader`. For a save, `AiConfigService` checks them
+  with `PermissionService.requireAiConfigEdit(credentials)` in a short
+  transaction before it validates any value or URL (so an ended or
+  unauthorised session never triggers a DNS lookup) and again in the write's
+  transaction. `ProviderTestService` checks them the same way before any
+  config read, URL validation or request. Reset to Defaults is the exception:
+  it writes the built-in defaults without validating them and checks the
+  session only in the write's transaction, because they are constants, every
+  provider call and connection test re-validates the stored URL, and
+  `AiConfigResetTest` pins that each default passes a save's validation. A URL
+  key added to the defaults needs a check where it is used before a reset may
+  write it unvalidated.
 - **Do NOT move `ProductionProfileGuard` or `SchemaManagementGuard` to
   `StartupEvent`**, even though Maven builds log a Quarkus warning recommending
   it. Flyway (with a dev/test profile's clean-at-start) and Hibernate's schema
@@ -670,6 +676,15 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
 - **Runtime settings (DB-backed):** Model, temperature, max tokens, prompts
   and the optional OpenAI Organization ID — configured via Admin Settings UI
   at `/admin/config`. The Organization ID has no property/environment input.
+- **Missing settings rows (accepted risk):** V1 seeds a row for every key, and
+  only direct SQL removes one. A save or reset of a key without a row recreates
+  it as `STRING`/`GENERAL` and not optional. Saves of a recreated numeric or
+  boolean key then skip its type and range checks (URL checks go by key and
+  still apply; the runtime falls back to the default for an unparseable number
+  and clamps temperature and max tokens), and a recreated
+  `openai.organization-id` refuses a blank value. Restore the row as V1 seeds
+  it; per-key metadata in the code would duplicate the migration. Reopen if
+  anything but SQL can delete a row.
 - **Config cache:** `AiConfigService` caches values in `AiConfigCache`. A fill
   caches only if no eviction happened since its read began (a generation taken
   before the read), and never when the calling thread has a transaction of any
@@ -679,7 +694,9 @@ Encrypted columns cannot use SQL `LIKE`. Equality lookups use a companion
   in its transaction and again in an `AFTER_COMPLETION` observer of
   `AiConfigChangedEvent`, also on rollback, for readers outside the writing
   transaction. Do not narrow that observer to `AFTER_SUCCESS` or drop the
-  generation check; `AiConfigCacheRaceTest` pins both.
+  generation check; `AiConfigCacheRaceTest` pins both. The settings page loads
+  its values through `AiConfigService.getEffectiveConfig()` off the UI thread;
+  that method stays non-transactional so its reads fill the cache.
 - **Host resolution:** the SSRF checks resolve hosts only through `HostResolver`;
   a test-scope `TestHostResolver` replaces it in every `@QuarkusTest`, so no
   test resolves a real host name; a class needing specific answers uses
