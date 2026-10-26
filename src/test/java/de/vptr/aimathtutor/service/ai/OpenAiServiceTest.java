@@ -143,12 +143,6 @@ class OpenAiServiceTest extends AbstractJaxRsAiServiceTest {
     }
 
     @Test
-    @DisplayName("getDefaultModel returns the default model")
-    void testGetDefaultModel() {
-        assertEquals("gpt-5-nano", this.openAiService.getDefaultModel());
-    }
-
-    @Test
     @DisplayName("getProviderName returns OpenAI")
     void testGetProviderName() {
         assertEquals("OpenAI", this.openAiService.getProviderName());

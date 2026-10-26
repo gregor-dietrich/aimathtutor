@@ -70,6 +70,23 @@ public class AiConfigService {
             Map.entry(AiConfigKeys.PROMPT_TUTORING_PREFIX, AppConstants.PROMPT_MATH_TUTORING_PREFIX),
             Map.entry(AiConfigKeys.PROMPT_TUTORING_POSTFIX, AppConstants.PROMPT_MATH_TUTORING_POSTFIX));
 
+    /**
+     * Returns the built-in default of a setting.
+     *
+     * @param key
+     *            the configuration key, one of the {@link AiConfigKeys} constants
+     * @return the built-in default value
+     * @throws IllegalArgumentException
+     *             if the key has no built-in default
+     */
+    public static String defaultValue(final String key) {
+        final var value = DEFAULT_VALUES.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("No built-in default for AI setting '" + key + "'");
+        }
+        return value;
+    }
+
     @Inject
     private AiConfigRepository aiConfigRepository;
 
@@ -129,8 +146,8 @@ public class AiConfigService {
 
     /**
      * Returns every known AI setting: the stored value, or the built-in default for a missing row. A stored temperature
-     * or token limit that does not parse is replaced by its default, so a caller can parse those values without a
-     * fallback of its own.
+     * that does not parse or is NaN, or a token limit that does not parse, is replaced by its default, so a caller can
+     * parse those values without a fallback of its own.
      * <p>
      * Deliberately not {@code @Transactional}: the reads go through {@link #getConfigValue}, which fills the cache only
      * outside a transaction, so a transactional snapshot would never fill it. There is no permission check: the values
@@ -181,12 +198,13 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a configuration value as a Double. Falls back to defaultValue if not found or if parsing fails.
+     * Retrieves a configuration value as a Double. Falls back to defaultValue if not found, if parsing fails or if the
+     * value is NaN.
      *
      * @param key
      *            the configuration key
      * @param defaultValue
-     *            the default value if not found or parsing fails
+     *            the default value if not found, unparseable or NaN
      * @return the configuration value or default
      */
     public Double getConfigValueAsDouble(final String key, final Double defaultValue) {
@@ -195,7 +213,12 @@ public class AiConfigService {
             return defaultValue;
         }
         try {
-            return Double.parseDouble(value);
+            final double parsed = Double.parseDouble(value);
+            if (Double.isNaN(parsed)) {
+                LOG.warnf("Ignoring NaN double config '%s'", key);
+                return defaultValue;
+            }
+            return parsed;
         } catch (final NumberFormatException e) {
             LOG.warnf(e, "Failed to parse double config '%s' with value '%s'", key, value);
             return defaultValue;
@@ -229,31 +252,29 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a temperature configuration value clamped to the valid range [0.0, 2.0].
+     * Retrieves a temperature configuration value clamped to the valid range [0.0, 2.0]. A missing, unparseable or NaN
+     * value yields the built-in default of the key.
      *
      * @param key
-     *            the configuration key
-     * @param defaultValue
-     *            the default value if not found or parsing fails
+     *            the configuration key, one of the {@link AiConfigKeys} constants
      * @return the clamped temperature value
      */
-    public double getClampedTemperature(final String key, final double defaultValue) {
-        final Double value = this.getConfigValueAsDouble(key, defaultValue);
-        return (value != null) ? Math.max(0.0, Math.min(2.0, value)) : defaultValue;
+    public double getClampedTemperature(final String key) {
+        final double value = this.getConfigValueAsDouble(key, Double.valueOf(defaultValue(key)));
+        return Math.max(0.0, Math.min(2.0, value));
     }
 
     /**
-     * Retrieves a max-tokens configuration value clamped to the valid range [1, 8192].
+     * Retrieves a max-tokens configuration value clamped to the valid range [1, 8192]. A missing or unparseable value
+     * yields the built-in default of the key.
      *
      * @param key
-     *            the configuration key
-     * @param defaultValue
-     *            the default value if not found or parsing fails
+     *            the configuration key, one of the {@link AiConfigKeys} constants
      * @return the clamped token limit
      */
-    public int getClampedTokens(final String key, final int defaultValue) {
-        final Integer value = this.getConfigValueAsInt(key, defaultValue);
-        return (value != null) ? Math.max(1, Math.min(8192, value)) : defaultValue;
+    public int getClampedTokens(final String key) {
+        final int value = this.getConfigValueAsInt(key, Integer.valueOf(defaultValue(key)));
+        return Math.max(1, Math.min(8192, value));
     }
 
     /**
@@ -515,7 +536,7 @@ public class AiConfigService {
             case DOUBLE -> {
                 try {
                     final double doubleValue = Double.parseDouble(configValue);
-                    if (configKey.contains("temperature") && (doubleValue < 0.0 || doubleValue > 2.0)) {
+                    if (configKey.contains("temperature") && !(doubleValue >= 0.0 && doubleValue <= 2.0)) {
                         throw new IllegalArgumentException(
                                 "Value for '" + configKey + "' must be between 0.0 and 2.0, got: " + configValue);
                     }

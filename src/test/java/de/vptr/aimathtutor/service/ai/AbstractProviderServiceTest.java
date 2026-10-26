@@ -30,11 +30,6 @@ class AbstractProviderServiceTest {
         }
 
         @Override
-        protected String getDefaultModel() {
-            return "test-model";
-        }
-
-        @Override
         protected String getProviderName() {
             return "Test Provider";
         }

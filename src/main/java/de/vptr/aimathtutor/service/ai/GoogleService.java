@@ -22,8 +22,6 @@ import jakarta.ws.rs.core.Response;
 public class GoogleService extends AbstractProviderService {
 
     private static final Logger LOG = Logger.getLogger(GoogleService.class);
-    private static final String DEFAULT_MODEL = "gemini-3.1-flash-lite";
-    private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 
     @ConfigProperty(name = "app.google.api.key", defaultValue = "")
     @Nullable
@@ -32,11 +30,6 @@ public class GoogleService extends AbstractProviderService {
     @Override
     protected String getConfigPrefix() {
         return AiConfigKeys.GOOGLE_PREFIX;
-    }
-
-    @Override
-    protected String getDefaultModel() {
-        return DEFAULT_MODEL;
     }
 
     @Override
@@ -64,10 +57,11 @@ public class GoogleService extends AbstractProviderService {
         this.requireApiKey(this.apiKey, "app.google.api.key");
 
         // Load dynamic configuration
-        final String model = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_MODEL, DEFAULT_MODEL);
-        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL, DEFAULT_BASE_URL);
-        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.GOOGLE_TEMPERATURE, 0.7);
-        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.GOOGLE_MAX_TOKENS, 2000);
+        final String model = this.getModel();
+        final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL,
+                AiConfigService.defaultValue(AiConfigKeys.GOOGLE_API_BASE_URL));
+        final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.GOOGLE_TEMPERATURE);
+        final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.GOOGLE_MAX_TOKENS);
 
         this.requireConfigured(model, "Google model");
         this.requireConfigured(baseUrl, "Google API URL");

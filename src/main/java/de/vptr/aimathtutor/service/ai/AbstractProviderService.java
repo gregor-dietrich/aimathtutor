@@ -98,11 +98,6 @@ public abstract class AbstractProviderService {
     protected abstract String getConfigPrefix();
 
     /**
-     * The default model name returned when no override is configured.
-     */
-    protected abstract String getDefaultModel();
-
-    /**
      * Human-readable provider name used in error messages and logs.
      */
     protected abstract String getProviderName();
@@ -118,7 +113,7 @@ public abstract class AbstractProviderService {
     @Nullable
     public String getModel() {
         return this.aiConfigService.getConfigValue(this.getConfigPrefix() + AiConfigKeys.SUFFIX_MODEL,
-                this.getDefaultModel());
+                AiConfigService.defaultValue(this.getConfigPrefix() + AiConfigKeys.SUFFIX_MODEL));
     }
 
     /**

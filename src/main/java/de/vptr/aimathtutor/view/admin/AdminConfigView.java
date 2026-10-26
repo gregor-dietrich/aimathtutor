@@ -30,6 +30,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import de.vptr.aimathtutor.component.dialog.ConfirmationDialog;
 import de.vptr.aimathtutor.dto.AiConfigUpdateDto;
 import de.vptr.aimathtutor.dto.Permission;
 import de.vptr.aimathtutor.dto.ProviderTestResultDto;
@@ -268,33 +269,34 @@ public class AdminConfigView extends AbstractAdminView {
             final var updates = new ArrayList<AiConfigUpdateDto>();
             updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_ENABLED,
                     enabledCheckbox.getValue() ? "true" : "false"));
-            updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER, provider != null ? provider : "mock"));
+            updates.add(new AiConfigUpdateDto(AiConfigKeys.AI_TUTOR_PROVIDER,
+                    provider != null ? provider : AiConfigService.defaultValue(AiConfigKeys.AI_TUTOR_PROVIDER)));
             try {
                 if ("google".equals(provider)) {
                     updates.addAll(
                             List.of(new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MODEL, googleModelField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.GOOGLE_API_BASE_URL, googleUrlField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.GOOGLE_TEMPERATURE,
-                                            temperatureOrDefault(googleTempField)),
+                                            temperatureOrDefault(googleTempField, AiConfigKeys.GOOGLE_TEMPERATURE)),
                                     new AiConfigUpdateDto(AiConfigKeys.GOOGLE_MAX_TOKENS,
-                                            intOrDefault(googleMaxTokensField, "2000"))));
+                                            intOrDefault(googleMaxTokensField, AiConfigKeys.GOOGLE_MAX_TOKENS))));
                 } else if ("openai".equals(provider)) {
                     updates.addAll(List.of(
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_ORGANIZATION_ID, openaiOrgIdField.getValue()),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_MODEL, openaiModelField.getValue()),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_API_BASE_URL, openaiUrlField.getValue()),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_TEMPERATURE,
-                                    temperatureOrDefault(openaiTempField)),
+                                    temperatureOrDefault(openaiTempField, AiConfigKeys.OPENAI_TEMPERATURE)),
                             new AiConfigUpdateDto(AiConfigKeys.OPENAI_MAX_TOKENS,
-                                    intOrDefault(openaiMaxTokensField, "2000"))));
+                                    intOrDefault(openaiMaxTokensField, AiConfigKeys.OPENAI_MAX_TOKENS))));
                 } else if ("ollama".equals(provider)) {
                     updates.addAll(
                             List.of(new AiConfigUpdateDto(AiConfigKeys.OLLAMA_API_URL, ollamaApiUrlField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MODEL, ollamaModelField.getValue()),
                                     new AiConfigUpdateDto(AiConfigKeys.OLLAMA_TEMPERATURE,
-                                            temperatureOrDefault(ollamaTempField)),
+                                            temperatureOrDefault(ollamaTempField, AiConfigKeys.OLLAMA_TEMPERATURE)),
                                     new AiConfigUpdateDto(AiConfigKeys.OLLAMA_MAX_TOKENS,
-                                            intOrDefault(ollamaMaxTokensField, "2000"))));
+                                            intOrDefault(ollamaMaxTokensField, AiConfigKeys.OLLAMA_MAX_TOKENS))));
                 }
             } catch (final IllegalArgumentException e) {
                 NotificationUtil.showError("Validation error: " + e.getMessage());
@@ -307,7 +309,11 @@ public class AdminConfigView extends AbstractAdminView {
                 providerCombo, updateEnabledState));
         testBtn.addClickListener(ignored -> this.onProviderSaveOrTest(true, saveBtn, testBtn, resetBtn, buildUpdates,
                 providerCombo, updateEnabledState));
-        resetBtn.addClickListener(ignored -> this.onProviderReset(saveBtn, testBtn, resetBtn, updateEnabledState));
+        resetBtn.addClickListener(ignored -> new ConfirmationDialog(
+                confirmed -> this.onProviderReset(saveBtn, testBtn, resetBtn, updateEnabledState), "Reset to defaults?",
+                "This replaces all AI settings, including the prompts, with the built-in defaults."
+                        + " The current values are not kept.",
+                "Reset").open());
 
         panel.add(enabledCheckbox, providerCombo, googleSection, openaiSection, ollamaSection, buttonRow);
         return panel;
@@ -490,15 +496,15 @@ public class AdminConfigView extends AbstractAdminView {
         return Objects.requireNonNull(config.get(key), key);
     }
 
-    private static String temperatureOrDefault(final NumberField field) {
+    private static String temperatureOrDefault(final NumberField field, final String key) {
         final var value = field.getValue();
-        return value != null ? value.toString() : "0.7";
+        return value != null ? value.toString() : AiConfigService.defaultValue(key);
     }
 
-    private static String intOrDefault(final NumberField field, final String defaultValue) {
+    private static String intOrDefault(final NumberField field, final String key) {
         final var value = field.getValue();
         if (value == null) {
-            return defaultValue;
+            return AiConfigService.defaultValue(key);
         }
         if (value % 1 != 0) {
             throw new IllegalArgumentException(field.getLabel() + " must be a whole number, but got: " + value);

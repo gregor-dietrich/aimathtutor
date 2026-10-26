@@ -27,6 +27,7 @@ import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.validation.ValidationException;
 
 /**
@@ -44,6 +45,9 @@ class AiConfigServiceTest {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    EntityManager em;
 
     private UserEntity adminUser;
 
@@ -129,6 +133,14 @@ class AiConfigServiceTest {
         this.aiConfigRepository.persist(invalidEntity);
 
         value = this.aiConfigService.getConfigValueAsDouble("test.invalid.double", 1.23);
+        assertEquals(1.23, value);
+
+        // NaN parses, but counts as unparseable
+        final var nanEntity = new AiConfigEntity("test.nan.double", "NaN", ConfigType.DOUBLE, ConfigCategory.GENERAL);
+        nanEntity.lastUpdatedBy = this.adminUser;
+        this.aiConfigRepository.persist(nanEntity);
+
+        value = this.aiConfigService.getConfigValueAsDouble("test.nan.double", 1.23);
         assertEquals(1.23, value);
     }
 
@@ -376,37 +388,74 @@ class AiConfigServiceTest {
         assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.temperature", "3.0", this.credentials));
 
+        // NaN fails every comparison, so it must be refused explicitly
+        assertThrows(ValidationException.class,
+                () -> this.aiConfigService.updateConfig("test.temperature", "NaN", this.credentials));
+
         // Too low
         assertThrows(ValidationException.class,
                 () -> this.aiConfigService.updateConfig("test.temperature", "-0.5", this.credentials));
     }
 
-    @Test
-    @DisplayName("getClampedTemperature clamps values to [0.0, 2.0]")
-    @TestTransaction
-    void testGetClampedTemperature() {
-        double result = this.aiConfigService.getClampedTemperature("nonexistent.key", 0.5);
-        assertEquals(0.5, result);
-
-        result = this.aiConfigService.getClampedTemperature("nonexistent.key", 3.0);
-        assertEquals(2.0, result, "Should clamp to 2.0");
-
-        result = this.aiConfigService.getClampedTemperature("nonexistent.key", -1.0);
-        assertEquals(0.0, result, "Should clamp to 0.0");
+    private void storeValue(final String key, final String value) {
+        this.aiConfigRepository.findByConfigKey(key).orElseThrow().configValue = value;
     }
 
     @Test
-    @DisplayName("getClampedTokens clamps values to [1, 8192]")
+    @DisplayName("getClampedTemperature clamps values to [0.0, 2.0] and defaults a missing, unparseable or NaN one")
+    @TestTransaction
+    void testGetClampedTemperature() {
+        final var key = AiConfigKeys.OPENAI_TEMPERATURE;
+        final var builtIn = Double.parseDouble(AiConfigService.defaultValue(key));
+
+        this.storeValue(key, "0.5");
+        assertEquals(0.5, this.aiConfigService.getClampedTemperature(key));
+
+        this.storeValue(key, "3.0");
+        assertEquals(2.0, this.aiConfigService.getClampedTemperature(key), "Should clamp to 2.0");
+
+        this.storeValue(key, "-1.0");
+        assertEquals(0.0, this.aiConfigService.getClampedTemperature(key), "Should clamp to 0.0");
+
+        this.storeValue(key, "NaN");
+        assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key), "NaN should give the default");
+
+        this.storeValue(key, "warm");
+        assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key));
+
+        this.em.remove(this.aiConfigRepository.findByConfigKey(key).orElseThrow());
+        assertEquals(builtIn, this.aiConfigService.getClampedTemperature(key));
+    }
+
+    @Test
+    @DisplayName("getClampedTokens clamps values to [1, 8192] and defaults a missing or unparseable one")
     @TestTransaction
     void testGetClampedTokens() {
-        int result = this.aiConfigService.getClampedTokens("nonexistent.key", 1000);
-        assertEquals(1000, result);
+        final var key = AiConfigKeys.OPENAI_MAX_TOKENS;
+        final var builtIn = Integer.parseInt(AiConfigService.defaultValue(key));
 
-        result = this.aiConfigService.getClampedTokens("nonexistent.key", 10_000);
-        assertEquals(8192, result, "Should clamp to 8192");
+        this.storeValue(key, "1000");
+        assertEquals(1000, this.aiConfigService.getClampedTokens(key));
 
-        result = this.aiConfigService.getClampedTokens("nonexistent.key", 0);
-        assertEquals(1, result, "Should clamp to 1");
+        this.storeValue(key, "10000");
+        assertEquals(8192, this.aiConfigService.getClampedTokens(key), "Should clamp to 8192");
+
+        this.storeValue(key, "0");
+        assertEquals(1, this.aiConfigService.getClampedTokens(key), "Should clamp to 1");
+
+        this.storeValue(key, "many");
+        assertEquals(builtIn, this.aiConfigService.getClampedTokens(key));
+
+        this.em.remove(this.aiConfigRepository.findByConfigKey(key).orElseThrow());
+        assertEquals(builtIn, this.aiConfigService.getClampedTokens(key));
+    }
+
+    @Test
+    @DisplayName("defaultValue returns the built-in default and refuses an unknown key")
+    void testDefaultValue() {
+        assertEquals("gpt-5-nano", AiConfigService.defaultValue(AiConfigKeys.OPENAI_MODEL));
+        final var e = assertThrows(IllegalArgumentException.class, () -> AiConfigService.defaultValue("no.such.key"));
+        assertEquals("No built-in default for AI setting 'no.such.key'", e.getMessage());
     }
 
     @SuppressWarnings("NullAway")
