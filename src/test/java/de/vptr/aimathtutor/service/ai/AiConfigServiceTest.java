@@ -146,9 +146,7 @@ class AiConfigServiceTest {
 
         // Infinities parse too, but are not finite
         for (final var infinite : new String[] { "Infinity", "-Infinity" }) {
-            nanEntity.configValue = infinite;
-            this.aiConfigRepository.update(nanEntity);
-            this.aiConfigService.clearCache();
+            setStoredValue(this.aiConfigRepository, "test.nan.double", infinite);
             value = this.aiConfigService.getConfigValueAsDouble("test.nan.double", 1.23);
             assertEquals(1.23, value, infinite + " should give the default");
         }
@@ -449,8 +447,6 @@ class AiConfigServiceTest {
         assertEquals("stored-model", this.aiConfigService.getConfigValue(key));
 
         this.em.remove(this.aiConfigRepository.findByConfigKey(key).orElseThrow());
-        this.em.flush();
-        this.aiConfigService.clearCache();
         assertEquals(AiConfigService.defaultValue(key), this.aiConfigService.getConfigValue(key));
 
         assertThrows(IllegalArgumentException.class, () -> this.aiConfigService.getConfigValue("no.such.key"));

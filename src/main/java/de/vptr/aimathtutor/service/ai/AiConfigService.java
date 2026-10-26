@@ -272,8 +272,8 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a temperature configuration value clamped to the valid range [0.0, 2.0]. A missing, unparseable or
-     * non-finite value yields the built-in default of the key.
+     * Retrieves a temperature configuration value clamped to the valid range [{@value #TEMPERATURE_MIN},
+     * {@value #TEMPERATURE_MAX}]. A missing, unparseable or non-finite value yields the built-in default of the key.
      *
      * @param key
      *            the key of a temperature setting (an {@link AiConfigKeys} {@code *_TEMPERATURE} constant)
@@ -287,14 +287,14 @@ public class AiConfigService {
     }
 
     /**
-     * Retrieves a max-tokens configuration value clamped to the valid range [1, 8192]. A missing or unparseable value
-     * yields the built-in default of the key.
+     * Retrieves a max-tokens configuration value clamped to the valid range [{@value #MAX_TOKENS_MIN},
+     * {@value #MAX_TOKENS_MAX}]. A missing or unparseable value yields the built-in default of the key.
      *
      * @param key
      *            the key of a max-tokens setting (an {@link AiConfigKeys} {@code *_MAX_TOKENS} constant)
      * @return the clamped token limit
      * @throws IllegalArgumentException
-     *             if the key has no numeric built-in default
+     *             if the key has no integer built-in default
      */
     public int getClampedTokens(final String key) {
         final int value = this.getConfigValueAsInt(key, Integer.valueOf(defaultValue(key)));
@@ -548,7 +548,8 @@ public class AiConfigService {
             case INTEGER -> {
                 try {
                     final int intValue = Integer.parseInt(configValue);
-                    if (configKey.contains("max-tokens") && (intValue < MAX_TOKENS_MIN || intValue > MAX_TOKENS_MAX)) {
+                    if (configKey.endsWith(AiConfigKeys.SUFFIX_MAX_TOKENS)
+                            && (intValue < MAX_TOKENS_MIN || intValue > MAX_TOKENS_MAX)) {
                         throw new IllegalArgumentException("Value for '" + configKey + "' must be between "
                                 + MAX_TOKENS_MIN + " and " + MAX_TOKENS_MAX + ", got: " + configValue);
                     }
@@ -560,7 +561,7 @@ public class AiConfigService {
             case DOUBLE -> {
                 try {
                     final double doubleValue = Double.parseDouble(configValue);
-                    if (configKey.contains("temperature")
+                    if (configKey.endsWith(AiConfigKeys.SUFFIX_TEMPERATURE)
                             && !(doubleValue >= TEMPERATURE_MIN && doubleValue <= TEMPERATURE_MAX)) {
                         throw new IllegalArgumentException("Value for '" + configKey + "' must be between "
                                 + TEMPERATURE_MIN + " and " + TEMPERATURE_MAX + ", got: " + configValue);

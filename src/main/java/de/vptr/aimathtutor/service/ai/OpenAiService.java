@@ -81,7 +81,7 @@ public class OpenAiService extends AbstractProviderService {
         final String baseUrl = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_API_BASE_URL);
         final double temperature = this.aiConfigService.getClampedTemperature(AiConfigKeys.OPENAI_TEMPERATURE);
         final int maxTokens = this.aiConfigService.getClampedTokens(AiConfigKeys.OPENAI_MAX_TOKENS);
-        final String organizationId = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_ORGANIZATION_ID, null);
+        final String organizationId = this.aiConfigService.getConfigValue(AiConfigKeys.OPENAI_ORGANIZATION_ID);
 
         this.requireConfigured(model, "OpenAI model");
         this.requireConfigured(baseUrl, "OpenAI API URL");
@@ -95,7 +95,7 @@ public class OpenAiService extends AbstractProviderService {
         try {
             Invocation.Builder builder = this.getClient().target(baseUrl).path("/chat/completions")
                     .request(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + this.apiKey);
-            if (organizationId != null && !organizationId.isBlank()) {
+            if (!organizationId.isBlank()) {
                 builder = builder.header("OpenAI-Organization", organizationId);
             }
             try (Response response = builder.post(Entity.json(requestDto))) {

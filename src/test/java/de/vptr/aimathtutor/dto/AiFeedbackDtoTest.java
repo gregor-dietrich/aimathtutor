@@ -10,7 +10,6 @@ class AiFeedbackDtoTest {
 
     @Test
     @DisplayName("clampConfidence drops a NaN confidence")
-    @SuppressWarnings("NullAway")
     void clampConfidenceDropsNaN() {
         final var dto = new AiFeedbackDto();
         dto.confidence = Double.NaN;
@@ -22,7 +21,6 @@ class AiFeedbackDtoTest {
 
     @Test
     @DisplayName("clampConfidence keeps an in-range confidence and clamps an out-of-range one to [0.0, 1.0]")
-    @SuppressWarnings("NullAway")
     void clampConfidenceClampsToRange() {
         final var dto = new AiFeedbackDto();
 

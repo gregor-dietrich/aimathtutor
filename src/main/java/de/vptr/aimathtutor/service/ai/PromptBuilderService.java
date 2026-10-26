@@ -42,8 +42,8 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_PREFIX);
-        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_QUESTION_POSTFIX);
+        final var prefix = this.aiConfigService.getConfigValue(AiConfigKeys.PROMPT_QUESTION_PREFIX);
+        final var postfix = this.aiConfigService.getConfigValue(AiConfigKeys.PROMPT_QUESTION_POSTFIX);
 
         prompt.append(prefix);
         prompt.append("\n\n");
@@ -90,8 +90,8 @@ public class PromptBuilderService {
         final var prompt = new StringBuilder();
 
         // Load dynamic prompt configuration
-        final var prefix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_PREFIX);
-        final var postfix = this.getConfigString(AiConfigKeys.PROMPT_TUTORING_POSTFIX);
+        final var prefix = this.aiConfigService.getConfigValue(AiConfigKeys.PROMPT_TUTORING_PREFIX);
+        final var postfix = this.aiConfigService.getConfigValue(AiConfigKeys.PROMPT_TUTORING_POSTFIX);
 
         prompt.append(prefix);
         prompt.append("\n\n<student_action>\n- Action Type: ");
@@ -144,18 +144,6 @@ public class PromptBuilderService {
         // Escape XML-like closing tags to prevent injection
         sanitized = sanitized.replace("</", "<\\/");
         return sanitized;
-    }
-
-    /**
-     * Null-safe getter for string configuration values. Falls back to default if aiConfigService is not injected or
-     * value is missing.
-     */
-    private String getConfigString(final String key) {
-        if (this.aiConfigService == null) {
-            LOG.debugf("AiConfigService not injected, using default for key=%s", key);
-            return AiConfigService.defaultValue(key);
-        }
-        return this.aiConfigService.getConfigValue(key);
     }
 
     private void appendConversationContext(final StringBuilder prompt, final ConversationContextDto context) {
