@@ -50,6 +50,12 @@ public class AiConfigService {
 
     private static final Logger LOG = Logger.getLogger(AiConfigService.class);
 
+    // The valid ranges of the temperature and max-tokens settings
+    public static final double TEMPERATURE_MIN = 0.0;
+    public static final double TEMPERATURE_MAX = 2.0;
+    public static final int MAX_TOKENS_MIN = 1;
+    public static final int MAX_TOKENS_MAX = 8192;
+
     // Internal cache for configuration values to reduce database hits.
     private final AiConfigCache cache = new AiConfigCache();
 
@@ -277,7 +283,7 @@ public class AiConfigService {
      */
     public double getClampedTemperature(final String key) {
         final double value = this.getConfigValueAsDouble(key, Double.valueOf(defaultValue(key)));
-        return Math.max(0.0, Math.min(2.0, value));
+        return Math.max(TEMPERATURE_MIN, Math.min(TEMPERATURE_MAX, value));
     }
 
     /**
@@ -292,7 +298,7 @@ public class AiConfigService {
      */
     public int getClampedTokens(final String key) {
         final int value = this.getConfigValueAsInt(key, Integer.valueOf(defaultValue(key)));
-        return Math.max(1, Math.min(8192, value));
+        return Math.max(MAX_TOKENS_MIN, Math.min(MAX_TOKENS_MAX, value));
     }
 
     /**
@@ -542,9 +548,9 @@ public class AiConfigService {
             case INTEGER -> {
                 try {
                     final int intValue = Integer.parseInt(configValue);
-                    if (configKey.contains("max-tokens") && (intValue < 1 || intValue > 8192)) {
-                        throw new IllegalArgumentException(
-                                "Value for '" + configKey + "' must be between 1 and 8192, got: " + configValue);
+                    if (configKey.contains("max-tokens") && (intValue < MAX_TOKENS_MIN || intValue > MAX_TOKENS_MAX)) {
+                        throw new IllegalArgumentException("Value for '" + configKey + "' must be between "
+                                + MAX_TOKENS_MIN + " and " + MAX_TOKENS_MAX + ", got: " + configValue);
                     }
                 } catch (final NumberFormatException e) {
                     throw new IllegalArgumentException(
@@ -554,9 +560,10 @@ public class AiConfigService {
             case DOUBLE -> {
                 try {
                     final double doubleValue = Double.parseDouble(configValue);
-                    if (configKey.contains("temperature") && !(doubleValue >= 0.0 && doubleValue <= 2.0)) {
-                        throw new IllegalArgumentException(
-                                "Value for '" + configKey + "' must be between 0.0 and 2.0, got: " + configValue);
+                    if (configKey.contains("temperature")
+                            && !(doubleValue >= TEMPERATURE_MIN && doubleValue <= TEMPERATURE_MAX)) {
+                        throw new IllegalArgumentException("Value for '" + configKey + "' must be between "
+                                + TEMPERATURE_MIN + " and " + TEMPERATURE_MAX + ", got: " + configValue);
                     }
                 } catch (final NumberFormatException e) {
                     throw new IllegalArgumentException(

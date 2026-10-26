@@ -51,9 +51,10 @@ import jakarta.inject.Inject;
 public class AdminConfigView extends AbstractAdminView {
 
     private static final Logger LOG = Logger.getLogger(AdminConfigView.class);
-    private static final String TEMPERATURE_HELPER =
-            "Temperature (0.0-2.0): Lower = more focused, Higher = more creative";
-    private static final String MAX_TOKENS_HELPER = "Maximum tokens in response (1-8192)";
+    private static final String TEMPERATURE_HELPER = "Temperature (" + AiConfigService.TEMPERATURE_MIN + "-"
+            + AiConfigService.TEMPERATURE_MAX + "): Lower = more focused, Higher = more creative";
+    private static final String MAX_TOKENS_HELPER = "Maximum tokens in response (" + AiConfigService.MAX_TOKENS_MIN
+            + "-" + AiConfigService.MAX_TOKENS_MAX + ")";
 
     @Inject
     private transient AiConfigService aiConfigService;
@@ -224,8 +225,7 @@ public class AdminConfigView extends AbstractAdminView {
                 "Ollama model name (e.g., gemma3:1b, llama3.2:3b, qwen3:8b, phi4:14b, ...)");
         final var ollamaTempField = this.createTemperatureField(configValue(config, AiConfigKeys.OLLAMA_TEMPERATURE));
         final var ollamaMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.OLLAMA_MAX_TOKENS));
-        ollamaMaxTokensField
-                .setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
+        ollamaMaxTokensField.setHelperText(MAX_TOKENS_HELPER + ". Use 2000+ to prevent truncated responses.");
         final var ollamaSection =
                 new VerticalLayout(ollamaApiUrlField, ollamaModelField, ollamaTempField, ollamaMaxTokensField);
         ollamaSection.setSpacing(true);
@@ -368,8 +368,8 @@ public class AdminConfigView extends AbstractAdminView {
     private NumberField createTemperatureField(final String value) {
         final var field = new NumberField("Temperature");
         field.setValue(Double.parseDouble(value));
-        field.setMin(0.0);
-        field.setMax(2.0);
+        field.setMin(AiConfigService.TEMPERATURE_MIN);
+        field.setMax(AiConfigService.TEMPERATURE_MAX);
         field.setStep(0.1);
         field.setHelperText(TEMPERATURE_HELPER);
         return field;
@@ -378,8 +378,8 @@ public class AdminConfigView extends AbstractAdminView {
     private NumberField createMaxTokensField(final String value) {
         final var field = new NumberField("Max Tokens");
         field.setValue(Double.parseDouble(value));
-        field.setMin(1);
-        field.setMax(8192);
+        field.setMin(AiConfigService.MAX_TOKENS_MIN);
+        field.setMax(AiConfigService.MAX_TOKENS_MAX);
         field.setStep(1);
         field.setHelperText(MAX_TOKENS_HELPER);
         return field;
