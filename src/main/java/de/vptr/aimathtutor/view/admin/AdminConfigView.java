@@ -60,7 +60,10 @@ public class AdminConfigView extends AbstractAdminView {
     @Inject
     private transient ProviderTestService aiProviderTestService;
 
-    /** Identifies the newest settings load; a result for an older one, or one finishing after detach, is dropped. */
+    /**
+     * Identifies the newest settings load; the callbacks of an older one, or of one finishing after detach, do nothing.
+     * Its failure notification still shows, since {@link AsyncDataLoader} shows it before the error callback runs.
+     */
     private int loadRequestId;
 
     @Override
@@ -130,11 +133,13 @@ public class AdminConfigView extends AbstractAdminView {
         this.showBelowTitle(new Span("Loading AI settings..."));
     }
 
+    private void reload() {
+        this.showLoading();
+        this.loadConfig();
+    }
+
     private void showLoadFailure() {
-        final var retryBtn = new Button("Retry", ignored -> {
-            this.showLoading();
-            this.loadConfig();
-        });
+        final var retryBtn = new Button("Retry", ignored -> this.reload());
         this.showBelowTitle(new Span("The AI settings could not be loaded."), retryBtn);
     }
 
@@ -187,8 +192,8 @@ public class AdminConfigView extends AbstractAdminView {
                 "Google AI model name (e.g., gemini-2.5-flash-lite, gemma-4-31b-it, gemini-3.1-pro, ...)");
         final var googleUrlField =
                 this.createTextConfigField("API Base URL", configValue(config, AiConfigKeys.GOOGLE_API_BASE_URL), null);
-        final var googleTempField = this.createTemperatureField(config, AiConfigKeys.GOOGLE_PREFIX);
-        final var googleMaxTokensField = this.createMaxTokensField(config, AiConfigKeys.GOOGLE_PREFIX);
+        final var googleTempField = this.createTemperatureField(configValue(config, AiConfigKeys.GOOGLE_TEMPERATURE));
+        final var googleMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.GOOGLE_MAX_TOKENS));
         final var googleSection = new VerticalLayout(googleApiKeyField, googleModelField, googleUrlField,
                 googleTempField, googleMaxTokensField);
         googleSection.setSpacing(true);
@@ -203,8 +208,8 @@ public class AdminConfigView extends AbstractAdminView {
                 "OpenAI model name (e.g., gpt-5-nano, gpt-5.4-mini, gpt-5.5, ...)");
         final var openaiUrlField =
                 this.createTextConfigField("API Base URL", configValue(config, AiConfigKeys.OPENAI_API_BASE_URL), null);
-        final var openaiTempField = this.createTemperatureField(config, AiConfigKeys.OPENAI_PREFIX);
-        final var openaiMaxTokensField = this.createMaxTokensField(config, AiConfigKeys.OPENAI_PREFIX);
+        final var openaiTempField = this.createTemperatureField(configValue(config, AiConfigKeys.OPENAI_TEMPERATURE));
+        final var openaiMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.OPENAI_MAX_TOKENS));
         final var openaiSection = new VerticalLayout(openaiApiKeyField, openaiOrgIdField, openaiModelField,
                 openaiUrlField, openaiTempField, openaiMaxTokensField);
         openaiSection.setSpacing(true);
@@ -215,8 +220,8 @@ public class AdminConfigView extends AbstractAdminView {
                 configValue(config, AiConfigKeys.OLLAMA_API_URL), "Ollama API URL (e.g., http://localhost:11434)");
         final var ollamaModelField = this.createTextConfigField("Model", configValue(config, AiConfigKeys.OLLAMA_MODEL),
                 "Ollama model name (e.g., gemma3:1b, llama3.2:3b, qwen3:8b, phi4:14b, ...)");
-        final var ollamaTempField = this.createTemperatureField(config, AiConfigKeys.OLLAMA_PREFIX);
-        final var ollamaMaxTokensField = this.createMaxTokensField(config, AiConfigKeys.OLLAMA_PREFIX);
+        final var ollamaTempField = this.createTemperatureField(configValue(config, AiConfigKeys.OLLAMA_TEMPERATURE));
+        final var ollamaMaxTokensField = this.createMaxTokensField(configValue(config, AiConfigKeys.OLLAMA_MAX_TOKENS));
         ollamaMaxTokensField
                 .setHelperText("Maximum tokens in response (1-8192). Use 2000+ to prevent truncated responses.");
         final var ollamaSection =
@@ -353,9 +358,9 @@ public class AdminConfigView extends AbstractAdminView {
         return field;
     }
 
-    private NumberField createTemperatureField(final Map<String, String> config, final String configPrefix) {
+    private NumberField createTemperatureField(final String value) {
         final var field = new NumberField("Temperature");
-        field.setValue(Double.parseDouble(configValue(config, configPrefix + AiConfigKeys.SUFFIX_TEMPERATURE)));
+        field.setValue(Double.parseDouble(value));
         field.setMin(0.0);
         field.setMax(2.0);
         field.setStep(0.1);
@@ -363,9 +368,9 @@ public class AdminConfigView extends AbstractAdminView {
         return field;
     }
 
-    private NumberField createMaxTokensField(final Map<String, String> config, final String configPrefix) {
+    private NumberField createMaxTokensField(final String value) {
         final var field = new NumberField("Max Tokens");
-        field.setValue(Double.parseDouble(configValue(config, configPrefix + AiConfigKeys.SUFFIX_MAX_TOKENS)));
+        field.setValue(Double.parseDouble(value));
         field.setMin(1);
         field.setMax(8192);
         field.setStep(1);
@@ -435,8 +440,7 @@ public class AdminConfigView extends AbstractAdminView {
             return Boolean.TRUE;
         }, this, ignored -> {
             NotificationUtil.showSuccess("All settings reset to defaults");
-            this.showLoading();
-            this.loadConfig();
+            this.reload();
         }, () -> {
             resetBtn.setEnabled(true);
             updateEnabledState.run();

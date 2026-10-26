@@ -1,5 +1,7 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static de.vptr.aimathtutor.service.ai.AiConfigTestSupport.defaults;
+import static de.vptr.aimathtutor.service.ai.AiConfigTestSupport.setStoredValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,19 +23,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.vptr.aimathtutor.dto.SessionCredentials;
+import de.vptr.aimathtutor.entity.UserEntity;
 import de.vptr.aimathtutor.exception.PermissionDeniedException;
 import de.vptr.aimathtutor.repository.AiConfigRepository;
 import de.vptr.aimathtutor.repository.UserRepository;
-import de.vptr.aimathtutor.util.AppConstants;
 import de.vptr.aimathtutor.util.TestSessionCredentials;
 import io.quarkus.arc.ClientProxy;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.validation.ValidationException;
 
 /**
  * "Reset to Defaults" writes the built-in defaults without validating them, so it needs no DNS lookup, and a test
@@ -62,36 +63,44 @@ class AiConfigResetTest {
     @InjectMock
     HostResolver hostResolver;
 
-    /** The committed values of the default keys before the test; a key without a row is absent. */
-    private Map<String, String> original = Map.of();
-
-    private static Map<String, String> defaults() {
-        return AiConfigService.defaultUpdates().stream()
-                .collect(Collectors.toMap(update -> update.configKey, update -> update.configValue));
+    /** A default key's row as found: its value and the id of the user who last updated it, either possibly null. */
+    private record StoredRow(@Nullable String value, @Nullable Long updatedById) {
     }
+
+    /** The committed rows of the default keys before the test; a key without a row is absent. */
+    private Map<String, StoredRow> original = Map.of();
 
     @BeforeEach
     void snapshot() {
         final var defaultKeys = defaults().keySet();
         this.original = QuarkusTransaction.requiringNew().call(() -> {
-            final var values = new HashMap<String, String>();
-            this.aiConfigRepository.findAll().stream().filter(entity -> defaultKeys.contains(entity.configKey))
-                    .forEach(entity -> values.put(Objects.requireNonNull(entity.configKey), entity.configValue));
-            return Map.copyOf(values);
+            final var rows = new HashMap<String, StoredRow>();
+            this.aiConfigRepository.findAll().stream().filter(entity -> defaultKeys.contains(entity.configKey)).forEach(
+                    entity -> rows.put(Objects.requireNonNull(entity.configKey), new StoredRow(entity.configValue,
+                            entity.lastUpdatedBy == null ? null : entity.lastUpdatedBy.id)));
+            return Map.copyOf(rows);
         });
         this.aiConfigService.clearCache();
     }
 
-    /** Puts the committed rows of the default keys back as {@link #snapshot()} found them. */
+    /**
+     * Puts the committed rows of the default keys back as {@link #snapshot()} found them: the value and the user who
+     * last updated each row that existed, and no row for a key that had none. {@code version} and {@code last_edit} are
+     * not restored, as the database sets them on every write.
+     */
     @AfterEach
     void restore() {
         QuarkusTransaction.requiringNew().run(() -> defaults().keySet().forEach(key -> {
             final var row = this.aiConfigRepository.findByConfigKey(key);
-            final var value = this.original.get(key);
-            if (value == null) {
+            final var stored = this.original.get(key);
+            if (stored == null) {
                 row.ifPresent(this.entityManager::remove);
             } else {
-                row.ifPresent(entity -> entity.configValue = value);
+                row.ifPresent(entity -> {
+                    entity.configValue = stored.value();
+                    entity.lastUpdatedBy = stored.updatedById() == null ? null
+                            : this.entityManager.getReference(UserEntity.class, stored.updatedById());
+                });
             }
         }));
         this.aiConfigService.clearCache();
@@ -100,12 +109,6 @@ class AiConfigResetTest {
     private SessionCredentials credentialsOf(final String username) {
         return TestSessionCredentials
                 .of(Objects.requireNonNull(this.userRepository.findByUsername(username), "Seeded user"));
-    }
-
-    private void setStoredValue(final String key, final String value) {
-        final var entity = this.aiConfigRepository.findByConfigKey(key).orElseThrow();
-        entity.configValue = value;
-        this.aiConfigRepository.update(entity);
     }
 
     private void assertTemperatureUnchanged() {
@@ -120,9 +123,10 @@ class AiConfigResetTest {
     void resetWithoutDnsRestoresAllDefaults() throws UnknownHostException {
         when(this.hostResolver.resolveAll(anyString())).thenThrow(new UnknownHostException("no DNS"));
         final var credentials = QuarkusTransaction.requiringNew().call(() -> {
-            this.setStoredValue(TEMPERATURE_KEY, SEEDED_VALUE);
-            this.setStoredValue(AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1/beta");
-            this.setStoredValue(AiConfigKeys.PROMPT_TUTORING_PREFIX, "changed " + UUID.randomUUID());
+            setStoredValue(this.aiConfigRepository, TEMPERATURE_KEY, SEEDED_VALUE);
+            setStoredValue(this.aiConfigRepository, AiConfigKeys.OPENAI_API_BASE_URL, "https://api.openai.com/v1/beta");
+            setStoredValue(this.aiConfigRepository, AiConfigKeys.PROMPT_TUTORING_PREFIX,
+                    "changed " + UUID.randomUUID());
             return this.credentialsOf("admin");
         });
         this.aiConfigService.clearCache();
@@ -136,11 +140,9 @@ class AiConfigResetTest {
 
     @Test
     @DisplayName("Reset writes the default URL although the Google allow-list no longer holds its host")
-    void resetIgnoresNarrowedAllowList() throws UnknownHostException {
-        when(this.hostResolver.resolveAll(anyString()))
-                .thenReturn(new InetAddress[] { InetAddress.ofLiteral(TestHostResolver.PUBLIC_ADDRESS) });
+    void resetIgnoresNarrowedAllowList() {
         final var credentials = QuarkusTransaction.requiringNew().call(() -> {
-            this.setStoredValue(AiConfigKeys.GOOGLE_API_BASE_URL, "https://gateway.example");
+            setStoredValue(this.aiConfigRepository, AiConfigKeys.GOOGLE_API_BASE_URL, "https://gateway.example");
             return this.credentialsOf("admin");
         });
         final var bean = ClientProxy.unwrap(this.aiConfigService);
@@ -157,31 +159,17 @@ class AiConfigResetTest {
             bean.allowedGoogleHosts = previous;
         }
 
+        verifyNoInteractions(this.hostResolver);
         this.aiConfigService.clearCache();
         assertEquals(defaults().get(AiConfigKeys.GOOGLE_API_BASE_URL),
                 this.aiConfigService.getConfigValue(AiConfigKeys.GOOGLE_API_BASE_URL, null));
     }
 
     @Test
-    @DisplayName("Reset with an ended session is refused and changes nothing")
-    @TestTransaction
-    void resetWithEndedSessionIsRefused() {
-        this.setStoredValue(TEMPERATURE_KEY, SEEDED_VALUE);
-        final var admin = Objects.requireNonNull(this.userRepository.findByUsername("admin"), "Seeded admin");
-        final var stale =
-                new SessionCredentials(Objects.requireNonNull(admin.publicId), "stale", UUID.randomUUID().toString());
-
-        final var ex = assertThrows(ValidationException.class, () -> this.aiConfigService.resetToDefaults(stale));
-
-        assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
-        this.assertTemperatureUnchanged();
-    }
-
-    @Test
     @DisplayName("Reset by a user without the AI-config permission is refused and changes nothing")
     @TestTransaction
     void resetWithoutPermissionIsRefused() {
-        this.setStoredValue(TEMPERATURE_KEY, SEEDED_VALUE);
+        setStoredValue(this.aiConfigRepository, TEMPERATURE_KEY, SEEDED_VALUE);
         final var student = this.credentialsOf("student1");
 
         assertThrows(PermissionDeniedException.class, () -> this.aiConfigService.resetToDefaults(student));

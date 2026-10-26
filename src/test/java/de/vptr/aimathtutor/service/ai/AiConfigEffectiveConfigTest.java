@@ -1,13 +1,13 @@
 package de.vptr.aimathtutor.service.ai;
 
+import static de.vptr.aimathtutor.service.ai.AiConfigTestSupport.defaults;
+import static de.vptr.aimathtutor.service.ai.AiConfigTestSupport.setStoredValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,21 +35,10 @@ class AiConfigEffectiveConfigTest {
     @Inject
     EntityManager entityManager;
 
-    private static Map<String, String> defaults() {
-        return AiConfigService.defaultUpdates().stream()
-                .collect(Collectors.toMap(update -> update.configKey, update -> update.configValue));
-    }
-
     @BeforeEach
     @AfterEach
     void clearCache() {
         this.aiConfigService.clearCache();
-    }
-
-    private void setStoredValue(final String key, final String value) {
-        final var entity = this.aiConfigRepository.findByConfigKey(key).orElseThrow();
-        entity.configValue = value;
-        this.aiConfigRepository.update(entity);
     }
 
     @Test
@@ -62,21 +51,25 @@ class AiConfigEffectiveConfigTest {
     @DisplayName("A row missing from ai_config yields its default")
     @TestTransaction
     void missingRowYieldsDefault() {
-        this.aiConfigRepository.findByConfigKey(AiConfigKeys.OLLAMA_MODEL).ifPresent(this.entityManager::remove);
+        setStoredValue(this.aiConfigRepository, AiConfigKeys.OLLAMA_MODEL, "stored-model");
+        this.entityManager.flush();
+        assertEquals("stored-model", this.aiConfigService.getEffectiveConfig().get(AiConfigKeys.OLLAMA_MODEL));
+
+        this.entityManager.remove(this.aiConfigRepository.findByConfigKey(AiConfigKeys.OLLAMA_MODEL).orElseThrow());
         this.entityManager.flush();
 
-        final var config = this.aiConfigService.getEffectiveConfig();
-
-        assertEquals(defaults().get(AiConfigKeys.OLLAMA_MODEL), config.get(AiConfigKeys.OLLAMA_MODEL));
+        assertTrue(this.aiConfigRepository.findByConfigKey(AiConfigKeys.OLLAMA_MODEL).isEmpty());
+        assertEquals(defaults().get(AiConfigKeys.OLLAMA_MODEL),
+                this.aiConfigService.getEffectiveConfig().get(AiConfigKeys.OLLAMA_MODEL));
     }
 
     @Test
     @DisplayName("A stored value is returned, a malformed temperature or token limit becomes its default")
     @TestTransaction
     void storedValueIsReturnedAndMalformedNumbersFallBack() {
-        this.setStoredValue(AiConfigKeys.OPENAI_MODEL, "stored-model");
-        this.setStoredValue(AiConfigKeys.GOOGLE_TEMPERATURE, "warm");
-        this.setStoredValue(AiConfigKeys.GOOGLE_MAX_TOKENS, "many");
+        setStoredValue(this.aiConfigRepository, AiConfigKeys.OPENAI_MODEL, "stored-model");
+        setStoredValue(this.aiConfigRepository, AiConfigKeys.GOOGLE_TEMPERATURE, "warm");
+        setStoredValue(this.aiConfigRepository, AiConfigKeys.GOOGLE_MAX_TOKENS, "many");
         this.entityManager.flush();
 
         final var config = this.aiConfigService.getEffectiveConfig();

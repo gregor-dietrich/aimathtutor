@@ -42,8 +42,8 @@ import jakarta.validation.ValidationException;
 
 /**
  * An AI-config save or reset made with a session that has ended (stale credential stamp, banned or deactivated account)
- * is refused with {@link AppConstants#SESSION_ENDED_MESSAGE}, before any value or URL validation, and writes nothing.
- * The real permission and authentication services run.
+ * is refused with {@link AppConstants#SESSION_ENDED_MESSAGE} and writes nothing; a save is refused before any value or
+ * URL validation, and a reset validates nothing. The real permission and authentication services run.
  */
 @QuarkusTest
 class AiConfigSessionEndedTest {
@@ -139,7 +139,7 @@ class AiConfigSessionEndedTest {
 
     @ParameterizedTest(name = "{0}: {2}")
     @MethodSource("writes")
-    @DisplayName("A save or reset with an ended session is refused before validation and writes nothing")
+    @DisplayName("A save or reset with an ended session is refused and writes nothing")
     @TestTransaction
     void endedSessionIsRefused(final String name, final BiConsumer<AiConfigSessionEndedTest, SessionCredentials> write,
             final String reason, final Consumer<UserEntity> change, final boolean staleStamp) {
@@ -147,7 +147,7 @@ class AiConfigSessionEndedTest {
         final var credentials = this.credentialsFor(admin, staleStamp);
         change.accept(admin);
 
-        // The session refusal, with no host resolved, proves authorisation runs before validation
+        // For a save, the session refusal with no host resolved proves authorisation runs before validation
         final var ex = assertThrows(ValidationException.class, () -> write.accept(this, credentials));
         assertEquals(AppConstants.SESSION_ENDED_MESSAGE, ex.getMessage());
 
