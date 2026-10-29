@@ -70,8 +70,8 @@ services:
   # Uncomment the ollama service below and ollama_data volume to use local AI.
   # ollama:
   #   # Choose image based on your hardware:
-  #   image: gregordietrich/ollama:0.15.2 # CPU or NVIDIA GPU
-  #   # image: ollama/ollama:0.15.2-rocm  # AMD GPU (ROCm)
+  #   image: gregordietrich/ollama:0.40.13 # CPU or NVIDIA GPU
+  #   # image: ollama/ollama:0.40.13-rocm  # AMD GPU (ROCm)
   #   restart: unless-stopped
   #   volumes:
   #     - ollama_data:/root/.ollama
@@ -87,7 +87,7 @@ services:
   #   #           count: all
   #   #           capabilities: [gpu]
   #
-  #   # Optional: Enable AMD GPU support (use with 0.15.2-rocm image)
+  #   # Optional: Enable AMD GPU support (use with 0.40.13-rocm image)
   #   # Requires: AMD GPU (RX 6000/7000 series or newer) with ROCm drivers
   #   # devices:
   #   #   - /dev/kfd
