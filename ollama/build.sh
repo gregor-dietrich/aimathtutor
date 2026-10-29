@@ -115,15 +115,23 @@ PUSH_IMAGE="${PUSH_IMAGE:-y}"
 echo ""
 echo "Downloading: $SELECTED_ASSET"
 
-# Construct download URL and download the asset
-DOWNLOAD_URL="https://github.com/ollama/ollama/releases/download/$SELECTED_TAG/$SELECTED_ASSET"
+# Download the asset and verify it against the release's published checksums
+DOWNLOAD_URL="https://github.com/ollama/ollama/releases/download/$SELECTED_TAG"
+ARCHIVE=$(mktemp)
+trap 'rm -f "$ARCHIVE"' EXIT
+curl -fsSL -o "$ARCHIVE" "$DOWNLOAD_URL/$SELECTED_ASSET"
+EXPECTED=$(curl -fsSL "$DOWNLOAD_URL/sha256sum.txt" | awk -v f="./$SELECTED_ASSET" '$2 == f { print $1 }')
+if [ -z "$EXPECTED" ] || ! echo "$EXPECTED  $ARCHIVE" | sha256sum -c --quiet -; then
+    echo "Error: Checksum verification failed for $SELECTED_ASSET"
+    exit 1
+fi
 rm -rf payload && mkdir payload
 
 # Handle both .tgz and .tar.zst formats
 if [[ "$SELECTED_ASSET" == *.tar.zst ]]; then
-    curl -fsSL "$DOWNLOAD_URL" | tar -I zstd -x -C payload
+    tar -I zstd -xf "$ARCHIVE" -C payload
 else
-    curl -fsSL "$DOWNLOAD_URL" | tar zx -C payload
+    tar zxf "$ARCHIVE" -C payload
 fi
 
 echo ""
