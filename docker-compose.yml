@@ -73,7 +73,7 @@ services:
 
   # Uncomment if you want to use Ollama:
   # ollama:
-  #   image: gregordietrich/ollama:0.15.2
+  #   image: gregordietrich/ollama:0.40.13
   #   restart: unless-stopped
   #   volumes:
   #     - ollama_data:/root/.ollama

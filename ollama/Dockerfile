@@ -1,4 +1,4 @@
-FROM redhat/ubi9-minimal:9.8@sha256:c4c285d42941ebb2bd4da878479008e1e4536bb599aad1dbe568f89de9053661
+FROM redhat/ubi9-minimal:9.8@sha256:bba2b4bbf0ed15cfe7dd72a1e17ae7d2015a141f306b304e1a2785c41400e39c
 
 ENV LANGUAGE='en_US:en'
 

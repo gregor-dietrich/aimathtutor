@@ -263,7 +263,7 @@ docker compose exec ollama ollama list
   - [NVIDIA Container
     Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
   - Significantly faster: 1-5 seconds per response
-- **AMD GPU Mode (ROCm):** Change image to `ollama/ollama:0.15.2-rocm` and
+- **AMD GPU Mode (ROCm):** Change image to `ollama/ollama:0.40.13-rocm` and
   uncomment AMD device mappings. Requires:
   - AMD GPU (RX 6000/7000 series or newer)
   - ROCm drivers installed on host
@@ -401,7 +401,7 @@ _NVIDIA:_
 
 _AMD (ROCm):_
 
-- Ensure you're using the `ollama/ollama:0.15.2-rocm` image
+- Ensure you're using the `ollama/ollama:0.40.13-rocm` image
 - Install ROCm drivers: [AMD ROCm
   Installation](https://rocm.docs.amd.com/en/latest/deploy/linux/quick_start.html)
 - Verify host GPU: `rocm-smi`
