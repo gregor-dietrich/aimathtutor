@@ -1,5 +1,5 @@
 ---
-description: "Use when modifying the Dockerfiles or Compose files. Covers keeping the two images in step and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
+description: "Use when modifying the Dockerfiles or Compose files. Covers keeping the two images in step, the base image's trusted roots and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
 paths:
   - "src/main/docker/**"
   - "docker-compose.yml"
@@ -26,7 +26,9 @@ paths:
   `emSign ECC Root CA - G3`, `emSign ECC Root CA - C3`, `emSign Root CA - C1`
   and `AAA Certificate Services`; its `blocked.certs` lists none of them. A
   Temurin bump keeps all four out: check its `cacerts`, or that the eMudhra
-  test hosts at `emudhra.we-have-a-problem.com` still fail TLS from the image.
+  test hosts at `emudhra.we-have-a-problem.com` still fail certificate path
+  validation from the image while a control host such as `api.openai.com`
+  succeeds.
 - **Compose defaults are placeholders:** every credential or
   deployment-specific value comes from `${VAR:-default}`, or from
   `${VAR:?message}` where no placeholder should work, and a default is never a

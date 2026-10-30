@@ -117,11 +117,15 @@ echo "Downloading: $SELECTED_ASSET"
 
 # Download the asset and verify it against the release's published checksums
 DOWNLOAD_URL="https://github.com/ollama/ollama/releases/download/$SELECTED_TAG"
-ARCHIVE=$(mktemp)
+ARCHIVE=$(mktemp -p .)
 trap 'rm -f "$ARCHIVE"' EXIT
 curl -fsSL -o "$ARCHIVE" "$DOWNLOAD_URL/$SELECTED_ASSET"
 EXPECTED=$(curl -fsSL "$DOWNLOAD_URL/sha256sum.txt" | awk -v f="./$SELECTED_ASSET" '$2 == f { print $1 }')
-if [ -z "$EXPECTED" ] || ! echo "$EXPECTED  $ARCHIVE" | sha256sum -c --quiet -; then
+if [ -z "$EXPECTED" ]; then
+    echo "Error: No published checksum for $SELECTED_ASSET in sha256sum.txt"
+    exit 1
+fi
+if ! echo "$EXPECTED  $ARCHIVE" | sha256sum -c --quiet -; then
     echo "Error: Checksum verification failed for $SELECTED_ASSET"
     exit 1
 fi
