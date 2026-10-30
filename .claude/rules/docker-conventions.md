@@ -21,6 +21,12 @@ paths:
   measuring the image, and pass no `-D` settings there. Java stays PID 1; add
   operator options via `JDK_JAVA_OPTIONS`, without baking its value into the
   image.
+- **Trusted roots come from the Temurin base:** the images reject the
+  compromised eMudhra intermediates only because the base's `cacerts` lacks
+  `emSign ECC Root CA - G3`, `emSign ECC Root CA - C3`, `emSign Root CA - C1`
+  and `AAA Certificate Services`; its `blocked.certs` lists none of them. A
+  Temurin bump keeps all four out: check its `cacerts`, or that the eMudhra
+  test hosts at `emudhra.we-have-a-problem.com` still fail TLS from the image.
 - **Compose defaults are placeholders:** every credential or
   deployment-specific value comes from `${VAR:-default}`, or from
   `${VAR:?message}` where no placeholder should work, and a default is never a
