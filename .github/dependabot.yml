@@ -10,8 +10,13 @@ multi-ecosystem-groups:
 updates:
   - package-ecosystem: "docker"
     directory: "/src/main/docker"
-    patterns: ["eclipse-temurin:25.*.*"]
+    # A pattern matches the dependency's name, which carries no tag.
+    patterns: ["eclipse-temurin"]
     multi-ecosystem-group: "infrastructure"
+    ignore:
+      # Keep the Temurin base on Java 25.
+      - dependency-name: "eclipse-temurin"
+        versions: [">=26"]
 
   - package-ecosystem: "docker"
     directory: "/ollama"

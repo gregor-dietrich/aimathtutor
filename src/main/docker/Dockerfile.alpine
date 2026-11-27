@@ -21,7 +21,7 @@
 # docker run -i --rm -p 9001:9001 -e JDK_JAVA_OPTIONS="-Xmx512m" quarkus/aimathtutor-jvm
 #
 ###
-FROM eclipse-temurin:25.0.5.1_2-jre-alpine-3.24@sha256:69c2a26e9894016e274c880fa542956d005b3755f84db765145185e87405bd89
+FROM eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:69c2a26e9894016e274c880fa542956d005b3755f84db765145185e87405bd89
 
 ENV LANGUAGE='en_US:en'
 
