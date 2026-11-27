@@ -1,11 +1,13 @@
 ---
-description: "Use when modifying the Dockerfiles, the Compose files or Dependabot's entry for the Dockerfiles. Covers keeping the two images in step, the base image's trusted roots, Dependabot's Temurin changes and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
+description: "Use when modifying the Dockerfiles, the base-image check, the Compose files or Dependabot's entry for the Dockerfiles. Covers keeping the two images in step, the base image's trusted roots, Dependabot's Temurin changes and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
 paths:
   - "src/main/docker/**"
   - "docker-compose.yml"
   - "deploy/compose.yml"
   - "docs/QUICKSTART.md"
   - ".github/dependabot.yml"
+  - ".github/workflows/base-images.yml"
+  - "scripts/check_base_images.py"
 ---
 
 # Docker Conventions
@@ -27,9 +29,10 @@ paths:
   compromised eMudhra intermediates only because the base's `cacerts` lacks
   `emSign ECC Root CA - G3`, `emSign ECC Root CA - C3`, `emSign Root CA - C1`
   and `AAA Certificate Services`; its `blocked.certs` lists none of them. A
-  Temurin bump keeps all four out: check its `cacerts`, or that the eMudhra
-  test hosts at `emudhra.we-have-a-problem.com` still fail certificate path
-  validation from the image while a control host such as `api.openai.com`
+  Temurin bump keeps all four out: `make check-base-images` fails on any of
+  them, and the `Base images` workflow runs it. Another check, by hand: the
+  eMudhra test hosts at `emudhra.we-have-a-problem.com` still fail certificate
+  path validation from the image while a control host such as `api.openai.com`
   succeeds.
 - **Dependabot proposes Temurin changes:** its `/src/main/docker` entry
   matches the dependency by name (`eclipse-temurin`; a pattern never sees the
@@ -40,8 +43,12 @@ paths:
   - Dependabot resolves each Dockerfile's tag on its own. While only one
     distribution has the new version, `TemurinBasePinTest` fails that PR;
     wait for the other tag, or set it by hand.
-  - No CI step reads an image's `cacerts`: the trusted-roots check is by hand,
-    for any change to either digest.
+  - The `Base images` workflow runs on pull requests into `main` that change
+    `src/main/docker/**`, the script or the workflow. It also fails when an
+    image's `JAVA_VERSION` is not its tag's version (a tag changed over an old
+    digest). A change to either `FROM` line needs a passing run: `main` has no
+    required checks, and a run that never started shows as nothing. Where
+    none ran, run `make check-base-images`.
   - The Alpine tag carries no release number (`-jre-alpine`, not
     `-jre-alpine-3.24`). Dependabot reads a trailing release number as a build
     number and then proposes a floating major tag (`25-jre-alpine-3.23` from

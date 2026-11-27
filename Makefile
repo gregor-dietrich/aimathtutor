@@ -9,7 +9,7 @@ endif
 include .devkit/make/common.mk
 include .devkit/make/java-maven.mk
 
-.PHONY: build dev password regen-frontend release frontend-manifest test-scripts
+.PHONY: build dev password regen-frontend release frontend-manifest test-scripts check-base-images
 
 build: check ## build the app and its Docker images for this host (prompts for the image tag)
 	@scripts/build.sh
@@ -31,7 +31,10 @@ install: frontend-manifest
 frontend-manifest:
 	@bash -c '. scripts/lib/frontend.sh && require_frontend_manifest'
 
-# The release-script tests need no Maven or network access, so they run before the Java tests.
+# The script tests need no Maven or network access, so they run before the Java tests.
 test: test-scripts
 test-scripts: ## run the Python tests of the build scripts
 	@python3 -B -m unittest discover -s scripts/tests -v
+
+check-base-images: ## check the Temurin bases' JAVA_VERSION and trusted roots (needs Docker with buildx, keytool, network)
+	@python3 -B scripts/check_base_images.py
