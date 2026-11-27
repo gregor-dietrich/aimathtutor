@@ -506,7 +506,8 @@ SpotBugs, Checkstyle, PMD, CPD). A push-only
 `dependency-submission` job submits the Maven dependency graph after
 `./devkitw path`. Secret scanning is `lint-secrets`, not a separate action.
 A separate `Base images` workflow runs `make check-base-images` for pull
-requests that change `src/main/docker/**` or the check.
+requests into `main` that change `src/main/docker/**`, the script or the
+workflow.
 
 - **Compiler warnings are build failures.** `maven-compiler-plugin`, configured
   in devkit's parent POM, passes `-Werror` and

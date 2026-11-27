@@ -32,6 +32,8 @@ state = json.load(open(os.environ["FAKE_STATE"]))
 args = sys.argv[1:]
 if args[:3] == ["buildx", "imagetools", "inspect"]:
     reference = args[3]
+    with open(os.environ["FAKE_REFERENCES"], "a") as log:
+        log.write(reference + "\\n")
     if args[4:] != ["--format", "{{{{json .Image}}}}"]:
         sys.stderr.write("unexpected inspect arguments: " + repr(args))
         sys.exit(3)
@@ -44,6 +46,9 @@ if args[:2] == ["buildx", "build"]:
     reference = re.search(r"^FROM (\\S+) AS base", dockerfile, re.M).group(1)
     platform = args[args.index("--platform") + 1]
     distro = next(k for k in state["build"] if k in reference)
+    if reference not in open(os.environ["FAKE_REFERENCES"]).read().splitlines():
+        sys.stderr.write("the build's reference was never inspected: " + reference)
+        sys.exit(3)
     with open(os.environ["FAKE_BUILDS"], "a") as log:
         log.write(distro + "|" + platform + "\\n")
     image = json.loads(next(v for k, v in state["inspect"].items() if k in reference)["stdout"])
@@ -127,14 +132,14 @@ class CheckBaseImagesTest(unittest.TestCase):
         self.path = str(self.bin)
 
     def write_dockerfile(self, relative: str, reference: str | None):
-        lines = ["# a comment mentioning FROM nothing", "ARG X=1", f"FROM {reference}" if reference else "", "USER 185"]
+        lines = ["# a comment mentioning FROM nothing", "", f"FROM {reference}" if reference else "", "USER 185"]
         (self.root / relative).write_text("\n".join(lines) + "\n")
 
     def run_check(self):
         state = self.root.parent / "state.json"
         state.write_text(json.dumps(self.state))
         environment = {**os.environ, "PATH": self.path, "FAKE_STATE": str(state), "FAKE_ARGS": str(self.args_log),
-                       "FAKE_BUILDS": str(self.builds_log)}
+                       "FAKE_BUILDS": str(self.builds_log), "FAKE_REFERENCES": str(self.root.parent / "references.log")}
         return subprocess.run(
             [sys.executable, "-B", "scripts/check_base_images.py"],
             cwd=self.root, env=environment, capture_output=True, text=True, check=False,
@@ -319,8 +324,44 @@ class CheckBaseImagesTest(unittest.TestCase):
 
         self.assert_fails(f"{ALPINE}: expected exactly one FROM, found 2")
 
+    def test_fails_for_a_from_keyword_split_by_a_line_continuation(self):
+        reference = f"eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:{DIGEST}"
+        (self.root / ALPINE).write_text(f"FR\\\nOM busybox:1.36\nRUN echo \\\nFROM {reference}\n")
+
+        self.assert_fails(f"{ALPINE}: FROM must be the first instruction, found 'FR\\\\'")
+
+    def test_fails_for_a_from_behind_a_byte_order_mark(self):
+        reference = f"eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:{DIGEST}"
+        (self.root / ALPINE).write_text(f"\ufeffFROM busybox:1.36\nRUN echo \\\nFROM {reference}\n")
+
+        self.assert_fails(f"{ALPINE}: FROM must be the first instruction, found '\\ufeffFROM busybox:1.36'")
+
+    def test_fails_for_an_instruction_before_from(self):
+        (self.root / ALPINE).write_text(f"ARG X=1\nFROM eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:{DIGEST}\n")
+
+        self.assert_fails(f"{ALPINE}: FROM must be the first instruction, found 'ARG X=1'")
+
+    def test_fails_for_a_dockerfile_that_is_not_utf8(self):
+        (self.root / ALPINE).write_bytes(b"# caf\xe9\nFROM x\n")
+
+        self.assert_fails(f"FAIL {ALPINE}: ", "codec can't decode")
+
+    def test_reports_both_streams_of_a_failed_command(self):
+        self.state["keytool"]["alpine"]["linux/amd64"] = {
+            "exit": 1,
+            "stderr": "Picked up JAVA_TOOL_OPTIONS: -Dx=y\n",
+            "stdout": "keytool error: java.io.IOException: keystore password was incorrect\n",
+        }
+
+        self.assert_fails("exited 1: Picked up JAVA_TOOL_OPTIONS: -Dx=y; keytool error: java.io.IOException")
+
+    def test_says_so_when_a_failed_command_printed_nothing(self):
+        self.state["keytool"]["alpine"]["linux/amd64"] = {"exit": 1}
+
+        self.assert_fails(f"{ALPINE}: linux/amd64: `keytool -J-Duser.language=en -list` exited 1: no output")
+
     def test_fails_for_a_bare_from_at_the_end_of_the_file(self):
-        (self.root / ALPINE).write_text("ARG X=1\nFROM")
+        (self.root / ALPINE).write_text("# a comment\nFROM")
 
         self.assert_fails(f"{ALPINE}: unsupported FROM line 'FROM'")
 

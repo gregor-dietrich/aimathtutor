@@ -36,5 +36,5 @@ test: test-scripts
 test-scripts: ## run the Python tests of the build scripts
 	@python3 -B -m unittest discover -s scripts/tests -v
 
-check-base-images: ## check each Dockerfile's Temurin base: JAVA_VERSION matches the tag, cacerts lacks the roots of the compromised eMudhra chains (needs Docker with buildx, keytool, network)
+check-base-images: ## check the Temurin bases' JAVA_VERSION and trusted roots (needs Docker with buildx, keytool, network)
 	@python3 -B scripts/check_base_images.py

@@ -26,16 +26,18 @@ FORBIDDEN_ROOTS = (
 )
 # Keep in step with PLATFORMS in scripts/lib/images.sh.
 RELEASE_PLATFORMS = ("linux/amd64", "linux/arm64")
-# Well under the workflow's `timeout-minutes: 10`, so a hung command fails here with its message.
+# Well under the workflow's `timeout-minutes: 10`, so a single hung command fails here with its message.
 COMMAND_TIMEOUT_SECONDS = 180
 
 REFERENCE = re.compile(
     r"eclipse-temurin:(?P<version>\d+(?:\.\d+)*)_(?P<build>\d+)-jre-[a-z]+@sha256:[0-9a-f]{64}"
 )
-# Every line whose first token is the keyword counts, whatever follows it.
+# Every line whose first token is the keyword counts, whatever follows it. Docker joins
+# continuation lines and strips a byte order mark first, so parse_reference also requires the
+# FROM to be the first instruction: a FROM split across lines then cannot hide behind a decoy.
 FROM_LINE = re.compile(r"^[ \t]*FROM\b.*$", re.IGNORECASE | re.MULTILINE)
 FROM_FORM = re.compile(r"FROM[ \t]+(?P<reference>\S+)(?:[ \t]+AS[ \t]+\S+)?", re.IGNORECASE)
-JAVA_HOME_PATH = re.compile(r"/[A-Za-z0-9._/-]+")
+JAVA_HOME_PATH = re.compile(r"/[A-Za-z0-9._+/-]+")
 
 
 class CheckError(Exception):
@@ -49,22 +51,27 @@ def run(command: list[str], stdin: str | None = None) -> str:
         result = subprocess.run(
             command, input=stdin, capture_output=True, text=True, check=False, timeout=COMMAND_TIMEOUT_SECONDS
         )
-    except (OSError, subprocess.TimeoutExpired) as error:
+    except (OSError, ValueError, subprocess.TimeoutExpired) as error:  # ValueError: undecodable output
         raise CheckError(f"`{name}` could not run: {error}") from error
     if result.returncode != 0:
         # keytool writes its errors to stdout, with a stack trace after the first line.
-        stdout_lines = result.stdout.strip().splitlines()
-        detail = result.stderr.strip() or (stdout_lines[0] if stdout_lines else "")
+        reasons = (result.stderr.strip(), *result.stdout.strip().splitlines()[:1])
+        detail = "; ".join(reason for reason in reasons if reason) or "no output"
         raise CheckError(f"`{name}` exited {result.returncode}: {detail}")
     return result.stdout
 
 
 def parse_reference(dockerfile: Path) -> tuple[str, str]:
     """Return the image reference and the expected JAVA_VERSION of the single FROM."""
-    instructions = FROM_LINE.findall(dockerfile.read_text())
+    text = dockerfile.read_text()
+    instructions = FROM_LINE.findall(text)
     if len(instructions) != 1:
         raise CheckError(f"expected exactly one FROM, found {len(instructions)}")
     line = instructions[0].strip()
+    stripped = (candidate.strip() for candidate in text.splitlines())
+    first = next((candidate for candidate in stripped if candidate and candidate[0] != "#"), "")
+    if first != line:
+        raise CheckError(f"FROM must be the first instruction, found {first!r}")
     form = FROM_FORM.fullmatch(line)
     if form is None:
         raise CheckError(f"unsupported FROM line {line!r}: expected FROM <reference> [AS <name>]")
@@ -89,7 +96,7 @@ def platform_configs(reference: str) -> dict[str, dict]:
         raise CheckError("image inspect output is not a JSON object")
     configs = (
         {f"{image.get('os', '?')}/{image.get('architecture', '?')}": image}
-        if "config" in image
+        if "config" in image or "architecture" in image
         else image
     )
     for platform, config in configs.items():
@@ -99,7 +106,8 @@ def platform_configs(reference: str) -> dict[str, dict]:
 
 
 def has_expected_shape(config: object) -> bool:
-    """Whether the platform value is an object whose `config` is an object with a list of string `Env`."""
+    """Whether the platform value is an object whose `config` and its `Env`, where present, are an
+    object and a list of strings."""
     if not isinstance(config, dict):
         return False
     inner = config.get("config")
@@ -195,7 +203,7 @@ def check_dockerfile(relative: str) -> tuple[list[str], list[str]]:
     try:
         reference, expected = parse_reference(ROOT / relative)
         configs = platform_configs(reference)
-    except (CheckError, OSError) as error:
+    except (CheckError, OSError, ValueError) as error:  # ValueError: a Dockerfile that is not UTF-8
         return [], [f"{relative}: {error}"]
     matched, version_failures = check_versions(configs, expected)
     successes = [
@@ -219,15 +227,16 @@ def check_dockerfile(relative: str) -> tuple[list[str], list[str]]:
 
 
 def main() -> int:
-    failures: list[str] = []
+    failed = False
     for relative in DOCKERFILES:
-        successes, problems = check_dockerfile(relative)
+        # Printed per Dockerfile and flushed, so a run that is killed later still shows them.
+        successes, failures = check_dockerfile(relative)
         for line in successes:
-            print(line)
-        failures += problems
-    for failure in failures:
-        print(f"FAIL {failure}", file=sys.stderr)
-    return 1 if failures else 0
+            print(line, flush=True)
+        for failure in failures:
+            print(f"FAIL {failure}", file=sys.stderr, flush=True)
+        failed = failed or bool(failures)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
