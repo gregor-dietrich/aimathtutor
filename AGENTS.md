@@ -492,7 +492,7 @@ CompletableFuture.supplyAsync(blockingCall::get, this.managedExecutor).thenAccep
 | CPD               | `./mvnw pmd:cpd-check`                           | Code duplication detection (DRY). Property `pmd-cpd.minTokens` (devkit parent default 65). CLI override: `-Dpmd-cpd.minTokens=60`. Tokens ≈ lines × 6.             |
 | OWASP dep-check   | `make audit`                                     | Not bound to a phase; CI `security` job runs it. `failBuildOnCVSS=7`. Needs `NVD_API_KEY` from environment or gitignored `.env.build` (not `.env`)                 |
 | License allowlist | `./mvnw license:add-third-party@add-third-party` | Runs at `verify`; fails on a dependency whose license neither the parent's allowlist nor a `pom.xml` append names (`mvn verify` without `-q` lists each)           |
-| Base images       | `make check-base-images`                         | `JAVA_VERSION` matches each tag; `cacerts` lacks the Docker rule's four roots. Needs Docker + buildx, `keytool`, network; CI: PRs touching `src/main/docker/**`    |
+| Base images       | `make check-base-images`                         | `JAVA_VERSION` matches each tag; `cacerts` lacks the Docker rule's four roots. Needs Docker + buildx, `keytool`, network; CI: the path-filtered `Base images` job  |
 
 CI order: `test` (`make -k lint-repo`, so every repo gate runs even if one
 fails, then the Compose validation, then `make test-scripts`, then
@@ -505,8 +505,8 @@ then `build` (`make install` with `MAVEN_ARGS=-Pproduction`: package, spotless,
 SpotBugs, Checkstyle, PMD, CPD). A push-only
 `dependency-submission` job submits the Maven dependency graph after
 `./devkitw path`. Secret scanning is `lint-secrets`, not a separate action.
-A separate `Base images` workflow (`make check-base-images`) runs only for pull
-requests touching `src/main/docker/**`, beside this pipeline.
+A separate `Base images` workflow runs `make check-base-images` for pull
+requests that change `src/main/docker/**` or the check.
 
 - **Compiler warnings are build failures.** `maven-compiler-plugin`, configured
   in devkit's parent POM, passes `-Werror` and

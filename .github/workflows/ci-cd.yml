@@ -63,7 +63,7 @@ jobs:
           cp .env.example "$compose_qa_dir/.env"
           docker compose --project-directory "$compose_qa_dir" -f docker-compose.yml config --quiet
           docker compose --project-directory "$compose_qa_dir" -f deploy/compose.yml config --quiet
-      - name: Test frontend lifecycle scripts
+      - name: Test the build scripts
         if: ${{ !cancelled() }}
         run: make test-scripts
       # -o skips make test's test-scripts prerequisite, which the step above ran, so a failing

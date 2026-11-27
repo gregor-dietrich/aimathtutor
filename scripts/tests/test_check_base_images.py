@@ -9,14 +9,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import textwrap
 import unittest
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 DIGEST = "a" * 64
 ALPINE = "src/main/docker/Dockerfile.alpine"
 UBUNTU = "src/main/docker/Dockerfile.ubuntu"
-FORBIDDEN = ("emSign ECC Root CA - G3", "emSign ECC Root CA - C3", "emSign Root CA - C1", "AAA Certificate Services")
 GOOD_LISTING = "\n".join(
     [
         "Keystore type: PKCS12",
@@ -34,6 +32,9 @@ state = json.load(open(os.environ["FAKE_STATE"]))
 args = sys.argv[1:]
 if args[:3] == ["buildx", "imagetools", "inspect"]:
     reference = args[3]
+    if args[4:] != ["--format", "{{{{json .Image}}}}"]:
+        sys.stderr.write("unexpected inspect arguments: " + repr(args))
+        sys.exit(3)
     entry = next(v for k, v in state["inspect"].items() if k in reference)
     sys.stderr.write(entry.get("stderr", ""))
     sys.stdout.write(entry.get("stdout", ""))
@@ -43,6 +44,21 @@ if args[:2] == ["buildx", "build"]:
     reference = re.search(r"^FROM (\\S+) AS base", dockerfile, re.M).group(1)
     platform = args[args.index("--platform") + 1]
     distro = next(k for k in state["build"] if k in reference)
+    with open(os.environ["FAKE_BUILDS"], "a") as log:
+        log.write(distro + "|" + platform + "\\n")
+    image = json.loads(next(v for k, v in state["inspect"].items() if k in reference)["stdout"])
+    if "config" in image:
+        image = {{image["os"] + "/" + image["architecture"]: image}}
+    env = image[platform]["config"]["Env"]
+    java_home = next(e for e in env if e.startswith("JAVA_HOME=")).split("=", 1)[1]
+    expected = (
+        "FROM " + reference + " AS base\\n"
+        "FROM scratch\\n"
+        "COPY --from=base " + java_home + "/lib/security/cacerts /cacerts\\n"
+    )
+    if dockerfile != expected:
+        sys.stderr.write("unexpected generated Dockerfile: " + repr(dockerfile))
+        sys.exit(3)
     entry = state["build"][distro].get(platform, {{}})
     if entry.get("exit", 0):
         sys.stderr.write(entry.get("stderr", "build failed"))
@@ -74,8 +90,12 @@ def image_config(version: str = "jdk-25.0.5.1+2", java_home: str | None = "/opt/
 
 def index(**overrides: dict | None) -> str:
     platforms = {"linux/amd64": image_config(), "linux/arm64": image_config(), "linux/s390x": image_config()}
-    for platform, config in overrides.items():
-        platforms.pop(platform.replace("_", "/"), None) if config is None else platforms.update({platform.replace("_", "/"): config})
+    for key, config in overrides.items():
+        platform = key.replace("_", "/")
+        if config is None:
+            platforms.pop(platform, None)
+        else:
+            platforms[platform] = config
     return json.dumps(platforms)
 
 
@@ -103,6 +123,7 @@ class CheckBaseImagesTest(unittest.TestCase):
             },
         }
         self.args_log = base / "keytool-args.log"
+        self.builds_log = base / "builds.log"
         self.path = str(self.bin)
 
     def write_dockerfile(self, relative: str, reference: str | None):
@@ -112,7 +133,8 @@ class CheckBaseImagesTest(unittest.TestCase):
     def run_check(self):
         state = self.root.parent / "state.json"
         state.write_text(json.dumps(self.state))
-        environment = {**os.environ, "PATH": self.path, "FAKE_STATE": str(state), "FAKE_ARGS": str(self.args_log)}
+        environment = {**os.environ, "PATH": self.path, "FAKE_STATE": str(state), "FAKE_ARGS": str(self.args_log),
+                       "FAKE_BUILDS": str(self.builds_log)}
         return subprocess.run(
             [sys.executable, "-B", "scripts/check_base_images.py"],
             cwd=self.root, env=environment, capture_output=True, text=True, check=False,
@@ -121,9 +143,13 @@ class CheckBaseImagesTest(unittest.TestCase):
     def assert_fails(self, *fragments: str):
         result = self.run_check()
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
         for fragment in fragments:
             self.assertIn(fragment, result.stderr)
         return result
+
+    def builds(self) -> list[str]:
+        return self.builds_log.read_text().splitlines() if self.builds_log.exists() else []
 
     def test_passes_for_matching_version_and_clean_listing(self):
         result = self.run_check()
@@ -131,10 +157,11 @@ class CheckBaseImagesTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         for dockerfile in (ALPINE, UBUNTU):
             for platform in ("linux/amd64", "linux/arm64"):
-                self.assertRegex(
-                    result.stdout,
-                    re.escape(f"{dockerfile}: {platform}: jdk-25.0.5.1+2 matches the tag; 4 certificates, none of the 4"),
+                self.assertIn(f"{dockerfile}: {platform}: JAVA_VERSION jdk-25.0.5.1+2 matches the tag", result.stdout)
+                self.assertIn(
+                    f"{dockerfile}: {platform}: cacerts holds 4 certificates, none of the 4 forbidden roots", result.stdout
                 )
+        self.assertIn(f"{ALPINE}: linux/s390x: JAVA_VERSION jdk-25.0.5.1+2 matches the tag", result.stdout)
 
     def test_passes_the_listing_through_english_keytool(self):
         self.run_check()
@@ -143,9 +170,12 @@ class CheckBaseImagesTest(unittest.TestCase):
         self.assertEqual(len(calls), 4)
         for call in calls:
             self.assertIn("-J-Duser.language=en", call)
+            self.assertIn("-list", call)
+            self.assertIn("-v", call)
+            self.assertEqual(call[call.index("-storepass") + 1], "changeit")
 
     def test_fails_for_each_forbidden_root(self):
-        for root in FORBIDDEN:
+        for root in FORBIDDEN_ROOTS:
             with self.subTest(root=root):
                 self.state["keytool"]["alpine"]["linux/amd64"]["stdout"] = (
                     GOOD_LISTING + f"\nOwner: CN={root}, O=eMudhra Technologies Limited, C=IN"
@@ -195,8 +225,27 @@ class CheckBaseImagesTest(unittest.TestCase):
 
         result = self.assert_fails(f"{ALPINE}: linux/arm64: platform missing from the image index")
         self.assertNotIn("JAVA_VERSION is", result.stderr)
+        self.assertIn(f"{ALPINE}: linux/amd64: cacerts holds 4 certificates", result.stdout)
+
+    def test_single_platform_manifest_still_checks_its_cacerts(self):
+        self.state["inspect"]["alpine"]["stdout"] = json.dumps(image_config())
+        self.state["keytool"]["alpine"]["linux/amd64"]["stdout"] = GOOD_LISTING + "\nOwner: CN=AAA Certificate Services"
+
+        self.assert_fails(f"{ALPINE}: linux/amd64: cacerts holds AAA Certificate Services")
 
     def test_fails_when_keytool_exits_non_zero(self):
+        self.state["keytool"]["alpine"]["linux/amd64"] = {
+            "exit": 3,
+            "stdout": "keytool error: java.io.IOException: keystore password was incorrect\n\tat sun.security.Stack.line\n",
+        }
+
+        result = self.assert_fails(
+            f"{ALPINE}: linux/amd64: `keytool -J-Duser.language=en -list` exited 3: "
+            "keytool error: java.io.IOException: keystore password was incorrect"
+        )
+        self.assertNotIn("sun.security.Stack", result.stderr)
+
+    def test_reports_keytool_stderr_when_it_has_any(self):
         self.state["keytool"]["alpine"]["linux/amd64"] = {"exit": 3, "stderr": "keystore was tampered with"}
 
         self.assert_fails(f"{ALPINE}: linux/amd64: `keytool -J-Duser.language=en -list` exited 3: keystore was tampered with")
@@ -244,12 +293,13 @@ class CheckBaseImagesTest(unittest.TestCase):
         self.assert_fails(f"{ALPINE}: linux/amd64: cacerts holds AAA Certificate Services", f"{UBUNTU}: `docker buildx imagetools` exited 1: boom")
 
     def test_names_match_the_trusted_roots_rule(self):
-        rule = (REPOSITORY / ".claude/rules/docker-conventions.md").read_text()
-        namespace = runpy_names()
+        rule = " ".join((REPOSITORY / ".claude/rules/docker-conventions.md").read_text().split())
+        sentence = re.search(r"`cacerts` lacks (.*?); its ", rule)
 
-        self.assertEqual(set(namespace["FORBIDDEN_ROOTS"]), set(FORBIDDEN))
-        for name in namespace["FORBIDDEN_ROOTS"]:
-            self.assertIn(f"`{name}`", rule.replace("\n", " "))
+        self.assertIsNotNone(sentence)
+        names = set(re.findall(r"`([^`]+)`", sentence.group(1)))
+        self.assertTrue(names)
+        self.assertEqual(names, set(FORBIDDEN_ROOTS))
 
     def test_platforms_match_the_release_script(self):
         literal = re.search(r'^PLATFORMS="([^"]+)"', (REPOSITORY / "scripts/lib/images.sh").read_text(), re.M)
@@ -257,9 +307,118 @@ class CheckBaseImagesTest(unittest.TestCase):
         self.assertIsNotNone(literal)
         self.assertEqual(list(runpy_names()["RELEASE_PLATFORMS"]), literal.group(1).split(","))
 
+    def test_dockerfiles_match_the_release_script(self):
+        found = re.findall(r'^DOCKERFILE_[A-Z]+="([^"]+)"', (REPOSITORY / "scripts/lib/images.sh").read_text(), re.M)
+
+        self.assertTrue(found)
+        self.assertEqual(set(runpy_names()["DOCKERFILES"]), set(found))
+
+    def test_fails_for_a_from_hidden_by_a_line_continuation(self):
+        reference = f"eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:{DIGEST}"
+        (self.root / ALPINE).write_text(f"FROM\\\n busybox:1.36\nRUN echo \\\nFROM {reference}\n")
+
+        self.assert_fails(f"{ALPINE}: expected exactly one FROM, found 2")
+
+    def test_fails_for_a_bare_from_at_the_end_of_the_file(self):
+        (self.root / ALPINE).write_text("ARG X=1\nFROM")
+
+        self.assert_fails(f"{ALPINE}: unsupported FROM line 'FROM'")
+
+    def test_fails_for_a_bare_from_before_another_instruction(self):
+        (self.root / ALPINE).write_text("FROM\nUSER 185\n")
+
+        self.assert_fails(f"{ALPINE}: unsupported FROM line 'FROM'")
+
+    def test_fails_for_a_from_with_a_flag(self):
+        (self.root / ALPINE).write_text(f"FROM --platform=linux/amd64 eclipse-temurin:25.0.5.1_2-jre-alpine@sha256:{DIGEST}\n")
+
+        self.assert_fails(f"{ALPINE}: unsupported FROM line")
+
+    def test_accepts_a_lower_case_from_with_a_tab_and_a_stage_name(self):
+        (self.root / ALPINE).write_text(f"from\teclipse-temurin:25.0.5.1_2-jre-alpine@sha256:{DIGEST} AS runtime\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"{ALPINE}: linux/amd64: cacerts holds 4 certificates", result.stdout)
+
+    def test_fails_for_a_forbidden_name_that_is_not_the_first_rdn(self):
+        self.state["keytool"]["alpine"]["linux/amd64"]["stdout"] = (
+            GOOD_LISTING + "\nOwner: O=Comodo CA Limited, CN=AAA Certificate Services, C=GB"
+        )
+
+        self.assert_fails(f"{ALPINE}: linux/amd64: cacerts holds AAA Certificate Services")
+
+    def test_ignores_a_forbidden_name_in_an_issuer_line(self):
+        self.state["keytool"]["alpine"]["linux/amd64"]["stdout"] = (
+            GOOD_LISTING + "\nOwner: CN=Example Two, O=Example\nIssuer: CN=AAA Certificate Services, O=Comodo CA Limited"
+        )
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"{ALPINE}: linux/amd64: cacerts holds 5 certificates", result.stdout)
+
+    def test_fails_for_a_java_home_that_is_not_a_plain_path(self):
+        for java_home in ("/opt/java\nRUN touch /pwned", "/opt/java openjdk"):
+            with self.subTest(java_home=java_home):
+                self.builds_log.unlink(missing_ok=True)
+                self.state["inspect"]["alpine"]["stdout"] = index(linux_arm64=image_config(java_home=java_home))
+
+                self.assert_fails(f"{ALPINE}: linux/arm64: JAVA_HOME is not a plain absolute path: {java_home!r}")
+                self.assertNotIn("alpine|linux/arm64", self.builds())
+                self.assertIn("alpine|linux/amd64", self.builds())
+
+    def test_joins_the_java_home_of_each_platform(self):
+        self.state["inspect"]["alpine"]["stdout"] = index(linux_arm64=image_config(java_home="/usr/lib/jvm/jdk"))
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.builds()), 4)
+
+    def test_fails_for_inspect_output_of_the_wrong_shape(self):
+        outputs = {
+            "not json": ("not json", "is not JSON"),
+            "list": ("[]", "is not a JSON object"),
+            "string platform": (json.dumps({"linux/amd64": "x"}), "unexpected shape for linux/amd64"),
+            "string config": (json.dumps({"linux/amd64": {"config": "x"}}), "unexpected shape for linux/amd64"),
+            "env not a list": (json.dumps({"linux/amd64": {"config": {"Env": "x"}}}), "unexpected shape for linux/amd64"),
+            "env of numbers": (json.dumps({"linux/amd64": {"config": {"Env": [1]}}}), "unexpected shape for linux/amd64"),
+        }
+        for name, (stdout, message) in outputs.items():
+            with self.subTest(name):
+                self.state["inspect"]["alpine"]["stdout"] = stdout
+
+                self.assert_fails(f"{ALPINE}: image inspect output", message)
+
+    def test_reports_a_version_mismatch_and_a_forbidden_root_together(self):
+        self.write_dockerfile(ALPINE, f"eclipse-temurin:25.0.6_7-jre-alpine@sha256:{DIGEST}")
+        self.state["keytool"]["alpine"]["linux/amd64"]["stdout"] = GOOD_LISTING + "\nOwner: CN=emSign Root CA - C1"
+
+        self.assert_fails(
+            f"{ALPINE}: linux/amd64: JAVA_VERSION is jdk-25.0.5.1+2, the tag says jdk-25.0.6+7",
+            f"{ALPINE}: linux/amd64: cacerts holds emSign Root CA - C1",
+        )
+
+    def test_prints_the_cacerts_line_on_a_version_mismatch(self):
+        self.write_dockerfile(ALPINE, f"eclipse-temurin:25.0.6_7-jre-alpine@sha256:{DIGEST}")
+
+        result = self.assert_fails(f"{ALPINE}: linux/amd64: JAVA_VERSION is")
+        self.assertIn(f"{ALPINE}: linux/amd64: cacerts holds 4 certificates, none of the 4 forbidden roots", result.stdout)
+        self.assertNotIn(f"{ALPINE}: linux/amd64: JAVA_VERSION jdk", result.stdout)
+
+    def test_fails_for_a_missing_dockerfile(self):
+        (self.root / ALPINE).unlink()
+
+        self.assert_fails(f"FAIL {ALPINE}: ", "No such file or directory")
+
 
 def runpy_names() -> dict:
     return runpy.run_path(str(REPOSITORY / "scripts/check_base_images.py"))
+
+
+FORBIDDEN_ROOTS = runpy_names()["FORBIDDEN_ROOTS"]
 
 
 if __name__ == "__main__":

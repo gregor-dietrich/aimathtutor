@@ -1,17 +1,17 @@
-# Checks the Temurin base each Dockerfile pins: its digest belongs to its tag, and its cacerts
+# Checks the Temurin base each Dockerfile pins: its JAVA_VERSION matches its tag, and its cacerts
 # lacks the roots of the compromised eMudhra chains (.claude/rules/docker-conventions.md).
 name: Base images
 
 on:
   pull_request:
     branches: [main]
-    # The script and this file are listed so a change to the check itself runs it.
+    # Changes to the script or this file also run it.
     paths:
       - "src/main/docker/**"
       - "scripts/check_base_images.py"
       - ".github/workflows/base-images.yml"
 
-# The job uses no secret and only a read token, so it runs the same on Dependabot's pull requests.
+# The job uses no secret and only a read token, which is all Dependabot's pull requests get.
 permissions:
   contents: read
 
@@ -30,5 +30,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "25"
+          check-latest: true # not an older 25.x the runner has cached
       - name: Check the base images
         run: make check-base-images
