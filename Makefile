@@ -9,7 +9,7 @@ endif
 include .devkit/make/common.mk
 include .devkit/make/java-maven.mk
 
-.PHONY: build dev password regen-frontend release frontend-manifest test-scripts
+.PHONY: build dev password regen-frontend release frontend-manifest test-scripts check-base-images
 
 build: check ## build the app and its Docker images for this host (prompts for the image tag)
 	@scripts/build.sh
@@ -35,3 +35,6 @@ frontend-manifest:
 test: test-scripts
 test-scripts: ## run the Python tests of the build scripts
 	@python3 -B -m unittest discover -s scripts/tests -v
+
+check-base-images: ## check that each Dockerfile's Temurin digest matches its tag and its cacerts lacks the roots of the compromised eMudhra chains (needs Docker with buildx, keytool, network)
+	@python3 -B scripts/check_base_images.py
