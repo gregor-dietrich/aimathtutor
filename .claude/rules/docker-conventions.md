@@ -30,6 +30,15 @@ paths:
   test hosts at `emudhra.we-have-a-problem.com` still fail certificate path
   validation from the image while a control host such as `api.openai.com`
   succeeds.
+- **Dependabot proposes Temurin bumps:** its `/src/main/docker` entry matches
+  the dependency by name (`eclipse-temurin`; a pattern never sees the tag) and
+  ignores Java 26 and later. It moves both Dockerfiles in one PR. The Alpine
+  tag carries no release number (`-jre-alpine`, not `-jre-alpine-3.24`):
+  Dependabot reads a trailing release number as a build number and then
+  proposes a floating tag on another Alpine release, so `TemurinBasePinTest`
+  allows only letters after `-jre-`. A new Alpine release therefore arrives
+  with a Temurin bump and shows only in the digest. The trusted-roots check
+  applies to Dependabot's PR as to a bump by hand.
 - **Compose defaults are placeholders:** every credential or
   deployment-specific value comes from `${VAR:-default}`, or from
   `${VAR:?message}` where no placeholder should work, and a default is never a

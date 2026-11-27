@@ -21,7 +21,7 @@ class TemurinBasePinTest {
     private static final Pattern FROM_LINE = Pattern.compile("(?i)^\\h*FROM(?:\\h.*)?$");
 
     private static final Pattern TEMURIN_PIN =
-            Pattern.compile("(?i:FROM)\\h+eclipse-temurin:(\\d+(?:[._]\\d+)*)-jre-[^\\s@]+@sha256:[a-f0-9]{64}\\h*");
+            Pattern.compile("(?i:FROM)\\h+eclipse-temurin:(\\d+(?:[._]\\d+)*)-jre-[a-z]+@sha256:[a-f0-9]{64}\\h*");
 
     @Test
     void testTemurinBasePinsMatch() throws IOException {
@@ -34,7 +34,8 @@ class TemurinBasePinTest {
         assertEquals(1, instructions.size(), dockerfile + " must have exactly one FROM instruction");
         final var pin = TEMURIN_PIN.matcher(instructions.get(0));
         assertTrue(pin.matches(),
-                dockerfile + " FROM must be exactly eclipse-temurin:<version>-jre-<distro>@sha256:<64 hex digits>");
+                dockerfile + " FROM must be exactly eclipse-temurin:<version>-jre-<distro>@sha256:<64 hex digits>,"
+                        + " <distro> in letters only: Dependabot reads a release number there as a build number");
         return pin.group(1);
     }
 }
