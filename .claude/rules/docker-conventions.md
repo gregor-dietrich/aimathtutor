@@ -1,10 +1,11 @@
 ---
-description: "Use when modifying the Dockerfiles or Compose files. Covers keeping the two images in step, the base image's trusted roots and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
+description: "Use when modifying the Dockerfiles, the Compose files or Dependabot's entry for the Dockerfiles. Covers keeping the two images in step, the base image's trusted roots, Dependabot's Temurin changes and compose defaults. Builds, releases and the key volume are in AGENTS.md, Docker."
 paths:
   - "src/main/docker/**"
   - "docker-compose.yml"
   - "deploy/compose.yml"
   - "docs/QUICKSTART.md"
+  - ".github/dependabot.yml"
 ---
 
 # Docker Conventions
@@ -13,8 +14,9 @@ paths:
   differ only where the distribution does: the base image, the package and
   user-creation commands, and the healthcheck tool (`wget` on Alpine, `curl`
   on Ubuntu). A change to one goes into the other:
-  the Temurin 25 JRE base pinned by digest, at the same version in both
-  (`TemurinBasePinTest`), the fast-jar copy to
+  the Temurin 25 JRE base, pinned by digest in a single `FROM` at the same
+  `<version>_<build>` in both (`TemurinBasePinTest`, which does not check the
+  major), the fast-jar copy to
   `/deployments`, user `185`, port `9001`, the `/q/health/ready`
   healthcheck, and the runtime JVM arguments in the exec-form Java
   entrypoint, each with its measured reason in `AGENTS.md` ("Runtime JVM
@@ -30,15 +32,22 @@ paths:
   test hosts at `emudhra.we-have-a-problem.com` still fail certificate path
   validation from the image while a control host such as `api.openai.com`
   succeeds.
-- **Dependabot proposes Temurin bumps:** its `/src/main/docker` entry matches
-  the dependency by name (`eclipse-temurin`; a pattern never sees the tag) and
-  ignores Java 26 and later. It moves both Dockerfiles in one PR. The Alpine
-  tag carries no release number (`-jre-alpine`, not `-jre-alpine-3.24`):
-  Dependabot reads a trailing release number as a build number and then
-  proposes a floating tag on another Alpine release, so `TemurinBasePinTest`
-  allows only letters after `-jre-`. A new Alpine release therefore arrives
-  with a Temurin bump and shows only in the digest. The trusted-roots check
-  applies to Dependabot's PR as to a bump by hand.
+- **Dependabot proposes Temurin changes:** its `/src/main/docker` entry
+  matches the dependency by name (`eclipse-temurin`; a pattern never sees the
+  tag) and ignores Java 26 and later.
+  - A change arrives in the weekly `infrastructure` group PR, beside other
+    ecosystems' updates: a version bump, or a new digest under the same tag,
+    because Temurin pushes its version tags again.
+  - Dependabot resolves each Dockerfile's tag on its own. While only one
+    distribution has the new version, `TemurinBasePinTest` fails that PR;
+    wait for the other tag, or set it by hand.
+  - No CI step reads an image's `cacerts`: the trusted-roots check is by hand,
+    for any change to either digest.
+  - The Alpine tag carries no release number (`-jre-alpine`, not
+    `-jre-alpine-3.24`). Dependabot reads a trailing release number as a build
+    number and then proposes a floating major tag (`25-jre-alpine-3.23` from
+    `25.0.5.1_2-jre-alpine-3.24`), so `TemurinBasePinTest` allows only letters
+    after `-jre-`. A new Alpine release therefore shows only in the digest.
 - **Compose defaults are placeholders:** every credential or
   deployment-specific value comes from `${VAR:-default}`, or from
   `${VAR:?message}` where no placeholder should work, and a default is never a
