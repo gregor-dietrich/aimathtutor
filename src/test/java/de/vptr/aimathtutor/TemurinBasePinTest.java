@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("Dockerfiles pin the same Temurin version, each by digest")
+@DisplayName("Dockerfiles pin the same Temurin 25 version, each by digest")
 class TemurinBasePinTest {
 
     private static final Path ALPINE = Path.of("src/main/docker/Dockerfile.alpine");
@@ -21,7 +21,7 @@ class TemurinBasePinTest {
     private static final Pattern FROM_LINE = Pattern.compile("(?i)^\\h*FROM(?:\\h.*)?$");
 
     private static final Pattern TEMURIN_PIN =
-            Pattern.compile("(?i:FROM)\\h+eclipse-temurin:(\\d+(?:\\.\\d+)*_\\d+)-jre-[a-z]+@sha256:[a-f0-9]{64}");
+            Pattern.compile("(?i:FROM)\\h+eclipse-temurin:(25(?:\\.\\d+)*_\\d+)-jre-[a-z]+@sha256:[a-f0-9]{64}");
 
     @Test
     void testTemurinBasePinsMatch() throws IOException {
@@ -33,10 +33,9 @@ class TemurinBasePinTest {
                 .filter(line -> FROM_LINE.matcher(line).matches()).map(String::strip).toList();
         assertEquals(1, instructions.size(), dockerfile + " must have exactly one FROM instruction");
         final var pin = TEMURIN_PIN.matcher(instructions.get(0));
-        assertTrue(pin.matches(),
-                dockerfile
-                        + " FROM must be exactly eclipse-temurin:<version>_<build>-jre-<distro>@sha256:<64 hex digits>,"
-                        + " <distro> in letters only: Dependabot reads a release number there as a build number");
+        assertTrue(pin.matches(), dockerfile
+                + " FROM must be exactly eclipse-temurin:<Java 25 version>_<build>-jre-<distro>@sha256:<64 hex digits>,"
+                + " <distro> in letters only: Dependabot reads a release number there as a build number");
         return pin.group(1);
     }
 }

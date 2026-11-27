@@ -15,8 +15,7 @@ paths:
   user-creation commands, and the healthcheck tool (`wget` on Alpine, `curl`
   on Ubuntu). A change to one goes into the other:
   the Temurin 25 JRE base, pinned by digest in a single `FROM` at the same
-  `<version>_<build>` in both (`TemurinBasePinTest`, which does not check the
-  major), the fast-jar copy to
+  `<version>_<build>` in both (`TemurinBasePinTest`), the fast-jar copy to
   `/deployments`, user `185`, port `9001`, the `/q/health/ready`
   healthcheck, and the runtime JVM arguments in the exec-form Java
   entrypoint, each with its measured reason in `AGENTS.md` ("Runtime JVM
