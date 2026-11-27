@@ -13,7 +13,8 @@ paths:
   differ only where the distribution does: the base image, the package and
   user-creation commands, and the healthcheck tool (`wget` on Alpine, `curl`
   on Ubuntu). A change to one goes into the other:
-  the Temurin 25 JRE base pinned by digest, the fast-jar copy to
+  the Temurin 25 JRE base pinned by digest, at the same version in both
+  (`TemurinBasePinTest`), the fast-jar copy to
   `/deployments`, user `185`, port `9001`, the `/q/health/ready`
   healthcheck, and the runtime JVM arguments in the exec-form Java
   entrypoint, each with its measured reason in `AGENTS.md` ("Runtime JVM
